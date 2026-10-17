@@ -33,6 +33,7 @@ save = function(config, "int configWrite(config_set_t *configSet)")
 assert "singleOpenDevice ? -1 : openFile" in save, "MC single-open policy changed"
 assert "if (curLen < originalLen)" in save, "legacy recovery unexpectedly changed"
 assert "memcmp(chunk, original + at, count)" not in save, "extra readback unexpectedly reintroduced"
+assert 'if (!singleOpenDevice && strncmp(configSet->filename, "pfs", 3) != 0 &&' in save, "MC/PFS should not allocate a verification snapshot they never read"
 
 HARNESS = r"""
 #include <assert.h>
@@ -51,7 +52,7 @@ HARNESS = r"""
 
 static char disk[256];
 static int length, alloc_calls, alloc_failure, opens, closes, writes;
-static int fail_open, fail_write, fail_close;
+static int fail_open, fail_write, fail_close, fail_seek;
 
 static void reset(void)
 {
@@ -59,7 +60,7 @@ static void reset(void)
     memcpy(disk, "OLD", 3);
     length = 3;
     alloc_calls = alloc_failure = opens = closes = writes = 0;
-    fail_open = fail_write = fail_close = 0;
+    fail_open = fail_write = fail_close = fail_seek = 0;
     errno = 0;
 }
 
@@ -98,6 +99,22 @@ static int fake_read(int fd, void *buf, unsigned int size)
     return (int)size;
 }
 
+static int fake_getFileSize(int fd)
+{
+    (void)fd;
+    if (fail_seek) {
+        errno = ENXIO;
+        return -1;
+    }
+    return length;
+}
+
+static void *fake_memalign(size_t alignment, size_t size)
+{
+    (void)alignment;
+    return malloc(size);
+}
+
 static int fake_lseek(int fd, int offset, int whence)
 {
     (void)fd;
@@ -133,6 +150,9 @@ static int fake_close(int fd)
     return 0;
 }
 
+#define LOG(...) ((void)0)
+#define getFileSize fake_getFileSize
+#define memalign fake_memalign
 #define malloc limited_malloc
 #define openFile fake_open
 #define read fake_read
@@ -146,10 +166,15 @@ static int fake_close(int fd)
 #undef read
 #undef openFile
 #undef malloc
+#undef memalign
+#undef getFileSize
+#undef LOG
 
 int main(void)
 {
     file_buffer_t *b;
+    void *contents;
+    int size;
 
     reset();
     alloc_failure = 1;
@@ -227,7 +252,36 @@ int main(void)
     fail_write = 0;
     assert(closeFileBuffer(b) == -1 && errno == EIO);
 
-    puts("PASS: config writes allocate before truncation and retain first I/O errno");
+    // Real readFile used by custom font loading: failed filesize must never
+    // turn -1 into a huge unsigned allocation, and every opened fd is closed.
+    reset();
+    fail_seek = 1;
+    size = -1;
+    contents = readFile("mass0:/font.ttf", -1, &size);
+    assert(contents == NULL && size == 0 && errno == ENXIO &&
+           opens == 1 && closes == 1 && alloc_calls == 0);
+
+    reset();
+    alloc_failure = 1;
+    size = -1;
+    contents = readFile("mc0:/font.ttf", -1, &size);
+    assert(contents == NULL && size == 0 && errno == ENOMEM &&
+           opens == 1 && closes == 1);
+
+    reset();
+    size = -1;
+    contents = readFile("mass0:/font.ttf", -1, &size);
+    assert(contents != NULL && size == 3 && memcmp(contents, "OLD", 3) == 0);
+    assert(opens == 1 && closes == 1);
+    free(contents);
+
+    reset();
+    fail_open = 1;
+    size = -1;
+    contents = readFile("mass0:/missing.ttf", -1, &size);
+    assert(contents == NULL && opens == 1 && closes == 0 && alloc_calls == 0);
+
+    puts("PASS: config saves preserve files and errno; failed file reads never leak descriptors");
     return 0;
 }
 """
@@ -237,6 +291,7 @@ c_code = c_code.replace("@FUNCTIONS@", "\n\n".join([
     function(util, "file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned int size)"),
     function(util, "void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)"),
     function(util, "int closeFileBuffer(file_buffer_t *fileBuffer)"),
+    function(util, "void *readFile(char *path, int align, int *size)"),
 ]))
 
 with tempfile.TemporaryDirectory() as folder:
