@@ -21,6 +21,7 @@
 #include "include/ioman.h"
 #include "include/launchdiag.h" // UDPBD hang-triage stage markers (inert unless a udp launch arms them)
 #include "include/system.h"
+#include "include/nativevmc.h"
 #include "include/ethsupport.h"   // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
 #include "include/udpfssupport.h" // udpfsGetModulesLoaded() -- symmetric backstop vs the udpfs_ioman filesystem stack
 #include "include/mmcesupport.h"  // mmceSendGameID() cross-device game-id (#261)
@@ -2354,6 +2355,36 @@ fail:
 // Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
 static int bdmMcemuSlots[2] = {-2, -2};
 
+static int bdmCheckNativeVmcLayout(int iop_fd, int size_mb, u64 *start_lba, int *fragments)
+{
+    *start_lba = (u64)-1;
+    *fragments = -1;
+    if (size_mb <= 0)
+        return NATIVE_VMC_INVALID;
+
+    // Some unsupported ioctl implementations return success without writing output.
+    if (fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_LBA, NULL, 0, start_lba, sizeof(*start_lba)) != 0 ||
+        *start_lba == (u64)-1)
+        return NATIVE_VMC_LAYOUT_UNKNOWN;
+
+    // Require the returned single extent to cover the whole card. A FAT read error
+    // in an older driver can otherwise look like a prematurely terminated chain.
+    bd_fragment_t extent = {.sector = (u64)-1, .count = 0};
+    *fragments = fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, &extent, sizeof(extent));
+    if (*fragments <= 0)
+        return NATIVE_VMC_LAYOUT_UNKNOWN;
+
+    // mcemu's sector address is 32 bits. Check the last sector without wrapping.
+    u64 sectors = (u64)size_mb * ((1024 * 1024) / 512);
+    if (*start_lba > 0xffffffffULL || sectors - 1 > 0xffffffffULL - *start_lba)
+        return NATIVE_VMC_LBA_RANGE;
+
+    if (*fragments == 1 && (extent.sector != *start_lba || extent.count < sectors))
+        return NATIVE_VMC_LAYOUT_UNKNOWN;
+
+    return *fragments == 1 ? NATIVE_VMC_OK : NATIVE_VMC_FRAGMENTED;
+}
+
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
 #ifdef RETROACHIEVEMENTS
@@ -2368,8 +2399,6 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int result;
     u64 isoTotalBytes = 0;
     int isoSizeKnown = 1;
-    u64 startingLBA;
-    unsigned int startCluster;
     char partname[256], filename[32];
     base_game_info_t *game;
     struct cdvdman_settings_bdm *settings;
@@ -2490,16 +2519,17 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         return;
     }
 
-    char vmc_name[32], vmc_path[256], have_error = 0;
-    int vmc_id, size_mcemu_irx = 0;
+    char vmc_name[32], vmc_path[256];
+    int vmc_id, have_error, size_mcemu_irx = 0;
     bdm_vmc_infos_t bdm_vmc_infos;
     vmc_superblock_t vmc_superblock;
 
     for (vmc_id = 0; vmc_id < 2 && pDeviceData->bdmDeviceType != BDM_TYPE_PCCF; vmc_id++) {
+        have_error = NATIVE_VMC_OK;
         memset(&bdm_vmc_infos, 0, sizeof(bdm_vmc_infos_t));
         configGetVMC(configSet, vmc_name, sizeof(vmc_name), vmc_id);
         if (vmc_name[0]) {
-            have_error = 1;
+            have_error = NATIVE_VMC_INVALID;
             int vmcSizeInMb = sysCheckVMC(pDeviceData->bdmPrefix, "/", vmc_name, 0, &vmc_superblock);
             if (vmcSizeInMb > 0) {
                 bdm_vmc_infos.flags = vmc_superblock.mc_flag & 0xFF;
@@ -2508,31 +2538,19 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                 bdm_vmc_infos.specs.block_size = vmc_superblock.pages_per_block;
                 bdm_vmc_infos.specs.card_size = vmc_superblock.pages_per_cluster * vmc_superblock.clusters_per_card;
 
-                sprintf(vmc_path, "%sVMC/%s.bin", pDeviceData->bdmPrefix, vmc_name);
+                snprintf(vmc_path, sizeof(vmc_path), "%sVMC/%s.bin", pDeviceData->bdmPrefix, vmc_name);
 
                 fd = open(vmc_path, O_RDONLY);
                 if (fd >= 0) {
                     iop_fd = ps2sdk_get_iop_fd(fd);
-                    if (fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &startingLBA, sizeof(startingLBA)) == 0 && (startCluster = (unsigned int)fileXioIoctl(iop_fd, USBMASS_IOCTL_GET_CLUSTER, vmc_path)) != 0) {
-
-                        // VMC only supports 32bit LBAs at the moment, so if the starting LBA + size of the VMC crosses the 32bit boundary
-                        // just report the VMC as being fragmented to prevent file system corruption.
-                        int vmcSectorCount = vmcSizeInMb * ((1024 * 1024) / 512); // size in MB * sectors per MB
-                        if (startingLBA + vmcSectorCount > 0x100000000) {
-                            LOG("BDMSUPPORT VMC bad LBA range\n");
-                            have_error = 2;
-                        }
-                        // Check VMC cluster chain for fragmentation (write operation can cause damage to the filesystem).
-                        else if (fileXioIoctl(iop_fd, USBMASS_IOCTL_CHECK_CHAIN, "") == 1) {
-                            LOG("BDMSUPPORT Cluster Chain OK\n");
-                            have_error = 0;
-                            bdm_vmc_infos.active = 1;
-                            bdm_vmc_infos.start_sector = startingLBA;
-                            LOG("BDMSUPPORT VMC slot %d start: 0x%08x%08x\n", vmc_id, ((u32 *)&startingLBA)[1], ((u32 *)&startingLBA)[0]);
-                        } else {
-                            LOG("BDMSUPPORT Cluster Chain NG\n");
-                            have_error = 2;
-                        }
+                    u64 startingLBA;
+                    int fragments;
+                    have_error = bdmCheckNativeVmcLayout(iop_fd, vmcSizeInMb, &startingLBA, &fragments);
+                    LOG("BDMSUPPORT VMC slot %d layout: reason=%d fragments=%d start=0x%08x%08x\n",
+                        vmc_id, have_error, fragments, (u32)(startingLBA >> 32), (u32)startingLBA);
+                    if (have_error == NATIVE_VMC_OK) {
+                        bdm_vmc_infos.active = 1;
+                        bdm_vmc_infos.start_sector = startingLBA;
                     }
 
                     close(fd);
@@ -2543,8 +2561,12 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (gAutoLaunchBDMGame == NULL) {
             if (have_error) {
                 char error[256];
-                if (have_error == 2) // VMC file is fragmented
+                if (have_error == NATIVE_VMC_FRAGMENTED)
                     snprintf(error, sizeof(error), _l(_STR_ERR_VMC_FRAGMENTED_CONTINUE), vmc_name, (vmc_id + 1));
+                else if (have_error == NATIVE_VMC_LBA_RANGE)
+                    snprintf(error, sizeof(error), _l(_STR_ERR_VMC_LBA_RANGE_CONTINUE), vmc_name, (vmc_id + 1));
+                else if (have_error == NATIVE_VMC_LAYOUT_UNKNOWN)
+                    snprintf(error, sizeof(error), _l(_STR_ERR_VMC_LAYOUT_CONTINUE), vmc_name, (vmc_id + 1));
                 else
                     snprintf(error, sizeof(error), _l(_STR_ERR_VMC_CONTINUE), vmc_name, (vmc_id + 1));
                 if (!guiMsgBox(error, 1, NULL)) {
