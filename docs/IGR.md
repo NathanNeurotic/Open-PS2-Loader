@@ -92,17 +92,19 @@ losing IGR for that game.
 
 Fewer games should need it now. IGR used to watch the pad from a **VBLANK interrupt handler**, and
 merely registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the
-handler did. It now polls the pad from its own low-priority thread, woken by a timer about once a
-frame, and registers nothing on VBLANK (official OPL #1762, ported here). The
+handler did. It now samples controller and power-button inputs directly from a short EE timer alarm
+about once per frame, and registers nothing on VBLANK (official OPL #1762, adapted here).
+The alarm only detects requests; a separate IGR worker handles game shutdown, so
+high-priority game threads cannot starve the input check. The
 **RetroAchievements** loader is the exception: its per-frame snapshots and unlock notice require a
 VBLANK interrupt. With IGR enabled, RA uses the existing combined VBLANK/IGR path. Under Mode 6,
 RA instead installs a snapshot-only handler when telemetry is active, without an IGR thread or pad
 hooks. Achievements may continue, but client-triggered reset is unavailable. Games incompatible
 with registration of any VBLANK handler may still be affected.
 
-If IGR stops responding in a game that used to answer it on an older build, report the title. A
-game that never lets a low-priority thread run would starve the polling thread; the power button
-does not depend on the pad and is the quickest cross-check.
+If IGR stops responding in a game that used to answer it on an older build, report the title. The alarm sampler avoids the former priority-127 worker starvation, but it does not fix
+missing pad hooks, changed controller layouts, or games that block interrupts. The power button
+is a useful cross-check because it does not depend on the pad buffer.
 
 **Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a
 property of that loader, and it is why Mode 6 is greyed out whenever the Loader Core is set to
@@ -164,7 +166,7 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 
 | File | Role |
 |---|---|
-| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, the polling IGR thread and its one-frame alarm (the VBLANK interrupt handler in RetroAchievements builds only), combo dispatch |
+| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, the one-frame EE alarm sampler and IGR shutdown worker (the VBLANK interrupt handler in RetroAchievements builds only), combo dispatch |
 | `ee_core/include/padhook.h` | The combo constants (`IGR_COMBO_R1_L1_R2_L2`, `IGR_COMBO_START_SELECT`, `IGR_COMBO_R3_L3`, `IGR_COMBO_UP`) |
 | `ee_core/src/cd_igr_rpc.c` | IOP-side reset RPC |
 | `ee_core/src/igs_api.c` | Screenshot capture and BMP writing |
