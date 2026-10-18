@@ -706,8 +706,8 @@ void Install_IGR(void)
          * has been published. Keep an unavailable alarm retryable on reopen. */
         int intr = DI();
         if (IGR_Poll_Alarm_ID < 0) {
-            IGR_Poll_Alarm_ID = SetAlarm(256, IGR_Poll_Alarm,
-                                        (void *)(unsigned long)IGR_Poll_Generation);
+            void *generation = (void *)(unsigned long)IGR_Poll_Generation;
+            IGR_Poll_Alarm_ID = SetAlarm(256, IGR_Poll_Alarm, generation);
             IGR_Poll_Recovery = (IGR_Poll_Alarm_ID < 0);
         }
         if (intr)
