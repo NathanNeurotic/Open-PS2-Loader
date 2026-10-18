@@ -2728,9 +2728,38 @@ static int vcdRaModuleStatus(const char *root, int removeOwned)
     int fd, got, matched = 0, owned = 0;
     if (snprintf(path, sizeof(path), "%sPOPS%cMODULE_9.IRX", root, vcdSep(root)) >= (int)sizeof(path))
         return -2;
+    errno = 0;
     fd = open(path, O_RDONLY);
-    if (fd < 0)
-        return errno == ENOENT ? 0 : -2;
+    if (fd < 0) {
+        char dirPath[256];
+        DIR *dir;
+        struct dirent *entry;
+        int readErr;
+
+        if (errno == ENOENT)
+            return 0;
+
+        // bdmfs_fatfs returns -FR_NO_FILE (4), not -ENOENT, for an absent file.
+        // When open fails with a non-POSIX error, verify absence via the readable
+        // POPS directory rather than claiming a leftover RA module exists.
+        if (snprintf(dirPath, sizeof(dirPath), "%sPOPS", root) >= (int)sizeof(dirPath))
+            return -2;
+        dir = opendir(dirPath);
+        if (dir == NULL)
+            return -2;
+        do {
+            errno = 0;
+            entry = readdir(dir);
+            if (entry != NULL && strcasecmp(entry->d_name, "MODULE_9.IRX") == 0) {
+                closedir(dir);
+                return -2; // A module exists but cannot be opened: preserve the warning.
+            }
+        } while (entry != NULL);
+        readErr = errno;
+        if (closedir(dir) < 0 || readErr != 0)
+            return -2; // Unreadable/incomplete directory: cannot prove absence.
+        return 0;
+    }
     while ((got = read(fd, buf, sizeof(buf))) > 0) {
         for (int i = 0; i < got; i++) {
             if (buf[i] == (unsigned char)magic[matched]) {
