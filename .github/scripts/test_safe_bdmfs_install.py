@@ -1,0 +1,43 @@
+"""Verify the installer is source-guarded, idempotent and applied to every release build."""
+from pathlib import Path
+import importlib.util
+import tempfile
+
+root = Path(__file__).resolve().parents[2]
+spec = importlib.util.spec_from_file_location('safe_bdmfs', root / '.github/scripts/install_safe_bdmfs.py')
+installer = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(installer)
+replacement = (root / '.github/patches/bdmfs-vmc-fragment-walk.c').read_text()
+stock = (root / '.github/scripts/fixtures/bdmfs-frag-stock.c').read_text()
+
+with tempfile.TemporaryDirectory() as temp:
+    sdk = Path(temp)
+    folder = sdk / 'iop/fs/bdmfs_fatfs/src'
+    folder.mkdir(parents=True)
+    driver = folder / 'fs_driver.c'
+    main = folder / 'main.c'
+    driver.write_text(stock + '\nret = get_frag_list(file, NULL, 0) == 1 ? 1 : 0;\n')
+    main.write_text('int _start(void) {\n    if (InitFS() != 0) return 1;\n}\n')
+    installer.stage(sdk, replacement)
+    once = (driver.read_text(), main.read_text())
+    assert 'iClusterNext == 0xFFFFFFFF' in once[0]
+    assert 'if (ret >= 0)' in once[0]
+    assert installer.MARKER.decode() in once[1]
+    installer.stage(sdk, replacement)
+    assert (driver.read_text(), main.read_text()) == once
+
+    driver.write_text(stock.replace('int iFragCount = 0;', 'int iFragCount = 1;'))
+    before = (driver.read_text(), main.read_text())
+    try:
+        installer.stage(sdk, replacement)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError('unknown source revision was accepted')
+    assert (driver.read_text(), main.read_text()) == before
+
+for path in (root / '.github/workflows').glob('*.yml'):
+    source = path.read_text()
+    assert source.count('sh .github/scripts/install_coherent_mmce.sh') == source.count(
+        'python3 .github/scripts/install_safe_bdmfs.py'), str(path)
+print('BDM installer: known source only, idempotence, failure preserves input, all build entry points pass')

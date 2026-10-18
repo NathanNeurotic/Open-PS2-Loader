@@ -24,6 +24,8 @@ on:
       - .github/scripts/package_release_app.py
       - .github/scripts/normalize_release_notes.py
       - .github/scripts/install_coherent_mmce.sh
+      - .github/scripts/install_safe_bdmfs.py
+      - .github/patches/bdmfs-vmc-fragment-walk.c
       - third_party/orbit-neutrino/**
       - pc/xeRAbora.url
 
@@ -173,6 +175,7 @@ jobs:
         run: |
           set -euo pipefail
           sh .github/scripts/install_coherent_mmce.sh
+          python3 .github/scripts/install_safe_bdmfs.py
           PADS='0 1'
           [ "$SDK" != OFFICIALROLLING ] || PADS=1
           for PAD in $PADS; do

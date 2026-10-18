@@ -92,6 +92,7 @@ jobs:
         run: |
           set -euo pipefail
           sh .github/scripts/install_coherent_mmce.sh
+          python3 .github/scripts/install_safe_bdmfs.py
           make clean
           make LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.diag }} RELEASE_CHANNEL=Korium-PR894 release
           test -s RIPTOPL.ELF

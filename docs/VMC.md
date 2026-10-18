@@ -10,6 +10,8 @@ Changing the size of an existing VMC is refused without modifying the image. Bac
 
 A full console restart can clear a stuck creation session, but does not change a file's disk fragmentation. Recreating the card is not guaranteed to allocate one extent, even with plenty of free space.
 
+Release builds rebuild their SDK's BDM filesystem module with a bounded FAT-chain walker. Failed reads, invalid links, early chain termination and cycles are refused rather than reported as a usable contiguous layout. Local legacy Make builds should run `python3 .github/scripts/install_safe_bdmfs.py` in their SDK build environment first; set `PS2SDKSRC` if SDK sources and installation use separate paths. The installer refuses unknown source revisions and checks the resulting IRX marker before replacing the SDK module used by the loader. This validates mappings; it does not relocate existing VMCs or reserve contiguous space for new cards.
+
 Native OPL on FAT32/exFAT BDM storage requires a contiguous VMC sector range; do not bypass launch-time write guards. Native APA/PFS uses bounded inode/block mapping. MMCE uses a separate file-backed contract; unsupported layout queries are unknown, not proof of fragmentation.
 
 Neutrino's BDM mapper supports multiple extents and shares a 64-fragment budget across the game and cards in the bundled runtime. Its fragment-budget or file-open error is not the same as the native single-fragment warning. APA/PFS VMC backing is not available under bundled Neutrino. Record the selected core and exact failure stage.
