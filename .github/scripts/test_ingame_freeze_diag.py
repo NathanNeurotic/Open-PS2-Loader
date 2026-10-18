@@ -107,7 +107,8 @@ check(i_prio < i_begin < i_stop < i_suspend,
       "threads are captured at priority 0 and before DMA/GS stop and thread suspension")
 check("if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {" in poll[i_prio:i_begin],
       "only the reset combo arms a report (not IGS or power-off)")
-check("g_freeze_diag_polls++;" in poll[:poll.index("IGR_CheckInputs();")], "each poll is counted")
+alarm = pad[pad.index("static void IGR_Poll_Alarm("):pad.index("static void IGR_PollUntilRequested(void)")]
+check("g_freeze_diag_polls++;" in alarm[:alarm.index("IGR_CheckInputs();")], "each alarm input sample is counted")
 
 thread = pad[pad.index("static void IGR_Thread(void *arg)"):]
 gate = re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*FreezeDiag_FetchAndShutdown\(\);\n#else\n#ifdef RETROACHIEVEMENTS\n(?:\s*//[^\n]*\n)*\s*if \(config->GameMode != DISC_MODE\)\n#endif\n\s*oplIGRShutdown\(0\);\n#endif\n", thread)

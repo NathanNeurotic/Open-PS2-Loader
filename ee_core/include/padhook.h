@@ -66,7 +66,7 @@ typedef struct
     int pos_combo2;
     int pos_state;
     int pos_frame;
-    u8 combo_type;
+    volatile u8 combo_type; /* Shared between alarm/interrupt callback and worker. */
     u8 prev_frame;
 } paddata_t;
 
