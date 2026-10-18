@@ -72,9 +72,11 @@ static int IGR_Thread_ID = -1;
 static int IGR_Intc_ID = -1;
 #ifndef IGR_VBLANK_HANDLER
 /* Timer 3's one-shot alarm must be installed independently of the priority-127 worker.
- * An alarm-allocation failure hands recovery to the worker instead of sleeping forever. */
+ * If the alarm table is full, a later game pad-open retries registration.
+ * The generation token rejects callbacks left pending during an ExecPS2 transition. */
 static volatile int IGR_Poll_Alarm_ID = -1;
 static volatile int IGR_Poll_Recovery = 0;
+static volatile unsigned int IGR_Poll_Generation = 1;
 #endif
 #ifdef RETROACHIEVEMENTS
 static int RA_Intc_ID = -1;
@@ -294,17 +296,20 @@ static void IGR_StopDmaAndGs(void)
 
 #ifndef IGR_VBLANK_HANDLER
 /* Timer 3's one-shot alarm counts horizontal-sync ticks (256 ~ one frame).
- * Sample directly from this callback: waking a priority-127 thread does not
- * guarantee that thread will be scheduled in games with busy high-priority EE
- * threads. The callback must never do RPC, ResetEE or game-thread suspension. */
+ * An expired alarm is removed before this callback by the PS2SDK dispatcher.
+ * Sampling here avoids depending on the priority-127 shutdown worker running. */
 static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
 {
     int next_alarm;
     (void)alarm_id;
     (void)time;
-    (void)common;
 
-    /* The expired slot has already been removed by the kernel alarm dispatcher. */
+    /* ReleaseAlarm can fail once the timer IRQ is already pending. In that
+     * case an old alarm may run after ExecPS2, including after a new worker
+     * has been installed. It must not observe the new game's pad state. */
+    if ((unsigned long)common != IGR_Poll_Generation)
+        return;
+
     IGR_Poll_Alarm_ID = -1;
     if (IGR_Thread_ID < 0)
         return;
@@ -315,51 +320,35 @@ static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
     IGR_CheckInputs();
 
     if (Pad_Data.combo_type != 0x00) {
-        /* A request can arrive before the worker has executed even once.
-         * Promoting it makes the shutdown path runnable despite game threads. */
+        /* A request may arrive before the worker first runs. */
         iChangeThreadPriority(IGR_Thread_ID, 0);
         iWakeupThread(IGR_Thread_ID);
-        return; /* No further sampling after a latched request. */
+        return;
     }
 
-    next_alarm = iSetAlarm(256, IGR_Poll_Alarm, NULL);
+    next_alarm = iSetAlarm(256, IGR_Poll_Alarm, common);
     if (next_alarm >= 0) {
         IGR_Poll_Alarm_ID = next_alarm;
+        IGR_Poll_Recovery = 0;
     } else {
-        /* A temporary alarm-slot shortage must not leave the worker asleep
-         * forever. Wake it to retry allocation outside interrupt context. */
+        /* Do not demote a spinning recovery worker: high-priority games can
+         * starve it forever, and a priority-0 loop can stall the game.
+         * A later pad-open retries independently of worker scheduling. */
         IGR_Poll_Recovery = 1;
-        iChangeThreadPriority(IGR_Thread_ID, 0);
-        iWakeupThread(IGR_Thread_ID);
     }
 }
 
-/* Once the alarm has latched a request, finish shutdown from thread context.
- * The recovery path runs only if registering/rearming the alarm failed. */
+/* The alarm owns sampling. This worker runs only when a request is latched.
+ * Alarm allocation is retried on later game pad-open calls, not by a thread
+ * that might never be scheduled or might monopolize the EE. */
 static void IGR_PollUntilRequested(void)
 {
-    int i, alarm_id;
+    int i;
 
-    while (Pad_Data.combo_type == 0x00) {
-        if (IGR_Poll_Recovery) {
-            IGR_CheckInputs();
-            if (Pad_Data.combo_type != 0x00)
-                break;
-
-            alarm_id = SetAlarm(256, IGR_Poll_Alarm, NULL);
-            if (alarm_id < 0) {
-                /* Never spin at promoted priority 0 while alarm slots are full. */
-                ChangeThreadPriority(TH_SELF, 127);
-                nopdelay();
-                continue;
-            }
-            IGR_Poll_Alarm_ID = alarm_id;
-            IGR_Poll_Recovery = 0;
-        }
+    while (Pad_Data.combo_type == 0x00)
         SleepThread();
-    }
 
-    DPRINTF("IGR combination detected by EE alarm.\n");
+    DPRINTF("IGR combination detected by EE alarm.\\n");
     ChangeThreadPriority(TH_SELF, 0);
 
 #ifdef INGAMEDIAG
@@ -712,13 +701,17 @@ void Install_IGR(void)
 #else
     // Standard builds use the EE alarm only; no VBLANK handler (OPL #1762).
     IGR_Intc_ID = -1;
-    if (IGR_Thread_ID >= 0 && IGR_Poll_Alarm_ID < 0 && !IGR_Poll_Recovery) {
-        IGR_Poll_Alarm_ID = SetAlarm(256, IGR_Poll_Alarm, NULL);
+    if (IGR_Thread_ID >= 0 && IGR_Poll_Alarm_ID < 0 && Pad_Data.combo_type == 0x00) {
+        /* Prevent the callback from executing before the returned alarm ID
+         * has been published. Keep an unavailable alarm retryable on reopen. */
+        int intr = DI();
         if (IGR_Poll_Alarm_ID < 0) {
-            IGR_Poll_Recovery = 1;
-            ChangeThreadPriority(IGR_Thread_ID, 0);
-            WakeupThread(IGR_Thread_ID);
+            IGR_Poll_Alarm_ID = SetAlarm(256, IGR_Poll_Alarm,
+                                        (void *)(unsigned long)IGR_Poll_Generation);
+            IGR_Poll_Recovery = (IGR_Poll_Alarm_ID < 0);
         }
+        if (intr)
+            EI();
     }
 #endif
 }
@@ -726,16 +719,25 @@ void Install_IGR(void)
 void Reset_Padhook(void)
 {
 #ifndef IGR_VBLANK_HANDLER
-    /* ExecPS2 may replace the resident worker: do not leave its old alarm
-     * sampling stale game memory or waking a reused thread ID. */
-    if (IGR_Poll_Alarm_ID >= 0) {
-        ReleaseAlarm(IGR_Poll_Alarm_ID);
-        IGR_Poll_Alarm_ID = -1;
-    }
+    /* Publish invalidation before cancellation: ReleaseAlarm may fail if a
+     * timer IRQ is already pending. An old callback must not use a new worker. */
+    int intr = DI();
+    int alarm_id = IGR_Poll_Alarm_ID;
+    IGR_Poll_Generation++;
+    if (IGR_Poll_Generation == 0)
+        IGR_Poll_Generation = 1;
+    IGR_Poll_Alarm_ID = -1;
     IGR_Poll_Recovery = 0;
-#endif
     IGR_Intc_ID = -1;
     IGR_Thread_ID = -1;
+    if (alarm_id >= 0)
+        ReleaseAlarm(alarm_id);
+    if (intr)
+        EI();
+#else
+    IGR_Intc_ID = -1;
+    IGR_Thread_ID = -1;
+#endif
 }
 
 #ifdef RETROACHIEVEMENTS
