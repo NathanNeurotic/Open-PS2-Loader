@@ -224,8 +224,11 @@ static void IGR_CheckInputs(void)
     } else
 #endif
     {
-        // Keep interrupts disabled while KSU=0 on the user-mode worker stack.
-        ee_kmode_enter();
+        /* A standard-build alarm or RA VBLANK callback executes in interrupt
+         * context, where changing the privilege mode to USER on return is unsafe.
+         * Preserve the original KSU bits instead of unconditionally calling
+         * ee_kmode_exit(), which always selects user mode. */
+        u32 previous_opmode = ee_kmode_enter() & 0x18;
 
         /* The CDVD power-off interrupt is a latched hardware condition, not
            a new tap every time the low-priority worker samples it. If its
@@ -256,7 +259,7 @@ static void IGR_CheckInputs(void)
             }
         }
 
-        ee_kmode_exit();
+        ee_set_opmode(previous_opmode);
     }
 
     if (intr)
