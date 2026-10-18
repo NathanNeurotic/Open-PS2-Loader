@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Coverflow · RiptOPL Docs</title>
-<meta name="description" content="The optional built-in cover-carousel theme, available in 4:3 and 16:9.">
+<title>Coverflow &amp; PSBBN Flow · RiptOPL Docs</title>
+<meta name="description" content="Choose Coverflow or PSBBN Flow: built-in cover-art themes, controls, artwork and authoring in 4:3 and 16:9.">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <meta property="og:site_name" content="RiptOPL Docs">
 <meta property="og:type" content="website">
@@ -45,7 +45,7 @@
     <h4>Features</h4>
     <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
-    <a href="coverflow.html" class="active"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="coverflow.html" class="active"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
@@ -71,22 +71,23 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
-<h1>Coverflow</h1>
-<p class="lead">RiptOPL's optional built-in carousel theme — centered cover art with an alpha-faded
+<h1>Coverflow &amp; PSBBN Flow</h1>
+<p class="lead">Coverflow is RiptOPL's optional built-in centered carousel theme — centered cover art with an alpha-faded
 reflection, animated scrolling between titles, and aspect-correct cover frames in both 4:3
-and widescreen. It is a <b>built-in theme</b>: no files to copy, active out of the box.</p>
+and widescreen. It is a <b>built-in theme</b>: no theme files to copy. Choose it in the Theme picker; fresh settings use <code>&lt;OPL&gt;</code>.
+For the Collection-style perspective fan, see <a href="#psbbn-flow">PSBBN Flow</a> below.</p>
 
 <div class="callout info"><div class="h">Built-in, not a THM folder theme</div>
 <code>&lt;Coverflow&gt;</code> is compiled into RiptOPL and appears in the theme list alongside
 any custom <code>THM/</code> themes you add. You can switch to a different theme in
 <b>Interface → Theme</b> and switch back at any time. The <b>Coverflow Settings</b>
-button only appears in <b>Interface</b> while a Coverflow-based theme is active.
+button in <b>Interface</b> tunes <code>Coverflow</code> elements; PSBBN Flow has its own fixed presentation.
 Fresh configurations start with <code>&lt;OPL&gt;</code>, a 4:3 menu and Auto video mode.
 Choose <code>&lt;Coverflow&gt;</code> under <b>Settings → Interface → Theme</b>, apply and save.
 Widescreen is a separate choice; Coverflow also works in 4:3. Existing saved settings take precedence.
 </div>
 
-<h2 id="how-it-works">How it works</h2>
+<h2 id="how-it-works">How Coverflow works</h2>
 <p>When the <code>&lt;Coverflow&gt;</code> theme is active, the game list view shows a row of
 cover-art images centred on the screen. The currently selected title sits at the centre; side
 covers fan out to the left and right. Below each cover a mirrored, alpha-faded reflection is
@@ -123,9 +124,33 @@ follows each row's aspect, and every cover stands on a common bottom edge, so po
 share one baseline and their reflections start together. See
 <a href="themes.html#block-families">Block families</a> for the full resolution rules.</p>
 
+<h2 id="psbbn-flow">PSBBN Flow</h2>
+<div class="callout info"><div class="h">Build availability</div>
+PSBBN Flow is added by <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">PR #977</a>.
+These instructions require a build containing that change. Older builds list only
+<code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> as built-ins.</div>
+<p>Select <b>Settings → Interface → Theme → <code>&lt;PSBBN Flow&gt;</code></b>, apply and save.
+The theme adapts <b>dnunezx / darkladark</b>'s LUNA Collection display from
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733">#733</a>, which #977 supersedes:
+a large focal cover on the right, a diminishing tail of up to six neighbors on the left,
+an outgoing foreground cover, a blue frame/footer and a 25-frame cubic glide.</p>
+<p>It uses the same native sources, selected rows, folders, Favorites, per-game settings and
+launch actions as Coverflow. <b>Left/Right browse covers; Up/Down change sources; R3 toggles Favorite.</b>
+Choose the display through the Theme picker. There is no R3 display switch or separate Collection screen.</p>
+<p>Artwork comes through the normal <code>ART/&lt;startup&gt;_COV</code> loaders and shared asynchronous
+cache, including the existing archive and per-kind fallback handling. No <code>ART/PSBBN</code>
+folder is needed. Portrait and square covers retain their proportions; missing covers use native
+placeholders. See <a href="install.html#cover-art">artwork naming</a> for PS2, PS1 and app keys.</p>
+<p>Theme and widescreen choices are independent, and the selection persists by name when disk themes
+are discovered or removed. The built-in shares editable palette and audio settings with the other
+built-ins. Coverflow's count, scale, duration and dimming settings tune the centered carousel;
+PSBBN Flow retains its fixed perspective, distance shading and 25-frame animation.</p>
+<p>Theme authors can use <code>type=PSBBNFlow</code> alongside a native <code>ItemsList</code>.
+See <a href="themes.html#psbbn-flow">PSBBNFlow authoring</a> for sizing, overlay and family rules.</p>
+
 <h2 id="coverflow-settings">Coverflow Settings</h2>
-<p>Open <b>Interface</b> and press the <b>Coverflow Settings</b> button (it appears only
-when a Coverflow theme is active). Four options are available:</p>
+<p>Open <b>Interface</b> and press the <b>Coverflow Settings</b> button. These options affect <code>Coverflow</code> elements,
+including those in custom themes. PSBBN Flow uses its fixed layout and animation. Four options are available:</p>
 
 <table data-sortable>
   <thead><tr><th>Setting</th><th>Options</th><th>What it does</th></tr></thead>
@@ -165,7 +190,7 @@ when a Coverflow theme is active). Four options are available:</p>
 (same folder used by all OPL themes). Name your art files by Game ID:</p>
 
 <pre>ART/
-  SLUS_012.34_COV.png   ← cover art (used by Coverflow)
+  SLUS_012.34_COV.png   ← cover art (used by Coverflow and PSBBN Flow)
   SLUS_012.34_SCR.png   ← screenshot 1 (shown on the info page)
   SLUS_012.34_SCR2.png  ← screenshot 2</pre>
 
@@ -175,7 +200,7 @@ built-in carousel uses a fixed slot count) and is not user-configurable.</p>
 
 <div class="callout info"><div class="h">Art is shared across OPL builds</div>
 Because all OPL-family builds use the same <code>ART/</code> folder layout, artwork you already
-have for stock OPL, uOPL, or wOPL works with RiptOPL's Coverflow carousel without any changes.
+have for stock OPL, uOPL, or wOPL works with both RiptOPL flow themes without any changes.
 </div>
 
 <h2 id="theme-authoring">Authoring a Coverflow theme</h2>

@@ -45,7 +45,7 @@
     <h4>Features</h4>
     <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
@@ -309,7 +309,7 @@ settings or saving the whole configuration.</div>
 <tr><td>Show [PS1]/[PS2] Labels</td><td>Off / On</td><td>Starts each disc-game row with <code>[PS1]</code> or <code>[PS2]</code>, which helps in the <em>Mixed</em> view. Off by default. Display only: names, sorting, renames and favourites are unchanged, and app and folder rows are never labelled.</td></tr>
 <tr><td>Show CFG Titles in Game Lists</td><td>Off / On</td><td>Shows the <code>Title=</code> line from each game's CFG instead of its file name, and sorts by it. Off by default: every list refresh then reads every game's CFG, so large SMB, MMCE and MX4SIO libraries load slower. Display only: renames, favourites, art and launching keep the file name. See <a href="unicode-titles.html#cfg-titles">Unicode game titles</a>.</td></tr>
 <tr><td>Video Mode</td><td>Auto / PAL / NTSC / &hellip;</td><td>Output mode for the <b>menu</b>. <em>Auto</em> follows the console. The two <em>FLICKER-FREE</em> entries at the end of the list send the same 480i/576i signal but read both fields from the same lines, so thin lines and font edges stop strobing on a CRT &mdash; at the cost of half the vertical detail. After a change, <b>hold</b> Accept to keep the new mode; a tap does nothing, and Back or 10 seconds restores the old one (see <a href="controls.html#keep-video-mode">Keeping a new video mode</a>). Games use GSM instead; see <a href="gsm.html">GSM Video Modes</a>.</td></tr>
-<tr><td>Theme</td><td><em>built-in and installed themes</em></td><td>A fresh configuration starts with <code>&lt;OPL&gt;</code>. Select the optional <code>&lt;Coverflow&gt;</code> carousel here, then apply and save. Saved theme choices override the default. External themes are read from <code>THM/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
+<tr><td>Theme</td><td><em>built-in and installed themes</em></td><td>A fresh configuration starts with <code>&lt;OPL&gt;</code>. Select the optional <code>&lt;Coverflow&gt;</code> carousel or <code>&lt;PSBBN Flow&gt;</code> perspective fan here, then apply and save. Both use Left/Right to browse covers and keep R3 as Favorite. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>. Saved theme choices override the default. External themes are read from <code>THM/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
 <tr><td>Coverflow Settings</td><td>[sub-screen]</td><td>See <a href="#coverflow-settings">Coverflow Settings</a>.</td></tr>
 <tr><td>Artwork Settings</td><td>[sub-screen]</td><td>See <a href="#artwork-settings">Artwork Settings</a>.</td></tr>
 <tr><td>Colors</td><td>[sub-screen]</td><td>See <a href="#colors-settings">Colors</a>.</td></tr>
@@ -318,7 +318,7 @@ settings or saving the whole configuration.</div>
 <tr><td>Notifications</td><td>Off / On</td><td>Brief on-screen notices when a config, theme or language file loads, or a partition mounts. On by default.</td></tr>
 <tr><td>Sort Games Alphabetically</td><td>Off / On</td><td>Sorts game lists by title. Off lists games in the order they are found. On by default.</td></tr>
 <tr><td>Automatic Refresh</td><td>Off / On</td><td>Re-scans for newly connected devices and adds their games without a manual refresh. Off by default.</td></tr>
-<tr><td>Widescreen</td><td>Off / On</td><td>Draws the menu for a 16:9 screen when On. Fresh configurations start Off (4:3); saved choices override this. Selecting Coverflow does not enable widescreen.</td></tr>
+<tr><td>Widescreen</td><td>Off / On</td><td>Draws the menu for a 16:9 screen when On. Fresh configurations start Off (4:3); saved choices override this. Selecting either flow theme does not enable widescreen.</td></tr>
 <tr><td>H-POS</td><td>&minus;300&ndash;300</td><td>Horizontal screen offset.</td></tr>
 <tr><td>V-POS</td><td>&minus;300&ndash;300</td><td>Vertical screen offset.</td></tr>
 <tr><td>Overscan</td><td>0&ndash;100</td><td>Shrinks the drawn area inward to compensate for overscan.</td></tr>
@@ -337,7 +337,7 @@ toggling and then powering off without doing either is the one case that is not 
 the display pickers above no longer allow is discarded, not forced.</div>
 
 <h3 id="coverflow-settings">Coverflow Settings</h3>
-<p>Tunable live while the Coverflow theme is active. See <a href="coverflow.html">Coverflow</a> for full detail.</p>
+<p>These options tune <code>Coverflow</code> elements, including custom themes, and can be edited before selecting a theme. PSBBN Flow retains its fixed perspective layout, distance shading and 25-frame animation. See <a href="coverflow.html">Coverflow &amp; PSBBN Flow</a> for full detail.</p>
 
 <table data-sortable>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
@@ -356,7 +356,7 @@ the display pickers above no longer allow is discarded, not forced.</div>
 <tr><td>Cover Art</td><td>Off / On</td><td>Loads cover art. When off, no art images are loaded even if present. On by default.</td></tr>
 <tr><td>Disc Artwork</td><td>Off / On</td><td>Shows the theme's disc art: every image keyed on the <code>ICO</code> suffix (<code>&lt;ID&gt;_ICO</code> in <code>ART/</code>), including the theme's own placeholder for it. Turn it off to hide the disc while keeping covers and backgrounds. On by default.</td></tr>
 <tr><td>Background Art</td><td>Off / On</td><td>Shows a game's background image (<code>&lt;ID&gt;_BG</code> in <code>ART/</code>) when the theme uses one. On by default.</td></tr>
-<tr><td>3D Save Icons</td><td>Off / On</td><td>Shows a save icon where the theme has a spot for it (both built-in themes do). PS2 titles use the assigned VMC first, then memory cards. PS1 titles read the 2D save icon from POPSTARTER's SLOT0.VMC/SLOT1.VMC or Ember's MC1.vmc/MC2.vmc in the game's save folder; those cards appear after the emulator creates them. Off by default. Themes place it with the <a href="themes.html#saveicon">SaveIcon element</a>.</td></tr>
+<tr><td>3D Save Icons</td><td>Off / On</td><td>Shows a save icon where the theme has a spot for it (<code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> do; <code>&lt;PSBBN Flow&gt;</code> does not place one by default). PS2 titles use the assigned VMC first, then memory cards. PS1 titles read the 2D save icon from POPSTARTER's SLOT0.VMC/SLOT1.VMC or Ember's MC1.vmc/MC2.vmc in the game's save folder; those cards appear after the emulator creates them. Off by default. Themes place it with the <a href="themes.html#saveicon">SaveIcon element</a>.</td></tr>
 <tr><td>Cover Art .tar Archive</td><td>Off / On</td><td>Also reads art from an <code>ART/art.tar</code> archive alongside the loose image files. Off by default.</td></tr>
 <tr><td>Art Delay</td><td>0 (Instant) / 2 (Fast) / 5 (Medium) / 8 (Standard)</td><td>How many frames the cursor must rest on a title before its art starts loading. <em>0</em>, the default, loads straight away; a higher value skips art for titles you scroll past.</td></tr>
 </tbody>
@@ -500,7 +500,7 @@ memory, so a long track costs no extra RAM. It looks in this order and takes the
 <li><code>&lt;theme&gt;/sound/bgm.ogg</code> — a disk theme's own music.</li>
 <li>The <b>Default Theme Music</b> path set above.</li>
 <li><code>THM/bgm.ogg</code> under the active settings home — <b>built-in themes only</b>
-(<code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code>). A disk theme never falls through to this.</li>
+(<code>&lt;OPL&gt;</code>, <code>&lt;Coverflow&gt;</code> and <code>&lt;PSBBN Flow&gt;</code>). A disk theme never falls through to this.</li>
 </ol>
 
 <p>That order is why a disk theme with its own <code>sound/bgm.ogg</code> ignores your Default Theme Music
@@ -528,7 +528,7 @@ other rate, such as 16&nbsp;kHz, plays no music at all; the menu carries on sile
 </tbody>
 </table>
 
-<p>The two built-in themes use effects embedded in the ELF and read nothing from the card. A disk theme
+<p>All three built-in themes use effects embedded in the ELF and read nothing from the card. A disk theme
 supplying only some of the eight falls back to the built-in sound for the rest. See
 <a href="themes.html">Theme Engine</a>.</p>
 
