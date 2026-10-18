@@ -167,9 +167,23 @@ static volatile u8 ndin, poff, sdin, scmd;
 #define CDVD_R_POFF (&poff)
 #define CDVD_R_SDIN (&sdin)
 #define CDVD_R_SCMD (&scmd)
-static int unprotectedKmode;
-static void ee_kmode_enter(void) { if (intrEnabled) unprotectedKmode++; }
-static void ee_kmode_exit(void) { if (intrEnabled) unprotectedKmode++; }
+/* Model ps2sdk's EE KSU bit handling rather than mocking kmode as a no-op.
+ * The old unconditional ee_kmode_exit forced USER even inside an IRQ. */
+static int unprotectedKmode, badIrqPrivilege;
+static u32 cpuMode = 0x10; /* normal game thread: user mode */
+static u32 ee_kmode_enter(void)
+{
+    if (intrEnabled) unprotectedKmode++;
+    u32 old = cpuMode;
+    cpuMode = 0;
+    return old;
+}
+static void ee_set_opmode(u32 mode)
+{
+    if (intrEnabled) unprotectedKmode++;
+    cpuMode = mode & 0x18;
+}
+static void ee_kmode_exit(void) { ee_set_opmode(0x10); }
 
 static int padOpen_hooked;
 static paddata_t Pad_Data;
@@ -252,8 +266,17 @@ static void tickAlarm(void)
     cb = alarmHandler;
     common = alarmCommon;
     if (cb) {
+        /* The real Timer 3 dispatcher invokes the alarm in kernel IRQ context,
+         * then restores the interrupted context after callback completion. */
+        int oldIntr = intrEnabled;
+        u32 oldMode = cpuMode;
         alarmHandler = NULL; /* the one-shot slot is gone before its callback */
+        intrEnabled = 0;
+        cpuMode = 0;
         cb(1, 256, common);
+        if (cpuMode != 0) badIrqPrivilege++;
+        cpuMode = oldMode;
+        intrEnabled = oldIntr;
     }
 }
 static void SleepThread(void)
@@ -421,6 +444,7 @@ int main(void)
     IGR_CheckInputs();
     CHECK(intrEnabled && unprotectedReads == 0 && unprotectedKmode == 0 && Pad_Data.combo_type == IGR_COMBO_START_SELECT,
           "thread-context polling protects reads and kmode window and restores enabled interrupts");
+    CHECK(cpuMode == 0x10, "thread-context input sampling restores caller USER mode");
 
     /* The physical button IRQ may remain asserted for multiple polling frames
        when Mechacon cancellation is delayed. Count only the first edge. */
@@ -611,6 +635,7 @@ STANDARD_CHECKS = r'''
           IGR_Poll_Alarm_ID == -1 && !alarmHandler && nAlarm == priorAlarms + 1,
           "installation rechecks worker, request and alarm state under the interrupt lock");
     CHECK(!badAlarmRelease, "ExecPS2 cancels alarms through the syscall-safe entry with interrupts disabled");
+    CHECK(!badIrqPrivilege, "Timer 3 alarm callback preserves kernel privilege through its return");
 '''
 
 RA_CHECKS = r'''
@@ -622,7 +647,13 @@ RA_CHECKS = r'''
     padBuf[112] = IGR_PAD_STABLE_V1;
     padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
     padBuf[2] = IGR_COMBO_START_SELECT;
+    cpuMode = 0;
+    intrEnabled = 0;
     IGR_Intc_Handler(0);
+    CHECK(cpuMode == 0 && !intrEnabled,
+          "RA IGR handler retains kernel mode and masked interrupts after input sample");
+    cpuMode = 0x10;
+    intrEnabled = 1;
     CHECK(nRA == 1, "the handler still calls RA_OnVblank");
     CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT, "the handler sees the same combo");
     CHECK(nIResetEE == 1 && nISuspend == 254 && nIPrio == 1 && nIWake == 0 + nWake, "interrupt-context shutdown, then wake the thread");
@@ -632,7 +663,13 @@ RA_CHECKS = r'''
     Pad_Data.combo_type = 0;
     g_cfg.GameMode = DISC_MODE;
     padBuf[2] = IGR_COMBO_R3_L3;
+    cpuMode = 0;
+    intrEnabled = 0;
     IGR_Intc_Handler(0);
+    CHECK(cpuMode == 0 && !intrEnabled,
+          "RA disc-mode handler also returns in kernel interrupt context");
+    cpuMode = 0x10;
+    intrEnabled = 1;
     CHECK(Pad_Data.combo_type == 0, "RA disc mode ignores the power-off combo");
 '''
 
