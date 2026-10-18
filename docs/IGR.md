@@ -102,12 +102,14 @@ RA instead installs a snapshot-only handler when telemetry is active, without an
 hooks. Achievements may continue, but client-triggered reset is unavailable. Games incompatible
 with registration of any VBLANK handler may still be affected.
 
-If IGR stops responding in a game that used to answer it on an older build, report the title. The alarm sampler avoids the former priority-127 worker starvation, but it does not fix
-missing pad hooks, changed controller layouts, or games that block interrupts. If a game exhausts
-the EE timer-alarm slots during initial setup, alarm registration retries on its next pad-open
-rather than spinning a high-priority recovery thread. Until then, neither IGR input is monitored.
-The power button is a useful cross-check when the sampler is active because it does not depend on
-the pad buffer.
+If IGR stops responding in a game that used to answer it on an older build, report the title.
+The alarm sampler avoids the former priority-127 worker starvation, but it does not fix missing
+pad hooks, changed controller layouts, or games that block interrupts. If initial alarm
+registration or rearming during gameplay fails, IGR stops monitoring both controller combinations
+and physical power-button events until a later pad-open successfully registers an alarm.
+Registration retries do not spin a high-priority recovery thread. If the game never opens a pad
+again, IGR stays unavailable for that session. While the sampler is active, the power button is a
+useful cross-check because it does not depend on the pad buffer.
 
 **Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a
 property of that loader, and it is why Mode 6 is greyed out whenever the Loader Core is set to
