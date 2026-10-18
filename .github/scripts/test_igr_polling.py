@@ -78,6 +78,7 @@ def host_safe(text):
 
 HARNESS = r'''
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 typedef unsigned char u8;
@@ -100,7 +101,17 @@ typedef unsigned long long u64;
 #define IGR_COMBO_R3_L3 0xF9
 #define IGR_COMBO_UP 0xEF
 static int intrEnabled = 1, unprotectedReads;
-static int DI(void) { int previous = intrEnabled; intrEnabled = 0; return previous; }
+static void (*beforeDisable)(void);
+static int DI(void) {
+    if (intrEnabled && beforeDisable) {
+        void (*interrupt)(void) = beforeDisable;
+        beforeDisable = NULL;
+        interrupt();
+    }
+    int previous = intrEnabled;
+    intrEnabled = 0;
+    return previous;
+}
 static void EI(void) { intrEnabled = 1; }
 static void *checkedUncached(void *ptr) {
     if (intrEnabled) unprotectedReads++;
@@ -109,7 +120,7 @@ static void *checkedUncached(void *ptr) {
 #define UNCACHED_SEG(x) checkedUncached(x)
 
 typedef struct { u16 libpad; u16 libversion; u8 *pad_buf; int vb_count; int pos_combo1; int pos_combo2;
-                 int pos_state; int pos_frame; u8 combo_type; u8 prev_frame; } paddata_t;
+                 int pos_state; int pos_frame; volatile u8 combo_type; u8 prev_frame; } paddata_t;
 typedef struct { int press; int vb_count; int latched; } powerbuttondata_t;
 /* Match the layout and fields of ps2sdk's ee_thread_t, not a success-only subset. */
 typedef struct {
@@ -172,7 +183,7 @@ static void *_gp;
 
 /* Kernel stubs: every call is counted so the test can say exactly what ran. */
 static int nAlarm, alarmFails, nSleep, nNop, nWake, lastWake, nPrio, lastPrioThread = -1, lastPrio = -1;
-static int nRelease, releaseFails, tickCount;
+static int nRelease, releaseFails, tickCount, inSyscall, badAlarmRelease;
 static int nResetEE, lastResetEE, nSuspend, nISuspend, nIResetEE, nIPrio, nIWake, nCreate, nStart, nDelete;
 static int createFailures, startFailures;
 static ee_thread_t lastCreatedThread;
@@ -201,6 +212,7 @@ static s32 iSetAlarm(u16 time, void (*cb)(s32, u16, void *), void *common)
 }
 static s32 ReleaseAlarm(s32 alarm_id)
 {
+    if (inSyscall) badAlarmRelease++;
     (void)alarm_id;
     nRelease++;
     if (releaseFails > 0) {
@@ -209,6 +221,16 @@ static s32 ReleaseAlarm(s32 alarm_id)
     }
     alarmHandler = NULL;
     return 0;
+}
+static s32 iReleaseAlarm(s32 alarm_id)
+{
+    if (intrEnabled) badAlarmRelease++;
+    /* Same alarm table operation, through the non-dispatching syscall entry. */
+    int previous = inSyscall;
+    inSyscall = 0;
+    int result = ReleaseAlarm(alarm_id);
+    inSyscall = previous;
+    return result;
 }
 /* Drive the timer independently of worker scheduling (including priority 0 games). */
 static void tickAlarm(void)
@@ -284,6 +306,16 @@ static void RA_OnVblank(void) { nRA++; }
 static void IGR_Thread(void *arg) { (void)arg; }
 
 @CODE@
+
+/* Another pad-open can install a timer, then its interrupt can latch a request
+   before the original installer disables interrupts. */
+#ifndef IGR_VBLANK_HANDLER
+static void requestBeforeInstallLock(void)
+{
+    Install_IGR();
+    tickAlarm();
+}
+#endif
 
 static int fails;
 #define CHECK(cond, msg) do { if (!(cond)) { printf("FAIL %s\n", msg); fails++; } } while (0)
@@ -541,7 +573,9 @@ STANDARD_CHECKS = r'''
         int oldRelease = nRelease;
         int beforeWake, newId;
         releaseFails = 1;
+        inSyscall = 1;
         Reset_Padhook();
+        inSyscall = 0;
         CHECK(nRelease == oldRelease + 1 && IGR_Poll_Alarm_ID == -1 &&
               IGR_Thread_ID == -1 && !IGR_Poll_Recovery,
               "ExecPS2 invalidates the old alarm generation even if cancel fails");
@@ -561,6 +595,22 @@ STANDARD_CHECKS = r'''
         CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
               "new generation still receives valid alarm callbacks");
     }
+
+    /* No alarm may be rearmed after a concurrent pad-open has latched shutdown. */
+    Pad_Data.combo_type = 0;
+    armPad();
+    IGR_Poll_Alarm_ID = -1;
+    alarmHandler = NULL;
+    padBuf[112] = IGR_PAD_STABLE_V1;
+    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
+    padBuf[2] = IGR_COMBO_START_SELECT;
+    int priorAlarms = nAlarm;
+    beforeDisable = requestBeforeInstallLock;
+    Install_IGR();
+    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT &&
+          IGR_Poll_Alarm_ID == -1 && !alarmHandler && nAlarm == priorAlarms + 1,
+          "installation rechecks worker, request and alarm state under the interrupt lock");
+    CHECK(!badAlarmRelease, "ExecPS2 cancels alarms through the syscall-safe entry with interrupts disabled");
 '''
 
 RA_CHECKS = r'''
@@ -655,7 +705,7 @@ def build_and_run(name, defines, code, checks, harness=HARNESS):
         if build.returncode != 0:
             failures.append('%s harness did not compile:\n%s' % (name, build.stderr))
             return
-        run = subprocess.run([str(exe)], capture_output=True, text=True, check=False)
+        run = subprocess.run([str(exe)], capture_output=True, text=True, check=False, timeout=10)
         if run.returncode != 0 or run.stdout.strip():
             failures.extend(('%s: ' % name + line) for line in (run.stdout.strip().splitlines() or ['exited %d' % run.returncode]))
 

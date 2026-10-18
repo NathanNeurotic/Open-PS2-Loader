@@ -18,6 +18,7 @@
 
 #include <ee_regs.h>
 #include <iopcontrol.h>
+#include <stdint.h>
 #include "asm.h"
 #include "ee_core.h"
 #include "iopmgr.h"
@@ -307,7 +308,7 @@ static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
     /* ReleaseAlarm can fail once the timer IRQ is already pending. In that
      * case an old alarm may run after ExecPS2, including after a new worker
      * has been installed. It must not observe the new game's pad state. */
-    if ((unsigned long)common != IGR_Poll_Generation)
+    if ((uintptr_t)common != IGR_Poll_Generation)
         return;
 
     IGR_Poll_Alarm_ID = -1;
@@ -348,7 +349,7 @@ static void IGR_PollUntilRequested(void)
     while (Pad_Data.combo_type == 0x00)
         SleepThread();
 
-    DPRINTF("IGR combination detected by EE alarm.\\n");
+    DPRINTF("IGR combination detected by EE alarm.\n");
     ChangeThreadPriority(TH_SELF, 0);
 
 #ifdef INGAMEDIAG
@@ -701,12 +702,12 @@ void Install_IGR(void)
 #else
     // Standard builds use the EE alarm only; no VBLANK handler (OPL #1762).
     IGR_Intc_ID = -1;
-    if (IGR_Thread_ID >= 0 && IGR_Poll_Alarm_ID < 0 && Pad_Data.combo_type == 0x00) {
+    {
         /* Prevent the callback from executing before the returned alarm ID
          * has been published. Keep an unavailable alarm retryable on reopen. */
         int intr = DI();
-        if (IGR_Poll_Alarm_ID < 0) {
-            void *generation = (void *)(unsigned long)IGR_Poll_Generation;
+        if (IGR_Thread_ID >= 0 && IGR_Poll_Alarm_ID < 0 && Pad_Data.combo_type == 0x00) {
+            void *generation = (void *)(uintptr_t)IGR_Poll_Generation;
             IGR_Poll_Alarm_ID = SetAlarm(256, IGR_Poll_Alarm, generation);
             IGR_Poll_Recovery = (IGR_Poll_Alarm_ID < 0);
         }
@@ -730,8 +731,9 @@ void Reset_Padhook(void)
     IGR_Poll_Recovery = 0;
     IGR_Intc_ID = -1;
     IGR_Thread_ID = -1;
+    // Called directly by Hook_ExecPS2 inside its syscall handler.
     if (alarm_id >= 0)
-        ReleaseAlarm(alarm_id);
+        iReleaseAlarm(alarm_id);
     if (intr)
         EI();
 #else
