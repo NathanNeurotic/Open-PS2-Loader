@@ -10,6 +10,11 @@ RiptOPL distinguishes **standard `hdd0:` APA/HDLoader games** from the DVRP-mana
 - Uses `bsd-dvr.toml`, `dvrdrv.irx`, `dvrfile.irx`, and `dvrfile_fhi.irx`.
 - The DVR Neutrino performs a **PSX-mode transition and IOP reset** before loading
   the game. `-qb` must NOT be passed; it skips the transition.
+  Preflight also refuses active `-bsd=` and `-bsdfs=` overrides in global or per-game
+  Neutrino arguments, including a redundant `-bsd=dvr`. The loader owns that backend
+  and filesystem path. `$-` disabled tokens and game arguments after `--b` in each
+  scope remain allowed. Refusal happens in the menu before companion-file checks
+  or launch teardown.
 
 ## Current integration boundary
 
