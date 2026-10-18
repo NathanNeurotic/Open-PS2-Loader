@@ -1925,11 +1925,18 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
 
     // The DVR backend is a filesystem (dvr_pfsN:), never a block-device
     // filesystem override. It must use the PSX-mode reset in pcm720's bsd-dvr
-    // branch: callers must not inject -qb, which skips that transition.
+    // branch: callers must not inject -qb, which skips that transition, or
+    // backend overrides that contradict the generated -bsd=dvr/file path pair.
     if (!strcmp(deviceName, "dvr")) {
         if (neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") || neutrinoArgHasActiveFlag(extraArgs, "-qb")) {
             LOG("[NEUTRINO] DVR: -qb would bypass the required PSX-mode transition\n");
             guiWarning(_l(_STR_NEUTRINO_DVR_QUICKBOOT), 6);
+            return -1;
+        }
+        if (neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsd=") || neutrinoArgHasActiveFlag(extraArgs, "-bsd=") ||
+            neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsdfs=") || neutrinoArgHasActiveFlag(extraArgs, "-bsdfs=")) {
+            LOG("[NEUTRINO] DVR: user backend overrides conflict with the DVR filesystem contract\n");
+            guiWarning(_l(_STR_NEUTRINO_DVR_BACKEND_OVERRIDE), 6);
             return -1;
         }
     }
