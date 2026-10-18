@@ -45,7 +45,7 @@
     <h4>Features</h4>
     <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
@@ -75,7 +75,7 @@
 <p class="lead">A RiptOPL/OPL theme is a folder of images, fonts and one text file — <code>conf_theme.cfg</code> —
 that lays out the whole UI on a virtual <b>640×480</b> canvas. This page is the complete authoring
 reference: every block family, every element type, every property and value token the parser in
-<code>src/themes.c</code> actually understands, including this fork's <b>Coverflow</b> carousel and the
+<code>src/themes.c</code> actually understands, including this fork's <b>Coverflow</b> carousel, <b>PSBBN Flow</b> fan and the
 <b>two-layer overlay</b> system. Nothing here is invented — if a key isn't listed, the engine ignores it.</p>
 
 <div class="callout info"><div class="h">i Mental model</div>A theme is a flat, ordered list of
@@ -94,11 +94,11 @@ picker. Inside the folder, all the artwork/fonts sit alongside a single <code>co
     incebtion.png       ← background, fonts, case art, screenshots… (any names you reference)
     case.png
     myfont.ttf</pre>
-<p>RiptOPL also ships two <b>built-in</b> themes you can study as references without copying any files:
-the default <code>&lt;OPL&gt;</code> theme and the optional <code>&lt;Coverflow&gt;</code> carousel.
-Their sources are <code>misc/conf_theme_OPL.cfg</code> and <code>misc/theme_coverflow.cfg</code> in the
-repository — both are reproduced and annotated lower down.</p>
-<p>Fresh configurations use a 4:3 menu and Auto video mode. Select <code>&lt;Coverflow&gt;</code>
+<p>RiptOPL provides three <b>built-in</b> themes in builds containing <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">#977</a> you can study as references without copying any files:
+the default <code>&lt;OPL&gt;</code> theme, optional <code>&lt;Coverflow&gt;</code> carousel and optional <code>&lt;PSBBN Flow&gt;</code> fan. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>.
+Their sources are <code>misc/conf_theme_OPL.cfg</code>, <code>misc/theme_coverflow.cfg</code> and
+<code>misc/theme_psbbn_flow.cfg</code> in the repository — the traditional layouts and PSBBN Flow authoring example are documented below.</p>
+<p>Fresh configurations use a 4:3 menu and Auto video mode. Select <code>&lt;Coverflow&gt;</code> or <code>&lt;PSBBN Flow&gt;</code>
 and, if wanted, Widescreen under <b>Settings → Interface</b>, then apply and save.
 An ELF update retains saved theme and display choices. See <a href="install.html#opinionated-defaults">Fresh-start defaults</a>.</p>
 
@@ -164,7 +164,7 @@ device page under <b>PS2/PS1 Game Display = Mixed</b>. The page as a whole still
 <code>ItemsList</code> belong to the <em>page</em>, so they stay put while you scroll.</p>
 <p>The <b>cover</b> does not. A PS2 case is portrait, a PS1 case and an app box are square, and forcing one shape
 on all three stretches whichever kinds are not the page's own. So the cover element — the <code>ItemCover</code>
-panel, the <code>Coverflow</code> carousel — is resolved <b>per row, by media kind</b>:</p>
+panel, the <code>Coverflow</code> carousel or <code>PSBBNFlow</code> fan — is resolved <b>per row, by media kind</b>:</p>
 <table data-sortable>
 <thead><tr><th>Row</th><th>Cover drawn from</th></tr></thead>
 <tbody>
@@ -293,6 +293,7 @@ work instead of hard-coding resolution-specific numbers.</p>
 <tr><td><code>LoadingIcon</code></td><td>The animated loading spinner (only one per theme).</td></tr>
 <tr><td><code>BdmIndex</code></td><td>The block-device (BDM) mode indicator — shows which mass device slot is active.</td></tr>
 <tr><td><code>Coverflow</code> <b>(item)</b></td><td><b>This fork:</b> a centred cover-art carousel (see §9).</td></tr>
+<tr><td><code>PSBBNFlow</code> <b>(item)</b></td><td><b>This fork:</b> Collection perspective fan with native menus and COV art. See <a href="#psbbn-flow">PSBBNFlow properties</a>.</td></tr>
 <tr><td><code>SaveIcon</code> <b>(item)</b></td><td><b>This fork:</b> the selected PS2 game's own 3D save icon, spinning (see §10). Draws nothing unless the user turns on <b>3D Save Icons</b>.</td></tr>
 </tbody>
 </table>
@@ -410,13 +411,13 @@ serve both. Regular OPL's parser never aborts on fork content: keys it doesn't k
 (<code>devices=</code>, <code>reflection_offset</code>, <code>overlay2</code>,
 <code>plasma_blend_color</code>, the entire <code>favsMain*</code>, <code>vcdMain*</code>, <code>favsVcdMain*</code>
 and <code>favsAppsMain*</code> families…) are
-simply never read, and unknown element types (<code>Coverflow</code>) are skipped without stopping the
+simply never read, and unknown element types (<code>Coverflow</code>, <code>PSBBNFlow</code>) are skipped without stopping the
 parse. What to expect there:</p>
 <ul>
 <li><b>Invisible:</b> all pure-key extras above — regular OPL renders the theme as if they weren't
 written.</li>
 <li><b>Cosmetic:</b> <code>aligned=2</code> renders centered; <code>#Size</code>/<code>#DiscType</code>/<code>#System</code>
-attributes and the Coverflow carousel are silently absent.</li>
+attributes, the Coverflow carousel and the PSBBN Flow fan are silently absent.</li>
 <li><b>Ugly but harmless:</b> <code>devices=</code> layouts — regular OPL draws <em>every</em>
 <code>MenuIcon</code>/<code>HintText</code> block on <em>every</em> page (overlapping), and treats a
 second <code>ItemsList</code> as the apps list while still drawing it on the games screen. Per-device
@@ -429,7 +430,7 @@ RiptOPL fixed it on our side). Ship the plain list and the theme is safe everywh
 
 <h2 id="image-overlay">6 · Image &amp; overlay properties (incl. the two-layer system)</h2>
 <p>Image-type elements (<code>StaticImage</code>, <code>GameImage</code>, <code>Background</code>,
-<code>AttributeImage</code>, <code>ItemCover</code>, <code>Coverflow</code>) add these:</p>
+<code>AttributeImage</code>, <code>ItemCover</code>, <code>Coverflow</code>, <code>PSBBNFlow</code>) add these:</p>
 <table data-sortable>
 <thead><tr><th>Property</th><th>Type</th><th>Notes</th></tr></thead>
 <tbody>
@@ -538,8 +539,8 @@ were removed in this fork — use the device icons and <code>Index_*</code> abov
 <p><code>type=Coverflow</code> (this fork) renders the game/app list as a centred cover carousel with a
 reflection and slide animation. It behaves like a <code>GameImage</code> — it uses the same <code>COV</code>
 cover cache and <code>overlay</code>/corner system — but draws 3 or 5 covers fanned out around the selection.
-The <em>first</em> <code>Coverflow</code> element the parser sees flags the theme as "Coverflow active", which
-unlocks the live <b>Coverflow Settings</b> menu.</p>
+Either a <code>Coverflow</code> or <code>PSBBNFlow</code> element enables flow navigation on the main
+browse pages. <b>Coverflow Settings</b> tunes only the <code>Coverflow</code> renderer.</p>
 
 <h3>Per-theme properties (in <code>conf_theme.cfg</code>)</h3>
 <table data-sortable>
@@ -603,8 +604,7 @@ vcdMain2:
     overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184</pre>
 
 <h3>Global Coverflow tuning (NOT in the theme)</h3>
-<p>These live in <code>settings_riptopl.cfg</code> and are exposed in the <b>Coverflow Settings</b> menu (shown
-while a Coverflow theme is active). They apply to <em>any</em> Coverflow theme and are clamped on load:</p>
+<p>These live in <code>settings_riptopl.cfg</code> and are exposed in <b>Settings → Interface → Coverflow Settings</b>. They can be edited before selecting a theme and affect <code>Coverflow</code> elements. PSBBN Flow uses its fixed layout and animation. They apply to <em>any</em> Coverflow theme and are clamped on load:</p>
 <table data-sortable>
 <thead><tr><th>Config key</th><th>Values</th><th>Effect</th></tr></thead>
 <tbody>
@@ -618,6 +618,74 @@ while a Coverflow theme is active). They apply to <em>any</em> Coverflow theme a
 live in the theme (a global key — see §3). For the in-menu walkthrough of these settings, see
 <a href="coverflow.html">Coverflow</a>.</p>
 
+<h2 id="psbbn-flow">The PSBBNFlow element</h2>
+<p>Use <code>type=PSBBNFlow</code> for the perspective fan. Keep a native <code>ItemsList</code> in the same
+family for the title row and navigation. Device, app, PS1 and Favorites families inherit
+and override slots using the usual contiguous-numbering rules. Adding either flow type
+rotates Left/Right and Up/Down on every main browse page in that theme, including pages
+with a plain list; info and settings controls keep their normal layout.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>PSBBNFlow behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td>Right edge of the focal square slot; default is screen width minus 37. Negative values anchor to the right edge.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>Top of the focal slot; default 75. Negative values anchor relative to the bottom edge.</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td>Focal slot size, capped to the renderer's viewport-dependent limit. Defaults to that limit. The renderer preserves portrait/square cover proportions inside the slot.</td>
+</tr>
+<tr>
+<td><code>pattern</code>, <code>default</code>, <code>count</code></td>
+<td>Native artwork suffix (default <code>COV</code>), missing-art asset and cache capacity. <code>count</code> controls cache slots, not the visible tail length.</td>
+</tr>
+<tr>
+<td><code>overlay</code>, <code>overlay2</code>, overlay corners</td>
+<td>Native frame layers, scaled with each cover. Author corners against the element's <code>width</code> / <code>height</code>.</td>
+</tr>
+<tr>
+<td><code>font</code></td>
+<td>Font for the selected-row/total counter.</td>
+</tr>
+</tbody>
+</table>
+<p>The fan draws up to six neighboring covers and an outgoing foreground cover. Its blue wash,
+frame/footer, cubic 25-frame animation and distance shading belong to this renderer.
+<code>coverflow_count</code>, <code>coverflow_scale</code>, <code>coverflow_anim</code>, <code>coverflow_dim</code> and
+<code>coverflow_cover_offset</code> affect <code>Coverflow</code> only. <code>PSBBNFlow</code> fixes centered alignment and
+aspect correction, supplies no mirrored reflection, and uses <code>width</code> for the square slot;
+generic <code>height</code>, <code>aligned</code>, <code>scaled</code>, <code>color</code> and <code>reflection</code> do not change those choices.</p>
+<p>A minimal custom theme, with normal app and PS1 fallbacks:</p>
+<pre><code class="language-ini">main0:
+    type=Background
+    pattern=BG
+main1:
+    type=PSBBNFlow
+    default=cover
+appsMain1:
+    type=PSBBNFlow
+    default=coverapp
+vcdMain1:
+    type=PSBBNFlow
+    default=cover
+main2:
+    type=ItemsList
+    x=54
+    y=-77
+    width=450
+    height=24
+</code></pre>
+<p>The built-in configuration adds device text, hints, a loading icon and an info-page layout.
+See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/codex/psbbn-flow-theme/misc/theme_psbbn_flow.cfg"><code>misc/theme_psbbn_flow.cfg</code></a> for the full example.</p>
 <h2 id="saveicon">10 · The SaveIcon element</h2>
 <p><b>This fork.</b> <code>type=SaveIcon</code> draws the selected PS2 game's own save icon — the 3D model the PS2
 browser shows — spinning, and moving too when the icon is animated. It comes from:</p>
@@ -640,8 +708,9 @@ cover art.</p>
 	y=86
 	width=64
 	height=52</pre>
-<p>Both built-in themes place one: <code>&lt;OPL&gt;</code> above the cover and <code>&lt;Coverflow&gt;</code> under the
-centre cover, and both between the two screenshots of the info page.</p>
+<p>The <code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> built-ins place one: <code>&lt;OPL&gt;</code> above the cover and <code>&lt;Coverflow&gt;</code> under the
+centre cover, and both between the two screenshots of the info page. The built-in <code>&lt;PSBBN Flow&gt;</code>
+layout does not place a SaveIcon; custom PSBBN Flow themes can add one.</p>
 
 <p>For a PS1 row, the same element draws the card's 2D icon rather than a PS2 3D model. It reads POPSTARTER's <code>SLOT0.VMC</code>/<code>SLOT1.VMC</code> in the VCD save folder or Ember's <code>MC1.vmc</code>/<code>MC2.vmc</code> in the game folder. No icon is expected before a save exists. See <a href="ps1-vcd.html#save-icons">PS1 save icons</a>.</p>
 
@@ -912,7 +981,7 @@ info15:
 
 <h2 id="see-also">See also</h2>
 <div class="grid">
-<a class="tile" href="coverflow.html"><span class="icon icon-coverflow"></span><b>Coverflow</b><span>The default theme &amp; its live settings</span></a>
+<a class="tile" href="coverflow.html"><span class="icon icon-coverflow"></span><b>Coverflow &amp; PSBBN Flow</b><span>Choose a cover-art theme and learn its controls</span></a>
 <a class="tile" href="ps1-vcd.html"><span class="icon icon-ps1"></span><b>PS1 / PS1 view</b><span>Where the vcdMain family is used</span></a>
 <a class="tile" href="favourites.html"><span class="icon icon-favorites"></span><b>Favorites</b><span>The favsMain/favsInfo family</span></a>
 <a class="tile" href="settings.html"><span class="icon icon-settings"></span><b>Settings Reference</b><span>Selecting &amp; applying a theme</span></a>
