@@ -16,6 +16,7 @@
 #include "include/saveicon.h"   // SaveIcon: the selected game's 3D save icon
 #include "include/cuesupport.h"
 #include "include/cfgtitle.h" // optional CFG Title shown for a row (#918)
+#include "include/psbbnflow.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rabadge.h" // RA: mark over the cover
 #endif
@@ -58,12 +59,15 @@ extern const char conf_theme_OPL_cfg;
 extern u16 size_conf_theme_OPL_cfg;
 extern const char theme_coverflow_cfg;
 extern u16 size_theme_coverflow_cfg;
+extern const char theme_psbbn_flow_cfg;
+extern u16 size_theme_psbbn_flow_cfg;
 
 theme_t *gTheme;
 
 // Set transiently around thmLoad(NULL) to load the embedded coverflow theme instead of
 // the default OPL theme (the built-in "<Coverflow>" entry in the theme list).
 static int gLoadCoverflowBuiltin = 0;
+static int gLoadPsbbnFlowBuiltin = 0;
 
 static int screenWidth;
 static int screenHeight;
@@ -85,6 +89,8 @@ int gCoverflowDimCovers = 0;    // bool
 static int cfIsAnimating = 0;
 static int cfAnimDirection = 0;
 static clock_t cfAnimStartTime = 0;
+static int psbbnFlowStartOffset = 0;
+static unsigned int psbbnFlowStartFrame = 0;
 
 enum ELEM_ATTRIBUTE_TYPE {
     ELEM_TYPE_ATTRIBUTE_TEXT = 0,
@@ -105,6 +111,7 @@ enum ELEM_ATTRIBUTE_TYPE {
     ELEM_TYPE_BDM_INDEX,
     ELEM_TYPE_GAME_COUNT_TEXT,
     ELEM_TYPE_COVERFLOW,
+    ELEM_TYPE_PSBBN_FLOW,
     ELEM_TYPE_SAVE_ICON,
     ELEM_TYPE_COUNT
 };
@@ -136,6 +143,7 @@ static const char *elementsType[ELEM_TYPE_COUNT] = {
     "BdmIndex",
     "GameCountText",
     "Coverflow",
+    "PSBBNFlow",
     "SaveIcon"};
 
 // Per-device element filter (theme key devices=usb,hdd,... on MenuIcon/ItemsList/HintText) /////////////////////////////////
@@ -1556,6 +1564,14 @@ static int cfAnimFrameCount = 0;
 // animation speed is 0. Called from menusys.c via the themes.h extern.
 void thmTriggerCoverflowAnim(int dir)
 {
+    if (gTheme != NULL && gTheme->psbbnFlow != NULL) {
+        int offset = psbbnFlowOffset(psbbnFlowStartOffset, (unsigned int)guiFrameId - psbbnFlowStartFrame) + dir * 1000;
+        psbbnFlowStartOffset = offset > 3000 ? 3000 : offset < -3000 ? -3000 :
+                                                                       offset;
+        psbbnFlowStartFrame = (unsigned int)guiFrameId;
+        cfIsAnimating = psbbnFlowStartOffset != 0;
+        return;
+    }
     if (gCoverflowAnimSpeed <= 0)
         return;
     cfIsAnimating = 1;
@@ -1868,6 +1884,116 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     rmSetReflectionYOffset(0); // don't leak the offset to any other reflection draw
 }
 
+/* Collection's perspective fan, adapted from dnunezx's PR #733. Rendering uses
+ * the native COV cache and current menu rows, including folders and favourites. */
+static void drawPsbbnCover(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem, int position)
+{
+    int limit = psbbnFlowSize(screenWidth, screenHeight);
+    int size = elem->width > 0 && elem->width < limit ? elem->width : limit;
+    psbbn_flow_rect_t rect = psbbnFlowRect(position, size, elem->posX - size / 2, elem->posY + size / 2);
+    if (rect.size <= 0 || rect.x + rect.size < 24 || rect.x > screenWidth - 12)
+        return;
+
+    theme_element_t *coverElem = thmGetElemForItem(menu, item, elem);
+    mutable_image_t *image = (mutable_image_t *)coverElem->extended;
+    if (image == NULL || isHiddenArtworkCache(image->cache))
+        return;
+    GSTEXTURE *texture = getGameImageTexture(image->cache, thmGetItemSource(menu, item), &item->item);
+    if (texture == NULL || texture->Mem == NULL)
+        texture = image->defaultTexture ? &image->defaultTexture->source : thmGetTexture(COVER_DEFAULT);
+    if (texture == NULL || texture->Mem == NULL)
+        return;
+
+    // Keep native cover proportions instead of stretching portrait COV art into a square.
+    GSTEXTURE *shape = image->overlayTexture ? &image->overlayTexture->source : texture;
+    if (shape->Width <= 0 || shape->Height <= 0)
+        return;
+    int w = rect.size, h = rect.size;
+    if (shape->Width < shape->Height)
+        w = rect.size * shape->Width / shape->Height;
+    else
+        h = rect.size * shape->Height / shape->Width;
+    if (w <= 0 || h <= 0)
+        return;
+    int x = rect.x + rect.size / 2, y = rect.y + rect.size / 2;
+    u64 color = GS_SETREG_RGBA(rect.shade, rect.shade, rect.shade, 0x80);
+    if (image->overlayTexture) {
+        image_texture_t *ov = image->overlayTexture;
+        int cw = coverElem->width > 0 ? coverElem->width : 1;
+        int ch = coverElem->height > 0 ? coverElem->height : 1;
+        rmDrawOverlayPixmap(&ov->source, x, y, ALIGN_CENTER, w, h, SCALING_RATIO, color,
+                            texture, ov->upperLeft_x * w / cw, ov->upperLeft_y * h / ch,
+                            ov->upperRight_x * w / cw, ov->upperRight_y * h / ch,
+                            ov->lowerLeft_x * w / cw, ov->lowerLeft_y * h / ch,
+                            ov->lowerRight_x * w / cw, ov->lowerRight_y * h / ch, 0);
+        if (image->overlayTexture2)
+            rmDrawPixmap(&image->overlayTexture2->source, x, y, ALIGN_CENTER, w, h, SCALING_RATIO, color, 0);
+    } else
+        rmDrawPixmap(texture, x, y, ALIGN_CENTER, w, h, SCALING_RATIO, color, 0);
+}
+
+static void drawPsbbnFlow(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
+{
+    (void)config;
+    int flow = psbbnFlowOffset(psbbnFlowStartOffset, (unsigned int)guiFrameId - psbbnFlowStartFrame);
+    cfIsAnimating = flow != 0;
+    if (elem->extended == NULL || menu == NULL || menu->item == NULL)
+        return;
+
+    // Retain Collection's blue wash, frame and footer above the native Background.
+    rmDrawRect(0, 0, screenWidth, screenHeight, GS_SETREG_RGBA(0x03, 0x09, 0x20, 0x58));
+    rmDrawRect(0, screenHeight - 39, screenWidth, 39, GS_SETREG_RGBA(0x02, 0x07, 0x19, 0x62));
+    int limit = psbbnFlowSize(screenWidth, screenHeight);
+    int size = elem->width > 0 && elem->width < limit ? elem->width : limit;
+    int frameWidth = elem->posX - size - 51;
+    if (frameWidth > 0)
+        rmDrawRect(24, 79, frameWidth, 2, GS_SETREG_RGBA(0x45, 0xB2, 0xF0, 0x24));
+    rmDrawRect(24, 79, 2, screenHeight - 159, GS_SETREG_RGBA(0x45, 0xB2, 0xF0, 0x1B));
+    int countRows = 0, selectedRow = 0;
+    for (struct submenu_list *row = menu->item->submenu; row != NULL; row = row->next) {
+        countRows++;
+        if (row == item)
+            selectedRow = countRows;
+    }
+    char counter[32];
+    snprintf(counter, sizeof(counter), "%d/%d", selectedRow, countRows);
+    int counterWidth = rmUnScaleX(fntCalcDimensions(elem->font, counter));
+    fntRenderString(elem->font, screenWidth - 38 - counterWidth, screenHeight - 83,
+                    ALIGN_LEFT, counterWidth, 0, counter, gTheme->textColor);
+    if (countRows < 2) {
+        flow = 0;
+        psbbnFlowStartOffset = 0;
+        cfIsAnimating = 0;
+    }
+    if (item == NULL)
+        return;
+
+    // Admit the focal cover first. The cache owns async I/O and texture lifetimes.
+    mutable_image_t *selected = (mutable_image_t *)thmGetElemForItem(menu, item, elem)->extended;
+    if (selected)
+        getGameImageTextureEx(selected->cache, thmGetItemSource(menu, item), &item->item, 1);
+
+    struct submenu_list *tail[PSBBN_FLOW_TAIL + 1] = {item};
+    struct submenu_list *previous = item->prev ? item->prev : menu->item->last;
+    int count = 1, previousInTail = previous == item;
+    for (int i = 1; i <= PSBBN_FLOW_TAIL; i++) {
+        struct submenu_list *next = tail[i - 1]->next ? tail[i - 1]->next : menu->item->submenu;
+        if (next == NULL || next == item || next == tail[i - 1])
+            break;
+        tail[count++] = next;
+        if (next == previous)
+            previousInTail = 1;
+    }
+    // Far tail first; the focal cover and outgoing foreground must stay on top.
+    for (int i = count - 1; i >= 0; i--) {
+        if (flow > 0 && i > 0 && tail[i] == previous)
+            continue;
+        drawPsbbnCover(menu, tail[i], elem, i * 1000 + flow);
+    }
+    if (previous != NULL && previous != item && (!previousInTail || flow > 0))
+        drawPsbbnCover(menu, previous, elem, -1000 + flow);
+}
+
 static void initCoverflow(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
 {
     mutable_image_t *mutableImage = initMutableImage(themePath, themeConfig, theme, name, elem->type, "COV", COVER_CACHE_SLOTS, NULL, NULL);
@@ -1917,7 +2043,7 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
             configGetStr(config, attributeImage->cache->suffix, (const char **)&attributeImage->currentValue);
         }
         if (attributeImage->currentValue) {
-            if (thmGetGuiValue() == 0 || thmGetGuiValue() == nThemes + 1) {
+            if (thmGetGuiValue() == 0 || thmGetGuiValue() == nThemes + 1 || thmGetGuiValue() == nThemes + 2) {
                 GSTEXTURE *texture = thmGetTexture(thmAttributeTexId(attributeImage));
                 if (texture && texture->Mem)
                     rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
@@ -3203,6 +3329,15 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 // like wOPL); initCoverflow points gTheme->coverflow at the FIRST as the active flag.
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, screenWidth >> 1, screenHeight >> 1, ALIGN_CENTER, 150, 210, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
                 initCoverflow(themePath, themeConfig, theme, elem, name);
+            } else if (!strcmp(elementsType[ELEM_TYPE_PSBBN_FLOW], type)) {
+                int size = psbbnFlowSize(screenWidth, screenHeight);
+                elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, screenWidth - 37, 75, ALIGN_CENTER, size, size, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
+                initCoverflow(themePath, themeConfig, theme, elem, name);
+                if (elem->drawElem) {
+                    elem->drawElem = &drawPsbbnFlow;
+                    if (theme->psbbnFlow == NULL)
+                        theme->psbbnFlow = elem;
+                }
             } else if (!strcmp(elementsType[ELEM_TYPE_SAVE_ICON], type)) {
                 elems->needsSaveIconConfig = 1;
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_SAVE_ICON, screenWidth >> 1, screenHeight >> 1, ALIGN_CENTER, 64, 64, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
@@ -3570,6 +3705,7 @@ static int thmLoad(const char *themePath)
     newT->favsItemsList = NULL;
     newT->vcdItemsList = NULL;
     newT->coverflow = NULL;
+    newT->psbbnFlow = NULL;
     newT->coverflowCoverOffset = 0;
     newT->loadingIcon = NULL;
     newT->loadingIconCount = LOAD7_ICON - LOAD0_ICON + 1;
@@ -3586,7 +3722,9 @@ static int thmLoad(const char *themePath)
     if (!themePath) {
         // No theme specified. Prepare and load the default theme.
         themeConfig = configAlloc(0, NULL, NULL);
-        if (gLoadCoverflowBuiltin)
+        if (gLoadPsbbnFlowBuiltin)
+            configReadBuffer(themeConfig, &theme_psbbn_flow_cfg, size_theme_psbbn_flow_cfg);
+        else if (gLoadCoverflowBuiltin)
             configReadBuffer(themeConfig, &theme_coverflow_cfg, size_theme_coverflow_cfg);
         else
             configReadBuffer(themeConfig, &conf_theme_OPL_cfg, size_conf_theme_OPL_cfg);
@@ -3874,6 +4012,8 @@ static int thmLoad(const char *themePath)
     if (curT == NULL)
         cacheCancelPendingImageLoads(); // first load: pre-cacheInit, nothing queued -- plain no-op drain
     gTheme = newT;
+    cfIsAnimating = 0;
+    psbbnFlowStartOffset = 0;
     thmFree(curT);
     return 0;
 }
@@ -3889,8 +4029,8 @@ static void thmRebuildGuiNames(void)
     if (guiThemesNames)
         free(guiThemesNames);
 
-    // build the themes name list (+1 default internal, +1 built-in coverflow, +1 NULL)
-    guiThemesNames = (const char **)malloc((nThemes + 3) * sizeof(char **));
+    // Default internal, disk themes, both built-in flows, then the NULL terminator.
+    guiThemesNames = (const char **)malloc((nThemes + 4) * sizeof(char **));
 
     // add default internal
     guiThemesNames[0] = "<OPL>";
@@ -3902,18 +4042,23 @@ static void thmRebuildGuiNames(void)
 
     // built-in coverflow theme occupies the slot right after the disk themes
     guiThemesNames[nThemes + 1] = "<Coverflow>";
-    guiThemesNames[nThemes + 2] = NULL;
+    guiThemesNames[nThemes + 2] = "<PSBBN Flow>";
+    guiThemesNames[nThemes + 3] = NULL;
 }
 
 int thmAddElements(char *path, const char *separator, int forceRefresh)
 {
     int result, i;
 
+    // Built-in IDs follow the disk entries. Preserve the live selection as discovery appends.
+    int builtin = guiThemeID > nThemes && guiThemeID <= nThemes + 2 ? guiThemeID - nThemes : 0;
     result = listDir(path, separator, THM_MAX_FILES - nThemes, &thmReadEntry);
     nThemes += result;
     // Appends above only fill NEW themes[] slots (the published name list references old slots
     // untouched); the rebuild's free+swap is what must be serialized against the GUI's readers.
     guiLock();
+    if (builtin)
+        guiThemeID = nThemes + builtin;
     thmRebuildGuiNames();
     guiUnlock();
 
@@ -3959,6 +4104,8 @@ void thmReinit(const char *path)
         activeOnDevice = strncmp(themes[guiThemeID - 1].filePath, path, strlen(path)) == 0;
     } else if (guiThemeID == nThemes + 1) {
         snprintf(activeName, sizeof(activeName), "<Coverflow>"); // built-in; its id (nThemes+1) shifts as themes are removed
+    } else if (guiThemeID == nThemes + 2) {
+        snprintf(activeName, sizeof(activeName), "<PSBBN Flow>");
     }
 
     // One guiLock section across the removal loop AND the rebuild: the frees below invalidate
@@ -4008,15 +4155,17 @@ const char *thmGetValue(void)
 
 int thmSetGuiValue(int themeID, int reload)
 {
-    if (themeID != -1) {
+    if (themeID >= 0 && themeID <= nThemes + 2) {
         if (guiThemeID != themeID || reload) {
             int loadResult;
-            if (themeID == nThemes + 1) {
-                // built-in coverflow theme: load the embedded buffer via thmLoad(NULL).
+            if (themeID == nThemes + 1 || themeID == nThemes + 2) {
+                // Built-in flow themes load their embedded buffer via thmLoad(NULL).
                 // Checked BEFORE the themes[themeID - 1] access below (which would be OOB).
-                gLoadCoverflowBuiltin = 1;
+                gLoadCoverflowBuiltin = themeID == nThemes + 1;
+                gLoadPsbbnFlowBuiltin = themeID == nThemes + 2;
                 loadResult = thmLoad(NULL);
                 gLoadCoverflowBuiltin = 0;
+                gLoadPsbbnFlowBuiltin = 0;
             } else
                 loadResult = thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
 
@@ -4027,7 +4176,7 @@ int thmSetGuiValue(int themeID, int reload)
 
             guiThemeID = themeID;
             return 1;
-        } else if (guiThemeID == 0 || guiThemeID == nThemes + 1) {
+        } else if (guiThemeID == 0 || guiThemeID == nThemes + 1 || guiThemeID == nThemes + 2) {
             /* Re-apply the edited gDefault*Color values to the LIVE theme when the theme itself is
                not being reloaded -- which is the whole of what a colour edit does.
 
@@ -4056,6 +4205,8 @@ int thmFindGuiID(const char *theme)
     if (theme) {
         if (strcasecmp(theme, "<Coverflow>") == 0)
             return nThemes + 1; // built-in coverflow theme
+        if (strcasecmp(theme, "<PSBBN Flow>") == 0)
+            return nThemes + 2;
         int i = 0;
         for (; i < nThemes; i++) {
             if (strcasecmp(themes[i].name, theme) == 0)

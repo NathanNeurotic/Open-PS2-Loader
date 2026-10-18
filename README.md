@@ -26,7 +26,7 @@ A heartfelt thank you to developers who have contributed pull requests directly 
 - **[#702](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/702)** (`ee_core`): **EE Core Stack Protection** — Relocated RetroAchievements buffers out of `.bss` to protect the EE stack from memory pressure and instability during game execution.
 
 ### [@dnunezx](https://github.com/dnunezx) (darkladark)
-- **[#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)** (`Cover art flow`): **LUNA Collection View** — Brought LUNA's Collection cover-art screen into RiptOPL's renderer, adapting it to RiptOPL's existing game lists, settings, and launch callbacks. Added R3 access to Collection, moved the existing favorite shortcut to L2 + R3, fixed artwork handling while scrolling, and built/tested the result in PCSX2.
+- **[#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)** (`Cover art flow`): **PSBBN Flow** — Contributed LUNA's Collection display and its perspective cover animation. Adapted into a selectable native theme alongside Cover Flow, using RiptOPL's existing game lists, artwork cache, settings and launch callbacks. R3 retains its normal favorite shortcut.
 
 # RiptOPL
 **An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**

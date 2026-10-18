@@ -3,18 +3,42 @@
 This document describes the Open PS2 Loader theme format **as implemented by the parser**
 (`src/themes.c`), so you can build your own themes. It covers every block type, property,
 value token, and built-in asset name the engine understands, including this fork's
-**`Coverflow`** render mode.
+**`Coverflow`** and **`PSBBNFlow`** render modes.
 
 - A theme is a folder in the `THM` directory containing a **`conf_theme.cfg`** plus its
   image/font assets.
 - Anything not supplied by the theme falls back to OPL's embedded defaults.
-- OPL also ships two built-in themes you can study as references: the default `<OPL>` theme
-  and this fork's `<Coverflow>` theme.
+- OPL ships three built-in themes you can study as references: `<OPL>`, `<Coverflow>`,
+  and `<PSBBN Flow>`.
 
 A fresh configuration starts with `<OPL>`, a 4:3 menu and Auto video mode.
 Select `<Coverflow>` and, if wanted, Widescreen under **Settings → Interface**,
 then apply and save. Saved theme and display choices remain in effect after an
 ELF update. See [Fresh-start defaults](DEFAULTS.md).
+
+### PSBBN Flow
+
+Select **`<PSBBN Flow>`** under **Settings → Interface → Theme**, then apply and save.
+This adapts dnunezx's LUNA Collection display from [PR #733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733):
+a large focal cover on the right, a diminishing tail on the left, and an outgoing cover that
+enlarges as it exits. Its cubic glide retains the original 25-frame timing.
+
+PSBBN Flow uses the same native device pages, current selection, artwork cache, palette settings,
+and launch/game-settings actions as Cover Flow. Left/Right browse the covers and Up/Down change
+device pages. R3 remains **toggle favorite**; there is no separate screen or R3 display swap.
+The chosen theme persists by name and remains selected when disk themes are added or removed.
+
+The built-in theme uses ordinary `ART/<startup>_COV` artwork through each source's existing image
+loader, including its archive and fallback handling. Square covers work, and portrait covers keep
+their proportions inside the square display slots. Unlike the old PR's separate screen, this
+adaptation does not require an `ART/PSBBN` directory. Missing covers use the native placeholder;
+folder rows remain browsable, and APPS, PS1 and Favorites use the native family/cache resolution.
+
+Custom themes can select the same renderer with `type=PSBBNFlow`, alongside an `ItemsList` for
+the native title/navigation row. The usual image properties (`pattern`, `default`, `count`,
+`x`, `y`, `width`, and overlays) apply. See [the built-in configuration](../misc/theme_psbbn_flow.cfg).
+The existing Cover Flow count/scale settings belong to `Coverflow`; PSBBN Flow retains Collection's
+fixed perspective layout.
 
 > Quick mental model: a theme is a flat list of **elements**, each positioned on a virtual
 > **640×480** canvas. OPL scales that canvas to the real screen, and (with `scaled=1`)
@@ -238,6 +262,7 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `LoadingIcon` | The animated loading spinner. |
 | `BdmIndex` | The block-device mode indicator. |
 | `Coverflow` *(item)* | **This fork:** a cover-art carousel (see §8). |
+| `PSBBNFlow` *(item)* | **This fork:** Collection perspective fan with native cover navigation (see [PSBBN Flow](#psbbn-flow)). |
 | `SaveIcon` *(item)* | **This fork:** a PS2 game's spinning 3D save icon or a PS1 game's animated VMC icon (see §9). |
 
 Elements are drawn in the order the theme declares them, with one exception: every `ItemText` is
@@ -352,7 +377,7 @@ Rules worth knowing:
 RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
 serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know (`devices=`,
 `reflection_offset`, `overlay2`, `plasma_blend_color`, the entire `favsMain*`, `vcdMain*`,
-`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`, `SaveIcon`) are skipped without
+`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`, `PSBBNFlow`, `SaveIcon`) are skipped without
 stopping the parse. What to expect there:
 
 - **Invisible:** all pure-key extras above — regular OPL renders the theme as if they weren't
