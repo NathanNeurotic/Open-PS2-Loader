@@ -2738,10 +2738,13 @@ static int vcdRaModuleStatus(const char *root, int removeOwned)
 
         if (errno == ENOENT)
             return 0;
+        // Only FatFs's leaked FR_NO_FILE (4) is ambiguous here: libcglue maps
+        // -4 to errno 4 (EINTR). Preserve warnings for actual I/O errors.
+        if (errno != EINTR)
+            return -2;
 
-        // bdmfs_fatfs returns -FR_NO_FILE (4), not -ENOENT, for an absent file.
-        // When open fails with a non-POSIX error, verify absence via the readable
-        // POPS directory rather than claiming a leftover RA module exists.
+        // Confirm absence from the readable POPS directory before skipping
+        // the stale-module warning; never assume a failed open proves absence.
         if (snprintf(dirPath, sizeof(dirPath), "%sPOPS", root) >= (int)sizeof(dirPath))
             return -2;
         dir = opendir(dirPath);
