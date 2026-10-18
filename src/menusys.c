@@ -1323,7 +1323,10 @@ static void menuFolderResetLeaving(struct menu_list *leaving)
 
 static void menuNextH()
 {
-    struct menu_list *next = selected_item->next;
+    int moved = 0;
+    // Match the async config worker's snapshot/publish lock, including traversal.
+    WaitSema(menuSemaId);
+    struct menu_list *next = selected_item != NULL ? selected_item->next : NULL;
     while (next != NULL && next->item->visible == 0)
         next = next->next;
 
@@ -1332,13 +1335,19 @@ static void menuNextH()
         menuFolderResetLeaving(selected_item);
         selected_item = next;
         itemConfigId = -1;
-        sfxPlay(SFX_CURSOR);
+        itemConfigGeneration++; // invalidate even a rapid A -> B -> A transition
+        moved = 1;
     }
+    SignalSema(menuSemaId);
+    if (moved)
+        sfxPlay(SFX_CURSOR); // audio RPCs must not hold up config publication
 }
 
 static void menuPrevH()
 {
-    struct menu_list *prev = selected_item->prev;
+    int moved = 0;
+    WaitSema(menuSemaId);
+    struct menu_list *prev = selected_item != NULL ? selected_item->prev : NULL;
     while (prev != NULL && prev->item->visible == 0)
         prev = prev->prev;
 
@@ -1346,8 +1355,12 @@ static void menuPrevH()
         menuFolderResetLeaving(selected_item);
         selected_item = prev;
         itemConfigId = -1;
-        sfxPlay(SFX_CURSOR);
+        itemConfigGeneration++;
+        moved = 1;
     }
+    SignalSema(menuSemaId);
+    if (moved)
+        sfxPlay(SFX_CURSOR);
 }
 
 static void menuFirstPage()
