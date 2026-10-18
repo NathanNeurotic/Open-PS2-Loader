@@ -254,10 +254,12 @@ int main(void) {
     replies[0]=0;replypos=0;
     assert(vcdRemoveRaModule("")==0);
     assert(vcdConfirmCleanLaunch("")==1 && replypos==0);
-    /* A different ambiguous errno also needs independent absence proof. */
-    forced_open_errno=EIO;replypos=0;
-    assert(vcdConfirmCleanLaunch("")==1 && replypos==0);
+    /* Real I/O errors must retain the warning even if the file is absent. */
+    forced_open_errno=EIO;replies[0]=0;replypos=0;
+    assert(vcdRemoveRaModule("")==-2);
+    assert(vcdConfirmCleanLaunch("")==0 && replypos==1);
     /* Inaccessible directory / failed enumeration: never infer absence. */
+    forced_open_errno=EINTR;
     forced_dopen_errno=EACCES;
     assert(vcdRemoveRaModule("")==-2);
     forced_dopen_errno=0;forced_dread_errno=EIO;
