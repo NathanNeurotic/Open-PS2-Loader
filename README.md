@@ -26,7 +26,7 @@ A heartfelt thank you to developers who have contributed pull requests directly 
 - **[#702](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/702)** (`ee_core`): **EE Core Stack Protection** — Relocated RetroAchievements buffers out of `.bss` to protect the EE stack from memory pressure and instability during game execution.
 
 ### [@dnunezx](https://github.com/dnunezx) (darkladark)
-- **[#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)** (`Cover art flow`): **LUNA Collection View** — Brought LUNA's Collection cover-art screen into RiptOPL's renderer, adapting it to RiptOPL's existing game lists, settings, and launch callbacks. Added R3 access to Collection, moved the existing favorite shortcut to L2 + R3, fixed artwork handling while scrolling, and built/tested the result in PCSX2.
+- **[#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)** (`Cover art flow`): **PSBBN Flow** — Contributed LUNA's Collection display and its perspective cover animation. Adapted into a selectable native theme alongside Cover Flow, using RiptOPL's existing game lists, artwork cache, settings and launch callbacks. R3 retains its normal favorite shortcut.
 
 # RiptOPL
 **An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
@@ -65,7 +65,7 @@ Review the LICENSE file for further details.<br><br>
 [![Discord](https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord)](https://tinyurl.com/PS2SPACE)
 [![Documentation](https://img.shields.io/badge/Documentation-RiptOPL-skyblue?style=flat&logo=githubpages&logoColor=white&labelColor=navy)](https://nathanneurotic.github.io/Open-PS2-Loader/)
 
-> **What is RiptOPL?** A downstream fork of Open PS2 Loader with an optional built-in cover-art **Coverflow** theme, a **Favorites** tab, per-game **Neutrino** external-core launching, a reorganized category **settings layout**, DualSense support, and configurable defaults. Fresh configurations start with **`<OPL>`**, **4:3**, and **Auto** menu video mode; see [Fresh-start defaults](docs/DEFAULTS.md). Its settings live in their own **`settings_riptopl.cfg`** to keep its master settings separate from official OPL and wOPL. Other files, including network and per-game settings, can still be shared. Favorites import from uOPL/wOPL is **one-way**: the next save writes RiptOPL’s own format to `favourites.bin`. See [Where your files live](#where-your-files-live). See **[This Fork's Additions](#this-forks-additions)**. For the canonical project, use [ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader).
+> **What is RiptOPL?** A downstream fork of Open PS2 Loader with optional built-in **Coverflow** and **PSBBN Flow** cover-art themes, a **Favorites** tab, per-game **Neutrino** external-core launching, a reorganized category **settings layout**, DualSense support, and configurable defaults. Fresh configurations start with **`<OPL>`**, **4:3**, and **Auto** menu video mode; see [Fresh-start defaults](docs/DEFAULTS.md). Its settings live in their own **`settings_riptopl.cfg`** to keep its master settings separate from official OPL and wOPL. Other files, including network and per-game settings, can still be shared. Favorites import from uOPL/wOPL is **one-way**: the next save writes RiptOPL’s own format to `favourites.bin`. See [Where your files live](#where-your-files-live). See **[This Fork's Additions](#this-forks-additions)**. For the canonical project, use [ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader).
 
 > 📖 **Full documentation & guides:** **<https://nathanneurotic.github.io/Open-PS2-Loader/>** — searchable setup and reference guides covering storage backends, the Neutrino core, PS1/VCD, the Theme Engine (with worked examples and an annotated sample theme), a full settings reference, and troubleshooting. For Japanese game names with English menus, see [Optional Unicode/CJK font fallback](docs/UNICODE-GAME-TITLES.md) (copy a suitable `font_CJK.ttf` beside `settings_riptopl.cfg` and restart).
 
@@ -222,7 +222,7 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 - **MMCE support:** OPL supports MMCE devices using the Memory Card Mass Storage protocol for SD-based loading through the Memory Card slot.
 - **MX4SIO support:** OPL supports MX4SIO adapters for SD-based loading through the Memory Card slot. See the **USB/MMCE/MX4SIO/iLink** section for filesystem and layout guidance.
 - **Internal HDD exFAT support:** the internal ATA HDD can be loaded as **exFAT** — mounted through the Block Device Manager (BDMAssault / "BDMA") into the same `massN:` namespace as USB/MX4SIO — in addition to APA/PFS, including GPT partitioning for large disks, for PS2 **and** PS1 (POPSTARTER) games. See the **HDD** section for formatting, the BDMA equip, and fragmentation guidance.
-- **Themes:** Fresh configurations start with the built-in **`<OPL>`** theme, **4:3**, and **Auto** menu video mode. The built-in **`<Coverflow>`** carousel and **16:9** are optional choices under **Settings → Interface**; apply and save them to keep that presentation. Saved settings override fresh defaults. See [Fresh-start defaults](docs/DEFAULTS.md). Place external theme assets in `THM/`; **UDPFS Files** also reads `udpfs:/THM` once connected (at boot with Network Connectivity **Auto**, or after opening the page with **Manual**). See the [Theme Engine reference](docs/THEME_ENGINE.md) to author themes.
+- **Themes:** Fresh configurations start with the built-in **`<OPL>`** theme, **4:3**, and **Auto** menu video mode. The built-in **`<Coverflow>`** carousel, **`<PSBBN Flow>`** perspective fan and **16:9** are optional choices under **Settings → Interface**; apply and save them to keep that presentation. Saved settings override fresh defaults. See [Fresh-start defaults](docs/DEFAULTS.md). Place external theme assets in `THM/`; **UDPFS Files** also reads `udpfs:/THM` once connected (at boot with Network Connectivity **Auto**, or after opening the page with **Manual**). See the [Theme Engine reference](docs/THEME_ENGINE.md) to author themes.
 - **Cheats / PS2RD:** OPL supports PS2RD `.cht` cheat files from the `CHT` folder, with both auto-apply and launch-time selection modes.
 - **Pad emulation (DS3/DS4):** On any build with PADEMU (the default), a DualShock 3 or DualShock 4 plugged into the console's USB port can navigate the OPL menu right away, with nothing to enable first. To play games with it, turn on **Pad Emulator** under **Settings**, then **Controller Settings** (globally, or per game via **Game Settings**). One caveat: pad emulation shares the SIO2 bus with MX4SIO SD-card loading, so running both can cause a game to hang on a black screen; leave Pad Emulator off if you boot from an MX4SIO card.
 - **GSM (video mode handling):** Builds that include GSM allow game video mode handling/overrides for display compatibility.
@@ -239,11 +239,18 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 
 This build layers several features on top of upstream OPL:
 
-- **`<Coverflow>` theme (built-in, and the default):** a centered cover-art carousel for
+- **`<Coverflow>` theme (optional built-in):** a centered cover-art carousel for
   the game/app list, with an alpha-faded reflection, animated scrolling, a configurable
   cover count, and aspect-correct covers in both 4:3 and widescreen. Tune it live under
-  **Coverflow Settings** (shown while the Coverflow theme is active). Authoring details
+  **Settings → Interface → Coverflow Settings**. Authoring details
   and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
+- **`<PSBBN Flow>` theme (optional built-in):** dnunezx's Collection display adapted from
+  [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) in
+  [#977](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977), with a large focal cover on the
+  right, a diminishing left tail and a 25-frame cubic glide. Select it through the same Theme picker.
+  It uses ordinary `ART/<startup>_COV` art and native game lists, folders, Favorites and launch actions.
+  Left/Right browse covers, Up/Down change sources, and R3 toggles favorites. Its fixed layout and
+  animation are independent of the Coverflow tuning settings. See [PSBBN Flow](docs/THEME_ENGINE.md#psbbn-flow).
 - **Per-device theme placement (`devices=`):** themes can position the device icon, the games
   list and the button hints **differently per device page** (e.g. pin the MMCE icon top-right
   while every other page keeps the shared spot). Add `devices=usb,hdd,…` to a `MenuIcon`,
@@ -261,7 +268,7 @@ This build layers several features on top of upstream OPL:
 - **3D save icons (opt-in, not yet hardware-tested):** turn on **3D Save Icons** under **Interface →
   Artwork Settings** (default **off**) and the selected PS2 game's own save icon spins next to its
   cover, animated and lit the way the PS2 browser shows it. It is read from the game's per-game VMC
-  when it has one, otherwise from the newest save on the memory cards. Both built-in themes show it;
+  when it has one, otherwise from the newest save on the memory cards. The `<OPL>` and `<Coverflow>` built-ins show it; `<PSBBN Flow>` leaves it out by default;
   other themes add a `SaveIcon` element
   (**[Theme Engine reference §9](docs/THEME_ENGINE.md#9-the-saveicon-element-this-fork)**).
 - **Favorites tab:** press **R3** on any game to star it; a virtual **Favorites** page
@@ -284,7 +291,7 @@ This build layers several features on top of upstream OPL:
   top of the list, shown with a trailing `/`). Select a folder to open it, and press the
   **cancel button** to go back up — a
   breadcrumb in the page title shows where you are. Each folder view is just the normal game
-  list, so covers, favorites, coverflow and per-game settings all work inside folders. Works on
+  list, so covers, favorites, both flow themes and per-game settings all work inside folders. Works on
   USB / MX4SIO / iLink / internal-BDM, MMCE and UDPFS-Files. Left off, a flat library looks and
   behaves exactly as before.
 - **Controller vibration in the menus (on by default):** toggle **Controller Vibration in Menus** in
@@ -488,7 +495,7 @@ This build layers several features on top of upstream OPL:
   environment RiptOPL hands it. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
 - **Category settings layout:** the start menu's settings are organised into eight category pages
   instead of one flat list — **Game Sources** (device selection + start modes), **General & System**,
-  **Network**, **Interface** (theme, artwork, Coverflow, PS2/PS1 Game Display), **Game Launching**
+  **Network**, **Interface** (theme, artwork, Coverflow tuning, PS2/PS1 Game Display), **Game Launching**
   (incl. the global Neutrino/OSD defaults), **PS Emulation Settings** (both PS1 cores: POPSTARTER
   and Ember), **Controller Settings** and
   **Audio Settings** — each with chained sub-pages, plus a **Save Changes** entry at the foot of the
@@ -538,8 +545,8 @@ MMCE Settings*) sends a switch-to-bootcard command as the reset happens.
 
 | Button | Action |
 | ------ | ------ |
-| D-pad Up/Down | Move through the list (Coverflow: switch device page) |
-| D-pad Left/Right | Switch device page (Coverflow: move through the carousel) |
+| D-pad Up/Down | Move through the list (Coverflow / PSBBN Flow: switch device page) |
+| D-pad Left/Right | Switch device page (Coverflow / PSBBN Flow: browse covers) |
 | Cross | Launch the selected game |
 | Circle | Go up one folder level |
 | Triangle | Per-game settings |
@@ -932,7 +939,7 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)** by **[Ripto](https://github.com/NathanNeurotic)** — all-in-one PC server launcher for **SMB, UDPFS, UDPBD and HTTP**.
 - **[udpfs-server](https://github.com/YouKnow-sys/udpfs-server)** by **[YouKnow-sys](https://github.com/YouKnow-sys)** — the same idea **from a phone**: an Android app that shares folders and disk images to the PS2 over **UDPFS**, found by broadcast so there is no server address to type in on the console. Works over a router or a direct cable. Built on **[udpfsd](https://github.com/pcm720/udpfsd)** by **[pcm720](https://github.com/pcm720)**; MIT licensed. An `android-udpfs-server.url` shortcut ships in installable packages.
 - **[OrbitPS2 Manager](https://github.com/Luden02/OrbitPS2-Manager)** by **[Luden](https://github.com/Luden02)** — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management.
-- **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** — *Lightweight Unified Neutrino Access*, a visual PS2 loader built on NHDDL and Neutrino, and our **#1 recommended alternative** if RiptOPL is more loader than you need. darkladark also contributes to RiptOPL: its Collection cover-art screen came from LUNA (#733).
+- **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** — *Lightweight Unified Neutrino Access*, a visual PS2 loader built on NHDDL and Neutrino, and our **#1 recommended alternative** if RiptOPL is more loader than you need. darkladark also contributes to RiptOPL: the PSBBN Flow theme adapts LUNA's Collection display (#733, superseded by #977), preserving the normal R3 favorite action.
 - **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **Akilluminati47** — our daughter project: a PS2-inspired front end with a **web-theme beta** at **[akilluminati47.github.io/RIPPS2](https://akilluminati47.github.io/RIPPS2/)**. A custom OPL theme and `RIPPS2.elf` are planned next; the project is still alpha, but we recommend it as an alternative with features intended to be on par with RiptOPL.
 - **[OPL PS1 AIO Converter GUI](https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI)** by **[shaan](https://github.com/shaanhomebrew-cloud)** — Windows all-in-one PS1/POPStarter preparation tool for converting BIN/CUE backups to VCDs and installing them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.
 - **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. Recommended client: **[v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)**. RiptOPL's RA build supports **xeRAbora v0.1.0-alpha.17** and its snapshot-only Mode 6 behavior. xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by **[oMrRexD](https://github.com/oMrRexD)**, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.
@@ -996,8 +1003,9 @@ With special and sincere thanks to:
   (*Lightweight Unified Neutrino Access*), his own visual loader built on NHDDL and Neutrino, with a
   PS2-inspired glass interface and four switchable library views. LUNA is **our #1 recommended
   alternative to RiptOPL** for lightweight, customized Neutrino gameplay. He also contributes to
-  RiptOPL directly: his [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) brings
-  LUNA's Collection cover-art screen to RiptOPL's renderer. Thank you for sharing your work with us.
+  RiptOPL directly: his [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) contributed
+  LUNA's Collection display, adapted as the native **PSBBN Flow** theme in
+  [#977](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977) with the normal R3 favorite action. Thank you for sharing your work with us.
 - **[Okeanos](https://github.com/Okeanos86)** — for **[BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)**, bringing read-only UDPFS VCD fallback to POPSTARTER through BDMA, based on israpps’ BDM Assault.
 - **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
