@@ -218,7 +218,7 @@ run('launch',prefix+s+test)
 # Exercise the actual interrupt handler up to the point where it would suspend
 # game threads. Hardware register reads/writes use host bytes in this harness.
 # The pad and power-button checks live in IGR_CheckInputs (shared with the
-# polling thread of standard builds, upstream OPL #1762), so compile it too.
+# alarm sampler in standard builds), so compile it too.
 s=(root/'ee_core/src/padhook.c').read_text(encoding='utf-8')
 check=s[s.index('static void IGR_CheckInputs'):]
 check=check[:check.index('\n}\n')+3]
@@ -232,6 +232,7 @@ prefix=r'''
 #include <stdio.h>
 #define RETROACHIEVEMENTS 1
 typedef unsigned char u8;
+typedef unsigned int u32;
 enum { DISC_MODE=1, OTHER_MODE, IGR_LIBPAD, IGR_LIBPAD2,
        IGR_PAD_STABLE_V1, IGR_PAD_STABLE_V2, IGR_COMBO_R1_L1_R2_L2,
        IGR_COMBO_START_SELECT, IGR_COMBO_R3_L3 };
@@ -248,8 +249,11 @@ static u8 ndin=0x20, poff=0x04, sdin=0x55, scmd=0x55;
 #define CDVD_R_SCMD (&scmd)
 static int padOpen_hooked, snapshots, kernel_enters;
 static void RA_OnVblank(void) {snapshots++;}
-static void ee_kmode_enter(void) {kernel_enters++;}
-static void ee_kmode_exit(void) {}
+/* RA's input check runs in interrupt/kernel context. The ps2sdk helper
+ * returns the saved KSU mode, and restoring it must not force USER mode. */
+static u32 interrupt_mode;
+static u32 ee_kmode_enter(void) {kernel_enters++;u32 old=interrupt_mode;interrupt_mode=0;return old;}
+static void ee_set_opmode(u32 mode) {interrupt_mode=mode&0x18;}
 static int DI(void) {return 0;} /* IGR handler already runs with interrupts disabled. */
 static void EI(void) {assert(0);}
 '''
@@ -260,18 +264,18 @@ int main(void) {
     Pad_Data.pos_state=0;Pad_Data.pos_frame=1;Pad_Data.pos_combo1=2;Pad_Data.pos_combo2=3;
     cfg.GameMode=DISC_MODE;
     assert(IGR_Intc_Handler(0)==0);
-    assert(snapshots==1 && !kernel_enters && !Power_Button.press);
+    assert(snapshots==1 && !kernel_enters && !Power_Button.press && interrupt_mode==0);
     assert(sdin==0x55 && scmd==0x55); /* no ROM power-off cancellation */
     pad[3]=IGR_COMBO_START_SELECT;
     assert(IGR_Intc_Handler(0)==IGR_COMBO_START_SELECT); /* return combo still reaches teardown */
     cfg.GameMode=OTHER_MODE;pad[3]=IGR_COMBO_R3_L3;
     assert(IGR_Intc_Handler(0)==IGR_COMBO_R3_L3);
-    assert(sdin==0 && scmd==0x1b && Power_Button.press==1 && Power_Button.latched==1 && kernel_enters==1);
+    assert(sdin==0 && scmd==0x1b && Power_Button.press==1 && Power_Button.latched==1 && kernel_enters==1 && interrupt_mode==0);
     /* Holding the same status must not create a false double press in RA. */
     for (int i=0;i<51;i++) IGR_CheckInputs();
     assert(Power_Button.press==1 && Pad_Data.combo_type==IGR_COMBO_R3_L3);
     poff=0; IGR_CheckInputs(); assert(!Power_Button.latched);
-    poff=4; IGR_CheckInputs(); assert(Power_Button.press==2);
+    poff=4; IGR_CheckInputs(); assert(Power_Button.press==2 && interrupt_mode==0);
     puts("PASS: RA disc leaves ROM power-off untouched; sustained physical button counts once and rearms");
 }
 '''
