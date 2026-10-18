@@ -73,6 +73,7 @@ HARNESS = r'''
 #define _STR_NEUTRINO_NOT_FOUND 4
 #define _STR_NEUTRINO_DVR_QUICKBOOT 5
 #define _STR_NEUTRINO_DVR_FILE_MISSING 6
+#define _STR_NEUTRINO_DVR_BACKEND_OVERRIDE 7
 
 static char gNeutrinoArgs[256];
 static int lastWarning;

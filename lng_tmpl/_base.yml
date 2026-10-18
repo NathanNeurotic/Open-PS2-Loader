@@ -1882,3 +1882,7 @@ gui_strings:
 
 - label: HINT_ENABLE_DVR
   string: "Experimental DESR DVR ISO discovery. Requires HDD source enabled; game launch needs external DVR-capable Neutrino."
+
+# DVR backend arguments are supplied by the loader.
+- label: NEUTRINO_DVR_BACKEND_OVERRIDE
+  string: "DVR launch selects its own backend. Remove -bsd= and -bsdfs= from global and per-game Neutrino arguments."
