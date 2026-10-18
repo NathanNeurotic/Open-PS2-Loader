@@ -29,6 +29,7 @@ render = r'''
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "include/psbbnflow.h"
 typedef unsigned long long u64;
 typedef int config_set_t;
@@ -40,7 +41,9 @@ struct menu_list { struct menu_item *item; };
 static int screenWidth = 640, screenHeight = 480, guiFrameId = 100, cfIsAnimating;
 static int psbbnFlowStartOffset;
 static unsigned int psbbnFlowStartFrame = 100;
-static struct { u64 textColor; } theme, *gTheme = &theme;
+static struct { u64 textColor; void *psbbnFlow; } theme, *gTheme = &theme;
+static int gCoverflowAnimSpeed, cfAnimDirection, cfAnimFrameCount;
+static clock_t cfAnimStartTime;
 static int drawn[8], positions[8], nDrawn, priorities;
 static char counter[32];
 #define GS_SETREG_RGBA(...) ((u64)0)
@@ -59,6 +62,7 @@ static void getGameImageTextureEx(int *c,void *s,void *i,int priority)
 static void drawPsbbnCover(struct menu_list *m,struct submenu_list *i,theme_element_t *e,int p) {
  (void)m;(void)e;assert(nDrawn<8);drawn[nDrawn]=i->item.id;positions[nDrawn++]=p;
 }
+@TRIGGER@
 @RENDER@
 static void checkRows(int count,int selected,int flow) {
  struct submenu_list rows[10]={0};
@@ -84,6 +88,17 @@ static void checkRows(int count,int selected,int flow) {
  assert(!strcmp(counter,expected));
 }
 int main(void) {
+ gTheme->psbbnFlow=&theme;gCoverflowAnimSpeed=0;
+ thmTriggerCoverflowAnim(1);assert(psbbnFlowStartOffset==1000 && cfIsAnimating);
+ thmTriggerCoverflowAnim(-1);assert(psbbnFlowStartOffset==0 && !cfIsAnimating);
+ gCoverflowAnimSpeed=220;cfAnimFrameCount=99;
+ thmTriggerCoverflowAnim(-1);
+ assert(psbbnFlowStartOffset==-1000 && cfAnimDirection==-1 && cfAnimFrameCount==0 && cfIsAnimating);
+ for(int i=0;i<5;i++)thmTriggerCoverflowAnim(-1);
+ assert(psbbnFlowStartOffset==-3000);
+ guiFrameId+=25;thmTriggerCoverflowAnim(1);assert(psbbnFlowStartOffset==1000);
+ gTheme->psbbnFlow=NULL;thmTriggerCoverflowAnim(-1);
+ assert(psbbnFlowStartOffset==1000 && cfAnimDirection==-1);
  psbbn_flow_rect_t focal=psbbnFlowRect(0,316,446,233);
  assert(focal.size==316 && focal.x==288 && focal.y==75 && focal.shade==128);
  psbbn_flow_rect_t tail=psbbnFlowRect(1000,316,446,233);
@@ -98,7 +113,7 @@ int main(void) {
   checkRows(n,s,f);
  puts("PSBBN: original geometry, both glide directions, empty/single/short lists and wrap deduplication passed");
 }
-'''.replace('@RENDER@', function('static void drawPsbbnFlow('))
+'''.replace('@RENDER@', function('static void drawPsbbnFlow(')).replace('@TRIGGER@', function('void thmTriggerCoverflowAnim('))
 run('psbbn_render', render)
 
 

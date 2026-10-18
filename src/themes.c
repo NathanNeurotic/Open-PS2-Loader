@@ -1570,7 +1570,7 @@ void thmTriggerCoverflowAnim(int dir)
                                                                        offset;
         psbbnFlowStartFrame = (unsigned int)guiFrameId;
         cfIsAnimating = psbbnFlowStartOffset != 0;
-        return;
+        // Arm Coverflow too - custom themes can use a different flow in each family.
     }
     if (gCoverflowAnimSpeed <= 0)
         return;
