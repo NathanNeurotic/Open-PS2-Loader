@@ -166,6 +166,7 @@ static powerbuttondata_t Power_Button;
 static int IGR_Thread_ID = -1;
 static int IGR_Intc_ID = -1;
 static volatile int IGR_Poll_Alarm_ID = -1, IGR_Poll_Recovery;
+static volatile unsigned int IGR_Poll_Generation = 1;
 static u8 IGR_Stack[IGR_STACK_SIZE];
 static void *_gp;
 
