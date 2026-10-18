@@ -2390,7 +2390,7 @@ void guiShowArtworkConfig(void)
 void guiShowColorsConfig(void)
 {
     int themeID = thmGetGuiValue();
-    int editable = (themeID == 0 || themeID == thmFindGuiID("<Coverflow>"));
+    int editable = (themeID == 0 || themeID == thmFindGuiID("<Coverflow>") || themeID == thmFindGuiID("<PSBBN Flow>"));
 
     if (editable) {
         // Display the default theme's colours.

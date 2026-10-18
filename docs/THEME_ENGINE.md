@@ -3,18 +3,95 @@
 This document describes the Open PS2 Loader theme format **as implemented by the parser**
 (`src/themes.c`), so you can build your own themes. It covers every block type, property,
 value token, and built-in asset name the engine understands, including this fork's
-**`Coverflow`** render mode.
+**`Coverflow`** and **`PSBBNFlow`** render modes.
 
 - A theme is a folder in the `THM` directory containing a **`conf_theme.cfg`** plus its
   image/font assets.
 - Anything not supplied by the theme falls back to OPL's embedded defaults.
-- OPL also ships two built-in themes you can study as references: the default `<OPL>` theme
-  and this fork's `<Coverflow>` theme.
+- OPL ships three built-in themes you can study as references: `<OPL>`, `<Coverflow>`,
+  and `<PSBBN Flow>`.
 
 A fresh configuration starts with `<OPL>`, a 4:3 menu and Auto video mode.
-Select `<Coverflow>` and, if wanted, Widescreen under **Settings → Interface**,
+Select `<Coverflow>` or `<PSBBN Flow>` and, if wanted, Widescreen under **Settings → Interface**,
 then apply and save. Saved theme and display choices remain in effect after an
 ELF update. See [Fresh-start defaults](DEFAULTS.md).
+
+## PSBBN Flow
+
+Select **`<PSBBN Flow>`** under **Settings → Interface → Theme**, then apply and save.
+This adapts dnunezx's LUNA Collection display from [PR #733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733):
+a large focal cover on the right, a diminishing tail on the left, and an outgoing cover that
+enlarges as it exits. Its cubic glide retains the original 25-frame timing.
+
+PSBBN Flow uses the same native device pages, current selection, artwork cache, palette settings,
+and launch/game-settings actions as Cover Flow. Left/Right browse the covers and Up/Down change
+device pages. R3 remains **toggle favorite**; there is no separate screen or R3 display swap.
+The chosen theme persists by name and remains selected when disk themes are added or removed.
+
+The built-in theme uses ordinary `ART/<startup>_COV` artwork through each source's existing image
+loader, including its archive and fallback handling. Square covers work, and portrait covers keep
+their proportions inside the square display slots. Unlike the old PR's separate screen, this
+adaptation does not require an `ART/PSBBN` directory. Missing covers use the native placeholder;
+folder rows remain browsable, and APPS, PS1 and Favorites use the native family/cache resolution.
+
+Custom themes can select the same renderer with `type=PSBBNFlow`, alongside an `ItemsList` for
+the native title/navigation row. `pattern`, `default`, `count` and overlays use the native image
+loader. `x` / `y` anchor the focal slot at its top-right corner (default `x=-37`, `y=75`),
+and `width` can only shrink it below its screen-derived maximum. Height and alignment do not
+set the slot shape or anchor. See the property table below and
+[the built-in configuration](../misc/theme_psbbn_flow.cfg).
+The existing Cover Flow count/scale settings belong to `Coverflow`; PSBBN Flow retains Collection's
+fixed perspective layout.
+
+### PSBBNFlow element properties
+
+Use `type=PSBBNFlow` for the perspective fan. Keep a native `ItemsList` in the same
+family for the title row and navigation. Device, app, PS1 and Favorites families inherit
+and override slots using the usual contiguous-numbering rules. Adding either flow type
+rotates Left/Right and Up/Down on every main browse page in that theme, including pages
+with a plain list; info and settings controls keep their normal layout.
+
+| Property | PSBBNFlow behavior |
+| --- | --- |
+| `x` | Right edge of the focal square slot; default is screen width minus 37. Negative values anchor to the right edge. |
+| `y` | Top of the focal slot; default 75. Negative values anchor relative to the bottom edge. |
+| `width` | Focal slot size, capped to the renderer's viewport-dependent limit. Defaults to that limit. The renderer preserves portrait/square cover proportions inside the slot. |
+| `pattern`, `default`, `count` | Native artwork suffix (default `COV`), missing-art asset and cache capacity. `count` controls cache slots, not the visible tail length. |
+| `overlay`, `overlay2`, overlay corners | Native frame layers, scaled with each cover. Author corners against the element's `width` / `height`. |
+| `font` | Font for the selected-row/total counter. |
+
+The fan draws up to six neighboring covers and an outgoing foreground cover. Its blue wash,
+frame/footer, cubic 25-frame animation and distance shading belong to this renderer.
+`coverflow_count`, `coverflow_scale`, `coverflow_anim`, `coverflow_dim` and
+`coverflow_cover_offset` affect `Coverflow` only. `PSBBNFlow` fixes centered alignment and
+aspect correction, supplies no mirrored reflection, and uses `width` for the square slot;
+generic `height`, `aligned`, `scaled`, `color` and `reflection` do not change those choices.
+
+A minimal custom theme, with normal app and PS1 fallbacks:
+
+```ini
+main0:
+    type=Background
+    pattern=BG
+main1:
+    type=PSBBNFlow
+    default=cover
+appsMain1:
+    type=PSBBNFlow
+    default=coverapp
+vcdMain1:
+    type=PSBBNFlow
+    default=cover
+main2:
+    type=ItemsList
+    x=54
+    y=-77
+    width=450
+    height=24
+```
+
+The built-in configuration adds device text, hints, a loading icon and an info-page layout.
+See [`misc/theme_psbbn_flow.cfg`](../misc/theme_psbbn_flow.cfg) for the full example.
 
 > Quick mental model: a theme is a flat list of **elements**, each positioned on a virtual
 > **640×480** canvas. OPL scales that canvas to the real screen, and (with `scaled=1`)
@@ -74,7 +151,7 @@ declares none behaves exactly as before (the Favorites PS1 view keeps using `vcd
   used before — so you override only what differs.
 - A **cover** is taken from these families only where you **declared** it. An undeclared cover slot keeps
   today's cover (the PS1 square from `vcdMain*`, the app square from `appsMain*`), never a fallback copy
-  such as `favsMain`'s portrait case. This applies to `ItemCover` panels and `Coverflow` carousels, and a
+  such as `favsMain`'s portrait case. This applies to `ItemCover` panels and both `Coverflow` / `PSBBNFlow` renderers, and a
   declared cover is only used where the page draws the same kind: a `Coverflow` in `favsVcdMain*` styles
   a carousel, never an `ItemCover` panel, and vice versa.
 - An `ItemsList` declared in these families needs no special handling: it takes none of the four global
@@ -91,7 +168,7 @@ the `ItemsList` belong to the *page*, so they stay put while you scroll.
 
 The **cover does not**. A PS2 case is portrait, a PS1 case and an app box are square, and forcing one
 shape on all three stretches whichever kinds are not the page's own. So the cover element — the
-`ItemCover` panel, the `Coverflow` carousel — is resolved **per row, by media kind**:
+`ItemCover` panel, the `Coverflow` carousel or `PSBBNFlow` fan — is resolved **per row, by media kind**:
 
 | Row | Cover drawn from |
 |---|---|
@@ -188,7 +265,7 @@ negative numbers for right/bottom-relative placement.
 ## 4. Image & overlay properties
 
 Image-type elements (`StaticImage`, `GameImage`, `Background`, `AttributeImage`, `ItemCover`,
-`Coverflow`) add:
+`Coverflow`, `PSBBNFlow`) add:
 
 | Property | Type | Notes |
 |---|---|---|
@@ -238,6 +315,7 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `LoadingIcon` | The animated loading spinner. |
 | `BdmIndex` | The block-device mode indicator. |
 | `Coverflow` *(item)* | **This fork:** a cover-art carousel (see §8). |
+| `PSBBNFlow` *(item)* | **This fork:** Collection perspective fan with native cover navigation (see [PSBBN Flow](#psbbn-flow)). |
 | `SaveIcon` *(item)* | **This fork:** a PS2 game's spinning 3D save icon or a PS1 game's animated VMC icon (see §9). |
 
 Elements are drawn in the order the theme declares them, with one exception: every `ItemText` is
@@ -352,13 +430,13 @@ Rules worth knowing:
 RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
 serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know (`devices=`,
 `reflection_offset`, `overlay2`, `plasma_blend_color`, the entire `favsMain*`, `vcdMain*`,
-`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`, `SaveIcon`) are skipped without
+`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`, `PSBBNFlow`, `SaveIcon`) are skipped without
 stopping the parse. What to expect there:
 
 - **Invisible:** all pure-key extras above — regular OPL renders the theme as if they weren't
   written.
 - **Cosmetic:** `aligned=2` renders centered; `#Size`/`#DiscType`/`#System` attributes and the
-  Coverflow carousel are silently absent.
+  Coverflow carousel and PSBBN Flow fan are silently absent.
 - **Ugly but harmless:** `devices=` layouts — regular OPL draws *every* `MenuIcon`/`HintText` block
   on *every* page (overlapping), and treats a second `ItemsList` as the apps list while still
   drawing it on the games screen. Per-device layouts are effectively RiptOPL-only.
@@ -576,14 +654,14 @@ Slots `favsVcdMain0`, `favsVcdMain1`, `favsVcdMain3`… are not declared here, s
 these carousels too.
 
 This example assumes a theme that already uses Coverflow. A `Coverflow` block in **any** family makes
-the whole theme a Coverflow theme: Left/Right steps through the list on every browse page and the
-Coverflow Settings menu appears. Adding one only to `favsVcdMain*` in a list-based theme therefore
+the whole theme use flow navigation: Left/Right steps through the list on every browse page. Adding one only to `favsVcdMain*` in a list-based theme therefore
 changes navigation on the device pages as well.
 
 ### Global Coverflow tuning (NOT in the theme)
 
-These live in **`settings_riptopl.cfg`** and are exposed in the **Coverflow Settings** menu (shown
-while a Coverflow theme is active). They apply to *any* Coverflow theme:
+These live in **`settings_riptopl.cfg`** and are exposed in the **Settings → Interface → Coverflow Settings** menu. These values apply to any `Coverflow`
+element, including one in a custom theme. They can be edited before selecting that theme.
+`PSBBNFlow` uses its own fixed layout and 25-frame animation:
 
 | Setting / key | Values | Effect |
 |---|---|---|
@@ -632,8 +710,9 @@ main19:
 	height=52
 ```
 
-Both built-in themes place one: `<OPL>` above the cover and `<Coverflow>` under the centre cover, and
-both between the two screenshots of the info page.
+The `<OPL>` and `<Coverflow>` built-ins place one: `<OPL>` above the cover and `<Coverflow>` under the centre cover, and
+both between the two screenshots of the info page. The built-in `<PSBBN Flow>` layout does not
+place a SaveIcon; custom PSBBN Flow themes can add the element.
 
 ---
 
@@ -647,5 +726,5 @@ both between the two screenshots of the info page.
 - Negative `x`/`y` and `POS_MID`/`DIM_INF` let you anchor to edges/center without hardcoding
   resolution-specific numbers.
 
-For a complete, working reference, open the bundled `<OPL>` and `<Coverflow>` themes and the
-`misc/conf_theme_OPL.cfg` / `misc/theme_coverflow.cfg` sources in the repository.
+For a complete, working reference, open the bundled `<OPL>`, `<Coverflow>` and `<PSBBN Flow>` themes and the
+`misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg` and `misc/theme_psbbn_flow.cfg` sources in the repository.
