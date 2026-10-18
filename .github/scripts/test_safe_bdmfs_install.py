@@ -62,6 +62,11 @@ assert all(len(entry['ref']) == 40 and len(entry['sha256']) == 64 for entry in l
 
 for path in (root / '.github/workflows').glob('*.yml'):
     source = path.read_text()
+    if path.name in ('korium-background-diagnostic.yml', 'korium-pr-test.yml'):
+        # These intentionally check out historical release/PR references. They
+        # must not inject new dependencies into an exact-source comparison.
+        assert 'python3 .github/scripts/install_safe_bdmfs.py' not in source
+        continue
     assert source.count('sh .github/scripts/install_coherent_mmce.sh') == source.count(
         'python3 .github/scripts/install_safe_bdmfs.py'), str(path)
 print('BDM installer: known source only, idempotence, failure preserves input, all build entry points pass')

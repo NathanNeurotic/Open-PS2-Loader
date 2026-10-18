@@ -45,7 +45,6 @@ jobs:
         working-directory: released-source
         run: |
           sh .github/scripts/install_coherent_mmce.sh
-          python3 .github/scripts/install_safe_bdmfs.py
           make clean
           make LOCALVERSION=KORIUM-BG-${{ matrix.variant }} RELEASE_CHANNEL=Korium REVISION=3608 release
           mkdir -p diagnostic-output
