@@ -196,6 +196,8 @@ int main(void) {
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <string.h>
 #define _l(x) "test"
 #define _STR_PS1_RA_USB_REQUIRED 0
 #define _STR_PS1_RA_REMOVE_PREVIOUS 0
@@ -204,6 +206,22 @@ int main(void) {
 #define _STR_PS1_RA_CLEAN_FAILED 0
 #define _STR_PS1_RA_CLEAN_CONTINUE 0
 static char vcdSep(const char *p) {(void)p;return '/';}
+static int forced_open_errno, forced_dopen_errno, forced_dread_errno;
+static int module_open(const char *p, int flags) {
+    if (forced_open_errno && strstr(p, "MODULE_9.IRX")) {errno=forced_open_errno;return -1;}
+    return open(p, flags);
+}
+static DIR *module_opendir(const char *p) {
+    if (forced_dopen_errno) {errno=forced_dopen_errno;return NULL;}
+    return opendir(p);
+}
+static struct dirent *module_readdir(DIR *dir) {
+    if (forced_dread_errno) {errno=forced_dread_errno;return NULL;}
+    return readdir(dir);
+}
+#define open module_open
+#define opendir module_opendir
+#define readdir module_readdir
 static int replies[3], replypos, fail_remove;
 static int module_unlink(const char *p) {if(fail_remove) {errno=EACCES;return -1;}return unlink(p);}
 #define unlink module_unlink
@@ -230,6 +248,34 @@ int main(void) {
     replies[0]=1;replies[1]=1;replypos=0;
     assert(vcdConfirmCleanLaunch("")==1 && access("POPS/MODULE_9.IRX",0)==0);
     fail_remove=0;assert(vcdRemoveRaModule("")==0);
+    /* FatFs's FR_NO_FILE reaches the EE as a non-ENOENT error, but the
+       directory is readable. No confirmation may be shown for absence. */
+    forced_open_errno=EINTR; /* Simulate raw -FR_NO_FILE (4). */
+    replies[0]=0;replypos=0;
+    assert(vcdRemoveRaModule("")==0);
+    assert(vcdConfirmCleanLaunch("")==1 && replypos==0);
+    /* A different ambiguous errno also needs independent absence proof. */
+    forced_open_errno=EIO;replypos=0;
+    assert(vcdConfirmCleanLaunch("")==1 && replypos==0);
+    /* Inaccessible directory / failed enumeration: never infer absence. */
+    forced_dopen_errno=EACCES;
+    assert(vcdRemoveRaModule("")==-2);
+    forced_dopen_errno=0;forced_dread_errno=EIO;
+    assert(vcdRemoveRaModule("")==-2);
+    forced_dread_errno=0;
+    /* Both user-owned and RiptOPL-owned files remain untouched when unreadable. */
+    f=fopen("POPS/MODULE_9.IRX","wb");fputs("user module",f);fclose(f);
+    assert(vcdRemoveRaModule("")==-2 && access("POPS/MODULE_9.IRX",0)==0);
+    replies[0]=0;replypos=0;
+    assert(vcdConfirmCleanLaunch("")==0 && replypos==1);
+    forced_open_errno=0;
+    assert(vcdRemoveRaModule("")==-1);
+    f=fopen("POPS/MODULE_9.IRX","wb");fputs("RIPTRA01",f);fclose(f);
+    forced_open_errno=EINTR;
+    assert(vcdRemoveRaModule("")==-2 && access("POPS/MODULE_9.IRX",0)==0);
+    forced_open_errno=0;
+    assert(vcdRemoveRaModule("")==0);
+    puts("PASS: absent FatFs module needs no warning; failures remain guarded; user and RA modules preserved");
     puts("PASS: user module preserved; owned module across read boundary; delete, continue anyway and cancel choices");
 }
 ''')
