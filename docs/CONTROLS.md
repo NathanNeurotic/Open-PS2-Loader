@@ -8,7 +8,7 @@ Two settings change what you read below, so check them first if the tables do no
   **Cross = confirm, Circle = back**, which is the default everywhere except **Japanese consoles**,
   where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your
   select button, swap those two everywhere, including the Settings screens.
-* **Coverflow** (*Settings → Interface*) rotates the navigation axis on the game list. Both layouts
+* **Coverflow and PSBBN Flow** (*Settings → Interface → Theme*) rotate the navigation axis on the game list. Both layouts
   are given below.
 
 ---
@@ -31,17 +31,20 @@ Two settings change what you read below, so check them first if the tables do no
 | **Start** | Open the main menu |
 | **Select** | Refresh the current device list |
 
-### With Coverflow enabled
+<a id="with-coverflow-enabled"></a>
 
-Coverflow rotates the two navigation axes on the game list — **and only there**. The info screen and
+### With Coverflow or PSBBN Flow selected
+
+Both flow themes rotate the two navigation axes on the game list — **and only there**. The info screen and
 every menu keep the standard layout.
 
-| Button | Coverflow off | Coverflow on |
+| Button | List theme, such as `<OPL>` | Coverflow / PSBBN Flow |
 |---|---|---|
 | **Up / Down** | Move through the list | Switch device page |
 | **Left / Right** | Switch device page | Move through the carousel |
 
-Every other button is unchanged.
+Every other button is unchanged, including **R3 = toggle Favorite**. PSBBN Flow is selected in the
+Theme picker; R3 does not switch displays. See [PSBBN Flow](THEME_ENGINE.md#psbbn-flow).
 
 ### Notes on individual buttons
 
