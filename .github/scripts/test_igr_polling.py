@@ -455,6 +455,26 @@ STANDARD_CHECKS = r'''
     CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT && nAlarm == 2,
           "combo stops rearming after the idle polling frame");
 
+    /* Re-arm failure inside the interrupt must wake a recovery worker too. */
+    armPad();
+    Pad_Data.combo_type = 0;
+    alarmHandler = NULL;
+    IGR_Poll_Alarm_ID = -1;
+    Install_IGR();
+    alarmFails = 1;
+    {
+        int before = nWake;
+        tickAlarm();
+        CHECK(IGR_Poll_Recovery == 1 && nWake == before + 1 &&
+              IGR_Poll_Alarm_ID < 0,
+              "an alarm callback rearm failure promotes and wakes the recovery worker");
+    }
+    tickCount = 0;
+    sleepsUntilCombo = 2;
+    IGR_PollUntilRequested();
+    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT && !IGR_Poll_Recovery,
+          "worker recovers from callback rearm failure and later detects the combo");
+
     /* Full alarm slots: promote the worker and recover without sleeping forever
        or busy-spinning at priority 0. */
     armPad();
