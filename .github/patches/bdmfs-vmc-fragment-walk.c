@@ -42,7 +42,7 @@ static int get_frag_list(FIL *file, void *rdata, unsigned int rdatalen)
             break;
 #if FF_FS_EXFAT
         case FS_EXFAT:
-            eof = 0x7FFFFFF8;
+            eof = 0x7FFFFFFF;
             break;
 #endif
         default:

@@ -85,6 +85,10 @@ int main(void) {
     reset(); file.obj.objsize=8*512; CHECK(get_frag_list(&file,NULL,0)<0);
     reset(); fs.fs_type=FS_EXFAT; no_fat_chain=1;
     CHECK(get_frag_list(&file,out,sizeof(out))==1 && out[0].count==24);
+    /* exFAT has one EOC marker; get_fat masks its high bit. */
+    reset(); fs.fs_type=FS_EXFAT; fat[4]=0x7FFFFFFF; CHECK(get_frag_list(&file,NULL,0)==1);
+    reset(); fs.fs_type=FS_EXFAT; fat[4]=0x7FFFFFF8; CHECK(get_frag_list(&file,NULL,0)<0);
+    reset(); fs.fs_type=FS_EXFAT; fat[4]=0x7FFFFFFE; CHECK(get_frag_list(&file,NULL,0)<0);
     reset(); fs.fs_type=FS_FAT12; fat[4]=0xFF8; CHECK(get_frag_list(&file,NULL,0)==1);
     reset(); fs.fs_type=FS_FAT16; fat[4]=0xFFF8; CHECK(get_frag_list(&file,NULL,0)==1);
     reset(); fs.fs_type=FS_FAT32; fat[4]=0x0FFFFFF8; CHECK(get_frag_list(&file,NULL,0)==1);
