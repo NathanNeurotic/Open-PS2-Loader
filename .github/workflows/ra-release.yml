@@ -26,6 +26,7 @@ on:
       - .github/scripts/install_coherent_mmce.sh
       - .github/scripts/install_safe_bdmfs.py
       - .github/patches/bdmfs-vmc-fragment-walk.c
+      - .github/patches/bdmfs-vmc-sources.json
       - third_party/orbit-neutrino/**
       - pc/xeRAbora.url
 

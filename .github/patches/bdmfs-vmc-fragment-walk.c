@@ -3,7 +3,7 @@
  */
 static int get_frag_list(FIL *file, void *rdata, unsigned int rdatalen)
 {
-    bd_fragment_t *f = (bd_fragment_t*)rdata;
+    bd_fragment_t *f = (bd_fragment_t *)rdata;
     int iMaxFragments = rdatalen / sizeof(bd_fragment_t);
     int iFragCount = 0;
     FATFS *fs;
@@ -31,13 +31,22 @@ static int get_frag_list(FIL *file, void *rdata, unsigned int rdatalen)
         return -EIO;
 
     switch (fs->fs_type) {
-        case FS_FAT12: eof = 0xFF8; break;
-        case FS_FAT16: eof = 0xFFF8; break;
-        case FS_FAT32: eof = 0x0FFFFFF8; break;
+        case FS_FAT12:
+            eof = 0xFF8;
+            break;
+        case FS_FAT16:
+            eof = 0xFFF8;
+            break;
+        case FS_FAT32:
+            eof = 0x0FFFFFF8;
+            break;
 #if FF_FS_EXFAT
-        case FS_EXFAT: eof = 0x7FFFFFF8; break;
+        case FS_EXFAT:
+            eof = 0x7FFFFFF8;
+            break;
 #endif
-        default: return -EINVAL;
+        default:
+            return -EINVAL;
     }
 
     bd = fatfs_fs_driver_get_mounted_bd_from_index(fs->pdrv);
@@ -71,7 +80,7 @@ static int get_frag_list(FIL *file, void *rdata, unsigned int rdatalen)
                 if (count > 0xFFFFFFFF)
                     return -EOVERFLOW;
                 f[iFragCount].sector = sector;
-                f[iFragCount].count  = count;
+                f[iFragCount].count = count;
                 DEBUG_U64_2XU32(sector);
                 M_DEBUG(" - sectors: 0x%08x%08x count %u\n", sector_u32[1], sector_u32[0], f[iFragCount].count);
             }
