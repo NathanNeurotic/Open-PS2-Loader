@@ -178,6 +178,15 @@ static int IGR_Thread_ID = -1;
 static int IGR_Intc_ID = -1;
 static volatile int IGR_Poll_Alarm_ID = -1, IGR_Poll_Recovery;
 static volatile unsigned int IGR_Poll_Generation = 1;
+static int IGR_Request_Sema = -1;
+typedef struct { int count, max_count, init_count, wait_threads; u32 attr, option; } ee_sema_t;
+static int semaFailures, semaCreates;
+static int CreateSema(ee_sema_t *p) {
+    semaCreates++;
+    if (p->init_count != 0 || p->max_count != 1) return -1;
+    if (semaFailures) { semaFailures--; return -1; }
+    return 3;
+}
 static u8 IGR_Stack[IGR_STACK_SIZE];
 static void *_gp;
 
@@ -271,6 +280,8 @@ static void SleepThread(void)
 }
 static void nopdelay(void) { nNop++; }
 static void iWakeupThread(int id) { nWake++; lastWake = id; }
+static void iSignalSema(int id) { (void)id; nWake++; lastWake = IGR_Thread_ID; }
+static void WaitSema(int id) { (void)id; SleepThread(); }
 static void WakeupThread(int id) { nWake++; lastWake = id; }
 static void ChangeThreadPriority(int id, int prio) { nPrio++; lastPrioThread = id; lastPrio = prio; }
 static void ResetEE(u32 bits) { nResetEE++; lastResetEE = bits; }
@@ -336,6 +347,12 @@ int main(void)
 {
     (void)RA_OnVblank;
 
+#ifndef IGR_VBLANK_HANDLER
+    semaFailures = 1;
+    Install_IGR();
+    CHECK(IGR_Request_Sema < 0 && nCreate == 0 && nAlarm == 0,
+          "failed request semaphore never starts an unwakeable worker or sampler");
+#endif
     createFailures = 1;
     Install_IGR();
     CHECK(IGR_Thread_ID < 0 && nCreate == 1 && nStart == 0, "a failed CreateThread stays retryable");
@@ -355,6 +372,10 @@ int main(void)
           lastCreatedThread.attr == 0 && lastCreatedThread.option == 0 &&
           lastCreatedThread.initial_priority == 127,
           "IGR CreateThread receives a fully initialized kernel structure");
+#ifndef IGR_VBLANK_HANDLER
+    CHECK(semaCreates == 2 && IGR_Request_Sema == 3,
+          "semaphore allocation retries once and is reused across worker retries and pad opens");
+#endif
 
     armPad();
     Power_Button.press = 1;
@@ -577,7 +598,7 @@ STANDARD_CHECKS = r'''
         Reset_Padhook();
         inSyscall = 0;
         CHECK(nRelease == oldRelease + 1 && IGR_Poll_Alarm_ID == -1 &&
-              IGR_Thread_ID == -1 && !IGR_Poll_Recovery,
+              IGR_Thread_ID == -1 && IGR_Request_Sema == -1 && !IGR_Poll_Recovery,
               "ExecPS2 invalidates the old alarm generation even if cancel fails");
         Pad_Data.combo_type = 0;
         Install_IGR();
