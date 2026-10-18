@@ -7,7 +7,7 @@ handler: RA_OnVblank's snapshot DMA (isceSifSetDma) and unlock overlay are inter
 that must run every frame. Mode 6 instead has a snapshot-only handler with no IGR worker.
 
 This compiles the real padhook.c functions twice -- standard and RA -- against kernel stubs and
-checks: timer installation and worker starvation, pad/power detection, alarm-slot recovery,
+checks: timer installation and worker starvation, pad/power detection, pad-hook alarm retry,
 no VBLANK handler on standard builds, and once-only shutdown preparation (priority, DMA/GS,
 ResetEE, suspension) with thread-context calls on one path and i* calls on the other.
 """
@@ -171,7 +171,7 @@ static void *_gp;
 
 /* Kernel stubs: every call is counted so the test can say exactly what ran. */
 static int nAlarm, alarmFails, nSleep, nNop, nWake, lastWake, nPrio, lastPrioThread = -1, lastPrio = -1;
-static int nRelease, tickCount;
+static int nRelease, releaseFails, tickCount;
 static int nResetEE, lastResetEE, nSuspend, nISuspend, nIResetEE, nIPrio, nIWake, nCreate, nStart, nDelete;
 static int createFailures, startFailures;
 static ee_thread_t lastCreatedThread;
@@ -202,6 +202,10 @@ static s32 ReleaseAlarm(s32 alarm_id)
 {
     (void)alarm_id;
     nRelease++;
+    if (releaseFails > 0) {
+        releaseFails--;
+        return -1; /* kernel refuses cancellation of a triggered alarm */
+    }
     alarmHandler = NULL;
     return 0;
 }
@@ -235,9 +239,9 @@ static void SleepThread(void)
     nSleep++;
     /* This emulates a blocked worker: alarms fire, but the worker cannot run
        until requested to shut down or asked to recover an allocation failure. */
-    for (k = 0; k < 150 && !Pad_Data.combo_type && !IGR_Poll_Recovery; k++)
+    for (k = 0; k < 150 && !Pad_Data.combo_type; k++)
         tickAlarm();
-    if (!Pad_Data.combo_type && !IGR_Poll_Recovery) {
+    if (!Pad_Data.combo_type) {
         printf("FAIL alarm never woke worker after 150 frames\\n");
         Pad_Data.combo_type = IGR_COMBO_START_SELECT; /* keep harness bounded */
     }
@@ -455,43 +459,57 @@ STANDARD_CHECKS = r'''
     CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT && nAlarm == 2,
           "combo stops rearming after the idle polling frame");
 
-    /* Re-arm failure inside the interrupt must wake a recovery worker too. */
+    /* Initial alarm allocation can fail when all timer slots are occupied.
+       Retry on a later game pad-open, not from a potentially starved worker. */
     armPad();
     Pad_Data.combo_type = 0;
+    padBuf[112] = IGR_PAD_STABLE_V1;
+    padBuf[3] = padBuf[2] = 0;
+    alarmHandler = NULL;
+    IGR_Poll_Alarm_ID = -1;
+    IGR_Poll_Recovery = 0;
+    nAlarm = nSleep = nNop = 0;
+    alarmFails = 1;
+    {
+        int oldWake = nWake, oldPrio = nPrio;
+        Install_IGR();
+        CHECK(IGR_Poll_Recovery && IGR_Poll_Alarm_ID < 0 &&
+              nWake == oldWake && nPrio == oldPrio && nNop == 0,
+              "alarm-full case never wakes or spins a priority-0 fallback worker");
+    }
+    Install_IGR();
+    CHECK(!IGR_Poll_Recovery && IGR_Poll_Alarm_ID >= 0 && nAlarm == 2,
+          "next pad hook retries registering the sampling alarm");
+    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
+    padBuf[2] = IGR_COMBO_START_SELECT;
+    tickAlarm();
+    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
+          "alarm retry detects a real combo without polling worker execution");
+
+    /* Forced failure in the interrupt rearm path uses the same safe retry. */
+    armPad();
+    Pad_Data.combo_type = 0;
+    padBuf[112] = IGR_PAD_STABLE_V1;
+    padBuf[3] = padBuf[2] = 0;
     alarmHandler = NULL;
     IGR_Poll_Alarm_ID = -1;
     Install_IGR();
     alarmFails = 1;
     {
-        int before = nWake;
+        int oldWake = nWake;
         tickAlarm();
-        CHECK(IGR_Poll_Recovery == 1 && nWake == before + 1 &&
-              IGR_Poll_Alarm_ID < 0,
-              "an alarm callback rearm failure promotes and wakes the recovery worker");
+        CHECK(IGR_Poll_Recovery && IGR_Poll_Alarm_ID < 0 &&
+              nWake == oldWake && !alarmHandler,
+              "rearm failure neither wakes a spinning worker nor leaves an invalid alarm");
     }
-    tickCount = 0;
-    sleepsUntilCombo = 2;
-    IGR_PollUntilRequested();
-    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT && !IGR_Poll_Recovery,
-          "worker recovers from callback rearm failure and later detects the combo");
-
-    /* Full alarm slots: promote the worker and recover without sleeping forever
-       or busy-spinning at priority 0. */
-    armPad();
-    Pad_Data.combo_type = 0;
-    alarmHandler = NULL;
-    IGR_Poll_Alarm_ID = -1;
-    nAlarm = nSleep = nNop = tickCount = 0;
-    alarmFails = 2;
-    sleepsUntilCombo = 2;
     Install_IGR();
-    CHECK(IGR_Poll_Recovery == 1 && IGR_Poll_Alarm_ID < 0,
-          "initial SetAlarm failure hands scheduling back to worker");
-    IGR_PollUntilRequested();
-    CHECK(nNop == 1 && nSleep == 1 && !IGR_Poll_Recovery,
-          "worker retries a full alarm table and eventually sleeps with an armed timer");
+    CHECK(!IGR_Poll_Recovery && IGR_Poll_Alarm_ID >= 0,
+          "later pad-open repairs a failed interrupt rearm");
+    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
+    padBuf[2] = IGR_COMBO_START_SELECT;
+    tickAlarm();
     CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
-          "recovered timer detects controller input");
+          "retried interrupt rearm detects the combo");
 
     /* Physical power button remains sampled even with no live pad buffer. */
     Pad_Data.combo_type = 0;
@@ -510,17 +528,37 @@ STANDARD_CHECKS = r'''
     CHECK(tickCount >= 50 && nSleep == 1,
           "blocked worker waits while alarm samples every frame");
 
-    /* ExecPS2 must release the previous game's still-active alarm. */
+    /* The alarm dispatcher may have started when ExecPS2 tries to cancel.
+       Its stale callback must not corrupt a newly installed worker's state. */
     Pad_Data.combo_type = 0;
     alarmHandler = NULL;
     IGR_Poll_Alarm_ID = -1;
     Install_IGR();
     {
-        int before = nRelease;
+        void (*oldCallback)(s32, u16, void *) = alarmHandler;
+        void *oldCommon = alarmCommon;
+        int oldRelease = nRelease;
+        int beforeWake, newId;
+        releaseFails = 1;
         Reset_Padhook();
-        CHECK(nRelease == before + 1 && IGR_Poll_Alarm_ID == -1 &&
+        CHECK(nRelease == oldRelease + 1 && IGR_Poll_Alarm_ID == -1 &&
               IGR_Thread_ID == -1 && !IGR_Poll_Recovery,
-              "ExecPS2 reset releases the old alarm and clears worker state");
+              "ExecPS2 invalidates the old alarm generation even if cancel fails");
+        Pad_Data.combo_type = 0;
+        Install_IGR();
+        newId = IGR_Poll_Alarm_ID;
+        beforeWake = nWake;
+        armPad();
+        padBuf[112] = IGR_PAD_STABLE_V1;
+        padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
+        padBuf[2] = IGR_COMBO_START_SELECT;
+        oldCallback(1, 256, oldCommon);
+        CHECK(Pad_Data.combo_type == 0 && IGR_Poll_Alarm_ID == newId &&
+              nWake == beforeWake,
+              "stale callback cannot sample pad or invalidate the new alarm");
+        tickAlarm();
+        CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
+              "new generation still receives valid alarm callbacks");
     }
 '''
 
