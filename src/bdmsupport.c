@@ -2173,7 +2173,7 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, neutrino_vmc_args_t *vmc
 
                     if (gAutoLaunchBDMGame == NULL && guiIsActive()) {
                         char error[256];
-                        snprintf(error, sizeof(error), _l(_STR_ERR_VMC_FRAGMENTED_CONTINUE), vmcName, (i + 1));
+                        snprintf(error, sizeof(error), _l(_STR_NEUTRINO_VMC_FRAG_BUDGET_CONTINUE), total, NEUTRINO_BDM_MAX_FRAGS, vmcName, (i + 1));
                         if (!guiMsgBox(error, 1, NULL))
                             return -1; // Abort launch to menu
                     }

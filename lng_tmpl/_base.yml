@@ -1886,3 +1886,6 @@ gui_strings:
 # DVR backend arguments are supplied by the loader.
 - label: NEUTRINO_DVR_BACKEND_OVERRIDE
   string: "DVR launch selects its own backend. Remove -bsd= and -bsdfs= from global and per-game Neutrino arguments."
+
+- label: NEUTRINO_VMC_FRAG_BUDGET_CONTINUE
+  string: "Game and VMC files use %d/%d fragments, exceeding Neutrino's shared limit. Skip VMC %s and use the physical Memory Card in slot %d?"
