@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <errno.h>  // errno/ENOENT in the absent-vs-contended split, mirroring vcdScanOpenDir
 #include <malloc.h> // memalign -- the published list matches sbReadList's alignment
+#include <sys/stat.h>
 
 #include "include/opl.h"        // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like vcdsupport.c
 #include "include/ioman.h"      // LOG
@@ -157,6 +158,16 @@ static int cueEntryIsGame(const char *devPrefix, const char *gamesDir, const str
     if (d == NULL) {
         if (errno == 0 || errno == ENOENT || errno == ENOTDIR || errno == EPERM)
             return 0;
+        // BDM FatFs returns -FR_NO_PATH for a regular file, without translating
+        // FRESULT to errno. FR_NO_PATH == 5 becomes EIO in newlib, so one loose
+        // readme/metadata file could discard every Ember row. Confirm the entry
+        // is a file rather than treating EIO itself as harmless: a real folder
+        // read failure must still preserve the last-good list and allow retry.
+        int openError = errno;
+        struct stat st;
+        if (stat(probe, &st) == 0 && S_ISREG(st.st_mode))
+            return 0;
+        errno = openError;
         LOG("[CUE] cannot open '%s' (errno %d)\n", probe, errno);
         return -1;
     }
