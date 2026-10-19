@@ -20,9 +20,9 @@ Neutrino's BDM mapper supports multiple extents and shares a 64-fragment budget 
 
 Report card size/path, PS2 model, exact build, device, filesystem, VMC/PADEMU state, error text, and whether the same unchanged file works after restart. An already expanded Custom ELF path from older config save behavior must be re-entered after updating; repeated save/reload should preserve it after #885.
 
-For confirmed source defects and validation limits, see [the creation/cancellation audit](VMC-AUDIT-2026-10-08.md). [PR #889](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/889) addresses a semaphore leak after failed writes and core-aware creation warnings. Console and device-specific validation remains separate from build and host-test results.
+For historical source defects and validation limits, see [the creation/cancellation audit](VMC-AUDIT-2026-10-08.md). The fixes in [PR #889](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/889) for a semaphore leak and core-aware creation warnings are merged. Console and device-specific validation remains separate from build and host-test results.
 
-## New native BDM cards: contiguous reservation candidate
+## New native BDM cards: contiguous reservation
 
 Native BDM creation requests a private versioned capability from the bundled FAT driver before opening a destination. The driver must return the exact positive version token; an old driver's zero/default response is not success. The destination is opened exclusively as a new file, without truncation. A file that appears after the menu's absence check is preserved.
 
@@ -30,4 +30,4 @@ The driver enables FatFs `f_expand` and reserves the complete card allocation be
 
 This policy applies to native BDM card creation, including Favorites and automatic creation. Neutrino and non-BDM sources retain their existing allocation behavior. Existing cards are reused or rejected by the existing checks and are never relocated/reformatted by the allocation request. Unsupported drivers, unsupported sector sizes and unavailable contiguous space fail explicitly. Reservation and filesystem I/O can delay cancellation; power-loss recovery and damaged-media behavior require separate validation.
 
-This is a separately reviewed allocation change. Host fault injection, disposable FAT32/exFAT image tests and native builds do not establish real-console save, reboot and load acceptance. The image fixture uses the pinned FatFs, runs the actual genvmc formatter and verifies its superblock/root directory across remount, also writes and reads every byte of a synthetic card, verifies create-new collision refusal, and rejects reservation when fragmented free space has no large enough contiguous run.
+This allocation path was merged in [PR #994](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/994). Host fault injection, disposable FAT32/exFAT image tests and native builds do not establish real-console save, reboot and load acceptance. The image fixture uses the pinned FatFs, runs the actual genvmc formatter and verifies its superblock/root directory across remount, also writes and reads every byte of a synthetic card, verifies create-new collision refusal, and rejects reservation when fragmented free space has no large enough contiguous run.

@@ -1,3 +1,7 @@
+> **Historical engineering record.** This file records its dated implementation or audit baseline.
+> Status, package names and instructions below may be superseded. Use [DOCUMENTATION-AUDIT-2026-10.md](DOCUMENTATION-AUDIT-2026-10.md)
+> for the current reference; do not treat old DONE/pending entries as a new hardware result.
+
 # Documentation gap index
 
 Working checklist of features that exist in RiptOPL but are **not explained** to users, across both

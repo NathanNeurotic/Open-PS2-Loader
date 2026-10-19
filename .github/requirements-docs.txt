@@ -1,0 +1,3 @@
+beautifulsoup4==4.15.0
+markdownify==1.2.0
+markdown-it-py==4.0.0

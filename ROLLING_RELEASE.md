@@ -7,6 +7,11 @@ intentionally owns GitHub's **Latest** marker. The publishing branch is `rebuild
 rebuild. `master` is the OLD LINEAGE and is no longer wired to the release workflow at all: a
 push to it builds nothing and publishes nothing.
 
+The [Korium channel](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium)
+uses the standard package shape with a `-Korium` suffix. Both standard editions install
+`APP_RIPTOPL`; choosing another edition replaces that app. The dedicated RA channel below
+uses `APP_RIPTOPL-RA`. Preserved snapshots can retain older asset names.
+
 ## What the rolling release contains
 
 Every push to the publishing branch rebuilds and republishes the `rolling` release. The headline
@@ -172,8 +177,7 @@ This workflow is the **single** place release packaging lives. The pushed ref pi
   source snapshot, VARIANTS archive, and DEBUG/language archives when produced, with the same
   best-effort flavour rules — so the two channels cannot drift into different package formats.
 
-`compilation.yml` no longer cuts releases (its release step is retired); it only runs CI +
-uploads run artifacts. Per-ref `concurrency` keeps a `rebuild/main` push and a tag release from
+`flavours.yml` builds CI loaders and uploads run artifacts; it does not publish releases. Per-ref `concurrency` keeps a `rebuild/main` push and a tag release from
 cancelling each other.
 
 ## Not a stable release

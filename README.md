@@ -1,11 +1,11 @@
 
-<p align="center"><a href="#"><img alt="RiptOPL" src="https://raw.githubusercontent.com/NathanNeurotic/Open-PS2-Loader/rebuild/main/docs/assets/riptopl.png" /></p></a>
+<p align="center"><img alt="RiptOPL" src="docs/assets/riptopl.png" /></p>
 
 <p align="center">
-  <a href="#"><img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" /></p></a>
+  <img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" />
 </p>
 
-> **Our daughter project: [RIPPS2](https://github.com/akilluminati47/RIPPS2) by Akilluminati47.** It is a PS2-inspired front end with a [web-theme beta](https://akilluminati47.github.io/RIPPS2/) available now. A custom OPL theme and `RIPPS2.elf` are planned next; the project is still alpha, but we recommend it as an alternative with features intended to be on par with RiptOPL.
+> **Our daughter project: [RIPPS2](https://github.com/akilluminati47/RIPPS2) by Akilluminati47.** A RiptOPL-derived PS2 frontend with a downloadable ELF and a [web demo](https://akilluminati47.github.io/RIPPS2/). Use [its releases](https://github.com/akilluminati47/RIPPS2/releases) for current builds and its own compatibility notes.
 
 > **Planned collaboration: ps2build C++ edition.** A ps2build C++ edition is planned in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**.
 
@@ -73,89 +73,39 @@ Review the LICENSE file for further details.<br><br>
 
 ## Contents
 
-[Releases](#releases) · [Quick Start](#quick-start) · [Sources and cores](#introduction) ·
+[Documentation index](docs/README.md) · [Releases](#releases) · [Quick Start](#quick-start) · [Sources and cores](#introduction) ·
 [Features](#major-features-overview) · [Fork additions](#this-forks-additions) ·
 [PS1](#ps1-games-two-cores-one-list) · [HTTP](docs/HTTP.md) · [RetroAchievements](docs/RETROACHIEVEMENTS.md) ·
 [Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [PADEMU](docs/PADEMU.md) ·
 [Interface](docs/INTERFACE.md) · [Japanese/Unicode game titles](docs/UNICODE-GAME-TITLES.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
-[SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD](#nbd-server) ·
+[SMB](#smb) · [HDD](#hdd) · [Cheats](#cheats) · [NBD](#nbd-server) ·
 [ZSO](#zso-format) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
 [Companion tools](#external-tools--services) · [Credits](#acknowledgements)
 
 ## Releases
 
-RiptOPL ships **one full-feature build** — GSM video-mode handling (including 1080p), DS3/DS4 pad
-emulation (PADEMU), VMC, PS2RD cheats and parental controls are all included in the
-standard ELF (no upstream-style per-feature variants). The two upstream `EXTRA_FEATURES`
-extras — in-game screenshots (IGS) and right-to-left (RTL) language support — are **not**
-compiled into any published main ELF (`EXTRA_FEATURES ?= 0`); they ship in the
-`EXTRA_FEATURES=1` builds inside the VARIANTS zip.
-DualSense / DualShock 5 (USB) support is available prebuilt in the `RIPTOPL-VARIANTS-*.zip`
-bundle, or build your own with `make DUALSENSE=1`.
+Choose a complete install kit for a first installation. Use a loose ELF only to update an
+existing installation; it does not update Neutrino, Ember or POPSTARTER support files.
 
-**RetroAchievements** has its own [single release channel](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra), containing both **inceBtion** and **Korium** themes. Choose `RIPTOPL-RetroAchievements-inceBtion-<version>.zip` or `RIPTOPL-RetroAchievements-Korium-<version>.zip` (or build it with
-`make RETROACHIEVEMENTS=1`). It is laid out like the main archive — same `POPS/`, `EMBER/`,
-`neutrino/` and shortcuts — with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/` files and
-`APP_RIPTOPL-RA.psu` in place of the standard app, plus a shortcut to
-**xeRAbora**, the PC client the feature talks to. It is a **development build, not a finished
-feature** — telemetry has run end to end on one real console, launched from MMCE and USB
-(oMrRexD, #702–#705), but most launch paths and edge cases are still unvalidated — and the standard
-ELF is completely unaffected by it. See
-**[docs/RETROACHIEVEMENTS.md](docs/RETROACHIEVEMENTS.md)** for what it does, which launch paths can
-ever support it, and why.
-
-Choose the current development build or a preserved snapshot:
-
-| Channel | What it is |
+| Channel | Contents and purpose |
 | --- | --- |
-| **[Rolling (Latest)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling)** | Updated from `rebuild/main` by successful publishing runs. A full, non-pre-release GitHub release that remains a **development build**, with compatibility depending on the game and hardware. |
-| **[RetroAchievements (both themes)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)** | Separate experimental release with inceBtion and Korium kits, ELF updates and PSU saves. It never replaces standard Rolling as Latest. |
-| **[Current Fan Favorite Build](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite)** | A preserved development snapshot selected after positive user feedback. Use it as a fixed comparison point; it is not a universal compatibility guarantee. |
+| [Rolling — inceBtion](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling) | Current standard development build from `rebuild/main`; GitHub Latest. Start with `RIPTOPL-<version>.zip`. |
+| [Rolling — Korium](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium) | Standard build with the Korium theme, in `RIPTOPL-<version>-Korium.zip`. |
+| [RetroAchievements — both themes](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) | Experimental RA kits: `RIPTOPL-RetroAchievements-inceBtion-<version>.zip` or `RIPTOPL-RetroAchievements-Korium-<version>.zip`. Read the [RA setup and validation limits](docs/RETROACHIEVEMENTS.md). |
+| [Current Fan Favorite](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite) | Preserved development snapshot for comparisons; its older package names and feature set can differ. |
 
-Download the **normal installable package**, `RIPTOPL-<version>.zip`. Separate archives serve
-different purposes: `RetroAchievements` for the experimental achievements loader, `VARIANTS` for alternate
-configurations including DualSense, `DEBUG` for diagnostics, `LANGS` for translations, and `src`
-for the exact source snapshot. Optional archives or SDK flavours can be omitted; read the release notes.
+These are development builds. A release's title, publication date or GitHub Latest marker does
+not establish console compatibility. Check its version, source revision and available assets.
 
-The standard and RetroAchievements ZIPs each contain a ready app under `APPS/`, matching `ART/`
-files, `POPS/`, `EMBER/`, `neutrino/`, companion shortcuts and a `.psu` memory-card save. The
-standard app is `APP_RIPTOPL` with `RIPTOPL.ELF`; the RA app is `APP_RIPTOPL-RA` with
-`RIPTOPL-RA.ELF`. Each PSU contains only the direct files in its app folder. Install the other
-folders separately where you use those features. A release fails packaging if a required
-Neutrino bundle is unavailable.
+The standard ELF includes GSM, VMC, PS2RD cheats, parental controls and DS3/DS4 PADEMU.
+Optional DualSense USB and IGS/RTL builds are in `RIPTOPL-VARIANTS-*.zip` when produced.
+The ready app and loose `RIPTOPL.ELF` prefer OFFICIALROLLING; pinned comparison apps are inside
+the full kit. Both standard editions install `APP_RIPTOPL`, so switching editions replaces
+that app. RA uses the separate `APP_RIPTOPL-RA` name; its two themes replace that same RA app.
 
-**Already have RiptOPL installed?** The rolling release carries a loose loader asset,
-`RIPTOPL.ELF`, for exactly that case: download it and overwrite the `RIPTOPL.ELF` you already have. Its name never changes, so
-<https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a
-permanent link. It is the `-OFFICIALROLLING` flavour, and it is not a first install — the bare loader
-does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files.
-
-The [RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)
-offers `RIPTOPL-RA-inceBtion.ELF` and `RIPTOPL-RA-Korium.ELF`. Rename the selected update to
-`RIPTOPL-RA.ELF` when replacing `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`. Its standalone saves are
-`APP_RIPTOPL-RA-inceBtion.psu` and `APP_RIPTOPL-RA-Korium.psu`. Both import into `APP_RIPTOPL-RA`;
-installing the other theme replaces that app. Each full kit includes the same pinned ORBIT runtime.
-Standard Rolling and Korium releases contain standard builds only. Historical tagged downloads remain
-available. RA publication requires both themes from one source revision; failure preserves the previous
-RA release without blocking standard publication.
-
-The workflow can also publish `v*` tags, but no such stable release is currently offered here.
-
-
-See **[ROLLING_RELEASE.md](ROLLING_RELEASE.md)** for exactly what the rolling release
-contains and how to pull it.
-
-> **Which rolling build?** The rolling zip ships four loader ELFs that differ only by build
-> toolchain — the RiptOPL code in each is identical. Start with a pinned SDK for reproducible comparisons:
-> 1. **`APP_RIPTOPL-PS2DEVPINNED/`** (`-PS2DEVPINNED`) — **recommended primary download.** Built on the
->    `ps2dev/ps2dev` SDK pinned by image digest for reproducible toolchain selection; pinning alone does not prove hardware compatibility.
-> 2. **`APP_RIPTOPL-OFFICIALPINNED/`** (`-OFFICIALPINNED`) — **recommended official pin.** Built on the
->    `ps2homebrew/ps2homebrew` official SDK, pinned by image digest.
-> 3. **`APP_RIPTOPL-PS2DEVROLLING/`** (`-PS2DEVROLLING`) — **bleeding-edge canary.** Tracks `ps2dev/ps2dev:latest`.
-> 4. **`APP_RIPTOPL-OFFICIALROLLING/`** (`-OFFICIALROLLING`) — **bleeding-edge official canary.** Tracks `ps2homebrew:main`.
-> See [Which build should I use?](ROLLING_RELEASE.md#which-build-should-i-use).
-
-> Older published builds may be available in the [MEGA archive](#opl-archive).
+[ROLLING_RELEASE.md](ROLLING_RELEASE.md) is the package, build-flavour and publishing reference.
+[Installation](https://nathanneurotic.github.io/Open-PS2-Loader/install.html) covers app folders,
+PSU imports and companion placement. [Test builds](docs/TEST-BUILDS.md) covers PR artifacts.
 
 ## Quick Start
 
@@ -237,331 +187,52 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 
 ### This Fork's Additions
 
-This build layers several features on top of upstream OPL:
+| Feature | Setup and detailed behavior |
+| --- | --- |
+| Optional built-in `<Coverflow>` and `<PSBBN Flow>` themes | Select under Interface → Theme. Left/Right browse, Up/Down change sources, R3 toggles Favorites. [Theme Engine](docs/THEME_ENGINE.md) includes layout, reflection, animation and per-device placement. |
+| Favorites across devices | Enable Favorites under Game Sources; R3 stars a game or app. L3 cycles PS2 → PS1 → ELF → All in One independently of device display modes. [Favorites guide](https://nathanneurotic.github.io/Open-PS2-Loader/favourites.html). |
+| External Neutrino core per PS2 game | Complete runtime installation, path aliases, video, cheats, VMC and argument precedence: [Neutrino](docs/NEUTRINO.md). |
+| Network libraries | SMB and HTTP use OPL's core; UDPFS/UDPBD require Neutrino. Choose Network Connectivity in Game Sources and Protocol on Game Sources or Network. [Network boot](https://nathanneurotic.github.io/Open-PS2-Loader/network-boot.html), [HTTP](docs/HTTP.md). |
+| Folder browsing, Apps/PS1ELF split and menu audio | [Interface behavior](docs/INTERFACE.md), [Apps](#apps) and [controls](docs/CONTROLS.md). |
+| Artwork archives, disc/logo art and optional 3D save icons | [Theme Engine](docs/THEME_ENGINE.md). Save-icon rendering still requires hardware validation. |
+| Fresh-start defaults and separate master settings | Built-in `<OPL>`, 4:3, Auto menu video, artwork/notifications on, audio off. [Defaults](docs/DEFAULTS.md) and [file locations](#where-your-files-live). |
+| Per-game parental locks | Password prompts also apply to Favorites and remembered launches. [Parental lock](docs/PARENTAL-LOCK.md). |
+| Experimental special hardware | [PC CARD CF](docs/PC-CARD-CF.md) and [PSX DESR DVR](docs/DESR-DVR.md); both opt-in and awaiting console validation. |
 
-- **`<Coverflow>` theme (optional built-in):** a centered cover-art carousel for
-  the game/app list, with an alpha-faded reflection, animated scrolling, a configurable
-  cover count, and aspect-correct covers in both 4:3 and widescreen. Tune it live under
-  **Settings → Interface → Coverflow Settings**. Authoring details
-  and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
-- **`<PSBBN Flow>` theme (optional built-in):** dnunezx's Collection display adapted from
-  [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) in
-  [#977](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977), with a large focal cover on the
-  right, a diminishing left tail and a 25-frame cubic glide. Select it through the same Theme picker.
-  It uses ordinary `ART/<startup>_COV` art and native game lists, folders, Favorites and launch actions.
-  Left/Right browse covers, Up/Down change sources, and R3 toggles favorites. Its fixed layout and
-  animation are independent of the Coverflow tuning settings. See [PSBBN Flow](docs/THEME_ENGINE.md#psbbn-flow).
-- **Per-device theme placement (`devices=`):** themes can position the device icon, the games
-  list and the button hints **differently per device page** (e.g. pin the MMCE icon top-right
-  while every other page keeps the shared spot). Add `devices=usb,hdd,…` to a `MenuIcon`,
-  `ItemsList` or `HintText` block; the unfiltered element automatically stands down on the pages
-  a filtered one covers. Existing themes are untouched. See
-  **[Theme Engine reference §5](docs/THEME_ENGINE.md#per-device-placement-devices--this-fork)**.
-- **Cover-art `.tar` archive (opt-in):** keep all of a device's covers in a single uncompressed
-  **`ART/art.tar`** (entries named `<GAMEID>_<suffix>.png`; VCD entries first use the filename without
-  `.VCD`, or the displayed `PP.<name>` / `__.<name>` install name, then fall back to a parsed PS1 ID)
-  instead of thousands of loose files.
-  Enable **Cover Art .tar Archive** under **Interface → Artwork Settings** (default **off**); when on, each
-  cover is read from the archive and *falls back to the loose `.png`* when it isn't there, so the
-  two coexist. A small `art_cache.bin` index written beside the archive lets later boots skip the
-  re-scan. The format matches wOPL/sOPL art packs, so existing `.tar` packs work unchanged.
-- **3D save icons (opt-in, not yet hardware-tested):** turn on **3D Save Icons** under **Interface →
-  Artwork Settings** (default **off**) and the selected PS2 game's own save icon spins next to its
-  cover, animated and lit the way the PS2 browser shows it. It is read from the game's per-game VMC
-  when it has one, otherwise from the newest save on the memory cards. The `<OPL>` and `<Coverflow>` built-ins show it; `<PSBBN Flow>` leaves it out by default;
-  other themes add a `SaveIcon` element
-  (**[Theme Engine reference §9](docs/THEME_ENGINE.md#9-the-saveicon-element-this-fork)**).
-- **Favorites tab:** press **R3** on any game to star it; a virtual **Favorites** page
-  (alongside the device tabs, switched on in **Game Sources**) gathers your starred games
-  from every device into one list, and a star marks favorited titles everywhere. Favorites
-  are stored in a shared `favourites.bin`, and RiptOPL will **import an existing uOPL / wOPL
-  `favourites.bin` file** if it finds one. This is a **one-way import**: the next favorites write replaces that file with RiptOPL’s `OFAV` format, which those loaders cannot read back. Keep a copy of the original if you also use them.
-  Favorites always has its own independent **L3** ring: **PS2 → PS1 → ELF → All in One**, opening
-  on **PS2** until you move it. The selected row's real type controls its actions and launcher even
-  in All in One; the global device-game display setting does not pin or disable this page. In the
-  mixed **All in One** shelf each row's cover is drawn at its **own** media's size — PS2 cases stay
-  portrait while PS1 cases and app boxes stay square — instead of one shape being stretched onto
-  all three.
-- **Optional APPS / PS1ELF split:** **APPS Display** defaults to **Mixed**, with every configured
-  ELF in one list and L3 inert. Choose **Apps / PS1ELF (L3)** to move entries whose displayed title
-  contains **`[PS1]`** (case-insensitive) onto a second L3 view. This only organizes the list; both
-  views still launch ordinary configured ELFs.
-- **Folder browsing (opt-in):** turn on **Browse Folders in Game List** in **Settings** to have
-  subdirectories inside your `CD` / `DVD` folders appear as browsable entries (grouped at the
-  top of the list, shown with a trailing `/`). Select a folder to open it, and press the
-  **cancel button** to go back up — a
-  breadcrumb in the page title shows where you are. Each folder view is just the normal game
-  list, so covers, favorites, both flow themes and per-game settings all work inside folders. Works on
-  USB / MX4SIO / iLink / internal-BDM, MMCE and UDPFS-Files. Left off, a flat library looks and
-  behaves exactly as before.
-- **Controller vibration in the menus (on by default):** toggle **Controller Vibration in Menus** in
-  **Settings** for a little haptic tap as you move around — a light tick when the cursor moves,
-  a slightly firmer bump on confirm / cancel / notifications, and one when OPL finishes booting
-  and the menu is ready. Needs a **DualShock in analog mode** (a digital-only or clone pad simply
-  won't buzz); DS3/DS4/DS5 pads are supported on builds with pad emulation. Left off, nothing
-  changes.
-> **Credit and licence — Neutrino is created by [rickgaiser](https://github.com/rickgaiser), and its
-> official home is <https://github.com/rickgaiser/neutrino>.** Neutrino is an independent PS2 device
-> emulator. Release packaging normally bundles the official
-> latest build, re-fetched at publish time (download/extraction failures can omit it; check the release notes), under its **AFL-3.0** licence. We add exactly one file to
-> that folder — `config/bsd-udpfsbd.toml`, because Neutrino ships `udpfs_bd.irx` without a matching
-> `-bsd` token and RiptOPL launches UDPFS as `-bsd=udpfsbd`. Nothing of rickgaiser's is altered or
-> removed. RiptOPL is one of several front-ends built on Neutrino, alongside
-> **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** (our #1
-> recommended alternative, for lightweight, customized Neutrino gameplay), **NHDDL**, **XEB+
-> Plugin**, **RETROLauncher**, **OSD-XMB** and **PSBBN/BBNL**. Please report *launching* problems to
-> **us** — the argument building and hand-off are ours — and genuine Neutrino bugs upstream.
-
-- **Neutrino external core (per-game):** hand a game off to an external `neutrino.elf`
-  instead of OPL's built-in core, chosen per title, with custom launch flags you can set
-  globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
-- **UDPBD network boot (Neutrino):** stream games from a PC over the LAN as a network block
-  device — they show up as a **UDPBD Games** list with full covers and per-game settings, just
-  like a local drive. UDPBD launches via Neutrino, is mutually exclusive with SMB (they share
-  the one network adapter), and needs a static PS2 IP (the default is `192.168.1.10`); the
-  fork's **network protocol defaults to Off** — pick UDPFS or UDPBD in **Network** and it
-  loads live (a restart is only needed to *switch away* from a protocol already loaded, and RiptOPL
-  offers to save and restart right there, and again when you press OK on Network). Confirming
-  Network Settings applies the current values and reconnects immediately; if the first connection
-  fails, press **Select / Refresh** on the failed network page to retry it. Run it from the
-  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. Confirmed
-  on a real PS2 (Kingdom Hearts, 2026-09-26) with every Neutrino setting left at its default. See the
-  network-boot section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--the-network-protocol-selector)**.
-- **HTTP library (new):** point RiptOPL at a server meeting the [HTTP client response profile](docs/HTTP.md), and it reads a `games.csv` catalog and streams the ISOs straight off it
-  through OPL’s own core. The PC side is **[Docmine17](https://github.com/Docmine17)’s**
-  **[HTTP server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)**, used **unmodified** — existing catalogs and folder layouts need no conversion. Pick **HTTP** under
-  **Network → Protocol**, set the address, port (default **1100**) and base path, then use **Test HTTP
-  server**. No VMC, no Neutrino and no PS1 over HTTP, and it has **not been hardware-tested yet**.
-  See **[docs/HTTP.md](docs/HTTP.md)**.
-- **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
-  alongside UDPBD. **Game Sources** holds the **Network Connectivity** row (Off / Manual / Auto) with
-  **Protocol** (**SMB / UDPFS / UDPBD / HTTP**) indented under it; the same **Protocol** row is on
-  **Network** too, and changing it on either page changes both. Setting Connectivity to **Off** keeps
-  your protocol: turning it back on brings the same one back. **Network** also holds
-  **SMB Version** (SMBv1 / SMB2, live only while Protocol is SMB),
-  and **Access** (Files / IMG — locked to Files
-  for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). **Default Menu → ETH Games** opens
-  whichever page that protocol's games are on (for UDPBD / UDPFS IMG, the network drive's page if it
-  has attached by the time the menu appears). UDPFS launches via `-bsd=udpfsbd` with a
-  bundled `bsd-udpfsbd.toml`. Use the
-  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher for UDPFS,
-  SMB and UDPBD; advanced users can run **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** directly.
-  Same static-IP and SMB-exclusivity rules as UDPBD.
 <a name="ps1-games-two-cores-one-list"></a>
-- **PS1 games — two cores, one list:** RiptOPL plays PS1 titles through **two** cores, and both appear
-  together in a single **PS1** library. **PS2/PS1 Game Display** decides whether a device presents
-  separate PS2/PS1 views, one combined list with L3 filters, or one locked library.
 
-  - **POPSTARTER** runs `*.VCD` files from `<device>:/POPS/`.
-  - **[Ember](https://github.com/Gageformer/Ember)** runs `*.cue` / `*.bin` / `*.exe` from
-    `<device>:/EMBER/games/<Game Name>/`.
+#### PS1 games — two cores, one list
 
-  The two are interleaved and sorted as one library, so a game you hold for both cores simply shows
-  twice. Which core runs a title is a property of that row, decided when you launch it — there is
-  nothing to configure and no third toggle.
+POPSTARTER `*.VCD` entries and Ember game folders share a PS1 library; the entry determines
+the core. **PS2/PS1 Game Display** controls separate, mixed or locked device views. Favorites
+and the optional Apps/PS1ELF split keep their own L3 cycles.
 
-  **Setting Ember up.** The release package contains a ready-made `EMBER/` folder; copy it to the
-  root of a device, beside `POPS/`. Then add **your own PS1 BIOS** as `EMBER/bios.bin` (exactly
-  512 KB) — a BIOS is copyrighted, so it is never distributed with RiptOPL, and the folder ships with
-  a placeholder file whose name says so. Finally give each game its own folder:
-
-  ```
-  <device>:/EMBER/
-      ember.elf
-      bios.bin                       <- yours, 512 KB
-      games/
-          Spyro 2 (Ripto's Rage)/
-              whatever.cue
-              whatever.bin
-  ```
-
-  The **folder name** is what you see in the list, and it is also the key for cover art and per-game
-  settings — so `ART/Spyro 2 (Ripto's Rage)_COV.png` on that device just works, exactly as it does
-  for a `.VCD`. Files inside can be named anything; `.cue` is preferred over `.exe` over `.bin`.
-  Ember writes its per-game memory cards (`MC1.vmc`, `MC2.vmc`) into that same folder, so it must be
-  on writable media. Available on USB, MX4SIO, iLink, exFAT-ATA, MMCE, SMB, the internal APA/PFS
-  hard drive, UDPFS and UDPBD. UDPFS Files also lists POPSTARTER VCDs; UDPBD and UDPFS IMG list Ember only. Ordinary device pages
-  merge Ember and POPSTARTER rows.
-
-  **On an internal APA/PFS drive**, where there is no filesystem root to copy a folder to, the
-  `EMBER/` folder goes on a partition of its own: **`__.EMBER`**, or `__.EMBER0` … `__.EMBER9` if you
-  want more than one. That is deliberately the same naming shape as the `__.POPS` containers that
-  hold your `.VCD` files, so there is only one convention to remember.
-
-  The partition is self-contained — the layout inside it is exactly the one above, starting at the
-  partition root:
-
-  ```
-  hdd0:__.EMBER
-      EMBER/
-          ember.elf
-          bios.bin                   <- yours, 512 KB
-          games/
-              Spyro 2 (Ripto's Rage)/
-                  whatever.cue
-                  whatever.bin
-  ```
-
-  Cover art is unchanged and does **not** go here — `ART/<Game Name>_COV.png` on your OPL data
-  partition, the same place and the same key a `.VCD` uses.
-
-  One difference is worth knowing about, because it is the reason this works at all: an APA Ember
-  title is launched with its partition **still mounted**. Ember inherits that live mount instead of
-  re-opening the drive for itself, which is also why the partition is mounted read/write — Ember's
-  memory cards and `settings.txt` are written straight through it.
-
-  **Credit and licence — Ember is created by [Gageformer](https://github.com/Gageformer), and its
-  bundled release is [Ember Beta 2](https://github.com/Gageformer/Ember/releases/tag/Beta-2).**
-  The repository shortcut ships as `EMBER/Ember Official Webpage.url`. Ember is an
-  independent PS1 emulator written from scratch for the PS2. It is bundled unmodified under the **Ember Public
-  Beta Testing Licence**, which ships in the release package as `EMBER/LICENSE-BETA.txt` and governs
-  the build it accompanies. That licence permits non-commercial bundling but prohibits selling,
-  modifying or repackaging the build. Ember contains no PlayStation BIOS and no game data — you
-  supply your own, from hardware and media you lawfully own. Please report Ember problems to *us*
-  first rather than to Gageformer: the launching is ours.
-
-  **Ember settings.** The **PS Emulation Settings** page carries five Ember rows: *Ember Display Mode*
-  (**Default** / **240p** / **480i** / **480p**), *Ember Timing* (**Default** / **Auto** / **NTSC** /
-  **PAL**), *Ember Dithering* (**Default** / **On** / **Off**), *Ember Shading* (**Default** /
-  **15-bit** / **24-bit (experimental)**) and *Ember Controller* (**Default** / **Auto** / **Analog** /
-  **D2A**). At launch RiptOPL updates `<device>:/EMBER/settings.txt` on the game's device. **480p**
-  needs component or HDMI (composite shows no picture), so picking it asks first. Global rows remain
-  changed-only: a row never changed in RiptOPL leaves a hand-written key alone; changing it back to
-  **Default** removes that global key. Unknown lines and comments are preserved.
-
-  **Per game:** on an Ember title, **Triangle → Ember Game Settings** exposes *Timing*, *Dithering*,
-  *Shading* and *Controller*. Ember reads those four keys from
-  `EMBER/games/<Folder Name>/settings.txt`; *Display* remains global-only. The choices are stored in
-  `CFG/<Folder Name>.cfg`. Pressing **OK** saves the CFG and applies those choices to the title's
-  `settings.txt` immediately, without launching it; launch reapplies them if needed.
-  **Default means inherit the global Ember setting**:
-  RiptOPL removes that game's corresponding key; any non-Default value overrides the global one. On
-  a Favourites entry the same source-game CFG is edited.
-
-
-- **Alternate POPSTARTER builds:** the release package ships
-  `POPS/POPSTARTER VERSIONS/` containing five builds of POPSTARTER — **MAIN**, **DEBUG**,
-  **USBDELAY**, **USBDELAY_DEBUG** and **USBDELAY_LONGER_DEBUG**. To switch, copy the
-  `POPSTARTER.ELF` you want over `POPS/POPSTARTER.ELF` on your device; nothing in RiptOPL selects
-  them for you. The `USBDELAY*` builds give USB devices longer to settle before POPSTARTER reads
-  them, and the `*DEBUG*` builds print diagnostics on screen — use one of those when reporting a
-  POPSTARTER problem.
-
-  **The shipped `POPS/POPSTARTER.ELF` is the DEBUG build, and that is deliberate** — it is the build
-  with SMB support, so it is the right default for the package. On-screen POPSTARTER diagnostics
-  during a VCD launch are expected and are not a fault. Do not overwrite it with **MAIN** unless you
-  are certain you do not need SMB; the alternate builds are here for the `USBDELAY` cases.
-
-- **Where POPSTARTER's VCDs come from:** the PS1 library belongs to a device page, not a separate
-  device tab. The **PS2/PS1 Game Display** setting on **Interface** decides how it is shown.
-  **Both (L3)** (the default) switches between separate PS2 and PS1
-  views; **Mixed** starts with both in one list and L3 cycles Mixed → PS2 → PS1; **PS2** and **PS1**
-  lock every applicable device page to one library and make L3 fully inert (no hint, sound,
-  notification, or pause). APPS and Favorites remain independent. Wherever L3 does something, the
-  view you leave a page on is **remembered across sessions** — each device page, the Favorites
-  shelf and the APPS split side keep their own position, restored the next time you boot (a
-  remembered view that the display setting no longer allows is simply dropped). BDM pages save one
-  position per device type (USB, iLink, MX4SIO, exFAT HDD, UDPBD), so a device keeps its view when the
-  `mass` slot numbers swap between boots. Pressing L3 never
-  writes to storage: the positions ride along with a write that already happens — **launching a
-  game, or saving settings** — so toggling and then powering off without doing either is the one
-  case that is not kept. On a combined
-  Mixed list every row's cover is drawn at its own media's size, so PS1 cases stay square while PS2
-  cases stay portrait. A `*.VCD` row boots through
-  **POPSTARTER** — never OPL's own core and never Neutrino, so the Loader Core selector is inert for
-  it. POPSTARTER VCDs work on USB / MMCE / MX4SIO / SMB **and the internal HDD** — both APA
-  (exact `__.POPS[0-9]?` containers plus `PP.<name>` / `__.<name>` one-game partitions containing
-  `IMAGE0.VCD`) and **exFAT** (BDMA; PS1 games in `massN:/POPS/`). Ember's half of the list has its
-  own device coverage, noted above. The iLink POPSTARTER path is wired but still awaiting a passing
-  hardware test: RiptOPL reads `POPS/usbd.irx.ilink` and
-  `POPS/usbhdfsd.irx.ilink`, copies them to the memory card without the `.ilink` suffix, and hands
-  POPSTARTER the normal local-device `XX.` selector, but revision 2692 returned to wLaunchELF in all
-  four SDK flavours. Every BDMA pair ships as loose files in
-  `POPS/`; none is embedded in `RIPTOPL.ELF`. **UDPFS Files** lists uppercase server
-  `POPS/*.VCD` alongside Ember titles and prepares POPSTARTER launches using
-  **Okeanos's BDM-UDPFS Assault** USB-first, read-only driver. Automatic BDMA equip selects
-  the `.udpfs` pair; its source may be any supported device's `POPS/`, including APA
-  `__common/POPS/`. **POPS Network Settings → POPS UDPFS Network Settings** saves the two
-  runtime config files to every connected USB volume's `POPS/` folder. Launch requires those
-  copies to be valid and agree, since the Alpha driver reads configs from USB after its IOP
-  reset. See **[POPS UDPFS setup](docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault)**.
-  The new VCD handoff awaits console validation. UDPBD and UDPFS IMG remain Ember-only.
-- **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
-  under Neutrino it greys the panels Neutrino ignores (GSM, PADEMU, OSD Language and the
-  OPL-only compat modes; cheats work on both cores) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /
-  1080i) plus a Neutrino-only **Mode 7** (`-gc=7`). Its global **Default Device** picker can also
-  target a complete `neutrino/` folder on iLink explicitly. iLink is a FAT-model Neutrino backend;
-  post-2692 builds automatically pair `-bsd=ilink` with `-qb` so Neutrino keeps the mounted iLink
-  environment RiptOPL hands it. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
-- **Category settings layout:** the start menu's settings are organised into eight category pages
-  instead of one flat list — **Game Sources** (device selection + start modes), **General & System**,
-  **Network**, **Interface** (theme, artwork, Coverflow tuning, PS2/PS1 Game Display), **Game Launching**
-  (incl. the global Neutrino/OSD defaults), **PS Emulation Settings** (both PS1 cores: POPSTARTER
-  and Ember), **Controller Settings** and
-  **Audio Settings** — each with chained sub-pages, plus a **Save Changes** entry at the foot of the
-  index. Leaving the start/settings menu returns to the page you paused on when it is still visible;
-  it no longer falls back to the first USB page.
-- **DualSense / DualShock 5 (USB):** optional controller support — available in the prebuilt
-  `RIPTOPL-VARIANTS-*.zip` release bundle (one ELF per SDK flavour), or build with `make DUALSENSE=1`.
-- **1080p GSM video mode:** forced progressive 1080p (1920×1080) GSM mode is built directly into all standard builds (`make GSM1080P=1`). Full GSM documentation: **[docs/GSM.md](docs/GSM.md)**. Selecting 1080p in the per-game GSM picker is guarded by a **three-step confirmation**; if a game loses the picture, disable/change its GSM override before relaunching. **Triangle + Cross** at boot affects only the OPL menu and requires a 480p-capable display/connection; **Triangle + Circle** forces the interlaced Auto mode instead.
-- **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
-  widescreen, cover art, notifications, sound effects + boot sound, delete/rename, and
-  the PS2 logo. Video mode stays **Auto**. Every storage device ships **off**, so the first boot
-  lands on the start menu with no tabs — enable exactly the devices your console has under
-  **Game Sources**. Change any of it under Settings.
-- **Private master settings, shared support files:** `settings_riptopl.cfg` is separate from stock OPL's master file. Other configuration and data can still be shared; favorites migration from uOPL/wOPL is one-way. See [Where your files live](#where-your-files-live).
+Use [the PS1 reference](docs/VCD.md) for the complete folder layout, BIOS/runtime requirements,
+Ember global/per-game settings, APA containers, alternate POPSTARTER builds, BDMA selection,
+SMB and POPS UDPFS. POPS UDPFS uses Okeanos's separate USB-first driver and valid matching
+USB runtime configs; UDPBD and UDPFS IMG remain Ember-only for PS1. iLink POPSTARTER is
+wired but still awaits a passing hardware retest. Neutrino and OPL's PS2 core do not launch PS1 rows.
 
 ## Controls and In-Game Reset
 
-Full button reference: **[docs/CONTROLS.md](docs/CONTROLS.md)**. In-Game Reset in detail:
-**[docs/IGR.md](docs/IGR.md)**. DualShock 3/4 emulation: **[docs/PADEMU.md](docs/PADEMU.md)**.
-Folder browsing, the parental lock and the audio system: **[docs/INTERFACE.md](docs/INTERFACE.md)**.
+Use the on-screen **Confirm** and **Back** hints: fresh settings use Circle to confirm,
+and the Select Button setting can swap Circle/Cross. Start opens the main menu; Triangle
+opens the selected game's menu; R3 toggles Favorites. Flow themes browse horizontally.
+The complete [button reference](docs/CONTROLS.md) covers list views, dialogs and boot recovery.
 
-### Leaving a running game (In-Game Reset)
+<a name="leaving-a-running-game-in-game-reset"></a>
 
-You do not need the console's Reset button. Hold all four shoulder buttons - **L1 + L2 + R1 + R2** -
-and then, still holding them, press the second half:
+For native OPL games, hold **L1 + L2 + R1 + R2**, then **Start + Select** to reset, or
+**L3 + R3** to power off. IGR resets to OSDSYS unless an IGR Path is configured. It is
+unavailable under Neutrino, before the game opens its controller, or with Mode 6 enabled.
+PS1 cores have their own reset behavior. [IGR](docs/IGR.md) covers reset targets, USB driver
+requirements, the power button and optional screenshots.
 
-| Hold | Then press | Result |
-| ---- | ---------- | ------ |
-| L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game to the PS2 browser, or to the **IGR Path** ELF |
-| L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
-| L1 + L2 + R1 + R2 | **Up** | In-game screenshot (needs GSM on **and** an `IGS=1` build: off in the main release loader, on in the `-extra1` loaders in `RIPTOPL-VARIANTS-*.zip` — see [docs/IGR.md](docs/IGR.md#in-game-screenshots-igs)) |
+<a name="game-list"></a>
 
-The console's own power button works too: **one press** powers off, **two presses** reset.
-
-Three cases where the combinations do nothing, all expected: before the game has opened a controller
-(the hook patches the game's own pad-open call - `scePadPortOpen` or `scePad2CreateSocket`), when
-per-game compatibility **Mode 6 - Disable
-IGR** is set, and under the **Neutrino core**, which has no IGR at all - which is why Mode 6 is greyed
-out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
-
-**IGR Path** (*Settings -> General & System*) boots a custom ELF from `mc0:`/`mc1:` or a FAT32 USB drive (`mass:/`) on reset instead of
-exiting to the PS2 browser; give it RiptOPL's own ELF to come back to RiptOPL. A USB path also needs two driver files on the
-memory card - see [docs/IGR.md](docs/IGR.md#where-a-reset-takes-you). **IGR Bootcard Slot(s)** (*Settings -> Game Sources ->
-MMCE Settings*) sends a switch-to-bootcard command as the reset happens.
-
-### Game list
-
-| Button | Action |
-| ------ | ------ |
-| D-pad Up/Down | Move through the list (Coverflow / PSBBN Flow: switch device page) |
-| D-pad Left/Right | Switch device page (Coverflow / PSBBN Flow: browse covers) |
-| Cross | Launch the selected game |
-| Circle | Go up one folder level |
-| Triangle | Per-game settings |
-| Square | Game info page |
-| L1 / R1 | Previous / next page (both wrap around at the ends) |
-| L2 / R2 | First / last page |
-| L3 | Cycle the page's library view |
-| R3 | Star or un-star as a Favorite |
-| Start | Main menu |
-| Select | Refresh the current list |
-
-Cross and Circle follow the configured **Select Button** setting, including in the settings screens.
-Holding **Triangle + Cross at boot** forces the menu to 480p
-progressive as a recovery path for a display that cannot sync the saved video mode; **Triangle +
-Circle** forces Auto (the region's interlaced mode) for a TV that can't take 480p.
+For controller emulation use [PADEMU](docs/PADEMU.md); for menu vibration, folders and audio,
+use [Interface](docs/INTERFACE.md). Per-game video overrides belong in [GSM](docs/GSM.md)
+or the [Neutrino video picker](docs/NEUTRINO.md#video-mode-limits), depending on the core.
 
 ## How to use
 
@@ -766,8 +437,8 @@ Launching an ordinary app ELF, from Apps or from an app in Favorites, first asks
 
 | Button | Result |
 | ------ | ------ |
-| **Cross** (YES) | Reset the IOP before the app starts, so it begins with a freshly reset I/O processor. |
-| **Circle** (NO) | Start the app on the IOP as RiptOPL left it, with its drivers still loaded. |
+| **Configured confirm button** (YES) | Reset the IOP before the app starts, so it begins with a freshly reset I/O processor. |
+| **Configured back button** (NO) | Start the app on the IOP as RiptOPL left it, with its drivers still loaded. |
 | **Triangle** | Cancel and stay in the list. |
 
 To answer it once for good, add `REBOOTIOP=YES` or `REBOOTIOP=NO` to the app's `title.cfg`.
@@ -838,13 +509,15 @@ To install onto internal HDD, you can use the latest version of HDL-Dump.
 
 ## PS3 BC
 
-Currently, supported only [PS3 Backward Compatible](https://www.psdevwiki.com/ps3/PS2_Compatibility#PS2-Compatibility) (BC) versions. So only [COK-001](https://www.psdevwiki.com/ps3/COK-00x#COK-001) and [COK-002/COK-002W](https://www.psdevwiki.com/ps3/COK-00x#COK-002) boards are supported. USB, SMB, HDD modes are supported.
-
-To run OPL, you need an entry point for running PS2 titles. You can use everything (Swapmagic PS2, for example), but custom firmware with the latest Cobra is preferred. Note: only CFW supports HDD mode.
+The inherited OPL support targets hardware backward-compatible PS3 models: CECHA/CECHB
+(COK-001, EE+GS) and CECHC/CECHE (COK-002/002W, GS with an emulated EE). Use a PS2 ELF
+entry point appropriate to that console. USB, SMB and CFW-dependent HDD support are the
+inherited paths; current RiptOPL features are not all validated on PS3. See the
+[PS3 guide](https://nathanneurotic.github.io/Open-PS2-Loader/ps3-bc.html) for scope and hardware references.
 
 ## Some notes for DEVS
 
-Repository scripts live in `tools/`; run them from the repository root. Existing
+Repository helpers live in `tools/`, with CI and documentation helpers in `.github/scripts/`; run them from the repository root. Existing
 Makefile targets retain their names and output locations.
 
 Use one of the toolchain images in [the CI matrix](.github/workflows/flavours.yml). Both pinned
@@ -940,7 +613,7 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[udpfs-server](https://github.com/YouKnow-sys/udpfs-server)** by **[YouKnow-sys](https://github.com/YouKnow-sys)** — the same idea **from a phone**: an Android app that shares folders and disk images to the PS2 over **UDPFS**, found by broadcast so there is no server address to type in on the console. Works over a router or a direct cable. Built on **[udpfsd](https://github.com/pcm720/udpfsd)** by **[pcm720](https://github.com/pcm720)**; MIT licensed. An `android-udpfs-server.url` shortcut ships in installable packages.
 - **[OrbitPS2 Manager](https://github.com/Luden02/OrbitPS2-Manager)** by **[Luden](https://github.com/Luden02)** — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management.
 - **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** — *Lightweight Unified Neutrino Access*, a visual PS2 loader built on NHDDL and Neutrino, and our **#1 recommended alternative** if RiptOPL is more loader than you need. darkladark also contributes to RiptOPL: the PSBBN Flow theme adapts LUNA's Collection display (#733, superseded by #977), preserving the normal R3 favorite action.
-- **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **Akilluminati47** — our daughter project: a PS2-inspired front end with a **web-theme beta** at **[akilluminati47.github.io/RIPPS2](https://akilluminati47.github.io/RIPPS2/)**. A custom OPL theme and `RIPPS2.elf` are planned next; the project is still alpha, but we recommend it as an alternative with features intended to be on par with RiptOPL.
+- **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **Akilluminati47** — our daughter project: a PS2-inspired front end with a **web-theme beta** at **[akilluminati47.github.io/RIPPS2](https://akilluminati47.github.io/RIPPS2/)**. It now offers a downloadable PS2 ELF; consult its own releases and compatibility notes for current builds.
 - **[OPL PS1 AIO Converter GUI](https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI)** by **[shaan](https://github.com/shaanhomebrew-cloud)** — Windows all-in-one PS1/POPStarter preparation tool for converting BIN/CUE backups to VCDs and installing them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.
 - **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. Recommended client: **[v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)**. RiptOPL's RA build supports **xeRAbora v0.1.0-alpha.17** and its snapshot-only Mode 6 behavior. xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by **[oMrRexD](https://github.com/oMrRexD)**, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.
 - **[OPL HTTP PC server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)** by **[Docmine17](https://github.com/Docmine17)** — the PC side of RiptOPL’s **HTTP** protocol: a small static HTTP server with byte-range support that serves your `games.csv` catalog and streams the ISOs themselves. RiptOPL works with it **unmodified** — no new API, no catalog conversion, no changed folder layout — with host conformance checks against the upstream server. PS2 hardware validation is still pending.
@@ -964,7 +637,7 @@ RiptOPL is a **direct agglomeration** of the wider OPL family, bringing together
 and ideas from [rickgaiser's OPL](https://github.com/rickgaiser/Open-PS2-Loader),
 [neutrino](https://github.com/rickgaiser/neutrino),
 [sOPL](https://github.com/mystyq/Stable-Open-PS2-Loader), uOPL,
-[wOPL](https://github.com/KrahJohlito/wOPL), [OPL DB](https://github.com/Jay-Jay-OPL/OPL-Daily-Builds),
+wOPL (historical; its public repository is unavailable), [OPL DB](https://github.com/Jay-Jay-OPL/OPL-Daily-Builds),
 [POPSLoader](https://github.com/NathanNeurotic/POPSLoader),
 [OPL RetroGEM ID by CosmicScale](https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM),
 [nhddl](https://github.com/pcm720/nhddl),
@@ -977,7 +650,7 @@ With special and sincere thanks to:
 
 - **KrahJohlito** — the legend, and the single biggest influence on this fork. Creator of
   **uOPL (Unofficial Open PS2 Loader)** and its continuation
-  **[wOPL](https://github.com/KrahJohlito/wOPL)**, where the modern OPL experience was
+  **wOPL** (historical; its public repository is unavailable), where the modern OPL experience was
   invented. The Neutrino external-core loader, the Coverflow interface, and the Favorites
   tab — the features that define RiptOPL — were designed and pioneered by him, and everything
   this fork does with them is a reimplementation of his work. We learned more reading his

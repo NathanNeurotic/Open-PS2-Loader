@@ -1,3 +1,7 @@
+> **Historical engineering record.** This file records its dated implementation or audit baseline.
+> Status, package names and instructions below may be superseded. Use [HTTP.md](HTTP.md)
+> for the current reference; do not treat old DONE/pending entries as a new hardware result.
+
 # HTTP integration plan (RiptOPL)
 
 > **Internal engineering document.** This is an implementation plan for contributors, not user
