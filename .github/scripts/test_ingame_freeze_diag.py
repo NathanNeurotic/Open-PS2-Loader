@@ -97,7 +97,7 @@ check("\t$(MAKE) FREEZEDIAG_BUILD=$(OPL_VERSION) -C $<" in top, "the report name
 
 # 2. IGR ordering in padhook.c.
 pad = read("ee_core/src/padhook.c")
-poll = pad[pad.index("static void IGR_PollUntilRequested(void)"):]
+poll = pad[pad.index("static void IGR_WaitForRequest(void)"):]
 poll = poll[:poll.index("\n}\n")]
 i_prio = poll.index("ChangeThreadPriority(TH_SELF, 0);")
 i_begin = poll.index("FreezeDiag_Begin(")
@@ -106,8 +106,9 @@ check(i_prio < i_begin < i_stop,
       "threads are captured at priority 0 before worker DMA/GS stop")
 check("if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {" in poll[i_prio:i_begin],
       "only the reset combo arms a report (not IGS or power-off)")
-alarm = pad[pad.index("static void IGR_Poll_Alarm("):pad.index("static void IGR_PollUntilRequested(void)")]
-check("g_freeze_diag_polls++;" in alarm[:alarm.index("IGR_CheckInputs();")], "each alarm input sample is counted")
+alarm = pad[pad.index("static int IGR_Intc_Handler("):]
+alarm = alarm[:alarm.index("\n}\n")]
+check("g_freeze_diag_polls++;" in alarm[:alarm.index("IGR_CheckInputs();")], "each VBLANK input sample is counted")
 check(alarm.index("iSuspendThread(i);") < alarm.index("iSignalSema(IGR_Request_Sema);"),
       "sampler suspends competitors before signalling the worker, including priority-0 games")
 check("SuspendThread(i);" not in poll,

@@ -24,7 +24,7 @@ def function(signature):
     return source[start:source.index('\n}\n', start) + 3]
 
 
-production = function('static void IGR_Poll_Alarm(') + function('static void IGR_PollUntilRequested(')
+production = function('static int IGR_Intc_Handler(') + function('static void IGR_WaitForRequest(')
 program = r'''
 #include <stdint.h>
 #include <stdio.h>
@@ -39,20 +39,19 @@ enum { DORMANT, READY, RUNNING, WAITING, SUSPENDED };
 struct thread { int state, priority, order; } threads[256];
 static struct { volatile unsigned char combo_type; } Pad_Data;
 static int IGR_Thread_ID = 7, IGR_Request_Sema = 3;
-static int IGR_Poll_Alarm_ID = 1, IGR_Poll_Recovery;
-static unsigned int IGR_Poll_Generation = 1;
 static int current, semaCount, semaGranted, waits, shutdowns, resets, completed;
 static int irqAtWait, irqActive, intrEnabled = 1, interruptSuspends, threadSuspends;
 static ucontext_t schedulerContext, workerContext;
 static unsigned char workerStack[32768];
 
-static void IGR_Poll_Alarm(s32, u16, void *);
-static void deliverAlarm(void)
+static int IGR_Intc_Handler(int);
+static void ExitHandler(void) {}
+static void deliverVblank(void)
 {
     int old = intrEnabled;
     intrEnabled = 0;
     irqActive = 1;
-    IGR_Poll_Alarm(1, 256, (void *)(uintptr_t)IGR_Poll_Generation);
+    IGR_Intc_Handler(0);
     irqActive = 0;
     intrEnabled = old;
 }
@@ -84,11 +83,6 @@ static int iSignalSema(int id)
     }
     return 0;
 }
-static int iSetAlarm(int ticks, void (*cb)(s32, u16, void *), void *common)
-{
-    (void)ticks; (void)cb; (void)common;
-    return 2;
-}
 static int WaitSema(int id)
 {
     if (id != IGR_Request_Sema || irqActive)
@@ -96,7 +90,7 @@ static int WaitSema(int id)
     waits++;
     if (irqAtWait) {
         irqAtWait = 0;
-        deliverAlarm(); /* worker is RUNNING, before the blocking syscall */
+        deliverVblank(); /* worker is RUNNING, before the blocking syscall */
     }
     if (semaCount) {
         semaCount--;
@@ -129,7 +123,7 @@ static void SuspendThread(int id)
 
 static void workerEntry(void)
 {
-    IGR_PollUntilRequested();
+    IGR_WaitForRequest();
     completed++;
     threads[IGR_Thread_ID].state = DORMANT;
     current = -1;
@@ -140,8 +134,6 @@ static void reset(void)
         threads[i] = (struct thread){DORMANT, 127, i};
     threads[IGR_Thread_ID] = (struct thread){READY, 127, 7};
     Pad_Data.combo_type = 0;
-    IGR_Poll_Alarm_ID = 1;
-    IGR_Poll_Recovery = 0;
     current = -1;
     semaCount = semaGranted = waits = shutdowns = resets = completed = 0;
     irqAtWait = irqActive = interruptSuspends = threadSuspends = 0;
@@ -195,7 +187,7 @@ int main(void)
 
     reset();
     occupyPriorityZero();
-    deliverAlarm();
+    deliverVblank();
     dispatchAfterInterrupt();
     failures += check("priority-0 game yields to worker before its first wait",
                       completed == 1 && shutdowns == 1 && resets == 1 && waits == 0 &&
@@ -206,7 +198,7 @@ int main(void)
     failures += check("worker blocks without an IGR request", waits == 1 && completed == 0 &&
                       threads[IGR_Thread_ID].state == WAITING && shutdowns == 0);
     occupyPriorityZero();
-    deliverAlarm();
+    deliverVblank();
     dispatchAfterInterrupt();
     failures += check("waiting worker preempts current and queued priority-0 game threads",
                       completed == 1 && shutdowns == 1 && resets == 1 && waits == 1 &&
