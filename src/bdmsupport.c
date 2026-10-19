@@ -2132,8 +2132,10 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, neutrino_vmc_args_t *vmc
     if (fd >= 0) {
         isoFrags = fileXioIoctl2(ps2sdk_get_iop_fd(fd), USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, NULL, 0);
         close(fd);
-        if (isoFrags < 0)
-            isoFrags = 0;
+        if (isoFrags < 0) {
+            LOG("[NEUTRINO] ISO fragment mapping failed: %d\n", isoFrags);
+            return 0;
+        }
     }
     total = isoFrags;
 
@@ -2145,6 +2147,10 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, neutrino_vmc_args_t *vmc
             if (fd >= 0) {
                 int frags = fileXioIoctl2(ps2sdk_get_iop_fd(fd), USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, NULL, 0);
                 close(fd);
+                if (frags < 0) {
+                    LOG("[NEUTRINO] VMC slot %d fragment mapping failed: %d\n", i, frags);
+                    return 0;
+                }
                 if (frags > 0)
                     vmcFrags[i] = frags;
             }
@@ -2174,7 +2180,7 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, neutrino_vmc_args_t *vmc
 
                     if (gAutoLaunchBDMGame == NULL && guiIsActive()) {
                         char error[256];
-                        snprintf(error, sizeof(error), _l(_STR_ERR_VMC_FRAGMENTED_CONTINUE), vmcName, (i + 1));
+                        snprintf(error, sizeof(error), _l(_STR_NEUTRINO_VMC_FRAG_BUDGET_CONTINUE), total, NEUTRINO_BDM_MAX_FRAGS, vmcName, (i + 1));
                         if (!guiMsgBox(error, 1, NULL))
                             return -1; // Abort launch to menu
                     }

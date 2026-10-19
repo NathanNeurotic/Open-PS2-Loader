@@ -1,5 +1,7 @@
 """Test regression repairs for Issue #830 (Neutrino exFAT VMC budget & creation) and Issue #831 (Beat Down title compat defaults)."""
 from pathlib import Path
+import json
+import re
 import subprocess
 import tempfile
 
@@ -24,6 +26,10 @@ assert 'coreLoader = guiGameResolveEffectiveCore(configSet, support, id);' in sr
 start = src_bdm.index('static int bdmNeutrinoFragBudgetOk(')
 end = src_bdm.index('\n}\n', start) + 3
 production_fn = src_bdm[start:end]
+language_base = (root / 'lng_tmpl/_base.yml').read_text(encoding='utf-8')
+budget_message = json.loads(re.search(
+    r'^- label: NEUTRINO_VMC_FRAG_BUDGET_CONTINUE\n  string: (".*")$',
+    language_base, re.M).group(1))
 
 harness = r'''
 #include <assert.h>
@@ -54,12 +60,14 @@ static int guiMsgBox(const char *text, int type, void *dialog) {
 #define _STR_ERR_VMC_FRAGMENTED_CONTINUE 1
 #define _STR_NEUTRINO_TOO_FRAGMENTED 2
 #define _STR_NEUTRINO_TOO_FRAGMENTED_NET 3
+#define _STR_NEUTRINO_VMC_FRAG_BUDGET_CONTINUE 4
 #define LOG(...) ((void)0)
 #define guiWarning(...) ((void)0)
 
 static const char *_l(int id) {
-    if (id == _STR_ERR_VMC_FRAGMENTED_CONTINUE)
-        return "VMC %s is fragmented. Continue with slot %d?";
+    assert(id != _STR_ERR_VMC_FRAGMENTED_CONTINUE);
+    if (id == _STR_NEUTRINO_VMC_FRAG_BUDGET_CONTINUE)
+        return @BUDGET_MESSAGE@;
     return "Neutrino: %d/%d fragments";
 }
 
@@ -174,9 +182,50 @@ int main(void) {
     assert(vmc.arg[0][0] == '\0');
     assert(vmc.arg[1][0] == '\0');
 
+    // Case 7: A contiguous VMC can overflow a full ISO budget. Explain the combined
+    // limit rather than incorrectly claiming that the VMC itself is fragmented.
+    strcpy(vmc.arg[0], "-mc0=mass0:/VMC/slot0.bin");
+    vmc.arg[1][0] = '\0';
+    stubIsoFrags = 64;
+    stubVmc0Frags = 1;
+    stubVmc1Frags = 0;
+    msgBoxCalled = 0;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 1);
+    assert(msgBoxCalled == 1 && vmc.arg[0][0] == '\0');
+    assert(strstr(lastMsgBox, "65/64") != NULL);
+    assert(strstr(lastMsgBox, "Neutrino") != NULL);
+    assert(strstr(lastMsgBox, "physical Memory Card in slot 1") != NULL);
+    assert(strstr(lastMsgBox, "slot0") != NULL);
+    assert(strstr(lastMsgBox, "is fragmented") == NULL);
+
+    // Case 8: Multiple VMC extents are valid when the combined table fits exactly.
+    strcpy(vmc.arg[0], "-mc0=mass0:/VMC/slot0.bin");
+    stubIsoFrags = 61;
+    stubVmc0Frags = 3;
+    msgBoxCalled = 0;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 1);
+    assert(msgBoxCalled == 0 && vmc.arg[0][0] != '\0');
+
+    // Mapping failures are not zero-fragment successes. Do not drop cards or
+    // offer a fragmentation prompt when the layout query itself failed.
+    strcpy(vmc.arg[0], "-mc0=mass0:/VMC/slot0.bin");
+    strcpy(vmc.arg[1], "-mc1=mass0:/VMC/slot1.bin");
+    stubIsoFrags = -5; stubVmc0Frags = 1; stubVmc1Frags = 1;
+    msgBoxCalled = 0;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 0);
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 1) == 0);
+    assert(msgBoxCalled == 0 && vmc.arg[0][0] && vmc.arg[1][0]);
+    stubIsoFrags = 1; stubVmc0Frags = -5;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 0);
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 1) == 0);
+    stubVmc0Frags = 1; stubVmc1Frags = -5;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 0);
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 1) == 0);
+    assert(msgBoxCalled == 0 && vmc.arg[0][0] && vmc.arg[1][0]);
+
     return 0;
 }
-'''.replace('@PRODUCTION_FUNCTION@', production_fn)
+'''.replace('@PRODUCTION_FUNCTION@', production_fn).replace('@BUDGET_MESSAGE@', json.dumps(budget_message))
 
 with tempfile.TemporaryDirectory() as temp_dir:
     td = Path(temp_dir)
