@@ -7,7 +7,7 @@ on:
       - '**/*.md'
       - '.github/scripts/*docs*'
       - '.github/scripts/*site_sync*'
-      - '.github/scripts/wiki_sync.py'
+      - '.github/scripts/*wiki_sync*'
       - '.github/requirements-docs.txt'
       - '.github/workflows/docs-check.yml'
   push:
@@ -16,7 +16,7 @@ on:
       - '**/*.md'
       - '.github/scripts/*docs*'
       - '.github/scripts/*site_sync*'
-      - '.github/scripts/wiki_sync.py'
+      - '.github/scripts/*wiki_sync*'
       - '.github/requirements-docs.txt'
       - '.github/workflows/docs-check.yml'
   workflow_dispatch:
@@ -35,3 +35,4 @@ jobs:
       - run: python -m pip install -r .github/requirements-docs.txt
       - run: python .github/scripts/check_docs.py
       - run: python .github/scripts/test_site_sync.py
+      - run: python .github/scripts/test_wiki_sync.py

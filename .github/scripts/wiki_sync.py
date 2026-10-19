@@ -24,6 +24,23 @@ SITE = "https://nathanneurotic.github.io/Open-PS2-Loader/"
 WIKI = REPO + "/wiki/"
 ROOT = None  # Explicit output checkout, selected by --wiki.
 MD = MarkdownIt("commonmark", {"html": True}).enable("table")
+COMPAT_BUILDER = '''"""Compatibility entry point; the reviewed builder now lives in the source repository."""
+import argparse
+from pathlib import Path
+import subprocess
+import sys
+
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument("--source", required=True, type=Path)
+args, _ = parser.parse_known_args()
+builder = args.source.resolve() / ".github/scripts/wiki_sync.py"
+if not builder.is_file():
+    raise SystemExit("Update the source checkout: .github/scripts/wiki_sync.py is required.")
+options = sys.argv[1:]
+if "--wiki" not in options:
+    options += ["--wiki", str(Path(__file__).resolve().parent.parent)]
+raise SystemExit(subprocess.call([sys.executable, str(builder), *options]))
+'''
 
 # Website pages remain the task-oriented guides; repository documents supply
 # their complete, often more detailed references without a second manual copy.
@@ -548,6 +565,7 @@ def main():
         raise ValueError(f"Unmanaged pages require review before generation: {unexpected}")
     for page, text in pages.items():
         (ROOT / (page + ".md")).write_text(text, encoding="utf-8", newline="\n")
+    (ROOT / "_tools" / "build.py").write_text(COMPAT_BUILDER, encoding="utf-8", newline="\n")
     manifest = {
         "source_commit": source_sha, "site_commit": site_sha,
         "website_pages": len(SITE_MAP), "repository_documents": len(DOCS),

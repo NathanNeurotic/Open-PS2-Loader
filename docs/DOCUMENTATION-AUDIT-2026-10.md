@@ -58,6 +58,7 @@ every remotely linked feature or download works. Follow-up authenticated checks 
 | PS3 guide invented EE hardware on COK-002 and suggested PS2 APA treatment of the PS3 disk | Use CECHA/B EE+GS and CECHC/E GS-only scope with hardware references; remove unsafe/unsubstantiated storage and universal entry-point claims |
 | Source plans and DONE ledgers read as current instructions | Add dated-record banners and a [current documentation index](README.md); preserve historical evidence |
 | External-tools catalog repeated on release and Home pages | Releases links to the Home catalog; update the generator so it does not restore the duplicate |
+| Companion announcement still called RIPPS2 an unreleased alpha web theme | Its current upstream README offers a downloadable PS2 ELF; link its releases instead of preserving an expired development forecast |
 | Wiki missed new devices/recovery guides and repeated entire site/source references | Add explicit coverage, retain old page names/anchors as source-section indexes, and move the builder into the reviewed source tree |
 
 ## Website coverage

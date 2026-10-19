@@ -33,6 +33,7 @@ python .github/scripts/site_sync.py --site ../site --ra-md docs/RETROACHIEVEMENT
 python .github/scripts/site_sync.py --site ../site --ra-md docs/RETROACHIEVEMENTS.md --check
 python .github/scripts/check_docs.py --site ../site --report /tmp/docs-links.json
 python .github/scripts/test_site_sync.py
+python .github/scripts/test_wiki_sync.py
 git diff --check
 git -C ../site diff --check
 ```
