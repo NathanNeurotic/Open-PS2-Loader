@@ -1203,6 +1203,22 @@ static int favCheckVMC(item_list_t *itemList, char *name, int createSize)
     return o->itemCheckVMC(o, name, createSize);
 }
 
+static int favCreateVMC(item_list_t *itemList, char *name, int createSize, int requireContiguous)
+{
+    opl_io_module_t *mod = oplGetModule(FAV_MODE);
+    if (mod == NULL || mod->menuItem.current == NULL)
+        return -1;
+    int id = mod->menuItem.current->item.id;
+    if (!favValidIndex(id))
+        return -1;
+    item_list_t ownerView;
+    item_list_t *o = favOwnerView(id, &ownerView);
+    if (o == NULL || o->itemCheckVMC == NULL)
+        return -1;
+    return o->itemCreateVMC != NULL ? o->itemCreateVMC(o, name, createSize, requireContiguous) :
+                                      o->itemCheckVMC(o, name, createSize);
+}
+
 // Two modes "match" for favourite identity if equal, OR both in the BDM range
 // (USB/iLink/MX4SIO/ATA slots are interchangeable -- a BDM favourite can move slots).
 static int favModesMatch(int a, int b)
@@ -1349,4 +1365,4 @@ static item_list_t favItemList = {
     FAV_MODE, -1, 0, 0, MENU_MIN_INACTIVE_FRAMES, FAV_MODE_UPDATE_DELAY, NULL, NULL, &favGetTextId, NULL, &favInit, &favNeedsUpdate, &favUpdateItemList,
     &favGetItemCount, NULL, &favGetItemName, &favGetItemNameLength, &favGetItemStartup, &favDeleteItem, &favRenameItem, &favLaunchItem,
     &favGetConfig, &favGetImage, &favCleanUp, &favShutdown, &favCheckVMC, &favGetIconId,
-    NULL, ITEM_VIEW_NATIVE, NULL, NULL, &favGetRowView, NULL, &favSaveCueSettings, &favGetPs1SaveDir};
+    NULL, ITEM_VIEW_NATIVE, NULL, NULL, &favGetRowView, NULL, &favSaveCueSettings, &favGetPs1SaveDir, &favCreateVMC};

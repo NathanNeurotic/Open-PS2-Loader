@@ -19,7 +19,9 @@ failures = []
 match = re.search(r'^int guiGameAutoCreateVmc\([^;{]*\)\s*\{', source, re.M)
 if match is None:
     sys.exit('src/guigame.c: guiGameAutoCreateVmc not found')
-function = source[match.start():source.index('\n}', match.start()) + 3]
+helper_start = source.index("static int guiGameCreateVMC(")
+helper_end = source.index("\n}", helper_start) + 3
+function = source[helper_start:helper_end] + source[match.start():source.index('\n}', match.start()) + 3]
 defines = '\n'.join(re.findall(r'^#define AUTO_VMC_\w+ .*$', source, re.M))
 status = re.search(r'typedef struct\s*\{[^}]*VMC_status[^}]*\} statusVMCparam_t;', source)
 if status is None or 'AUTO_VMC_SIZE_MB' not in defines:
@@ -48,7 +50,9 @@ if 'curMenu->current->item.id != launchId' in select:
 genvmc = (root / 'modules/vmc/genvmc/genvmc.c').read_text(encoding='utf-8').replace('\r\n', '\n')
 failed = genvmc[genvmc.index('vmc_mcformat(param->VMC_filename'):]
 failed = failed[:failed.index('ExitDeleteThread();')]
-cleanup = failed.find('if (r < 0 && !aborted && r != -98 && r != -99 && r != -100 && r != -101)\n        remove(param->VMC_filename);')
+cleanup = failed.find('remove(param->VMC_filename);')
+if 'genvmc_owns_file' not in failed or 'r != -98 && r != -99 && r != -100 && r != -101' not in failed:
+    failures.append('genvmc: retain explicit new-file ownership and legacy pre-open exclusions')
 report = failed.find('genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;')
 if not (0 <= cleanup < report):
     failures.append('genvmc.c: every failure after the open -- never one before it (-98..-101) -- must remove the '
@@ -71,6 +75,7 @@ struct item_list {
     int mode;
     char *(*itemGetStartup)(item_list_t *, int);
     int (*itemCheckVMC)(item_list_t *, char *, int);
+    int (*itemCreateVMC)(item_list_t *, char *, int, int);
 };
 
 @STATUS@
@@ -151,7 +156,7 @@ static int checkVMC(item_list_t *l, char *name, int size)
 
 static int fails;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL %s\n", m); fails++; } } while (0)
-static item_list_t dev = {BDM_MODE, getStartup, checkVMC};
+static item_list_t dev = {BDM_MODE, getStartup, checkVMC, NULL};
 static config_set_t cfg;
 
 static void reset(void)

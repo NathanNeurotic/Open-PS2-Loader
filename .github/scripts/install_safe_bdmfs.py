@@ -16,7 +16,7 @@ import tempfile
 import urllib.request
 
 STOCK_SHA256 = 'aacd29d99b77e1c00c80f59dc970ca763d31ba4f00d85b98865b3776baa4269f'
-MARKER = b'RiptOPL BDM VMC extent guard v1'
+MARKER = b'RiptOPL BDM VMC extent and allocation guard v2'
 
 
 def download(entry, destination):
@@ -55,6 +55,33 @@ def stage(sdk_source, replacement):
     main.write_text(entry, encoding='utf-8')
 
 
+def stage_allocation(sdk_source, repo):
+    driver = sdk_source / 'iop/fs/bdmfs_fatfs/src/fs_driver.c'
+    source = driver.read_text(encoding='utf-8')
+    if '#include "vmc_alloc.h"' in source:
+        raise RuntimeError('Allocation source already patched; rebuild from the pinned SDK source')
+    anchor = '    ret = f_open(fd->privdata, modified_name, f_mode);'
+    if source.count(anchor) != 1:
+        raise RuntimeError('Unknown BDM open implementation')
+    source = source.replace(anchor,
+        '    if ((flags & (O_CREAT | FIO_O_EXCL)) == (O_CREAT | FIO_O_EXCL))\n'
+        '        f_mode = (f_mode & (FA_READ | FA_WRITE)) | FA_CREATE_NEW;\n\n' + anchor)
+    start = source.index('int fs_ioctl2(')
+    helper = (repo / '.github/patches/bdmfs-vmc-allocation.c').read_text()
+    source = source[:start] + helper + '\n' + source[start:]
+    start = source.index('int fs_ioctl2(')
+    anchor = '        case USBMASS_IOCTL_RENAME:'
+    index = source.index(anchor, start)
+    cases = '        case VMC_ALLOC_RESERVE:\n        case VMC_ALLOC_VERIFY: {\n            vmc_alloc_request_t request;\n            if (!(fd->mode & FIO_O_EXCL) || data == NULL || datalen != sizeof(request)) {\n                ret = -EINVAL;\n                break;\n            }\n            memcpy(&request, data, sizeof(request));\n            ret = vmc_allocate_contiguous(file, &request, cmd == VMC_ALLOC_RESERVE);\n            break;\n        }\n'
+    source = source[:index] + cases + source[index:]
+    start = source.index('static int fs_devctl(')
+    index = source.index('        case USBMASS_DEVCTL_STOP_UNIT:', start)
+    source = source[:index] + '        case VMC_ALLOC_CAPS:\n            ret = VMC_ALLOC_V1;\n            break;\n' + source[index:]
+    source = '#include "vmc_alloc.h"\n' + source
+    driver.write_text(source, encoding='utf-8')
+    shutil.copyfile(repo / 'include/vmc_alloc.h', driver.with_name('vmc_alloc.h'))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk-source', type=Path)
@@ -87,6 +114,7 @@ def main():
                 if entry['group'] == 'sdk':
                     download(entry, staged_sdk / entry['path'])
         stage(staged_sdk, replacement.read_text(encoding='utf-8'))
+        stage_allocation(staged_sdk, repo)
         build = scratch / 'build'
         build.mkdir()
         for source_file in (module / 'src').rglob('*'):
@@ -97,6 +125,12 @@ def main():
         for entry in lock:
             if entry['group'] == 'fatfs':
                 download(entry, build / Path(entry['path']).name)
+        config = build / 'ffconf.h'
+        config_text = config.read_text()
+        config_text, changed = re.subn(r'(#define FF_USE_EXPAND\s+)0\b', r'\g<1>1', config_text)
+        if changed != 1:
+            raise RuntimeError('Unknown FatFs expand configuration')
+        config.write_text(config_text)
         (build / 'Makefile').write_text(
             'IOP_BIN = bdmfs_fatfs.irx\n'
             'IOP_OBJS = main.o imports.o fs_driver.o diskio.o ff.o ffsystem.o ffunicode.o\n'

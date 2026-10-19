@@ -21,7 +21,9 @@ ROOT = Path(__file__).resolve().parents[2]
 guigame = (ROOT / "src/guigame.c").read_text(encoding="utf-8")
 start = guigame.index("#define AUTO_VMC_SIZE_MB")
 end = guigame.index("\n}\n", guigame.index("int guiGameAutoCreateVmc(")) + 3
-function = guigame[start:end]
+helper_start = guigame.index("static int guiGameCreateVMC(")
+helper_end = guigame.index("\n}\n", helper_start) + 3
+function = guigame[helper_start:helper_end] + guigame[start:end]
 
 harness = r'''
 #include <assert.h>
@@ -42,6 +44,7 @@ struct item_list {
     int mode;
     int (*itemCheckVMC)(item_list_t *, char *, int);
     char *(*itemGetStartup)(item_list_t *, int);
+    int (*itemCreateVMC)(item_list_t *, char *, int, int);
 };
 static int gAutoCreateVmc = 1, gDefaultCoreLoader = 0;
 static int probeResult, reprobeResult, submitResult, probes, submits, aborts, saves, assigned, msgs, lastMsg, cancelAt = -1, frame;
@@ -68,6 +71,12 @@ static int checkVMC(item_list_t *l, char *name, int size)
         return probes++ == 0 ? probeResult : reprobeResult;
     submits++;
     return submitResult;
+}
+static int requestedContiguous;
+static int createVMC(item_list_t *l, char *name, int size, int requireContiguous)
+{
+    requestedContiguous = requireContiguous;
+    return checkVMC(l, name, size);
 }
 static int flipAfterSubmit;
 static int guiLocked;
@@ -105,7 +114,7 @@ static int sysVMCContiguity(void) { return 1; }
 '''
 
 tests = r'''
-static item_list_t list = {BDM_MODE, checkVMC, getStartup};
+static item_list_t list = {BDM_MODE, checkVMC, getStartup, NULL};
 static config_set_t cfg;
 static void reset(int probe, int submit, int reprobe)
 {
@@ -231,6 +240,16 @@ int main(void)
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
     assert(submits == 1 && assigned == 0 && saves == 0);
     flipAfterSubmit = 0;
+    reset(-1, -1, 8);
+    list.itemCreateVMC = createVMC;
+    requestedContiguous = -1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(requestedContiguous == 1 && assigned == 1);
+    reset(-1, -1, 8);
+    gDefaultCoreLoader = 1;
+    requestedContiguous = -1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(requestedContiguous == 0 && assigned == 1);
     puts("ok");
     return 0;
 }

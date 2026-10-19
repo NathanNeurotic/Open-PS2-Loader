@@ -97,12 +97,13 @@ int write(int fd, void *buf, int count)
 @WRITER@
 
 /* ---- the job itself ---- */
-static int formatResult, formats, removes, removeSawBusy, abortDuringFormat;
+static int formatResult, formats, removes, removeSawBusy, abortDuringFormat, formatterOwns;
 static char formatName[1024], removedName[1024];
 static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progress, char *msg)
 {
     static char cluster[1024];
     (void)size_kb; (void)blocksize; (void)msg;
+    genvmc_owns_file = formatterOwns;
     formats++;
     strcpy(formatName, filename);
     *progress = 50;
@@ -277,6 +278,38 @@ int main(void)
         CHECK(created == 0, "and starts nothing");
     }
 
+    SCENARIO("invalid_native_allocation_request_refused") {
+        memset(&a, 0, sizeof(a));
+        strcpy(a.VMC_filename, "mass:VMC/A.bin");
+        a.VMC_flags = VMC_CREATE_CONTIGUOUS;
+        a.VMC_card_slot = -1;
+        CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) < 0, "invalid size/block geometry refused");
+        a.VMC_size_mb = 8; a.VMC_blocksize = 16; a.VMC_card_slot = 0;
+        CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) < 0, "copy requests cannot reserve new files");
+        CHECK(created == 0, "invalid requests start nothing");
+    }
+    SCENARIO("contiguous_preopen_failure_preserves_file") {
+        CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
+        genvmc_job.VMC_flags = VMC_CREATE_CONTIGUOUS;
+        formatterOwns = 0; formatResult = -111;
+        runWorker();
+        CHECK(removes == 0, "unsupported capability must not remove any file");
+    }
+    SCENARIO("contiguous_allocation_failure_removes_only_owned_file") {
+        CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
+        genvmc_job.VMC_flags = VMC_CREATE_CONTIGUOUS;
+        formatterOwns = 1; formatResult = -112;
+        runWorker();
+        CHECK(removes == 1 && removeSawBusy, "only this job's exclusive new file is removed before status");
+        formatterOwns = 0;
+    }
+    SCENARIO("close_failure_has_its_own_message") {
+        CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
+        formatResult = -114;
+        runWorker();
+        CHECK(genvmc_stats.VMC_error == -114, "close failure retained");
+        CHECK(strcmp(genvmc_stats.VMC_msg, "Cannot close the VMC file") == 0, "close is not mislabeled as layout failure");
+    }
     genvmc_deinit(NULL);
     if (failures)
         return 1;
