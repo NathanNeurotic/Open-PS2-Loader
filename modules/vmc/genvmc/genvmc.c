@@ -547,7 +547,7 @@ static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progres
         }
     }
     if (close(genvmc_fh) < 0)
-        return -113;
+        return -114;
 
     *progress = 100;
 
@@ -630,6 +630,8 @@ static void VMC_create_thread(void *args)
         strcpy(genvmc_stats.VMC_msg, "Cannot reserve contiguous VMC space");
     else if (r == -113)
         strcpy(genvmc_stats.VMC_msg, "Cannot verify the completed VMC layout");
+    else if (r == -114)
+        strcpy(genvmc_stats.VMC_msg, "Cannot close the VMC file");
     else if (r < 0)
         strcpy(genvmc_stats.VMC_msg, "Failed to format VMC file");
     else {

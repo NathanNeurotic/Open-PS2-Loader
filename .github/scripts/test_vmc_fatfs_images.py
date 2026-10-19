@@ -91,6 +91,15 @@ static void run(BYTE format) {
     genvmc_job.VMC_flags=VMC_CREATE_CONTIGUOUS;
     assert(vmc_mcformat("0:/native.bin",8192,16,&progress,message)==0);
     assert(progress==100&&genvmc_owns_file==1);
+    verifyFailure=1;
+    assert(vmc_mcformat("0:/verify.bin",8192,16,&progress,message)==-113);
+    verifyFailure=0;assert(f_unlink("0:/verify.bin")==FR_OK);
+    closeFailure=1;
+    assert(vmc_mcformat("0:/close.bin",8192,16,&progress,message)==-114);
+    closeFailure=0;assert(f_unlink("0:/close.bin")==FR_OK);
+    genvmc_job.VMC_flags=0;closeFailure=1;
+    assert(vmc_mcformat("0:/legacy.bin",8192,16,&progress,message)==-114);
+    closeFailure=0;assert(f_unlink("0:/legacy.bin")==FR_OK);
     /* Atomic create-new refuses a racing existing card without truncating it. */
     assert(f_open(&f,"0:/saved.bin",FA_CREATE_NEW|FA_READ|FA_WRITE)==FR_EXIST);
     assert(f_mount(NULL,"0:",0)==FR_OK);
@@ -164,11 +173,13 @@ typedef struct {
 #define FIO_O_EXCL 0x800
 #define ALLOC_FIRST 0
 static FIL formatted;
+static int closeFailure, verifyFailure;
 static int host_open(const char *name,int flags) {
-    assert(flags==(O_RDWR|O_CREAT|FIO_O_EXCL));
-    return f_open(&formatted,name,FA_CREATE_NEW|FA_READ|FA_WRITE)==FR_OK?0:-1;
+    assert(flags==(O_RDWR|O_CREAT|FIO_O_EXCL)||flags==(O_RDWR|O_CREAT|O_TRUNC));
+    BYTE create=(flags&FIO_O_EXCL)?FA_CREATE_NEW:FA_CREATE_ALWAYS;
+    return f_open(&formatted,name,create|FA_READ|FA_WRITE)==FR_OK?0:-1;
 }
-static int host_close(int fd) {assert(fd==0);return f_close(&formatted)==FR_OK?0:-1;}
+static int host_close(int fd) {assert(fd==0);FRESULT result=f_close(&formatted);return result==FR_OK&&!closeFailure?0:-1;}
 static int host_write(int fd,const void *buf,int bytes) {
     UINT written;assert(fd==0);
     return f_write(&formatted,buf,bytes,&written)==FR_OK?(int)written:-1;
@@ -184,6 +195,7 @@ static int host_devctl(const char *name,unsigned int cmd,void *in,int insize,voi
 static int host_ioctl2(int fd,unsigned int cmd,void *in,int insize,void *out,int outsize) {
     assert(fd==0&&insize==sizeof(vmc_alloc_request_t)&&out==NULL&&outsize==0);
     assert(cmd==VMC_ALLOC_RESERVE||cmd==VMC_ALLOC_VERIFY);
+    if(cmd==VMC_ALLOC_VERIFY&&verifyFailure)return -EIO;
     return vmc_allocate_contiguous(&formatted,in,cmd==VMC_ALLOC_RESERVE);
 }
 static int mc_getmcrtime(sceMcStDateTime *time) {

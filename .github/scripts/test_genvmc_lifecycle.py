@@ -303,6 +303,13 @@ int main(void)
         CHECK(removes == 1 && removeSawBusy, "only this job's exclusive new file is removed before status");
         formatterOwns = 0;
     }
+    SCENARIO("close_failure_has_its_own_message") {
+        CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
+        formatResult = -114;
+        runWorker();
+        CHECK(genvmc_stats.VMC_error == -114, "close failure retained");
+        CHECK(strcmp(genvmc_stats.VMC_msg, "Cannot close the VMC file") == 0, "close is not mislabeled as layout failure");
+    }
     genvmc_deinit(NULL);
     if (failures)
         return 1;
