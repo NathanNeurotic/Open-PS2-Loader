@@ -53,10 +53,13 @@ u32 New_SifSetDma(SifDmaTransfer_t *sdd, s32 len)
     disable_padOpen_hook = 1;
     Invalidate_PadBuffer();
 
-    // Hook padOpen function to install In Game Reset
-    if (!(g_compat_mask & COMPAT_MODE_6) && padOpen_hooked == 0) {
+    // A patched PadOpen call does not prove the worker/interrupt still exists:
+    // ExecPS2 clears those kernel objects while retaining patches in the ELF.
+    // Ensure power-button monitoring independently of the controller hook.
+    if (!(g_compat_mask & COMPAT_MODE_6)) {
         Install_IGR();
-        padOpen_hooked = Install_PadOpen_Hook(0x00100000, 0x01ff0000, PADOPEN_HOOK);
+        if (padOpen_hooked == 0)
+            padOpen_hooked = Install_PadOpen_Hook(0x00100000, 0x01ff0000, PADOPEN_HOOK);
     }
 
     struct _iop_reset_pkt *reset_pkt = (struct _iop_reset_pkt *)sdd->src;

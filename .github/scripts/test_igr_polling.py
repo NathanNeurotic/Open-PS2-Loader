@@ -8,7 +8,8 @@ wakes the worker at priority 0, all from interrupt context. Mode 6 keeps a snaps
 
 This compiles the real padhook.c functions twice -- standard and RA -- against kernel stubs and
 checks: worker/handler installation and retry, pad/power detection, IOP-reset pad invalidation,
-interrupt-side shutdown handoff, ExecPS2 reset, and that no EE alarm sampler comes back.
+interrupt-side shutdown handoff, the production worker with early and spurious wakes,
+actual reset-caller reinstallation after ExecPS2, and that no EE alarm sampler comes back.
 """
 from pathlib import Path
 import re
@@ -57,6 +58,7 @@ common = ''.join(function_text(sig) for sig in (
 ))
 reset = function_text('void Reset_Padhook(')
 handler = function_text('static int IGR_Intc_Handler(')
+worker = function_text('static void IGR_Thread(')
 install = function_text('void Install_IGR(')
 mode6 = ''.join(function_text(sig) for sig in (
     'static int RA_Intc_Handler(',
@@ -65,15 +67,83 @@ mode6 = ''.join(function_text(sig) for sig in (
 ))
 
 
+# Exercise the reset caller with the real installer, not a successful-call stub.
+syshook = (root / 'ee_core/src/syshook.c').read_text(encoding='utf-8')
+reset_at = syshook.index('u32 New_SifSetDma(')
+reset_hook = syshook[reset_at:syshook.index('\n}', reset_at) + 2]
+RESET_STUBS = r'''
+#define COMPAT_MODE_6 0x20
+#define PADOPEN_HOOK 0
+static int g_compat_mask, disable_padOpen_hook, padScans, resetResult = 1;
+struct _iop_reset_pkt { int arglen; char arg[16]; };
+typedef struct { void *src; } SifDmaTransfer_t;
+static int New_Reset_Iop(const char *arg, int len) { (void)arg; (void)len; return resetResult; }
+static int Install_PadOpen_Hook(u32 a, u32 b, int mode)
+{
+    (void)a; (void)b; (void)mode;
+    padScans++;
+    return 1;
+}
+#ifdef RETROACHIEVEMENTS
+static unsigned int ra_snap_iop;
+static void Install_RA_Vblank(void) {}
+#endif
+'''
+
+RESET_CHECKS = r'''
+    g_cfg.GameMode = 0;
+    struct _iop_reset_pkt packet = {0, {0}};
+    SifDmaTransfer_t dma = {&packet};
+    for (int cycle = 0; cycle < 2; cycle++) {
+        /* ExecPS2 destroys kernel objects, but the new ELF is already patched. */
+        Reset_Padhook();
+        padOpen_hooked = 1;
+        armPad();
+        int oldCreates = nCreate, oldHandlers = nAddIntc;
+        CHECK(New_SifSetDma(&dma, 1) == 1 && !disable_padOpen_hook,
+              "intercepted reboot completes and releases the scan guard");
+        CHECK(nCreate == oldCreates + 1 && IGR_Thread_ID >= 0 && padScans == 0,
+              "retained PadOpen patch still recreates the actual IGR worker without rescanning");
+        CHECK(Pad_Data.pad_buf == NULL && padOpen_hooked == 1,
+              "reboot preserves the patch but invalidates the stale pad buffer");
+        CHECK(nAddIntc == oldHandlers + 1 && IGR_Intc_ID >= 0,
+              "reset caller installs a fresh VBLANK sampler after ExecPS2");
+        New_SifSetDma(&dma, 1);
+        CHECK(nCreate == oldCreates + 1 && padScans == 0,
+              "another IOP reset reuses the surviving worker and controller patch");
+        resetResult = 0;
+        CHECK(New_SifSetDma(&dma, 1) == 0 && !disable_padOpen_hook && IGR_Thread_ID >= 0,
+              "failed IOP reset releases the guard without losing the live monitor");
+        resetResult = 1;
+    }
+    Reset_Padhook();
+    startFailures = 1;
+    New_SifSetDma(&dma, 1);
+    CHECK(IGR_Thread_ID < 0, "worker start failure remains retryable with a retained patch");
+    New_SifSetDma(&dma, 1);
+    CHECK(IGR_Thread_ID >= 0 && padScans == 0,
+          "next reset retries the actual installer even though the ELF is already patched");
+    Reset_Padhook();
+    g_compat_mask = COMPAT_MODE_6;
+    int oldCreates = nCreate;
+    New_SifSetDma(&dma, 1);
+    CHECK(IGR_Thread_ID < 0 && nCreate == oldCreates && padScans == 0,
+          "disabled IGR creates neither worker nor pad scan through the reset caller");
+'''
+
+
 def host_safe(text):
-    # The MIPS barrier has no host meaning; everything else compiles as written.
-    return text.replace('asm volatile("sync.l\\n");', ';')
+    # MIPS hardware instructions have no host meaning; retain the production C logic.
+    text = text.replace('asm volatile("sync.l\\n");', ';')
+    # GetCop0 is stubbed to zero, so this MIPS-only performance-counter branch is never taken.
+    return re.sub(r'__asm__ __volatile__\(\s*" mfc0  \$3, \$25;".*?\);', ';', text, flags=re.S)
 
 
 HARNESS = r'''
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -129,7 +199,7 @@ typedef struct {
     u32 option;
 } ee_thread_t;
 
-struct cfg { int EnableGSMOp; int GameMode; };
+struct cfg { int EnableGSMOp; int GameMode; int gCheatList; int MMCEIGRSettings; };
 static struct cfg g_cfg;
 #define USE_LOCAL_EECORE_CONFIG struct cfg *config = &g_cfg;
 
@@ -187,8 +257,47 @@ static s32 SetAlarm(u16 time, void (*cb)(s32, u16, void *), void *common)
     nAlarm++;
     return -1;
 }
-static void SleepThread(void) { nSleep++; }
-static void iWakeupThread(int id) { nWake++; lastWake = id; }
+static int IGR_Intc_Handler(int cause);
+static void IGR_Thread(void *arg);
+static void (*beforeSleep)(void);
+static int pendingWake, workerWaiting, dropRunningWake, lostRunningWakes, consumedWakes, strayWakeups;
+static void SleepThread(void)
+{
+    nSleep++;
+    if (strayWakeups) {
+        strayWakeups--;
+        return;
+    }
+    /* Inject the interrupt after the production worker read its latch, before it blocks. */
+    if (beforeSleep) {
+        void (*interrupt)(void) = beforeSleep;
+        beforeSleep = NULL;
+        interrupt();
+    }
+    if (!pendingWake) {
+        /* Also model raw kernels that reject a RUNNING-thread wake: the persistent
+           VBLANK handler runs again after this worker enters WAIT. */
+        workerWaiting = 1;
+        IGR_Intc_Handler(0);
+        workerWaiting = 0;
+    }
+    if (!pendingWake) {
+        fputs("FAIL production worker blocked without a pending or repeated VBLANK wake\n", stderr);
+        exit(1);
+    }
+    pendingWake--;
+    consumedWakes++;
+}
+static void iWakeupThread(int id)
+{
+    nWake++;
+    lastWake = id;
+    if (dropRunningWake && !workerWaiting) {
+        lostRunningWakes++;
+        return;
+    }
+    pendingWake++;
+}
 static void WakeupThread(int id) { nWake++; lastWake = id; }
 static void ChangeThreadPriority(int id, int prio) { nPrio++; lastPrioThread = id; lastPrio = prio; }
 static void ResetEE(u32 bits) { nResetEE++; lastResetEE = bits; }
@@ -221,7 +330,39 @@ static int AddIntcHandler(int cause, int (*h)(int), int next) { (void)h; (void)n
 static void EnableIntc(int cause) { (void)cause; nEnableIntc++; }
 static void ExitHandler(void) {}
 static void RA_OnVblank(void) { nRA++; }
-static void IGR_Thread(void *arg) { (void)arg; }
+/* Reset services are inert; the complete production worker still executes its wait and exit path. */
+static int EnableDebug, workerShutdowns, workerExitCalls, workerRpcCalls, prematureShutdown;
+#define DBGCOL(...) ((void)0)
+#define OPL_MODULE_ID_RESETSPU 1
+#define OPL_MODULE_ID_MMCEDRV 2
+#define OPL_MODULE_ID_MMCEIGR 3
+static void SifInitRpc(int mode)
+{
+    (void)mode;
+    workerRpcCalls++;
+    if (!Pad_Data.combo_type)
+        prematureShutdown++;
+}
+static void oplIGRShutdown(int poweroff) { (void)poweroff; workerShutdowns++; }
+static int Reset_Iop(const char *arg, int len) { (void)arg; (void)len; return 1; }
+static void Remove_Kernel_Hooks(void) {}
+static void InitializeTLB(void) {}
+static u32 GetCop0(int reg) { (void)reg; return 0; }
+static void DisableGSM(void) {}
+static void DisableCheats(void) {}
+static int SifIopSync(void) { return 1; }
+static void SifInitIopHeap(void) {}
+static void LoadFileInit(void) {}
+static void sbv_patch_enable_lmb(void) {}
+static int LoadOPLModule(int id, int mode, int len, void *arg)
+{
+    (void)id; (void)mode; (void)len; (void)arg;
+    return 1;
+}
+static void SifExitIopHeap(void) {}
+static void LoadFileExit(void) {}
+static void SifExitRpc(void) {}
+static void IGR_Exit(s32 code) { (void)code; workerExitCalls++; }
 
 @CODE@
 
@@ -239,6 +380,28 @@ static void armPad(void)
     Pad_Data.pos_combo2 = 2;
     Pad_Data.pos_state = 112;
     Pad_Data.pos_frame = 88;
+}
+
+static void prepareWorker(void)
+{
+    g_cfg.GameMode = g_cfg.EnableGSMOp = g_cfg.gCheatList = g_cfg.MMCEIGRSettings = 0;
+    IGR_Thread_ID = 5;
+    armPad();
+    Pad_Data.combo_type = 0;
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    ndin = poff = scmd = 0;
+    pendingWake = workerWaiting = dropRunningWake = lostRunningWakes = consumedWakes = strayWakeups = 0;
+    nSleep = nWake = nIResetEE = nISuspend = nIPrio = 0;
+    workerShutdowns = workerExitCalls = workerRpcCalls = prematureShutdown = 0;
+    beforeSleep = NULL;
+}
+
+static void requestAtSleep(void)
+{
+    padBuf[112] = IGR_PAD_STABLE_V1;
+    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
+    padBuf[2] = IGR_COMBO_START_SELECT;
+    IGR_Intc_Handler(0);
 }
 
 int main(void)
@@ -405,6 +568,38 @@ STANDARD_CHECKS = r'''
           "the next game installs a fresh worker and handler with no stale request");
 '''
 
+
+WORKER_CHECKS = r'''
+    prepareWorker();
+    requestAtSleep();
+    IGR_Thread(NULL);
+    CHECK(nSleep == 0 && consumedWakes == 0 && workerShutdowns == 1 && workerExitCalls == 1,
+          "production worker handles a prelatched request without sleeping");
+
+    prepareWorker();
+    beforeSleep = requestAtSleep;
+    IGR_Thread(NULL);
+    CHECK(nSleep == 1 && consumedWakes == 1 && pendingWake == 0 && lostRunningWakes == 0 &&
+          nIResetEE == 1 && nISuspend == 254 && workerShutdowns == 1 && workerExitCalls == 1,
+          "request at the production check/sleep boundary consumes its pending wake and exits");
+
+    prepareWorker();
+    strayWakeups = 1;
+    beforeSleep = requestAtSleep;
+    IGR_Thread(NULL);
+    CHECK(nSleep == 2 && consumedWakes == 1 && workerShutdowns == 1 && workerExitCalls == 1 &&
+          prematureShutdown == 0,
+          "production worker rechecks a spurious wake before starting shutdown");
+
+    prepareWorker();
+    dropRunningWake = 1;
+    beforeSleep = requestAtSleep;
+    IGR_Thread(NULL);
+    CHECK(nSleep == 1 && lostRunningWakes == 1 && consumedWakes == 1 && pendingWake == 0 &&
+          nIResetEE == 2 && nISuspend == 508 && workerShutdowns == 1 && workerExitCalls == 1,
+          "repeated VBLANK handoff recovers even when a raw kernel drops the early wake");
+'''
+
 RA_CHECKS = r'''
     CHECK(nAddIntc == 1 && lastIntcCause == kINTC_VBLANK_END && nEnableIntc == 1,
           "RA build keeps its VBLANK_END handler, registered once");
@@ -498,19 +693,22 @@ def build_and_run(name, defines, code, checks, harness=HARNESS):
             failures.append('%s harness did not compile:\n%s' % (name, build.stderr))
             return
         run = subprocess.run([str(exe)], capture_output=True, text=True, check=False, timeout=10)
-        if run.returncode != 0 or run.stdout.strip():
-            failures.extend(('%s: ' % name + line) for line in (run.stdout.strip().splitlines() or ['exited %d' % run.returncode]))
+        output = (run.stdout + run.stderr).strip()
+        if run.returncode != 0 or output:
+            failures.extend(('%s: ' % name + line) for line in (output.splitlines() or ['exited %d' % run.returncode]))
 
 
 if not failures:
-    build_and_run('standard', '', common + handler + install + reset, STANDARD_CHECKS)
+    reset_code = RESET_STUBS + reset_hook
+    build_and_run('standard', '', common + handler + worker + install + reset + reset_code,
+                  STANDARD_CHECKS + RESET_CHECKS + WORKER_CHECKS)
     # nWake counts iWakeupThread for the RA handler too (the stub is shared), so the check compares it.
     ra_checks = RA_CHECKS.replace('nIWake == 0 + nWake', 'nWake == 1')
     build_and_run('retroachievements', '#define RETROACHIEVEMENTS\n',
-                  common + handler + install + reset, ra_checks)
+                  common + handler + worker + install + reset + reset_code, ra_checks + RESET_CHECKS + WORKER_CHECKS)
     build_and_run('ra_mode6', '#define RETROACHIEVEMENTS\n', mode6, MODE6_CHECKS, MODE6_HARNESS)
 
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('IGR: VBLANK_END sampling in standard and RA builds, and Mode 6 snapshot-only passed')
+print('IGR: VBLANK sampling, production worker wakes, reset reinstallation and RA Mode 6 passed')
