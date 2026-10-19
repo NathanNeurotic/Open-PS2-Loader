@@ -186,6 +186,8 @@ jobs:
           persist-credentials: false
       - name: Check compact release notes and changelog
         run: python3 .github/scripts/test_release_notes.py
+      - name: Check release edition titles and classification policy
+        run: python3 .github/scripts/test_release_titles.py
       - name: Check pinned ORBIT extraction and RA package isolation
         run: python3 .github/scripts/test_package_orbit_neutrino.py
       - name: Check both RA themes, provenance gates and upload rollback

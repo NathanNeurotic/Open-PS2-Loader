@@ -65,7 +65,7 @@ def publish(folder, notes, repository):
     releases = json.loads(gh("api", "--paginate", "--slurp", f"repos/{repository}/releases?per_page=100"))
     existing = next((release for page in releases for release in page if release["tag_name"] == TAG), None)
     assets = sorted(folder.iterdir())
-    title = "RiptOPL RetroAchievements — inceBtion & Korium (experimental)"
+    title = "RetroAchievements"
     with tempfile.TemporaryDirectory() as backup:
         if existing:
             # Back up every clobbered name before mutation. Restore all of them,

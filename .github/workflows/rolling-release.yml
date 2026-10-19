@@ -1,7 +1,7 @@
 name: Rolling Release
 
 # Continuously publishes the current build of the PUBLISHING BRANCH to a single "rolling"
-# development release. It is a full (non-pre-release) GitHub release marked Latest, and it can be
+# development release. Its display title is "inceBtion"; it is a full (non-pre-release) release marked Latest, and it can be
 # pulled directly from a stable URL as development progresses. The publishing branch is
 # `rebuild/main`, and only rebuild/main: it is the physical publish knob, fast-forwarded to a
 # tested step-chain tip exactly when Nathan wants a rolling build to go out, never
@@ -509,7 +509,7 @@ jobs:
       # The rolling channel this ref publishes: rebuild/main -> "rolling" (GitHub's Latest); the Korium
       # test line -> "rolling-korium", identical but for the built-in theme, and never Latest.
       ROLLING_TAG: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && 'rolling-korium' || 'rolling' }}
-      ROLLING_TITLE: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && 'Rolling (Korium)' || 'Rolling' }}
+      ROLLING_TITLE: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && 'Korium' || 'inceBtion' }}
       ROLLING_LATEST: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && '--latest=false' || '--latest' }}
       OPL_VERSION: ${{ needs.build-rolling-ps2dev-latest.outputs.version }}
       # Human-readable label for the FALLBACK (-PS2DEVPINNED) build, shown in the release notes.
