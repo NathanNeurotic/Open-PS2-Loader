@@ -945,7 +945,12 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
     }
     // VMC and PADEMU also need an initial SDK SIO2MAN table to hook after reset.
     // Keep one copy and preserve the existing module ID across every transport.
-    if ((modules & (CORE_IRX_MX4SIO | CORE_IRX_VMC)) PADEMU_ARG) {
+    // Not for MMCE: the in-game mmcedrv (stock ps2-mmce v2.1.1) takes an SIO2 lock that only the
+    // game's own SIO2MAN releases. With the SDK SIO2MAN loaded first, that lock is never released
+    // and the game hangs on a black screen after the PS2 logo (confirmed on hardware: pre-#962
+    // 2ee8292c boots, ad43082f hangs). VMC and PADEMU then hook the game's SIO2MAN when it
+    // registers, as they did before #962.
+    if (!(modules & CORE_IRX_MMCE) && ((modules & (CORE_IRX_MX4SIO | CORE_IRX_VMC)) PADEMU_ARG)) {
         irxptr_tab[modcount].info = size_sio2man_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_SIO2MAN);
         irxptr_tab[modcount++].ptr = (void *)&sio2man_irx;
     }
