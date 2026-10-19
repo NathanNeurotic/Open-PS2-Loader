@@ -1,11 +1,17 @@
-"""Execute production reset callers with failed special-reset stages, standard/RA."""
+"""Execute production reset callers, retained PadOpen patches and failure stages.
+
+An optional git ref selects the syscall hook for before/after reproduction.
+"""
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 manager = (ROOT / "ee_core/src/iopmgr.c").read_text(encoding="utf-8")
 hooks = (ROOT / "ee_core/src/syshook.c").read_text(encoding="utf-8")
+if len(sys.argv) > 1:
+    hooks = subprocess.check_output(["git", "show", sys.argv[1] + ":ee_core/src/syshook.c"], cwd=ROOT, text=True)
 # The real syscall trampoline must preserve C's failure result. A C-only
 # harness misses an unconditional success written in the MIPS return slot.
 assembly = (ROOT / "ee_core/src/asm.S").read_text(encoding="utf-8")
@@ -64,16 +70,17 @@ static void SifExitRpc(void) {exits++;}
 static int LoadOPLModule(int id,int mode,int n,void *p) {
  (void)id;(void)mode;(void)n;(void)p;loads++;return 1;
 }
-static void Install_IGR(void) {}
+static int igr_installs, pad_scans;
+static void Install_IGR(void) {igr_installs++;}
 static int pad_buffer_live, invalidations;
 static void Invalidate_PadBuffer(void) {
  assert(disable_padOpen_hook == 1);
- pad_buffer_live=0;padOpen_hooked=0;invalidations++;
+ pad_buffer_live=0;invalidations++;
 }
 static int Install_PadOpen_Hook(int a,int b,int c) {
  (void)a;(void)b;(void)c;
  assert(!pad_buffer_live && disable_padOpen_hook);
- return 1;
+ pad_scans++;return 1;
 }
 #ifdef RETROACHIEVEMENTS
 static void Install_RA_Vblank(void) {ticks++;}
@@ -91,7 +98,7 @@ static void prepare(int stage) {
  fail_stage=stage;special_calls=exits=loads=wipes=sleeps=ticks=0;
  iop_reboot_count=1;set_reg_disabled=1;set_reg_hook=0;ra_snap_iop=99;
  disable_padOpen_hook=0;g_compat_mask=COMPAT_MODE_6;
- pad_buffer_live=1;invalidations=0;
+ pad_buffer_live=1;invalidations=0;padOpen_hooked=0;igr_installs=pad_scans=0;
 }
 int main(void) {
  char arg[11]="0123456789";
@@ -124,11 +131,11 @@ int main(void) {
  for(int stage=1;stage<=2;stage++) {
   prepare(stage);assert(New_SifSetDma(&dma,1)==0);
   assert(!disable_padOpen_hook && ticks==0 && loads==0);
-  assert(!pad_buffer_live && invalidations==1);
+  assert(!pad_buffer_live && invalidations==1 && igr_installs==0 && pad_scans==0);
  }
  prepare(0);assert(New_SifSetDma(&dma,1)==1);
  assert(!disable_padOpen_hook);
- assert(!pad_buffer_live && invalidations==1);
+ assert(!pad_buffer_live && invalidations==1 && igr_installs==0 && pad_scans==0);
 #ifdef RETROACHIEVEMENTS
  assert(ticks==1);
 #else
@@ -139,7 +146,10 @@ int main(void) {
   assert(New_SifSetDma(&dma,1)==(stage==0));
   assert(!pad_buffer_live && invalidations==1 && padOpen_hooked==1);
   assert(!disable_padOpen_hook && ticks==0);
+  assert(igr_installs==1 && pad_scans==0); // an existing pad patch is NOT a live IGR worker
  }
+ prepare(0);g_compat_mask=0;
+ assert(New_SifSetDma(&dma,1)==1 && igr_installs==1 && pad_scans==1);
  prepare(1);sysLoadElf("game.elf",0,NULL);
  assert(wipes==0 && loads==0 && sleeps==1 && set_reg_disabled==1);
  prepare(0);sysLoadElf("game.elf",0,NULL);
