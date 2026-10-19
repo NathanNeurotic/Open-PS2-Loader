@@ -1,6 +1,8 @@
 # SIO2MAN hook compatibility
 
-VMC and controller emulation keep independent original callbacks for the v1 and v2 SIO2MAN export layouts. The SDK driver is embedded when MX4SIO, VMC or PADEMU needs it, and loaded before the block driver and emulation hooks. Existing module IDs are preserved. Game libraries registered later use the same version-aware hook installation.
+VMC and controller emulation keep independent original callbacks for the v1 and v2 SIO2MAN export layouts. The SDK driver is embedded when MX4SIO, VMC or PADEMU needs it, and loaded before the block driver and emulation hooks.
+
+**MMCE games are the exception: they never get the SDK driver.** The in-game MMCE driver (`mmcedrv`, stock ps2-mmce v2.1.1) takes an SIO2 lock that only the game's own SIO2MAN releases. With the SDK SIO2MAN loaded first, the lock is never released and the game hangs on a black screen after the PS2 logo. Confirmed on hardware with the builds either side of #962 (`2ee8292c` boots, `ad43082f` hangs). On MMCE, VMC and PADEMU hook the game's own SIO2MAN when it registers, as they did before #962. `test_mmce_sio2man_pack.py` checks this. Existing module IDs are preserved. Game libraries registered later use the same version-aware hook installation.
 
 When SDK export entries alias the same original function, the hooks update every alias and retain the actual original callback rather than chaining a hook back into itself. Installing the same hook twice leaves its saved originals intact. The MX4SIO block driver still requires a successful SIO2MAN load.
 
