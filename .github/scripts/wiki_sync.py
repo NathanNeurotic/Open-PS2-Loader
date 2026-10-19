@@ -190,6 +190,8 @@ class Converter(MarkdownConverter):
 
     def convert_a(self, el, text, parent_tags):
         if el.get("name") and not el.get("href"):
+            if {"td", "th"} & parent_tags:
+                return '<a name="' + el["name"] + '"></a>'
             return '\n\n<a name="' + el["name"] + '"></a>\n\n'
         if "tile" in el.get("class", []):
             label = self.escape(el.get_text(" ", strip=True), parent_tags)
@@ -219,12 +221,19 @@ def convert_site(path, sha):
     main = soup.select_one("main.content")
     if main is None:
         raise ValueError(f"No main.content in {path}")
-    for tag in main.select("script, style, button, input, .toc, footer"):
+    for tag in main.select("script, style, button, input, .toc, footer, .fork-gap-controls, .fork-gap-count, .directory-alpha"):
         tag.decompose()
     # Retain every explicit website anchor, including anchors on containers.
     for tag in list(main.select("[id]")):
         anchor = soup.new_tag("a", attrs={"name": tag["id"]})
-        tag.insert_before(anchor)
+        # An anchor between table rows destroys Markdown table recognition.
+        # Keep row/cell bookmarks inside a cell, where inline HTML is supported.
+        if tag.name == "tr" and tag.find(["td", "th"]) is not None:
+            tag.find(["td", "th"]).insert(0, anchor)
+        elif tag.name in ("td", "th"):
+            tag.insert(0, anchor)
+        else:
+            tag.insert_before(anchor)
         del tag["id"]
     for tag in main.select("a[href]"):
         tag["href"] = rewrite_url(tag["href"], "site", path.name, sha)
