@@ -1,0 +1,23 @@
+diff --git a/mmceman/src/mmce_fs.c b/mmceman/src/mmce_fs.c
+--- a/mmceman/src/mmce_fs.c
++++ b/mmceman/src/mmce_fs.c
+@@ -745,9 +745,17 @@ int mmce_fs_dread(iomanX_iop_file_t *file, iox_dirent_t *dirent)
+     }
+ 
+     if (rdbuf[0x4] != 0) {
+-        DPRINTF("%s ERROR: Returned %i, Expected 0\n", __func__, rdbuf[0x4]);
++        // 0 (end of directory), not -1: the card answers this status when its iterator has no next
++        // entry -- the firmware's sd_iterate_dir fails openNext at the end of EVERY listing, and for
++        // an entry that was opened as a directory but is really a file. Returning -1 here made every
++        // completed listing indistinguishable from a failed one: the EE's readdir() returned NULL
++        // with errno set, so a caller that checks errno (OPL's Ember scan) discarded every MMCE
++        // listing as a read failure. The card sends the same status for a handle it no longer
++        // holds (bad fd), which likewise has nothing more to list. The timeout/garbled-reply paths
++        // above and below stay -1, so a contended bus is still reported as a failure.
++        DPRINTF("%s: end of directory (status %i)\n", __func__, rdbuf[0x4]);
+         mmce_sio2_unlock();
+-        return -1;
++        return 0;
+     }
+ 
+     //Packet #n + 1: io_stat_t and filename len
