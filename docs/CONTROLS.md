@@ -5,9 +5,9 @@ Every button RiptOPL responds to, in one place.
 Two settings change what you read below, so check them first if the tables do not match your console:
 
 * **Select Button** (*Settings → Controller Settings*) swaps which face button confirms. The tables use
-  **Cross = confirm, Circle = back**, which is the default everywhere except **Japanese consoles**,
-  where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your
-  select button, swap those two everywhere, including the Settings screens.
+  **Cross = confirm, Circle = back** as a reference layout. Fresh RiptOPL settings use
+  **Circle to confirm**; saved preferences override that. Swap the two in these tables when
+  Circle is selected, including on Settings screens, and follow the on-screen hints.
 * **Coverflow and PSBBN Flow** (*Settings → Interface → Theme*) rotate the navigation axis on the game list. Both layouts
   are given below.
 

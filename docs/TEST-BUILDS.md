@@ -30,9 +30,10 @@ freezes, press **L1 + L2 + R1 + R2 + Start + Select** (the normal IGR combo). Th
 IGR always does. Copy that file off the card with wLaunchELF and send it with your report. Each
 freeze overwrites the previous file.
 
-The file records the game's threads at the moment of the combo, the last disc reads and any read
-that started and never finished, memory card (VMC) activity, and whether the I/O processor still
-answered. Its `hint=` line says which of those looks stuck.
+The file records thread waits and priorities after IGR has suspended the game threads; their
+status includes that suspension. It also records the last disc reads and any read that started
+and never finished, memory card (VMC) activity, and whether the I/O processor still answered.
+Its `hint=` line says which of those looks stuck.
 
 If the combo does nothing, report that and confirm Compatibility Mode 6 was off. An unresponsive
 combo alone does not establish a main-CPU freeze: IGR can be disabled or fail to detect input.

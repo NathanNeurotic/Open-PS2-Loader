@@ -2,7 +2,7 @@
 """In-game freeze report (INGAMEDIAG / FREEZEDIAG flavour) structural checks.
 
 The report must not exist in any other build, must not be able to hang IGR on a stuck IOP, and
-must capture the game's threads before IGR changes them. The text formatter itself is covered by
+must capture thread waits and priorities after handoff suspension, before DMA/GS shutdown. The text formatter is covered by
 ee_core/tests/test_freeze_diag_format.c.
 """
 
@@ -102,13 +102,16 @@ poll = poll[:poll.index("\n}\n")]
 i_prio = poll.index("ChangeThreadPriority(TH_SELF, 0);")
 i_begin = poll.index("FreezeDiag_Begin(")
 i_stop = poll.index("IGR_StopDmaAndGs();")
-i_suspend = poll.index("SuspendThread(i);")
-check(i_prio < i_begin < i_stop < i_suspend,
-      "threads are captured at priority 0 and before DMA/GS stop and thread suspension")
+check(i_prio < i_begin < i_stop,
+      "threads are captured at priority 0 before worker DMA/GS stop")
 check("if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {" in poll[i_prio:i_begin],
       "only the reset combo arms a report (not IGS or power-off)")
 alarm = pad[pad.index("static void IGR_Poll_Alarm("):pad.index("static void IGR_PollUntilRequested(void)")]
 check("g_freeze_diag_polls++;" in alarm[:alarm.index("IGR_CheckInputs();")], "each alarm input sample is counted")
+check(alarm.index("iSuspendThread(i);") < alarm.index("iSignalSema(IGR_Request_Sema);"),
+      "sampler suspends competitors before signalling the worker, including priority-0 games")
+check("SuspendThread(i);" not in poll,
+      "the worker does not repeat suspension; reports include the sampler's suspension")
 
 thread = pad[pad.index("static void IGR_Thread(void *arg)"):]
 gate = re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*FreezeDiag_FetchAndShutdown\(\);\n#else\n#ifdef RETROACHIEVEMENTS\n(?:\s*//[^\n]*\n)*\s*if \(config->GameMode != DISC_MODE\)\n#endif\n\s*oplIGRShutdown\(0\);\n#endif\n", thread)

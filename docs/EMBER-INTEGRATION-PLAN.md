@@ -1,3 +1,7 @@
+> **Historical engineering record.** This file records its dated implementation or audit baseline.
+> Status, package names and instructions below may be superseded. Use [VCD.md](VCD.md)
+> for the current reference; do not treat old DONE/pending entries as a new hardware result.
+
 # Ember as a second PS1 core — integration plan
 
 > **Internal engineering document.** This is an implementation plan for contributors, not user

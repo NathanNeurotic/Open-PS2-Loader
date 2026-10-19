@@ -1,3 +1,7 @@
+> **Historical engineering record.** This file records its dated implementation or audit baseline.
+> Status, package names and instructions below may be superseded. Use [RETROACHIEVEMENTS.md](RETROACHIEVEMENTS.md)
+> for the current reference; do not treat old DONE/pending entries as a new hardware result.
+
 > Historical PS2 integration plan. USB PS1/VCD support now uses the separate
 > `rapops`/`rapull` IOP path described in [the current RA guide](RETROACHIEVEMENTS.md#ps1-achievements-through-usb-popstarter).
 > The ee_core-only PS1 exclusions below describe the original plan.

@@ -69,6 +69,12 @@ files that are already there. Games started by **Auto Loading** skip the offer, 
 the menu to answer it: launch a game on the OPL core from the menu once, or copy the two files
 yourself, before relying on a USB IGR Path there.
 
+This limits the **return ELF's location**, not the game's source. OPL-core PS2
+games on an internal exFAT HDD use the same IGR hook as other OPL transports.
+The reset loader does not restore an internal exFAT filesystem for an `ata:`
+return path. Use the PS2 browser or a memory-card ELF to isolate a failing
+return target from a combination that is not detected.
+
 If you use MMCE cards, **IGR Bootcard Slot(s)** (*Settings → Game Sources → MMCE Settings*) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is
 already back on its boot image by the time the next thing loads.
@@ -83,7 +89,7 @@ you do not spend time hunting a fault that is not there.
 **Before the game opens a controller.** The hook attaches by patching the game's own
 `scePadPortOpen` / `scePad2CreateSocket` call. Until the game asks for a pad, there is nothing
 hooked — so IGR does not respond during very early boot logos on some titles. The console power
-button still works.
+button is independent of the pad buffer, subject to the hardware limits above.
 
 **When the game is incompatible.** A few games handle input in a way the hook disturbs. Per-game
 compatibility **Mode 6 — Disable IGR** turns the hook off for that title. If a game misbehaves in a
@@ -94,8 +100,10 @@ Fewer games should need it now. IGR used to watch the pad from a **VBLANK interr
 merely registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the
 handler did. It now samples controller and power-button inputs directly from a short EE timer alarm
 about once per frame, and registers nothing on VBLANK (official OPL #1762, adapted here).
-The alarm only detects requests; a separate IGR worker handles game shutdown, so
-high-priority game threads cannot starve the input check. The
+The alarm samples inputs and, on a reset request, suspends competing game
+threads before signalling the IGR worker. Promoting that worker to priority 0
+alone cannot preempt a game already running at priority 0. The worker then
+handles DMA/GS and EE shutdown. Ordinary samples do not suspend threads. The
 **RetroAchievements** loader is the exception: its per-frame snapshots and unlock notice require a
 VBLANK interrupt. With IGR enabled, RA uses the existing combined VBLANK/IGR path. Under Mode 6,
 RA instead installs a snapshot-only handler when telemetry is active, without an IGR thread or pad
@@ -119,9 +127,8 @@ property of that loader, and it is why Mode 6 is greyed out whenever the Loader 
 Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's
 power or reset button.
 
-PS1 titles are a separate case again: they run under POPSTARTER or Ember, each of which has its own
-independent IGR behaviour built into that binary. RiptOPL's hook is not involved. See
-[VCD.md](VCD.md).
+PS1 titles do not use RiptOPL's PS2 IGR hook. POPSTARTER supplies its own reset
+behavior; **Ember does not provide IGR**. See [VCD.md](VCD.md).
 
 ---
 
@@ -158,7 +165,13 @@ game; and — for the power-off combination specifically — the controller is i
 and R3 are the stick clicks. The screenshot combination uses **Up**, so it needs no analog mode.
 
 Try the console power button as a cross-check: if that resets and the pad combination does not, the
-hook is fine and the problem is in the pad half.
+sampler is active; check the pad hook and controller behavior.
+
+**An older build fails on internal exFAT.** Compare the exact version/flavour and SHA.
+[Issue #984](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/984) records
+failures including Beta-4032. [PR #990](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/990)
+repairs a reproduced lost IGR notification and is included in current main.
+Passing that regression does not establish that every reported console failure is resolved.
 
 **Reset takes me somewhere unexpected.** Check **IGR Path** in *Settings → General & System*. A stale path
 left over from an earlier setup will boot that ELF instead of exiting to the PS2 browser. A USB path that
@@ -184,4 +197,4 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 
 * [CONTROLS.md](CONTROLS.md) — the full button reference
 * [NEUTRINO.md](NEUTRINO.md) — the alternative core, which has no IGR
-* [VCD.md](VCD.md) — PS1 titles and their own IGR behaviour
+* [VCD.md](VCD.md) — PS1 cores and their separate limitations

@@ -12,7 +12,7 @@ boot better under Neutrino, or for users who prefer Neutrino's loader and its la
 PS2 Device Emulator"*. Home: <https://github.com/rickgaiser/neutrino>.
 
 The RiptOPL release package
-normally bundles the official latest build, re-fetched from upstream at publish time (a failed download/extraction can omit it; check the release notes), under Neutrino's
+bundles the upstream development pre-release selected at publish time (falling back to the upstream latest release when no pre-release is listed); a failed download or incomplete extraction fails packaging, under Neutrino's
 **AFL-3.0** licence. We add exactly one file to that folder — `config/bsd-udpfsbd.toml`, because
 Neutrino ships `udpfs_bd.irx` without a matching `-bsd` token and RiptOPL launches UDPFS as
 `-bsd=udpfsbd`. Nothing of rickgaiser's is altered or removed.
@@ -179,7 +179,7 @@ settings:
 |---|---|
 | `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpfs\|udpfsbd\|udpbd>` | always (the storage backend). APA HDD maps to `ata` (+ `-bsdfs=hdl`), so no separate `apa` token is ever emitted. OPL emits this unconditionally for every backend, including `udpfs` — nightly Neutrino builds that auto-detect the backend simply ignore the explicit token, so there is no version split on OPL's side |
 | `-bsdfs=hdl` | internal HDD (APA) only |
-| `-bsdfs=<exfat\|hdl\|bd>` | only if the per-game **Neutrino Filesystem** picker (Compatibility screen) is set off Auto; block-backed devices only (never mmce/udpfs — no filesystem layer there). `hdl`/`bd` also reshape `-dvd` to `hdl:`/`bdfs:`. A hand-typed `-bsdfs=` in the args wins over the picker (per-game args over global ones, last one wins) and reshapes `-dvd` the same way; a hand-typed `-dvd=` wins if it is forwarded (a long argument list can drop it). `bd` names the drive as `<driver><N>p0` (a second USB stick is `usb1p0`), using the device number the drive reported; if it never reported one, the launch is refused while the menu is still up, not guessed as device 0 -- whether `bd` came from the picker or was typed, and even beside a typed `-dvd=` (a long argument list can drop it). ATA is exempt (one device, always 0) |
+| `-bsdfs=<exfat\|hdl\|bd>` | only if the per-game **Neutrino Filesystem** picker (Compatibility screen) is set off Auto; block-backed devices only (never mmce/udpfs — no filesystem layer there). `hdl`/`bd` also reshape `-dvd` to `hdl:`/`bdfs:`. A hand-typed `-bsdfs=` in the args wins over the picker (per-game args over global ones, last one wins) and reshapes `-dvd` the same way; a hand-typed `-dvd=` wins when forwarded; an over-budget interactive launch is refused. `bd` names the drive as `<driver><N>p0` (a second USB stick is `usb1p0`), using the device number the drive reported; if it never reported one, the launch is refused while the menu is still up, not guessed as device 0 -- whether `bd` came from the picker or was typed, and even beside a typed `-dvd=`. ATA is exempt (one device, always 0) |
 | `-dvd=<path>` / `-dvd=hdl:<partition>` | always (the game image/partition) |
 | `-qb` | USB, iLink, UDPBD and both UDPFS legs (`udpfs`/`udpfsbd`), the same set NHDDL uses (every mode except HDL). RiptOPL's no-reset ELF bridge deliberately preserves the already-mounted BDM/UDPFS environment; quick boot makes Neutrino enter its load environment without resetting that inherited stack away. For UDPFS an IOP reset also triggers a secondary DISCOVERY that collides with active server streams. Without it, UDPBD reconnected on its own after the reset, read the image's partition table and never reached the game. A user-supplied active `-qb` is never duplicated |
 | `-gc=<modes>` | only if the game has OPL compatibility modes set |
@@ -323,7 +323,7 @@ HDD / MMCE) are independent and browse alongside whichever network protocol you 
 > **UDPBD vs UDPFS — pick by your PC server.** They are **wire-incompatible**: UDPBD speaks SUDPBDv2
 > (port `0xBDBD`, `udpbd-server`), UDPFS speaks UDPRDMA (port `0xF5F6`, `udpfsd`). If you already run
 > the old `udpbd-server`, select **UDPBD** and nothing else changes. If you're setting up fresh, prefer
-> **UDPFS** (it also serves loose ISOs and transparent `.zso`/`.chd` — see below). A config saved as
+> **UDPFS** (it serves loose ISOs as well as disk images). A config saved as
 > UDPBD stays UDPBD: RiptOPL never silently migrates you off it.
 
 ### UDPFS Access — Files vs Image
@@ -339,7 +339,7 @@ FILESYSTEM (`udpfs:`), Image is the `udpfs_bd` BLOCK device (`massN:`).
 | Server command | `udpfsd -fsroot <dir>` | `udpfsd -bdpath <image>` |
 | Launch | by name (`-dvd=udpfs:<name>`, stock `-bsd=udpfs`) — no `massN:`, no fragment list | mounted like a USB drive (`massN:`, fragment-list launch) |
 | Add a game | drop it into the served `CD/` or `DVD/` folder | mount the image, copy, unmount |
-| Compression | transparent `.zso`/`.cso`/`.chd` | — (raw sectors only) |
+| Compression | Server-dependent; RiptOPL must see an `.iso` entry and ISO bytes | — (raw sectors only) |
 
 Because both backends bind the same UDPRDMA port and the IOP ministack can load only one per boot, you
 **can't run both at once** — Files vs Image is a **config-time choice** (defaulting to Files). It's a
@@ -424,12 +424,10 @@ When a game's core is **Neutrino**:
   source of `-gsm`: a manual `-gsm` typed into **Launch Args** takes precedence (OPL emits only
   one `-gsm`, since Neutrino aborts on a duplicate/malformed value).
 
-  > **The "1080p impression" trick:** on 1080-class displays, `1080i x3` (`-gsm=1080ix3`) is the
-  > community workaround for progressive-looking output — the same effect people previously got by
-  > launching Neutrino from PS2BBLE/OSDmenu with `-gsm=1080ix3`. Set it per game, or globally via
-  > **Settings → Game Launching → Neutrino Video** and leave games on "Default". Neutrino itself exposes only the
-  > listed `1080i` modes; it does not expose RiptOPL's separate, GSM-synthetic forced-progressive
-  > 1080p mode used by the native OPL core.
+  > **1080i x1–x3 remain interlaced output.** These presets change the output mapping, not
+  > the game's rendering resolution or frame rate. x3 is not a 1080p mode or a universal
+  > recommendation. Start with video forcing Off when diagnosing a launch; see
+  > [the scaling explanation](SETUP-QUESTIONS.md#what-do-neutrinos-1080i-x1-x2-and-x3-mean).
   OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
   they're OPL ee-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, and
   no PSS/BIK video-skip), so OPL never forwards them. Modes 1/2/3/5 *do* map to `-gc`, and a Neutrino-only

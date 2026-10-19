@@ -302,7 +302,7 @@ static void IGR_StopDmaAndGs(void)
  * Sampling here avoids depending on the priority-127 shutdown worker running. */
 static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
 {
-    int next_alarm;
+    int next_alarm, i;
     (void)alarm_id;
     (void)time;
 
@@ -322,7 +322,16 @@ static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
     IGR_CheckInputs();
 
     if (Pad_Data.combo_type != 0x00) {
-        /* A request may arrive before the worker first runs. */
+        /* Promotion alone cannot preempt a game already running at priority 0:
+         * equal-priority EE threads run until they yield. Restore the archived
+         * interrupt-side handoff before signalling, including any other ready
+         * priority-0 threads. The semaphore retains an early request even if
+         * our worker has not reached its first wait. Do this only on shutdown,
+         * never during ordinary sampling. */
+        for (i = 1; i < 256; i++) {
+            if (i != IGR_Thread_ID)
+                iSuspendThread(i);
+        }
         iChangeThreadPriority(IGR_Thread_ID, 0);
         iSignalSema(IGR_Request_Sema);
         return;
@@ -345,8 +354,6 @@ static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
  * that might never be scheduled or might monopolize the EE. */
 static void IGR_PollUntilRequested(void)
 {
-    int i;
-
     /* The raw EE iWakeupThread loses notifications for a RUNNING thread, and
      * ee_core disables the SDK workaround. A semaphore retains a request that
      * arrives between this condition and the blocking call. No interrupt mask
@@ -358,7 +365,8 @@ static void IGR_PollUntilRequested(void)
     ChangeThreadPriority(TH_SELF, 0);
 
 #ifdef INGAMEDIAG
-    /* Freeze report: game thread state before any shutdown changes. */
+    /* The sampler has suspended game threads so even a priority-0 title
+     * yields to us. The report therefore observes that suspended state. */
     if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {
         unsigned int pad_state = 0, pad_frame = 0;
 
@@ -372,11 +380,6 @@ static void IGR_PollUntilRequested(void)
 
     IGR_StopDmaAndGs();
     ResetEE(0x7F);
-
-    for (i = 1; i < 256; i++) {
-        if (i != IGR_Thread_ID)
-            SuspendThread(i);
-    }
 }
 #endif
 

@@ -75,8 +75,8 @@ void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int 
     report.pad_frame = pad_frame;
     report.iop_status = FREEZE_DIAG_IOP_NO_BIND;
 
-    // The game's threads as they were when the combo was pressed. The IGR thread is at priority 0
-    // here, so none of them runs while this walks the table.
+    // The sampler suspended game threads before waking us, including priority-0
+    // competitors. Their status includes that suspension when this walks the table.
     report.thread_count = 0;
     report.threads_total = 0;
     for (id = 1; id < 256; id++) {

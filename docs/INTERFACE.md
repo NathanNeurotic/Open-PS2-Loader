@@ -38,7 +38,7 @@ the loader flattening everything into one long list.
 
 ### Supported devices only
 
-Folder browsing works on **BDM devices** (USB, MX4SIO, iLink, exFAT HDD), **MMCE**, and **UDPFS in
+Folder browsing works on **BDM devices** (USB, MX4SIO, iLink, exFAT HDD and network-backed BDM slots), **MMCE**, and **UDPFS in
 Files mode**.
 
 It does **not** apply to:
@@ -47,7 +47,6 @@ It does **not** apply to:
 |---|---|
 | APA/PFS HDD | Stores games as HDLoader partitions; there is no `CD`/`DVD` directory tree to scan |
 | PS1 / VCD list | Same — the VCD view is not a directory scan |
-| UDPFS block device | Block transport, not a file tree |
 | SMB / ETH | **Deferred, not yet supported.** SMB paths use a different separator (`\`) from the loose-file scanners |
 
 Turning the setting on simply has no effect on those pages.
@@ -56,20 +55,22 @@ Turning the setting on simply has no effect on those pages.
 
 ## Parental lock
 
-**Parental Lock Password**, on **Settings → General & System**. Sets a password that must be entered
+**Parental Lock Password**, under **Settings → General & System → Security**. Sets a password that must be entered
 before configuration can be changed. Leave it blank to disable the lock.
 
 ### What it actually gates
 
-The parental lock guards **configuration and destructive actions, not game launching**. Anyone can
-still start any game on the list. Behind the password:
+The master password guards **configuration and destructive actions**. Individual PS2 games can
+additionally require it at launch. The configuration gate protects:
 
 * **Settings**, and the per-game / per-app settings screens (Triangle on a title)
 * **Rename** and **Delete** on a game entry
 * **Network compatibility update** and **Start NBD Server**
 
-> It is not a content filter. If your aim is to stop a particular game being played, the parental
-> lock will not do it — it stops the library being *changed*, not played.
+> To lock an individual PS2 game, enable **Parental Lock** in its Compatibility settings and save.
+> Each launch requires fresh authorization, including Favorites and remembered launches. This is
+> separate from unlocking settings for the session; unmarked games remain launchable. See
+> [Per-game parental lock](PARENTAL-LOCK.md) for Test Changes, saved-lock removal and recovery.
 
 ### Setting, using and clearing it
 
