@@ -93,6 +93,21 @@ fi
 echo "== Applying mmceman dopen-ENOENT fix (distinct errno for genuinely-absent dir) =="
 git -C "$WORK/mmceman" apply --verbose "$FS_DOPEN_ENOENT_PATCH"
 
+# End of directory is not an error (Ember on MMCE, October 2026). The card firmware answers a
+# non-zero status to DREAD once its iterator has no next entry -- that is how EVERY listing ends --
+# and mmce_fs_dread turned that status into -1. The EE then saw readdir() return NULL with errno
+# set, so a scan that checks errno (cueScanDir) discarded every completed MMCE listing as a read
+# failure and the PS1 page showed the POPSTARTER titles alone. This patch returns 0 (end of
+# directory) for the card's status reply only; timeouts and garbled replies stay -1. Applies on top
+# of the three patches above (disjoint hunk); fail LOUD if it stops applying.
+FS_DREAD_EOF_PATCH="$SCRIPT_DIR/../patches/mmceman-fs-dread-eof.patch"
+if [ ! -f "$FS_DREAD_EOF_PATCH" ]; then
+    echo "ERROR: expected mmceman dread end-of-directory patch not found at $FS_DREAD_EOF_PATCH" >&2
+    exit 1
+fi
+echo "== Applying mmceman dread end-of-directory fix (card status reply = 0, not -1) =="
+git -C "$WORK/mmceman" apply --verbose "$FS_DREAD_EOF_PATCH"
+
 # Older-SDK make quirk: the per-module obj dir isn't auto-created by every Makefile.iopglobal
 # vintage -- pre-create it so the first compile step doesn't fail on a missing directory.
 mkdir -p "$WORK/mmceman/mmceman/obj"
