@@ -215,6 +215,7 @@ static void verifyFormattedCard(void) {
     assert(f_size(&f)==8*1048576U);
     assert(f_read(&f,&info,sizeof(info),&got)==FR_OK&&got==sizeof(info));
     assert(memcmp(info.magic,SUPERBLOCK_MAGIC,sizeof(SUPERBLOCK_MAGIC)-1)==0);
+    assert(memcmp(info.version,SUPERBLOCK_VERSION,sizeof(SUPERBLOCK_VERSION))==0);
     assert(info.cardform==1&&info.pagesize==512&&info.clusters_per_card==8192);
     assert(f_lseek(&f,info.alloc_offset*1024)==FR_OK);
     assert(f_read(&f,entries,sizeof(entries),&got)==FR_OK&&got==sizeof(entries));

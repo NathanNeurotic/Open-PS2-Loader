@@ -330,8 +330,8 @@ static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progres
 
     // set superblock magic & version
     memset((void *)&mcdi->magic, 0, sizeof(mcdi->magic) + sizeof(mcdi->version));
-    strcpy((char *)&mcdi->magic, SUPERBLOCK_MAGIC);
-    strcat((char *)&mcdi->magic, SUPERBLOCK_VERSION);
+    memcpy(mcdi->magic, SUPERBLOCK_MAGIC, sizeof(mcdi->magic));
+    memcpy(mcdi->version, SUPERBLOCK_VERSION, sizeof(SUPERBLOCK_VERSION));
 
     // set mc specs
     mcdi->cluster_size = 1024;   // size in KB of clusters
