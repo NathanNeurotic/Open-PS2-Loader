@@ -1893,3 +1893,6 @@ gui_strings:
   string: "Cannot verify VMC %s disk layout. Continue with the physical Memory Card in slot %d?"
 - label: ERR_VMC_PFS_LIMIT_CONTINUE
   string: "VMC %s exceeds the native core's PFS mapping limit. Continue with the physical Memory Card in slot %d?"
+
+- label: NEUTRINO_VMC_FRAG_BUDGET_CONTINUE
+  string: "Game and VMC files use %d/%d fragments, exceeding Neutrino's shared limit. Skip VMC %s and use the physical Memory Card in slot %d?"
