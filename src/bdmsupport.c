@@ -2132,8 +2132,10 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, neutrino_vmc_args_t *vmc
     if (fd >= 0) {
         isoFrags = fileXioIoctl2(ps2sdk_get_iop_fd(fd), USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, NULL, 0);
         close(fd);
-        if (isoFrags < 0)
-            isoFrags = 0;
+        if (isoFrags < 0) {
+            LOG("[NEUTRINO] ISO fragment mapping failed: %d\n", isoFrags);
+            return 0;
+        }
     }
     total = isoFrags;
 
@@ -2145,6 +2147,10 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, neutrino_vmc_args_t *vmc
             if (fd >= 0) {
                 int frags = fileXioIoctl2(ps2sdk_get_iop_fd(fd), USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, NULL, 0);
                 close(fd);
+                if (frags < 0) {
+                    LOG("[NEUTRINO] VMC slot %d fragment mapping failed: %d\n", i, frags);
+                    return 0;
+                }
                 if (frags > 0)
                     vmcFrags[i] = frags;
             }

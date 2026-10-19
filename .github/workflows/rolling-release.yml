@@ -119,6 +119,8 @@ jobs:
         run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
       - name: Install menu-coherent mmceman (#254)
         run: sh .github/scripts/install_coherent_mmce.sh
+      - name: Install verified native VMC fragment walker
+        run: python3 .github/scripts/install_safe_bdmfs.py
 
       - name: Build (make clean release)
         # LOCALVERSION brands the in-ELF version string ("-PS2DEVPINNED") so hardware reports
@@ -245,6 +247,8 @@ jobs:
 
       - name: Install menu-coherent mmceman (#254)
         run: sh .github/scripts/install_coherent_mmce.sh
+      - name: Install verified native VMC fragment walker
+        run: python3 .github/scripts/install_safe_bdmfs.py
 
       - name: Build (make clean release)
         # LOCALVERSION brands the in-ELF version string ("-PS2DEVROLLING") so hardware reports
@@ -350,6 +354,8 @@ jobs:
 
       - name: Install menu-coherent mmceman (#254)
         run: sh .github/scripts/install_coherent_mmce.sh
+      - name: Install verified native VMC fragment walker
+        run: python3 .github/scripts/install_safe_bdmfs.py
 
       - name: Build (make clean release)
         # LOCALVERSION brands the in-ELF version string ("-OFFICIALROLLING") so hardware
@@ -436,6 +442,8 @@ jobs:
 
       - name: Install menu-coherent mmceman (#254)
         run: sh .github/scripts/install_coherent_mmce.sh
+      - name: Install verified native VMC fragment walker
+        run: python3 .github/scripts/install_safe_bdmfs.py
 
       - name: Build (make clean release)
         run: make --trace clean && make --trace LOCALVERSION=OFFICIALPINNED release

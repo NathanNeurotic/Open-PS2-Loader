@@ -1,0 +1,93 @@
+[
+  {
+    "group": "sdk",
+    "repo": "ps2dev/ps2sdk",
+    "ref": "329e2bb43287e16af16c4dde1c614e2662c24468",
+    "path": "iop/fs/bdmfs_fatfs/src/main.c",
+    "sha256": "2653db97a4e1379f1a4856577e48839c77b2a1ba774946e07716433a1f463d75"
+  },
+  {
+    "group": "sdk",
+    "repo": "ps2dev/ps2sdk",
+    "ref": "329e2bb43287e16af16c4dde1c614e2662c24468",
+    "path": "iop/fs/bdmfs_fatfs/src/fs_driver.c",
+    "sha256": "97c4790a9a3d92704c555fea2424c0fb690be957bd992d83ef420ef02b601e57"
+  },
+  {
+    "group": "sdk",
+    "repo": "ps2dev/ps2sdk",
+    "ref": "329e2bb43287e16af16c4dde1c614e2662c24468",
+    "path": "iop/fs/bdmfs_fatfs/src/irx_imports.h",
+    "sha256": "9a706e4a28be5c0e49ab8df869b8e1bca84fe7738439ca1f995f8177241d8482"
+  },
+  {
+    "group": "sdk",
+    "repo": "ps2dev/ps2sdk",
+    "ref": "329e2bb43287e16af16c4dde1c614e2662c24468",
+    "path": "iop/fs/bdmfs_fatfs/src/imports.lst",
+    "sha256": "acce86df7d55acce07748028900625a01e55ae94adece436263c1fdae85f9388"
+  },
+  {
+    "group": "sdk",
+    "repo": "ps2dev/ps2sdk",
+    "ref": "329e2bb43287e16af16c4dde1c614e2662c24468",
+    "path": "iop/fs/bdmfs_fatfs/src/include/fs_driver.h",
+    "sha256": "2e7d7925582ad923a70ff9ffec214333e5f8ff7d4f7068467182a7280c4f4611"
+  },
+  {
+    "group": "sdk",
+    "repo": "ps2dev/ps2sdk",
+    "ref": "329e2bb43287e16af16c4dde1c614e2662c24468",
+    "path": "iop/fs/bdmfs_fatfs/src/include/module_debug.h",
+    "sha256": "e7d4aa01596f05fa509526a1e86a13660e16f46f52f54d43f2880a79ae66d6c1"
+  },
+  {
+    "group": "fatfs",
+    "repo": "fjtrujy/FatFs",
+    "ref": "18cc3d9e07473a6aa3d783a66224b243a7b4974c",
+    "path": "source/diskio.c",
+    "sha256": "95c66f4852d5b847d098b5407b04b5ce01fc900adced68d0e737ad39a7ce8634"
+  },
+  {
+    "group": "fatfs",
+    "repo": "fjtrujy/FatFs",
+    "ref": "18cc3d9e07473a6aa3d783a66224b243a7b4974c",
+    "path": "source/ff.c",
+    "sha256": "85ebc0cd2871a688d448f7144f35a98b2fc1855d4b755aad308be2a2d527a47b"
+  },
+  {
+    "group": "fatfs",
+    "repo": "fjtrujy/FatFs",
+    "ref": "18cc3d9e07473a6aa3d783a66224b243a7b4974c",
+    "path": "source/ffsystem.c",
+    "sha256": "5fd4950b8f359d27ff636eb49243015fb07e189ec0af108bde5254696e3a97cb"
+  },
+  {
+    "group": "fatfs",
+    "repo": "fjtrujy/FatFs",
+    "ref": "18cc3d9e07473a6aa3d783a66224b243a7b4974c",
+    "path": "source/ffunicode.c",
+    "sha256": "3f1632c1f1e64b0b683b0d7e51341b9870728f398604869dd8211f1819509a8e"
+  },
+  {
+    "group": "fatfs",
+    "repo": "fjtrujy/FatFs",
+    "ref": "18cc3d9e07473a6aa3d783a66224b243a7b4974c",
+    "path": "source/include/diskio.h",
+    "sha256": "1c2b29f53e061c55d43b2e412c3a61320b2621bac7561a05e275514baa44785a"
+  },
+  {
+    "group": "fatfs",
+    "repo": "fjtrujy/FatFs",
+    "ref": "18cc3d9e07473a6aa3d783a66224b243a7b4974c",
+    "path": "source/include/ff.h",
+    "sha256": "257e0befcbabf0eca19a035d1096b8c7619d1b1988a52823625e7a2b9a9b816e"
+  },
+  {
+    "group": "fatfs",
+    "repo": "fjtrujy/FatFs",
+    "ref": "18cc3d9e07473a6aa3d783a66224b243a7b4974c",
+    "path": "source/include/ffconf.h",
+    "sha256": "1eec13091ab1b8d3ed1890a5617d21eec7fe98e4378da4dfa5785dab012ecb29"
+  }
+]
