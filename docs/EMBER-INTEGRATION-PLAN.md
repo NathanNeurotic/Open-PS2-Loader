@@ -418,6 +418,15 @@ everywhere rather than open-coding the compare.
 
 * Only subdirectories. `d_type` is untrustworthy on MMCE clones (see the MMCE theme-discovery
   finding) — probe with `opendir()` on the candidate and treat success as "is a directory".
+  On MMCE that probe also succeeds for a regular file (the card firmware's `sd_open` opens
+  either); the file then lists nothing, so `cueEntryIsGame()`'s top-level image check excludes it.
+* End of directory is not an error. The scanner checks `errno` after `readdir()` returns NULL, so
+  every driver must report a completed listing as 0. mmceman did not: the card answers DREAD with
+  a non-zero status once its iterator runs out, and `mmce_fs_dread` returned -1, which reached the
+  EE as `EPERM`. Every MMCE Ember scan failed and the PS1 page showed the POPSTARTER titles alone.
+  `.github/patches/mmceman-fs-dread-eof.patch` (applied by `install_coherent_mmce.sh`) returns 0
+  for that status; timeouts and garbled replies stay -1. Regression:
+  `.github/scripts/test_ember_mmce_dread.py`.
 * Skip `.` and `..`.
 * Skip any name failing `cueNameLaunchable()`, and `LOG()` it. Such a name cannot occur on
   FAT/exFAT anyway; an over-long one is a user mistake, and listing an unlaunchable row would be a
