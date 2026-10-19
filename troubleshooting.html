@@ -293,9 +293,7 @@ from both SDK lineages failed, so the result is not isolated to one compiler ima
   <li>For exFAT HDD, confirm <b>Internal HDD (exFAT)</b> is enabled in <b>Game Sources</b> and that the HDD has mounted — the game list should show an <b>HDD Games</b> entry. VCDs on the exFAT HDD live in <code>massN:/POPS/</code>.</li>
 </ul>
 
-<div class="callout info"><div class="h">i UDPFS / UDPBD are Ember-only PS1 pages</div>
-The network-page scanner currently enumerates Ember. For POPSTARTER VCD reads over UDPFS, use <a href="ps1-vcd.html#pops-udpfs">Okeanos’s BDM-UDPFS Assault setup</a>: install the matching memory-card pair, keep other POPS files and configs on USB, and check uppercase <code>.VCD</code> paths and the server subnet. This pair does not support UDPBD. Automatic network VCD enumeration/equip is a separate integration step.
-</div>
+<div class="callout info"><div class="h">PS1 over UDPFS versus UDPBD</div>UDPFS Files lists uppercase <code>POPS/*.VCD</code> alongside Ember. POPSTARTER needs Okeanos's matching <code>.udpfs</code> memory-card pair and valid matching USB runtime configs; its VCD handoff is awaiting console validation. UDPBD and UDPFS IMG remain Ember-only for PS1. See <a href="ps1-vcd.html#pops-udpfs">POPS UDPFS setup</a>.</div>
 
 <div class="callout info"><div class="h">i Favorites always has four views</div>
 Press L3 on Favorites to cycle <b>PS2 → PS1 → ELF → All in One</b>. This independent ring is not
@@ -350,7 +348,7 @@ shelf you last left it on.
   <a class="tile" href="https://www.psx-place.com/threads/open-ps2-loader-game-bug-reports.19401/"><span class="icon icon-start"></span><b>Bug report thread</b><span>Report game-specific compatibility issues</span></a>
 </div>
 <h2 id="vmc-errors">VMC creation or layout errors</h2>
-<ol><li>Back up any existing card. Record the exact error text and whether it appears during creation, after progress finishes, or during launch.</li><li>Check that the game's device has a writable <code>VMC/</code> directory and enough space. For network cards, verify the server/share allows writes.</li><li>Use the current rolling release before comparing MMCE behavior; its unsupported-query fix does not prove that a USB card is contiguous.</li><li>Record the core (OPL or Neutrino), transport and filesystem. Native BDM VMC needs contiguous storage; Neutrino's game and card mappings share a fragment budget. See <a href="vmc.html#fragmentation">VMC layout checks</a>.</li><li>If retrying changes the result, include the before/after error, card filename and whether reboot brings it back. Avoid recreating a card containing the only copy of your saves.</li></ol>
+<ol><li>Back up any existing card. Record the exact error text and whether it appears during creation, after progress finishes, or during launch.</li><li>Check that the game's device has a writable <code>VMC/</code> directory and enough space. For network cards, verify the server/share allows writes.</li><li>Use the current rolling release before comparing MMCE behavior; its unsupported-query fix does not prove that a USB card is contiguous.</li><li>Record the core (OPL or Neutrino), transport and filesystem. New native BDM cards request a contiguous reservation before formatting; existing cards still need a valid single extent. Neutrino's game and card mappings instead share a 64-fragment budget, and its prompt can skip the named VMC for a physical card. See <a href="vmc.html#fragmentation">VMC layout checks</a>.</li><li>If retrying changes the result, include the before/after error, card filename and whether reboot brings it back. Avoid recreating a card containing the only copy of your saves.</li></ol>
 <h2 id="report-details">Details to include in a bug report</h2>
 <pre>PS2 MODEL:
 OPL VERSION:

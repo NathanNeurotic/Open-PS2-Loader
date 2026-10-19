@@ -71,7 +71,7 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
-<div class="callout info" id="specialized-storage"><div class="h">Specialized Sony hardware</div><p><a href="psx-dvr.html"><b>PSX DESR DVR support</b></a> is a separate experimental read-only ISO path, merged in PR #947 but awaiting real DVR tests. <a href="pc-card-cf.html"><b>PC CARD CompactFlash</b></a> for Japanese SCPH-10000/15000/18000 consoles is still being reviewed in PR #955. Neither feature changes the standard APA/exFAT workflows documented below.</p></div>
+<div class="callout info" id="specialized-storage"><div class="h">Specialized Sony hardware</div><p><a href="psx-dvr.html"><b>PSX DESR DVR support</b></a> is a separate experimental read-only ISO path, merged in PR #947 but awaiting real DVR tests. <a href="pc-card-cf.html"><b>PC CARD CompactFlash</b></a> for Japanese SCPH-10000/15000/18000 consoles was merged in PR #955 and awaits hardware testing. Neither feature changes the standard APA/exFAT workflows documented below.</p></div>
 <h1>Internal HDD (APA &amp; exFAT)</h1>
 <p class="lead">RiptOPL supports two completely different ways to use the PS2's internal ATA/IDE hard drive: the traditional
 <b>APA/PFS partition scheme</b> (HDLoader format, used by HDL-Dump and virtually all legacy tools), and the modern
@@ -325,7 +325,7 @@ hardware power-cut test yet.</p>
 <tr><td>PS2 game format</td><td>HDLoader partitions</td><td>ISO / ZSO in <code>DVD/</code> or <code>CD/</code></td></tr>
 <tr><td>OPL data location</td><td>Standard folders at the OPL partition root (<code>pfs0:</code>)</td><td>Standard folders at drive root</td></tr>
 <tr><td>PS1 support</td><td><code>__.POPS*</code> (POPSTARTER) and <code>__.EMBER*</code> (Ember) APA partitions</td><td><code>POPS/</code> + BDMA equip, and/or <code>EMBER/</code></td></tr>
-<tr><td>Fragmentation risk</td><td>None (partition-based)</td><td>Yes — add files one at a time</td></tr>
+<tr><td>Fragmentation risk</td><td>HDLoader game partitions use their own layout; PFS support files and VMCs have separate mapping limits</td><td>Yes — add files one at a time</td></tr>
 <tr><td>Tool ecosystem</td><td>HDL-Dump, pfs-shell, uLaunchELF</td><td>Any PC file manager</td></tr>
 <tr><td>Enable in RiptOPL</td><td>Game Sources → HDD (APA) Start Mode</td><td>Game Sources → Internal HDD (exFAT)</td></tr>
 </tbody>

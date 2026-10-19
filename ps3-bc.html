@@ -72,104 +72,20 @@
   </nav>
   <main class="content">
 <h1>PS3 Backward Compatibility</h1>
-<p class="lead">RiptOPL runs on a PS3 — but only the specific hardware revisions that contain real PS2 silicon.
-This page explains which models qualify, which storage modes work, and how to get an entry point to launch PS2 titles.</p>
-
-<div class="callout info"><div class="h">Only hardware BC models are supported</div>
-Not all PS3s can run PS2 software. Only the first-generation units that ship with actual PS2 hardware on board
-(the <b>COK-001</b> and <b>COK-002 / COK-002W</b> mainboard families) are supported. All later PS3 models removed the on-board PS2 hardware and cannot run OPL or any other PS2 homebrew loader.
-</div>
-
-<h2 id="supported-hardware">Supported hardware</h2>
-<p>The following mainboard revisions contain the dedicated PS2 Emotion Engine and Graphics Synthesizer chips and are
-the only PS3 hardware on which RiptOPL operates:</p>
-
-<table data-sortable>
-<thead><tr><th>Mainboard</th><th>Notes</th><th>psdevwiki reference</th></tr></thead>
-<tbody>
-<tr>
-  <td><b>COK-001</b></td>
-  <td>First-generation 20 GB and 60 GB launch units (North America / Japan / PAL). Full hardware PS2 compatibility — both EE and GS are discrete chips.</td>
-  <td><a href="https://www.psdevwiki.com/ps3/COK-00x#COK-001" target="_blank" rel="noopener">psdevwiki: COK-001</a></td>
-</tr>
-<tr>
-  <td><b>COK-002 / COK-002W</b></td>
-  <td>Later 60 GB (some regions) and first-wave 80 GB units. Still supported by OPL.</td>
-  <td><a href="https://www.psdevwiki.com/ps3/COK-00x#COK-002" target="_blank" rel="noopener">psdevwiki: COK-002</a></td>
-</tr>
-</tbody>
-</table>
-
-<p>All other PS3 SKUs (CECHx serial suffixes from P onward, Slim, Super Slim) removed the PS2 hardware and are
-<b>not supported</b>. If your PS3 model is not listed above, OPL cannot run on it.</p>
-
-<details class="deep"><summary>How do I identify my PS3 mainboard?</summary>
-<p>The mainboard revision is not printed on the outside of the console. The easiest method is to check the <b>serial number
-suffix</b> on the back of the unit, then cross-reference the psdevwiki
-<a href="https://www.psdevwiki.com/ps3/PS2_Compatibility#PS2-Compatibility" target="_blank" rel="noopener">PS2 Compatibility</a>
-table. In practice: if you own a <b>20 GB, 60 GB, or first-wave 80 GB fat PS3</b> and it came with a PS2 game bundled or
-advertised "PS2 backward compatibility," it is almost certainly a COK-001 or COK-002. The 40 GB fat and all Slim/Super Slim
-units are not backward compatible.</p>
-</details>
-
-<h2 id="supported-modes">Supported storage modes</h2>
-<p>On a qualifying PS3, RiptOPL supports the same three storage backends it does on a real PS2:</p>
-
-<ul class="checklist">
-<li><b>USB</b> — FAT32 or exFAT USB mass storage. Works with any entry point (ODE, Swap Magic, CFW). See <a href="usb.html">USB / MX4SIO / iLink</a>.</li>
-<li><b>SMB</b> — Games streamed over a network share. Works with any entry point. See <a href="smb.html">SMB (network share)</a>.</li>
-<li><b>HDD</b> — Internal PS3 hard drive (APA partition scheme, same format as a real PS2 HDD). <b>CFW with Cobra is required</b> — ODE and optical-disc entry points do not expose the HDD to the PS2 environment. See <a href="hdd.html">Internal HDD</a>.</li>
-</ul>
-
-<div class="callout info"><div class="h">MMCE, MX4SIO, iLink, UDPBD, UDPFS on PS3</div>
-MMCE (SD2PSX / MemCard PRO2), MX4SIO, iLink, and the network-boot protocols (UDPBD / UDPFS) are not tested or
-confirmed to work on PS3 BC hardware. Stick to USB, SMB, or HDD (CFW only) for a reliable experience.
-</div>
-
+<p class="lead">The inherited OPL support targets hardware backward-compatible PS3 models. Current RiptOPL changes still need testing on the specific console, firmware, entry point and game source.</p>
+<h2 id="hardware">Supported hardware scope</h2>
+<table><thead><tr><th>PS3 models</th><th>Mainboard</th><th>PS2 hardware</th></tr></thead><tbody>
+<tr><td>CECHA / CECHB</td><td>COK-001</td><td>EE + GS hardware</td></tr>
+<tr><td>CECHC / CECHE</td><td>COK-002 / COK-002W</td><td>GS hardware; EE emulated by the PS3</td></tr>
+</tbody></table>
+<p>Identify the CECH model on the console label; drive capacity alone is unreliable after upgrades. See <a href="https://www.psdevwiki.com/ps3/PS2_Compatibility">PS3 Developer Wiki's compatibility table</a> and <a href="https://www.psdevwiki.com/ps3/COK-00x">COK board references</a>. Later non-BC models use a different software-emulation path; this guide does not claim RiptOPL support for them.</p>
+<h2 id="storage">Inherited storage modes</h2>
+<p>Upstream OPL documents USB, SMB and CFW-dependent HDD modes for BC PS3. These are inherited support paths, not a current RiptOPL hardware test matrix. A source working on PS2 does not establish that its exFAT, VMC, GSM or networking implementation works in the PS3's PS2 environment.</p>
+<p><b>Do not format a PS3 system disk as a PS2 APA drive.</b> The internal-HDD instructions for an ordinary PS2 are not a PS3 installation procedure. Use the documentation for your actual PS3 firmware and PS2 execution environment.</p>
 <h2 id="entry-point">Getting an entry point</h2>
-<p>The PS3 does not boot PS2 ELFs natively — you need a mechanism to launch a PS2 executable. Your options, in
-roughly increasing order of capability:</p>
-
-<div class="steps">
-<div class="step">
-<h3>Swap Magic PS2 disc</h3>
-<p>A physical Swap Magic disc can bootstrap a PS2 ELF on a stock (OFW) PS3 BC unit with no firmware modification. It is
-the lowest-friction option for a console you do not want to modify. USB and SMB modes work; HDD mode does not.</p>
-</div>
-<div class="step">
-<h3>Other disc-based entry points (PS2 ODE, game exploit, etc.)</h3>
-<p>Any method that lets you boot an arbitrary PS2 ELF from optical media or a swap trick will work for USB and SMB.
-HDD mode is still unavailable without CFW.</p>
-</div>
-<div class="step">
-<h3>Custom Firmware (CFW) with the latest Cobra payload — recommended</h3>
-<p>CFW with Cobra is the preferred entry point. It gives you the cleanest PS2 launch path, unlocks <b>HDD mode</b>,
-and requires no disc swapping. Install a current CFW that includes Cobra and make sure the Cobra plugin is active. RiptOPL is then launchable as a PS2 ELF through the CFW/Cobra entry point, with no disc swapping required.</p>
-</div>
-</div>
-
-<div class="callout info"><div class="h">CFW is the only path to HDD mode</div>
-<b>Only CFW supports HDD mode.</b> If you want to run games off the PS3's internal hard drive through OPL's APA/PFS
-partition scheme, you must be on custom firmware with Cobra. No OFW or disc-swap method exposes the HDD to the PS2
-environment.
-</div>
-
-<h2 id="limitations">Known limitations</h2>
-<ul class="checklist">
-<li>MMCE, MX4SIO, and iLink storage have not been verified on PS3 BC hardware.</li>
-<li>Network boot protocols (UDPBD / UDPFS) are untested on PS3 BC.</li>
-<li>HDD mode requires CFW + Cobra; it will not work under OFW or disc-based entry points.</li>
-<li>PS3 BC hardware does not support the Neutrino external core — Neutrino is a PS2 IOP/EE-level loader and its interaction with PS3 BC emulation is untested. Use the built-in OPL core on PS3.</li>
-<li>Some GSM video mode adjustments may behave differently on PS3 BC hardware due to the partial GS integration on COK-002/002W units.</li>
-</ul>
-
-<details class="deep"><summary>Why are non-BC PS3s not supported?</summary>
-<p>Post-COK-002 PS3 models removed the discrete PS2 hardware entirely. Sony's "Software Compatibility" mode (found on some
-40 GB PAL units) used a partial PS2 software emulator but it was never complete and was removed from later firmware. OPL
-depends on real PS2 EE/GS/IOP hardware being present and accessible — there is no emulation layer it can target on
-a non-BC PS3. If you want to run PS2 games on a non-BC PS3 you need a different solution entirely (e.g., PS2 Classics
-from the PlayStation Store, or RPCS3 on a PC).</p>
-</details>
+<p>You need a working way to launch a PS2 ELF on the BC console. Upstream mentions Swap Magic and recommends CFW with Cobra; HDD mode requires CFW. Consult that firmware/launcher project's current instructions rather than assuming every disc exploit or ODE exposes the same devices. See <a href="https://github.com/ps2homebrew/Open-PS2-Loader#ps3-bc">upstream OPL's PS3 notes</a>.</p>
+<h2 id="limitations">Validation and bug reports</h2>
+<p>MMCE, MX4SIO, iLink, UDPFS/UDPBD, HTTP, Neutrino and RA are not established PS3 compatibility claims here. Start with the native OPL core and a known-working setup. A report should name CECH model, firmware/Cobra version, ELF entry point, exact RiptOPL commit/flavour, source, game and failure stage. Compare the same setup against a known-good build. See <a href="troubleshooting.html#report-details">report details</a>.</p>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>

@@ -127,7 +127,7 @@ PC-side server. Pick a protocol only when you have those pieces in place. Local 
 </tbody>
 </table>
 
-<div class="callout info"><div class="h">POPS UDPFS and Ember network libraries</div>RiptOPL’s UDPFS/UDPBD pages currently enumerate Ember folders. <b>POPSTARTER can read VCDs over UDPFS</b> using <a href="https://github.com/Okeanos86/BDMAssault/releases">Okeanos’s BDM-UDPFS Assault</a>: USB is tried first, then the same VCD path is read from the server. Other POPS files remain on USB. See <a href="ps1-vcd.html#pops-udpfs">manual setup, supplied files and credits</a>. This separate driver survives POPSTARTER’s IOP reset; automatic network VCD enumeration/equip remains a separate integration step. UDPBD is outside this driver’s scope.</div>
+<div class="callout info"><div class="h">PS1 network libraries</div>UDPFS Files lists uppercase <code>POPS/*.VCD</code> alongside Ember titles and can automatically equip Okeanos's <code>.udpfs</code> pair. The POPSTARTER driver tries USB before the server, and other POPS files remain on USB. Matching valid USB runtime configs are required; the new VCD handoff still awaits console validation. UDPBD and UDPFS IMG remain Ember-only for PS1. See <a href="ps1-vcd.html#pops-udpfs">POPS UDPFS setup</a>.</div>
 
 <div class="callout info"><div class="h">Apply and retry without leaving the page</div>
 Confirming <b>Network Settings</b> applies the current values and begins a new connection attempt
@@ -147,8 +147,7 @@ not retired — it is kept because SUDPBDv2 is <b>wire-incompatible</b> with UDP
 port <code>0xBDBD</code> via <code>udpbd-server</code>; UDPFS speaks <code>0xF5F6</code> via <code>udpfsd</code>),
 so users still running the old <code>udpbd-server</code> must be able to keep selecting it. A config
 saved as UDPBD <b>stays UDPBD</b> — RiptOPL never silently migrates you off it. If you are setting up
-fresh, prefer <b>UDPFS</b> (it also serves loose ISOs and transparent
-<code>.zso</code>/<code>.cso</code>/<code>.chd</code> — see below).
+fresh, UDPFS can serve loose ISOs as well as disk images. See the format limits below before relying on server-side decompression.
 </div>
 
 <div class="callout info"><div class="h">UDPBD, UDPFS and SMB work on a real PS2</div>
@@ -196,7 +195,7 @@ the <code>udpfs_ioman</code> <b>filesystem</b> (<code>udpfs:</code>), IMG is the
 <tr><td><b>Server command</b></td><td><code>udpfsd -fsroot &lt;dir&gt;</code></td><td><code>udpfsd -bdpath &lt;image&gt;</code></td></tr>
 <tr><td><b>Launch</b></td><td>by name (<code>-dvd=udpfs:&lt;name&gt;</code>, stock <code>-bsd=udpfs</code>) — no <code>massN:</code>, no fragment list</td><td>mounted like a USB drive (<code>massN:</code>, fragment-list launch)</td></tr>
 <tr><td><b>Add a game</b></td><td>drop it into the served <code>CD/</code> or <code>DVD/</code> folder</td><td>mount the image, copy, unmount</td></tr>
-<tr><td><b>Compression</b></td><td>transparent <code>.zso</code>/<code>.cso</code>/<code>.chd</code></td><td>— (raw sectors only)</td></tr>
+<tr><td><b>Compression</b></td><td>server-dependent virtual ISO exposure (see the format limits below)</td><td>— (raw sectors only)</td></tr>
 </tbody>
 </table>
 
@@ -232,7 +231,7 @@ is a <b>config-time choice</b>, and switching between them needs an <b>OPL resta
 
 <details class="deep"><summary>So why offer both Files and IMG?</summary>
 <p>They're the same protocol but a genuinely different workflow. <b>Files</b> is the lower-friction,
-"modern" model (loose ISOs, drop-in, transparent <code>.zso</code>/<code>.cso</code>/<code>.chd</code>
+"modern" model (loose ISOs, drop-in, server-dependent virtual ISO exposure (see the format limits below)
 compression) and matches how NHDDL and pcm720's server are designed. <b>IMG</b> reuses OPL's
 existing <code>massN:</code> block pipeline (a disk image the PS2 mounts with its own FAT/exFAT
 drivers) — handy if you already keep a block image or want the exact same shape as USB/HDD. Pick
@@ -292,12 +291,7 @@ the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
   UDPFS feature ships its <b>own bundled Neutrino</b> (a ready-to-use <code>neutrino/</code> folder in
   the release zip, pre-populated with the UDPFS config). See <a href="neutrino.html">Neutrino
   Core</a>. <i>(SMB needs no Neutrino — it uses OPL's own core.)</i></li>
-  <li><b>Neutrino reads its own IP from a toml, not from OPL.</b> When a UDPFS game boots, control hands
-  to the external Neutrino, which reads the toml for the active mode — <b>Files</b> uses the stock
-  <code>config/bsd-udpfs.toml</code>; <b>IMG</b> uses the bundled <code>config/bsd-udpfsbd.toml</code>.
-  Both hardcode <code>ip=192.168.1.10</code>. If your PS2's static IP differs, edit the <code>ip=</code>
-  line in whichever toml is active (under the bundled <code>neutrino/config/</code>) to match — otherwise
-  games list fine in OPL but fail to boot.</li>
+  <li><b>UDPFS runtime IP:</b> RiptOPL rewrites the active Neutrino TOML's <code>ip=</code> value from the configured PS2 static IP before launch. Files uses <code>config/bsd-udpfs.toml</code>; IMG uses <code>config/bsd-udpfsbd.toml</code>. Keep that configuration writable and retain its expected IP token. A missing or unreadable required TOML aborts before teardown. A restructured, oversized or unwritable file is logged and left under the existing manual-IP contract; verify its IP yourself in that case.</li>
   <li><b>Game files laid out with standard OPL folders</b> for the <b>IMG</b> mode and SMB:
   <code>CD/</code>, <code>DVD/</code>, <code>ART/</code>, <code>CFG/</code>, etc. — the same
   structure you would use on a USB drive. UDPFS <b>Files</b> also expects the standard layout: its
@@ -368,7 +362,7 @@ OPL's own core.</p>
 built-in EE core. Every UDPFS game launches via Neutrino, regardless of the per-game <b>Loader Core</b>
 setting. In the per-game Compatibility screen, the Loader Core selector is <b>locked to Neutrino</b> on
 the block-device tabs (UDPFS <b>IMG</b> and UDPBD) — it cannot be changed to <code>&lt;OPL&gt;</code>;
-on the UDPFS <b>Files</b> tab the row stays editable, but the launch forces Neutrino anyway. If
+the UDPFS <b>Files</b> tab also locks the selector, including Favorites resolved to these sources. If
 <code>neutrino.elf</code> is missing when a game is launched, OPL shows a warning and returns to the
 menu; it does not attempt an OPL-core fallback.</p>
 
@@ -379,8 +373,8 @@ classic OPL network share. See <a href="smb.html">SMB (network share)</a>.</p>
 UDPFS games support the full per-game settings screen in its Neutrino-aware mode:
 compat modes 1/2/3/5 (mapped to <code>-gc</code>), mode 7 (fix IOP buffer overrun,
 <code>-gc=7</code>), the Neutrino Video picker (<code>-gsm</code>), VMC, and free-text
-Neutrino Launch Args. OPL-core-only panels (GSM, Cheats, PADEMU, OSD Language) show a
-"not used with the Neutrino core" notice. See <a href="per-game-settings.html">Per-game Settings</a>
+Neutrino Launch Args. OPL-core-only panels (GSM, PADEMU, OSD Language) show a
+"not used with the Neutrino core" notice. Text cheats use the same selection UI when the installed Neutrino runtime supports them; cheat images remain native-only. See <a href="per-game-settings.html">Per-game Settings</a>
 and <a href="neutrino.html">Neutrino Core</a> for details.
 </div>
 
@@ -437,8 +431,8 @@ mass0:/  (device root — folders sit here directly by default)
   ART/         ← cover art (same naming as USB)
   CFG/         ← per-game config files
   VMC/         ← virtual memory cards (optional)
-  POPS/        ← PS1 POPS firmware (for VCD, if used)
-  POPSTARTER/  ← POPSTARTER.ELF (for VCD, if used)
+  POPS/        ← POPSTARTER.ELF and VCDs (UDPFS Files only; see PS1 setup)
+  EMBER/       ← Ember runtime and games (where supported)
   APPS/        ← homebrew ELF files (optional)
 </pre>
 
@@ -447,15 +441,10 @@ disk image: point <code>udpfsd -fsroot</code> at a folder that contains <code>CD
 <code>DVD/</code> subfolders of ISOs (OPL lists from <code>&lt;served&gt;/CD</code> +
 <code>&lt;served&gt;/DVD</code>, not the served root). Drop an ISO into <code>CD/</code> or
 <code>DVD/</code> and it appears in the UDPFS games list — no <code>massN:</code>, no fragment list, and
-transparent <code>.zso</code>/<code>.cso</code>/<code>.chd</code> compression.</p>
+server-dependent virtual ISO exposure (see the format limits below).</p>
 
 <details class="deep"><summary>Can I use ZSO or UL-format images over UDPFS?</summary>
-<p>It depends on the access mode. <b>Files</b> (the filesystem) supports transparent
-<code>.zso</code>/<code>.cso</code>/<code>.chd</code> compression — Neutrino opens the file by name and
-the server decompresses on the fly. The <b>IMG</b> mode serves raw sectors only, and USB Extreme
-split (<code>.ul</code>) images require the OPL built-in core, which UDPFS does not use — so
-in IMG mode, only standard ISO images work.</p>
-</details>
+<p>RiptOPL scans ISO/ZSO-style names, but Neutrino launches require ISO bytes: a direct <code>.zso</code> is refused, <code>.cso</code>/<code>.chd</code> names are not discovered, and UL split images have no Neutrino path. A server may transparently decompress a file only if it exposes an <code>.iso</code> entry with correct ISO contents and size. This is server-specific; verify its behavior. IMG and UDPBD expose raw disk sectors, so use ordinary ISO files in that filesystem.</p></details>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 
@@ -485,12 +474,10 @@ in IMG mode, only standard ISO images work.</p>
 </tr>
 <tr>
   <td>Game launches but immediately crashes or freezes</td>
-  <td><code>neutrino.elf</code> not found, wrong <code>ip=</code> in the Neutrino toml, or server
+  <td><code>neutrino.elf</code> not found, unwritable or incompatible Neutrino TOML, or server
   disconnect mid-launch.</td>
   <td>Verify <code>neutrino.elf</code> exists (bundled <code>neutrino/</code> folder, or wherever
-  <b>Neutrino Path</b> points). Check the <code>ip=</code> line in the active mode's toml
-  (<code>neutrino/config/bsd-udpfs.toml</code> for Files, <code>bsd-udpfsbd.toml</code> for IMG)
-  matches your PS2's static IP. Keep the PC server running throughout play.</td>
+  <b>Neutrino Path</b> points). RiptOPL normally updates the active TOML IP automatically. On restructured or read-only installations, verify its IP manually; check any missing-file warning and write permissions. Keep the PC server running throughout play.</td>
 </tr>
 <tr>
   <td>UDPFS IMG game fails but Files works (or vice-versa)</td>

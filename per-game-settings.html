@@ -130,9 +130,7 @@ Core is Neutrino. They are greyed under <code>&lt;OPL&gt;</code>.</p>
   <li><b>Neutrino Launch Args</b> — a button that opens the same <b>structured args sub-screen</b> as the
   global setting: named fields (Quick Boot, Working Dir, Config, Boot ELF, ATA0 / ATA0 ID / ATA1 image, plus
   a free-form Extra field) reassembled in a valid order with <code>--b</code> last. Stored in config key
-  <code>$NeutrinoArgs</code> as a single flat string (e.g. <code>-mt=dvd</code>). Each sub-field holds 31
-  visible characters; for a longer single value, edit <code>$NeutrinoArgs</code> in the <code>.cfg</code>
-  directly — OPL forwards the full value at launch. A global default is set in <b>Settings → Game
+  <code>$NeutrinoArgs</code> as a single flat string (e.g. <code>-gsm=fp2</code>). Each text field opens a full-value keyboard; the row is a preview. The complete saved string is limited to 255 characters, and launch preflight also checks the combined 14-entry / 256-byte budget. A global default is set in <b>Settings → Game
   Launching → Neutrino Advanced Arguments</b>; per-game args are appended after it.</li>
   <li><b>Neutrino Video</b> — structured picker for Neutrino's <code>-gsm</code> video-mode flag.
   Config key: <code>$NeutrinoVideo</code>.</li>
@@ -157,7 +155,7 @@ Core is Neutrino. They are greyed under <code>&lt;OPL&gt;</code>.</p>
     <tr><td>480p</td><td><code>-gsm=fp2</code></td><td>Force 480p / NTSC progressive scan</td></tr>
     <tr><td>1080i x1</td><td><code>-gsm=1080ix1</code></td><td>Force 1080i</td></tr>
     <tr><td>1080i x2</td><td><code>-gsm=1080ix2</code></td><td>Force 1080i</td></tr>
-    <tr><td>1080i x3</td><td><code>-gsm=1080ix3</code></td><td>Force 1080i — the community "1080p impression" setting</td></tr>
+    <tr><td>1080i x3</td><td><code>-gsm=1080ix3</code></td><td>Force 1080i — interlaced output mapping; not 1080p</td></tr>
     <tr><td>Default</td><td><em>(nothing per-game)</em></td><td>Removes <code>$NeutrinoVideo</code> entirely, so the title follows the global <b>Settings → Game Launching → Neutrino Defaults → Neutrino Video</b> value</td></tr>
   </tbody>
 </table>
@@ -249,15 +247,16 @@ mode used to read the game partition. Options range from <b>MDMA 0</b> through <
 picker is hidden for devices that do not support DMA (USB, SMB, MMCE, etc.).</p>
 
 <h3 id="game-id-alt-startup">Game ID &amp; Custom ELF</h3>
-<p><b>Game ID</b> (<code>$DNAS</code>) stores the hexadecimal startup ID used to look up the game in the
-OPL compatibility database. Use <b>Load from Disc</b> to read it automatically from an inserted disc, or
+<p><b>DNAS ID</b> (<code>$DNAS</code>) is the disc authentication ID for DNAS online games, not the startup serial used for CFG/artwork lookup. Use <b>Load from Disc</b> to read it automatically from an inserted disc, or
 type it manually. <b>Custom ELF</b> (<code>$AltStartup</code>) overrides the ELF that is executed at boot —
 useful for multi-disc sets or non-standard disc layouts. Both fields are 31 characters maximum in the
 on-screen editor.</p>
 
+<h3 id="parental-lock">Per-game parental lock</h3>
+<p>Set a password under General &amp; System → Security, then enable <b>Parental Lock</b> in the game's Compatibility settings and save. The stored <code>$ParentalLock=1</code> prompts for each PS2 launch, including Favorites and Last Played. Unlocking settings does not authorize later game launches. Test Changes checks a stored lock before applying an unsaved unlock, and saving/removing a stored lock also needs authorization. With no configured password, the saved game lock warns but is not effective. See <a href="settings.html#parental-lock">parental-lock behavior</a>.</p>
 <h2 id="vmc">VMC — Virtual Memory Cards</h2>
 <p>The <b>VMC</b> screen assigns a Virtual Memory Card image to each of the two memory-card slots for
-this title. Up to two VMCs can be active simultaneously. VMC images are <code>.bin</code> files in the
+this title. Native OPL can activate both slots; the <a href="vmc.html#neutrino-vmc">Neutrino runtime has slot/geometry limits</a>. HTTP, PC CARD CF and DESR DVR do not support VMCs. VMC images are <code>.bin</code> files in the
 <code>VMC/</code> folder; they can range from 8 MB to 64 MB.</p>
 <p>For each slot you can:</p>
 <ul class="checklist">
@@ -273,7 +272,7 @@ details on creating and managing VMC images.</p>
 <div class="callout info"><div class="h">i VMC and Neutrino: spaced names</div>
 VMC file names with spaces work correctly — OPL passes each VMC path as a discrete argument rather
 than concatenating into a flat string. Names up to 31 characters are supported in the on-screen editor;
-longer names can be set by editing the <code>.cfg</code> file directly.
+stay within the supported editor limit rather than relying on longer hand-edited names.
 </div>
 
 <h2 id="cheats">Cheat Settings</h2>
@@ -303,14 +302,12 @@ Flipping, and how to recover a game that loses the picture.</p>
 <p>If the game's Loader Core is set to Neutrino, opening Controller Emulation displays the message
 <em>"This setting is not used with the Neutrino core."</em></p>
 <p>DualSense / DualShock 5 (USB) support is off in the default builds, but you do not have to build it
-yourself: each release flavour also ships a ready-made <code>-ds5.ELF</code> loader as its own named
-download. See the <a href="releases.html">Releases</a> page.</p>
+yourself: available DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>. See the <a href="releases.html">Releases</a> page.</p>
 <p>The PADEMU screen is covered in full on the <a href="pademu.html">PADEMU</a> page: USB and Bluetooth
 modes, per-port emulation and vibration, multitap, and the fake-DS3 workaround.</p>
 
 <h2 id="osd-language">OSD Settings</h2>
-<p>OPL can patch the OSD language, TV aspect ratio, and video output mode written into EEPROM during
-game boot via the per-game <b>OSD Settings</b> screen. This is an <b>OPL core feature</b>;
+<p>The per-game <b>OSD Settings</b> screen overrides the language, TV aspect ratio and video configuration returned to the game. It does not rewrite the console's EEPROM. This is an <b>OPL core feature</b>;
 it is not available under Neutrino.</p>
 <p>If the game's Loader Core is set to Neutrino, opening OSD Settings displays the message
 <em>"This setting is not used with the Neutrino core."</em></p>
@@ -376,7 +373,8 @@ If the settings turn out to work, follow up with <b>Save Changes</b>.</p>
 <h2 id="config-keys">Config key reference</h2>
 <p>Per-game settings are stored in the game's <code>.cfg</code> file as key=value pairs. The keys used
 by the per-game settings screen are:</p>
-<pre>$Compatibility    compatibility mode bitmask (integer)
+<pre>$ParentalLock     0 = Off, 1 = require password on each PS2 launch
+$Compatibility    compatibility mode bitmask (integer)
 $CoreLoader       0 = &lt;OPL&gt;, 1 = Neutrino
                   (key ABSENT when the picker is "Default" -> follow the global Default Loader Core)
 $NeutrinoArgs     Neutrino launch arguments (set via the structured sub-screen)
@@ -386,7 +384,7 @@ $NeutrinoGsmComp  0=Off, 1-3=comp type (key removed when the picker is "Default"
 $NeutrinoBsdfs    0=Auto, 1=exfat, 2=hdl, 3=bd (key removed on Auto)
 $VMC_0            VMC name for slot 1
 $VMC_1            VMC name for slot 2
-$DNAS             game hexadecimal ID (for compat DB lookup)
+$DNAS             DNAS disc authentication ID (not the CFG startup serial)
 $AltStartup       override ELF path at boot</pre>
 
 <details class="deep"><summary>How are compat modes stored as a bitmask?</summary>

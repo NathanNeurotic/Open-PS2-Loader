@@ -94,7 +94,7 @@ The NBD server exports the drive as <b>read-only</b> when the <b>Write Operation
 <div class="steps">
   <div class="step">
     <h3>Open the main menu</h3>
-    <p>From any game list, press <b>Triangle</b> to open the main menu.</p>
+    <p>From any game list, press <b>Start</b> to open the main menu.</p>
   </div>
   <div class="step">
     <h3>Select "Start NBD Server"</h3>
@@ -149,7 +149,7 @@ nbdfuse ps2/ nbd://192.168.1.45 &amp;</pre>
 <pre>wnbd-client.exe unmap hdd0</pre>
 
 <h2 id="macos">macOS</h2>
-<p>macOS is <b>not supported</b>. There is no NBD client available for macOS that is compatible with the lwNBD server.</p>
+<p>macOS is <b>not supported</b>. This project does not document or validate a macOS NBD client. Use one of the tested client environments above.</p>
 
 <h2 id="hdl-dump-workflow">Using hdl_dump over NBD</h2>
 <p>Once the drive is connected via any of the clients above, <code>hdl_dump</code> treats the exposed block device (or file) the same as a local drive. A typical workflow to install a game image to the PS2's HDD:</p>

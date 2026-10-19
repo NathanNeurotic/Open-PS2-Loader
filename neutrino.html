@@ -79,13 +79,11 @@
 
 <p><b>Neutrino is created by <a href="https://github.com/rickgaiser">rickgaiser</a></b> — a
 <i>"Small, Fast and Modular PS2 Device Emulator"</i>. The
-release package bundles the official latest build as a ready-to-use <code>neutrino/</code> folder
+standard release package bundles the upstream development pre-release selected at publish time (or upstream latest when none is listed) as a required ready-to-use <code>neutrino/</code> folder
 under its <b>AFL-3.0</b> licence; see <a href="credits.html#special-thanks">Credits</a> for the full
 attribution. Report <i>launching</i> problems to us and genuine Neutrino bugs upstream.</p>
 
-<div class="callout info"><div class="h">These features are specific to RiptOPL</div>
-The <b>Loader Core</b> selector, the <b>Neutrino Path</b> setting, the structured <b>Launch Args</b> sub-screen, and the per-game <b>Neutrino Video</b> picker are all additions in this fork. They do not exist in stock OPL or wOPL.
-</div>
+<div class="callout info"><div class="h">RiptOPL launch controls</div>This guide describes RiptOPL's path resolver, per-game core selector, launch-argument editor and video picker. Other OPL forks can expose different controls and defaults.</div>
 
 <h2 id="install">1. Install Neutrino</h2>
 
@@ -115,7 +113,7 @@ still occur. The automatic lookup deliberately probes the active game device bef
 </tbody>
 </table>
 
-<p>A Neutrino Path that is set but unavailable does not strand the launch: the lookup carries on to the game device and the memory cards. If none of them holds a complete install when you launch a game set to the Neutrino core, OPL shows a warning and falls back to the <code>&lt;OPL&gt;</code> core for that launch only.</p>
+<p>A Neutrino Path that is set but unavailable does not strand the launch: the lookup carries on to the game device and the memory cards. If none of them holds a complete install when you launch a game set to the Neutrino core, RiptOPL warns before using the native core where that source supports it. UDPFS, UDPBD and DESR DVR have no native fallback and return to the menu.</p>
 
 <div class="callout amber"><div class="h">Upgrading with Neutrino on the APA HDD</div>
 Older builds also searched the APA HDD's OPL data home automatically for games on <em>other</em>
@@ -130,10 +128,8 @@ that choice now appears as the matching Neutrino Path, and until you edit it Rip
 other folder/file spellings the picker accepted, because memory cards and APA partitions are
 case-sensitive. The other old choices load as <em>&lt;not set&gt;</em>.</p>
 
-<h3>Network boot exception</h3>
-
-<p>The <a href="network-boot.html">UDPBD / UDPFS</a> feature ships its <b>own bundled Neutrino</b> — a drag-and-drop <code>neutrino/</code> folder (<code>neutrino.elf</code> plus <code>config/</code> and <code>modules/</code>) in the release zip, pre-populated with the UDPFS config. Per-game Neutrino use still needs you to supply <code>neutrino.elf</code> at the paths above.</p>
-
+<h3>One complete runtime for local and network games</h3>
+<p>The bundled <code>neutrino/</code> serves both per-game and UDPFS/UDPBD launches. Copy the whole installation to a resolver location. The RA edition instead requires its pinned ORBIT runtime; see <a href="retroachievements.html">the RA guide</a>. DESR DVR needs the separate <a href="psx-dvr.html">DVR-capable runtime</a>.</p>
 <h2 id="per-game-core">2. Pick the core per game</h2>
 
 <div class="steps">
@@ -141,7 +137,7 @@ case-sensitive. The other old choices load as <em>&lt;not set&gt;</em>.</p>
 <p>Highlight a game, press <b>Triangle</b> and choose <b>Game Settings</b>.</p>
 </div>
 <div class="step"><h3>Set Loader Core</h3>
-<p>Change <b>Loader Core</b> to <b><code>Neutrino</code></b>. The other option is <b><code>&lt;OPL&gt;</code></b> (the built-in core; default for every game).</p>
+<p>Change <b>Loader Core</b> to <b><code>Neutrino</code></b>. Choose <b><code>&lt;OPL&gt;</code></b> to pin the native core, or <b>Default</b> to follow the global Default Loader Core. Sources that require a particular core lock this selector.</p>
 </div>
 <div class="step"><h3>Save</h3>
 <p>Save. The selection is written as <code>$CoreLoader</code> in that game's <code>.cfg</code> file.</p>
@@ -267,11 +263,9 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 </ul>
 
 <p>Arguments are space-separated. Example:</p>
-<pre>-mt=dvd -gsm=1</pre>
+<pre>-gsm=fp2</pre>
 
-<div class="callout info"><div class="h">Editing long argument strings</div>
-Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Args open a <b>structured sub-screen</b> (see below) whose individual fields each hold up to 31 visible characters. If you need a longer value in a single field, edit <code>neutrino_args</code> (global, in <code>settings_riptopl.cfg</code>) or <code>$NeutrinoArgs</code> (per game, in the game's <code>.cfg</code>) directly — OPL reads and forwards the full string at launch. The editor preserves every field you do not touch at its full stored length, so opening and closing the dialog never truncates a hand-edited value.
-</div>
+<div class="callout info"><div class="h">Editing long argument strings</div>Each text row opens a full-value keyboard; its visible row is a preview. The complete saved global or per-game string must fit 255 characters. The editor refuses an overlong result. Before teardown, launch preflight checks the combined automatic, global, per-game and VMC arguments against ExecPS2's 14-entry / 256-byte budget; an interactive overflow stays in the menu rather than silently dropping flags.</div>
 
 <h3 id="args-subscreen">Structured Neutrino Args sub-screen</h3>
 
@@ -295,10 +289,7 @@ Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Arg
 
 <p>The canonical reassembly order is: <code>-qb</code> &rarr; <code>-dbc</code> &rarr; <code>-logo</code> &rarr; <code>-cwd</code> &rarr; <code>-cfg</code> &rarr; <code>-elf</code> &rarr; <code>-ata0</code> &rarr; <code>-ata0id</code> &rarr; <code>-ata1</code> &rarr; Extra. The Extra slot also collects any flags the parser does not recognise, preserving them verbatim. <code>--b</code> and everything following it is always kept at the tail (those tokens are arguments forwarded to the booted ELF, not to Neutrino itself).</p>
 
-<div class="callout info"><div class="h">Auto-emitted flags are never typed</div>
-<code>-bsd</code>, <code>-dvd</code>, <code>-gc</code>, and <code>-mc0</code>/<code>-mc1</code> are always constructed from the game settings by OPL. Do not enter them in the Extra field or the Launch Args text box — doing so produces a duplicate that Neutrino may reject or misinterpret. Use the dedicated UI controls (compat modes, VMC slots, etc.) to set those values instead.
-<p><code>-dbc</code>, <code>-logo</code>, and <code>-gsm</code> are the exceptions: they have dedicated controls (the <b>Debug Colors</b> and <b>PS2 Logo</b> toggles in the args sub-screen, and the <b>Neutrino Video</b> picker), and if you do forward one of them yourself OPL suppresses its own auto-emitted copy so exactly one reaches Neutrino. A copy disabled with a leading <code>$</code> does not count as forwarded, so OPL still emits its own in that case.</p>
-</div>
+<div class="callout info"><div class="h">Automatic flags and expert overrides</div>RiptOPL derives backend, image, compatibility and VMC arguments. Expert overrides in Extra are supported for normal backends, with per-game values after global ones; disabled <code>$-</code> tokens and <code>--b</code> tails have distinct handling. DVR refuses backend/filesystem overrides and quick boot. Use <b>Show Launch Arguments</b> and the <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/NEUTRINO.md#3-launch-arguments">complete precedence reference</a> before changing these values.</div>
 
 <h3 id="show-args">See the exact arguments: Show Launch Arguments</h3>
 
@@ -330,14 +321,7 @@ Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Arg
 </table>
 
 <p><b>Global default:</b> the same picker also exists in <b>Settings</b> (with its GSM-comp half). Games whose per-game picker is “Default” follow it — so one global change forces e.g. <code>-gsm=1080ix3</code> for every Neutrino game. An explicit per-game value — <em>including Off</em> — overrides the global.</p>
-<div class="callout info"><div class="h">i The “1080p impression” trick</div>On 1080-class displays,
-<b>1080i x3</b> (<code>-gsm=1080ix3</code>) is the community workaround for progressive-looking output —
-the same effect previously reached by launching Neutrino from PS2BBLE/OSDmenu with
-<code>-gsm=1080ix3</code>. Set it per game, or globally and leave games on “Default”. True 1080p is not
-one of Neutrino's <code>-gsm</code> modes — its option remains <code>1080i</code>. RiptOPL's native
-<em>OPL</em> core separately provides a hardware-confirmed forced-progressive 1080p GSM mode in every
-standard loader; it is guarded by a three-step confirmation, with <b>Triangle + Cross</b> at console
-boot changing only the menu to 480p (<b>Triangle + Circle</b> forces the interlaced Auto mode instead). A game video override must be changed in game settings; the display/connection must accept 480p for menu recovery.</div>
+<div class="callout info"><div class="h">1080i x1–x3 remain interlaced</div>These presets change output mapping, not the game's rendering resolution or frame rate. x3 is not 1080p or a universal recommendation. Start with video forcing Off when diagnosing a launch. See <a href="troubleshooting.html#setup-what-do-neutrinos-1080i-x1-x2-and-x3-mean">the scaling explanation</a> and <a href="gsm.html">native OPL GSM</a> for the separate native video options.</div>
 <p>The picker is the <em>default</em> source for <code>-gsm</code>. If you manually type <code>-gsm=&lt;value&gt;</code> into the <b>Neutrino Launch Args</b> field, that value wins — OPL emits only one <code>-gsm</code> argument, because Neutrino aborts on a duplicate or malformed value.</p>
 
 <h3 id="mode7">Mode 7 — fix IOP buffer overrun (<code>-gc=7</code>)</h3>
