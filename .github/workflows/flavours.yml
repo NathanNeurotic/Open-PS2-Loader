@@ -275,6 +275,8 @@ jobs:
         run: python3 .github/scripts/test_game_parental_lock.py
       - name: Check VMC and PADEMU SIO2MAN version and alias isolation
         run: python3 .github/scripts/test_sio2man_hooks.py
+      - name: Check local transport binding and iLink aliases cannot cross-wire devices
+        run: python3 .github/scripts/test_bdm_transport_binding.py
       - name: Check BDM partition I/O bounds and sector-size refusal
         run: python3 .github/scripts/test_bdm_partitions.py
       - name: Check BDM allocation failure cannot publish an uninitialized slot
@@ -421,7 +423,7 @@ jobs:
           # --- FREEZE REPORT: OFFICIALROLLING (the toolchain the release app uses) built with
           # INGAMEDIAG=1. When a game freezes, the IGR combo (L1+L2+R1+R2+Start+Select) saves what
           # the console was doing -- the game's threads, the IOP's disc and VMC activity -- to
-          # mc0:/RIPTFRZ.TXT, then exits as usual. If the combo does nothing, the EE itself is stuck.
+          # mc0:/RIPTFRZ.TXT, then exits as usual. An inert combo can also mean IGR input monitoring failed.
           # Hand it out when a tester reports in-game freezes. Compatibility Mode 6 turns IGR off,
           # and with it the report.
           - flavour: OFFICIALROLLING-FREEZEDIAG
