@@ -206,6 +206,23 @@ int main(void) {
     assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 1);
     assert(msgBoxCalled == 0 && vmc.arg[0][0] != '\0');
 
+    // Mapping failures are not zero-fragment successes. Do not drop cards or
+    // offer a fragmentation prompt when the layout query itself failed.
+    strcpy(vmc.arg[0], "-mc0=mass0:/VMC/slot0.bin");
+    strcpy(vmc.arg[1], "-mc1=mass0:/VMC/slot1.bin");
+    stubIsoFrags = -5; stubVmc0Frags = 1; stubVmc1Frags = 1;
+    msgBoxCalled = 0;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 0);
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 1) == 0);
+    assert(msgBoxCalled == 0 && vmc.arg[0][0] && vmc.arg[1][0]);
+    stubIsoFrags = 1; stubVmc0Frags = -5;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 0);
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 1) == 0);
+    stubVmc0Frags = 1; stubVmc1Frags = -5;
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 0) == 0);
+    assert(bdmNeutrinoFragBudgetOk("iso", &vmc, 1) == 0);
+    assert(msgBoxCalled == 0 && vmc.arg[0][0] && vmc.arg[1][0]);
+
     return 0;
 }
 '''.replace('@PRODUCTION_FUNCTION@', production_fn).replace('@BUDGET_MESSAGE@', json.dumps(budget_message))
