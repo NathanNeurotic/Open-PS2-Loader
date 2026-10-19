@@ -1,16 +1,15 @@
-"""IGR timer-alarm sampling without VBLANK_END (except in RetroAchievements builds).
+"""IGR samples input from a VBLANK_END interrupt handler in every build (issue #984).
 
-Merely registering a VBLANK_END interrupt handler black-screens some games (Fatal Fury: Battle
- Archives Volume 2). Standard builds now sample controller input in the one-frame EE alarm callback
-and stop the game from the awakened worker. RetroAchievements builds keep the
-handler: RA_OnVblank's snapshot DMA (isceSifSetDma) and unlock overlay are interrupt-context code
-that must run every frame. Mode 6 instead has a snapshot-only handler with no IGR worker.
+Two alarm-based replacements failed on real hardware: a priority-127 polling thread (busy games
+never let it run) and sampling in the EE alarm callback (controller and power button both dead in
+game). Standard and RetroAchievements builds therefore share OPL's original handler: it samples the
+pad and power button each frame, and on a request stops DMA/GS, suspends every game thread and
+wakes the worker at priority 0, all from interrupt context. Mode 6 keeps a snapshot-only RA handler.
 
 This compiles the real padhook.c functions twice -- standard and RA -- against kernel stubs and
-checks: timer installation and worker starvation, pad/power detection, pad-hook alarm retry,
-no VBLANK handler on standard builds, interrupt-side suspension before signalling,
-once-only DMA/GS/ResetEE shutdown preparation in the appropriate context, and actual worker/sampler
-reinstallation through New_SifSetDma after ExecPS2, including repeated resets and failed starts.
+checks: worker/handler installation and retry, pad/power detection, IOP-reset pad invalidation,
+interrupt-side shutdown handoff, the production worker with early and spurious wakes,
+actual reset-caller reinstallation after ExecPS2, and that no EE alarm sampler comes back.
 """
 from pathlib import Path
 import re
@@ -32,13 +31,12 @@ def function_text(signature):
     return source[match.start():end] + '\n}\n'
 
 
-# The handler may only exist, and only be registered, in RA builds.
-if not re.search(r'#ifdef RETROACHIEVEMENTS\s*\n#define IGR_VBLANK_HANDLER', source):
-    failures.append('padhook.c: IGR_VBLANK_HANDLER must be defined for RETROACHIEVEMENTS builds only')
-handler_at = source.find('static int IGR_Intc_Handler(')
-guard_at = source.rfind('#ifdef IGR_VBLANK_HANDLER', 0, handler_at)
-if handler_at < 0 or guard_at < 0 or source.find('#endif', guard_at) < handler_at:
-    failures.append('padhook.c: IGR_Intc_Handler must sit inside #ifdef IGR_VBLANK_HANDLER')
+# Every build samples from the handler; the failed alarm samplers must not come back.
+if 'IGR_VBLANK_HANDLER' in source:
+    failures.append('padhook.c: the VBLANK_END handler is unconditional; IGR_VBLANK_HANDLER must not return')
+for alarm_call in ('SetAlarm(', 'iSetAlarm(', 'ReleaseAlarm('):
+    if alarm_call in source:
+        failures.append('padhook.c: IGR must not sample from an EE alarm (%s found, issue #984)' % alarm_call)
 
 asm_source = (root / 'ee_core/src/asm.S').read_text(encoding='utf-8').replace('\r\n', '\n')
 for hook_name in ('_SifSetDma', 'Hook_ExecPS2', 'Hook_CreateThread'):
@@ -58,18 +56,16 @@ common = ''.join(function_text(sig) for sig in (
     'static void IGR_CheckInputs(',
     'static void IGR_StopDmaAndGs(',
 ))
-polling = ''.join(function_text(sig) for sig in (
-    'static void IGR_Poll_Alarm(',
-    'static void IGR_PollUntilRequested(',
-))
-reset_padhook = function_text('void Reset_Padhook(')
+reset = function_text('void Reset_Padhook(')
 handler = function_text('static int IGR_Intc_Handler(')
+worker = function_text('static void IGR_Thread(')
 install = function_text('void Install_IGR(')
 mode6 = ''.join(function_text(sig) for sig in (
     'static int RA_Intc_Handler(',
     'void Install_RA_Vblank(',
     'void IGR_RequestReset(',
 ))
+
 
 # Exercise the reset caller with the real installer, not a successful-call stub.
 syshook = (root / 'ee_core/src/syshook.c').read_text(encoding='utf-8')
@@ -101,23 +97,17 @@ RESET_CHECKS = r'''
     for (int cycle = 0; cycle < 2; cycle++) {
         /* ExecPS2 destroys kernel objects, but the new ELF is already patched. */
         Reset_Padhook();
-        alarmHandler = NULL;
         padOpen_hooked = 1;
         armPad();
-        int oldCreates = nCreate, oldAlarms = nAlarm, oldHandlers = nAddIntc;
+        int oldCreates = nCreate, oldHandlers = nAddIntc;
         CHECK(New_SifSetDma(&dma, 1) == 1 && !disable_padOpen_hook,
               "intercepted reboot completes and releases the scan guard");
         CHECK(nCreate == oldCreates + 1 && IGR_Thread_ID >= 0 && padScans == 0,
               "retained PadOpen patch still recreates the actual IGR worker without rescanning");
         CHECK(Pad_Data.pad_buf == NULL && padOpen_hooked == 1,
               "reboot preserves the patch but invalidates the stale pad buffer");
-#ifndef IGR_VBLANK_HANDLER
-        CHECK(nAlarm == oldAlarms + 1 && alarmHandler != NULL,
-              "reset caller arms a fresh standard sampler after ExecPS2");
-#else
         CHECK(nAddIntc == oldHandlers + 1 && IGR_Intc_ID >= 0,
-              "reset caller installs a fresh RA sampler after ExecPS2");
-#endif
+              "reset caller installs a fresh VBLANK sampler after ExecPS2");
         New_SifSetDma(&dma, 1);
         CHECK(nCreate == oldCreates + 1 && padScans == 0,
               "another IOP reset reuses the surviving worker and controller patch");
@@ -127,7 +117,6 @@ RESET_CHECKS = r'''
         resetResult = 1;
     }
     Reset_Padhook();
-    alarmHandler = NULL;
     startFailures = 1;
     New_SifSetDma(&dma, 1);
     CHECK(IGR_Thread_ID < 0, "worker start failure remains retryable with a retained patch");
@@ -135,7 +124,6 @@ RESET_CHECKS = r'''
     CHECK(IGR_Thread_ID >= 0 && padScans == 0,
           "next reset retries the actual installer even though the ELF is already patched");
     Reset_Padhook();
-    alarmHandler = NULL;
     g_compat_mask = COMPAT_MODE_6;
     int oldCreates = nCreate;
     New_SifSetDma(&dma, 1);
@@ -145,14 +133,17 @@ RESET_CHECKS = r'''
 
 
 def host_safe(text):
-    # The MIPS barrier has no host meaning; everything else compiles as written.
-    return text.replace('asm volatile("sync.l\\n");', ';')
+    # MIPS hardware instructions have no host meaning; retain the production C logic.
+    text = text.replace('asm volatile("sync.l\\n");', ';')
+    # GetCop0 is stubbed to zero, so this MIPS-only performance-counter branch is never taken.
+    return re.sub(r'__asm__ __volatile__\(\s*" mfc0  \$3, \$25;".*?\);', ';', text, flags=re.S)
 
 
 HARNESS = r'''
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -208,7 +199,7 @@ typedef struct {
     u32 option;
 } ee_thread_t;
 
-struct cfg { int EnableGSMOp; int GameMode; };
+struct cfg { int EnableGSMOp; int GameMode; int gCheatList; int MMCEIGRSettings; };
 static struct cfg g_cfg;
 #define USE_LOCAL_EECORE_CONFIG struct cfg *config = &g_cfg;
 
@@ -226,7 +217,6 @@ static volatile u32 dmaReg[16];
 #define R_EE_D8_CHCR (&dmaReg[9])
 #define R_EE_D9_CHCR (&dmaReg[10])
 static volatile u64 gsCsr;
-static int gsResets;
 static volatile u64 *gsCsrReg(void)
 {
     static int calls;
@@ -249,112 +239,65 @@ static paddata_t Pad_Data;
 static powerbuttondata_t Power_Button;
 static int IGR_Thread_ID = -1;
 static int IGR_Intc_ID = -1;
-static volatile int IGR_Poll_Alarm_ID = -1, IGR_Poll_Recovery;
-static volatile unsigned int IGR_Poll_Generation = 1;
-static int IGR_Request_Sema = -1;
-typedef struct { int count, max_count, init_count, wait_threads; u32 attr, option; } ee_sema_t;
-static int semaFailures, semaCreates;
-static int CreateSema(ee_sema_t *p) {
-    semaCreates++;
-    if (p->init_count != 0 || p->max_count != 1) return -1;
-    if (semaFailures) { semaFailures--; return -1; }
-    return 3;
-}
 static u8 IGR_Stack[IGR_STACK_SIZE];
 static void *_gp;
 
 /* Kernel stubs: every call is counted so the test can say exactly what ran. */
-static int nAlarm, alarmFails, nSleep, nNop, nWake, lastWake, nPrio, lastPrioThread = -1, lastPrio = -1;
-static int nRelease, releaseFails, tickCount, inSyscall, badAlarmRelease;
+static int nAlarm, nSleep, nWake, lastWake, nPrio, lastPrioThread = -1, lastPrio = -1;
 static int nResetEE, lastResetEE, nSuspend, nISuspend, nIResetEE, nIPrio, nIWake, nCreate, nStart, nDelete;
 static int createFailures, startFailures;
 static ee_thread_t lastCreatedThread;
 static int nAddIntc, lastIntcCause = -1, nEnableIntc, nRA;
-static int sleepsUntilCombo = -1, powerPressAtSleep = -1;
 static u8 padBuf[128];
-static void (*alarmHandler)(s32, u16, void *);
-static void *alarmCommon;
 
+/* Any EE alarm use would show up here: padhook.c must not arm one (checked above, too). */
 static s32 SetAlarm(u16 time, void (*cb)(s32, u16, void *), void *common)
 {
+    (void)time; (void)cb; (void)common;
     nAlarm++;
-    if (alarmFails > 0) {
-        alarmFails--;
-        return -1;
-    }
-    if (time != 256)
-        printf("FAIL alarm time %u, expected 256 (about one frame)\n", time);
-    alarmHandler = cb;
-    alarmCommon = common;
-    return 1;
+    return -1;
 }
-static s32 iSetAlarm(u16 time, void (*cb)(s32, u16, void *), void *common)
-{
-    return SetAlarm(time, cb, common);
-}
-static s32 ReleaseAlarm(s32 alarm_id)
-{
-    if (inSyscall) badAlarmRelease++;
-    (void)alarm_id;
-    nRelease++;
-    if (releaseFails > 0) {
-        releaseFails--;
-        return -1; /* kernel refuses cancellation of a triggered alarm */
-    }
-    alarmHandler = NULL;
-    return 0;
-}
-static s32 iReleaseAlarm(s32 alarm_id)
-{
-    if (intrEnabled) badAlarmRelease++;
-    /* Same alarm table operation, through the non-dispatching syscall entry. */
-    int previous = inSyscall;
-    inSyscall = 0;
-    int result = ReleaseAlarm(alarm_id);
-    inSyscall = previous;
-    return result;
-}
-/* Drive the timer independently of worker scheduling (including priority 0 games). */
-static void tickAlarm(void)
-{
-    void (*cb)(s32, u16, void *);
-    void *common;
-    tickCount++;
-    if (sleepsUntilCombo == tickCount) {
-        padBuf[112] = IGR_PAD_STABLE_V1;
-        padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
-        padBuf[2] = IGR_COMBO_START_SELECT;
-    }
-    if (powerPressAtSleep == tickCount) {
-        ndin = 0x20;
-        poff = 0x04;
-    } else {
-        poff = 0;
-    }
-    cb = alarmHandler;
-    common = alarmCommon;
-    if (cb) {
-        alarmHandler = NULL; /* the one-shot slot is gone before its callback */
-        cb(1, 256, common);
-    }
-}
+static int IGR_Intc_Handler(int cause);
+static void IGR_Thread(void *arg);
+static void (*beforeSleep)(void);
+static int pendingWake, workerWaiting, dropRunningWake, lostRunningWakes, consumedWakes, strayWakeups;
 static void SleepThread(void)
 {
-    int k;
     nSleep++;
-    /* This emulates a blocked worker: alarms fire, but the worker cannot run
-       until requested to shut down or asked to recover an allocation failure. */
-    for (k = 0; k < 150 && !Pad_Data.combo_type; k++)
-        tickAlarm();
-    if (!Pad_Data.combo_type) {
-        printf("FAIL alarm never woke worker after 150 frames\\n");
-        Pad_Data.combo_type = IGR_COMBO_START_SELECT; /* keep harness bounded */
+    if (strayWakeups) {
+        strayWakeups--;
+        return;
     }
+    /* Inject the interrupt after the production worker read its latch, before it blocks. */
+    if (beforeSleep) {
+        void (*interrupt)(void) = beforeSleep;
+        beforeSleep = NULL;
+        interrupt();
+    }
+    if (!pendingWake) {
+        /* Also model raw kernels that reject a RUNNING-thread wake: the persistent
+           VBLANK handler runs again after this worker enters WAIT. */
+        workerWaiting = 1;
+        IGR_Intc_Handler(0);
+        workerWaiting = 0;
+    }
+    if (!pendingWake) {
+        fputs("FAIL production worker blocked without a pending or repeated VBLANK wake\n", stderr);
+        exit(1);
+    }
+    pendingWake--;
+    consumedWakes++;
 }
-static void nopdelay(void) { nNop++; }
-static void iWakeupThread(int id) { nWake++; lastWake = id; }
-static void iSignalSema(int id) { (void)id; nWake++; lastWake = IGR_Thread_ID; }
-static void WaitSema(int id) { (void)id; SleepThread(); }
+static void iWakeupThread(int id)
+{
+    nWake++;
+    lastWake = id;
+    if (dropRunningWake && !workerWaiting) {
+        lostRunningWakes++;
+        return;
+    }
+    pendingWake++;
+}
 static void WakeupThread(int id) { nWake++; lastWake = id; }
 static void ChangeThreadPriority(int id, int prio) { nPrio++; lastPrioThread = id; lastPrio = prio; }
 static void ResetEE(u32 bits) { nResetEE++; lastResetEE = bits; }
@@ -387,19 +330,42 @@ static int AddIntcHandler(int cause, int (*h)(int), int next) { (void)h; (void)n
 static void EnableIntc(int cause) { (void)cause; nEnableIntc++; }
 static void ExitHandler(void) {}
 static void RA_OnVblank(void) { nRA++; }
-static void IGR_Thread(void *arg) { (void)arg; }
+/* Reset services are inert; the complete production worker still executes its wait and exit path. */
+static int EnableDebug, workerShutdowns, workerExitCalls, workerRpcCalls, prematureShutdown;
+#define DBGCOL(...) ((void)0)
+#define OPL_MODULE_ID_RESETSPU 1
+#define OPL_MODULE_ID_MMCEDRV 2
+#define OPL_MODULE_ID_MMCEIGR 3
+static void SifInitRpc(int mode)
+{
+    (void)mode;
+    workerRpcCalls++;
+    if (!Pad_Data.combo_type)
+        prematureShutdown++;
+}
+static void oplIGRShutdown(int poweroff) { (void)poweroff; workerShutdowns++; }
+static int Reset_Iop(const char *arg, int len) { (void)arg; (void)len; return 1; }
+static void Remove_Kernel_Hooks(void) {}
+static void InitializeTLB(void) {}
+static u32 GetCop0(int reg) { (void)reg; return 0; }
+static void DisableGSM(void) {}
+static void DisableCheats(void) {}
+static int SifIopSync(void) { return 1; }
+static void SifInitIopHeap(void) {}
+static void LoadFileInit(void) {}
+static void sbv_patch_enable_lmb(void) {}
+static int LoadOPLModule(int id, int mode, int len, void *arg)
+{
+    (void)id; (void)mode; (void)len; (void)arg;
+    return 1;
+}
+static void SifExitIopHeap(void) {}
+static void LoadFileExit(void) {}
+static void SifExitRpc(void) {}
+static void IGR_Exit(s32 code) { (void)code; workerExitCalls++; }
 
 @CODE@
 
-/* Another pad-open can install a timer, then its interrupt can latch a request
-   before the original installer disables interrupts. */
-#ifndef IGR_VBLANK_HANDLER
-static void requestBeforeInstallLock(void)
-{
-    Install_IGR();
-    tickAlarm();
-}
-#endif
 
 static int fails;
 #define CHECK(cond, msg) do { if (!(cond)) { printf("FAIL %s\n", msg); fails++; } } while (0)
@@ -416,26 +382,42 @@ static void armPad(void)
     Pad_Data.pos_frame = 88;
 }
 
+static void prepareWorker(void)
+{
+    g_cfg.GameMode = g_cfg.EnableGSMOp = g_cfg.gCheatList = g_cfg.MMCEIGRSettings = 0;
+    IGR_Thread_ID = 5;
+    armPad();
+    Pad_Data.combo_type = 0;
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    ndin = poff = scmd = 0;
+    pendingWake = workerWaiting = dropRunningWake = lostRunningWakes = consumedWakes = strayWakeups = 0;
+    nSleep = nWake = nIResetEE = nISuspend = nIPrio = 0;
+    workerShutdowns = workerExitCalls = workerRpcCalls = prematureShutdown = 0;
+    beforeSleep = NULL;
+}
+
+static void requestAtSleep(void)
+{
+    padBuf[112] = IGR_PAD_STABLE_V1;
+    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
+    padBuf[2] = IGR_COMBO_START_SELECT;
+    IGR_Intc_Handler(0);
+}
+
 int main(void)
 {
     (void)RA_OnVblank;
 
-#ifndef IGR_VBLANK_HANDLER
-    semaFailures = 1;
-    Install_IGR();
-    CHECK(IGR_Request_Sema < 0 && nCreate == 0 && nAlarm == 0,
-          "failed request semaphore never starts an unwakeable worker or sampler");
-#endif
     createFailures = 1;
     Install_IGR();
     CHECK(IGR_Thread_ID < 0 && nCreate == 1 && nStart == 0, "a failed CreateThread stays retryable");
-    CHECK(nAddIntc == 0, "RA must not register an interrupt without a live worker");
+    CHECK(nAddIntc == 0, "no interrupt is registered without a live worker");
 
     startFailures = 1;
     Install_IGR();
     CHECK(IGR_Thread_ID < 0 && nCreate == 2 && nStart == 1 && nDelete == 1,
           "a failed StartThread deletes its dormant worker and remains retryable");
-    CHECK(nAddIntc == 0, "a failed worker never arms the RA interrupt");
+    CHECK(nAddIntc == 0, "a failed worker never arms the interrupt");
 
     Install_IGR();
     Install_IGR(); /* a repeated pad open must not recreate the worker or handler */
@@ -445,10 +427,6 @@ int main(void)
           lastCreatedThread.attr == 0 && lastCreatedThread.option == 0 &&
           lastCreatedThread.initial_priority == 127,
           "IGR CreateThread receives a fully initialized kernel structure");
-#ifndef IGR_VBLANK_HANDLER
-    CHECK(semaCreates == 2 && IGR_Request_Sema == 3,
-          "semaphore allocation retries once and is reused across worker retries and pad opens");
-#endif
 
     armPad();
     Power_Button.press = 1;
@@ -544,169 +522,82 @@ int main(void)
 '''
 
 STANDARD_CHECKS = r'''
-    CHECK(nAddIntc == 0 && nEnableIntc == 0, "standard build registers no VBLANK handler");
-    CHECK(IGR_Intc_ID == -1, "standard handler ID remains absent");
-    CHECK(nAlarm == 1 && IGR_Poll_Alarm_ID >= 0,
-          "Install_IGR arms the sampler before the worker ever runs");
+    CHECK(nAddIntc == 1 && lastIntcCause == kINTC_VBLANK_END && nEnableIntc == 1 && IGR_Intc_ID == 7,
+          "standard build registers its VBLANK_END handler once, after the worker starts");
+    CHECK(nAlarm == 0, "no EE alarm is armed");
 
-    /* Simulate a game that never schedules its priority-127 IGR thread. */
+    /* The handler samples in interrupt context, so a game that never yields cannot starve it. */
     armPad();
-    padBuf[112] = IGR_PAD_STABLE_V1;
-    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
-    padBuf[2] = IGR_COMBO_START_SELECT;
-    tickAlarm();
-    CHECK(nSleep == 0 && Pad_Data.combo_type == IGR_COMBO_START_SELECT,
-          "alarm detects input without ever scheduling the worker");
-    CHECK(nIPrio == 1 && nWake == 1 && lastWake == IGR_Thread_ID,
-          "detection immediately promotes and wakes the shutdown worker");
-    CHECK(nAlarm == 1 && IGR_Poll_Alarm_ID < 0 && !alarmHandler,
-          "sampler stops rearming after an IGR request");
-    CHECK(nISuspend == 254 && nSuspend == 0,
-          "sampler suspends game threads before worker scheduling can be starved");
-    IGR_PollUntilRequested();
-    CHECK(nSleep == 0 && nPrio == 1 && lastPrioThread == TH_SELF && lastPrio == 0,
-          "worker handles preexisting IGR request without sleeping");
-    CHECK(nResetEE == 1 && lastResetEE == 0x7F && nSuspend == 0 && nISuspend == 254,
-          "worker handles ResetEE once without repeating game suspension");
-    CHECK(nIResetEE == 0,
-          "standard callback leaves DMA/GS and EE reset to the worker");
-
-    /* A non-request frame must rearm exactly one one-shot alarm. */
-    armPad();
-    Pad_Data.combo_type = 0;
-    nAlarm = 0;
     padBuf[112] = IGR_PAD_STABLE_V1;
     padBuf[3] = padBuf[2] = 0;
-    Install_IGR();
-    CHECK(nAlarm == 1, "a repeated pad open restores a stopped sampler");
-    tickAlarm();
-    CHECK(nAlarm == 2 && IGR_Poll_Alarm_ID >= 0 && Pad_Data.combo_type == 0,
-          "idle alarm samples once and re-arms itself");
+    IGR_Intc_Handler(0);
+    CHECK(Pad_Data.combo_type == 0 && nISuspend == 0 && nWake == 0 && nIResetEE == 0,
+          "an idle frame neither stops the game nor wakes the worker");
     padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
     padBuf[2] = IGR_COMBO_START_SELECT;
-    tickAlarm();
-    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT && nAlarm == 2,
-          "combo stops rearming after the idle polling frame");
+    IGR_Intc_Handler(0);
+    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT, "the handler latches the reset combo");
+    CHECK(nIResetEE == 1 && nISuspend == 254 && nIPrio == 1 && nWake == 1 && lastWake == IGR_Thread_ID,
+          "interrupt-context shutdown: reset the EE, suspend every game thread, then wake the worker");
+    CHECK(nResetEE == 0 && nSuspend == 0 && nRA == 0, "no thread-only calls and no RA work from the handler");
+    /* Until the worker leaves for the exit ELF, a latched request repeats the handoff every frame,
+       exactly as OPL's original handler did: the game stays stopped and the worker stays woken. */
+    IGR_Intc_Handler(0);
+    CHECK(nIResetEE == 2 && nISuspend == 508 && nIPrio == 2 && nWake == 2 && lastWake == IGR_Thread_ID,
+          "a request still latched next frame repeats the same interrupt-side handoff");
 
-    /* Initial alarm allocation can fail when all timer slots are occupied.
-       Retry on a later game pad-open, not from a potentially starved worker. */
-    armPad();
-    Pad_Data.combo_type = 0;
-    padBuf[112] = IGR_PAD_STABLE_V1;
-    padBuf[3] = padBuf[2] = 0;
-    alarmHandler = NULL;
-    IGR_Poll_Alarm_ID = -1;
-    IGR_Poll_Recovery = 0;
-    nAlarm = nSleep = nNop = 0;
-    alarmFails = 1;
-    {
-        int oldWake = nWake, oldPrio = nPrio;
-        Install_IGR();
-        CHECK(IGR_Poll_Recovery && IGR_Poll_Alarm_ID < 0 &&
-              nWake == oldWake && nPrio == oldPrio && nNop == 0,
-              "alarm-full case never wakes or spins a priority-0 fallback worker");
-    }
-    Install_IGR();
-    CHECK(!IGR_Poll_Recovery && IGR_Poll_Alarm_ID >= 0 && nAlarm == 2,
-          "next pad hook retries registering the sampling alarm");
-    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
-    padBuf[2] = IGR_COMBO_START_SELECT;
-    tickAlarm();
-    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
-          "alarm retry detects a real combo without polling worker execution");
-
-    /* Forced failure in the interrupt rearm path uses the same safe retry. */
-    armPad();
-    Pad_Data.combo_type = 0;
-    padBuf[112] = IGR_PAD_STABLE_V1;
-    padBuf[3] = padBuf[2] = 0;
-    alarmHandler = NULL;
-    IGR_Poll_Alarm_ID = -1;
-    Install_IGR();
-    alarmFails = 1;
-    {
-        int oldWake = nWake;
-        tickAlarm();
-        CHECK(IGR_Poll_Recovery && IGR_Poll_Alarm_ID < 0 &&
-              nWake == oldWake && !alarmHandler,
-              "rearm failure neither wakes a spinning worker nor leaves an invalid alarm");
-    }
-    Install_IGR();
-    CHECK(!IGR_Poll_Recovery && IGR_Poll_Alarm_ID >= 0,
-          "later pad-open repairs a failed interrupt rearm");
-    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
-    padBuf[2] = IGR_COMBO_START_SELECT;
-    tickAlarm();
-    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
-          "retried interrupt rearm detects the combo");
-
-    /* Physical power button remains sampled even with no live pad buffer. */
+    /* The physical power button needs no controller hook. */
     Pad_Data.combo_type = 0;
     Pad_Data.pad_buf = NULL;
     Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
-    ndin = poff = scmd = 0;
-    alarmHandler = NULL;
-    IGR_Poll_Alarm_ID = -1;
-    tickCount = nSleep = 0;
-    sleepsUntilCombo = -1;
-    powerPressAtSleep = 1;
-    Install_IGR();
-    IGR_PollUntilRequested();
-    CHECK(Pad_Data.combo_type == IGR_COMBO_R3_L3 && Power_Button.press == 1,
-          "one hardware press powers off after the double-tap window");
-    CHECK(tickCount >= 50 && nSleep == 1,
-          "blocked worker waits while alarm samples every frame");
-
-    /* The alarm dispatcher may have started when ExecPS2 tries to cancel.
-       Its stale callback must not corrupt a newly installed worker's state. */
-    Pad_Data.combo_type = 0;
-    alarmHandler = NULL;
-    IGR_Poll_Alarm_ID = -1;
-    Install_IGR();
+    ndin = 0x20; poff = 0x04; scmd = 0;
     {
-        void (*oldCallback)(s32, u16, void *) = alarmHandler;
-        void *oldCommon = alarmCommon;
-        int oldRelease = nRelease;
-        int beforeWake, newId;
-        releaseFails = 1;
-        inSyscall = 1;
-        Reset_Padhook();
-        inSyscall = 0;
-        CHECK(nRelease == oldRelease + 1 && IGR_Poll_Alarm_ID == -1 &&
-              IGR_Thread_ID == -1 && IGR_Request_Sema == -1 && !IGR_Poll_Recovery,
-              "ExecPS2 invalidates the old alarm generation even if cancel fails");
-        Pad_Data.combo_type = 0;
-        Install_IGR();
-        newId = IGR_Poll_Alarm_ID;
-        beforeWake = nWake;
-        armPad();
-        padBuf[112] = IGR_PAD_STABLE_V1;
-        padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
-        padBuf[2] = IGR_COMBO_START_SELECT;
-        oldCallback(1, 256, oldCommon);
-        CHECK(Pad_Data.combo_type == 0 && IGR_Poll_Alarm_ID == newId &&
-              nWake == beforeWake,
-              "stale callback cannot sample pad or invalidate the new alarm");
-        tickAlarm();
-        CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
-              "new generation still receives valid alarm callbacks");
+        int before = nISuspend, k;
+        for (k = 0; k < 60 && !Pad_Data.combo_type; k++)
+            IGR_Intc_Handler(0);
+        CHECK(Pad_Data.combo_type == IGR_COMBO_R3_L3 && Power_Button.press == 1 && nISuspend == before + 254,
+              "one physical press powers off through the handler with no pad buffer");
     }
+    ndin = poff = scmd = 0;
 
-    /* No alarm may be rearmed after a concurrent pad-open has latched shutdown. */
-    Pad_Data.combo_type = 0;
-    armPad();
-    IGR_Poll_Alarm_ID = -1;
-    alarmHandler = NULL;
-    padBuf[112] = IGR_PAD_STABLE_V1;
-    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
-    padBuf[2] = IGR_COMBO_START_SELECT;
-    int priorAlarms = nAlarm;
-    beforeDisable = requestBeforeInstallLock;
+    /* ExecPS2 ends the old game's threads and handlers; the next pad-open installs new ones. */
+    Reset_Padhook();
+    CHECK(IGR_Thread_ID == -1 && IGR_Intc_ID == -1, "ExecPS2 forgets the old worker and handler");
     Install_IGR();
-    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT &&
-          IGR_Poll_Alarm_ID == -1 && !alarmHandler && nAlarm == priorAlarms + 1,
-          "installation rechecks worker, request and alarm state under the interrupt lock");
-    CHECK(!badAlarmRelease, "ExecPS2 cancels alarms through the syscall-safe entry with interrupts disabled");
+    CHECK(IGR_Thread_ID == 5 && IGR_Intc_ID == 7 && nAddIntc == 2 && Pad_Data.combo_type == 0,
+          "the next game installs a fresh worker and handler with no stale request");
+'''
+
+
+WORKER_CHECKS = r'''
+    prepareWorker();
+    requestAtSleep();
+    IGR_Thread(NULL);
+    CHECK(nSleep == 0 && consumedWakes == 0 && workerShutdowns == 1 && workerExitCalls == 1,
+          "production worker handles a prelatched request without sleeping");
+
+    prepareWorker();
+    beforeSleep = requestAtSleep;
+    IGR_Thread(NULL);
+    CHECK(nSleep == 1 && consumedWakes == 1 && pendingWake == 0 && lostRunningWakes == 0 &&
+          nIResetEE == 1 && nISuspend == 254 && workerShutdowns == 1 && workerExitCalls == 1,
+          "request at the production check/sleep boundary consumes its pending wake and exits");
+
+    prepareWorker();
+    strayWakeups = 1;
+    beforeSleep = requestAtSleep;
+    IGR_Thread(NULL);
+    CHECK(nSleep == 2 && consumedWakes == 1 && workerShutdowns == 1 && workerExitCalls == 1 &&
+          prematureShutdown == 0,
+          "production worker rechecks a spurious wake before starting shutdown");
+
+    prepareWorker();
+    dropRunningWake = 1;
+    beforeSleep = requestAtSleep;
+    IGR_Thread(NULL);
+    CHECK(nSleep == 1 && lostRunningWakes == 1 && consumedWakes == 1 && pendingWake == 0 &&
+          nIResetEE == 2 && nISuspend == 508 && workerShutdowns == 1 && workerExitCalls == 1,
+          "repeated VBLANK handoff recovers even when a raw kernel drops the early wake");
 '''
 
 RA_CHECKS = r'''
@@ -802,20 +693,22 @@ def build_and_run(name, defines, code, checks, harness=HARNESS):
             failures.append('%s harness did not compile:\n%s' % (name, build.stderr))
             return
         run = subprocess.run([str(exe)], capture_output=True, text=True, check=False, timeout=10)
-        if run.returncode != 0 or run.stdout.strip():
-            failures.extend(('%s: ' % name + line) for line in (run.stdout.strip().splitlines() or ['exited %d' % run.returncode]))
+        output = (run.stdout + run.stderr).strip()
+        if run.returncode != 0 or output:
+            failures.extend(('%s: ' % name + line) for line in (output.splitlines() or ['exited %d' % run.returncode]))
 
 
 if not failures:
-    reset_code = reset_padhook + RESET_STUBS + reset_hook
-    build_and_run('standard', '', common + polling + install + reset_code, STANDARD_CHECKS + RESET_CHECKS)
+    reset_code = RESET_STUBS + reset_hook
+    build_and_run('standard', '', common + handler + worker + install + reset + reset_code,
+                  STANDARD_CHECKS + RESET_CHECKS + WORKER_CHECKS)
     # nWake counts iWakeupThread for the RA handler too (the stub is shared), so the check compares it.
     ra_checks = RA_CHECKS.replace('nIWake == 0 + nWake', 'nWake == 1')
-    build_and_run('retroachievements', '#define RETROACHIEVEMENTS\n#define IGR_VBLANK_HANDLER\n',
-                  common + handler + install + reset_code, ra_checks + RESET_CHECKS)
+    build_and_run('retroachievements', '#define RETROACHIEVEMENTS\n',
+                  common + handler + worker + install + reset + reset_code, ra_checks + RESET_CHECKS + WORKER_CHECKS)
     build_and_run('ra_mode6', '#define RETROACHIEVEMENTS\n', mode6, MODE6_CHECKS, MODE6_HARNESS)
 
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('IGR: starvation-safe EE alarm, combined RA/IGR and Mode 6 snapshot-only passed')
+print('IGR: VBLANK sampling, production worker wakes, reset reinstallation and RA Mode 6 passed')
