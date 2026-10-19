@@ -805,6 +805,7 @@ static const struct
     {"SLES_535.58", COMPAT_MODE_2}, // Beat Down: Fists of Vengeance (Europe): hangs after "Now Loading" without Synchronous Reads (#831)
     {"SLPM_660.94", COMPAT_MODE_2}, // Beat Down: Fists of Vengeance (Japan): hangs after "Now Loading" without Synchronous Reads (#831)
     {"SLKA_253.13", COMPAT_MODE_2}, // Beat Down: Fists of Vengeance (Korea): hangs after "Now Loading" without Synchronous Reads (#831)
+    {"SLUS_217.23", COMPAT_MODE_6}, // Fatal Fury: Battle Archives Volume 2 (USA): black screen with IGR's VBLANK_END handler (upstream OPL #1762, #984)
 };
 
 int sbTitleCompatDefault(config_set_t *configSet)

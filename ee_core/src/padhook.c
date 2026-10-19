@@ -18,7 +18,6 @@
 
 #include <ee_regs.h>
 #include <iopcontrol.h>
-#include <stdint.h>
 #include "asm.h"
 #include "ee_core.h"
 #include "iopmgr.h"
@@ -54,32 +53,28 @@ static paddata_t Pad_Data;
 /* Monitored power button data */
 static powerbuttondata_t Power_Button;
 
-/* How IGR watches the pad.
+/* How IGR watches the pad: a VBLANK_END interrupt handler, in every build (issue #984).
  *
- * Upstream OPL #1762 (L10N37): merely registering a VBLANK_END handler black-screens some games
- * (Fatal Fury: Battle Archives Volume 2), even with an empty body. So every build now polls the pad
- * in an EE alarm callback about once a frame. The callback only samples inputs; shutdown
- * remains in an ordinary EE thread, so a busy game cannot starve the sampling step.
+ * The handler samples the pad and the power button each frame. On a request it stops DMA/GS,
+ * suspends every game thread, then wakes the priority-127 worker at priority 0. It runs in
+ * interrupt context, so no game thread, however busy or high-priority, can keep it from running.
+ * This is OPL's original design, and what RiptOPL shipped until October 5, 2026.
  *
- * Except RetroAchievements builds. RA_OnVblank's snapshot DMA (isceSifSetDma) and its unlock overlay
- * are interrupt-context code that must run every frame, so those builds keep the VBLANK_END handler
- * and accept that conflict. Both paths share the same input check and the same shutdown. */
-#ifdef RETROACHIEVEMENTS
-#define IGR_VBLANK_HANDLER
-#endif
+ * Two replacements failed on hardware and must not come back:
+ *   - Oct 5 (upstream OPL #1762): poll from the priority-127 thread, woken by an EE alarm. A game
+ *     that keeps any thread runnable never lets it run, so IGR was dead in GTA San Andreas, NFS Most
+ *     Wanted, PES and others (Beta-3979; upstream #1787, PES 2013).
+ *   - Oct 17 (#973, #990, #999): sample in the EE alarm callback. In-game the sampler never
+ *     latched anything -- controller and physical power button both dead on Beta-4032/4080, RE4
+ *     included -- while the VBLANK build worked on the same console and games.
+ *
+ * Known cost: #1762 reports Fatal Fury: Battle Archives Volume 2 black-screens with a VBLANK_END
+ * handler registered. supportbase.c gives that title Mode 6 (IGR off) by default.
+ * RetroAchievements builds also run RA_OnVblank from this handler. */
 
 /* IGR Thread ID and interrupt handler */
 static int IGR_Thread_ID = -1;
 static int IGR_Intc_ID = -1;
-#ifndef IGR_VBLANK_HANDLER
-/* Timer 3's one-shot alarm must be installed independently of the priority-127 worker.
- * If the alarm table is full, a later game pad-open retries registration.
- * The generation token rejects callbacks left pending during an ExecPS2 transition. */
-static volatile int IGR_Poll_Alarm_ID = -1;
-static volatile int IGR_Poll_Recovery = 0;
-static volatile unsigned int IGR_Poll_Generation = 1;
-static int IGR_Request_Sema = -1;
-#endif
 #ifdef RETROACHIEVEMENTS
 static int RA_Intc_ID = -1;
 #endif
@@ -168,8 +163,7 @@ static void t_loadElf(void)
 }
 
 // Read the pad buffer and the power button once, and set Pad_Data.combo_type when either asks for
-// IGR. Runs about once a frame: from the VBLANK_END handler in RA builds, from the EE alarm
-// callback otherwise. This already runs in interrupt context on the RA path.
+// IGR. Runs once a frame, from the VBLANK_END handler (interrupt context).
 static void IGR_CheckInputs(void)
 {
     USE_LOCAL_EECORE_CONFIG;
@@ -296,93 +290,6 @@ static void IGR_StopDmaAndGs(void)
     };
 }
 
-#ifndef IGR_VBLANK_HANDLER
-/* Timer 3's one-shot alarm counts horizontal-sync ticks (256 ~ one frame).
- * An expired alarm is removed before this callback by the PS2SDK dispatcher.
- * Sampling here avoids depending on the priority-127 shutdown worker running. */
-static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
-{
-    int next_alarm, i;
-    (void)alarm_id;
-    (void)time;
-
-    /* ReleaseAlarm can fail once the timer IRQ is already pending. In that
-     * case an old alarm may run after ExecPS2, including after a new worker
-     * has been installed. It must not observe the new game's pad state. */
-    if ((uintptr_t)common != IGR_Poll_Generation)
-        return;
-
-    IGR_Poll_Alarm_ID = -1;
-    if (IGR_Thread_ID < 0)
-        return;
-
-#ifdef INGAMEDIAG
-    g_freeze_diag_polls++;
-#endif
-    IGR_CheckInputs();
-
-    if (Pad_Data.combo_type != 0x00) {
-        /* Promotion alone cannot preempt a game already running at priority 0:
-         * equal-priority EE threads run until they yield. Restore the archived
-         * interrupt-side handoff before signalling, including any other ready
-         * priority-0 threads. The semaphore retains an early request even if
-         * our worker has not reached its first wait. Do this only on shutdown,
-         * never during ordinary sampling. */
-        for (i = 1; i < 256; i++) {
-            if (i != IGR_Thread_ID)
-                iSuspendThread(i);
-        }
-        iChangeThreadPriority(IGR_Thread_ID, 0);
-        iSignalSema(IGR_Request_Sema);
-        return;
-    }
-
-    next_alarm = iSetAlarm(256, IGR_Poll_Alarm, common);
-    if (next_alarm >= 0) {
-        IGR_Poll_Alarm_ID = next_alarm;
-        IGR_Poll_Recovery = 0;
-    } else {
-        /* Do not demote a spinning recovery worker: high-priority games can
-         * starve it forever, and a priority-0 loop can stall the game.
-         * A later pad-open retries independently of worker scheduling. */
-        IGR_Poll_Recovery = 1;
-    }
-}
-
-/* The alarm owns sampling. This worker runs only when a request is latched.
- * Alarm allocation is retried on later game pad-open calls, not by a thread
- * that might never be scheduled or might monopolize the EE. */
-static void IGR_PollUntilRequested(void)
-{
-    /* The raw EE iWakeupThread loses notifications for a RUNNING thread, and
-     * ee_core disables the SDK workaround. A semaphore retains a request that
-     * arrives between this condition and the blocking call. No interrupt mask
-     * is held across the wait, and spurious signals still recheck the latch. */
-    while (Pad_Data.combo_type == 0x00)
-        WaitSema(IGR_Request_Sema);
-
-    DPRINTF("IGR combination detected by EE alarm.\n");
-    ChangeThreadPriority(TH_SELF, 0);
-
-#ifdef INGAMEDIAG
-    /* The sampler has suspended game threads so even a priority-0 title
-     * yields to us. The report therefore observes that suspended state. */
-    if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {
-        unsigned int pad_state = 0, pad_frame = 0;
-
-        if (Pad_Data.pad_buf != NULL) {
-            pad_state = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_state];
-            pad_frame = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_frame];
-        }
-        FreezeDiag_Begin(Pad_Data.libpad, pad_state, pad_frame);
-    }
-#endif
-
-    IGR_StopDmaAndGs();
-    ResetEE(0x7F);
-}
-#endif
-
 #ifdef RETROACHIEVEMENTS
 void IGR_RequestReset(void)
 {
@@ -403,14 +310,25 @@ static void IGR_Thread(void *arg)
     USE_LOCAL_EECORE_CONFIG;
     u32 Cop0_Perf;
 
-#ifdef IGR_VBLANK_HANDLER
-    // Place our IGR thread in WAIT state
-    // It will be woken up by our IGR interrupt handler
-    SleepThread();
+    // Wait for the VBLANK_END handler. It latches the request, stops DMA/GS, suspends every other
+    // thread and raises this one to priority 0 before waking it. Recheck the latch so a stray
+    // wakeup cannot start a shutdown nobody asked for.
+    while (Pad_Data.combo_type == 0x00)
+        SleepThread();
 
     DPRINTF("IGR thread woken up!\n");
-#else
-    IGR_PollUntilRequested();
+
+#ifdef INGAMEDIAG
+    // Freeze report: the handler has suspended the game's threads, so this records their state.
+    if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {
+        unsigned int pad_state = 0, pad_frame = 0;
+
+        if (Pad_Data.pad_buf != NULL) {
+            pad_state = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_state];
+            pad_frame = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_frame];
+        }
+        FreezeDiag_Begin(Pad_Data.libpad, pad_state, pad_frame);
+    }
 #endif
 
     if (EnableDebug)
@@ -569,9 +487,7 @@ void IGR_Exit(s32 exit_code)
     Exit(exit_code);
 }
 
-#ifdef IGR_VBLANK_HANDLER
 // IGR VBLANK_END interrupt handler install to monitor combo trick in pad data aera.
-// RetroAchievements builds only (see IGR_VBLANK_HANDLER): every other build polls from IGR_Thread.
 static int IGR_Intc_Handler(int cause)
 {
     int i;
@@ -580,6 +496,9 @@ static int IGR_Intc_Handler(int cause)
     RA_OnVblank(); /* RetroAchievements: per-frame memory snapshot */
 #endif
 
+#ifdef INGAMEDIAG
+    g_freeze_diag_polls++;
+#endif
     IGR_CheckInputs();
 
     // If power button or combo is press
@@ -611,7 +530,6 @@ static int IGR_Intc_Handler(int cause)
 
     return 0;
 }
-#endif
 
 // An IOP reset invalidates the old libpad DMA buffer, even when the EE worker
 // survives. Do not read that memory until the game opens its pad again. Keep
@@ -665,20 +583,6 @@ static void Set_libpad_Params(void *addr)
 // Install IGR thread, and Pad interrupt handler
 void Install_IGR(void)
 {
-#ifndef IGR_VBLANK_HANDLER
-    {
-        int intr = DI();
-        if (IGR_Request_Sema < 0) {
-            ee_sema_t sema = {0};
-            sema.max_count = 1;
-            IGR_Request_Sema = CreateSema(&sema);
-        }
-        if (intr)
-            EI();
-    }
-    if (IGR_Request_Sema < 0)
-        return; // A later pad-open retries; never start an unwakeable worker.
-#endif
     // Pad-open hooks call this again when a game changes or reopens its pad buffer. Once the
     // worker is running, do not erase its live pad pointer, pending combo or power-button
     // counter: doing so can cancel a shutdown request without creating another worker.
@@ -709,11 +613,10 @@ void Install_IGR(void)
             IGR_Thread_ID = -1;
         }
         if (IGR_Thread_ID < 0)
-            DPRINTF("IGR: could not start polling thread; will retry on next hook\n");
+            DPRINTF("IGR: could not start IGR thread; will retry on next hook\n");
     }
 
-#ifdef IGR_VBLANK_HANDLER
-    // Never arm the RA VBLANK interrupt if the worker it would wake did not start.
+    // Never arm the VBLANK interrupt if the worker it would wake did not start.
     if (IGR_Thread_ID >= 0 && IGR_Intc_ID < 0) {
         int handler = AddIntcHandler(kINTC_VBLANK_END, IGR_Intc_Handler, 0);
         if (handler >= 0) {
@@ -721,49 +624,12 @@ void Install_IGR(void)
             EnableIntc(kINTC_VBLANK_END);
         }
     }
-#else
-    // Standard builds use the EE alarm only; no VBLANK handler (OPL #1762).
-    IGR_Intc_ID = -1;
-    {
-        /* Prevent the callback from executing before the returned alarm ID
-         * has been published. Keep an unavailable alarm retryable on reopen. */
-        int intr = DI();
-        if (IGR_Thread_ID >= 0 && IGR_Poll_Alarm_ID < 0 && Pad_Data.combo_type == 0x00) {
-            void *generation = (void *)(uintptr_t)IGR_Poll_Generation;
-            IGR_Poll_Alarm_ID = SetAlarm(256, IGR_Poll_Alarm, generation);
-            IGR_Poll_Recovery = (IGR_Poll_Alarm_ID < 0);
-        }
-        if (intr)
-            EI();
-    }
-#endif
 }
 
 void Reset_Padhook(void)
 {
-#ifndef IGR_VBLANK_HANDLER
-    /* Publish invalidation before cancellation: ReleaseAlarm may fail if a
-     * timer IRQ is already pending. An old callback must not use a new worker. */
-    int intr = DI();
-    int alarm_id = IGR_Poll_Alarm_ID;
-    IGR_Poll_Generation++;
-    if (IGR_Poll_Generation == 0)
-        IGR_Poll_Generation = 1;
-    IGR_Poll_Alarm_ID = -1;
-    IGR_Poll_Recovery = 0;
-    // Hook_ExecPS2 clears the kernel's semaphores along with the old threads.
-    IGR_Request_Sema = -1;
     IGR_Intc_ID = -1;
     IGR_Thread_ID = -1;
-    // Called directly by Hook_ExecPS2 inside its syscall handler.
-    if (alarm_id >= 0)
-        iReleaseAlarm(alarm_id);
-    if (intr)
-        EI();
-#else
-    IGR_Intc_ID = -1;
-    IGR_Thread_ID = -1;
-#endif
 }
 
 #ifdef RETROACHIEVEMENTS

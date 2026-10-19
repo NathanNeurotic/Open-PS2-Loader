@@ -73,12 +73,8 @@ jobs:
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check masked pattern scan bounds and rejection of short ranges
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
-      - name: Check IGR polls without a VBLANK handler, except in RetroAchievements builds
+      - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
         run: python3 .github/scripts/test_igr_polling.py
-      - name: Check an IGR request cannot be lost before the worker blocks
-        run: python3 .github/scripts/test_igr_wait_race.py
-      - name: Check IGR takes over from current and queued priority-zero game threads
-        run: python3 .github/scripts/test_igr_priority_handoff.py
       - name: Check the in-game freeze report stays in its flavour and cannot hang IGR
         run: python3 .github/scripts/test_ingame_freeze_diag.py
       - name: Check the in-game freeze report text
