@@ -34,3 +34,10 @@
   #fork-gap-audit .fork-gap-controls { gap:8px; }
   #fork-gap-audit .fork-gap-controls label { min-width:140px; flex-basis:160px; }
 }
+
+#fork-gap-audit .fork-gap-state[data-state="overlap"] { color:#67e5ca; }
+#fork-gap-audit .fork-gap-state[data-state="candidate"] { color:#deccff; }
+#fork-gap-audit .fork-gap-state[data-state="experimental"] { color:#ffca87; }
+#fork-gap-audit .fork-gap-state[data-state="planned"] { color:#d7bbfa; }
+#fork-gap-audit .fork-gap-state[data-state="companion"] { color:#9ac7ff; }
+#fork-gap-audit .fork-gap-state[data-state="limitation"] { color:#ff9f9f; }
