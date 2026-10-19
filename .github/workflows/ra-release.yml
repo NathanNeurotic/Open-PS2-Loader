@@ -24,6 +24,7 @@ on:
       - .github/scripts/package_release_app.py
       - .github/scripts/normalize_release_notes.py
       - .github/scripts/install_coherent_mmce.sh
+      - .github/patches/mmceman-*.patch
       - .github/scripts/install_safe_bdmfs.py
       - .github/patches/bdmfs-vmc-fragment-walk.c
       - .github/patches/bdmfs-vmc-sources.json
