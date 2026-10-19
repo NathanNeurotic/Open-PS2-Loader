@@ -9,7 +9,8 @@ that must run every frame. Mode 6 instead has a snapshot-only handler with no IG
 This compiles the real padhook.c functions twice -- standard and RA -- against kernel stubs and
 checks: timer installation and worker starvation, pad/power detection, pad-hook alarm retry,
 no VBLANK handler on standard builds, interrupt-side suspension before signalling,
-and once-only DMA/GS/ResetEE shutdown preparation in the appropriate context.
+once-only DMA/GS/ResetEE shutdown preparation in the appropriate context, and actual worker/sampler
+reinstallation through New_SifSetDma after ExecPS2, including repeated resets and failed starts.
 """
 from pathlib import Path
 import re
@@ -60,8 +61,8 @@ common = ''.join(function_text(sig) for sig in (
 polling = ''.join(function_text(sig) for sig in (
     'static void IGR_Poll_Alarm(',
     'static void IGR_PollUntilRequested(',
-    'void Reset_Padhook(',
 ))
+reset_padhook = function_text('void Reset_Padhook(')
 handler = function_text('static int IGR_Intc_Handler(')
 install = function_text('void Install_IGR(')
 mode6 = ''.join(function_text(sig) for sig in (
@@ -69,6 +70,78 @@ mode6 = ''.join(function_text(sig) for sig in (
     'void Install_RA_Vblank(',
     'void IGR_RequestReset(',
 ))
+
+# Exercise the reset caller with the real installer, not a successful-call stub.
+syshook = (root / 'ee_core/src/syshook.c').read_text(encoding='utf-8')
+reset_at = syshook.index('u32 New_SifSetDma(')
+reset_hook = syshook[reset_at:syshook.index('\n}', reset_at) + 2]
+RESET_STUBS = r'''
+#define COMPAT_MODE_6 0x20
+#define PADOPEN_HOOK 0
+static int g_compat_mask, disable_padOpen_hook, padScans, resetResult = 1;
+struct _iop_reset_pkt { int arglen; char arg[16]; };
+typedef struct { void *src; } SifDmaTransfer_t;
+static int New_Reset_Iop(const char *arg, int len) { (void)arg; (void)len; return resetResult; }
+static int Install_PadOpen_Hook(u32 a, u32 b, int mode)
+{
+    (void)a; (void)b; (void)mode;
+    padScans++;
+    return 1;
+}
+#ifdef RETROACHIEVEMENTS
+static unsigned int ra_snap_iop;
+static void Install_RA_Vblank(void) {}
+#endif
+'''
+
+RESET_CHECKS = r'''
+    g_cfg.GameMode = 0;
+    struct _iop_reset_pkt packet = {0, {0}};
+    SifDmaTransfer_t dma = {&packet};
+    for (int cycle = 0; cycle < 2; cycle++) {
+        /* ExecPS2 destroys kernel objects, but the new ELF is already patched. */
+        Reset_Padhook();
+        alarmHandler = NULL;
+        padOpen_hooked = 1;
+        armPad();
+        int oldCreates = nCreate, oldAlarms = nAlarm, oldHandlers = nAddIntc;
+        CHECK(New_SifSetDma(&dma, 1) == 1 && !disable_padOpen_hook,
+              "intercepted reboot completes and releases the scan guard");
+        CHECK(nCreate == oldCreates + 1 && IGR_Thread_ID >= 0 && padScans == 0,
+              "retained PadOpen patch still recreates the actual IGR worker without rescanning");
+        CHECK(Pad_Data.pad_buf == NULL && padOpen_hooked == 1,
+              "reboot preserves the patch but invalidates the stale pad buffer");
+#ifndef IGR_VBLANK_HANDLER
+        CHECK(nAlarm == oldAlarms + 1 && alarmHandler != NULL,
+              "reset caller arms a fresh standard sampler after ExecPS2");
+#else
+        CHECK(nAddIntc == oldHandlers + 1 && IGR_Intc_ID >= 0,
+              "reset caller installs a fresh RA sampler after ExecPS2");
+#endif
+        New_SifSetDma(&dma, 1);
+        CHECK(nCreate == oldCreates + 1 && padScans == 0,
+              "another IOP reset reuses the surviving worker and controller patch");
+        resetResult = 0;
+        CHECK(New_SifSetDma(&dma, 1) == 0 && !disable_padOpen_hook && IGR_Thread_ID >= 0,
+              "failed IOP reset releases the guard without losing the live monitor");
+        resetResult = 1;
+    }
+    Reset_Padhook();
+    alarmHandler = NULL;
+    startFailures = 1;
+    New_SifSetDma(&dma, 1);
+    CHECK(IGR_Thread_ID < 0, "worker start failure remains retryable with a retained patch");
+    New_SifSetDma(&dma, 1);
+    CHECK(IGR_Thread_ID >= 0 && padScans == 0,
+          "next reset retries the actual installer even though the ELF is already patched");
+    Reset_Padhook();
+    alarmHandler = NULL;
+    g_compat_mask = COMPAT_MODE_6;
+    int oldCreates = nCreate;
+    New_SifSetDma(&dma, 1);
+    CHECK(IGR_Thread_ID < 0 && nCreate == oldCreates && padScans == 0,
+          "disabled IGR creates neither worker nor pad scan through the reset caller");
+'''
 
 
 def host_safe(text):
@@ -734,11 +807,12 @@ def build_and_run(name, defines, code, checks, harness=HARNESS):
 
 
 if not failures:
-    build_and_run('standard', '', common + polling + install, STANDARD_CHECKS)
+    reset_code = reset_padhook + RESET_STUBS + reset_hook
+    build_and_run('standard', '', common + polling + install + reset_code, STANDARD_CHECKS + RESET_CHECKS)
     # nWake counts iWakeupThread for the RA handler too (the stub is shared), so the check compares it.
     ra_checks = RA_CHECKS.replace('nIWake == 0 + nWake', 'nWake == 1')
     build_and_run('retroachievements', '#define RETROACHIEVEMENTS\n#define IGR_VBLANK_HANDLER\n',
-                  common + handler + install, ra_checks)
+                  common + handler + install + reset_code, ra_checks + RESET_CHECKS)
     build_and_run('ra_mode6', '#define RETROACHIEVEMENTS\n', mode6, MODE6_CHECKS, MODE6_HARNESS)
 
 if failures:
