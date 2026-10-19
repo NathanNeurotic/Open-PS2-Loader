@@ -36,7 +36,6 @@
 }
 
 #fork-gap-audit .fork-gap-state[data-state="overlap"] { color:#67e5ca; }
-#fork-gap-audit .fork-gap-state[data-state="candidate"] { color:#deccff; }
 #fork-gap-audit .fork-gap-state[data-state="experimental"] { color:#ffca87; }
 #fork-gap-audit .fork-gap-state[data-state="planned"] { color:#d7bbfa; }
 #fork-gap-audit .fork-gap-state[data-state="companion"] { color:#9ac7ff; }
