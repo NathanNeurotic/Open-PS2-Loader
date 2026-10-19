@@ -1,11 +1,17 @@
-"""Execute production reset callers with failed special-reset stages, standard/RA."""
+"""Execute production reset callers, retained PadOpen patches and failure stages.
+
+An optional git ref selects the syscall hook for before/after reproduction.
+"""
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 manager = (ROOT / "ee_core/src/iopmgr.c").read_text(encoding="utf-8")
 hooks = (ROOT / "ee_core/src/syshook.c").read_text(encoding="utf-8")
+if len(sys.argv) > 1:
+    hooks = subprocess.check_output(["git", "show", sys.argv[1] + ":ee_core/src/syshook.c"], cwd=ROOT, text=True)
 # The real syscall trampoline must preserve C's failure result. A C-only
 # harness misses an unconditional success written in the MIPS return slot.
 assembly = (ROOT / "ee_core/src/asm.S").read_text(encoding="utf-8")
