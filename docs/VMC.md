@@ -30,4 +30,4 @@ The driver enables FatFs `f_expand` and reserves the complete card allocation be
 
 This policy applies to native BDM card creation, including Favorites and automatic creation. Neutrino and non-BDM sources retain their existing allocation behavior. Existing cards are reused or rejected by the existing checks and are never relocated/reformatted by the allocation request. Unsupported drivers, unsupported sector sizes and unavailable contiguous space fail explicitly. Reservation and filesystem I/O can delay cancellation; power-loss recovery and damaged-media behavior require separate validation.
 
-This is a separately reviewed allocation change. Host fault injection and native builds do not establish real FAT32/exFAT save, reboot and load acceptance.
+This is a separately reviewed allocation change. Host fault injection, disposable FAT32/exFAT image tests and native builds do not establish real-console save, reboot and load acceptance. The image fixture uses the pinned FatFs, writes and reads a synthetic card across remount, verifies create-new collision refusal, and rejects reservation when fragmented free space has no large enough contiguous run.

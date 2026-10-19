@@ -45,10 +45,7 @@ typedef struct {
     char magic[32];
     int mc_type, mc_flag, page_size, pages_per_block, pages_per_cluster, clusters_per_card;
 } vmc_superblock_t;
-typedef struct {
-    char VMC_filename[1024];
-    int VMC_size_mb, VMC_blocksize, VMC_thread_priority, VMC_flags, VMC_card_slot;
-} createVMCparam_t;
+#include "genvmc.h"
 static char gVMCCreatePath[256] = {0};
 static int exists, length, opened, erased, jobs, returnsError;
 static int openError, badHeader, shortHeader;
@@ -158,5 +155,5 @@ with tempfile.TemporaryDirectory() as d:
     out = Path(d) / "test"
     src.write_text(program, encoding="utf-8")
     subprocess.run(["gcc", "-std=c99", "-Wall", "-Wextra", "-Wno-unused-parameter", "-Werror",
-                    str(src), "-o", str(out)], check=True)
+                    "-I", str(root / "modules/vmc/genvmc"), str(src), "-o", str(out)], check=True)
     subprocess.run([str(out)], check=True, timeout=10)

@@ -63,14 +63,7 @@
 #include <usbhdfsd-common.h> // USBMASS_IOCTL_GET_LBA / _CHECK_CHAIN -- VMC contiguity probe
 #include <ps2sdkapi.h>       // ps2sdk_get_iop_fd -- the ioctls above take the IOP-side fd
 
-typedef struct
-{
-    char VMC_filename[1024];
-    int VMC_size_mb;
-    int VMC_blocksize;
-    int VMC_thread_priority;
-    int VMC_card_slot;
-} createVMCparam_t;
+#include "../modules/vmc/genvmc/genvmc.h"
 
 extern unsigned char eecore_elf[];
 extern unsigned int size_eecore_elf;
