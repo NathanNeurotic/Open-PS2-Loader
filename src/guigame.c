@@ -236,6 +236,13 @@ static int guiGameResolveEffectiveCore(config_set_t *configSet, item_list_t *sup
     return core;
 }
 
+static int guiGameCreateVMC(item_list_t *support, char *name, int size, int core)
+{
+    if (support->itemCreateVMC != NULL)
+        return support->itemCreateVMC(support, name, size, core != 1);
+    return support->itemCheckVMC(support, name, size);
+}
+
 static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *configSet, char *VMCName, int slot, int validate)
 {
     int result = validate ? VMC_BUTTON_CREATE : 0;
@@ -284,7 +291,8 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                     sizeUI = 8;
 
                 if (sizeUI != size) {
-                    int createResult = support->itemCheckVMC(support, vmc, sizeUI);
+                    int effectiveCore = guiGameResolveEffectiveCore(configSet, support, id);
+                    int createResult = guiGameCreateVMC(support, vmc, sizeUI, effectiveCore);
                     if (createResult == SYS_VMC_REPLACE_REQUIRES_DELETE) {
                         guiMsgBox(_l(_STR_VMC_REPLACE_REQUIRES_DELETE), 0, diaVMC);
                     } else if (createResult == SYS_VMC_CREATE_FAILED) {
@@ -430,7 +438,7 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     if (probe == -1) {
         // A create request answers -1 (the probe's "absent") when genvmc accepted the job; anything
         // else (SYS_VMC_REPLACE_REQUIRES_DELETE, SYS_VMC_CREATE_FAILED) means no job was started.
-        if (support->itemCheckVMC(support, vmc, AUTO_VMC_SIZE_MB) != -1) {
+        if (guiGameCreateVMC(support, vmc, AUTO_VMC_SIZE_MB, coreLoader) != -1) {
             LOG("GUIGAME auto VMC %s: create request rejected\n", vmc);
             guiMsgBox(_l(_STR_AUTO_VMC_FAILED), 0, NULL);
             return 1;

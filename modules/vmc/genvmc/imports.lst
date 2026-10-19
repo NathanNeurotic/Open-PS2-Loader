@@ -10,6 +10,8 @@ I_lseek
 I_write
 I_close
 I_remove
+I_ioctl2
+I_devctl
 iomanX_IMPORTS_end
 
 intrman_IMPORTS_start

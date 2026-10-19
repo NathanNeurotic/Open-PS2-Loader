@@ -1,5 +1,6 @@
 IOP_BIN = genvmc.irx
 IOP_OBJS = genvmc.o imports.o
+IOP_INCS += -I../../../include
 
 ifeq ($(DEBUG),1)
 IOP_CFLAGS += -DDEBUG
