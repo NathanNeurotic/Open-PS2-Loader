@@ -716,7 +716,7 @@ int CheckPS2Logo(int fd, u32 lba)
 
     w = 0;
     memset(logo, 0, sizeof(logo));
-    if ((fd > 0) && (lba == 0)) { // BDM_MODE & ETH_MODE
+    if ((fd >= 0) && (lba == 0)) { // File-backed modes; descriptor zero is valid.
         lseek(fd, 0, SEEK_SET);
         w = read(fd, logo, sizeof(logo)) == sizeof(logo);
     }
