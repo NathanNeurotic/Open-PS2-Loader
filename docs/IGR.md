@@ -32,7 +32,7 @@ The power button on the front of the console is hooked too, and does not need a 
 | Press **once** | Power off |
 | Press **twice** | Reset — the same as Start + Select |
 
-The second press has to land within **about a second** — RiptOPL waits ~50 polling frames after the
+The second press has to land within **about a second** — RiptOPL waits ~50 frames after the
 first press to see whether another arrives, then acts on the count. A single
 hardware power-off status held across several frames counts as **one** press,
 not a spurious double press.
@@ -96,31 +96,32 @@ compatibility **Mode 6 — Disable IGR** turns the hook off for that title. If a
 way that started when you launched it through RiptOPL, this is the mode to try — at the cost of
 losing IGR for that game.
 
-Fewer games should need it now. IGR used to watch the pad from a **VBLANK interrupt handler**, and
-merely registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the
-handler did. It now samples controller and power-button inputs directly from a short EE timer alarm
-about once per frame, and registers nothing on VBLANK (official OPL #1762, adapted here).
-The alarm samples inputs and, on a reset request, suspends competing game
-threads before signalling the IGR worker. Promoting that worker to priority 0
-alone cannot preempt a game already running at priority 0. The worker then
-handles DMA/GS and EE shutdown. Ordinary samples do not suspend threads. The
-**RetroAchievements** loader is the exception: its per-frame snapshots and unlock notice require a
-VBLANK interrupt. With IGR enabled, RA uses the existing combined VBLANK/IGR path. Under Mode 6,
-RA instead installs a snapshot-only handler when telemetry is active, without an IGR thread or pad
-hooks. Achievements may continue, but client-triggered reset is unavailable. Games incompatible
-with registration of any VBLANK handler may still be affected.
+**Fatal Fury: Battle Archives Volume 2** is the known example. IGR watches the pad from a **VBLANK
+interrupt handler**, and registering one black-screens that game whatever the handler does. Set
+Mode 6 for it.
 
-If IGR stops responding in a game that used to answer it on an older build, report the title.
-Standard builds retain the detected request in a semaphore until the shutdown worker consumes it.
-This avoids the raw EE kernel wakeup defect if a timer recognizes a combination immediately before
-the worker enters its wait. It does not change the game's interrupt sources or add busy polling.
-The alarm sampler avoids the former priority-127 worker starvation, but it does not fix missing
-pad hooks, changed controller layouts, or games that block interrupts. If initial alarm
-registration or rearming during gameplay fails, IGR stops monitoring both controller combinations
-and physical power-button events until a later pad-open successfully registers an alarm.
-Registration retries do not spin a high-priority recovery thread. If the game never opens a pad
-again, IGR stays unavailable for that session. While the sampler is active, the power button is a
-useful cross-check because it does not depend on the pad buffer.
+#### How IGR watches the pad
+
+Once a frame, a VBLANK interrupt handler reads the controller and the power button. When it sees a
+request it stops the game's DMA and the GS, suspends every game thread, and wakes the IGR thread,
+which does the rest of the shutdown. Because this runs in interrupt context, a game that keeps the
+EE busy cannot hold it off. This is how OPL has always done it. The **RetroAchievements** loader
+uses the same handler and also takes its per-frame achievement snapshots there. Under Mode 6, RA
+installs a snapshot-only handler when telemetry is active, with no IGR thread or pad hooks:
+achievements continue, but client-triggered reset is unavailable.
+
+Between October 5 and October 19, 2026, standard builds tried two replacements that avoided VBLANK,
+and both failed on real consoles
+([issue #984](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/984)):
+
+* **A low-priority polling thread** woken by an EE timer (official OPL #1762). A game that always
+  has a thread ready to run never lets that thread run, so IGR did nothing in GTA San Andreas, Need
+  for Speed Most Wanted, PES and others.
+* **Sampling inside the EE timer callback.** In games the controller combination and the power
+  button both stopped answering, Resident Evil 4 included.
+
+Builds from that window can therefore fail where current builds work. If IGR stops responding in a
+game that used to answer it, report the title and the exact build.
 
 **Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a
 property of that loader, and it is why Mode 6 is greyed out whenever the Loader Core is set to
@@ -165,13 +166,11 @@ game; and — for the power-off combination specifically — the controller is i
 and R3 are the stick clicks. The screenshot combination uses **Up**, so it needs no analog mode.
 
 Try the console power button as a cross-check: if that resets and the pad combination does not, the
-sampler is active; check the pad hook and controller behavior.
+VBLANK handler is running; check the pad hook and controller behavior.
 
-**An older build fails on internal exFAT.** Compare the exact version/flavour and SHA.
-[Issue #984](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/984) records
-failures including Beta-4032. [PR #990](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/990)
-repairs a reproduced lost IGR notification and is included in current main.
-Passing that regression does not establish that every reported console failure is resolved.
+**IGR did nothing on a build from mid-October 2026.** Builds made between October 5 and October 19,
+2026 (for example Beta-3979, Beta-4032 and Beta-4080) used the timer-based samplers described
+above, which fail in many games, on every storage type. Update to a current build.
 
 **Reset takes me somewhere unexpected.** Check **IGR Path** in *Settings → General & System*. A stale path
 left over from an earlier setup will boot that ELF instead of exiting to the PS2 browser. A USB path that
@@ -187,7 +186,7 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 
 | File | Role |
 |---|---|
-| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, the one-frame EE alarm sampler and IGR shutdown worker (the VBLANK interrupt handler in RetroAchievements builds only), combo dispatch |
+| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, the VBLANK interrupt handler that samples input and stops the game, the IGR shutdown thread, combo dispatch |
 | `ee_core/include/padhook.h` | The combo constants (`IGR_COMBO_R1_L1_R2_L2`, `IGR_COMBO_START_SELECT`, `IGR_COMBO_R3_L3`, `IGR_COMBO_UP`) |
 | `ee_core/src/cd_igr_rpc.c` | IOP-side reset RPC |
 | `ee_core/src/igs_api.c` | Screenshot capture and BMP writing |

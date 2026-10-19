@@ -2,7 +2,7 @@
 """In-game freeze report (INGAMEDIAG / FREEZEDIAG flavour) structural checks.
 
 The report must not exist in any other build, must not be able to hang IGR on a stuck IOP, and
-must capture thread waits and priorities after handoff suspension, before DMA/GS shutdown. The text formatter is covered by
+must capture thread waits and priorities after the handler suspends the game. The text formatter is covered by
 ee_core/tests/test_freeze_diag_format.c.
 """
 
@@ -95,23 +95,22 @@ check("EECORE_EXTRA_FLAGS += INGAMEDIAG=1" in top, "ee_core gets the flag")
 check("IOP_OBJS += freezediag.o" in top, "the menu embeds freezediag.irx only in the flavour")
 check("\t$(MAKE) FREEZEDIAG_BUILD=$(OPL_VERSION) -C $<" in top, "the report names the build it came from")
 
-# 2. IGR ordering in padhook.c.
+# 2. IGR ordering in padhook.c. The VBLANK_END handler stops the game; the worker reports.
 pad = read("ee_core/src/padhook.c")
-poll = pad[pad.index("static void IGR_PollUntilRequested(void)"):]
-poll = poll[:poll.index("\n}\n")]
-i_prio = poll.index("ChangeThreadPriority(TH_SELF, 0);")
-i_begin = poll.index("FreezeDiag_Begin(")
-i_stop = poll.index("IGR_StopDmaAndGs();")
-check(i_prio < i_begin < i_stop,
-      "threads are captured at priority 0 before worker DMA/GS stop")
-check("if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {" in poll[i_prio:i_begin],
+handler = pad[pad.index("static int IGR_Intc_Handler(int cause)"):]
+handler = handler[:handler.index("\n}\n")]
+check("g_freeze_diag_polls++;" in handler[:handler.index("IGR_CheckInputs();")], "each VBLANK input sample is counted")
+check(handler.index("iSuspendThread(i);") < handler.index("iWakeupThread(IGR_Thread_ID);"),
+      "the handler suspends the game's threads before waking the worker")
+worker = pad[pad.index("static void IGR_Thread(void *arg)"):]
+i_wait = worker.index("SleepThread();")
+i_begin = worker.index("FreezeDiag_Begin(")
+i_fetch = worker.index("FreezeDiag_FetchAndShutdown();")
+check(i_wait < i_begin < i_fetch, "threads are captured once the worker wakes, before the IOP shutdown")
+check("if (Pad_Data.combo_type == IGR_COMBO_START_SELECT) {" in worker[i_wait:i_begin],
       "only the reset combo arms a report (not IGS or power-off)")
-alarm = pad[pad.index("static void IGR_Poll_Alarm("):pad.index("static void IGR_PollUntilRequested(void)")]
-check("g_freeze_diag_polls++;" in alarm[:alarm.index("IGR_CheckInputs();")], "each alarm input sample is counted")
-check(alarm.index("iSuspendThread(i);") < alarm.index("iSignalSema(IGR_Request_Sema);"),
-      "sampler suspends competitors before signalling the worker, including priority-0 games")
-check("SuspendThread(i);" not in poll,
-      "the worker does not repeat suspension; reports include the sampler's suspension")
+check("SuspendThread(i);" not in worker[:i_fetch],
+      "the worker does not repeat suspension; reports include the handler's suspension")
 
 thread = pad[pad.index("static void IGR_Thread(void *arg)"):]
 gate = re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*FreezeDiag_FetchAndShutdown\(\);\n#else\n#ifdef RETROACHIEVEMENTS\n(?:\s*//[^\n]*\n)*\s*if \(config->GameMode != DISC_MODE\)\n#endif\n\s*oplIGRShutdown\(0\);\n#endif\n", thread)
