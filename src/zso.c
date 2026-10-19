@@ -8,7 +8,7 @@
 #include "include/hddsupport.h"
 #include "../modules/isofs/zso.c"
 
-int probed_fd = 0;
+int probed_fd = -1;
 u32 probed_lba = 0;
 
 static void ReadHDDSectors(u32 lba, u8 *buffer, u32 nsectors)
@@ -40,13 +40,13 @@ static void longLseek(int fd, unsigned int lba)
 
 int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)
 {
-    u32 lba = offset / (2048 >> shift); // avoid overflow by shifting sector size instead of offset
-    u32 pos = (offset << shift) & 2047; // doesn't matter if it overflows since we only care about the 11 LSB anyways
-    if (probed_fd > 0) {                // USB/ETH
+    u32 lba = offset / (2048 >> shift);      // avoid overflow by shifting sector size instead of offset
+    u32 pos = (offset << shift) & 2047;      // doesn't matter if it overflows since we only care about the 11 LSB anyways
+    if (probed_fd >= 0 && probed_lba == 0) { // File-backed probe; zero is a valid descriptor.
         longLseek(probed_fd, lba);
         lseek(probed_fd, pos, SEEK_CUR);
         return read(probed_fd, addr, size);
-    } else { // HDD
+    } else if (probed_fd == 0 && probed_lba > 0) { // HDD
         u32 o_size = size;
 
         // read first block if not aligned to sector size
@@ -81,6 +81,7 @@ int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)
         // return remaining size
         return o_size - size;
     }
+    return -1; // No valid backing store was selected.
 }
 
 void *ziso_alloc(u32 size)

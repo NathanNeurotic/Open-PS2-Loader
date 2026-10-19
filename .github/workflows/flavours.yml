@@ -96,7 +96,9 @@ jobs:
       - name: Check 3D save icons parse real icons and card images, and refuse damaged ones
         run: python3 .github/scripts/test_save_icons.py
       - name: Check native PS2 logo validation including descriptor zero
-        run: python3 .github/scripts/test_ps2_logo_validation.py
+        run: |
+          python3 .github/scripts/test_ps2_logo_validation.py
+          python3 .github/scripts/test_zso_probe_fd.py
       - name: Check PS1 VMC save icons and reject damaged cards
         run: python3 .github/scripts/test_ps1_save_icons.py
       - name: Check packaged BDMA pairs against both production validators
@@ -188,6 +190,8 @@ jobs:
           persist-credentials: false
       - name: Check compact release notes and changelog
         run: python3 .github/scripts/test_release_notes.py
+      - name: Check release edition titles and classification policy
+        run: python3 .github/scripts/test_release_titles.py
       - name: Check pinned ORBIT extraction and RA package isolation
         run: python3 .github/scripts/test_package_orbit_neutrino.py
       - name: Check both RA themes, provenance gates and upload rollback

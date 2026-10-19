@@ -1,4 +1,4 @@
-name: Enforce Rolling as Latest
+name: Enforce inceBtion as Latest
 
 on:
   push:
@@ -69,7 +69,7 @@ jobs:
       # the moving channel as an invisible draft. This job runs after that workflow completes, so it
       # is the natural second layer: asserting the published state here costs one idempotent call and
       # closes the only window in which users could find the rolling download page missing.
-      - name: Enforce rolling as Latest, published and non-pre-release
+      - name: Enforce three edition titles, inceBtion Latest and RA pre-release
         # Skipped when the publish we were waiting on was superseded: the release on the tag right
         # now belongs to a NEWER build whose own promote is enforcing it. Asserting here would race
         # that run and could fail on a release mid-update through no fault of its own.
@@ -80,10 +80,25 @@ jobs:
           set -eu
           gh release edit rolling \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Rolling" \
+            --title "inceBtion" \
             --draft=false \
             --prerelease=false \
             --latest
+
+          # Restore public metadata independently of the asset builders. This also corrects
+          # existing release pages at the first successful rebuild/main promotion.
+          gh release edit rolling-korium \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Korium" \
+            --draft=false \
+            --prerelease=false \
+            --latest=false
+          gh release edit rolling-ra \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "RetroAchievements" \
+            --draft=false \
+            --prerelease \
+            --latest=false
 
           # Report the settled state, and fail loudly rather than leaving a hidden release behind.
           DRAFT=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/rolling" --jq .draft)
@@ -91,6 +106,15 @@ jobs:
           PUB=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/rolling" --jq .published_at)
           echo "rolling: draft=$DRAFT prerelease=$PRE published_at=$PUB"
           if [ "$DRAFT" != "false" ] || [ "$PRE" != "false" ]; then
-            echo "ERROR: rolling did not settle as a published, non-pre-release" >&2
+            echo "ERROR: inceBtion did not settle as a published, non-pre-release" >&2
             exit 1
           fi
+          LATEST=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name)
+          RA_TITLE=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/rolling-ra" --jq .name)
+          RA_PRE=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/rolling-ra" --jq .prerelease)
+          KORIUM_TITLE=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/rolling-korium" --jq .name)
+          if [ "$LATEST" != "rolling" ] || [ "$RA_TITLE" != "RetroAchievements" ] || [ "$RA_PRE" != "true" ] || [ "$KORIUM_TITLE" != "Korium" ]; then
+            echo "ERROR: release title/classification policy drifted (Latest=$LATEST, RA=$RA_TITLE/$RA_PRE, Korium=$KORIUM_TITLE)" >&2
+            exit 1
+          fi
+          echo "Release metadata verified: inceBtion=Latest, Korium=stable, RetroAchievements=pre-release"
