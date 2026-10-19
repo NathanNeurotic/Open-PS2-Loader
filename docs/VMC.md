@@ -14,6 +14,8 @@ Release builds rebuild the BDM filesystem module with a bounded FAT-chain walker
 
 Native OPL on FAT32/exFAT BDM storage requires a contiguous VMC sector range; do not bypass launch-time write guards. Native APA/PFS uses bounded inode/block mapping. MMCE uses a separate file-backed contract; unsupported layout queries are unknown, not proof of fragmentation.
 
+Native launch warnings distinguish a confirmed fragmented card from a disk address outside the core's 32-bit sector range, an unavailable layout query, and a PFS mapping that exceeds the native block-table limit. A read or mapping error is not proof of fragmentation. Rejected cards stay inactive; accepting the prompt uses the physical memory card in the named slot, and declining returns to the menu. Existing VMC files and saves are not modified by these checks.
+
 Neutrino's BDM mapper supports multiple extents and shares a 64-fragment budget across the game and cards in the bundled runtime. Its fragment-budget or file-open error is not the same as the native single-fragment warning. APA/PFS VMC backing is not available under bundled Neutrino. Record the selected core and exact failure stage.
 
 Report card size/path, PS2 model, exact build, device, filesystem, VMC/PADEMU state, error text, and whether the same unchanged file works after restart. An already expanded Custom ELF path from older config save behavior must be re-entered after updating; repeated save/reload should preserve it after #885.

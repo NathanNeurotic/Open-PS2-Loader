@@ -103,6 +103,9 @@ hooks. Achievements may continue, but client-triggered reset is unavailable. Gam
 with registration of any VBLANK handler may still be affected.
 
 If IGR stops responding in a game that used to answer it on an older build, report the title.
+Standard builds retain the detected request in a semaphore until the shutdown worker consumes it.
+This avoids the raw EE kernel wakeup defect if a timer recognizes a combination immediately before
+the worker enters its wait. It does not change the game's interrupt sources or add busy polling.
 The alarm sampler avoids the former priority-127 worker starvation, but it does not fix missing
 pad hooks, changed controller layouts, or games that block interrupts. If initial alarm
 registration or rearming during gameplay fails, IGR stops monitoring both controller combinations
