@@ -73,7 +73,7 @@ jobs:
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check masked pattern scan bounds and rejection of short ranges
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
-      - name: Check the VBLANK IGR baseline, controller and power input, and RA Mode 6
+      - name: Check IGR input sampling, controller and power handling, and RA Mode 6
         run: python3 .github/scripts/test_igr_polling.py
       - name: Check an IGR request cannot be lost before the worker blocks
         run: python3 .github/scripts/test_igr_wait_race.py
