@@ -22,6 +22,7 @@
 #include "include/launchdiag.h" // UDPBD hang-triage stage markers (inert unless a udp launch arms them)
 #include "include/system.h"
 #include "include/nativevmc.h"
+#include "include/vmc_alloc.h"
 #include "include/ethsupport.h"   // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
 #include "include/udpfssupport.h" // udpfsGetModulesLoaded() -- symmetric backstop vs the udpfs_ioman filesystem stack
 #include "include/mmcesupport.h"  // mmceSendGameID() cross-device game-id (#261)
@@ -2950,7 +2951,7 @@ static int bdmCreateVMC(item_list_t *itemList, char *name, int size, int require
     bdm_device_data_t *device = (bdm_device_data_t *)itemList->priv;
     if (device == NULL || device->bdmDeviceType == BDM_TYPE_PCCF)
         return SYS_VMC_CREATE_FAILED;
-    return sysCheckVMCEx(device->bdmPrefix, "/", name, size, NULL, requireContiguous ? 1 : 0);
+    return sysCheckVMCEx(device->bdmPrefix, "/", name, size, NULL, requireContiguous ? VMC_CREATE_CONTIGUOUS : 0);
 }
 
 static char *bdmGetPrefix(item_list_t *itemList)

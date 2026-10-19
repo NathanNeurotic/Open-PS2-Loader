@@ -278,6 +278,16 @@ int main(void)
         CHECK(created == 0, "and starts nothing");
     }
 
+    SCENARIO("invalid_native_allocation_request_refused") {
+        memset(&a, 0, sizeof(a));
+        strcpy(a.VMC_filename, "mass:VMC/A.bin");
+        a.VMC_flags = VMC_CREATE_CONTIGUOUS;
+        a.VMC_card_slot = -1;
+        CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) < 0, "invalid size/block geometry refused");
+        a.VMC_size_mb = 8; a.VMC_blocksize = 16; a.VMC_card_slot = 0;
+        CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) < 0, "copy requests cannot reserve new files");
+        CHECK(created == 0, "invalid requests start nothing");
+    }
     SCENARIO("contiguous_preopen_failure_preserves_file") {
         CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
         genvmc_job.VMC_flags = VMC_CREATE_CONTIGUOUS;

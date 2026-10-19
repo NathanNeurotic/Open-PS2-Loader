@@ -24,8 +24,8 @@ typedef struct
     int VMC_size_mb;
     int VMC_blocksize;
     int VMC_thread_priority;
-    int VMC_flags;     // VMC_CREATE_CONTIGUOUS for new native BDM cards
     int VMC_card_slot; // 0=slot 1, 1=slot 2, anything else=blank
+    int VMC_flags;     // appended: VMC_CREATE_CONTIGUOUS for new native BDM cards
 } createVMCparam_t;
 
 typedef struct

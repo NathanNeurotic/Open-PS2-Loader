@@ -654,7 +654,9 @@ static int vmc_create(const createVMCparam_t *param)
     iop_thread_t thread_param;
 
     if ((param->VMC_flags & ~VMC_CREATE_CONTIGUOUS) ||
-        ((param->VMC_flags & VMC_CREATE_CONTIGUOUS) && param->VMC_card_slot != -1))
+        ((param->VMC_flags & VMC_CREATE_CONTIGUOUS) &&
+         (param->VMC_card_slot != -1 || param->VMC_blocksize != 16 ||
+          (param->VMC_size_mb != 8 && param->VMC_size_mb != 16 && param->VMC_size_mb != 32 && param->VMC_size_mb != 64))))
         return -EINVAL;
     if (genvmc_stats.VMC_status == GENVMC_STAT_BUSY)
         return -EBUSY;
