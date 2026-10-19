@@ -1,0 +1,522 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Credits &amp; Sources · RiptOPL Docs</title>
+<meta name="description" content="The people and projects RiptOPL is built on.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html" class="active"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content credits-page">
+<h1>Credits &amp; Sources</h1>
+<p class="lead">RiptOPL is a downstream fork of <b>Open PS2 Loader</b> — a labor of love, not a replacement for upstream.
+Every feature in this fork began as someone else's code and someone else's ideas.
+This page names the people and projects it stands on.</p>
+
+<div class="callout info"><div class="h">Downstream, not canonical</div>
+The canonical, actively-maintained project lives at
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader"><b>ps2homebrew/Open-PS2-Loader</b></a>.
+If you want the reference build, go there. This fork exists only because that upstream work
+is open for everyone to study, learn from, and build on. Please support the canonical project.
+</div>
+
+<h2 id="foundation">The Foundation: ps2homebrew &amp; PS2SDK</h2>
+
+<p>None of this would exist without the <a href="https://github.com/ps2homebrew"><b>ps2homebrew</b></a> team
+and their many years of open-source work on Open PS2 Loader and the
+<a href="https://github.com/ps2dev/ps2sdk">PS2SDK</a>.
+The toolchain, the IOP module ecosystem, the network stack, the HDD drivers, the memory-card protocol,
+the pad-emulation IRX chain — all of it was built, maintained, and kept free and open so that
+people could study and extend it. Every feature in RiptOPL is built on that foundation.</p>
+
+<p>Original Open PS2 Loader authors: <b>Ifcaro</b> and <b>jimmikaelkael</b> (copyright 2009).
+Core OPL development has been carried on by Ifcaro, volca, jimmikaelkael, polo35, izdubar,
+hominem.te.esse, SP193, and many contributors listed in the
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader/blob/master/CREDITS">CREDITS</a> file.</p>
+
+<h2 id="opl-family">The OPL Family RiptOPL Draws From</h2>
+
+<p>RiptOPL is a direct agglomeration of the wider OPL family. The following projects each
+contributed code, ideas, or directly-ported features:</p>
+
+<table class="credits-source-table" data-sortable>
+<thead><tr><th>Project</th><th>Author(s)</th><th>What came from it</th><th>Source</th></tr></thead>
+<tbody>
+<tr>
+  <td><b>rickgaiser's OPL</b></td>
+  <td>rickgaiser</td>
+  <td>Various enhancements and modernisations used as a base</td>
+  <td><a href="https://github.com/rickgaiser/Open-PS2-Loader">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>Neutrino</b></td>
+  <td>rickgaiser</td>
+  <td><b>Launched, not derived from</b> — see <a href="#special-thanks">Special Thanks</a>. The external EE/IOP game-loader core RiptOPL hands games to per game, and the core behind the UDPBD block-device transport and the UDPFS network transports (a loose-ISO filesystem device plus a UDPFSBD block device), with its own IRX chain. Bundled in the release package.</td>
+  <td><a href="https://github.com/rickgaiser/neutrino">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>sOPL</b> (Stable OPL)</td>
+  <td>mystyq</td>
+  <td>Stability fixes and polish fed into the shared lineage</td>
+  <td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>uOPL</b> / <b>wOPL</b></td>
+  <td>KrahJohlito</td>
+  <td>The single biggest influence on this fork: KrahJohlito's uOPL (Unofficial Open PS2 Loader) and its continuation wOPL, where the modern OPL experience was invented. The Neutrino external-core launcher and per-game Neutrino args; the Coverflow cover-art carousel; the Favorites tab and <code>favourites.bin</code> format; the PS2RD cheat-image loader</td>
+  <td>Historical project; public repository unavailable at the October 2026 audit</td>
+</tr>
+<tr>
+  <td><b>uOPL fork</b></td>
+  <td>Wolf3s</td>
+  <td>An independent uOPL fork that kept unique features and unmerged upstream work alive; contributions across the wOPL effort and the wider OPL scene</td>
+  <td><a href="https://github.com/Wolf3s">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>OPL Daily Builds (OPL DB)</b></td>
+  <td>Jay-Jay-OPL / community</td>
+  <td>Build-pipeline patterns and 10th-Anniversary extras</td>
+  <td><a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>POPSLoader</b></td>
+  <td>NathanNeurotic &amp; contributors</td>
+  <td>PS1/POPSTARTER launch chain; VCD listing; cover-art and GameID metadata integration</td>
+  <td><a href="https://github.com/NathanNeurotic/POPSLoader">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>OPL RetroGEM ID</b></td>
+  <td>CosmicScale</td>
+  <td>Visual GameID barcode display</td>
+  <td><a href="https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>nhddl</b></td>
+  <td>pcm720</td>
+  <td>Reference implementation for Neutrino HDD launching and argument conventions</td>
+  <td><a href="https://github.com/pcm720/nhddl">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>Modulo-R1</b></td>
+  <td>AdityaKumar7209</td>
+  <td>Inspiration for folder browsing in the game list (the idea, not the code)</td>
+  <td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>PS2-Launcher</b></td>
+  <td>Irfanlesnar</td>
+  <td>UI and feature ideas across the wider OPL fork ecosystem</td>
+  <td><a href="https://github.com/Irfanlesnar/PS2-Launcher">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>Open PS2 Loader (canonical)</b></td>
+  <td>ps2homebrew team</td>
+  <td>The project this fork is based on; every OPL feature RiptOPL inherits</td>
+  <td><a href="https://github.com/ps2homebrew/Open-PS2-Loader">GitHub</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="special-thanks">Special Thanks</h2>
+
+<p>Beyond the repositories above, these individuals deserve particular recognition for contributions
+that directly shaped this fork.</p>
+
+<dl class="credits credits-detailed">
+
+<div class="credit">
+<dt>KrahJohlito — uOPL / wOPL</dt>
+<dd>
+<p>The legend, and the single biggest influence on this fork. Creator of <b>uOPL (Unofficial Open PS2
+Loader)</b> and its continuation <b>wOPL</b>, where the modern OPL experience was invented. The Neutrino
+external-core launcher, the Coverflow interface, and the Favorites tab — the features that define
+RiptOPL — were designed and pioneered by him, and everything this fork does with them is a
+reimplementation of his work. We learned more reading his code than anywhere else. RiptOPL is,
+above all, a tribute to it.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Wolf3s — the wider OPL scene</dt>
+<dd>
+<p>For contributions across the wOPL effort and the wider OPL scene, and for past work on an independent
+<b>uOPL</b> fork that kept unique features and unmerged work alive.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>bbsan2k — MMCE Protocol</dt>
+<dd>
+<p>Author of the <b>MMCE (Memory Card Mass Storage)</b> protocol that makes SD-card game loading
+through the PS2's memory-card slot possible. OPL's entire MMCE device path — and everything
+this fork builds on top of it — traces directly back to that work.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>rickgaiser — Neutrino (second PS2 core)</dt>
+<dd>
+<p>Author of <b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b>, a
+<i>"Small, Fast and Modular PS2 Device Emulator"</i> — and RiptOPL's <b>second PS2 loader core</b>
+alongside OPL's own.
+Every release package bundles the official latest build, re-fetched from upstream at publish time, as
+a ready-to-use <code>neutrino/</code> folder.</p>
+<p>It is bundled under the <b>AFL-3.0</b> licence. One honest note on "unmodified": we add exactly one
+file, <code>config/bsd-udpfsbd.toml</code> — Neutrino ships <code>udpfs_bd.irx</code> without a
+matching <code>-bsd</code> token, and RiptOPL launches UDPFS as <code>-bsd=udpfsbd</code>. Nothing of
+rickgaiser's is altered or removed.</p>
+<p>Neutrino is deliberately <b>UI-agnostic</b> — it has no interface of its own, and that design
+choice is precisely what makes front-ends like this one possible. RiptOPL is one of several:
+<b><a href="https://github.com/dnunezx/LUNA">LUNA</a></b> by <a href="https://github.com/dnunezx">darkladark</a>
+(our <b>#1 recommended alternative</b>, for lightweight, customized Neutrino gameplay), <b>NHDDL</b>,
+<b>XEB+ Plugin</b>, <b>RETROLauncher</b>, <b>OSD-XMB</b> and <b>PSBBN/BBNL</b> drive the
+same core, and are worth a look if you want a different shape of launcher over it. Please report
+<i>launching</i> problems to
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">us</a> — building the arguments
+and handing off are ours — and genuine Neutrino bugs upstream.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Gageformer — Ember (second PS1 core)</dt>
+<dd>
+<p>Author of <b><a href="https://github.com/Gageformer/Ember/releases">Ember</a></b>, an independent PlayStation 1 emulator written from
+scratch for the PlayStation 2 — original recompiler, memory model, geometry pipeline and graphics
+translation. It ships inside the release
+package as an <code>EMBER/</code> folder and serves as RiptOPL's <b>second PS1 core</b> alongside
+POPSTARTER.</p>
+<p>It is bundled unmodified under the <b>Ember Public Beta Testing
+Licence</b> — included in the package as <code>EMBER/LICENSE-BETA.txt</code>, which governs the
+build it accompanies. Please report Ember problems to
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">us</a> first, not to him: the
+launching is ours.</p>
+<p>Ember's own licence credits <b><a href="https://github.com/stenzek/duckstation">DuckStation</a></b>
+as a correctness reference for a small number of routines. Ember is not a fork or port of it.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>hacan359 (yoba) — RetroAchievements</dt>
+<dd>
+<p>Author of <b>RetroAchievements support for real PlayStation 2 hardware</b>, and of the PC client
+it talks to, <b><a href="https://github.com/hacan359/xerabora">xeRAbora</a></b> (MIT). The console works out <i>which</i> game an image is and streams the
+handful of memory addresses that game's achievements watch, while everything above the wire —
+rcheevos, the RetroAchievements servers, your login — happens on the PC. That split is why the
+console side stays small enough to live inside a loader.</p>
+<p>RiptOPL implements the <b>published wire protocol</b> and ships
+as its own <code>RIPTOPL-RetroAchievements-*.zip</code> build with a shortcut to xeRAbora inside. Please report
+<i>RiptOPL</i> problems to <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">us</a>
+first, not to him — the loader side is ours.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt><a href="https://github.com/oMrRexD">oMrRexD</a> — RetroAchievements stabilization</dt>
+<dd>
+<p>Contributor of the <b>real-hardware investigation and stabilization pass</b> that made RiptOPL's
+RetroAchievements build reliably boot and communicate on the tested USB/MMCE paths. His PRs
+<b>#702–#705</b> traced and fixed the ee_core stack squeeze, restored the MMCE DEV9 dependency,
+made cold telemetry launches bring networking up safely with an unusable-IP fallback, and moved
+the RA controls back to the Network page where they are actually read and saved.</p>
+<p>The work was deliberately kept narrow and isolated from normal builds, and the fixes were backed
+by testing on a real PlayStation 2. That contribution is part of the reason the RA port moved from
+"builds" to something that could actually be exercised on hardware.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt id="darkladark"><a href="https://github.com/dnunezx">darkladark</a> — LUNA</dt>
+<dd>
+<p>Creator of <b><a href="https://github.com/dnunezx/LUNA">LUNA</a></b> (<i>Lightweight Unified Neutrino
+Access</i>), his own visual loader built on NHDDL and Neutrino, with a PS2-inspired glass interface
+and four switchable library views. LUNA is <b>our #1 recommended alternative to RiptOPL</b> for
+lightweight, customized Neutrino gameplay: if RiptOPL is more loader than you need, start there.</p>
+<p>He also contributes to RiptOPL directly: his
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733">#733</a> contributed LUNA's Collection display.
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">#977</a> supersedes that PR by adapting
+the display as the native <a href="coverflow.html#psbbn-flow">PSBBN Flow</a> theme, retaining his
+perspective geometry and animation while preserving the normal R3 Favorite action. Thank you for sharing your work with us.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Okeanos — POPS UDPFS / BDM-UDPFS Assault</dt>
+<dd><p><b><a href="https://github.com/Okeanos86/BDMAssault/releases">BDM-UDPFS Assault</a></b> by <b><a href="https://github.com/Okeanos86">Okeanos</a></b> — POPSTARTER-specific BDMA drivers with read-only UDPFS fallback for VCDs, based on israpps' BDM Assault. Credits also belong to krHACKen (POPSTARTER), rickgaiser (UDPFS/UDPRDMA), pcm720 (udpfsd), and the PS2SDK contributors. See <a href="ps1-vcd.html#pops-udpfs">POPS UDPFS setup</a> and the bundled upstream notices.</p></dd>
+</div>
+<div class="credit">
+<dt>saildot4k — BDMA-ATA / exFAT HDD</dt>
+<dd>
+<p>Contributor of <b>BDMA-ATA</b> (exFAT internal-HDD block-device support via BDMAssault),
+plus the fixes, feedback, and ongoing oversight that shaped this fork's block-device work.
+Getting exFAT HDD right — for both PS2 and PS1 titles — would not have happened without that
+collaboration.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Aerosol — UDPFS and VMC testing</dt>
+<dd>
+<p>Tested UDPFS across Linux, Windows and direct connections, identified the explicit-bind
+workaround, and confirmed that CRLF config output could leave a carriage return in a VMC
+filename. Converting the config to LF restored VMC loading.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Testers — Testing &amp; Feedback</dt>
+<dd>
+<p>For dedicated <b>testing, bug reports, and real-hardware feedback</b> that has repeatedly
+caught issues and shaped fixes across this fork. Hands-on QA on real PS2 hardware is what turns
+a build that compiles into a build that actually works. Credited in the OPL CREDITS file:
+<b>eliminator1403</b>, <b>lucaslmgv</b>, <b>AndrewBento</b>, <b>AcidReach</b>, <b>bodvenomz</b>,
+<b>nuno6573</b>, <b>Blade1984</b>, <b>zackcage6</b>, <b>Vapor</b>, <b>V3ditata</b>, and <b>Aislinn🏳️‍⚧️</b>.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>AdityaKumar7209 — Modulo-R1 (folder browsing idea)</dt>
+<dd>
+<p>Whose <a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2"><b>Modulo-R1</b></a>
+project inspired this fork's <b>folder browsing</b> in the game list.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Irfanlesnar — PS2-Launcher</dt>
+<dd>
+<p>Creator of <a href="https://github.com/Irfanlesnar/PS2-Launcher"><b>PS2-Launcher</b></a>,
+whose UI and feature ideas contributed to the wider OPL fork ecosystem and inspired parts of
+RiptOPL's presentation.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>pcm720 — udpfsd / nhddl</dt>
+<dd>
+<p>For <a href="https://github.com/pcm720/udpfsd"><b>udpfsd</b></a> and
+<a href="https://github.com/pcm720/nhddl"><b>nhddl</b></a>, key foundations for modern PS2
+network streaming and Neutrino HDD-launch conventions.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Berion — Artwork &amp; Theme Design</dt>
+<dd>
+<p>Responsible for the UI design and artwork that has defined how OPL looks for years. The
+visual language this fork builds on — icon style, layout sensibility, theme conventions —
+owes a great deal to that craft. Berion is credited as UI designer in the original OPL
+CREDITS file.</p>
+</dd>
+</div>
+
+<div class="credit">
+<dt>Ifcaro &amp; jimmikaelkael — OPL Origins</dt>
+<dd>
+<p>The <b>original Open PS2 Loader authors</b> (copyright 2009). Without their decision to write
+OPL in the open — and license it under the Academic Free License — none of the downstream
+work described on this page would have been possible. Everything starts here.</p>
+</dd>
+</div>
+
+</dl>
+
+<h2 id="the-name">The Name</h2>
+
+<dl class="credits credits-detailed credits-single">
+<div class="credit">
+<dt>Akilluminati47 — the name RiptOPL</dt>
+<dd>
+<p><b>RiptOPL is named by <a href="https://github.com/akilluminati47">Akilluminati47</a>.</b> He came up
+with it before the project existed, and it stuck. Every release, every build and every thread
+carries a name he thought of first — which is the sort of contribution that is easy to forget
+precisely because it is on everything.</p>
+<p>He also <b>funds this fork's development</b> — a generosity that keeps the rolling builds
+coming and is deeply appreciated.</p>
+</dd>
+</div>
+</dl>
+
+<h2 id="companion-tools">Companion Tools</h2>
+
+<p>Most of these the release package links to rather than vendoring, so you always get the maintained
+version; the two <b>cores</b> at the end are the exception and ship inside the package. All but
+PS2-Servers are <b>third-party projects</b>, independently maintained and not part of RiptOPL —
+<b>please report issues with those to their own repository, not here.</b></p>
+
+<ul class="checklist">
+<li><b><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a></b> by <b><a href="https://github.com/NathanNeurotic">Ripto</a></b> —
+    all-in-one PC server launcher for <b>SMBv1, UDPFS and UDPBD</b>. This one is ours, from the same
+    author as RiptOPL, so its issues belong on its own tracker but are the same hands. Shipped as
+    <code>PS2-Servers.url</code>.</li>
+<li><b><a href="https://github.com/YouKnow-sys/udpfs-server">udpfs-server</a></b> by <b><a href="https://github.com/YouKnow-sys">YouKnow-sys</a></b> —
+    the same idea <em>from a phone</em>: an <b>Android</b> app that shares folders and disk images to
+    the PS2 over <b>UDPFS</b>. It is found by broadcast, so there is no server address to type in on
+    the console, and it works over a router or a direct cable. Built on
+    <b><a href="https://github.com/pcm720/udpfsd">udpfsd</a></b> by
+    <b><a href="https://github.com/pcm720">pcm720</a></b>; MIT licensed. Reach for it when the games
+    live on a phone or tablet and there is no PC on the network. Shipped as
+    <code>udpfs-server.url</code>.</li>
+<li><b><a href="https://github.com/Luden02/OrbitPS2-Manager">OrbitPS2 Manager</a></b> by <b><a href="https://github.com/Luden02">Luden</a></b> —
+    cross-platform library manager: import games from disc images, fetch cover art and screenshots,
+    compress ISOs to ZSO, edit per-game settings and manage virtual memory cards. It writes the
+    <code>ART</code> folder and per-game configs in exactly the layout RiptOPL expects, which
+    resolves most "looks wrong on my setup" reports. Shipped as
+    <code>OrbitPS2-Manager.url</code>.</li>
+<li><b><a href="https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI">OPL PS1 AIO
+    Converter GUI</a></b> by <b><a href="https://github.com/shaanhomebrew-cloud">shaan</a></b> — Windows all-in-one PS1 preparation tool: converts BIN/CUE backups to
+    <code>*.VCD</code> and installs them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and the APA
+    internal HDD. Shipped as <code>OPL-PS1-AIO-Converter-GUI.url</code>.</li>
+<li><b><a href="https://github.com/TheRealNextria/PS2RD-CHT-Manager">PS2RD CHT Manager</a></b> by <b><a href="https://github.com/TheRealNextria">TheRealNextria</a></b> —
+    manages the PS2RD <code>.cht</code> cheat files RiptOPL reads from a device's <code>CHT</code>
+    folder. Shipped as <code>PS2RD-CHT-Manager.url</code>.</li>
+<li><b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b> by <b><a href="https://github.com/rickgaiser">rickgaiser</a></b> — not a shortcut but a
+    <em>bundle</em>: ships <em>inside</em> the package as a ready-to-use <code>neutrino/</code>
+    folder. Ordinary memory-card placement is supported; for MMCE + GameID card switching, keep the
+    complete folder on <code>mmceN:</code> (or under the MMCE Prefix Path) rather than the switched
+    <code>mcN:</code> view. AFL-3.0. RiptOPL's second PS2 loader core. See above.</li>
+<li><b><a href="https://github.com/Gageformer/Ember/releases">Ember</a></b> by <b><a href="https://github.com/Gageformer">Gageformer</a></b> — likewise bundled rather than
+    linked: an <code>EMBER/</code> folder inside the package, unmodified, under its own licence.
+    RiptOPL's second PS1 core. See above.</li>
+</ul>
+
+<h2 id="other-credits">Other Credits (from the OPL CREDITS file)</h2>
+
+<p>The full OPL CREDITS file records many more contributors. Selected entries relevant to
+RiptOPL's codebase:</p>
+
+<ul class="checklist">
+<li><b>misfire</b> — NETLOG module and other contributions</li>
+<li><b>Eugene Plotnikov</b> — SMSUTILS, SMSMAP &amp; SMSTCPIP modules</li>
+<li><b>Marcus R. Brown</b> — DEV9, ATAD modules and derived code used in cdvdman</li>
+<li><b>icyson55</b> — OPL-CL project / network update support</li>
+<li><b>fjtrujy</b> — CI/CD implementation using Docker and GitHub Actions</li>
+<li><b>Eric Young</b> — DES algorithm used in the SMB code</li>
+<li><b>ps2dev team</b> — USB, Network, and PS2HDD modules via PS2SDK</li>
+<li>Quality assurance over OPL's history: RandQalan, yoshi314, EP, LocalH, lee4, El_Patas,
+ShaolinAssassin, algol, gledson999, jolek, zero35, and many others</li>
+</ul>
+
+<p>For the complete list, see the
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader/blob/master/CREDITS">CREDITS</a>
+file in the canonical OPL repository.</p>
+
+<h2 id="ps1-note">A Note on PS1 Emulation</h2>
+
+<p>RiptOPL plays PS1 titles through <b>two independent cores</b>, and they work in completely
+different ways.</p>
+
+<div class="callout info"><div class="h">POPSTARTER uses POPS, Sony's own emulator</div>
+The <code>*.VCD</code> path in RiptOPL (and in all OPL forks) runs through <b>POPS</b> — Sony's own
+PS1 emulator built into PS2 firmware — combined with the open-source <b>POPSTARTER</b>
+launcher. POPS itself is not distributed here, and its use depends on your console's firmware.
+For the deep reference on PS1 / POPSTARTER internals — the 32-byte config table, IGR, cheats,
+multi-disc, and storage — see the sister site:
+<a href="https://nathanneurotic.github.io/POPSLoader/"><b>POPStarter docs</b></a>.
+</div>
+
+<div class="callout info"><div class="h">Ember is a real emulator, not a Sony component</div>
+The <code>*.cue</code> path runs through <b>Ember</b>, Gageformer's independent PS1 emulator for the
+PS2. It does not use POPS and does not depend on your console's firmware — but it does need
+<b>your own PS1 BIOS</b>, which you supply as <code>EMBER/bios.bin</code>. No BIOS and no game data
+are distributed with Ember or with RiptOPL. See <a href="ps1-vcd.html#ember">Ember — the second PS1
+core</a>.
+</div>
+
+<h2 id="dvr-tool">PSX DVR / DTL TOOL: developers and technical references</h2>
+<p>The experimental <a href="psx-dvr.html">PSX DESR DVR ISO support</a> builds upon <a href="https://github.com/pcm720/neutrino/tree/bsd-dvr"><b>pcm720</b></a>'s external DVR-enabled Neutrino backend; DVRP modules from <a href="https://github.com/ps2dev/ps2sdk"><b>ps2dev / PS2SDK contributors</b></a>; and DVR initialization precedent in <a href="https://github.com/saildot4k/wLaunchELF_R3Z"><b>wLaunchELF_R3Z</b></a> and the LaunchELF family. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/947">PR #947</a> tracks RiptOPL's own integration.</p>
+<p>Credit also belongs to the PS2 community members who support Sony's <b>DTL-T10000 development TOOL</b> systems, including maintainers of <a href="https://github.com/ps2homebrew/wOPL">wOPL</a> and upstream OPL's <code>DTL_T10000</code> build variants. These are <b>different</b> consoles from Sony's PSX DESR DVR; support for one does not prove compatibility with the other. Early PC CARD CompactFlash work independently credits <a href="https://github.com/mihhru/PS2CF"><b>mihhru / PS2CF</b></a> on the <a href="pc-card-cf.html">CompactFlash page</a>.</p>
+<h2 id="license">License</h2>
+
+<p>Open PS2 Loader, and this fork, are licensed under the
+<b>Academic Free License version 3.0</b>. Review the
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/LICENSE">LICENSE</a>
+file in the repository for the full terms.</p>
+
+<details class="deep"><summary>Why a fork at all, rather than contributing upstream?</summary>
+<p>RiptOPL was built primarily as a personal "definitive build" — opinionated defaults, a
+Coverflow-first UI, and features ported from uOPL/wOPL assembled in one place for testers
+without strong opinions about which fork to run. The intent was never to compete with or
+fragment the upstream project. Contributing features back upstream is always welcome; the
+fork format was simply the fastest path to a working, testable build with all the desired
+pieces together. The canonical project at
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>
+is where the community's energy should go for long-term development.</p>
+</details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

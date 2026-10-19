@@ -1,0 +1,107 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PS3 BC · RiptOPL Docs</title>
+<meta name="description" content="Backward-compatible PS3 support and limits.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html" class="active"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>PS3 Backward Compatibility</h1>
+<p class="lead">The inherited OPL support targets hardware backward-compatible PS3 models. Current RiptOPL changes still need testing on the specific console, firmware, entry point and game source.</p>
+<span id="supported-hardware"></span>
+<h2 id="hardware">Supported hardware scope</h2>
+<table><thead><tr><th>PS3 models</th><th>Mainboard</th><th>PS2 hardware</th></tr></thead><tbody>
+<tr><td>CECHA / CECHB</td><td>COK-001</td><td>EE + GS hardware</td></tr>
+<tr><td>CECHC / CECHE</td><td>COK-002 / COK-002W</td><td>GS hardware; EE emulated by the PS3</td></tr>
+</tbody></table>
+<p>Identify the CECH model on the console label; drive capacity alone is unreliable after upgrades. See <a href="https://www.psdevwiki.com/ps3/PS2_Compatibility">PS3 Developer Wiki's compatibility table</a> and <a href="https://www.psdevwiki.com/ps3/COK-00x">COK board references</a>. Later non-BC models use a different software-emulation path; this guide does not claim RiptOPL support for them.</p>
+<span id="supported-modes"></span><span id="supported-storage-modes"></span>
+<h2 id="storage">Inherited storage modes</h2>
+<p>Upstream OPL documents USB, SMB and CFW-dependent HDD modes for BC PS3. These are inherited support paths, not a current RiptOPL hardware test matrix. A source working on PS2 does not establish that its exFAT, VMC, GSM or networking implementation works in the PS3's PS2 environment.</p>
+<p><b>Do not format a PS3 system disk as a PS2 APA drive.</b> The internal-HDD instructions for an ordinary PS2 are not a PS3 installation procedure. Use the documentation for your actual PS3 firmware and PS2 execution environment.</p>
+<span id="swap-magic-ps2-disc"></span><span id="other-disc-based-entry-points-ps2-ode-game-exploit-etc"></span><span id="custom-firmware-cfw-with-the-latest-cobra-payload--recommended"></span>
+<h2 id="entry-point">Getting an entry point</h2>
+<p>You need a working way to launch a PS2 ELF on the BC console. Upstream mentions Swap Magic and recommends CFW with Cobra; HDD mode requires CFW. Consult that firmware/launcher project's current instructions rather than assuming every disc exploit or ODE exposes the same devices. See <a href="https://github.com/ps2homebrew/Open-PS2-Loader#ps3-bc">upstream OPL's PS3 notes</a>.</p>
+<span id="known-limitations"></span>
+<h2 id="limitations">Validation and bug reports</h2>
+<p>MMCE, MX4SIO, iLink, UDPFS/UDPBD, HTTP, Neutrino and RA are not established PS3 compatibility claims here. Start with the native OPL core and a known-working setup. A report should name CECH model, firmware/Cobra version, ELF entry point, exact RiptOPL commit/flavour, source, game and failure stage. Compare the same setup against a known-good build. See <a href="troubleshooting.html#report-details">report details</a>.</p>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

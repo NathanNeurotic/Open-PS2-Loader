@@ -1,0 +1,469 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Internal HDD (APA &amp; exFAT) · RiptOPL Docs</title>
+<meta name="description" content="Internal HDD two ways: APA/PFS (HDL) and exFAT (BDMA).">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html" class="active"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<div class="callout info" id="specialized-storage"><div class="h">Specialized Sony hardware</div><p><a href="psx-dvr.html"><b>PSX DESR DVR support</b></a> is a separate experimental read-only ISO path, merged in PR #947 but awaiting real DVR tests. <a href="pc-card-cf.html"><b>PC CARD CompactFlash</b></a> for Japanese SCPH-10000/15000/18000 consoles was merged in PR #955 and awaits hardware testing. Neither feature changes the standard APA/exFAT workflows documented below.</p></div>
+<h1>Internal HDD (APA &amp; exFAT)</h1>
+<p class="lead">RiptOPL supports two completely different ways to use the PS2's internal ATA/IDE hard drive: the traditional
+<b>APA/PFS partition scheme</b> (HDLoader format, used by HDL-Dump and virtually all legacy tools), and the modern
+<b>exFAT filesystem</b> routed through the Block Device Manager (BDMAssault). Both formats are supported and both can be enabled at the same time — one shared
+<code>ata_bd</code> stack serves APA and BDM, and neither toggle greys the other. Arbitration happens per
+<i>drive</i> at mount time rather than in the dialog: APA is kept off a plain MBR/GPT/exFAT disk (the recognized APA+MBR hybrid is handled separately), and BDM only
+publishes a <code>massN:</code> slot where a FAT/exFAT partition exists. Only 48-bit LBA drives are supported; check the drive and adapter specifications before use.</p>
+
+<div class="callout info"><div class="h">Which format should I use?</div>
+<b>APA/PFS</b> is the classic choice: maximum compatibility with every existing tool (HDL-Dump, uLaunchELF, ps2-packer,
+etc.) and the format your existing HDLoader library already lives on. <b>exFAT</b> is the modern choice: copy ISOs
+from any PC with no special software, GPT for drives larger than 2 TB, and PS1 VCD support on the same drive — but
+contiguous files leave the most fragment-budget headroom (see the fragmentation warning below). Most users with an existing HDD
+library should stay on APA/PFS. New builds or large (>2 TB) drives are where exFAT shines.
+</div>
+
+<h2 id="apa-pfs">APA / PFS (HDLoader format)</h2>
+<p>The APA partition scheme and PFS filesystem are the native PS2 HDD formats, understood by every classic HDD tool.
+OPL reads games in the <b>HDLoader format</b> — each game occupies one or more APA partitions written by HDL-Dump (or
+the older HDL server). This path is mature, well-tested, and requires no configuration beyond enabling HDD mode.</p>
+
+<h3 id="apa-capacity">Capacity</h3>
+<p>APA/PFS supports up to <b>2 TB</b> via 48-bit LBA. Drives larger than 2 TB are not addressable in this format — use
+exFAT with a GPT partition table instead (see below).</p>
+
+<h3 id="apa-opl-partition">The OPL data partition</h3>
+<p>RiptOPL only mounts <b>existing</b> PFS partitions. It does not create, resize or format an APA
+partition (see <a href="#disk-safety">Disk safety</a>). The selection order is:</p>
+<ol><li>A usable <code>hdd_partition</code> selection in <code>__common/OPL/conf_hdd.cfg</code>.</li>
+<li>An existing <code>+OPL</code> partition.</li><li>Existing <code>__common/OPL/</code>.</li></ol>
+<p>If none is available, the data home stays unavailable instead of creating a partition. To select
+an existing partition explicitly, place this in <code>OPL/conf_hdd.cfg</code> on the mounted
+<code>__common</code> partition:</p><pre>hdd_partition=__common</pre>
+<p><code>+OPL</code> keeps support folders at its root. The <code>__common</code> fallback keeps them
+inside <code>OPL/</code>. A configuration entry names a partition to mount; it does not create one.</p>
+
+<h3 id="apa-folder-layout">Folder layout</h3>
+<p>Unlike folder-based devices (USB, MMCE, SMB…), APA/PFS stores games as HDLoader partitions — there are no
+<code>CD/</code> or <code>DVD/</code> folders. All other OPL support files live inside the OPL data partition:</p>
+<table data-sortable>
+<thead><tr><th>Location</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>hdd0:GAMENAME</code> (APA partition)</td><td>One HDLoader game partition per title</td></tr>
+<tr><td><code>pfs0:CFG/</code></td><td>Per-game config files</td></tr>
+<tr><td><code>pfs0:ART/</code></td><td>Cover art</td></tr>
+<tr><td><code>pfs0:VMC/</code></td><td>Virtual memory card images</td></tr>
+<tr><td><code>pfs0:THM/</code></td><td>Themes</td></tr>
+<tr><td><code>pfs0:CHT/</code></td><td>Cheat files</td></tr>
+<tr><td><code>pfs0:APPS/</code></td><td>Homebrew ELFs</td></tr>
+<tr><td><code>pfs0:LNG/</code></td><td>Language packs</td></tr>
+</tbody>
+</table>
+<p>The <code>pfs0:</code> prefix above refers to the mounted OPL data partition — in practice that is
+<code>hdd0:+OPL</code> (or whatever partition name you configured in <code>conf_hdd.cfg</code>). If you point
+<code>hdd_partition</code> at a partition whose name does not start with <code>+</code> (for example
+<code>__common</code>), OPL inserts an extra <code>OPL/</code> tier and the paths become
+<code>pfs0:OPL/CFG/</code>, <code>pfs0:OPL/ART/</code>, and so on.</p>
+
+<h3 id="apa-install-games">Installing games (HDL-Dump / NBD)</h3>
+<p>OPL does not install games itself — you install them from a PC using <b>HDL-Dump</b> over the network (via OPL's
+built-in <a href="nbd.html">NBD server</a>). The typical workflow:</p>
+<div class="steps">
+<div class="step"><h3>Start the NBD server on the PS2</h3>
+<p>In RiptOPL, open the menu and select <b>Start NBD server</b>. The screen updates to "NBD Server running…" once it
+is ready. OPL must have a configured IP address (static or DHCP).</p></div>
+<div class="step"><h3>Connect from your PC</h3>
+<p>On Linux: <code>sudo nbd-client 192.168.x.x /dev/nbd1</code> (load the <code>nbd</code> kernel module first with
+<code>sudo modprobe nbd</code>). On Windows, use the NBD client of your choice. The drive appears as a raw block
+device to the OS. See the <a href="nbd.html">NBD Server</a> page for full client instructions.</p></div>
+<div class="step"><h3>Inject the game with HDL-Dump</h3>
+<p>With the NBD connection active, run:</p>
+<pre>hdl_dump inject_dvd ps2/nbd "Game Title" ./GAME.ISO</pre>
+<p>HDL-Dump writes the game directly into a new APA partition on the PS2's HDD. Disconnect the NBD client when done.</p></div>
+<div class="step"><h3>Enable HDD mode in RiptOPL</h3>
+<p>In <b>Game Sources</b>, set <b>HDD (APA) Start Mode</b> to Manual or Auto. On the next boot the game list appears as the
+<b>HDD Games</b> tab.</p></div>
+</div>
+
+<details class="deep"><summary>Can I use the old HDL server instead of NBD?</summary>
+<p>No — RiptOPL (like all recent OPL builds) uses the NBD server protocol. The older HDL server is gone. HDL-Dump
+still works perfectly; only the transport has changed from HDL's proprietary protocol to the open NBD standard.
+See the <a href="nbd.html">NBD Server</a> page for details.</p>
+</details>
+
+<details class="deep"><summary>Can I use pfs-shell or a hex editor?</summary>
+<p>Yes. Because NBD exposes the raw APA disk to your PC, any tool that worked with the drive when it was physically
+connected will work over NBD — including <code>pfs-shell</code>, partition managers, and hex editors. Be careful:
+direct APA partition editing can corrupt the drive if done incorrectly.</p>
+</details>
+
+<h3 id="apa-ps1">PS1 games on APA/PFS</h3>
+<p>POPSTARTER <code>*.VCD</code> files on an APA/PFS HDD live in dedicated <b><code>__.POPS</code></b>
+partitions (named <code>__.POPS</code>, <code>__.POPS0</code> … <code>__.POPS9</code>). Each partition
+holds its VCD files at the partition root.</p>
+<p>Ember uses a separate exact namespace: <b><code>__.EMBER</code></b> or
+<code>__.EMBER0</code> … <code>__.EMBER9</code>. Each is self-contained and holds
+<code>EMBER/ember.elf</code>, <code>EMBER/bios.bin</code>, and <code>EMBER/games/</code>. RiptOPL scans
+these partitions even when the drive has no POPSTARTER partitions, mounts them on <code>pfs1:</code>
+for listing, then remounts the selected one read/write on <code>pfs0:</code> and hands that live mount
+to Ember. See <a href="ps1-vcd.html">PS1 Games</a> for the display-mode and launch workflow.</p>
+
+<h2 id="exfat-bdm">exFAT via Block Device Manager (BDMA)</h2>
+<p>RiptOPL can also treat the internal HDD as a plain exFAT mass-storage device, mounted through the same
+<b>Block Device Manager</b> (BDMAssault / "BDMA") used for exFAT USB drives. Once enabled, the HDD appears in OPL
+as an <b>"HDD Games"</b> games list with the HDD icon — it occupies one slot in the shared <code>massN:</code>
+namespace alongside any USB/MX4SIO devices.</p>
+
+<h3 id="exfat-why">Why exFAT?</h3>
+<ul class="checklist">
+<li><b>No special install tools needed</b> — copy ISOs directly from any PC (Windows, macOS, Linux) to the
+<code>DVD/</code> or <code>CD/</code> folder, just like a USB drive.</li>
+<li><b>MBR up to 2 TB; GPT can address larger disks</b> — if your drive is larger than 2 TB, GPT breaks the APA ceiling.</li>
+<li><b>PS1 VCDs on the same drive</b> — put <code>*.VCD</code> files in the <code>POPS/</code> folder and they list
+under L3 PS1 view exactly like a USB drive (with the BDMA equip for POPSTARTER — see below).</li>
+</ul>
+
+<h3 id="exfat-format">Formatting and partition table</h3>
+<p>Format the drive exFAT from your PC before use. Key rules:</p>
+<ul class="checklist">
+<li>Partition table: <b>MBR</b> (up to 2 TB) or <b>GPT</b> (larger drives). On GPT, a partition is found
+even when an earlier slot in the partition table is empty, for example after deleting the first partition on a PC.</li>
+<li>Filesystem: <b>exFAT</b></li>
+<li>Allocation unit size: <b>Default</b> — do not choose a custom cluster size</li>
+</ul>
+<div class="callout info"><div class="h">Why "Default" allocation unit size?</div>
+Use the formatter's Default as the setup recommendation. A custom cluster size alone does not prove a volume is incompatible;
+record the actual sector and cluster sizes when diagnosing a mount failure. Changing cluster size requires backing up and reformatting the volume.
+</div>
+
+<h3 id="exfat-fragmentation">Fragmentation warning</h3>
+<p>The block-device loader has a bounded fragment table. Sequential copies with enough free space reduce fragmentation,
+but neither a batch copy nor a single-file copy proves the resulting extent layout. Native OPL shares 64 entries across image parts;
+Neutrino shares its budget across the ISO and VMCs. Native OPL VMC backing must be contiguous. Back up your files before repair;
+do not reformat an otherwise readable disk solely because its games are absent from the list.</p>
+
+<h3 id="exfat-enable">Enabling BDM HDD in RiptOPL</h3>
+<div class="steps">
+<div class="step"><h3>Enable Internal HDD (exFAT)</h3>
+<p>In <b>Settings → Game Sources</b>, turn <b>Internal HDD (exFAT)</b> on and set <b>BDM Devices Start Mode</b> to Manual or Auto. On the next boot (or scan) the exFAT HDD mounts into
+the <code>massN:</code> namespace and an <b>HDD Games</b> tab appears in the game list.</p></div>
+<div class="step"><h3>Copy your games</h3>
+<p>On your PC, place PS2 ISO/ZSO files in the <code>DVD/</code> (for DVD-format discs) or <code>CD/</code> (for
+CD-format discs) folder at the drive root — the same layout as USB. Artwork, themes, configs and VMCs go in their
+usual folders (<code>ART/</code>, <code>THM/</code>, <code>CFG/</code>, <code>VMC/</code>, etc.).</p></div>
+<div class="step"><h3>Launch a game</h3>
+<p>Select the <b>HDD Games</b> tab in RiptOPL and pick a title. The drive mounts as <code>massN:</code> at
+runtime — the same path as USB — so all per-game settings, cover art lookups and VMC assignments work identically
+to a USB drive.</p></div>
+</div>
+
+<h3 id="exfat-folder-layout">Folder layout</h3>
+<p>The exFAT HDD uses the same folder structure as USB/MMCE/MX4SIO:</p>
+<table data-sortable>
+<thead><tr><th>Folder</th><th>Contents</th></tr></thead>
+<tbody>
+<tr><td><code>DVD/</code></td><td>PS2 DVD-format game ISOs / ZSOs</td></tr>
+<tr><td><code>CD/</code></td><td>PS2 CD-format game ISOs / ZSOs</td></tr>
+<tr><td><code>POPS/</code></td><td>PS1 <code>*.VCD</code> files + <code>POPSTARTER.ELF</code></td></tr>
+<tr><td><code>ART/</code></td><td>Cover art images</td></tr>
+<tr><td><code>CFG/</code></td><td>Per-game config files</td></tr>
+<tr><td><code>VMC/</code></td><td>Virtual memory card images</td></tr>
+<tr><td><code>THM/</code></td><td>Themes</td></tr>
+<tr><td><code>CHT/</code></td><td>Cheat files</td></tr>
+<tr><td><code>APPS/</code></td><td>Homebrew ELFs</td></tr>
+</tbody>
+</table>
+<p>The device prefix at runtime is <code>massN:/</code> (where <em>N</em> is the BDM slot index assigned at boot).
+In <code>conf_apps.cfg</code>, use <code>mass:</code> as the device prefix (the same as USB).</p>
+
+<h3 id="exfat-hybrid">APA-Jail / APA + exFAT hybrid disks</h3>
+<p>APA-Jail lets APA/PFS system storage coexist with an MBR exFAT game area. Games stored as files appear through the exFAT BDM list. For an APA launch, RiptOPL normally uses exFAT for settings, with existing settings and explicit redirects deciding the final home. See the <a href="#guide-apa-jail-apapfs-and-exfat-on-the-same-disk">complete APA-Jail guide below</a> for migration, exceptions, supported layouts and safety.</p>
+<h3 id="exfat-ps1">PS1 games on exFAT (BDMA equip)</h3>
+<p>Put your <code>*.VCD</code> files in the drive's <code>POPS/</code> folder alongside
+<code>POPSTARTER.ELF</code>. Use <b>PS2/PS1 Game Display</b> to show the PS1 library separately,
+combined with PS2 rows, or pinned by itself.</p>
+<p>POPSTARTER's stock driver only reads FAT32, so booting a PS1 game from the exFAT HDD needs the
+<b>HDD (exFAT)</b> BDMA driver modules equipped. RiptOPL does this <b>automatically by default</b>: the
+<b>VCD BDMA Apply on Launch</b> toggle (in <b>Settings &rarr; PS Emulation Settings</b>) ships <b>On</b>, and each time you launch
+a VCD it auto-equips that title's matching exFAT driver pair — copying the correct BDMAssault modules onto
+<code>mc?:/POPSTARTER/</code> for you — right before boot. You do not need to touch anything.</p>
+<div class="callout info"><div class="h">Manual equip (only after turning auto-equip Off)</div>
+The manual <b>BDMA Source</b> / <b>BDMA Mode</b> pickers are hidden while <b>VCD BDMA Apply on Launch</b> is On.
+If you turn that toggle <b>Off</b> to manage the equip yourself, they appear on the same
+<b>Settings &rarr; PS Emulation Settings</b> page — set <b>BDMA Mode</b> to <b>HDD (exFAT)</b> and
+<b>BDMA Source</b> to <b>Internal HDD</b> (the source identifies your drive by its <code>ata</code> driver and
+reads its <code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code>).
+</div>
+<p>See <a href="ps1-vcd.html#bdma">PS1 Games (VCD) — exFAT BDMA equip</a> for the complete walkthrough,
+including the BDMA Source setting.</p>
+
+<h2 id="disk-safety">Disk safety and code 402</h2>
+<p>RiptOPL is a game loader, not a partition manager. On an APA disk it writes only <i>inside</i> PFS
+partitions (settings, covers, VMCs) and never edits the APA partition table. That changes a few things
+you may know from older OPL builds:</p>
+<ul class="checklist">
+<li><b>No Delete on the HDD, and no Rename for PS2 games.</b> Both edited APA partition headers, so
+the menu no longer offers them. Manage the HDLoader library from a PC with HDL-Dump over
+<a href="nbd.html">NBD</a>.</li>
+<li><b>A one-game <code>PP.*</code> PS1 install can't be renamed</b>, because it is its own APA partition;
+RiptOPL says so and changes nothing. Loose VCDs in <code>__.POPS*</code> and Ember titles still rename:
+that is a file write inside their partition.</li>
+<li><b>No formatting, and no creating, deleting or renaming partitions.</b> The driver refuses all of
+them, and raw sector writes too.</li>
+<li><b>4Kn drives are refused.</b> A drive whose <i>logical</i> sectors are not 512 bytes gets no disk
+I/O at all: formatted exFAT it shows <b>code 500</b>, formatted APA it is not detected. Ordinary
+Advanced Format <b>512e</b> drives, which is nearly every modern disk, are unaffected.</li>
+<li><b>GPT/APA hybrid disks are left alone.</b> A disk with a GPT header is treated as GPT and never gets
+the APA driver, so its APA side does not list.</li>
+<li><b>FAT/exFAT never writes the first 128 MB of an APA disk</b>, including on APA + exFAT hybrids.</li>
+</ul>
+
+<div class="callout amber"><div class="h">Code 402, or "Formatted: NO" — do not format the disk</div>
+Code <b>402</b> means the HDD answered, but its APA partition table can't be read. The same damage shows
+as <b>"Connected: YES / Formatted: NO"</b> in wLaunchELF. Every partition header and every game is almost
+certainly still on the disk; only the start of the partition chain is gone. Formatting is what would
+destroy them. (Code <b>401</b> now means the drive really did not answer.)
+</div>
+
+<div class="steps">
+<div class="step"><h3>Stop writing to the disk</h3>
+<p>Don't format, "initialize", or run repair tools that write. Every write is a risk until you have a copy.</p></div>
+<div class="step"><h3>Connect it to a PC and image it</h3>
+<p>Use a SATA/IDE adapter. If you have the space, image the whole disk first, for example with
+<code>dd</code> or Win32 Disk Imager's <i>Read</i>. At minimum the recovery tool saves the first 4 MB for you.</p></div>
+<div class="step"><h3>Diagnose (read-only)</h3>
+<p>Get <code>apa_recover.py</code> from
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/tree/rebuild/main/pc/apa-recovery"><code>pc/apa-recovery</code></a>
+(Python 3.8 or newer, no extra packages) and run it as root:</p>
+<pre>python3 apa_recover.py /dev/sdX</pre>
+<p>On Windows, from an Administrator prompt: <code>python apa_recover.py \\.\PhysicalDrive2</code>. Find the
+number in Disk Management; the APA disk shows as unallocated. The report says what is wrong and lists the
+partitions it can find.</p></div>
+<div class="step"><h3>Repair, if it says Repairable</h3>
+<pre>python3 apa_recover.py /dev/sdX --repair</pre>
+<p>It backs up the first 4 MB, rewrites only the table's root (LBA 0–7), then re-reads the result and
+checks it with the same rules the PS2 driver applies. It refuses GPT hybrids, a chain broken in the
+middle, and anything else it cannot verify.</p></div>
+</div>
+
+<p><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/APA-SAFETY.md">docs/APA-SAFETY.md</a>
+lists every protection and what none of them can cover: other software (wLaunchELF, HDD-OSD, PC tools)
+uses its own driver, and a failing drive fails regardless. None of these protections has been through a
+hardware power-cut test yet.</p>
+
+<h2 id="apa-vs-exfat">APA/PFS vs. exFAT at a glance</h2>
+<table data-sortable>
+<thead><tr><th>Feature</th><th>APA / PFS</th><th>exFAT (BDMA)</th></tr></thead>
+<tbody>
+<tr><td>Max capacity</td><td>2 TB (48-bit LBA)</td><td>2 TB (MBR); larger GPT disks depend on driver and hardware support</td></tr>
+<tr><td>Install method</td><td>HDL-Dump via NBD server</td><td>Copy files from PC (no tools)</td></tr>
+<tr><td>PS2 game format</td><td>HDLoader partitions</td><td>ISO / ZSO in <code>DVD/</code> or <code>CD/</code></td></tr>
+<tr><td>OPL data location</td><td>Standard folders at the OPL partition root (<code>pfs0:</code>)</td><td>Standard folders at drive root</td></tr>
+<tr><td>PS1 support</td><td><code>__.POPS*</code> (POPSTARTER) and <code>__.EMBER*</code> (Ember) APA partitions</td><td><code>POPS/</code> + BDMA equip, and/or <code>EMBER/</code></td></tr>
+<tr><td>Fragmentation risk</td><td>HDLoader game partitions use their own layout; PFS support files and VMCs have separate mapping limits</td><td>Yes — add files one at a time</td></tr>
+<tr><td>Tool ecosystem</td><td>HDL-Dump, pfs-shell, uLaunchELF</td><td>Any PC file manager</td></tr>
+<tr><td>Enable in RiptOPL</td><td>Game Sources → HDD (APA) Start Mode</td><td>Game Sources → Internal HDD (exFAT)</td></tr>
+</tbody>
+</table>
+
+<h2 id="notes">Notes &amp; limitations</h2>
+<ul class="checklist">
+<li>APA/PFS HDD mode and the exFAT BDM HDD now <b>coexist</b> in RiptOPL — both rows stay enabled in Game
+Sources and a single boot can serve both. The driver arbitrates per drive at mount time: APA is refused on a
+non-Sony (MBR/GPT/exFAT) disk as a corruption guard.</li>
+<li>The exFAT HDD mounts as <code>massN:</code> — it shares that namespace with USB/MX4SIO devices. If you have
+both a USB drive and the exFAT HDD connected, they each occupy a separate <code>massN</code> slot.</li>
+<li>Network boot (UDPBD / UDPFS) is mutually exclusive with SMB, but is independent of the local HDD — you can use
+HDD and network boot at the same time.</li>
+<li>On PS3 Backward Compatible units, HDD mode requires CFW with Cobra. See <a href="ps3-bc.html">PS3 BC</a>.</li>
+<li>ZSO compressed images are supported on exFAT HDD exactly as on USB. See <a href="zso.html">ZSO Format</a>.</li>
+</ul>
+<h2 id="guide-exfat-storage-setup-benefits-and-limits">exFAT storage: setup, benefits and limits</h2>
+<p>RiptOPL can read games stored as files on an exFAT volume, including an internal ATA HDD. <strong>MBR and GPT are supported partition-table choices for the internal exFAT HDD.</strong> The filesystem, partition table and game layout are separate decisions: GPT does not make a missing <code>DVD</code> folder appear, and enabling APA does not select the exFAT game list.</p>
+<h2 id="guide-choose-the-layout">Choose the layout</h2>
+<table>
+<thead>
+<tr>
+<th>Layout</th>
+<th>Where PS2 games live</th>
+<th>Source to enable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Internal HDD, exFAT with MBR</td>
+<td><code>CD/</code> and <code>DVD/</code> files</td>
+<td>BDM and Internal HDD (exFAT)</td>
+</tr>
+<tr>
+<td>Internal HDD, exFAT with GPT</td>
+<td><code>CD/</code> and <code>DVD/</code> files</td>
+<td>BDM and Internal HDD (exFAT)</td>
+</tr>
+<tr>
+<td>Internal HDD, APA/HDLoader</td>
+<td>Installed game partitions</td>
+<td>HDD (APA)</td>
+</tr>
+</tbody>
+</table>
+<p>MBR with 512-byte logical sectors has the conventional approximately 2 TiB addressing limit. GPT permits partition addresses beyond that limit; this is not a guarantee that every disk capacity, adapter or partition layout has been tested. Neither choice changes the speed of the ATA connection. A supported hybrid APA/exFAT layout can expose both sources, but constructing one is an advanced partitioning task, not a requirement for ordinary exFAT use.</p>
+<p><strong>GPT/exFAT is enabled through BDM; it is not blocked by the APA safety check.</strong> RiptOPL registers both MBR and GPT partition drivers. Selecting the separate HDD (APA) source does not make a GPT/exFAT volume an APA disk. This follows the distinction in <a href="https://github.com/grimdoomer/Open-PS2-Loader/blob/d1f51be4452074c2352931e0b9c474da9242e481/src/hddsupport.c">grimdoomer's large-capacity HDD implementation</a>: GPT/exFAT uses the block-device path, while the APA/PFS stack is skipped for non-APA media.</p>
+<p>Use a disk exposing <strong>512-byte logical sectors</strong>. A 512e disk has 4 KiB physical sectors but presents 512-byte logical sectors and is acceptable. A 4Kn disk presents 4096-byte logical sectors and is unsupported. Back up existing files before formatting or changing the partition table; conversion is not a troubleshooting step for an empty game list.</p>
+<h2 id="guide-set-up-an-internal-exfat-hdd">Set up an internal exFAT HDD</h2>
+<ol>
+<li>Create an MBR or GPT partition table and an exFAT volume on your PC. Use the formatter's <strong>Default</strong> allocation-unit size.</li>
+<li>Create <code>DVD</code> and <code>CD</code> at the volume root. Put DVD game images in <code>DVD/</code> and CD game images in <code>CD/</code>. For example, <code>DVD/SLUS_203.12.Game Name.iso</code> follows the established OPL naming format. Keep the complete image rather than splitting it for FAT32's file-size limit.</li>
+<li>In <strong>Settings → Game Sources</strong>, enable <strong>BDM Devices Start Mode</strong> and <strong>Internal HDD (exFAT)</strong>. The separate <strong>HDD (APA) Start Mode</strong> controls APA game partitions; it is not required to enumerate a plain exFAT disk.</li>
+<li>Leave <strong>BDM Prefix Path</strong> empty when <code>CD/</code> and <code>DVD/</code> are at the root. A prefix of <code>OPL</code> instead searches <code>OPL/CD/</code> and <code>OPL/DVD/</code>. The prefix applies to BDM sources, so check its effect on other attached devices too.</li>
+<li>Open the HDD (exFAT) BDM game list. The default startup page only chooses which list opens first; it does not move games between the APA and BDM lists. Save settings when the setup is correct.</li>
+</ol>
+<p>The internal exFAT HDD mounts into the shared <code>massN:</code> namespace. <code>mass0:</code> does <strong>not</strong> always mean USB: numbers depend on mount order. For a Neutrino custom path, the typed <code>ata:/neutrino/neutrino.elf</code> alias identifies internal ATA storage more reliably than a fixed slot number.</p>
+<h2 id="guide-benefits-and-limitations">Benefits and limitations</h2>
+<ul>
+<li><strong>PC file management:</strong> copy images and artwork as ordinary files rather than installing each PS2 game into an HDLoader partition. exFAT supports individual files larger than FAT32's 4 GiB limit.</li>
+<li><strong>Large-disk partitioning:</strong> GPT removes MBR's conventional addressing limit. exFAT alone does not remove that limit from an MBR disk.</li>
+<li><strong>Game compatibility still depends on the core:</strong> native OPL supports ISO, ZSO and UL layouts; Neutrino uses ISO. Changing the filesystem does not resolve every game's compatibility settings. See <a href="neutrino.html">Neutrino</a>.</li>
+<li><strong>Fragmentation still matters:</strong> native OPL shares a bounded 64-entry fragment table across image parts. Neutrino's BDM mapping budget includes the ISO and VMCs together. Copy files sequentially with adequate free space; a fresh copy can help, but deleting and recopying is not guaranteed to make a file contiguous.</li>
+<li><strong>VMCs have additional write constraints:</strong> native OPL's FAT32/exFAT VMC backing must be contiguous. Neutrino supports multiple extents within its shared budget. Back up cards containing saves before attempting repairs. See <a href="vmc.html">VMC creation and recovery</a>.</li>
+<li><strong>Booting and loading games are different:</strong> support for an exFAT game disk does not make that disk a FreeHDBoot/APA boot installation. Launch RiptOPL using an available boot method, then use its BDM list.</li>
+<li><strong>PS1 uses a separate runtime:</strong> place VCDs in <code>POPS/</code> and use the matching BDMA exFAT setup for POPSTARTER. PS2 exFAT support alone does not install that runtime. See <a href="ps1-vcd.html">VCD setup</a>.</li>
+</ul>
+<h2 id="guide-apa-jail-apapfs-and-exfat-on-the-same-disk">APA-Jail: APA/PFS and exFAT on the same disk</h2>
+<p><strong>APA-Jail is a hybrid layout, not another filesystem or an option you enable in RiptOPL.</strong> It lets APA/PFS storage for PSBBN/system data coexist with an exFAT area for game files and homebrew. The <a href="https://github.com/CosmicScale/PSBBN-Definitive-Project">PSBBN Definitive Project</a> uses APA-Jail, developed by Berion. Use that project's installation tools and instructions to create or maintain its layout; ordinary PC repartitioning can destroy the APA side.</p>
+<p>RiptOPL recognizes the supported <strong>APA+MBR hybrid</strong> by a valid, checksummed APA header plus an MBR FAT/exFAT partition entry beyond the APA reserved area. An MBR signature alone does not make a plain APA disk an APA-Jail disk.</p>
+<table>
+<thead>
+<tr>
+<th>Disk layout</th>
+<th>BDM FAT/exFAT access</th>
+<th>APA/PFS access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plain MBR/exFAT</td>
+<td>Supported</td>
+<td>Not an APA disk</td>
+</tr>
+<tr>
+<td>Plain GPT/exFAT</td>
+<td>Supported</td>
+<td>Not an APA disk</td>
+</tr>
+<tr>
+<td>Recognized APA+MBR/exFAT (APA-Jail)</td>
+<td>Supported</td>
+<td>Supported for a valid APA layout</td>
+</tr>
+<tr>
+<td>Mixed GPT+APA metadata</td>
+<td>GPT FAT/exFAT volumes still use BDM</td>
+<td>Not implemented by the currently embedded APA driver</td>
+</tr>
+</tbody>
+</table>
+<p>The last row is an <strong>APA-driver limitation, not a ban on GPT</strong>. The current APA build uses the traditional APA journal/error-sector layout; a GPT-aware APA build needs a different layout. Its APA stack is skipped on GPT media, leaving BDM's GPT driver enabled. Do not remove that separation merely to force the APA page to open a GPT disk.</p>
+<h3 id="guide-games-and-settings-on-apa-jail">Games and settings on APA-Jail</h3>
+<p>Games stored as files on the exFAT side belong in its <code>DVD/</code>, <code>CD/</code> and <code>POPS/</code> folders and appear through <strong>BDM → Internal HDD (exFAT)</strong>. The <strong>HDD (APA)</strong> list is for HDLoader game partitions; it does not list those exFAT files. RiptOPL may itself be launched from the APA side without moving the game files there.</p>
+<p>For an APA launch on a recognized hybrid, RiptOPL normally adopts the mounted exFAT volume as its settings home:</p>
+<ul>
+<li>Existing RiptOPL settings on exFAT are preferred first.</li>
+<li>Otherwise, a <strong>Custom Settings Path</strong> saved in the APA data home keeps that explicit routing in force.</li>
+<li>Without that redirect, older RiptOPL settings in <code>+OPL</code> or <code>__common/OPL/</code> are read as carry-over settings. The next save writes to the exFAT home; this is not a destructive move or deletion of the old settings.</li>
+<li>On a first run, an official-OPL seed, or APA carry-over, the exFAT home enables the ATA BDM transport and starts a disabled BDM list on <strong>Auto</strong>. Once RiptOPL has saved its own settings there, your saved BDM start-mode choice is respected.</li>
+</ul>
+<p>This depends on the exFAT volume mounting successfully. If it is not available during discovery, RiptOPL can use an accessible APA data home instead. Check the reported settings path and the actual volume before deleting configurations or assuming a save failed. RiptOPL's master file is <code>settings_riptopl.cfg</code>; official OPL's <code>conf_opl.cfg</code> is a separate file. Network, artwork, per-game files and other shared data still need their correct paths.</p>
+<h3 id="guide-safety-and-troubleshooting">Safety and troubleshooting</h3>
+<p>RiptOPL is not an APA-Jail partition manager. Its APA driver refuses partition-table modifications, and the ATA BDM write fence protects the first 128 MiB of an APA disk. Those guards do not validate every possible hybrid layout or make an overlapping partition safe. Back up valuable data, use the layout's own maintenance tools, and do not convert an installed APA-Jail disk to GPT or reformat it to fix an empty list.</p>
+<p>For missing games, check the <strong>exFAT BDM list</strong>, its transport/start settings and prefix first. For missing settings, check which home was selected and whether an APA Custom Settings Path is present. <strong>Code 402 is not an instruction to format.</strong> See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/APA-SAFETY.md">APA safety and recovery</a>.</p>
+<h2 id="guide-hdd-detected-but-games-missing">HDD detected, but games missing</h2>
+<p>Check the game list and path before changing the disk:</p>
+<ol>
+<li>Verify you are viewing the <strong>BDM HDD (exFAT)</strong> source, rather than the APA HDD source. Both use an HDD icon.</li>
+<li>Check BDM start mode, the internal-HDD transport toggle, and <strong>BDM Prefix Path</strong>. An old configuration can point at a subfolder even when your files are at the root.</li>
+<li>Check the actual <code>DVD/</code> and <code>CD/</code> contents, image names/extensions, and the selected PS2/PS1 view. A VCD in <code>POPS/</code> belongs in the PS1 view.</li>
+<li>Refresh the source after applying settings. If the disk does not mount at all, check its partition/filesystem and sector size separately from game enumeration.</li>
+<li>Record the exact build suffix, core, settings and unchanged disk layout when comparing builds. Back up your settings before trying a clean configuration; deleting all settings loses useful evidence and is not a required installation step.</li>
+</ol>
+<p>The fixes in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/894">PR #894</a> address a stale live BDM prefix after settings changes and an ATA readiness probe after the existing startup settle. Host tests demonstrate those defects and their fixes; they do not establish that either was the cause of every reported empty list, or replace a same-console test.</p>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

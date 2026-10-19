@@ -1,0 +1,267 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>In-Game Reset (IGR) · RiptOPL Docs</title>
+<meta name="description" content="In-Game Reset: the button combinations, the power button, IGR Path, Mode 6, and in-game screenshots.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html" class="active"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>In-Game Reset (IGR)</h1>
+<p class="lead">In-Game Reset lets you leave a running game — or power the console off — without touching the
+console's own Reset button. It is a controller shortcut that works from inside the game.</p>
+
+<p>RiptOPL installs a small hook into the running game that watches the controller for a reserved button
+combination. When it sees one, it tears the game down and either leaves for the PS2 browser (or the ELF set in
+<b>IGR Path</b>) or shuts the console down.</p>
+
+<h2 id="combinations">The button combinations</h2>
+<p>Every combination starts the same way: <b>hold all four shoulder buttons — L1 + L2 + R1 + R2</b> — and
+then, while still holding them, press the second half.</p>
+
+<table>
+<thead><tr><th>Hold</th><th>Then press</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>L1 + L2 + R1 + R2</td><td><b>Start + Select</b></td><td><b>Reset</b> — quit the game; see <a href="#where-reset-goes">Where a reset takes you</a></td></tr>
+<tr><td>L1 + L2 + R1 + R2</td><td><b>L3 + R3</b></td><td><b>Power off</b> the console</td></tr>
+<tr><td>L1 + L2 + R1 + R2</td><td><b>Up</b></td><td><b>In-game screenshot</b> — see <a href="#igs">Screenshots</a></td></tr>
+</tbody>
+</table>
+
+<p>L3 and R3 are the analog-stick <em>clicks</em>, so the power-off combination needs a DualShock with the
+analog light on.</p>
+
+<h2 id="power-button">The console power button</h2>
+<p>The power button on the front of the console is hooked too, and does not need a controller:</p>
+
+<table>
+<thead><tr><th>Power button</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>Press <b>once</b></td><td>Power off</td></tr>
+<tr><td>Press <b>twice</b></td><td>Reset — the same as Start + Select</td></tr>
+</tbody>
+</table>
+
+<p>The second press has to land within <b>about a second</b> — RiptOPL waits ~50 polling frames after the
+first press to see whether another arrives, then acts on the count. A hardware status held across
+several frames counts as one press.</p>
+
+<div class="callout info"><div class="h">Worth remembering</div>
+This does not depend on the pad buffer, but a short tap is not guaranteed on every console and
+transport. On setups with active DEV9/network or HDD access, Mechacon/CDVD event handling can miss
+the tap even while controller IGR works. The console's normal press-and-hold standby action remains
+the hardware fallback; avoid cutting AC power during disk activity.</div>
+
+<h2 id="where-reset-goes">Where a reset takes you</h2>
+<p>With the <b>IGR Path</b> setting (<em>Settings → General &amp; System</em>) left blank, a reset exits to the
+<b>PS2 browser</b>, the same place the menu's own <b>Exit</b> goes. It does not come back to RiptOPL by itself.</p>
+
+<p>Point IGR Path at an ELF and that ELF is booted on reset instead: another launcher, a homebrew menu, or
+RiptOPL itself. To come straight back to RiptOPL, give it RiptOPL's own ELF —
+<code>mc0:/APP_RIPTOPL/RIPTOPL.ELF</code> if you imported <code>APP_RIPTOPL.psu</code> to the first memory card.
+RiptOPL then starts fresh. It does not restore what you had selected: <b>Remember Last Played Game</b>
+(<em>Settings → General &amp; System</em>) is a separate setting, off by default, and it is what re-selects the last
+game you ran.</p>
+
+<p>The ELF must live <b>on a memory card</b> (<code>mc0:</code> or <code>mc1:</code>) or on a <b>FAT32 USB drive</b>
+(<code>mass:/…</code>). After a reset the console can only reach USB through <code>USBD.IRX</code> and
+<code>USBHDFSD.IRX</code> in the memory card's <code>SYS-CONF</code> folder, the files FMCB installs; without them the
+reset drops to the PS2 browser instead. If they are missing, RiptOPL offers to copy its own there the first time you
+launch a game on the OPL core with a USB IGR Path (Neutrino has no IGR, so its launches never ask). It never replaces
+files that are already there. Games started by <b>Auto Loading</b> skip the offer, because nobody is at the menu to
+answer it: launch a game on the OPL core from the menu once, or copy the two files yourself, before relying on a USB
+IGR Path there.</p>
+
+<p>This limits the <b>return ELF's location</b>, not the game's source. OPL-core PS2 games on internal
+exFAT use the same IGR hook as other OPL transports. The reset loader does not restore internal exFAT
+for an <code>ata:</code> return path. Test with a blank IGR Path (PS2 browser) or a memory-card ELF to
+distinguish a failed return target from a combination that is not detected.</p>
+
+<p>If you use MMCE cards, <b>IGR Bootcard Slot(s)</b> (<em>Settings → Game Sources → MMCE Settings</em>) additionally sends a
+"switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already
+back on its boot image by the time the next thing loads. See <a href="mmce.html">MMCE</a>.</p>
+
+<h2 id="limitations">When IGR is not available</h2>
+<p>IGR is not universal. It is worth knowing the three cases where the combinations will do nothing, so you do
+not spend time hunting a fault that is not there.</p>
+
+<h3>Before the game opens a controller</h3>
+<p>The hook attaches by patching the game's own <code>scePadPortOpen</code> / <code>scePad2CreateSocket</code>
+call. Until the game asks for a pad, there is nothing hooked — so IGR does not respond during very early boot
+logos on some titles. The console power button is independent of the pad buffer, subject to the
+hardware limits above.</p>
+
+<h3>When the game is incompatible</h3>
+<p>A few games handle input in a way the hook disturbs. Per-game compatibility <b>Mode 6 — Disable IGR</b>
+turns the hook off for that title. If a game misbehaves in a way that started when you launched it through
+RiptOPL, this is the mode to try — at the cost of losing IGR for that game. See
+<a href="per-game-settings.html">Per-game Settings</a>.</p>
+
+<p>Fewer games should need it now. IGR used to watch the pad from a <b>VBLANK interrupt handler</b>, and merely
+registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the handler did. It now
+samples pad and power inputs directly from a short EE timer alarm about once a frame, and registers nothing on
+VBLANK (official OPL #1762, adapted here). A separate worker handles shutdown; high-priority game threads cannot
+starve the input sample. Standard builds retain a detected request in a semaphore until the worker consumes it.</p>
+
+<p>The <b>RetroAchievements</b> loader needs a VBLANK interrupt for its memory snapshots and unlock notice.
+With IGR enabled it uses the combined RA/IGR handler. Mode 6 instead permits a snapshot-only handler when
+telemetry is active, without an IGR worker or pad hooks; client-triggered reset is unavailable. Games that
+reject any VBLANK handler may still be affected.</p>
+
+<p>If initial alarm registration or rearming fails, standard-build IGR stops monitoring controller and
+power-button inputs until a later pad-open successfully registers an alarm. It does not spin a recovery
+thread; without another pad-open, IGR remains unavailable for the session.</p>
+
+<h3>Under the Neutrino core</h3>
+<div class="callout amber"><div class="h">Neutrino has no IGR</div>
+This is a property of that loader, not a RiptOPL limitation, and it is why <b>Mode 6 is greyed out</b>
+whenever the Loader Core is set to Neutrino — there is no hook there to disable. To leave a Neutrino-launched
+game, use the console's power or reset button. See <a href="neutrino.html">Neutrino Core</a>.</div>
+
+<p>PS1 titles do not use RiptOPL's PS2 IGR hook. POPSTARTER supplies its own reset behavior;
+<b>Ember does not provide IGR</b>. See
+<a href="ps1-vcd.html">PS1 Games</a> and the sister
+<a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+
+<h2 id="igs">In-game screenshots (IGS)</h2>
+<p>The <b>L1+L2+R1+R2 + Up</b> combination captures the current frame to a bitmap on <b>memory card slot
+1</b>, named from the game's ID with a zero-padded sequence number starting at 001 — for example
+<code>mc1:/SLUS_012.34_GS(001).bmp</code>. The number increments to a maximum of 255 per game.</p>
+
+<p>Two conditions gate it, and both catch people out:</p>
+<ol>
+<li><b>GSM must be enabled</b> for the running game. The capture is gated on the game's GSM setting, so with
+GSM off the combination does nothing at all.</li>
+<li><b>The build must include IGS.</b> The <code>Makefile</code> defaults <code>EXTRA_FEATURES</code> to
+<code>0</code> and <code>IGS</code> follows it, and the <b>main release loader is built with that
+default</b> — so the loader most people run has no IGS and the Up combination is simply inert.</li>
+</ol>
+
+<div class="callout info"><div class="h">You do not have to build it yourself</div>
+The rolling release also publishes an IGS-enabled loader. Inside <code>RIPTOPL-VARIANTS-*.zip</code>, the
+variants named <code>-extra1</code> are built with <code>EXTRA_FEATURES=1</code>, which turns IGS on; they
+come in <code>pademu0</code>/<code>pademu1</code> and optional <code>-ds5</code> flavours. Building from
+source with <code>make IGS=1</code> works too. See <a href="releases.html">Releases</a>.</div>
+
+<div class="callout amber"><div class="h">RetroAchievements and IGS are mutually exclusive</div>
+The RA loader (<code>RIPTOPL-RetroAchievements-*.zip</code>) is deliberately built without <code>EXTRA_FEATURES</code>:
+GSM 1080p plus IGS and RA will not both fit in the console's <code>ram84</code> region. You can have
+achievements or in-game screenshots, not both. See <a href="retroachievements.html">RetroAchievements</a>.</div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p><b>Nothing happens when I press the combination.</b> Check, in order: the game has actually started (past
+the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is not set for this game; and — for
+the power-off combination specifically — the controller is in analog mode, since L3 and R3 are the stick
+clicks. The screenshot combination uses <b>Up</b>, so it needs no analog mode.</p>
+
+<p>Try the console power button as a cross-check: if that resets and the pad combination does not, the sampler is
+active; check the pad hook and controller behavior.</p>
+
+<p><b>IGR stopped answering in a game that worked on an older build.</b> Report the title, exact version/flavour
+and SHA. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues/984">Issue #984</a> records
+internal-exFAT failures including Beta-4032. Current main includes
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/990">#990's repair for a reproduced lost notification</a>.
+Passing that regression does not prove every console report resolved. The power button is an additional
+cross-check independent of the pad buffer, subject to the hardware limits above.</p>
+
+<p><b>Reset takes me somewhere unexpected.</b> Check <b>IGR Path</b> in <em>Settings → General &amp; System</em>. A stale
+path left over from an earlier setup will boot that ELF instead of exiting to the PS2 browser. A USB path that lands
+in the PS2 browser anyway is missing its memory-card drivers — see <a href="#where-reset-goes">Where a reset takes
+you</a>.</p>
+
+<p><b>The game resets on its own during play.</b> A game that uses all four shoulders plus Start or Select in
+normal play can trigger IGR by accident. Set <b>Mode 6 — Disable IGR</b> for that title.</p>
+
+<details><summary>Where this lives in the source</summary>
+<table>
+<thead><tr><th>File</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>ee_core/src/padhook.c</code></td><td>Pad pattern matching, one-frame EE alarm sampler and shutdown worker; combined RA/IGR or snapshot-only VBLANK handler in RA builds</td></tr>
+<tr><td><code>ee_core/include/padhook.h</code></td><td>The combo constants (<code>IGR_COMBO_R1_L1_R2_L2</code>, <code>IGR_COMBO_START_SELECT</code>, <code>IGR_COMBO_R3_L3</code>, <code>IGR_COMBO_UP</code>)</td></tr>
+<tr><td><code>ee_core/src/cd_igr_rpc.c</code></td><td>IOP-side reset RPC</td></tr>
+<tr><td><code>ee_core/src/igs_api.c</code></td><td>Screenshot capture and BMP writing</td></tr>
+<tr><td><code>include/iosupport.h</code></td><td><code>COMPAT_MODE_6</code> — the Disable IGR flag</td></tr>
+</tbody>
+</table>
+</details>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

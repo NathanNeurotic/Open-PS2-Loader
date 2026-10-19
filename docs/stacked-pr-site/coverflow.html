@@ -1,0 +1,263 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coverflow &amp; PSBBN Flow · RiptOPL Docs</title>
+<meta name="description" content="Choose Coverflow or PSBBN Flow: built-in cover-art themes, controls, artwork and authoring in 4:3 and 16:9.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html" class="active"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<span id="coverflow"></span>
+<h1>Coverflow &amp; PSBBN Flow</h1>
+<p class="lead">Coverflow is RiptOPL's optional built-in centered carousel theme — centered cover art with an alpha-faded
+reflection, animated scrolling between titles, and aspect-correct cover frames in both 4:3
+and widescreen. It is a <b>built-in theme</b>: no theme files to copy. Choose it in the Theme picker; fresh settings use <code>&lt;OPL&gt;</code>.
+For the Collection-style perspective fan, see <a href="#psbbn-flow">PSBBN Flow</a> below.</p>
+
+<div class="callout info"><div class="h">Built-in, not a THM folder theme</div>
+<code>&lt;Coverflow&gt;</code> is compiled into RiptOPL and appears in the theme list alongside
+any custom <code>THM/</code> themes you add. You can switch to a different theme in
+<b>Interface → Theme</b> and switch back at any time. The <b>Coverflow Settings</b>
+button in <b>Interface</b> tunes <code>Coverflow</code> elements; PSBBN Flow has its own fixed presentation.
+Fresh configurations start with <code>&lt;OPL&gt;</code>, a 4:3 menu and Auto video mode.
+Choose <code>&lt;Coverflow&gt;</code> under <b>Settings → Interface → Theme</b>, apply and save.
+Widescreen is a separate choice; Coverflow also works in 4:3. Existing saved settings take precedence.
+</div>
+
+<h2 id="how-it-works">How Coverflow works</h2>
+<p>When the <code>&lt;Coverflow&gt;</code> theme is active, the game list view shows a row of
+cover-art images centred on the screen. The currently selected title sits at the centre; side
+covers fan out to the left and right. Below each cover a mirrored, alpha-faded reflection is
+drawn automatically. Scrolling left or right slides the entire carousel with a smooth animation;
+the selection lands on the new title when the animation completes.</p>
+
+<p>Covers are drawn inside a <b>two-layer frame</b>: a plastic-case layer (<code>case</code>)
+sits over the raw cover art, and a second overlay layer (<code>case_overlay</code>) sits over
+that, keeping the frame visually aligned regardless of cover art dimensions. The engine
+keeps the frame <b>aspect-correct</b> automatically in both 4:3 and widescreen — it does
+<b>not</b> apply an extra widescreen scale on top of what the PS2 already does, so covers
+never warp when widescreen is toggled.</p>
+
+<p>The element type driving the carousel is <code>type=Coverflow</code>. The built-in theme
+defines three variants of this element:</p>
+
+<table data-sortable>
+  <thead><tr><th>Block</th><th>Used for</th><th>Box size</th><th>Default cover</th></tr></thead>
+  <tbody>
+    <tr><td><code>main2</code></td><td>PS2 games</td><td>184 × 256 px (portrait)</td><td><code>cover</code></td></tr>
+    <tr><td><code>appsMain2</code></td><td>Apps</td><td>184 × 184 px (square)</td><td><code>coverapp</code></td></tr>
+    <tr><td><code>vcdMain2</code></td><td>PS1 / VCD games</td><td>184 × 184 px (square)</td><td><code>cover</code></td></tr>
+  </tbody>
+</table>
+
+<p>Apps and PS1 covers use a square box so the frame matches their square art; PS2 games use the
+taller portrait box that matches a standard PS2 case.</p>
+
+<p>On a <b>mixed</b> carousel — the Favorites <b>All in One</b> shelf, or a device page under
+<b>PS2/PS1 Game Display = Mixed</b> — more than one of these blocks is live at once, and each cover
+is drawn from the block for its <em>own</em> media kind rather than one shape being stretched onto
+all three. The cover <b>width</b> stays uniform so carousel spacing does not move; only the height
+follows each row's aspect, and every cover stands on a common bottom edge, so portrait and square covers
+share one baseline and their reflections start together. See
+<a href="themes.html#block-families">Block families</a> for the full resolution rules.</p>
+
+<h2 id="psbbn-flow">PSBBN Flow</h2>
+<div class="callout info"><div class="h">Build availability</div>
+PSBBN Flow is added by <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">PR #977</a>.
+These instructions require a build containing that change. Older builds list only
+<code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> as built-ins.</div>
+<p>Select <b>Settings → Interface → Theme → <code>&lt;PSBBN Flow&gt;</code></b>, apply and save.
+The theme adapts <b>dnunezx / darkladark</b>'s LUNA Collection display from
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733">#733</a>, which #977 supersedes:
+a large focal cover on the right, a diminishing tail of up to six neighbors on the left,
+an outgoing foreground cover, a blue frame/footer and a 25-frame cubic glide.</p>
+<p>It uses the same native sources, selected rows, folders, Favorites, per-game settings and
+launch actions as Coverflow. <b>Left/Right browse covers; Up/Down change sources; R3 toggles Favorite.</b>
+Choose the display through the Theme picker. There is no R3 display switch or separate Collection screen.</p>
+<p>Artwork comes through the normal <code>ART/&lt;startup&gt;_COV</code> loaders and shared asynchronous
+cache, including the existing archive and per-kind fallback handling. No <code>ART/PSBBN</code>
+folder is needed. Portrait and square covers retain their proportions; missing covers use native
+placeholders. See <a href="install.html#cover-art">artwork naming</a> for PS2, PS1 and app keys.</p>
+<p>Theme and widescreen choices are independent, and the selection persists by name when disk themes
+are discovered or removed. The built-in shares editable palette and audio settings with the other
+built-ins. Coverflow's count, scale, duration and dimming settings tune the centered carousel;
+PSBBN Flow retains its fixed perspective, distance shading and 25-frame animation.</p>
+<p>Theme authors can use <code>type=PSBBNFlow</code> alongside a native <code>ItemsList</code>.
+See <a href="themes.html#psbbn-flow">PSBBNFlow authoring</a> for sizing, overlay and family rules.</p>
+
+<h2 id="coverflow-settings">Coverflow Settings</h2>
+<p>Open <b>Interface</b> and press the <b>Coverflow Settings</b> button. These options affect <code>Coverflow</code> elements,
+including those in custom themes. PSBBN Flow uses its fixed layout and animation. Four options are available:</p>
+
+<table data-sortable>
+  <thead><tr><th>Setting</th><th>Options</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Cover Count</b></td>
+      <td>3 / 5</td>
+      <td>Number of covers shown simultaneously. <b>3</b> = one centre + one each side;
+      <b>5</b> = one centre + two each side.</td>
+    </tr>
+    <tr>
+      <td><b>Center Scale</b></td>
+      <td>None / Small / Medium / Large</td>
+      <td>How much the centre cover grows relative to the side covers. <b>None</b> = all covers the same size.</td>
+    </tr>
+    <tr>
+      <td><b>Animation Speed</b></td>
+      <td>Off / Fast / Normal / Slow</td>
+      <td>Duration of the slide animation when the selection changes. <b>Off</b> = instant snap
+      (0 ms); <b>Fast</b> = 100 ms; <b>Normal</b> = 200 ms; <b>Slow</b> = 400 ms.</td>
+    </tr>
+    <tr>
+      <td><b>Dim Side Covers</b></td>
+      <td>On / Off</td>
+      <td>When on, non-centre covers are drawn darker to focus attention on the selected title.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>These settings are saved to <code>settings_riptopl.cfg</code> under the keys
+<code>coverflow_count</code>, <code>coverflow_scale</code>, <code>coverflow_anim</code>, and
+<code>coverflow_dim</code>. They apply to <em>any</em> theme that uses a
+<code>type=Coverflow</code> element — not just the built-in one.</p>
+
+<h2 id="cover-art">Cover art</h2>
+<p>The carousel pulls cover art from the <code>ART/</code> folder on the active storage device
+(same folder used by all OPL themes). Name your art files by Game ID:</p>
+
+<pre>ART/
+  SLUS_012.34_COV.png   ← cover art (used by Coverflow and PSBBN Flow)
+  SLUS_012.34_SCR.png   ← screenshot 1 (shown on the info page)
+  SLUS_012.34_SCR2.png  ← screenshot 2</pre>
+
+<p>If no matching cover is found the carousel shows the built-in <code>cover</code> placeholder
+instead. Art is loaded into a shared texture cache. The cache is pre-sized internally (the
+built-in carousel uses a fixed slot count) and is not user-configurable.</p>
+
+<div class="callout info"><div class="h">Art is shared across OPL builds</div>
+Because all OPL-family builds use the same <code>ART/</code> folder layout, artwork you already
+have for stock OPL, uOPL, or wOPL works with both RiptOPL flow themes without any changes.
+</div>
+
+<h2 id="theme-authoring">Authoring a Coverflow theme</h2>
+<p>You can create your own theme that uses the <code>type=Coverflow</code> element — custom
+background, fonts, colors, and overlay art, with the same live settings above. See
+<a href="themes.html">Theme Engine</a> for the full authoring reference, including:</p>
+
+<ul class="checklist">
+  <li>The <code>type=Coverflow</code> element properties (<code>default</code>, <code>overlay</code>,
+  <code>overlay2</code>, <code>reflection</code>, <code>width</code>/<code>height</code>,
+  overlay corners)</li>
+  <li>The global <code>coverflow_cover_offset</code> key for horizontal nudging of the whole carousel</li>
+  <li>Block family prefixes (<code>appsMain*</code>, <code>vcdMain*</code>, <code>favsMain*</code>, and the
+  opt-in <code>favsVcdMain*</code> / <code>favsAppsMain*</code> for PS1 and app favorites) for per-view overrides</li>
+  <li>The two-layer overlay system (<code>overlay</code> + <code>overlay2</code>) used by the
+  built-in case frame</li>
+</ul>
+
+<p>The built-in theme's source, <code>misc/theme_coverflow.cfg</code> in the repository, is a
+complete working reference you can copy and modify.</p>
+
+<h2 id="cfg-reference">Config key reference</h2>
+<p>The Coverflow Settings are stored in <code>settings_riptopl.cfg</code>. For completeness,
+the underlying keys and their value ranges:</p>
+
+<table data-sortable>
+  <thead><tr><th>Config key</th><th>Type</th><th>Values</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>coverflow_count</code></td><td>int</td><td>3 or 5</td><td>Visible covers in the carousel</td></tr>
+    <tr><td><code>coverflow_scale</code></td><td>int</td><td>0 / 15 / 30 / 45</td><td>Centre-cover grow amount (0 = None, 15 = Small, 30 = Medium, 45 = Large)</td></tr>
+    <tr><td><code>coverflow_anim</code></td><td>int (ms)</td><td>0 / 100 / 200 / 400</td><td>Slide duration (0 = Off, 100 = Fast, 200 = Normal, 400 = Slow)</td></tr>
+    <tr><td><code>coverflow_dim</code></td><td>bool</td><td>0 / 1</td><td>Dim non-centre covers</td></tr>
+  </tbody>
+</table>
+
+<details class="deep"><summary>Where does the per-theme horizontal nudge live?</summary>
+<p>The <code>coverflow_cover_offset</code> key is a <b>theme-level global property</b> — it lives
+inside the theme's <code>conf_theme.cfg</code>, not in <code>settings_riptopl.cfg</code>. It shifts
+the entire carousel left or right (range −1024 to 1024, default 0). The built-in
+<code>&lt;Coverflow&gt;</code> theme sets it to <code>0</code>. If you author a custom theme and
+need to reposition the carousel horizontally, set this in your <code>conf_theme.cfg</code> — it does
+not appear in the Coverflow Settings menu.</p>
+</details>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

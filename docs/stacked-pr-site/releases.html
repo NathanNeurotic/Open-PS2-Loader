@@ -1,0 +1,386 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Releases · RiptOPL Docs</title>
+<meta name="description" content="The rolling and tagged release channels, and how to pull.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="unicode-titles.html"><span class="icon icon-languages"></span>Japanese / Unicode Titles</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html" class="active"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<section class="callout info" id="ra-release-channel"><div class="h">RetroAchievements downloads</div><p>The <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra">single experimental RetroAchievements release</a> offers both <b>inceBtion</b> and <b>Korium</b> themes. Choose one complete theme kit. Both use the same RiptOPL source revision and pinned ORBIT runtime. Standard Rolling and Korium downloads contain standard builds only. Installing the other RA theme replaces the same <code>APP_RIPTOPL-RA</code> app. See the <a href="retroachievements.html">RA setup guide and compatibility limits</a>.</p></section>
+<h1>Releases</h1>
+<p class="lead">Choose <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling">Rolling</a> for current development or <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite">Current Fan Favorite Build</a> for a preserved development snapshot. The publishing branch is <code>rebuild/main</code>; neither choice guarantees compatibility with every setup.</p>
+
+<div class="callout info"><div class="h">One full-feature build</div>
+RiptOPL ships a single standard ELF that includes <b>GSM</b> video-mode handling,
+<b>DS3/DS4 pad emulation (PADEMU)</b>, <b>VMC</b> (Virtual Memory Cards),
+<b>PS2RD cheats</b>, and <b>parental controls</b>. There are no stripped-down per-feature variants
+to juggle. One optional extra is <b>DualSense / DualShock 5 (USB)</b> support: it is off in the
+standard ELF, but you do not have to build it yourself — the rolling release publishes a ready-made
+<code>RIPTOPL-&lt;version&gt;-&lt;SDK&gt;-ds5.ELF</code> for each available SDK flavour inside
+<code>RIPTOPL-VARIANTS-*.zip</code>.
+<code>make DUALSENSE=1</code> is only needed if you compile your own. Forced-progressive
+<b>1080p</b> GSM support is hardware-confirmed and built into every standard loader. Selecting it is
+guarded by a three-step in-GUI confirmation, and holding <b>Triangle + Cross</b> during console boot
+forces 480p for the OPL menu only; the display and connection must accept it. On an interlaced-only TV,
+<b>Triangle + Circle</b> forces the interlaced Auto mode instead.</div>
+
+<h2 id="channels">Release channels</h2>
+
+<table data-sortable>
+<thead><tr><th>Channel</th><th>Tag</th><th>When to use</th><th>Stability</th></tr></thead>
+<tbody>
+<tr>
+  <td><b>Rolling (Latest)</b></td>
+  <td><code>rolling</code></td>
+  <td>Latest features, actively tested builds, eager testers</td>
+  <td>Development builds — <em>may be unstable</em></td>
+</tr>
+<tr><td><b>Korium standard</b></td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium"><code>rolling-korium</code></a></td><td>Standard kit with the Korium theme; replaces the same APP_RIPTOPL app</td><td>Development build</td></tr>
+<tr><td><b>RetroAchievements</b></td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra"><code>rolling-ra</code></a></td><td>Experimental inceBtion and Korium kits using APP_RIPTOPL-RA</td><td>Pre-release; limited hardware evidence</td></tr>
+<tr><td><b>Current Fan Favorite Build</b></td><td><code>current-fan-favorite</code></td><td>A fixed development snapshot for comparison</td><td>Selected after positive feedback; compatibility varies</td></tr>
+</tbody>
+</table>
+
+<p>Release notes on the rolling channel show the source commit, build version, build timestamp, and
+the CI run that produced it. The rolling channel is a full (non-pre-release) development release and
+intentionally owns GitHub's Latest marker. Release candidates use an <code>-rc*</code> suffix and stay
+as pre-releases; a bare <code>v*</code> tag produces a full curated release without displacing rolling.</p>
+
+<h2 id="rolling-assets">What the rolling release contains</h2>
+
+<p>Successful publishing runs on <code>rebuild/main</code> replace the rolling assets. Archives are organized by purpose: the normal installable package, RA development package, exact source, VARIANTS, and optional language/debug packs. Read the release notes for omitted optional flavours. Current standard kits require a usable Neutrino bundle. Korium uses the same standard asset shape with a <code>-Korium</code> suffix; preserved snapshots can retain older names.</p>
+
+<table data-sortable>
+<thead><tr><th>Asset</th><th>What it is</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>RIPTOPL-&lt;version&gt;.zip</code></td>
+  <td><b>The installable package.</b> A ready-to-install app, <code>APPS/APP_RIPTOPL/</code>
+  (<code>RIPTOPL.ELF</code> with its icons, <code>title.cfg</code> and music: the
+  <code>-OFFICIALROLLING</code> build when available, otherwise the first available of the pinned and
+  ps2dev builds), the same app as one memory-card save, <code>APP_RIPTOPL.psu</code>, and its artwork
+  in <code>ART/</code>. Beside it, <code>APPS/</code> normally holds four explicitly labelled SDK loader
+  folders (a best-effort flavour can be absent when its build fails, and the release notes identify it):
+  <code>APP_RIPTOPL-PS2DEVPINNED/</code> (#1, recommended pinned ps2dev),
+  <code>APP_RIPTOPL-OFFICIALPINNED/</code> (#2, recommended official pin),
+  <code>APP_RIPTOPL-PS2DEVROLLING/</code> (#3, moving ps2dev canary), and
+  <code>APP_RIPTOPL-OFFICIALROLLING/</code> (#4, moving official canary). The package also has
+  one canonical <code>POPS/</code> folder for POPSTARTER support (every BDMA pair stays loose there,
+  including <code>usbd.irx.ilink</code> + <code>usbhdfsd.irx.ilink</code>; none is embedded),
+  the bundled <code>EMBER/</code> and <code>neutrino/</code> folders, and five companion-tool shortcuts.
+  Install the ready app, or start with <code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> for a
+  pinned build when that best-effort flavour is present.
+  The presence of the loose iLink pair documents package contents, not a hardware pass: revision
+  2692's POPSTARTER iLink launch still returned to wLaunchELF in every flavour.</td>
+</tr>
+<tr>
+  <td><code>RIPTOPL.ELF</code></td>
+  <td><b>The loader on its own, for updating an install you already have.</b> Download it and
+  overwrite your existing <code>RIPTOPL.ELF</code> — no archive to unpack, nothing else to copy.
+  Its name never changes, so
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF">the
+  download link</a> is permanent. It is the <code>-OFFICIALROLLING</code> flavour, and there is only
+  one of these on purpose: four would put the "which do I pick?" question back in front of the
+  people this asset exists for. <b>Not a first install</b> — the bare loader does not bring
+  <code>POPS/</code>, <code>EMBER/</code>, <code>neutrino/</code> or the language files, so PS1 and
+  Neutrino launches still need the package above. For a reproducible build to quote in a bug report,
+  take a pinned folder from the package instead. Best-effort, like the flavour it is copied from: if
+  that build fails the release ships without it.</td>
+</tr>
+<tr><td><code>RIPTOPL-RA-inceBtion.ELF</code>, <code>RIPTOPL-RA-Korium.ELF</code></td><td>Theme-specific RetroAchievements updates: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-inceBtion.ELF">inceBtion ELF</a> or <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-Korium.ELF">Korium ELF</a>. Rename the selected download to <code>RIPTOPL-RA.ELF</code> when replacing <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code>. Full kits install the runtime.</td></tr>
+<tr><td><code>APP_RIPTOPL.psu</code>; RA theme saves</td><td>Standard app-only save from Rolling. The <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra">RA release</a> has <code>APP_RIPTOPL-RA-inceBtion.psu</code> and <code>APP_RIPTOPL-RA-Korium.psu</code>. Both RA saves import into <code>APP_RIPTOPL-RA</code>; copy shared folders from the matching full kit separately.</td></tr>
+<tr>
+  <td><code>RIPTOPL-&lt;version&gt;-src.zip</code></td>
+  <td>Source snapshot of the exact built commit — you can rebuild this precise revision later.</td>
+</tr>
+<tr>
+  <td><code>RIPTOPL-LANGS-*.zip</code></td>
+  <td>Extra UI language files (<code>.lng</code> files and non-Latin fonts not embedded in the ELF). Copy into your OPL folder alongside the ELF.</td>
+</tr>
+<tr><td><code>RIPTOPL-RetroAchievements-inceBtion-&lt;version&gt;.zip</code><br><code>RIPTOPL-RetroAchievements-Korium-&lt;version&gt;.zip</code></td><td>Both full theme kits in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra">one RA release</a>. Each includes the ready official-toolchain app, ps2dev comparison apps, artwork, PSU, POPS, Ember, pinned ORBIT Neutrino and companion links. Experimental: review the <a href="retroachievements.html">setup and limits</a>.</td></tr>
+<tr>
+  <td><code>RIPTOPL-VARIANTS-*.zip</code></td>
+  <td>The full <code>EXTRA_FEATURES</code> × <code>PADEMU</code> × <code>DUALSENSE</code> matrix for the
+  two ps2dev flavours, plus one ready-made DualSense (<code>DUALSENSE=1</code>) loader for each
+  available official flavour.</td>
+</tr>
+<tr>
+  <td><code>RIPTOPL-DEBUG-*.zip</code></td>
+  <td>Debug builds for the two ps2dev flavours (<code>iopcore</code>, <code>ingame</code>,
+  <code>eesio</code>, <code>iopcore_ppctty</code>, <code>ingame_ppctty</code>, and
+  <code>DTL_T10000</code>). For diagnostics only.</td>
+</tr>
+</tbody>
+</table>
+
+<p><code>&lt;version&gt;</code> in a download's name is the build version without its commit, e.g.
+<code>v1.2.0-Beta-2915</code> — one authoritative version, taken from the required
+<code>ps2dev:latest</code> build and applied to all four flavours. The full version, commit included
+(for example <code>v1.2.0-Beta-2915-da28622</code>), is in the release notes header and on the
+loader's About screen.</p>
+
+<div class="callout info"><div class="h">Separate standard and RA downloads</div>Standard releases retain <code>RIPTOPL.ELF</code>, their app-only PSU and install archives. The dedicated RA release retains one ELF update and PSU per theme, both full kits, its source snapshot, provenance and checksums. DualSense comparison loaders remain in the standard VARIANTS archive.</div>
+
+<span id="two-toolchains"></span>
+<h2 id="test-artifacts">Download a PR or Actions test build</h2>
+<p>A test artifact is a ZIP attached to a successful GitHub Actions run, rather than an asset on the Releases page. Open the supplied run link, check that its source commit matches the fix you are testing, then choose the requested artifact under <b>Artifacts</b>. GitHub normally requires you to sign in to download it. Expired artifacts need a new build.</p>
+<p>For an <b>official rolling toolchain</b> test, choose <code>OPL-OFFICIALROLLING</code>. <code>OPL-OFFICIALPINNED</code> is the separate pinned official toolchain; <code>OPL-PS2DEVROLLING</code> uses the moving ps2dev toolchain. The word rolling in the artifact name identifies the toolchain, not proof that the commit has been published in the rolling release.</p>
+<p>Extract the ZIP and read <code>BUILD-MANIFEST.txt</code> for the source commit, flavour and build configuration. Launch the supplied ELF requested in the test instructions. These artifacts contain loader builds and their manifest; keep a complete installed package for companion cores, modules and artwork. Report the exact commit and flavour alongside the console, device, filesystem, core and changed settings.</p>
+
+<p>Japanese/Unicode game-name fallback is available in compatible builds using a user-supplied <code>font_CJK.ttf</code> beside <code>settings_riptopl.cfg</code>. See <a href="unicode-titles.html">Unicode font setup</a> for the PR #917 build artifact and activation steps.</p>
+<h2 id="four-flavours">Four toolchain flavours, ordered for testing</h2>
+
+<p>Every release attempts four labelled flavours of the same RiptOPL source, in this recommended order:</p>
+<ul class="checklist">
+  <li><b><code>APP_RIPTOPL-PS2DEVPINNED/</code></b> — digest-pinned ps2dev; recommended primary control.</li>
+  <li><b><code>APP_RIPTOPL-OFFICIALPINNED/</code></b> — digest-pinned official ps2homebrew toolchain.</li>
+  <li><b><code>APP_RIPTOPL-PS2DEVROLLING/</code></b> — moving <code>ps2dev:latest</code> canary.</li>
+  <li><b><code>APP_RIPTOPL-OFFICIALROLLING/</code></b> — moving official <code>ps2homebrew:main</code> canary.</li>
+</ul>
+<p>The <code>PS2DEVROLLING</code> canary must compile — if it fails, the publish fails loudly rather
+than shipping without its required build. The other three flavours are <em>best-effort</em>: if one
+fails, the release still updates without that folder and the notes identify the omission.</p>
+
+<h2 id="bundled-neutrino">Bundled Neutrino core</h2>
+
+<p>The installable package ships the latest published official
+<a href="https://github.com/rickgaiser/neutrino">rickgaiser/neutrino</a> build as an
+already-extracted <code>neutrino/</code> folder at the package root (holding
+<code>neutrino.elf</code> plus the <code>config/</code> and <code>modules/</code> folders) — no
+zip-in-zip, so you just drag-and-drop it. RiptOPL adds only one file —
+<code>config/bsd-udpfsbd.toml</code> — so UDPFS works out of the box without a manual copy step.
+Everything else is the official Neutrino build, unchanged.</p>
+
+<div class="callout info"><div class="h">Copying it over</div>
+There is nothing to extract: copy the whole <code>neutrino/</code> folder, including
+<code>neutrino.elf</code>, <code>config/</code> and <code>modules/</code>. For ordinary non-MMCE
+setups, <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code> is supported. <b>For MMCE games
+with GameID card switching, place it on the MMCE game device instead</b> — normally
+<code>mmceN:/neutrino/</code>, or under the configured MMCE Prefix Path. An <code>mcN:</code>-hosted
+Neutrino would conflict with that slot's card switch, so RiptOPL protects the handoff by skipping
+the switch; an <code>mmceN:</code> copy is unaffected. <b>Auto</b> probes the active game device
+before memory-card fallbacks. See <a href="neutrino.html">Neutrino Core</a> for the full setup guide.</div>
+
+<h2 id="how-to-pull">How to pull the rolling release</h2>
+
+<p>Because filenames embed the version and short SHA, they change on every push. Pull by the
+<code>rolling</code> <em>tag</em> rather than a fixed filename so you always get what is currently
+published:</p>
+
+<pre># Everything in the current rolling release
+gh release download rolling --repo NathanNeurotic/Open-PS2-Loader --clobber</pre>
+
+<p>Or download directly from the release page:<br>
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling">github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling</a></p>
+
+<div class="callout info"><div class="h">No stale accumulation</div>
+Every prior run's assets are deleted before the new set is uploaded, so old builds do not
+pile up on the release page. GitHub's automatic "Source code" archives (added separately by
+GitHub) are the only exception.</div>
+
+<h2 id="pipeline">How the pipeline works</h2>
+
+<p>One workflow file — <code>.github/workflows/rolling-release.yml</code> — is the single place
+release packaging lives. The pushed ref picks the publish target:</p>
+
+<ul class="checklist">
+  <li><b>Push to <code>rebuild/main</code> or <code>master</code></b> → updates the
+  <code>rolling</code> full development release, explicitly clears its pre-release flag, and keeps it
+  marked as GitHub Latest.</li>
+  <li><b>Push of a <code>v*</code> tag</b> → cuts a curated per-version release for that tag,
+  using the same normalized package format and best-effort rules. An <code>-rc*</code> tag stays a
+  pre-release; a bare <code>v*</code> tag makes a full release. Neither displaces rolling from the
+  Latest marker.</li>
+  <li><b>Manual <code>workflow_dispatch</code></b> → re-runs as rolling.</li>
+</ul>
+
+<p>A <code>concurrency</code> group cancels in-flight rolling runs when a newer push arrives, so the
+release always reflects the freshest commit. A publishing-branch push and a simultaneous
+<code>v*</code> tag release run in separate concurrency groups and do not cancel each other.</p>
+
+<details class="deep"><summary>Why are there four toolchain flavours in the same release?</summary>
+<p>The moving ps2dev and official toolchain tags can advance independently and occasionally introduce
+regressions. Each lineage therefore has a digest-pinned control beside its moving canary. Start with
+<code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code>; if hardware behavior differs, test the other
+labelled folders and report the exact in-app flavour suffix so application and SDK regressions can be
+separated.
+</p></details>
+
+<details class="deep"><summary>When should I use the VARIANTS or DEBUG zips?</summary>
+<p><b>VARIANTS</b> contain the full <code>EXTRA_FEATURES</code> × <code>PADEMU</code> ×
+<code>DUALSENSE</code> matrix for the moving and pinned ps2dev flavours. The normalizer also adds a
+ready-made DualSense loader for each available official flavour; it does not build the complete
+official-toolchain matrix. <b>DEBUG</b> builds are produced for the two ps2dev flavours only. Those
+configurations (<code>iopcore</code>, <code>ingame</code>, <code>eesio</code>, <code>iopcore_ppctty</code>, <code>ingame_ppctty</code>,
+<code>DTL_T10000</code>) emit diagnostic output over a UART/TTY; they are only useful if you
+have the hardware or emulator setup to capture it. Do not use debug builds for normal gaming —
+they are significantly slower.</p></details>
+
+<h2 id="getting-started">After downloading</h2>
+
+<div class="steps">
+<div class="step"><h3>Extract the package zip</h3>
+<p>Unzip <code>RIPTOPL-&lt;version&gt;.zip</code>. The contents are ready to
+copy to your memory card or USB drive root:</p>
+<pre>APPS/
+  APP_RIPTOPL/
+    RIPTOPL.ELF        ← ready-to-install app (-OFFICIALROLLING when available)
+  APP_RIPTOPL-PS2DEVPINNED/
+    RIPTOPL.ELF        ← #1 recommended pinned control
+  APP_RIPTOPL-OFFICIALPINNED/
+    RIPTOPL.ELF        ← #2 official pinned control
+  APP_RIPTOPL-PS2DEVROLLING/
+    RIPTOPL.ELF        ← #3 moving ps2dev canary
+  APP_RIPTOPL-OFFICIALROLLING/
+    RIPTOPL.ELF        ← #4 moving official canary
+ART/                   ← the app's artwork (RIPTOPL.ELF_*.png)
+APP_RIPTOPL.psu        ← APPS/APP_RIPTOPL/ as one memory-card save
+POPS/                  ← POPSTARTER.ELF and every loose BDMA variant (including .ilink)
+EMBER/                 ← official Ember core; add your own BIOS and games
+neutrino/              ← official Neutrino core (already extracted, drag-and-drop)
+PS2-Servers.url        ← link to the UDPFS / SMBv1 / UDPBD all-in-one PC launcher
+                         (plus four more companion-tool shortcuts)</pre>
+</div>
+<div class="step"><h3>Install the ELF via your launch method</h3>
+<p>Copy <code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> to wherever your launch method (FMCB,
+FHDB, or equivalent) expects it. If that best-effort folder is absent in a run, use the next available
+flavour in the order above. Or install the ready app instead: copy <code>APPS/APP_RIPTOPL/</code> into
+the device's <code>APPS/</code>, or import <code>APP_RIPTOPL.psu</code> onto a memory card with a PS2
+save manager. The labelled folders can sit side by side; the <code>APP_</code> prefix is the OPL
+convention for homebrew apps stored on your device.</p>
+</div>
+<div class="step"><h3>Set up Neutrino (optional)</h3>
+<p>The <code>neutrino/</code> folder is already extracted — copy the whole folder
+(<code>neutrino.elf</code> plus <code>config/</code> and <code>modules/</code>) to a resolver location.
+For ordinary non-MMCE setups, <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code> is supported.
+For MMCE games using GameID card switching, use the active MMCE device instead
+(<code>mmceN:/neutrino/</code>, or under its Prefix Path). Required only if you want per-game
+Neutrino launching or network boot (UDPBD/UDPFS). See <a href="neutrino.html">Neutrino Core</a>.</p>
+</div>
+<div class="step"><h3>Copy the language pack (optional)</h3>
+<p>If you want a non-default UI language, extract <code>RIPTOPL-LANGS-*.zip</code> and copy its
+<code>.lng</code> files and any non-Latin font files into your <code>OPL/LNG/</code> folder.
+The pack covers 33 languages. RiptOPL's own strings are machine-translated in 31 of them; Galician and
+Serbian show those strings in English for now. Scripts the built-in font lacks need the font file from
+the pack too.</p>
+</div>
+</div>
+
+<p>For a complete first-run walkthrough (folder layout, enabling devices, launching your first game),
+see <a href="getting-started.html">Getting Started</a>.</p>
+<h2 id="archive-availability">Archive availability</h2><p>MEGA uploads require successful publishing and configured credentials. Superseded or failed runs may have no archive. Installable packages, source and metadata are archived when upload succeeds; VARIANTS and DEBUG are excluded. Neutrino download/extraction is best-effort, so check release notes before relying on a bundled core.</p>
+
+<h2 id="archive">The rolling archive</h2>
+<p>Because the rolling release is rebuilt on every push, a build you were happy with is replaced quickly.
+Successful runs are preserved on MEGA under run-specific folders, so an older build can still be retrieved:</p>
+
+<pre>RiptOPL/Rolling/&lt;version&gt;/run_&lt;number&gt;/</pre>
+
+<p>Each folder holds the installable packages plus source and build metadata. <b>VARIANTS and DEBUG bundles are
+excluded</b>, and — as above — an upload only exists when that run published successfully and the credentials
+were configured, so superseded or failed runs may have no archive at all.</p>
+
+<p><a href="https://mega.nz/folder/74pRHKRB#9SLDkrkvZAbeKO4Qvxg9LQ">Browse the MEGA rolling archive &rarr;</a></p>
+
+<h2 id="building">Building from source</h2>
+<p>You do not need to build RiptOPL to use it — the releases above are ready to run. This is for people who
+want to change the code or produce a build with non-default options.</p>
+
+<p>Build inside one of the toolchain images from the CI matrix. Both pinned and rolling SDK images work, and
+the latest SDK is <em>not</em> required. For a reproducible baseline use the <code>PS2DEVPINNED</code> image
+digest from that matrix. From the repository root, with Docker available:</p>
+
+<pre>docker run --rm -v "${PWD}:/src" -w /src   ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11   make -j4</pre>
+
+<p>Repository scripts live in <code>tools/</code> and are run from the repository root. Existing Makefile
+targets keep their names and output locations.</p>
+
+<div class="callout amber"><div class="h">Use a clean build directory when changing SDK image</div>
+Object files from one SDK are not safe to mix with another. Also worth saying plainly: <b>a successful build
+does not establish console compatibility</b> — it only means the code compiled.</div>
+
+<p>See the <code>Makefile</code> for the option flags, including <code>DUALSENSE=1</code> (a
+<a href="pademu.html#dualsense">DualSense</a> loader) and <code>EXTRA_FEATURES=1</code> (which turns on
+<a href="igr.html#igs">in-game screenshots</a> and right-to-left language support).</p><h2 id="ecosystem">Companion Ecosystem &amp; Tools</h2>
+<section class="callout info" id="external-tools"><div class="h">Companion tools</div><p>See the <a href="index.html#external-tools">shared companion catalogue</a> for server launchers, library tools and runtime credits.</p></section>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>
