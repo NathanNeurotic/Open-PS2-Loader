@@ -147,7 +147,6 @@ static volatile u32 dmaReg[16];
 #define R_EE_D8_CHCR (&dmaReg[9])
 #define R_EE_D9_CHCR (&dmaReg[10])
 static volatile u64 gsCsr;
-static int gsResets;
 static volatile u64 *gsCsrReg(void)
 {
     static int calls;
@@ -170,112 +169,26 @@ static paddata_t Pad_Data;
 static powerbuttondata_t Power_Button;
 static int IGR_Thread_ID = -1;
 static int IGR_Intc_ID = -1;
-static volatile int IGR_Poll_Alarm_ID = -1, IGR_Poll_Recovery;
-static volatile unsigned int IGR_Poll_Generation = 1;
-static int IGR_Request_Sema = -1;
-typedef struct { int count, max_count, init_count, wait_threads; u32 attr, option; } ee_sema_t;
-static int semaFailures, semaCreates;
-static int CreateSema(ee_sema_t *p) {
-    semaCreates++;
-    if (p->init_count != 0 || p->max_count != 1) return -1;
-    if (semaFailures) { semaFailures--; return -1; }
-    return 3;
-}
 static u8 IGR_Stack[IGR_STACK_SIZE];
 static void *_gp;
 
 /* Kernel stubs: every call is counted so the test can say exactly what ran. */
-static int nAlarm, alarmFails, nSleep, nNop, nWake, lastWake, nPrio, lastPrioThread = -1, lastPrio = -1;
-static int nRelease, releaseFails, tickCount, inSyscall, badAlarmRelease;
+static int nAlarm, nSleep, nWake, lastWake, nPrio, lastPrioThread = -1, lastPrio = -1;
 static int nResetEE, lastResetEE, nSuspend, nISuspend, nIResetEE, nIPrio, nIWake, nCreate, nStart, nDelete;
 static int createFailures, startFailures;
 static ee_thread_t lastCreatedThread;
 static int nAddIntc, lastIntcCause = -1, nEnableIntc, nRA;
-static int sleepsUntilCombo = -1, powerPressAtSleep = -1;
 static u8 padBuf[128];
-static void (*alarmHandler)(s32, u16, void *);
-static void *alarmCommon;
 
+/* Any EE alarm use would show up here: padhook.c must not arm one (checked above, too). */
 static s32 SetAlarm(u16 time, void (*cb)(s32, u16, void *), void *common)
 {
+    (void)time; (void)cb; (void)common;
     nAlarm++;
-    if (alarmFails > 0) {
-        alarmFails--;
-        return -1;
-    }
-    if (time != 256)
-        printf("FAIL alarm time %u, expected 256 (about one frame)\n", time);
-    alarmHandler = cb;
-    alarmCommon = common;
-    return 1;
+    return -1;
 }
-static s32 iSetAlarm(u16 time, void (*cb)(s32, u16, void *), void *common)
-{
-    return SetAlarm(time, cb, common);
-}
-static s32 ReleaseAlarm(s32 alarm_id)
-{
-    if (inSyscall) badAlarmRelease++;
-    (void)alarm_id;
-    nRelease++;
-    if (releaseFails > 0) {
-        releaseFails--;
-        return -1; /* kernel refuses cancellation of a triggered alarm */
-    }
-    alarmHandler = NULL;
-    return 0;
-}
-static s32 iReleaseAlarm(s32 alarm_id)
-{
-    if (intrEnabled) badAlarmRelease++;
-    /* Same alarm table operation, through the non-dispatching syscall entry. */
-    int previous = inSyscall;
-    inSyscall = 0;
-    int result = ReleaseAlarm(alarm_id);
-    inSyscall = previous;
-    return result;
-}
-/* Drive the timer independently of worker scheduling (including priority 0 games). */
-static void tickAlarm(void)
-{
-    void (*cb)(s32, u16, void *);
-    void *common;
-    tickCount++;
-    if (sleepsUntilCombo == tickCount) {
-        padBuf[112] = IGR_PAD_STABLE_V1;
-        padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
-        padBuf[2] = IGR_COMBO_START_SELECT;
-    }
-    if (powerPressAtSleep == tickCount) {
-        ndin = 0x20;
-        poff = 0x04;
-    } else {
-        poff = 0;
-    }
-    cb = alarmHandler;
-    common = alarmCommon;
-    if (cb) {
-        alarmHandler = NULL; /* the one-shot slot is gone before its callback */
-        cb(1, 256, common);
-    }
-}
-static void SleepThread(void)
-{
-    int k;
-    nSleep++;
-    /* This emulates a blocked worker: alarms fire, but the worker cannot run
-       until requested to shut down or asked to recover an allocation failure. */
-    for (k = 0; k < 150 && !Pad_Data.combo_type; k++)
-        tickAlarm();
-    if (!Pad_Data.combo_type) {
-        printf("FAIL alarm never woke worker after 150 frames\\n");
-        Pad_Data.combo_type = IGR_COMBO_START_SELECT; /* keep harness bounded */
-    }
-}
-static void nopdelay(void) { nNop++; }
+static void SleepThread(void) { nSleep++; }
 static void iWakeupThread(int id) { nWake++; lastWake = id; }
-static void iSignalSema(int id) { (void)id; nWake++; lastWake = IGR_Thread_ID; }
-static void WaitSema(int id) { (void)id; SleepThread(); }
 static void WakeupThread(int id) { nWake++; lastWake = id; }
 static void ChangeThreadPriority(int id, int prio) { nPrio++; lastPrioThread = id; lastPrio = prio; }
 static void ResetEE(u32 bits) { nResetEE++; lastResetEE = bits; }
@@ -464,6 +377,11 @@ STANDARD_CHECKS = r'''
     CHECK(nIResetEE == 1 && nISuspend == 254 && nIPrio == 1 && nWake == 1 && lastWake == IGR_Thread_ID,
           "interrupt-context shutdown: reset the EE, suspend every game thread, then wake the worker");
     CHECK(nResetEE == 0 && nSuspend == 0 && nRA == 0, "no thread-only calls and no RA work from the handler");
+    /* Until the worker leaves for the exit ELF, a latched request repeats the handoff every frame,
+       exactly as OPL's original handler did: the game stays stopped and the worker stays woken. */
+    IGR_Intc_Handler(0);
+    CHECK(nIResetEE == 2 && nISuspend == 508 && nIPrio == 2 && nWake == 2 && lastWake == IGR_Thread_ID,
+          "a request still latched next frame repeats the same interrupt-side handoff");
 
     /* The physical power button needs no controller hook. */
     Pad_Data.combo_type = 0;

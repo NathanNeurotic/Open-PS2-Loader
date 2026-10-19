@@ -100,7 +100,17 @@ losing IGR for that game.
 interrupt handler**, and registering one black-screens that game whatever the handler does. Set
 Mode 6 for it.
 
-#### How IGR watches the pad
+**Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a
+property of that loader, and it is why Mode 6 is greyed out whenever the Loader Core is set to
+Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's
+power or reset button.
+
+PS1 titles do not use RiptOPL's PS2 IGR hook. POPSTARTER supplies its own reset
+behavior; **Ember does not provide IGR**. See [VCD.md](VCD.md).
+
+---
+
+## How IGR watches the pad
 
 Once a frame, a VBLANK interrupt handler reads the controller and the power button. When it sees a
 request it stops the game's DMA and the GS, suspends every game thread, and wakes the IGR thread,
@@ -122,14 +132,6 @@ and both failed on real consoles
 
 Builds from that window can therefore fail where current builds work. If IGR stops responding in a
 game that used to answer it, report the title and the exact build.
-
-**Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a
-property of that loader, and it is why Mode 6 is greyed out whenever the Loader Core is set to
-Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's
-power or reset button.
-
-PS1 titles do not use RiptOPL's PS2 IGR hook. POPSTARTER supplies its own reset
-behavior; **Ember does not provide IGR**. See [VCD.md](VCD.md).
 
 ---
 
