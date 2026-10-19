@@ -83,7 +83,7 @@ jobs:
           ripps2_html = f'''<b><a href="{ripps2}">RIPPS2</a></b> by <b>Akilluminati47</b> — our daughter project: a PS2-inspired front end with a <b>web-theme beta</b> at <b><a href="{ripps2_site}">akilluminati47.github.io/RIPPS2</a></b>. A custom OPL theme and <code>RIPPS2.elf</code> are planned next; the project is still alpha, but we recommend it as an alternative with features intended to be on par with RiptOPL.<br>\n'''
           html_section = html_section.replace(f'<b><a href="{ps1_converter}">', ripps2_html + f'<b><a href="{ps1_converter}">', 1)
           pages_before = {}
-          for name in ("index.html", "releases.html"):
+          for name in ("index.html",):
               path = pages / name
               html = path.read_text(encoding="utf-8")
               pages_before[name] = html

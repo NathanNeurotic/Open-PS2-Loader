@@ -1,3 +1,6 @@
+> **Dated contributor record.** Reports and proposed work below describe their recorded baseline.
+> Use [the documentation index](README.md) for current setup and [the October audit](DOCUMENTATION-AUDIT-2026-10.md) for this refresh.
+
 # RiptOPL: what is left
 
 The [full handoff](./COMMUNITY_REPORTS_HANDOFF_2026-10-02.md) has the reports

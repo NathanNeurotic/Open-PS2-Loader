@@ -1,0 +1,37 @@
+name: Check documentation
+
+on:
+  pull_request:
+    branches: [rebuild/main]
+    paths:
+      - '**/*.md'
+      - '.github/scripts/*docs*'
+      - '.github/scripts/*site_sync*'
+      - '.github/scripts/wiki_sync.py'
+      - '.github/requirements-docs.txt'
+      - '.github/workflows/docs-check.yml'
+  push:
+    branches: [rebuild/main]
+    paths:
+      - '**/*.md'
+      - '.github/scripts/*docs*'
+      - '.github/scripts/*site_sync*'
+      - '.github/scripts/wiki_sync.py'
+      - '.github/requirements-docs.txt'
+      - '.github/workflows/docs-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r .github/requirements-docs.txt
+      - run: python .github/scripts/check_docs.py
+      - run: python .github/scripts/test_site_sync.py
