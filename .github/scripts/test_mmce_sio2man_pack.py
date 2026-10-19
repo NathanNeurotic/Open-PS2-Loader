@@ -75,12 +75,20 @@ if not failures:
             src = Path(tmp) / 'pack.c'
             exe = Path(tmp) / ('pack.exe' if sys.platform == 'win32' else 'pack')
             src.write_text(program, encoding='utf-8')
-            build = subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Werror', '-o', str(exe), str(src)],
-                                   capture_output=True, text=True, check=False)
+            try:
+                build = subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Werror', '-o', str(exe), str(src)],
+                                       capture_output=True, text=True, check=False, timeout=120)
+            except subprocess.TimeoutExpired:
+                failures.append('%s harness: gcc did not finish within 120 s' % flavour)
+                continue
             if build.returncode != 0:
                 failures.append('%s harness did not compile:\n%s' % (flavour, build.stderr))
                 continue
-            run = subprocess.run([str(exe)], capture_output=True, text=True, check=False, timeout=10)
+            try:
+                run = subprocess.run([str(exe)], capture_output=True, text=True, check=False, timeout=10)
+            except subprocess.TimeoutExpired:
+                failures.append('%s harness: did not finish within 10 s' % flavour)
+                continue
             if run.returncode != 0:
                 failures.extend('%s: %s' % (flavour, l) for l in (run.stdout.strip().splitlines() or ['exited %d' % run.returncode]))
 
