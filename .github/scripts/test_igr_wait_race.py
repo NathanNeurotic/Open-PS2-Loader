@@ -1,9 +1,9 @@
 """Reproduce raw EE iWakeupThread losing a wake between the latch read and sleep.
 
 The SDK documents this running-thread defect; DISABLE_PATCHED_FUNCTIONS in the
-resident core selects the raw syscall wrappers. Compile the actual VBLANK handler and
+resident core selects the raw syscall wrappers. Compile the actual alarm and
 worker functions, scheduling a request at precisely the vulnerable boundary.
-An optional git ref selects another compatible source revision.
+An optional git ref permits checking that the original source is rejected.
 """
 from pathlib import Path
 import subprocess
@@ -19,7 +19,7 @@ def function(signature):
     start = source.index(signature)
     return source[start:source.index('\n}\n', start) + 3]
 
-production = function('static int IGR_Intc_Handler(') + function('static void IGR_WaitForRequest(')
+production = function('static void IGR_Poll_Alarm(') + function('static void IGR_PollUntilRequested(')
 program = r'''
 #include <stdio.h>
 #include <stdint.h>
@@ -29,10 +29,11 @@ typedef unsigned short u16;
 #define DPRINTF(...) ((void)0)
 #define TH_SELF 0
 static struct { volatile unsigned char combo_type; } Pad_Data;
-static int IGR_Thread_ID=7;
+static int IGR_Thread_ID=7, IGR_Poll_Alarm_ID=1, IGR_Poll_Recovery;
 static int IGR_Request_Sema=3;
+static unsigned int IGR_Poll_Generation=1;
 static int intrEnabled, stateWaiting, wakeCount, lostWakes, delivered;
-static int sleeps, shutdowns, resets, suspends, spurious;
+static int sleeps, shutdowns, resets, suspends, rearms, spurious;
 static jmp_buf blocked;
 static inline int DI(void) { int old=intrEnabled; intrEnabled=0; return old; }
 static inline void EI(void) { intrEnabled=1; }
@@ -46,26 +47,28 @@ static inline int iSignalSema(int id) {
     if(id!=3) return -1;
     wakeCount=1; return 0; /* token persists even when the worker is RUNNING */
 }
-static int IGR_Intc_Handler(int);
-static void ExitHandler(void) {}
-static void deliver_vblank(void) {
+static int iSetAlarm(int ticks, void (*cb)(s32,u16,void *), void *common) {
+    (void)ticks; (void)cb; (void)common; rearms++; return 1;
+}
+static void IGR_Poll_Alarm(s32, u16, void *);
+static void deliver_alarm(void) {
     int old=intrEnabled; intrEnabled=0; delivered++;
-    IGR_Intc_Handler(0);
+    IGR_Poll_Alarm(1,256,(void *)(uintptr_t)IGR_Poll_Generation);
     intrEnabled=old;
 }
 static void SleepThread(void) {
     sleeps++;
     if (spurious) { spurious=0; return; }
     /* Interrupt just before the actual syscall, while the worker is RUNNING. */
-    if (intrEnabled && !delivered) deliver_vblank();
+    if (intrEnabled && !delivered) deliver_alarm();
     stateWaiting=1;
     if (!wakeCount && !delivered) {
         /* Sleep dispatches a different game thread with its own IRQ state.
-         * That thread's VBLANK wakes the now-WAITING worker. */
+         * That thread's timer wakes the now-WAITING worker. */
         int workerIntr=intrEnabled; intrEnabled=1;
-        deliver_vblank(); intrEnabled=workerIntr;
+        deliver_alarm(); intrEnabled=workerIntr;
     }
-    if (!wakeCount) longjmp(blocked,1); /* cannot return: game suspended, wake lost */
+    if (!wakeCount) longjmp(blocked,1); /* cannot return: alarm stopped, wake lost */
     wakeCount--; stateWaiting=0;
 }
 static inline void WaitSema(int id) { (void)id; SleepThread(); }
@@ -77,21 +80,21 @@ static void __attribute__((unused)) iSuspendThread(int id) { (void)id; suspends+
 @PRODUCTION@
 static void reset(int intr) {
     (void)IGR_Request_Sema;
-    Pad_Data.combo_type=0;
+    Pad_Data.combo_type=0; IGR_Poll_Alarm_ID=1; IGR_Poll_Recovery=0;
     intrEnabled=intr; stateWaiting=wakeCount=lostWakes=delivered=0;
-    sleeps=shutdowns=resets=suspends=spurious=0;
+    sleeps=shutdowns=resets=suspends=rearms=spurious=0;
 }
 #define CHECK(c) do { if(!(c)) { fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#c); return 1; } } while(0)
 int main(void) {
     reset(1);
-    if(setjmp(blocked)) { fputs("FAIL: request latched, game suspended, running-thread wake lost, worker asleep\n",stderr); return 1; }
-    IGR_WaitForRequest();
+    if(setjmp(blocked)) { fputs("FAIL: request latched, alarm stopped, running-thread wake lost, worker asleep\n",stderr); return 1; }
+    IGR_PollUntilRequested();
     CHECK(delivered==1 && !lostWakes && sleeps==1 && intrEnabled==1);
-    CHECK(Pad_Data.combo_type==0xf6);
+    CHECK(Pad_Data.combo_type==0xf6 && IGR_Poll_Alarm_ID==-1 && rearms==0);
     CHECK(shutdowns==1 && resets==1 && suspends==254);
-    reset(1); Pad_Data.combo_type=0xf6; IGR_WaitForRequest();
+    reset(1); Pad_Data.combo_type=0xf6; IGR_PollUntilRequested();
     CHECK(sleeps==0 && delivered==0 && intrEnabled==1 && shutdowns==1);
-    reset(1); spurious=1; IGR_WaitForRequest();
+    reset(1); spurious=1; IGR_PollUntilRequested();
     CHECK(sleeps==2 && delivered==1 && !lostWakes && intrEnabled==1 && shutdowns==1);
     puts("IGR wait: persistent request across check/wait gap, prelatched and spurious signals pass");
     return 0;

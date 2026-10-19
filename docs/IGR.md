@@ -96,31 +96,31 @@ compatibility **Mode 6 — Disable IGR** turns the hook off for that title. If a
 way that started when you launched it through RiptOPL, this is the mode to try — at the cost of
 losing IGR for that game.
 
-The native OPL core uses the **VBLANK_END** input-sampling baseline used by wOPL
-and Grimdoomer's released exFAT build. The handler checks the controller and
-physical power button each frame. On a request it suspends competing game threads
-before signalling a semaphore; the worker performs DMA/GS and EE shutdown.
-This retains early requests and handles games whose running thread has priority 0.
-It does not depend on an EE Timer 3 alarm, alarm slots, rearming, or a recovery thread.
+Fewer games should need it now. IGR used to watch the pad from a **VBLANK interrupt handler**, and
+merely registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the
+handler did. It now samples controller and power-button inputs directly from a short EE timer alarm
+about once per frame, and registers nothing on VBLANK (official OPL #1762, adapted here).
+The alarm samples inputs and, on a reset request, suspends competing game
+threads before signalling the IGR worker. Promoting that worker to priority 0
+alone cannot preempt a game already running at priority 0. The worker then
+handles DMA/GS and EE shutdown. Ordinary samples do not suspend threads. The
+**RetroAchievements** loader is the exception: its per-frame snapshots and unlock notice require a
+VBLANK interrupt. With IGR enabled, RA uses the existing combined VBLANK/IGR path. Under Mode 6,
+RA instead installs a snapshot-only handler when telemetry is active, without an IGR thread or pad
+hooks. Achievements may continue, but client-triggered reset is unavailable. Games incompatible
+with registration of any VBLANK handler may still be affected.
 
-**Known compatibility tradeoff:** registering a VBLANK_END handler can itself
-black-screen some games, including Fatal Fury: Battle Archives Volume 2
-(`SLUS_217.23`; official OPL #1762). Use Mode 6 for such a title, which disables
-native IGR. This baseline restoration needs console validation; it is not a claim
-that the remaining internal-exFAT reports are resolved. The previous alarm sampler
-avoided that VBLANK conflict but could lose both input-monitoring paths if its alarm
-was unavailable or stopped. Beta 4080 still has a report of both inputs being inert.
-
-The **RetroAchievements** loader also feeds its snapshots from VBLANK. With IGR
-on it shares the handler above. Under Mode 6 it installs a snapshot-only handler
-when telemetry is active, without an IGR worker or pad hooks; client-triggered reset
-is unavailable. A game incompatible with any VBLANK handler may still be affected.
-
-If IGR stops responding, report the exact build/flavour, game ID, Mode 6 state,
-controller result and physical power-button result. A working power-button reset
-with an inert combo points toward the pad hook; neither input responding requires
-checking sampler installation/interrupt delivery and whether a request reaches
-shutdown. No host test can establish those results on a physical console.
+If IGR stops responding in a game that used to answer it on an older build, report the title.
+Standard builds retain the detected request in a semaphore until the shutdown worker consumes it.
+This avoids the raw EE kernel wakeup defect if a timer recognizes a combination immediately before
+the worker enters its wait. It does not change the game's interrupt sources or add busy polling.
+The alarm sampler avoids the former priority-127 worker starvation, but it does not fix missing
+pad hooks, changed controller layouts, or games that block interrupts. If initial alarm
+registration or rearming during gameplay fails, IGR stops monitoring both controller combinations
+and physical power-button events until a later pad-open successfully registers an alarm.
+Registration retries do not spin a high-priority recovery thread. If the game never opens a pad
+again, IGR stays unavailable for that session. While the sampler is active, the power button is a
+useful cross-check because it does not depend on the pad buffer.
 
 **Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a
 property of that loader, and it is why Mode 6 is greyed out whenever the Loader Core is set to
@@ -187,7 +187,7 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 
 | File | Role |
 |---|---|
-| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, VBLANK input sampling, semaphore handoff and IGR shutdown worker, combo dispatch |
+| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, the one-frame EE alarm sampler and IGR shutdown worker (the VBLANK interrupt handler in RetroAchievements builds only), combo dispatch |
 | `ee_core/include/padhook.h` | The combo constants (`IGR_COMBO_R1_L1_R2_L2`, `IGR_COMBO_START_SELECT`, `IGR_COMBO_R3_L3`, `IGR_COMBO_UP`) |
 | `ee_core/src/cd_igr_rpc.c` | IOP-side reset RPC |
 | `ee_core/src/igs_api.c` | Screenshot capture and BMP writing |
