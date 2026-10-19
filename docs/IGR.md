@@ -97,8 +97,8 @@ way that started when you launched it through RiptOPL, this is the mode to try â
 losing IGR for that game.
 
 **Fatal Fury: Battle Archives Volume 2** is the known example. IGR watches the pad from a **VBLANK
-interrupt handler**, and registering one black-screens that game whatever the handler does. Set
-Mode 6 for it. On the **RetroAchievements** loader with achievements active, Mode 6 still registers
+interrupt handler**, and registering one black-screens that game whatever the handler does. The USA
+release (SLUS_217.23) gets Mode 6 by default; set it yourself for other regions. On the **RetroAchievements** loader with achievements active, Mode 6 still registers
 a VBLANK handler for the achievement snapshots, so play that game on the standard loader instead.
 
 **Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a

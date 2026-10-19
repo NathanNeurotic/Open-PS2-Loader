@@ -69,7 +69,7 @@ static powerbuttondata_t Power_Button;
  *     included -- while the VBLANK build worked on the same console and games.
  *
  * Known cost: #1762 reports Fatal Fury: Battle Archives Volume 2 black-screens with a VBLANK_END
- * handler registered. As before October 5, that game needs Compatibility Mode 6 (IGR off).
+ * handler registered. supportbase.c gives that title Mode 6 (IGR off) by default.
  * RetroAchievements builds also run RA_OnVblank from this handler. */
 
 /* IGR Thread ID and interrupt handler */
