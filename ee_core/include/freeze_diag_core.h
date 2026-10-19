@@ -1,6 +1,6 @@
 /*
   In-game freeze report (INGAMEDIAG flavour only). Called from the IGR path in padhook.c:
-    FreezeDiag_Begin     combo seen, IGR thread at priority 0, game threads not yet suspended
+    FreezeDiag_Begin     combo seen, IGR worker at priority 0, sampler has suspended game threads
     FreezeDiag_FetchAndShutdown  replaces oplIGRShutdown(0): fetches the IOP's record, then sends
                                  the shutdown with a deadline (skipped if the IOP did not answer)
     FreezeDiag_Write     after the IGR IOP reboot; freezediag.irx writes mc0:/RIPTFRZ.TXT

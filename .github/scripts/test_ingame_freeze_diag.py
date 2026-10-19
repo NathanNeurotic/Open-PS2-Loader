@@ -2,7 +2,7 @@
 """In-game freeze report (INGAMEDIAG / FREEZEDIAG flavour) structural checks.
 
 The report must not exist in any other build, must not be able to hang IGR on a stuck IOP, and
-must capture the game's threads before IGR changes them. The text formatter itself is covered by
+must capture thread waits and priorities after handoff suspension, before DMA/GS shutdown. The text formatter is covered by
 ee_core/tests/test_freeze_diag_format.c.
 """
 
