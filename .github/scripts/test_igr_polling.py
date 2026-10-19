@@ -8,8 +8,8 @@ that must run every frame. Mode 6 instead has a snapshot-only handler with no IG
 
 This compiles the real padhook.c functions twice -- standard and RA -- against kernel stubs and
 checks: timer installation and worker starvation, pad/power detection, pad-hook alarm retry,
-no VBLANK handler on standard builds, and once-only shutdown preparation (priority, DMA/GS,
-ResetEE, suspension) with thread-context calls on one path and i* calls on the other.
+no VBLANK handler on standard builds, interrupt-side suspension before signalling,
+and once-only DMA/GS/ResetEE shutdown preparation in the appropriate context.
 """
 from pathlib import Path
 import re
@@ -488,13 +488,15 @@ STANDARD_CHECKS = r'''
           "detection immediately promotes and wakes the shutdown worker");
     CHECK(nAlarm == 1 && IGR_Poll_Alarm_ID < 0 && !alarmHandler,
           "sampler stops rearming after an IGR request");
+    CHECK(nISuspend == 254 && nSuspend == 0,
+          "sampler suspends game threads before worker scheduling can be starved");
     IGR_PollUntilRequested();
     CHECK(nSleep == 0 && nPrio == 1 && lastPrioThread == TH_SELF && lastPrio == 0,
           "worker handles preexisting IGR request without sleeping");
-    CHECK(nResetEE == 1 && lastResetEE == 0x7F && nSuspend == 254,
-          "worker handles ResetEE and game suspension exactly once");
-    CHECK(nIResetEE == 0 && nISuspend == 0,
-          "standard callback never does interrupt-context shutdown");
+    CHECK(nResetEE == 1 && lastResetEE == 0x7F && nSuspend == 0 && nISuspend == 254,
+          "worker handles ResetEE once without repeating game suspension");
+    CHECK(nIResetEE == 0,
+          "standard callback leaves DMA/GS and EE reset to the worker");
 
     /* A non-request frame must rearm exactly one one-shot alarm. */
     armPad();

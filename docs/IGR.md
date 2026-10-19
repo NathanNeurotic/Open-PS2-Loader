@@ -94,8 +94,10 @@ Fewer games should need it now. IGR used to watch the pad from a **VBLANK interr
 merely registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the
 handler did. It now samples controller and power-button inputs directly from a short EE timer alarm
 about once per frame, and registers nothing on VBLANK (official OPL #1762, adapted here).
-The alarm only detects requests; a separate IGR worker handles game shutdown, so
-high-priority game threads cannot starve the input check. The
+The alarm samples inputs and, on a reset request, suspends competing game
+threads before signalling the IGR worker. Promoting that worker to priority 0
+alone cannot preempt a game already running at priority 0. The worker then
+handles DMA/GS and EE shutdown. Ordinary samples do not suspend threads. The
 **RetroAchievements** loader is the exception: its per-frame snapshots and unlock notice require a
 VBLANK interrupt. With IGR enabled, RA uses the existing combined VBLANK/IGR path. Under Mode 6,
 RA instead installs a snapshot-only handler when telemetry is active, without an IGR thread or pad

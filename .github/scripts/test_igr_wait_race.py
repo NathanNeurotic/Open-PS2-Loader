@@ -75,7 +75,8 @@ static inline void WaitSema(int id) { (void)id; SleepThread(); }
 static void IGR_StopDmaAndGs(void) { shutdowns++; }
 static void ChangeThreadPriority(int id,int priority) { (void)id; (void)priority; }
 static void ResetEE(int mask) { if(mask==0x7f) resets++; }
-static void SuspendThread(int id) { (void)id; suspends++; }
+static void __attribute__((unused)) SuspendThread(int id) { (void)id; suspends++; }
+static void __attribute__((unused)) iSuspendThread(int id) { (void)id; suspends++; }
 @PRODUCTION@
 static void reset(int intr) {
     (void)IGR_Request_Sema;
