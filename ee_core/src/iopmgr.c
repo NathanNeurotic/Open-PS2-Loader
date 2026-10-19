@@ -211,7 +211,8 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
     }
 #endif
 
-    // Optional except for MX4SIO; the menu packs it for VMC/PADEMU too.
+    // Optional except for MX4SIO; the menu packs it for VMC/PADEMU too, never for MMCE games
+    // (src/system.c sendIrxKernelRAM). Unpacked, this load fails harmlessly.
     int sio2manLoaded = LoadOPLModule(OPL_MODULE_ID_SIO2MAN, 0, 0, NULL);
 
     switch (config->GameMode) {
