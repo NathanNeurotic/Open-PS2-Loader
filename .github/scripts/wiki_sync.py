@@ -415,6 +415,10 @@ site checkouts must be clean. Existing working copies are also accepted by the b
 git clone --depth 1 --single-branch --branch rebuild/main https://github.com/NathanNeurotic/Open-PS2-Loader.git source
 git clone --depth 1 --single-branch --branch gh-pages https://github.com/NathanNeurotic/Open-PS2-Loader.git site
 git clone https://github.com/NathanNeurotic/Open-PS2-Loader.wiki.git wiki
+git -C source fetch origin {source_sha}
+git -C source checkout --detach FETCH_HEAD
+git -C site fetch origin {site_sha}
+git -C site checkout --detach FETCH_HEAD
 cd wiki
 python -m venv .venv
 ```
