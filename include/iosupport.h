@@ -223,6 +223,8 @@ typedef struct _item_list_t
     // Name and core kind identify rows independently of the device's current view (Favourites).
     int (*itemGetPs1SaveDir)(item_list_t *itemList, int id, const char *name, int ember,
                              char *directory, int directorySize, char *partition, int partitionSize);
+    // Optional core-aware creation; appended to preserve positional initializers.
+    int (*itemCreateVMC)(item_list_t *itemList, char *name, int size, int requireContiguous);
 } item_list_t;
 
 #define ITEM_VIEW_NATIVE    0

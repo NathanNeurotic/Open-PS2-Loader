@@ -5,7 +5,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 source = (root / "src/system.c").read_text(encoding="utf-8")
-start = source.index("int sysCheckVMC(")
+start = source.index("int sysCheckVMCEx(")
 brace = source.index("{", start)
 depth = 0
 end = brace
@@ -15,7 +15,7 @@ while end < len(source):
     if depth == 0:
         break
 assert depth == 0
-function = source[start:end]
+function = source[start:end] + "\n" + source[source.index("int sysCheckVMC("):].split("\n}\n", 1)[0] + "\n}\n"
 ui = (root / "src/guigame.c").read_text(encoding="utf-8")
 assert "createResult == SYS_VMC_REPLACE_REQUIRES_DELETE" in ui
 assert "_STR_VMC_REPLACE_REQUIRES_DELETE" in ui
@@ -47,7 +47,7 @@ typedef struct {
 } vmc_superblock_t;
 typedef struct {
     char VMC_filename[1024];
-    int VMC_size_mb, VMC_blocksize, VMC_thread_priority, VMC_card_slot;
+    int VMC_size_mb, VMC_blocksize, VMC_thread_priority, VMC_flags, VMC_card_slot;
 } createVMCparam_t;
 static char gVMCCreatePath[256] = {0};
 static int exists, length, opened, erased, jobs, returnsError;

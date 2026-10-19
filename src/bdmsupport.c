@@ -2945,6 +2945,14 @@ static int bdmCheckVMC(item_list_t *itemList, char *name, int createSize)
     return pDeviceData != NULL ? sysCheckVMC(pDeviceData->bdmPrefix, "/", name, createSize, NULL) : -1;
 }
 
+static int bdmCreateVMC(item_list_t *itemList, char *name, int size, int requireContiguous)
+{
+    bdm_device_data_t *device = (bdm_device_data_t *)itemList->priv;
+    if (device == NULL || device->bdmDeviceType == BDM_TYPE_PCCF)
+        return SYS_VMC_CREATE_FAILED;
+    return sysCheckVMCEx(device->bdmPrefix, "/", name, size, NULL, requireContiguous ? 1 : 0);
+}
+
 static char *bdmGetPrefix(item_list_t *itemList)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
@@ -2978,7 +2986,7 @@ static item_list_t bdmGameList = {
     BDM_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, BDM_MODE_UPDATE_DELAY, NULL, NULL, &bdmGetTextId, &bdmGetPrefix, &bdmInit, &bdmNeedsUpdate,
     &bdmUpdateGameList, &bdmGetGameCount, &bdmGetGame, &bdmGetGameName, &bdmGetGameNameLength, &bdmGetGameStartup, &bdmDeleteGame, &bdmRenameGame,
     &bdmLaunchGame, &bdmGetConfig, &bdmGetImage, &bdmCleanUp, &bdmShutdown, &bdmCheckVMC, &bdmGetIconId, &bdmLaunchVcd,
-    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId, &bdmSaveCueSettings, &bdmGetPs1SaveDir};
+    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId, &bdmSaveCueSettings, &bdmGetPs1SaveDir, &bdmCreateVMC};
 
 void bdmInitSemaphore()
 {

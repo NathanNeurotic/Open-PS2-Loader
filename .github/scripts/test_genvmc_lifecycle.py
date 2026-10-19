@@ -97,12 +97,13 @@ int write(int fd, void *buf, int count)
 @WRITER@
 
 /* ---- the job itself ---- */
-static int formatResult, formats, removes, removeSawBusy, abortDuringFormat;
+static int formatResult, formats, removes, removeSawBusy, abortDuringFormat, formatterOwns;
 static char formatName[1024], removedName[1024];
 static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progress, char *msg)
 {
     static char cluster[1024];
     (void)size_kb; (void)blocksize; (void)msg;
+    genvmc_owns_file = formatterOwns;
     formats++;
     strcpy(formatName, filename);
     *progress = 50;
@@ -277,6 +278,21 @@ int main(void)
         CHECK(created == 0, "and starts nothing");
     }
 
+    SCENARIO("contiguous_preopen_failure_preserves_file") {
+        CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
+        genvmc_job.VMC_flags = VMC_CREATE_CONTIGUOUS;
+        formatterOwns = 0; formatResult = -111;
+        runWorker();
+        CHECK(removes == 0, "unsupported capability must not remove any file");
+    }
+    SCENARIO("contiguous_allocation_failure_removes_only_owned_file") {
+        CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
+        genvmc_job.VMC_flags = VMC_CREATE_CONTIGUOUS;
+        formatterOwns = 1; formatResult = -112;
+        runWorker();
+        CHECK(removes == 1 && removeSawBusy, "only this job's exclusive new file is removed before status");
+        formatterOwns = 0;
+    }
     genvmc_deinit(NULL);
     if (failures)
         return 1;

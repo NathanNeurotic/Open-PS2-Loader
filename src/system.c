@@ -2759,7 +2759,7 @@ int sysVMCContiguity(void)
 }
 
 // createSize == -1 : delete, createSize == 0 : probing, createSize > 0 : creation
-int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize, vmc_superblock_t *vmc_superblock)
+int sysCheckVMCEx(const char *prefix, const char *sep, char *name, int createSize, vmc_superblock_t *vmc_superblock, int flags)
 {
     int size = -1;
     char path[256];
@@ -2862,6 +2862,7 @@ int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize,
             createParam.VMC_blocksize = 16;
             createParam.VMC_thread_priority = 0x0f;
             createParam.VMC_card_slot = -1;
+            createParam.VMC_flags = flags;
             if (fileXioDevctl("genvmc:", 0xC0DE0001, (void *)&createParam, sizeof(createParam), NULL, 0) < 0) {
                 gVMCCreatePath[0] = '\0';
                 return SYS_VMC_CREATE_FAILED;
@@ -2869,4 +2870,9 @@ int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize,
         }
     }
     return size;
+}
+
+int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize, vmc_superblock_t *vmc_superblock)
+{
+    return sysCheckVMCEx(prefix, sep, name, createSize, vmc_superblock, 0);
 }

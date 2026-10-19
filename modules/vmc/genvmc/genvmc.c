@@ -19,6 +19,7 @@
 #include <errno.h>
 
 #include "genvmc.h"
+#include "vmc_alloc.h"
 
 #ifdef DEBUG
 #define DPRINTF(args...) printf(args)
@@ -29,7 +30,7 @@
 #endif
 
 #define MODNAME "genvmc"
-IRX_ID(MODNAME, 1, 1);
+IRX_ID(MODNAME, 1, 2);
 
 // driver ops protypes
 static int genvmc_dummy(void);
@@ -130,6 +131,7 @@ static int genvmc_abort = 0;
 // The one job genvmc runs, in its own copy. The create devctl's argument is fileXio's RPC buffer,
 // which the next request overwrites while the job is still running.
 static createVMCparam_t genvmc_job;
+static int genvmc_owns_file;
 
 static statusVMCparam_t genvmc_stats;
 
@@ -288,6 +290,24 @@ exit:
 }
 
 //--------------------------------------------------------------
+// Capability is queried before opening: old drivers may ignore O_EXCL/ioctl2.
+static int vmc_open_contiguous(char *filename, unsigned int bytes)
+{
+    vmc_alloc_request_t request = {VMC_ALLOC_V1, bytes};
+    int fd;
+    if (devctl(filename, VMC_ALLOC_CAPS, NULL, 0, NULL, 0) != VMC_ALLOC_V1)
+        return -111;
+    fd = open(filename, O_RDWR | O_CREAT | FIO_O_EXCL);
+    if (fd < 0)
+        return -101;
+    genvmc_owns_file = 1;
+    if (ioctl2(fd, VMC_ALLOC_RESERVE, &request, sizeof(request), NULL, 0) != VMC_ALLOC_V1) {
+        close(fd);
+        return -112;
+    }
+    return fd;
+}
+
 static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progress, char *msg)
 {
     register int i, r, b, ifc_index, fat_index;
@@ -297,9 +317,16 @@ static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progres
     MCDevInfo *mcdi = (MCDevInfo *)&devinfo;
 
     strcpy(msg, "Creating VMC file...");
-    int genvmc_fh = open(filename, O_RDWR | O_CREAT | O_TRUNC);
-    if (genvmc_fh < 0)
-        return -101;
+    int genvmc_fh;
+    if (genvmc_job.VMC_flags & VMC_CREATE_CONTIGUOUS) {
+        genvmc_fh = vmc_open_contiguous(filename, (unsigned int)size_kb * 1024U);
+        if (genvmc_fh < 0)
+            return genvmc_fh;
+    } else {
+        genvmc_fh = open(filename, O_RDWR | O_CREAT | O_TRUNC);
+        if (genvmc_fh < 0)
+            return -101;
+    }
 
     // set superblock magic & version
     memset((void *)&mcdi->magic, 0, sizeof(mcdi->magic) + sizeof(mcdi->version));
@@ -512,7 +539,15 @@ static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progres
         goto err_out;
     }
 
-    close(genvmc_fh);
+    if (genvmc_job.VMC_flags & VMC_CREATE_CONTIGUOUS) {
+        vmc_alloc_request_t request = {VMC_ALLOC_V1, (unsigned int)size_kb * 1024U};
+        if (ioctl2(genvmc_fh, VMC_ALLOC_VERIFY, &request, sizeof(request), NULL, 0) != VMC_ALLOC_V1) {
+            r = -113;
+            goto err_out;
+        }
+    }
+    if (close(genvmc_fh) < 0)
+        return -113;
 
     *progress = 100;
 
@@ -563,6 +598,7 @@ static void VMC_create_thread(void *args)
     aborted = genvmc_abort;
     SignalSema(genvmc_abort_sema);
 
+    genvmc_owns_file = 0;
     if (aborted)
         r = -1000;
     else if (param->VMC_card_slot == -1)
@@ -576,7 +612,9 @@ static void VMC_create_thread(void *args)
     // failures that come BEFORE the open -- vmc_mccopy's source-card checks (-98 no card, -99
     // unreadable, -100 not formatted) and the open itself (-101): the name may belong to a VMC
     // this job never touched.
-    if (r < 0 && !aborted && r != -98 && r != -99 && r != -100 && r != -101)
+    if (r < 0 && !aborted &&
+        ((param->VMC_flags & VMC_CREATE_CONTIGUOUS) ? genvmc_owns_file :
+                                                      (r != -98 && r != -99 && r != -100 && r != -101)))
         remove(param->VMC_filename);
 
     // The result is published last, once the file is in its final state (a removed partial
@@ -586,6 +624,12 @@ static void VMC_create_thread(void *args)
     genvmc_stats.VMC_error = r < 0 ? r : 0;
     if (r == -1000)
         strcpy(genvmc_stats.VMC_msg, "VMC file creation aborted");
+    else if (r == -111)
+        strcpy(genvmc_stats.VMC_msg, "VMC driver lacks safe contiguous creation");
+    else if (r == -112)
+        strcpy(genvmc_stats.VMC_msg, "Cannot reserve contiguous VMC space");
+    else if (r == -113)
+        strcpy(genvmc_stats.VMC_msg, "Cannot verify the completed VMC layout");
     else if (r < 0)
         strcpy(genvmc_stats.VMC_msg, "Failed to format VMC file");
     else {
@@ -609,6 +653,9 @@ static int vmc_create(const createVMCparam_t *param)
     register int r, thid;
     iop_thread_t thread_param;
 
+    if ((param->VMC_flags & ~VMC_CREATE_CONTIGUOUS) ||
+        ((param->VMC_flags & VMC_CREATE_CONTIGUOUS) && param->VMC_card_slot != -1))
+        return -EINVAL;
     if (genvmc_stats.VMC_status == GENVMC_STAT_BUSY)
         return -EBUSY;
 

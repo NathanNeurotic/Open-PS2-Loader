@@ -105,6 +105,7 @@ jobs:
         run: |
           python3 .github/scripts/test_bdmfs_frag_walk.py
           python3 .github/scripts/test_safe_bdmfs_install.py
+          python3 .github/scripts/test_vmc_contiguous_create.py
       - name: Check native VMC mapping refusals and both slot lifetimes
         run: python3 .github/scripts/test_native_vmc_layout.py
       - name: Check Back on a Settings page keeps its edits and only a real change reconnects SMB
