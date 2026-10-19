@@ -5,7 +5,7 @@ Exercise both a priority-0 game and another priority-0 ready thread: raising
 the IGR worker to 0 alone cannot give it the CPU. Also run the actual worker
 across its semaphore wait and the interrupt-before-wait boundary. Hardware
 reset/input operations are stubs; request delivery and handoff are production
-functions. An optional git ref demonstrates that the previous source fails.
+functions. An optional git ref selects another compatible source revision.
 """
 from pathlib import Path
 import subprocess

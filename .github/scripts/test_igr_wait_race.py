@@ -3,7 +3,7 @@
 The SDK documents this running-thread defect; DISABLE_PATCHED_FUNCTIONS in the
 resident core selects the raw syscall wrappers. Compile the actual VBLANK handler and
 worker functions, scheduling a request at precisely the vulnerable boundary.
-An optional git ref permits checking that the original source is rejected.
+An optional git ref selects another compatible source revision.
 """
 from pathlib import Path
 import subprocess

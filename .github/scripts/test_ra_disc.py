@@ -217,15 +217,12 @@ run('launch',prefix+s+test)
 
 # Exercise the actual interrupt handler up to the point where it would suspend
 # game threads. Hardware register reads/writes use host bytes in this harness.
-# The pad and power-button checks live in IGR_CheckInputs (shared with the
-# polling thread of standard builds, upstream OPL #1762), so compile it too.
+# The shared pad/power checker and full VBLANK handler compile together.
 s=(root/'ee_core/src/padhook.c').read_text(encoding='utf-8')
 check=s[s.index('static void IGR_CheckInputs'):]
 check=check[:check.index('\n}\n')+3]
 s=s[s.index('static int IGR_Intc_Handler'):]
-s=s[:s.index('    // If power button or combo is press')]
-s=s.replace('    int i;','    (void)cause;')
-s+='    return Pad_Data.combo_type;\n}\n'
+s=s[:s.index('\n}\n')+3]
 s=check+s
 prefix=r'''
 #include <assert.h>
@@ -247,6 +244,11 @@ static u8 ndin=0x20, poff=0x04, sdin=0x55, scmd=0x55;
 #define CDVD_R_SDIN (&sdin)
 #define CDVD_R_SCMD (&scmd)
 static int padOpen_hooked, snapshots, kernel_enters;
+static int IGR_Thread_ID=5, IGR_Request_Sema=3;
+static void iSuspendThread(int id) {(void)id;}
+static void iChangeThreadPriority(int id, int priority) {(void)id;(void)priority;}
+static void iSignalSema(int id) {assert(id==IGR_Request_Sema);}
+static void ExitHandler(void) {}
 static void RA_OnVblank(void) {snapshots++;}
 static void ee_kmode_enter(void) {kernel_enters++;}
 static void ee_kmode_exit(void) {}
@@ -263,9 +265,9 @@ int main(void) {
     assert(snapshots==1 && !kernel_enters && !Power_Button.press);
     assert(sdin==0x55 && scmd==0x55); /* no ROM power-off cancellation */
     pad[3]=IGR_COMBO_START_SELECT;
-    assert(IGR_Intc_Handler(0)==IGR_COMBO_START_SELECT); /* return combo still reaches teardown */
+    assert(IGR_Intc_Handler(0)==0 && Pad_Data.combo_type==IGR_COMBO_START_SELECT); /* return combo still reaches teardown */
     cfg.GameMode=OTHER_MODE;pad[3]=IGR_COMBO_R3_L3;
-    assert(IGR_Intc_Handler(0)==IGR_COMBO_R3_L3);
+    assert(IGR_Intc_Handler(0)==0 && Pad_Data.combo_type==IGR_COMBO_R3_L3);
     assert(sdin==0 && scmd==0x1b && Power_Button.press==1 && Power_Button.latched==1 && kernel_enters==1);
     /* Holding the same status must not create a false double press in RA. */
     for (int i=0;i<51;i++) IGR_CheckInputs();
