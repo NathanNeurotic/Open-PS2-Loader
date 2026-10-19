@@ -198,9 +198,9 @@ depends on your Select button setting — see <a href="controls.html">Controls</
 </ul>
 
 <div class="callout amber"><div class="h">Supported devices only</div>
-Folder browsing works on <b>BDM devices</b> (USB, MX4SIO, iLink, exFAT HDD), <b>MMCE</b>, and
+Folder browsing works on <b>BDM devices</b> (USB, MX4SIO, iLink, exFAT HDD and network-backed BDM slots), <b>MMCE</b>, and
 <b>UDPFS in Files mode</b>. It does <b>not</b> apply to the APA/PFS HDD or the PS1/VCD list, which do not scan
-a <code>CD</code>/<code>DVD</code> directory tree at all, nor to the UDPFS block device. <b>SMB is not
+a <code>CD</code>/<code>DVD</code> directory tree at all,  <b>SMB is not
 supported yet</b> — its paths use a different separator and it is deliberately deferred. Turning the setting
 on simply has no effect on those pages.</div>
 
@@ -209,17 +209,14 @@ on simply has no effect on those pages.</div>
 invalid password, such as the master override itself, is rejected.</p>
 
 <h3 id="parental-lock-behaviour">What the lock actually gates</h3>
-<p>The parental lock guards <b>configuration and destructive actions</b>, not game launching. Anyone can
-still start any game on the list. What is behind the password:</p>
+<p>The master password guards <b>configuration and destructive actions</b>. Individual PS2 games can additionally require it at launch. The configuration gate protects:</p>
 <ul>
 <li><b>Settings</b> and the per-game / per-app settings screens (Triangle on a title)</li>
 <li><b>Rename</b> and <b>Delete</b> on a game entry</li>
 <li><b>Network compatibility update</b> and <b>Start NBD Server</b></li>
 </ul>
 
-<div class="callout amber"><div class="h">It is not a content filter</div>
-If your aim is to stop a particular game being played, the parental lock will not do it — it stops the
-library being <em>changed</em>, not played.</div>
+<div class="callout info"><div class="h">Lock an individual PS2 game</div>Enable <b>Parental Lock</b> in that game's Compatibility settings and save. Each launch requires a fresh password, including Favorites and remembered launches. Unmarked games remain launchable. Test Changes and saving/removing a stored game lock also enforce authorization. See <a href="per-game-settings.html#parental-lock">per-game locks</a>.</div>
 
 <h3 id="parental-lock-usage">Setting, using and clearing it</h3>
 <p><b>To set one</b>, enter a password in the field above and save. <b>To remove one</b>, clear the field and
@@ -354,6 +351,7 @@ the display pickers above no longer allow is discarded, not forced.</div>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>Cover Art</td><td>Off / On</td><td>Loads cover art. When off, no art images are loaded even if present. On by default.</td></tr>
+<tr><td>Logo Artwork</td><td>Off / On</td><td>Shows LGO images such as <code>&lt;ID&gt;_LGO.png</code>, including theme placeholders and LGO list decorators. Independent of ICO disc art and the game-launch PS2 Logo. On by default.</td></tr>
 <tr><td>Disc Artwork</td><td>Off / On</td><td>Shows the theme's disc art: every image keyed on the <code>ICO</code> suffix (<code>&lt;ID&gt;_ICO</code> in <code>ART/</code>), including the theme's own placeholder for it. Turn it off to hide the disc while keeping covers and backgrounds. On by default.</td></tr>
 <tr><td>Background Art</td><td>Off / On</td><td>Shows a game's background image (<code>&lt;ID&gt;_BG</code> in <code>ART/</code>) when the theme uses one. On by default.</td></tr>
 <tr><td>3D Save Icons</td><td>Off / On</td><td>Shows a save icon where the theme has a spot for it (<code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> do; <code>&lt;PSBBN Flow&gt;</code> does not place one by default). PS2 titles use the assigned VMC first, then memory cards. PS1 titles read the 2D save icon from POPSTARTER's SLOT0.VMC/SLOT1.VMC or Ember's MC1.vmc/MC2.vmc in the game's save folder; those cards appear after the emulator creates them. Off by default. Themes place it with the <a href="themes.html#saveicon">SaveIcon element</a>.</td></tr>
@@ -438,7 +436,7 @@ This is an OPL core feature. See <a href="per-game-settings.html#osd-language">P
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>POPSTARTER.ELF Path</td><td>text (full path)</td><td>Where <code>POPSTARTER.ELF</code> is. <em>&lt;not set&gt;</em> (the default) looks in the VCD's own <code>POPS</code> folder, then <code>mc0:</code>/<code>mc1:</code>; APA HDD VCDs use <code>__common/POPS</code>. A path you set is tried first, on any device, and falls back the same way when it is unavailable. The editor takes the whole path. Replaces the old <em>POPSTARTER.ELF Device</em> picker, whose device choice becomes the matching path when you upgrade. SMB PS1 VCDs also use an <code>SB.&lt;name&gt;.ELF</code> selector.</td></tr>
-<tr><td>RetroGEM Game ID</td><td>Off / On</td><td>Draws the game-ID barcode read by Pixel FX / RetroGEM / PS2Digital when a PS1 VCD launches. On by default.</td></tr>
+<tr><td>RetroGEM Game ID</td><td>Off / On</td><td>Controls the PS1 half of Show GameID Barcode (Pixel FX). Fresh settings leave the barcode Off; use the combined Interface picker to select PS1, PS2 or both.</td></tr>
 <tr><td>Ember Display Mode</td><td>Default / 240p / 480i / 480p</td><td>Output mode Ember uses, written to <code>settings.txt</code> in the launching device's <code>EMBER</code> folder. <em>480p</em> needs component or HDMI (composite shows no picture), so choosing it asks first. RiptOPL used to label 480i as "480p"; it has always written 480i.</td></tr>
 <tr><td>Ember Timing</td><td>Default / Auto / NTSC / PAL</td><td>Ember's timing standard, written to the same <code>settings.txt</code>.</td></tr>
 <tr><td>Ember Dithering</td><td>Default / On / Off</td><td>Ember's dithering, written to the same <code>settings.txt</code>.</td></tr>
@@ -469,7 +467,7 @@ This is an OPL core feature. See <a href="per-game-settings.html#osd-language">P
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>Scrolling Speed</td><td>Slow / Medium / Fast</td><td>List scrolling speed. Default Medium.</td></tr>
-<tr><td>Select Button</td><td>Circle / Cross</td><td>Which face button confirms. The default follows the console: Circle on Japanese consoles, Cross elsewhere.</td></tr>
+<tr><td>Select Button</td><td>Circle / Cross</td><td>Which face button confirms. Fresh RiptOPL settings use Circle. Saved preferences override it; follow the on-screen hints.</td></tr>
 <tr><td>Analog X-Axis Sensitivity</td><td>Off / Low / Medium / High</td><td>How readily the left stick moves the cursor horizontally. <em>Off</em> stops the stick navigating on that axis. Default Low.</td></tr>
 <tr><td>Analog Y-Axis Sensitivity</td><td>Off / Low / Medium / High</td><td>The same for the vertical axis.</td></tr>
 <tr><td>Controller Vibration in Menus</td><td>Off / On</td><td>A short vibration when moving the cursor, confirming or going back. Needs a DualShock in analog mode. On by default.</td></tr>

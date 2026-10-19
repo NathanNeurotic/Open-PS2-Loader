@@ -76,13 +76,7 @@
 folder, enable cheats in <b>Game Settings</b>, and choose whether OPL applies them automatically or
 shows you a selection menu before the game boots.</p>
 
-<div class="callout info"><div class="h">Neutrino and cheats</div>
-The PS2RD cheat engine is an <b>OPL core feature</b>. When a game's Loader Core is set to
-<b>Neutrino</b>, opening <b>Cheat Settings</b> shows a notice that the feature is not used with the
-Neutrino core, and no cheat options are presented; the cheat engine does not run
-— Neutrino manages the game environment itself. If you need cheats for a title, leave its Loader
-Core on <b>OPL</b> (the default). See <a href="neutrino.html">Neutrino Core</a> and
-<a href="per-game-settings.html">Per-game Settings</a> for details.</div>
+<div class="callout info"><div class="h">Cheats depend on the runtime</div>Native OPL runs PS2RD itself. Standard kits bundle a post-v1.8.0 Neutrino development runtime with text-cheat support; standalone Neutrino v1.8.0 and the RA kit's pinned ORBIT v1.0.2 do not provide that support. A valid <code>90xxxxxx</code> mastercode is required. See <a href="#neutrino">Neutrino cheat setup</a>.</div>
 
 <h2 id="cht-files">The CHT folder and .cht file format</h2>
 <p>OPL looks for cheat files in the <code>CHT/</code> folder on your storage device (USB, MMCE,
@@ -374,7 +368,7 @@ if the source is set to Global). The relevant config keys are:</p>
 <h2 id="related">Related pages</h2>
 <div class="grid">
   <a class="tile" href="per-game-settings.html"><span class="icon icon-settings-pergame"></span><b>Per-game Settings</b><span>Full walk-through of every per-title option panel</span></a>
-  <a class="tile" href="neutrino.html"><span class="icon icon-neutrino"></span><b>Neutrino Core</b><span>Why cheats are greyed under Neutrino</span></a>
+  <a class="tile" href="neutrino.html"><span class="icon icon-neutrino"></span><b>Neutrino Core</b><span>Runtime, path and launch-argument requirements</span></a>
   <a class="tile" href="vmc.html"><span class="icon icon-vmc"></span><b>VMC</b><span>Virtual Memory Cards — another per-game feature</span></a>
 </div>
 </main>

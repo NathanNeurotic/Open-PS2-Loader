@@ -72,9 +72,9 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
-<div class="callout info"><div class="h">Special hardware?</div><p>If you have a Sony PSX DESR recorder or an early Japanese PS2 with a PC CARD slot, review <a href="psx-dvr.html">PSX DVR</a> and <a href="pc-card-cf.html">PC CARD CompactFlash</a> first. Both paths are experimental, and CompactFlash is still an unmerged PR.</p></div>
+<div class="callout info"><div class="h">Special hardware?</div><p>If you have a Sony PSX DESR recorder or an early Japanese PS2 with a PC CARD slot, review <a href="psx-dvr.html">PSX DVR</a> and <a href="pc-card-cf.html">PC CARD CompactFlash</a> first. Both paths are experimental, and CompactFlash is implemented but awaits hardware validation.</p></div>
 <h1>Getting Started</h1>
-<p class="lead">From nothing to your first game running — pick a storage device, place your files, enable the device, and launch. The whole process takes about ten minutes.</p>
+<p class="lead">From nothing to your first game running — pick a storage device, place your files, enable the device, and launch. Follow the USB walk-through after your homebrew launcher is ready.</p>
 
 <div class="callout info"><div class="h">Already installed RiptOPL?</div>
 If <code>RIPTOPL.ELF</code> is already on your PS2 and booting, skip ahead to
@@ -87,17 +87,17 @@ If <code>RIPTOPL.ELF</code> is already on your PS2 and booting, skip ahead to
   <li>A PlayStation 2 (any model) or a backward-compatible PlayStation 3.</li>
   <li>A way to launch homebrew ELFs — Free McBoot (FMCB), Free HD Boot (FHDB), a modchip, or equivalent.</li>
   <li>At least one storage option: USB drive, MMCE / MX4SIO SD card, iLink storage, SMB network share, or an internal HDD.</li>
-  <li>A RiptOPL build — download <code>RIPTOPL.ELF</code> from the <a href="releases.html">Releases</a> page. Choose the preserved <code>current-fan-favorite</code> development snapshot or <code>rolling</code> for the newest development build.</li>
+  <li>A complete RiptOPL install kit — download <code>RIPTOPL-&lt;version&gt;.zip</code> from the <a href="releases.html">Releases</a> page. Choose the preserved <code>current-fan-favorite</code> development snapshot or <code>rolling</code> for the newest development build.</li>
   <li>At least one PS2 game image in ISO or ZSO format.</li>
 </ul>
 
 <details class="deep"><summary>Which release should I download?</summary>
-<p>The <b>rolling</b> channel is rebuilt from <code>rebuild/main</code> on every push during the rebuild and is intentionally published as GitHub's full, non-pre-release <b>Latest</b> release. It may occasionally be unstable. The <b>Current Fan Favorite Build</b> is a preserved development snapshot selected after positive feedback; compatibility still varies by setup. Either way, the full installable package zip (<code>RIPTOPL-&lt;version&gt;.zip</code>) normally contains four labelled loader folders (the notes identify any omitted best-effort flavour), one canonical <code>POPS/</code> folder (including every loose BDMA pair and the iLink <code>.ilink</code> pair), <code>EMBER/</code>, and normally an extracted <code>neutrino/</code> folder (check release notes for download/extraction omissions). No duplicate release-root <code>POPSTARTER/</code> folder or embedded BDMA pair is used. The language pack is a separate optional <code>RIPTOPL-LANGS-*.zip</code> release asset. See <a href="releases.html">Releases</a> for details.</p>
+<p>The <b>rolling</b> channel is rebuilt from <code>rebuild/main</code> on every push during the rebuild and is intentionally published as GitHub's full, non-pre-release <b>Latest</b> release. It may occasionally be unstable. The <b>Current Fan Favorite Build</b> is a preserved development snapshot selected after positive feedback; compatibility still varies by setup. Either way, the full installable package zip (<code>RIPTOPL-&lt;version&gt;.zip</code>) normally contains four labelled loader folders (the notes identify any omitted best-effort flavour), one canonical <code>POPS/</code> folder (including every loose BDMA pair and the iLink <code>.ilink</code> pair), <code>EMBER/</code>, and a required extracted <code>neutrino/</code> folder; a failed Neutrino download or extraction fails current packaging. No duplicate release-root <code>POPSTARTER/</code> folder or embedded BDMA pair is used. The language pack is a separate optional <code>RIPTOPL-LANGS-*.zip</code> release asset. See <a href="releases.html">Releases</a> for details.</p>
 </details>
 
 <h2 id="pick-a-device">Pick a device</h2>
 
-<p>RiptOPL supports eight storage backends. Choose whichever matches your hardware:</p>
+<p>Choose a source that matches your hardware and game core:</p>
 
 <table data-sortable>
 <thead><tr><th>Device</th><th>What it needs</th><th>Where to go next</th></tr></thead>
@@ -106,7 +106,7 @@ If <code>RIPTOPL.ELF</code> is already on your PS2 and booting, skip ahead to
 <tr><td><b>MX4SIO</b></td><td>MX4SIO adapter + SD card in the memory-card slot (FAT32 or exFAT)</td><td><a href="usb.html">USB / MX4SIO / iLink</a></td></tr>
 <tr><td><b>MMCE</b></td><td>SD2PSX, MemCard PRO2, or compatible MMCE device in the memory-card slot</td><td><a href="mmce.html">MMCE</a></td></tr>
 <tr><td><b>iLink</b></td><td>IEEE 1394 (FireWire) SBP2 storage device</td><td><a href="usb.html">USB / MX4SIO / iLink</a></td></tr>
-<tr><td><b>SMB</b></td><td>A network share on a PC or NAS (SMBv1 or SMB2 — pick it with the <b>SMB Version</b> setting in Game Sources; SMBv1 is the default); PS2 needs a network adapter</td><td><a href="smb.html">SMB</a></td></tr>
+<tr><td><b>SMB</b></td><td>A network share on a PC or NAS (SMBv1 or SMB2 — pick it with the <b>SMB Version</b> setting in Network; SMBv1 is the default); PS2 needs a network adapter</td><td><a href="smb.html">SMB</a></td></tr>
 <tr><td><b>Internal HDD (APA)</b></td><td>Internal ATA HDD formatted with APA/PFS — classic PS2 HDD setup</td><td><a href="hdd.html">Internal HDD</a></td></tr>
 <tr><td><b>Internal HDD (exFAT)</b></td><td>Internal ATA HDD formatted exFAT — BDM path, same folder layout as USB</td><td><a href="hdd.html">Internal HDD</a></td></tr>
 <tr><td><b>Network boot (UDPBD / UDPFS)</b></td><td>PS2 network adapter + a PC running the server; requires Neutrino</td><td><a href="network-boot.html">Network Boot</a></td></tr>
@@ -114,14 +114,14 @@ If <code>RIPTOPL.ELF</code> is already on your PS2 and booting, skip ahead to
 </table>
 
 <div class="callout info"><div class="h">Simplest first-time choice</div>
-A USB drive is the fastest path to a first working game. Format it FAT32 (or exFAT for drives over 32 GB), plug it in, and follow the steps below.</div>
+A USB drive is the fastest path to a first working game. Use FAT32 for files below 4 GiB, or exFAT for large single images, plug it in, and follow the steps below.</div>
 
 <h2 id="folder-structure">The OPL folder structure</h2>
 
 <p>All folder-based devices — USB, MX4SIO, MMCE, iLink, SMB, and an exFAT HDD — share the same directory layout, at the root of the device (or inside a subfolder, if you set a prefix). <b>RiptOPL creates these folders automatically</b> the first time it boots and you enable a device — you do not need to create them by hand.</p>
 
 <pre>
-DVD/        PS2 DVD games (ISO, ZSO, or USBExtreme ul.* split files)
+DVD/        PS2 DVD games (ISO or ZSO files)
 CD/         PS2 CD games (ISO, ZSO — blue-bottom discs)
 ART/        Cover art images (game-id_COV.png, game-id_ICO.png, etc.)
 CFG/        Per-game configuration files (saved by OPL automatically)
@@ -138,9 +138,9 @@ An APA-formatted internal HDD stores games as HDLoader partitions, <b>not</b> as
 
 <h3>Supported game image formats</h3>
 <ul class="checklist">
-  <li><b>ISO</b> — standard disc image. Works on all devices. Games over 4 GB require exFAT (FAT32 has a 4 GB file size limit).</li>
-  <li><b>ZSO</b> — compressed ISO. Saves space; transparent to OPL at launch. See <a href="zso.html">ZSO Format</a>.</li>
-  <li><b>USBExtreme / ul.*</b> — split multi-file format used to store games larger than 4 GB on FAT32 drives. Handled automatically by OPL; no special steps at launch time.</li>
+  <li><b>ISO</b> — standard disc image. Local FAT32 files must be below 4 GiB; exFAT permits larger files. SMB does not inherit the PS2 drive's FAT32 limit. See the source/core guides for restrictions.</li>
+  <li><b>ZSO</b> — compressed image for native OPL sources that support it; unavailable for HTTP and Neutrino. See <a href="zso.html">ZSO Format</a>.</li>
+  <li><b>USBExtreme / ul.*</b> — split files for the native OPL core. Keep <code>ul.cfg</code> and every <code>ul.*</code> part at the library root, outside <code>CD/</code> and <code>DVD/</code>. See <a href="usb.html#usbextreme">USBExtreme setup</a>.</li>
   <li><b>HDLoader partitions</b> — APA/PFS HDD only; installed with hdl-dump or OPL's NBD server.</li>
 </ul>
 
@@ -158,7 +158,7 @@ USB root
 └── DVD/
     └── My Game Title.iso
 </pre>
-<p>For games larger than 4 GB on a FAT32 drive, use USBExtreme / USBUtil to split them into <code>ul.*</code> files in <code>DVD/</code> instead. On exFAT you can use a plain ISO regardless of size.</p>
+<p>For games larger than 4 GB on a FAT32 drive, use USBExtreme / USBUtil to split them into <code>ul.*</code> files plus <code>ul.cfg</code> at the library root instead. On exFAT you can use a plain ISO regardless of size.</p>
 </div>
 
 <div class="step">
@@ -191,7 +191,7 @@ OPL loads the game using its built-in OPL core by default. If the game boots suc
 <div class="step">
 <h3>5. Save your settings</h3>
 <p>After a successful launch, go back to the main menu (press <b>Start</b>) and choose <b>Save Changes</b>. This writes <code>settings_riptopl.cfg</code> to your storage device so RiptOPL remembers your configuration on every subsequent boot.</p>
-<div class="callout info"><div class="h">Where the config file lives</div>
+<div class="callout info" id="config-location"><div class="h">Where the config file lives</div>
 RiptOPL's master settings use <code>settings_riptopl.cfg</code> (with migration from
 <code>conf_riptopl.cfg</code>). That filename is separate from stock OPL's master config, but
 <code>conf_network.cfg</code>, app lists, per-game configuration and support files can still be shared.
@@ -220,17 +220,10 @@ do not assume it is always <code>mc0:/OPL/</code>.</div>
 </div>
 
 <details class="deep"><summary>Can I use RiptOPL alongside stock OPL or wOPL on the same memory card?</summary>
-<p>RiptOPL's master settings use <code>settings_riptopl.cfg</code> (with migration from
-<code>conf_riptopl.cfg</code>). That filename is separate from stock OPL's master config, but
-<code>conf_network.cfg</code>, app lists, per-game configuration and support files can still be shared.
-Favorites import from uOPL/wOPL is <b>one-way</b>: the next write saves RiptOPL's own <code>OFAV</code>
-format to <code>favourites.bin</code>, which those loaders cannot read back. Keep an original copy if
-you use them too. The settings home follows boot-directory discovery or <b>Custom Settings Path</b>;
-do not assume it is always <code>mc0:/OPL/</code>.</p>
-</details>
+<p>Yes, with shared-file precautions. See <a href="#config-location">where the config file lives</a> above and <a href="install.html#config-file">the settings-home reference</a>. Back up favorites before the one-way import.</p></details>
 
 <details class="deep"><summary>Do I need Neutrino to play games?</summary>
-<p>No. RiptOPL ships with OPL's built-in core, which handles the vast majority of PS2 games without any extra setup. Neutrino is an optional external core you can assign per game for titles that benefit from it — for example, those that need its compatibility modes or network-boot features (UDPBD / UDPFS). See <a href="neutrino.html">Neutrino Core</a> for details. Neutrino normally comes in the installable package; if download/extraction failed for that release, its notes identify the omission and you need a complete Neutrino install separately.</p>
+<p>No. RiptOPL ships with OPL's built-in core, which handles the vast majority of PS2 games without any extra setup. Neutrino is an optional external core you can assign per game for titles that benefit from it — for example, those that need its compatibility modes or network-boot features (UDPBD / UDPFS). See <a href="neutrino.html">Neutrino Core</a> for details. Current installable kits require the complete Neutrino bundle. Copy that folder to a supported location; the loose loader update does not install it.</p>
 </details>
 
 <details class="deep"><summary>My game list is empty after enabling a device. What do I check?</summary>

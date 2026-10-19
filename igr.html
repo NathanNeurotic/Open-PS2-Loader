@@ -106,12 +106,15 @@ analog light on.</p>
 </tbody>
 </table>
 
-<p>The second press has to land within <b>about a second</b> — RiptOPL waits ~50 vertical blanks after the
-first press to see whether another arrives, then acts on the count.</p>
+<p>The second press has to land within <b>about a second</b> — RiptOPL waits ~50 polling frames after the
+first press to see whether another arrives, then acts on the count. A hardware status held across
+several frames counts as one press.</p>
 
 <div class="callout info"><div class="h">Worth remembering</div>
-This is the fallback when a game has stopped responding to the pad entirely — it does not depend on the
-pad hook having attached.</div>
+This does not depend on the pad buffer, but a short tap is not guaranteed on every console and
+transport. On setups with active DEV9/network or HDD access, Mechacon/CDVD event handling can miss
+the tap even while controller IGR works. The console's normal press-and-hold standby action remains
+the hardware fallback; avoid cutting AC power during disk activity.</div>
 
 <h2 id="where-reset-goes">Where a reset takes you</h2>
 <p>With the <b>IGR Path</b> setting (<em>Settings → General &amp; System</em>) left blank, a reset exits to the
@@ -133,6 +136,11 @@ files that are already there. Games started by <b>Auto Loading</b> skip the offe
 answer it: launch a game on the OPL core from the menu once, or copy the two files yourself, before relying on a USB
 IGR Path there.</p>
 
+<p>This limits the <b>return ELF's location</b>, not the game's source. OPL-core PS2 games on internal
+exFAT use the same IGR hook as other OPL transports. The reset loader does not restore internal exFAT
+for an <code>ata:</code> return path. Test with a blank IGR Path (PS2 browser) or a memory-card ELF to
+distinguish a failed return target from a combination that is not detected.</p>
+
 <p>If you use MMCE cards, <b>IGR Bootcard Slot(s)</b> (<em>Settings → Game Sources → MMCE Settings</em>) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already
 back on its boot image by the time the next thing loads. See <a href="mmce.html">MMCE</a>.</p>
@@ -144,7 +152,8 @@ not spend time hunting a fault that is not there.</p>
 <h3>Before the game opens a controller</h3>
 <p>The hook attaches by patching the game's own <code>scePadPortOpen</code> / <code>scePad2CreateSocket</code>
 call. Until the game asks for a pad, there is nothing hooked — so IGR does not respond during very early boot
-logos on some titles. The console power button still works.</p>
+logos on some titles. The console power button is independent of the pad buffer, subject to the
+hardware limits above.</p>
 
 <h3>When the game is incompatible</h3>
 <p>A few games handle input in a way the hook disturbs. Per-game compatibility <b>Mode 6 — Disable IGR</b>
@@ -154,10 +163,18 @@ RiptOPL, this is the mode to try — at the cost of losing IGR for that game. Se
 
 <p>Fewer games should need it now. IGR used to watch the pad from a <b>VBLANK interrupt handler</b>, and merely
 registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the handler did. It now
-polls the pad from its own low-priority thread, woken by a timer about once a frame, and registers nothing on VBLANK
-(official OPL #1762, ported here). The <b>RetroAchievements</b> loader is the exception: its per-frame memory snapshots
-and unlock notice must run inside that interrupt, so it keeps the handler, and the games it upsets still need Mode 6
-there.</p>
+samples pad and power inputs directly from a short EE timer alarm about once a frame, and registers nothing on
+VBLANK (official OPL #1762, adapted here). A separate worker handles shutdown; high-priority game threads cannot
+starve the input sample. Standard builds retain a detected request in a semaphore until the worker consumes it.</p>
+
+<p>The <b>RetroAchievements</b> loader needs a VBLANK interrupt for its memory snapshots and unlock notice.
+With IGR enabled it uses the combined RA/IGR handler. Mode 6 instead permits a snapshot-only handler when
+telemetry is active, without an IGR worker or pad hooks; client-triggered reset is unavailable. Games that
+reject any VBLANK handler may still be affected.</p>
+
+<p>If initial alarm registration or rearming fails, standard-build IGR stops monitoring controller and
+power-button inputs until a later pad-open successfully registers an alarm. It does not spin a recovery
+thread; without another pad-open, IGR remains unavailable for the session.</p>
 
 <h3>Under the Neutrino core</h3>
 <div class="callout amber"><div class="h">Neutrino has no IGR</div>
@@ -165,8 +182,8 @@ This is a property of that loader, not a RiptOPL limitation, and it is why <b>Mo
 whenever the Loader Core is set to Neutrino — there is no hook there to disable. To leave a Neutrino-launched
 game, use the console's power or reset button. See <a href="neutrino.html">Neutrino Core</a>.</div>
 
-<p>PS1 titles are a separate case again: they run under POPSTARTER or Ember, each of which has its own
-independent IGR behaviour built into that binary. RiptOPL's hook is not involved. See
+<p>PS1 titles do not use RiptOPL's PS2 IGR hook. POPSTARTER supplies its own reset behavior;
+<b>Ember does not provide IGR</b>. See
 <a href="ps1-vcd.html">PS1 Games</a> and the sister
 <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
 
@@ -202,12 +219,15 @@ the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is no
 the power-off combination specifically — the controller is in analog mode, since L3 and R3 are the stick
 clicks. The screenshot combination uses <b>Up</b>, so it needs no analog mode.</p>
 
-<p>Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is
-fine and the problem is in the pad half.</p>
+<p>Try the console power button as a cross-check: if that resets and the pad combination does not, the sampler is
+active; check the pad hook and controller behavior.</p>
 
-<p><b>IGR stopped answering in a game that worked on an older build.</b> Report the title. IGR now polls the pad
-from a low-priority thread (see <a href="#limitations">When IGR is not available</a>), and a game that never lets
-such a thread run would starve it. The power button does not depend on the pad and is the quickest cross-check.</p>
+<p><b>IGR stopped answering in a game that worked on an older build.</b> Report the title, exact version/flavour
+and SHA. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues/984">Issue #984</a> records
+internal-exFAT failures including Beta-4032. Current main includes
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/990">#990's repair for a reproduced lost notification</a>.
+Passing that regression does not prove every console report resolved. The power button is an additional
+cross-check independent of the pad buffer, subject to the hardware limits above.</p>
 
 <p><b>Reset takes me somewhere unexpected.</b> Check <b>IGR Path</b> in <em>Settings → General &amp; System</em>. A stale
 path left over from an earlier setup will boot that ELF instead of exiting to the PS2 browser. A USB path that lands
@@ -221,7 +241,7 @@ normal play can trigger IGR by accident. Set <b>Mode 6 — Disable IGR</b> for t
 <table>
 <thead><tr><th>File</th><th>Role</th></tr></thead>
 <tbody>
-<tr><td><code>ee_core/src/padhook.c</code></td><td>The hook itself: pad pattern matching, the polling IGR thread and its one-frame alarm (the VBLANK interrupt handler in RetroAchievements builds only), combo dispatch</td></tr>
+<tr><td><code>ee_core/src/padhook.c</code></td><td>Pad pattern matching, one-frame EE alarm sampler and shutdown worker; combined RA/IGR or snapshot-only VBLANK handler in RA builds</td></tr>
 <tr><td><code>ee_core/include/padhook.h</code></td><td>The combo constants (<code>IGR_COMBO_R1_L1_R2_L2</code>, <code>IGR_COMBO_START_SELECT</code>, <code>IGR_COMBO_R3_L3</code>, <code>IGR_COMBO_UP</code>)</td></tr>
 <tr><td><code>ee_core/src/cd_igr_rpc.c</code></td><td>IOP-side reset RPC</td></tr>
 <tr><td><code>ee_core/src/igs_api.c</code></td><td>Screenshot capture and BMP writing</td></tr>

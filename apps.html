@@ -174,8 +174,8 @@ asks <b>REBOOT IOP?</b>:</p>
 <table>
 <thead><tr><th>Button</th><th>Result</th></tr></thead>
 <tbody>
-<tr><td><b>Cross</b> (YES)</td><td>Reset the IOP before the app starts, so it begins with a freshly reset I/O processor.</td></tr>
-<tr><td><b>Circle</b> (NO)</td><td>Start the app on the IOP as RiptOPL left it, with its drivers still loaded.</td></tr>
+<tr><td><b>Configured confirm button</b> (YES)</td><td>Reset the IOP before the app starts, so it begins with a freshly reset I/O processor.</td></tr>
+<tr><td><b>Configured back button</b> (NO)</td><td>Start the app on the IOP as RiptOPL left it, with its drivers still loaded.</td></tr>
 <tr><td><b>Triangle</b></td><td>Cancel and stay in the list.</td></tr>
 </tbody>
 </table>
@@ -193,8 +193,7 @@ gets the HDD cleanup before it starts, whichever answer you give.</p>
 
 <h2 id="art">Cover art for apps</h2>
 <p>Apps use the same <code>ART/</code> folder as games, on the device the app itself lives on. The lookup key
-is the app's <b>ELF filename</b> rather than a game ID, so an app booting <code>MYAPP.ELF</code> looks for
-<code>MYAPP</code>-keyed art. The suffix convention is unchanged — see <a href="coverflow.html">Coverflow &amp; PSBBN Flow</a>
+is the app's <b>ELF filename</b> rather than a game ID, so an app booting <code>MYAPP.ELF</code> looks for <code>MYAPP.ELF</code>-keyed art (for example <code>MYAPP.ELF_COV.png</code>). The suffix convention is unchanged — see <a href="coverflow.html">Coverflow &amp; PSBBN Flow</a>
 for the naming.</p>
 
 <p>An app box is <b>square</b>, where a PS2 case is portrait — 184×184 against 184×256 on the built-in theme —

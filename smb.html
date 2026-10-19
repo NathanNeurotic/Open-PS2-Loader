@@ -72,7 +72,7 @@
   </nav>
   <main class="content">
 <h1>SMB (network share)</h1>
-<p class="lead">Load PS2 (and PS1) games directly from a shared folder on a Windows PC, Linux Samba server, or NAS over your local network. RiptOPL speaks <b>SMBv1</b> by default and can be switched to <b>SMB2</b> with the <b>SMB Version</b> row in Game Sources. No USB drive required — the PS2 mounts the share and reads ISOs straight off it.</p>
+<p class="lead">Load PS2 (and PS1) games directly from a shared folder on a Windows PC, Linux Samba server, or NAS over your local network. RiptOPL speaks <b>SMBv1</b> by default and can be switched to <b>SMB2</b> with the <b>SMB Version</b> row in Network. No USB drive required — the PS2 mounts the share and reads ISOs straight off it.</p>
 
 <div class="callout info"><div class="h">SMB and Network Boot share the same adapter</div>
 The PS2 has one Ethernet port and one network driver. <b>SMB (ETH) and Network Boot (UDPBD/UDPFS) are mutually exclusive</b> — selecting one in <b>Game Sources</b> excludes the others. If you switch, you must save and restart for the change to take effect. See <a href="network-boot.html">Network Boot</a> for the UDPBD/UDPFS alternative.</div>
@@ -91,7 +91,7 @@ visit <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a>, c
 select your games folder and follow the protocol-specific IP, port, share and credential values the
 launcher displays. It implements the OPL-compatible SMBv1 subset directly and does not require you
 to enable Windows' built-in SMB1 feature. Because it serves <b>SMBv1 only</b>, leave
-<b>Game Sources → SMB Version</b> on <b>SMBv1</b> when you use it — set to SMB2 it lists no games
+<b>Network → SMB Version</b> on <b>SMBv1</b> when you use it — set to SMB2 it lists no games
 at all. Samba/NAS users staying on SMBv1 may need <code>min protocol = NT1</code> if their server
 defaults have been tightened; that line is not needed when you run OPL on SMB2.</div>
 
@@ -169,7 +169,7 @@ another already-configured SMB server.</p>
 </table>
 
 <div class="callout info"><div class="h">Subfolder prefix (ETH Prefix)</div>
-If your share contains more than one OPL layout — for example you have multiple consoles sharing one NAS share — you can point OPL at a subfolder inside the share. Set <b>ETH Prefix Path</b> on <b>Settings → General &amp; System</b> (config key <code>eth_prefix</code>) to the subfolder name. OPL will prepend that path to every read/write inside the share. Leave it empty to use the share root directly.</div>
+If your share contains more than one OPL layout — for example you have multiple consoles sharing one NAS share — you can point OPL at a subfolder inside the share. Set <b>ETH Prefix Path</b> on <b>Settings → Game Sources</b> (config key <code>eth_prefix</code>) to the subfolder name. OPL will prepend that path to every read/write inside the share. Leave it empty to use the share root directly.</div>
 
 <h3 id="save-connect">Saving and connecting</h3>
 
@@ -249,7 +249,7 @@ If you leave the <b>Share</b> field empty, OPL asks the driver to enumerate the 
 <div class="steps">
   <div class="step">
     <h3>Copy the SMB modules to the memory card</h3>
-    <p>The release package ships a <code>POPSTARTER/</code> folder containing the four network IRX modules POPSTARTER needs for SMB: <code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, and <code>ps2dev9.irx</code>. Copy them to <code>mc0:/POPSTARTER/</code> (or <code>mc1:/POPSTARTER/</code>). OPL checks for all four on one card before an SMB VCD launch and warns you rather than hanging if any are missing. OPL does not install them for you.</p>
+    <p>The release package ships the four modules inside its canonical <code>POPS/</code> folder containing the four network IRX modules POPSTARTER needs for SMB: <code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, and <code>ps2dev9.irx</code>. Copy them to <code>mc0:/POPSTARTER/</code> (or <code>mc1:/POPSTARTER/</code>). OPL checks for all four on one card before an SMB VCD launch and warns you rather than hanging if any are missing. OPL does not install them for you.</p>
   </div>
   <div class="step">
     <h3>Set up the POPSTARTER network config</h3>
@@ -303,7 +303,7 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
     </tr>
     <tr>
       <td>ETH Games tab lists nothing at all after switching to SMB2</td>
-      <td>Almost always a dialect mismatch: the server only speaks SMBv1. The session does not negotiate down, so nothing is listed. Set <b>Game Sources → SMB Version</b> back to <b>SMBv1</b> (required for the bundled PS2 Servers SMBv1 server), or point OPL at a server that speaks SMB2. If you just changed the row and nothing moved at all, restart OPL — see below.</td>
+      <td>Almost always a dialect mismatch: the server only speaks SMBv1. The session does not negotiate down, so nothing is listed. Set <b>Network → SMB Version</b> back to <b>SMBv1</b> (required for the bundled PS2 Servers SMBv1 server), or point OPL at a server that speaks SMB2. If you just changed the row and nothing moved at all, restart OPL — see below.</td>
     </tr>
     <tr>
       <td>Changing SMB Version appears to do nothing</td>
@@ -362,7 +362,7 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
 </table>
 
 <details class="deep"><summary>What about eth_prefix / ETH Prefix?</summary>
-<p>The <code>eth_prefix</code> key (set via <b>Settings → General &amp; System → ETH Prefix Path</b>) is stored in <code>settings_riptopl.cfg</code>, not in <code>conf_network.cfg</code>. When non-empty, OPL appends it (plus a backslash) between the share root and every path it constructs — so <code>smb0:PS2\DVD\game.iso</code> instead of <code>smb0:DVD\game.iso</code>. Use this if the share hosts multiple setups and OPL's root is not the share root.</p>
+<p>The <code>eth_prefix</code> key (set via <b>Settings → Game Sources → ETH Prefix Path</b>) is stored in <code>settings_riptopl.cfg</code>, not in <code>conf_network.cfg</code>. When non-empty, OPL appends it (plus a backslash) between the share root and every path it constructs — so <code>smb0:PS2\DVD\game.iso</code> instead of <code>smb0:DVD\game.iso</code>. Use this if the share hosts multiple setups and OPL's root is not the share root.</p>
 </details>
 
 <h2 id="see-also">See also</h2>

@@ -74,7 +74,7 @@
 <h1>ZSO Format</h1>
 <p class="lead">ZSO is a compressed variant of the standard ISO disc image. OPL decompresses each sector
 on the fly using LZ4, so the PS2 sees a normal disc — but your storage device holds a smaller file.
-Support was added in OPL 1.2.0 and works across all storage backends that use OPL's built-in core.</p>
+Support was added in OPL 1.2.0 and works on native OPL backends that implement ZSO; HTTP is ISO-only.</p>
 
 <div class="callout info"><div class="h">Neutrino does not support ZSO</div>
 If a game is configured to launch via the <a href="neutrino.html">Neutrino core</a> but its image is a
@@ -141,7 +141,7 @@ ZSO files follow the same naming conventions as ISO files. A game named
 </div>
 
 <h3>Internal HDD (APA)</h3>
-<p>Use the latest version of <a href="https://github.com/APA-OPL/hdl-dump" target="_blank" rel="noopener">HDL-Dump</a>
+<p>Use the latest version of <a href="https://github.com/ps2homebrew/hdl-dump" target="_blank" rel="noopener">HDL-Dump</a>
 to install a ZSO image to the internal HDD in the same way you would install a plain ISO. The APA
 partition will contain the compressed data; OPL reads the ZSO magic from the partition header and
 initialises the decompressor before any sector reads.</p>

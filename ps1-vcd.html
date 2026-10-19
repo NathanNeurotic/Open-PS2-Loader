@@ -245,19 +245,20 @@ Ember games stay in the list even when <code>ember.elf</code> is missing or misn
 
 <p><b>RiptOPL only touches a setting you have changed in RiptOPL.</b> A row left on <b>Default</b>
 leaves that key alone in every file, so a <code>settings.txt</code> written by hand keeps working
-exactly as written. A row you change is written when you launch an Ember title, on that device
-only — creating the file if it is not there, updating it in place if it is. Changing a row back to
+exactly as written. Changed per-game rows are saved on OK; global rows are applied when you launch
+an Ember title on that device, creating the file if needed and updating it in place. Changing a row back to
 <b>Default</b> removes the key again (and the file, if that key was all it held), so Ember's own
 default — or, for a game, the global row — applies. Every other line in the file is kept.</p>
 
-<p>Controller is the only per-game setting, on Ember's author's advice: per-game settings are meant
-for the controller, and 24-bit shading can cause issues. Earlier builds labelled Ember's
+<p>Timing, Dithering, Shading and Controller can be overridden per game; Display Mode stays global.
+24-bit shading can cause issues in some titles. Earlier builds labelled Ember's
 <code>480</code> as "480p"; it has always been 480i, and the 480i / 480p rows now say so.</p>
 
 <h3>Device support</h3>
 <p>Ember titles are supported on <b>USB, MX4SIO, iLink, exFAT-ATA, MMCE, SMB, APA/PFS HDD,
-UDPFS and UDPBD</b>. Ordinary device pages merge Ember folders with their POPSTARTER rows; the two
-UDP network pages are Ember-only. A device with no <code>EMBER/</code> library simply contributes no
+UDPFS and UDPBD</b>. Ordinary device pages merge Ember folders with their POPSTARTER rows.
+UDPFS Files also lists uppercase <code>POPS/*.VCD</code>; UDPBD and UDPFS IMG remain Ember-only.
+A device with no <code>EMBER/</code> library simply contributes no
 Ember rows, and every ordinary device's POPSTARTER library lists exactly as before.</p>
 
 <h2 id="file-layout">Where to put your VCD files</h2>
@@ -477,7 +478,14 @@ hanging silently.</p>
 <a href="hdd.html">Internal HDD (APA &amp; exFAT)</a>.</p>
 
 <h2 id="limitations">Notes &amp; limitations</h2>
+<p><b>Ember list empty on internal exFAT or another BDM drive?</b> A reproduced scanner defect lets a
+loose file such as <code>EMBER/games/readme.txt</code> or <code>.DS_Store</code> abort the Ember scan
+on FAT32 and exFAT. Move loose files out of <code>EMBER/games/</code>, leaving the individual game
+directories there. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/999">PR #999 proposes the fix</a>;
+this does not require reformatting the disk or changing the PS2 BDM Prefix.</p>
 <ul class="checklist">
+  <li>Ember does not provide IGR. POPSTARTER supplies its own reset behavior; neither uses
+  <a href="igr.html">RiptOPL's PS2 IGR hook</a>.</li>
   <li>The PS1 view reuses the normal device pipeline, so covers, favorites, and the theme all work
   exactly as they do for disc games.</li>
   <li>POPSTARTER, every loose BDMA pair (including <code>.ilink</code>), and the POPS patch file
@@ -515,7 +523,7 @@ re-documented here:</p>
 </div>
 
 <h2 id="save-icons">PS1 save icons</h2>
-<p><b>Artwork Settings ? 3D Save Icons</b> also displays PS1 save artwork, using the card's 2D icon. POPSTARTER cards are <code>SLOT0.VMC</code>/<code>SLOT1.VMC</code> in the VCD's accompanying save folder; Ember cards are <code>MC1.vmc</code>/<code>MC2.vmc</code> inside the listed game folder. Launch the game and create a save first. These emulator cards are separate from the PS2 <code>VMC/&lt;name&gt;.bin</code> assignments.</p>
+<p><b>Artwork Settings → 3D Save Icons</b> also displays PS1 save artwork, using the card's 2D icon. POPSTARTER cards are <code>SLOT0.VMC</code>/<code>SLOT1.VMC</code> in the VCD's accompanying save folder; Ember cards are <code>MC1.vmc</code>/<code>MC2.vmc</code> inside the listed game folder. Launch the game and create a save first. These emulator cards are separate from the PS2 <code>VMC/&lt;name&gt;.bin</code> assignments.</p>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
