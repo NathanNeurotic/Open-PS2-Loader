@@ -125,6 +125,7 @@ HARNESS = r'''
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
 
 /* Everything the scan touches is faked. Renamed so nothing collides with the host's own headers. */
 #undef errno
@@ -137,6 +138,7 @@ static int fake_errno;
 #define opendir fake_opendir
 #define readdir fake_readdir
 #define closedir fake_closedir
+#define stat(...) fake_stat(__VA_ARGS__)
 #define DIR fake_DIR
 #define dirent fake_dirent
 
@@ -151,12 +153,20 @@ static int gamesOpens;                 /* does EMBER/games open at all? */
 static int gamesErrno;                 /* errno when it does not */
 static const char *const *gameNames;   /* its entries; "file_*" are files, "empty_*" folders hold no image */
 static int childOpenError, parentReadError, childReadError;
+static int statProbeFailure;
 static DIR gamesDir, probeDir;
 static struct dirent ent, probeEnt;    /* separate storage: a probe reads WHILE the games dir is mid-enumeration */
 #define GAMES_PATH "mass0:/EMBER/games"
 
 static int open(const char *path, int flags) { (void)flags; return coreFile != NULL && !strcmp(path, coreFile) ? 3 : -1; }
 static int close(int fd) { (void)fd; return 0; }
+static int fake_stat(const char *path, struct stat *st)
+{
+    if (statProbeFailure) { errno=EIO; return -1; }
+    memset(st,0,sizeof(*st));
+    st->st_mode = strstr(path,"/file_") ? S_IFREG : S_IFDIR;
+    return 0;
+}
 static DIR *opendir(const char *path)
 {
     size_t n = strlen(GAMES_PATH);
@@ -177,7 +187,8 @@ static DIR *opendir(const char *path)
         probeDir.pos = 0;
         return &probeDir; /* a game folder answers its probe */
     }
-    errno = ENOENT;
+    /* Real BDM fs_dopen negates FR_NO_PATH (5), which newlib exposes as EIO. */
+    errno = strstr(path,"/file_") ? EIO : ENOENT;
     return NULL;
 }
 static struct dirent *readdir(DIR *d)
@@ -239,6 +250,7 @@ int main(void)
     parentReadError=1; expect("parent readdir EIO",core,1,0,-1); parentReadError=0;
     parentReadError=2; expect("parent EIO after one good game",core,1,0,-1); parentReadError=0;
     childReadError=1; expect("child readdir EIO",core,1,0,-1); childReadError=0;
+    statProbeFailure=1; expect("failed stat cannot hide a directory-open error",core,1,0,-1); statProbeFailure=0;
 
     /* Exact USB layout reported by Vapor: mass0:/EMBER/games/Tomba!/CDROM.CUE,
      * with an uppercase disc suffix and an exclamation mark in the folder name. */
