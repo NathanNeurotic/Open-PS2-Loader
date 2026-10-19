@@ -78,6 +78,7 @@ static int IGR_Intc_ID = -1;
 static volatile int IGR_Poll_Alarm_ID = -1;
 static volatile int IGR_Poll_Recovery = 0;
 static volatile unsigned int IGR_Poll_Generation = 1;
+static int IGR_Request_Sema = -1;
 #endif
 #ifdef RETROACHIEVEMENTS
 static int RA_Intc_ID = -1;
@@ -323,7 +324,7 @@ static void IGR_Poll_Alarm(s32 alarm_id, u16 time, void *common)
     if (Pad_Data.combo_type != 0x00) {
         /* A request may arrive before the worker first runs. */
         iChangeThreadPriority(IGR_Thread_ID, 0);
-        iWakeupThread(IGR_Thread_ID);
+        iSignalSema(IGR_Request_Sema);
         return;
     }
 
@@ -346,8 +347,12 @@ static void IGR_PollUntilRequested(void)
 {
     int i;
 
+    /* The raw EE iWakeupThread loses notifications for a RUNNING thread, and
+     * ee_core disables the SDK workaround. A semaphore retains a request that
+     * arrives between this condition and the blocking call. No interrupt mask
+     * is held across the wait, and spurious signals still recheck the latch. */
     while (Pad_Data.combo_type == 0x00)
-        SleepThread();
+        WaitSema(IGR_Request_Sema);
 
     DPRINTF("IGR combination detected by EE alarm.\n");
     ChangeThreadPriority(TH_SELF, 0);
@@ -657,6 +662,20 @@ static void Set_libpad_Params(void *addr)
 // Install IGR thread, and Pad interrupt handler
 void Install_IGR(void)
 {
+#ifndef IGR_VBLANK_HANDLER
+    {
+        int intr = DI();
+        if (IGR_Request_Sema < 0) {
+            ee_sema_t sema = {0};
+            sema.max_count = 1;
+            IGR_Request_Sema = CreateSema(&sema);
+        }
+        if (intr)
+            EI();
+    }
+    if (IGR_Request_Sema < 0)
+        return; // A later pad-open retries; never start an unwakeable worker.
+#endif
     // Pad-open hooks call this again when a game changes or reopens its pad buffer. Once the
     // worker is running, do not erase its live pad pointer, pending combo or power-button
     // counter: doing so can cancel a shutdown request without creating another worker.
@@ -729,6 +748,8 @@ void Reset_Padhook(void)
         IGR_Poll_Generation = 1;
     IGR_Poll_Alarm_ID = -1;
     IGR_Poll_Recovery = 0;
+    // Hook_ExecPS2 clears the kernel's semaphores along with the old threads.
+    IGR_Request_Sema = -1;
     IGR_Intc_ID = -1;
     IGR_Thread_ID = -1;
     // Called directly by Hook_ExecPS2 inside its syscall handler.

@@ -1887,5 +1887,12 @@ gui_strings:
 - label: NEUTRINO_DVR_BACKEND_OVERRIDE
   string: "DVR launch selects its own backend. Remove -bsd= and -bsdfs= from global and per-game Neutrino arguments."
 
+- label: ERR_VMC_LBA_RANGE_CONTINUE
+  string: "VMC %s is outside the native core's supported disk address range. Continue with the physical Memory Card in slot %d?"
+- label: ERR_VMC_LAYOUT_CONTINUE
+  string: "Cannot verify VMC %s disk layout. Continue with the physical Memory Card in slot %d?"
+- label: ERR_VMC_PFS_LIMIT_CONTINUE
+  string: "VMC %s exceeds the native core's PFS mapping limit. Continue with the physical Memory Card in slot %d?"
+
 - label: NEUTRINO_VMC_FRAG_BUDGET_CONTINUE
   string: "Game and VMC files use %d/%d fragments, exceeding Neutrino's shared limit. Skip VMC %s and use the physical Memory Card in slot %d?"

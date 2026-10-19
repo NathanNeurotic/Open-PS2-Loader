@@ -17,6 +17,7 @@
 #include "include/ioman.h"
 #include "include/texcache.h" // cache quiesce before the POPSTARTER launch remounts pfs0:
 #include "include/system.h"
+#include "include/nativevmc.h"
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
 #include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
@@ -2632,7 +2633,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
         for (vmc_id = 0; vmc_id < 2; vmc_id++) {
             if (vmc_name[vmc_id][0]) {
-                have_error = 1;
+                have_error = NATIVE_VMC_INVALID;
                 hdd_vmc_infos.active = 0;
                 if (sysCheckVMC(gHDDPrefix, "/", vmc_name[vmc_id], 0, &vmc_superblock) > 0) {
                     hdd_vmc_infos.flags = vmc_superblock.mc_flag & 0xFF;
@@ -2654,17 +2655,19 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                             LOG("HDDSUPPORT hdd_vmc_infos.blocks[%d].subpart    : 0x%X\n", i, hdd_vmc_infos.blocks[i].subpart);
                             LOG("HDDSUPPORT hdd_vmc_infos.blocks[%d].count      : 0x%X\n", i, hdd_vmc_infos.blocks[i].count);
                         }
-                    } else { // else VMC file is too fragmented
-                        LOG("HDDSUPPORT Block Chain NG\n");
-                        have_error = 2;
+                    } else {
+                        LOG("HDDSUPPORT VMC slot %d block mapping failed: %d\n", vmc_id, nparts);
+                        have_error = nparts == -ENOMEM ? NATIVE_VMC_PFS_LIMIT : NATIVE_VMC_LAYOUT_UNKNOWN;
                     }
                 }
 
                 if (have_error) {
                     if (gAutoLaunchGame == NULL) {
                         char error[256];
-                        if (have_error == 2) // VMC file is fragmented
-                            snprintf(error, sizeof(error), _l(_STR_ERR_VMC_FRAGMENTED_CONTINUE), vmc_name[vmc_id], (vmc_id + 1));
+                        if (have_error == NATIVE_VMC_PFS_LIMIT)
+                            snprintf(error, sizeof(error), _l(_STR_ERR_VMC_PFS_LIMIT_CONTINUE), vmc_name[vmc_id], (vmc_id + 1));
+                        else if (have_error == NATIVE_VMC_LAYOUT_UNKNOWN)
+                            snprintf(error, sizeof(error), _l(_STR_ERR_VMC_LAYOUT_CONTINUE), vmc_name[vmc_id], (vmc_id + 1));
                         else
                             snprintf(error, sizeof(error), _l(_STR_ERR_VMC_CONTINUE), vmc_name[vmc_id], (vmc_id + 1));
                         if (!guiMsgBox(error, 1, NULL))
