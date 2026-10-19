@@ -5153,6 +5153,7 @@ static void init(void)
     thmInit();
     guiInit();
     ioInit();
+    bdmSetAutoLaunch(0);
     menuInit();
 
     startPads();
@@ -5298,6 +5299,9 @@ static void miniInit(int mode)
     configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd)
 
     ioInit();
+    // Load transports to identify the requested device, but do not hold the IO
+    // queue for an unrelated iLink drive. Auto Loading has its own mount retries.
+    bdmSetAutoLaunch(1);
     LOG_ENABLE();
 
     // Settings discovery can need a BDM transport even when the game itself is on APA HDD.

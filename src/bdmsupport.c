@@ -42,6 +42,7 @@
 
 static int iUSBModLoaded = 0;
 static int iLinkModLoaded = 0;
+static int bdmAutoLaunch;
 static int iLinkManModLoaded = 0;
 static int ieee1394ModLoaded = 0;
 static int mx4sioModLoaded = 0;
@@ -1388,9 +1389,12 @@ static void bdmLoadBlockDeviceModules(void)
     // still published by the bdmevent handler as usual; the single forced refresh covers a mount
     // whose event was spent before the menu could act on it.
     static int ilinkProbeDone = 0;
+    // Auto Loading already waits for its target mass device. Do not make its
+    // IO drain wait for an absent, force-enabled iLink source as well. Leave
+    // the menu's one-shot probe unconsumed if Auto Loading falls back to it.
     if (!gEnableILK)
         ilinkProbeDone = 0;
-    else if (iLinkModLoaded && !ilinkProbeDone) {
+    else if (iLinkModLoaded && !ilinkProbeDone && !bdmAutoLaunch) {
         char ilkRoot[16];
         int waitedMs;
 
@@ -1455,6 +1459,13 @@ static void bdmLoadCoreModules(int forceUsb)
 #endif
 
     LOG("BDMSUPPORT Modules loaded\n");
+}
+
+// Set only after ioInit has joined any previous worker. Keep the value for
+// the whole IO session, including teardown, so a queued pass sees the same policy.
+void bdmSetAutoLaunch(int enabled)
+{
+    bdmAutoLaunch = enabled;
 }
 
 void bdmLoadModules(void)

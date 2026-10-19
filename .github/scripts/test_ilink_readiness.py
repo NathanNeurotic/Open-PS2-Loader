@@ -2,17 +2,20 @@
 """Exercise the production probe with early, delayed, and absent iLink roots."""
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 
 root = Path(__file__).resolve().parents[2]
 source = (root / 'src/bdmsupport.c').read_text(encoding='utf-8')
+if len(sys.argv) > 1:
+    source = subprocess.check_output(['git', 'show', sys.argv[1] + ':src/bdmsupport.c'], cwd=root, text=True)
 start = source.index('    static int ilinkProbeDone = 0;')
 probe = source[start:source.index('\n}', start)]
 program = r'''
 #include <assert.h>
 #include <stdio.h>
-static int gEnableILK, iLinkModLoaded, delays, refreshes, ready_after;
+static int gEnableILK, iLinkModLoaded, delays, refreshes, ready_after, bdmAutoLaunch;
 #define BDM_TYPE_ILINK 1
 #define LOG(...) ((void)0)
 static int bdmGetDeviceRootByType(int type, char *root, unsigned int size) {
@@ -27,6 +30,16 @@ static void run_probe(void) {
 ''' + probe + r'''
 }
 int main(void) {
+    gEnableILK = 0; run_probe();
+    gEnableILK = iLinkModLoaded = bdmAutoLaunch = 1;
+    ready_after = -1;
+    run_probe();
+    assert(delays == 0 && refreshes == 0); // absent optional iLink cannot delay autoload
+    ready_after = 2; run_probe();
+    assert(delays == 0 && refreshes == 0); // target readiness belongs to autoload's mass retries
+    bdmAutoLaunch = 0;
+    run_probe();
+    assert(delays == 2 && refreshes == 1); // fallback menu still gets its late-drive probe
     int readiness[] = {0, 2, 11, -1};
     for (unsigned int i = 0; i < sizeof(readiness)/sizeof(readiness[0]); i++) {
         gEnableILK = 0; run_probe();
@@ -41,7 +54,7 @@ int main(void) {
     run_probe(); assert(refreshes == 0 && delays == 0);
     iLinkModLoaded = 1; ready_after = 0;
     run_probe(); assert(refreshes == 1 && delays == 0);
-    puts("iLink readiness: ready, delayed, absent, one-shot and re-enable passed");
+    puts("iLink readiness: autoload skip, menu fallback, ready, delayed, absent and one-shot passed");
     return 0;
 }
 '''
@@ -52,3 +65,10 @@ with tempfile.TemporaryDirectory() as temp:
     subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror',
                     str(cfile), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
+
+# A reused IO worker must be joined before its session policy can change.
+opl = (root / 'src/opl.c').read_text(encoding='utf-8')
+for signature, enabled in [('static void init(void)', 0), ('static void miniInit(int mode)', 1)]:
+    begin = opl.index(signature)
+    body = opl[begin:opl.index('\n}', begin)]
+    assert body.index('ioInit();') < body.index(f'bdmSetAutoLaunch({enabled});') < body.index('bdmInitSemaphore();')

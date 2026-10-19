@@ -73,6 +73,7 @@ typedef struct
 } bdm_device_data_t;
 
 void bdmLoadModules(void);
+void bdmSetAutoLaunch(int enabled);
 int bdmModeIsPCCF(int mode);
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
 
