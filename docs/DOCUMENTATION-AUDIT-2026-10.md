@@ -73,10 +73,10 @@ paths were newly tested.
 | Local storage | `usb`, `mmce`: existing device/setup qualifications retained; `hdd`: merged CF status and allocation wording reconciled |
 | Special hardware | `pc-card-cf`, `psx-dvr`: merged/opt-in status corrected; `ps3-bc`: hardware and inherited-support scope corrected |
 | Network | `smb`, `network-boot`, `nbd`: paths, file layout, IP synchronization, core and format restrictions corrected; `http`: existing experimental/conformance scope retained |
-| Cores and saves | `neutrino`, `cheats`, `per-game-settings`, `vmc`: runtime, arguments, locks and VMC corrections; `ps1-vcd`: current POPS UDPFS/Ember guidance retained |
+| Cores and saves | `neutrino`, `cheats`, `per-game-settings`, `vmc`: runtime, arguments, locks and VMC corrections; `ps1-vcd`: UDPFS Files scope, all four Ember per-game settings and the confirmed loose-file scan defect reconciled |
 | Interface | `controls`, `settings`, `themes`, `pademu`: defaults and missing behavior corrected; `coverflow`, `favourites`, `languages`: current guides retained |
 | Other references | `unicode-titles`: durable release/wiki links; `zso`: maintained tool link and HTTP exclusion; `credits`: dead link removed, attribution retained |
-| Recovery and history | `troubleshooting`: VMC reservation/fallback wording aligned; `gsm`, `igr`: current recovery/core restrictions retained; `fork-gaps`: dated comparison preserved with broken evidence URL removed |
+| Recovery and history | `troubleshooting`: VMC reservation/fallback wording aligned; `igr`: EE alarm, retained notifications, Mode 6/RA behavior, power-button limits, return-path restrictions and Ember's lack of IGR corrected; `gsm`: recovery guide retained; `fork-gaps`: dated comparison preserved with broken evidence URL removed |
 | Generated content | `retroachievements` regenerated from its current Markdown owner; `data/search-index.json` regenerated from final pages |
 
 ## Validation and limits

@@ -366,6 +366,14 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 
 ## 8. Notes & limitations
 
+- Ember does not provide IGR. POPSTARTER has its own reset behavior; neither
+  uses [RiptOPL's PS2 IGR hook](IGR.md).
+- **Ember list empty on a BDM drive:** a reproduced scanner defect lets a
+  loose file such as `EMBER/games/readme.txt` or `.DS_Store` abort the Ember
+  scan on FAT32 and exFAT. Move loose files out of `EMBER/games/`, leaving
+  the individual game directories there. [PR #999](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/999)
+  proposes the fix; this does not require reformatting the disk or changing
+  the PS2 BDM Prefix.
 - VCD support reuses the normal device pipeline, so covers, favorites and the theme all
   work exactly as they do for disc games.
 - POPSTARTER, the patch file and every BDMA module variant are supplied as separate files in the
