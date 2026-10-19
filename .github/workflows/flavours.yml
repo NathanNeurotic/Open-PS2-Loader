@@ -423,7 +423,7 @@ jobs:
           # --- FREEZE REPORT: OFFICIALROLLING (the toolchain the release app uses) built with
           # INGAMEDIAG=1. When a game freezes, the IGR combo (L1+L2+R1+R2+Start+Select) saves what
           # the console was doing -- the game's threads, the IOP's disc and VMC activity -- to
-          # mc0:/RIPTFRZ.TXT, then exits as usual. If the combo does nothing, the EE itself is stuck.
+          # mc0:/RIPTFRZ.TXT, then exits as usual. An inert combo can also mean IGR input monitoring failed.
           # Hand it out when a tester reports in-game freezes. Compatibility Mode 6 turns IGR off,
           # and with it the report.
           - flavour: OFFICIALROLLING-FREEZEDIAG
