@@ -287,7 +287,7 @@ jobs:
         run: python3 .github/scripts/test_game_parental_lock.py
       - name: Check VMC and PADEMU SIO2MAN version and alias isolation
         run: python3 .github/scripts/test_sio2man_hooks.py
-      - name: Check MMCE games get no SDK SIO2MAN (black screen after the PS2 logo)
+      - name: Check native SIO2MAN packing follows active VMC/PADEMU and preserves MMCE
         run: python3 .github/scripts/test_mmce_sio2man_pack.py
       - name: Check local transport binding and iLink aliases cannot cross-wire devices
         run: python3 .github/scripts/test_bdm_transport_binding.py

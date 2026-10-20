@@ -2576,7 +2576,10 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #else
     const int discMode = 0;
 #endif
-    if (!discMode && strcmp(mode_str, "BDM_CF_MODE"))
+    // CORE_IRX_VMC also selects the SDK SIO2MAN dependency. An unused VMC module
+    // has size zero; marking it present would replace the game's SIO2MAN even
+    // with both VMC slots disabled. Keep the game's stack unless a consumer needs ours.
+    if (!discMode && strcmp(mode_str, "BDM_CF_MODE") && size_mcemu_irx > 0)
         modules |= CORE_IRX_VMC;
 
     LOG("SYSTEM LaunchLoaderElf loading modules\n");
