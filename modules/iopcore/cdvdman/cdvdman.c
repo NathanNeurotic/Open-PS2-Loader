@@ -295,6 +295,19 @@ static int ProbeZSO(u8 *buffer)
     return 1;
 }
 
+// IOP clock ticks (36.864MHz) one 2048-byte sector takes under Accurate Reads (Mode 1).
+static u32 cdvdman_accu_read_ticks(void)
+{
+    // SP193: approximately 2KB/3600KB/s = 555us required per 2048-byte data sector at 3600KB/s, so 555 * 36.864 = 20460 ticks per sector with a 36.864MHz clock.
+    /* AKuHAK: 3600KB/s is too fast, it is CD 24x - theoretical maximum on CD
+       However, when setting SCECdSpinMax we will get 900KB/s (81920) for CD, and 2200KB/s (33512) for DVD */
+    /* Slow Reads (Mode 8) gives a DVD title the CD rate. Tales of the Abyss loses its music and SFX at
+       >=1200KB/s and plays clean at <=1000KB/s, which OPL 0.9's ~900KB/s Mode 1 met (#924). */
+    if (cdvdman_settings.common.media == 0x12 || (cdvdman_settings.common.flags & IOPCORE_COMPAT_SLOW_READS))
+        return 81920;
+    return 33512;
+}
+
 static int cdvdman_read_sectors(u32 lsn, unsigned int sectors, void *buf)
 {
     unsigned int remaining;
@@ -351,10 +364,7 @@ static int cdvdman_read_sectors(u32 lsn, unsigned int sectors, void *buf)
                 SectorsToRead = 8;
 
             TargetTime.hi = 0;
-            TargetTime.lo = (cdvdman_settings.common.media == 0x12 ? 81920 : 33512) * SectorsToRead;
-            // SP193: approximately 2KB/3600KB/s = 555us required per 2048-byte data sector at 3600KB/s, so 555 * 36.864 = 20460 ticks per sector with a 36.864MHz clock.
-            /* AKuHAK: 3600KB/s is too fast, it is CD 24x - theoretical maximum on CD
-               However, when setting SCECdSpinMax we will get 900KB/s (81920) for CD, and 2200KB/s (33512) for DVD */
+            TargetTime.lo = cdvdman_accu_read_ticks() * SectorsToRead;
             ClearEventFlag(cdvdman_stat.intr_ef, ~0x1000);
             SetAlarm(&TargetTime, &cdvdemu_read_end_cb, NULL);
         }
