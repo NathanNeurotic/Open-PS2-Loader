@@ -317,3 +317,355 @@ translations:
   HINT_EMBER_DISPLAY: Mode keluaran yang dipakai Ember untuk gim PS1. 240p atau 480p ditulis ke settings.txt di folder EMBER pada perangkat yang diluncurkan. Bawaan menghapus pengaturan itu lagi, berikut berkasnya jika tidak berisi apa pun selain itu.
   LOGOART: "Logo Game"
   HINT_LOGOART: "Menampilkan logo game (<ID>_LGO) saat digunakan oleh tema. Mematikannya juga menyembunyikan gambar bawaan tanpa mengubah sampul, gambar cakram, atau latar belakang."
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  BDM_GAMES: Game BDM
+  HDD_GAMES: Game HDD
+  NET_GAMES: Game ETH
+  OK: OK
+  BDMMODE: Mode Mulai BDM
+  MANUAL: Manual
+  CAT_SMB_SERVER: '- Server SMB -'
+  MASK: Mask
+  GATEWAY: Gateway
+  RESET: Setel Ulang
+  VMC_STATUS: Status
+  INFO: Info
+  MODE: Mode
+  VMC_SLOT1: Slot VMC 1
+  VMC_SLOT2: Slot VMC 2
+  VSYNC: V-Sync
+  XOFFSET: POS-H
+  YOFFSET: POS-V
+  DS34BT_MODE: DualShock3/4 BT
+  MTAP_ENABLE: Emulasi Multitap
+  HINT_PADEMU_WORKAROUND: Beberapa DS3 palsu butuh cara khusus; opsi ini menyalakannya.
+  CFG_NOTIFICATION: Konfigurasi dimuat dari %s
+  THM_NOTIFICATION: Tema dimuat dari %s
+  LNG_NOTIFICATION: Bahasa dimuat dari %s
+  PARTITION_NOTIFICATION: Partisi %s terpasang.
+  PERGAME_SETTINGS: Per Game
+  HINT_NEUTRINO_AUTO_ELF: Mengirim ELF boot game ke Neutrino untuk mencari konfigurasi per judul. Nyala secara bawaan; opsi Boot ELF yang diatur manual lebih diutamakan.
+  HINT_POPSTARTER_PATH: Letak POPSTARTER.ELF. Jika dibiarkan kosong, RIPPS2 mengisi yang ditemukannya di drive; timpa untuk memakai yang lain, seperti usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Argumen Neutrino melebihi panjang yang bisa disimpan. Pendekkan satu kolom sebelum menyimpan.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Argumen peluncuran Neutrino melebihi batas aman. Pendekkan argumen global atau argumen game.
+  NEUTRINO_AUTO_ELF: Boot ELF Otomatis (-elf)
+  HINT_NEUTRINO_PATH: 'Di mana neutrino.elf berada? <belum diatur> = Perangkat game -> mc0/mc1. Jalur lengkap khusus dicoba lebih dulu. Contoh: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Tampilan Game PS2/PS1
+  HINT_GAME_VIEW_MODE: Semua menampilkan game PS2 dan PS1 bersama dan L3 berganti Semua, PS1, PS2. PS2 atau PS1 hanya menampilkan jenis itu dan mematikan L3. APPS dan Game Berbintang memakai aturan tampilannya sendiri.
+  VIEW_MIXED: Menampilkan game PS2 + PS1
+  VIEW_PS1_ELF: Menampilkan aplikasi ELF PS1
+  APPS_DISPLAY: Tampilan Aplikasi
+  HINT_APPS_DISPLAY: Semua menampilkan setiap ELF dalam satu daftar APPS dengan L3 mati. Aplikasi / PS1ELF memisahkan judul yang berisi [PS1] ke halaman L3 kedua; cara peluncuran tidak berubah.
+  VIEW: Tampilan
+  VIEW_PS2: Menampilkan game PS2 berbintang
+  VIEW_PS1: Menampilkan game PS1 berbintang
+  VIEW_ELF: Menampilkan ELF berbintang
+  VIEW_ALL: Menampilkan semua game berbintang
+  VMC_FRAGMENTED_ON_CREATE: VMC sudah dibuat, tetapi terfragmentasi. Emulasi kartu memori butuh satu file yang utuh tanpa putus, jadi VMC ini dilewati saat peluncuran dan kartu asli yang dipakai. Kosongkan ruang dan buat lagi, atau salin dari perangkat lain.
+  KEYB_MOVE_CURSOR: Gerakkan kursor
+  TITLECOLOR: Warna Judul Game
+  RA_CHECK_GAME: Periksa dukungan RetroAchievements
+  RA_TEST_LINK: Uji koneksi PC RetroAchievements
+  RA_CHECKING_IMAGE: Memeriksa image, butuh beberapa detik...
+  RA_CHECK_RUNNING: Pemeriksaan image sudah berjalan
+  RA_LOOKING_FOR_PC: Mencari klien PC...
+  RA_UL_UNSUPPORTED: Game UL/USBExtreme belum bisa diperiksa
+  RA_UL_UNSUPPORTED2: Hanya image .iso biasa di DVD/ atau CD/ yang didukung
+  RA_UNKNOWN_IMAGE: RetroAchievements tidak mengenal image ini
+  RA_STILL_IDENTIFYING: PC masih mengenali image
+  RA_TRY_AGAIN: Coba lagi beberapa detik lagi
+  RA_NO_SOCKET: Konsol tidak bisa membuka soket jaringan
+  RA_NO_SOCKET2: Mulai ulang konsol, atau periksa perangkat ETH di pengaturan
+  RA_TEST_NO_SOCKET2: Periksa kabel dan ETH di pengaturan; jika jaringan berjalan, boot ulang konsol
+  RA_PC_NO_ANSWER: Klien PC tidak menjawab
+  RA_PC_NO_ANSWER2: Pastikan xeRAbora berjalan, atau coba uji koneksi PC
+  RA_SUPPORTED: Didukung oleh RetroAchievements
+  RA_START_TO_TRACK: Jalankan game untuk melacak pencapaian
+  RA_ACHIEVEMENTS: '%d pencapaian'
+  RA_ACHIEVEMENTS_FULL: '%d pencapaian -- %d terbuka, %d tidak didukung'
+  RA_HASH_FAILED: Hash image tidak bisa dihitung
+  RA_HASH_FAILED2: Lihat RA/hashes.txt di samping game untuk alasannya
+  RA_NET_BUSY: Jaringan sedang dipakai transport UDP
+  RA_NET_BUSY2: RA butuh stack SMB -- ganti protokol, atau buat .wl di PC
+  RA_NET_BUSY_HASH: Hash ada di RA/hashes.txt -- xeRAbora bisa membuat .wl darinya
+  RA_NO_IP: Konsol tidak punya alamat IP
+  RA_NO_IP2: Periksa DHCP atau alamat statis di pengaturan Jaringan
+  RA_TEST_NO_ANSWER: Tidak ada klien PC yang menjawab dalam 3 detik
+  RA_TEST_NO_ANSWER2: Konsol%s. Pastikan xeRAbora berjalan dan UDP 18194 terbuka
+  RA_TEST_FOUND: Klien PC ditemukan%s%s %s
+  RA_TEST_FOUND2: Jawaban dalam %u ms, konsol%s
+  RA_NA_NEUTRINO: Pelacakan RA butuh inti <OPL> -- peluncuran Neutrino tidak pernah memuat ee_core
+  RA_NA_UDPFS: Pelacakan RA tidak tersedia di UDPFS -- game diluncurkan lewat Neutrino
+  RA_NA_PS1: Pelacakan RA tidak tersedia untuk game PS1
+  RA_NA_HDD: Info game APA atau folder pengaturan HDD tidak tersedia
+  RA_NA_HDD2: Atur folder pengaturan HDD yang valid dan segarkan sebelum memeriksa dukungan
+  RA_TELEMETRY: Telemetri RetroAchievements
+  RA_BADGES: Lencana RetroAchievements
+  HTTP_GAMES: Game HTTP
+  HTTP_SERVER: Server HTTP
+  HTTP_PORT: Port HTTP
+  HTTP_BASE_PATH: Jalur dasar HTTP
+  HTTP_TEST: Uji server HTTP
+  HTTP_TEST_OK: Server OK -- game terdaftar
+  HTTP_TEST_EMPTY: Katalog kosong -- valid, tetapi tidak membuktikan apa pun soal rentang byte
+  HTTP_TEST_NO_ISO: Katalog tidak punya image yang didukung untuk menguji rentang byte
+  HTTP_ERR_CONNECT: Tidak bisa menjangkau server HTTP
+  HTTP_ERR_CATALOG: games.csv tidak ada, tidak terbaca, atau terlalu besar
+  HTTP_ERR_RANGE: Server tidak mengembalikan byte persis seperti yang diminta
+  HTTP_LAUNCH_UNAVAILABLE: Peluncuran HTTP belum diterapkan -- katalog hanya bisa dijelajahi
+  HTTP_ERR_COMPRESSED: Image terkompresi (.zso) belum didukung lewat HTTP
+  HTTP_NO_VMC: Kartu memori virtual tidak tersedia lewat HTTP -- pakai kartu fisik
+  HTTP_TAB_HINT: HTTP membaca games.csv dari servermu. Atur alamat, port, dan jalur dasar di pengaturan Jaringan, lalu pakai Uji.
+  RA_DISC_CHECK: 'RA: periksa dukungan disk'
+  RA_DISC_LAUNCH: 'RA: jalankan disk'
+  RA_DISC_CHECKING: Memeriksa disk untuk RetroAchievements
+  RA_DISC_HASH_FAILED: Hash disk tidak bisa dihitung -- periksa RA/hashes.txt di folder pengaturan
+  RA_DISC_HOME_ERROR: Jalur pengaturan tidak bisa dipakai untuk daftar pantau disk
+  RA_DISC_ENABLE: Nyalakan telemetri RetroAchievements di pengaturan Jaringan lebih dulu
+  RA_DISC_CHECK_FIRST: 'Tidak ada daftar pantau untuk disk ini -- pakai RA: periksa dukungan disk lebih dulu'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: HDD ditemukan, tetapi tabel partisi APA-nya tidak bisa dibaca. Jangan diformat -- game-gamemu mungkin masih bisa diselamatkan.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: Sebuah drive tidak dipasang karena sektornya bukan 512 byte (misalnya drive sektor 4K). OPL hanya bisa membaca sektor 512 byte.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Judul ini adalah partisi APA tersendiri, dan OPL tidak pernah mengedit tabel partisi. Ganti namanya di PC.
+  POPS_SETTINGS_UNREADABLE: Tidak bisa membaca pengaturan POPSTARTER -- kartu memori sedang sibuk atau tidak terbaca. Coba lagi setelah pemuatan selesai.
+  GLOBAL_PS_EMULATION_SETTINGS: Pengaturan Emulasi PS Global
+  RA_NO_LINK_UNTRACKED: Jaringan tidak tersedia -- kali ini diluncurkan tanpa RetroAchievements.
+  IGR_USB_DRIVERS_PROMPT: Jalur IGR ada di USB, tetapi %s tidak punya USBD.IRX dan USBHDFSD.IRX, yang dibutuhkan konsol untuk menjangkau USB setelah In-Game Reset. Tanpa keduanya, IGR jatuh ke peramban PS2. Salin driver RiptOPL ke sana sekarang? FMCB, OpenTuna, dan exploit lain juga memuat file ini dan bisa berperilaku berbeda karenanya. File yang ada tidak pernah diganti. Hanya USB FAT32.
+  IGR_USB_DRIVERS_FAILED: Tidak bisa menyalin driver USB ke %s (kartu penuh atau tidak bisa ditulisi). IGR akan jatuh ke peramban PS2.
+  OFFICIAL_CFG_NOTIFICATION: Pengaturan OPL resmi dimuat dari %s
+  CFM_VMODE_HOLD_KEEP: Tahan untuk mempertahankan
+  BDM_PS2_FOLDERS_UNREADABLE: Tidak bisa membuka folder CD atau DVD di %s (galat %d), jadi perangkat itu tidak menampilkan game PS2. Tekan SELECT di halamannya untuk mencoba lagi.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Sistem file Neutrino diatur ke bd, tetapi perangkat ini tidak pernah melaporkan nomor perangkatnya, jadi Neutrino tidak bisa diarahkan ke sana. Atur sistem file Neutrino game ini ke Auto atau exfat.
+  CFM_VMODE_REVERT_IN: Kembali dalam %d dtk
+  EMBER_DITHER: Dithering Ember
+  HINT_EMBER_DITHER: Dithering Ember (Nyala atau Mati), ditulis ke EMBER/settings.txt di perangkat yang diluncurkan. Nilai per game lebih diutamakan.
+  EMBER_SHADING: Shading Ember
+  HINT_EMBER_SHADING: 'Kedalaman warna Ember: 15-bit, atau 24-bit (eksperimental). Ditulis ke EMBER/settings.txt di perangkat yang diluncurkan. Nilai per game lebih diutamakan.'
+  EMBER_CONTROLLER: Kontroler Ember
+  HINT_EMBER_CONTROLLER: 'Mode kontroler Ember: Otomatis, Analog, atau D2A. Biasanya paling baik diatur per game (Segitiga > Pengaturan Game Ember), yang lebih diutamakan.'
+  EMBER_480P_CONFIRM: Ember 480p tidak menampilkan gambar lewat komposit. Pakai 480p?
+  EMBER_SHADING_24: 24-bit (eksperimental)
+  EMBER_GAME_SETTINGS: Pengaturan Game Ember
+  HINT_EMBER_GAME_SETTING: Hanya game ini. Tekan OK untuk menulis EMBER/games/<nama>/settings.txt sebelum peluncuran. Bawaan yang tidak disentuh mempertahankan nilai yang sudah ada di file; mengubah nilai kembali ke Bawaan menghapus penimpaannya.
+  EMBER_TIMING: Timing Ember
+  HINT_EMBER_TIMING: 'Timing video Ember: Otomatis mengikuti region disk, NTSC memaksa 60 Hz, PAL memaksa 50 Hz. Ditulis ke EMBER/settings.txt di perangkat yang diluncurkan.'
+  EMBER_GLOBAL_WARNING: Pengaturan Ember ini berlaku untuk setiap game PS1, dan beberapa game crash karenanya. Untuk mengubah satu game saja, pakai Segitiga > Pengaturan Game Ember di game itu.
+  HINT_COVERFLOW_COUNT: Berapa sampul yang ditampilkan RIPFLOW di setiap sisi sampul yang dipilih.
+  HINT_COVERFLOW_SCALE: Seberapa besar RIPFLOW menggambar sampul yang dipilih dibanding yang lain.
+  HINT_COVERFLOW_ANIM: Seberapa cepat sampul meluncur saat kamu bergerak di sepanjang aliran.
+  HINT_NARGS_QB: 'Quick Boot: melewati layar awal Neutrino sendiri. Nyala di sini, dikirim untuk setiap game; mati, RIPPS2 tetap mengirimnya sendiri untuk game USB, iLink, dan jaringan, tempat ia dibutuhkan.'
+  HINT_NARGS_DBC: 'Warna Debug: Neutrino mengisi layar dengan satu warna di setiap langkah pemuatan, sehingga foto menunjukkan di mana game berhenti.'
+  HINT_NARGS_LOGO: Menampilkan logo PS2 sebelum game (boot ulang IOP kedua, yang dibutuhkan beberapa drive iLink). Mati di sini, RIPPS2 mengikuti Peluncuran Game > Logo PS2, dan tidak pernah mengirimnya untuk game MMCE atau jaringan.
+  HINT_NARGS_CWD: 'Folder yang dianggap game sebagai miliknya. Kosong: bawaan Neutrino.'
+  HINT_NARGS_CFG: 'File konfigurasi Neutrino milikmu sendiri (-cfg). Kosong: milik Neutrino.'
+  HINT_NARGS_ELF: 'Menjalankan ELF ini alih-alih file boot yang ditunjuk disk. Kosong: milik game sendiri.'
+  HINT_NARGS_ATA0: Image HDD yang dipasang Neutrino sebagai HDD internal konsol, untuk game yang memakai HDD (-ata0).
+  HINT_NARGS_ATA0ID: File ID yang menyertai image HDD itu (-ata0id).
+  HINT_NARGS_ATA1: Image HDD kedua (-ata1).
+  PS1_SAVE_GUIDANCE: Simpanan PS1 bergantung pada Ember atau POPSTARTER; pengaturan VMC PS2 tidak berlaku.
+  NEUTRINO_SHOW_ARGS: Tampilkan Argumen Peluncuran
+  HINT_NEUTRINO_SHOW_ARGS: Sebelum setiap peluncuran Neutrino, tampilkan semua argumen yang akan diterima Neutrino dan tanyakan apakah lanjut. Kembali kembali ke menu tanpa meluncurkan.
+  NEUTRINO_ARGS_CONFIRM: Neutrino akan mulai dengan argumen ini. Luncurkan?
+  HINT_NARGS_EXTRA: Flag Neutrino lainnya, dipisahkan spasi, dikirim setelah semua yang di atas. RIPPS2 selalu menambahkan -bsd dan -dvd untuk drive dan ISO game, -mc0 dan -mc1 untuk VMC-nya, -gsm untuk mode videonya, dan mode kompatibilitas milik game. Flag yang punya baris sendiri di atas (seperti -logo) dipindah ke baris itu saat disimpan, dan tetap dikirim.
+  GAME_TYPE_LABELS: Tampilkan Label [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: Daftar cheat tidak bisa disimpan ke folder Neutrino, jadi Neutrino tidak bisa memakainya. Luncurkan tanpa cheat?
+  AUTO_CREATE_VMC: Buat VMC saat Peluncuran Pertama
+  HINT_AUTO_CREATE_VMC: Meluncurkan game PS2 tanpa VMC di slot 1 membuat kartu 8 MB di perangkat game, dinamai seperti saran layar VMC (dipakai bersama oleh setiap disk game itu), lalu memasangnya. Tidak untuk HDD internal di bawah Neutrino.
+  AUTO_VMC_CREATING: Membuat VMC game ini...
+  AUTO_VMC_FAILED: Tidak bisa membuat VMC game ini. Game dimulai tanpa VMC.
+  SAVE_ICONS: Ikon Simpanan 3D
+  HINT_SAVE_ICONS: Menampilkan ikon simpanan game yang dipilih, berputar, di tempat yang disediakan tema. Membaca VMC milik game lebih dulu, lalu kartu memori.
+  NETBOOT_RESTART_NOW: Protokol jaringan berubah setelah mulai ulang. Simpan pengaturan dan mulai ulang OPL sekarang?
+  HINT_NET_PROTOCOL: 'Layanan jaringan yang dipakai RiptOPL: share SMB, UDPFS, UDPBD, atau HTTP. Pengaturan yang sama dengan di Sumber Game. Beralih dari layanan yang sudah berjalan butuh mulai ulang.'
+  HINT_UDPFS_ACCESS: Hanya UDPFS. File membaca ISO lepas dari folder game di server; IMG membaca image disk sebagai drive. SMB dan HTTP selalu memakai File, UDPBD selalu IMG.
+  HINT_SMB_VERSION: Versi SMB yang dipakai untuk berbicara dengan share PC.
+  HINT_NET_ADVANCED: Membuka Mode Link Ethernet dan Port SMB untuk diedit.
+  HINT_ETH_LINK_MODE: Memaksa kecepatan link jaringan dan duplex. Biarkan Otomatis kecuali link terus putus.
+  HINT_IP_ADDR_TYPE: Statis memakai alamat di bawah; DHCP meminta ke router-mu. UDPFS dan UDPBD selalu memakai Statis.
+  HINT_PS2_IP: Alamat IP milik PS2 sendiri. Pilih yang tidak dipakai perangkat lain, dalam rentang yang sama dengan PC-mu.
+  HINT_NETMASK: Subnet mask, biasanya 255.255.255.0.
+  HINT_GATEWAY: Alamat router-mu, biasanya tiga angka pertamanya sama dan berakhir .1.
+  HINT_DNS: Alamat server DNS. Biasanya sama dengan gateway.
+  HINT_SMB_ADDR_TYPE: Menjangkau PC lewat alamat IP-nya atau nama NetBIOS (komputer)-nya.
+  HINT_SMB_ADDRESS: 'PC yang membagikan game-gamemu: alamat IP-nya, atau nama komputernya saat Tipe Alamat adalah NetBIOS.'
+  HINT_SMB_PORT: 'Port SMB. Harus sama dengan PC: PS2 Servers memakai 1111, share Windows dan Samba memakai 445.'
+  HINT_SMB_USER: Nama pengguna SMB. guest bisa dipakai untuk kebanyakan share.
+  HINT_HTTP_SERVER: Alamat IP server game HTTP.
+  HINT_HTTP_PORT: Port yang didengarkan server game HTTP.
+  HINT_HTTP_BASE: Folder di server HTTP yang berisi games.csv. / adalah root server.
+  HINT_HTTP_TEST: Mencoba server HTTP dengan nilai di atas dan melaporkan hasilnya.
+  HINT_RA_TELEMETRY: Sakelar utama RetroAchievements. Mati meluncurkan game tanpa stack jaringan atau snapshot, sama seperti build biasa.
+  HINT_RA_BADGES: Menandai game yang punya pencapaian di daftar. Tetap gelap selama telemetri mati.
+  HINT_POPS_NET_BUTTON: Mengedit file jaringan milik POPSTARTER (IPCONFIG.DAT, SMBCONFIG.DAT), yang dibutuhkan game PS1 lewat SMB.
+  HINT_POPS_IP_TYPE: 'Cara PS2 mendapat alamat saat game PS1 berjalan lewat SMB: Statis atau DHCP.'
+  HINT_POPS_IP: Alamat IP PS2 saat game PS1 berjalan lewat SMB.
+  HINT_POPS_SMB_IP: Alamat IP PC yang membagikan game PS1-mu.
+  HINT_POPS_SMB_SHARE: Nama share di PC itu yang berisi folder POPS.
+  HINT_LASTPLAYED: Mulai dari game yang terakhir kamu luncurkan.
+  HINT_LANGUAGE: Bahasa menu. Tambah lagi dengan menaruh file lang_*.lng di folder LNG.
+  HINT_GSM_DEFAULTS_BUTTON: Perbaikan mode video yang didapat setiap game kecuali punya pengaturan GSM sendiri.
+  HINT_DEFDEVICE: Halaman yang dibuka RiptOPL saat boot.
+  HINT_MMCE_MODE: Game di SD2PSX atau MemCard PRO2. Otomatis mulai saat boot, Manual saat kamu membuka halamannya, Mati menyembunyikannya.
+  HINT_MMCE_SETTINGS_BUTTON: Slot, IGR bootcard, GameID, dan opsi timing untuk MMCE.
+  HINT_ENABLE_USB: Memuat driver penyimpanan USB.
+  HINT_ENABLE_MX4SIO: Memuat driver adaptor kartu SD MX4SIO.
+  HINT_ENABLE_ILINK: Memuat driver penyimpanan iLink (FireWire).
+  HINT_NETSTART: 'Memulai jaringan: Otomatis saat boot, Manual saat kamu membuka halamannya. Mati tidak menyentuh adaptor jaringan.'
+  HINT_APPMODE: Halaman Aplikasi. Otomatis mulai saat boot, Manual saat kamu membukanya, Mati menyembunyikannya.
+  HINT_FAVMODE: Halaman Game Berbintang. Otomatis mulai saat boot, Manual saat kamu membukanya, Mati menyembunyikannya.
+  HINT_BDMA_BUTTON: Driver exFAT yang dipakai POPSTARTER untuk game PS1 di USB, MX4SIO, MMCE, HDD, atau iLink.
+  HINT_VCD_LIST_BUTTON: 'Cara game PS1 ditampilkan: sembunyikan ID game, hanya tampilkan disk 1, tampilkan partisi PP di HDD.'
+  HINT_MMCE_SLOT: Slot kartu memori tempat perangkat MMCE berada. Otomatis menemukannya.
+  HINT_MMCE_GAMEID: Memberi tahu perangkat MMCE game mana yang dimulai, supaya bisa berganti ke kartu memori game itu.
+  HINT_MMCE_COMM_BUTTON: Opsi timing untuk link MMCE. Ubah hanya jika game macet atau dimuat lambat.
+  HINT_MMCE_PATH_BUTTON: Letak folder game di kartu MMCE.
+  HINT_MMCE_PREFIX: Subfolder di kartu MMCE yang berisi CD, DVD, dan folder OPL lainnya. Kosong memakai root kartu.
+  HINT_GAME_TYPE_LABELS: Mengawali setiap nama game dengan [PS1] atau [PS2]. Hanya tampilan.
+  HINT_MENU_VMODE: Keluaran video untuk menu. Game memakai GSM sebagai gantinya. Tahan Terima untuk mempertahankan mode baru.
+  HINT_THEME: Tampilan menu. Tema dibaca dari folder THM di setiap perangkat.
+  HINT_COVERFLOW_BUTTON: Jumlah sampul, ukuran, animasi, dan peredupan untuk tema Coverflow.
+  HINT_ARTWORK_BUTTON: 'Gambar yang dimuat: sampul, gambar disk, latar, dan ikon simpanan.'
+  HINT_COLORS_BUTTON: Warna teks, sorotan, dialog, dan latar.
+  HINT_NOTIFICATIONS: Pemberitahuan singkat saat file konfigurasi, tema, atau bahasa dimuat.
+  HINT_AUTOSORT: Mengurutkan daftar game dari A ke Z. Mati mempertahankan urutan saat ditemukan.
+  HINT_AUTOREFRESH: Menambahkan game dari perangkat yang baru dihubungkan tanpa penyegaran manual.
+  HINT_COVERART: Memuat sampul dari folder ART.
+  HINT_DISCART: Menampilkan gambar disk (<ID>_ICO). Mati menyembunyikan disk tetapi mempertahankan sampul dan latar.
+  HINT_BGART: Menampilkan latar game (<ID>_BG) saat tema memakainya.
+  HINT_ART_TAR: Juga membaca gambar yang dikemas dalam ART/art.tar.
+  HINT_ART_DELAY: Berapa lama kursor diam di sebuah game sebelum gambarnya dimuat. Makin tinggi, makin banyak gambar dilewati saat kamu menggulir cepat.
+  HINT_TXTCOLOR: Warna teks menu biasa.
+  HINT_SELCOLOR: Warna item yang disorot.
+  HINT_UICOLOR: Rona latar kotak dialog.
+  HINT_TITLECOLOR: Warna judul game di daftar.
+  HINT_BGCOLOR: Warna latar menu.
+  HINT_PLASCOLOR: Warna yang dicampur ke latar animasi.
+  HINT_RESETCOLOR: Mengembalikan warna bawaan RiptOPL, bukan warna tema.
+  HINT_WIDESCREEN: Menggambar menu untuk TV 16:9.
+  HINT_XOFF: Menggeser menu ke kiri atau kanan di layar.
+  HINT_YOFF: Menggeser menu ke atas atau bawah di layar.
+  HINT_MENU_OVERSCAN: Mengecilkan menu ke dalam jika TV memotong tepinya.
+  HINT_APPLYGAMEID: Menampilkan barcode saat game dimulai, supaya perangkat Pixel FX, RetroGEM, dan PS2Digital berganti profil.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Jalur, mode video, dan argumen Neutrino untuk setiap game.
+  HINT_OSD_DEFAULTS_BUTTON: Bahasa konsol, ukuran layar, dan mode video yang diberikan ke game.
+  HINT_ENWRITEOP: Mengizinkan mengganti nama dan menghapus game serta membuat VMC. Tidak pernah menyentuh tabel partisi HDD.
+  HINT_DEBUG: 'Bantuan pengembang: layar berwarna saat game boot, dan penghitung pemuatan gambar di menu.'
+  HINT_BDMPREFIX: Subfolder di drive USB, MX4SIO, iLink, dan exFAT yang berisi folder game. Kosong memakai root drive.
+  HINT_ETHPREFIX: Subfolder di share SMB yang berisi folder game. Kosong memakai root share.
+  HINT_HDDGAMELISTCACHE: Mengingat daftar game HDD APA untuk mempercepat pemindaian berikutnya.
+  HINT_BDMCACHE: Cache baca-dulu untuk USB dan drive BDM lain saat bermain. Makin besar bisa memperhalus streaming tetapi memakai lebih banyak memori.
+  HINT_HDDCACHE: Cache baca-dulu untuk HDD internal saat bermain.
+  HINT_SMBCACHE: Cache baca-dulu untuk SMB saat bermain.
+  HINT_CORE_LOADER: Inti untuk game ini jika keduanya didukung. UDPFS/UDPBD hanya Neutrino; SMB/HTTP hanya <OPL>. Bawaan mengikuti Peluncuran Game.
+  HINT_DMA_MODE: Mode transfer HDD internal untuk game ini. Turunkan jika game tersendat atau macet.
+  HINT_DNAS_GAMEID: ID disk untuk game online DNAS. Muat dari Disk membacanya dari disk asli.
+  HINT_LOAD_FROM_DISC: Membaca ID DNAS dari disk asli di drive.
+  HINT_ALTSTARTUP: Mem-boot ELF ini dari image disk alih-alih yang ditunjuk SYSTEM.CNF.
+  HINT_VMC_DEFINE: Pilih, buat, atau ubah ukuran kartu memori virtual slot ini.
+  HINT_VMC_ACTION: Pakai Umum memberi slot ini kartu bersama; Setel Ulang menghapus pilihan.
+  HINT_VMC_NAME: Nama file kartu, disimpan di folder VMC.
+  HINT_VMC_CREATE: Membuat kartu, atau menerapkan ukuran baru padanya.
+  HINT_VMC_DELETE: Menghapus file kartu ini.
+  HINT_SETTINGS_SOURCE: Global memakai pengaturan bersama; Per Game menyimpannya hanya untuk game ini.
+  HINT_PADMACRO_TOGGLE: Saat Tombol Ditekan melambatkan stik hanya selama kamu menahan tombol; Diganti dengan Tombol menyalakan dan mematikannya.
+  HINT_SFX: Efek suara menu.
+  HINT_BOOT_SND: Memutar suara saat RiptOPL mulai.
+  HINT_BGM: Memutar musik tema, atau file Musik Tema Bawaan milikmu.
+  HINT_SFX_VOLUME: Volume efek suara menu.
+  HINT_BOOT_SND_VOLUME: Volume suara awal.
+  HINT_BGM_VOLUME: Volume musik latar.
+  HINT_SCROLL: Seberapa cepat daftar menggulir saat kamu menahan arah.
+  HINT_SELECTBUTTON: 'Tombol yang menerima: Silang atau Lingkaran.'
+  HINT_XSENSITIVITY: Seberapa mudah stik kiri menggerakkan kursor ke kiri dan kanan. Mati mengabaikannya.
+  HINT_YSENSITIVITY: Seberapa mudah stik kiri menggerakkan kursor ke atas dan bawah. Mati mengabaikannya.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 lewat USB atau Bluetooth, dan multitap, untuk setiap game.
+  HINT_PADMACRO_GLOBAL: Perlambatan stik, pembalikan sumbu, dan turbo untuk setiap game.
+  HINT_COVERFLOW_DIM: Menggelapkan sampul samping.
+  HINT_OSD_ENABLE: Memberikan pengaturan di bawah ke game. Mati memakai milik konsol sendiri.
+  HINT_OSD_TVASPECT: Bentuk TV yang diberikan ke game.
+  HINT_OSD_VMODE: Mode video yang diberikan ke game.
+  DNAS_ID: ID DNAS
+  NEUTRINO_PADEMU_WARN: Emulasi pad tidak tersedia dengan Neutrino. Pakai kontroler PS2 atau sumber yang mendukung inti <OPL>.
+  RA_MODE: Mode RA
+  RA_HOST_IP: IP pendamping RA (0.0.0.0 = otomatis)
+  HINT_RA_HOST_IP: IPv4 opsional untuk PC khusus RetroAchievements. Pakai 0.0.0.0 untuk cadangan SMB/HTTP lama atau penemuan Xerabora. Tidak mengubah pengaturan server game.
+  HINT_RA_MODE: Pilih klien PC. Xerabora adalah bawaan; Caduceus memeriksa sesi masuknya lebih dulu.
+  RA_CADUCEUS_OFFLINE: Sesi RA Caduceus sedang offline.
+  RA_CADUCEUS_SIGN_IN: Masuk ke RetroAchievements di Caduceus, lalu coba lagi.
+  FAV_SAVING: Menyimpan ke Game Berbintang...
+  FAV_SAVED: Disimpan ke Game Berbintang
+  FAV_SAVE_FAILED: Tidak bisa menyimpan ke Game Berbintang
+  CAD_ACHIEVEMENTS: Pencapaian Caduceus
+  CAD_VIEW_ACHIEVEMENTS: Lihat pencapaian
+  CAD_USE_LIBRARY: Jelajahi game ini lewat pencapaian Caduceus di menu utama.
+  CAD_HASH_UNSUPPORTED: Format ini tidak bisa di-hash. Jelajahi pustaka akun sebagai gantinya.
+  CAD_HEADING: PENCAPAIAN
+  CAD_LIBRARY: Pustaka akun RetroAchievements
+  CAD_FILTER_ALL: Semua
+  CAD_EARNED: Diraih
+  CAD_LOCKED: Terkunci
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: '%d / %d diraih  |  %s'
+  CAD_ONE_GAME: '%d game di akun'
+  CAD_GAMES: '%d game di akun'
+  CAD_GAME_PROGRESS: '%d / %d pencapaian  |  %d hardcore'
+  CAD_POINTS: '%d poin  |  %s'
+  CAD_EMPTY_LIBRARY: Tidak ada game dengan kemajuan di akun ini.
+  CAD_EMPTY_FILTER: Tidak ada pencapaian yang cocok dengan filter ini.
+  CAD_LOADING: Memuat pencapaian...
+  CAD_PAIR: Masuk ke Caduceus dan pasangkan ART/CADUCEUS.KEY di share SMB-mu.
+  CAD_UNKNOWN_GAME: Game ini tidak ada di katalog Caduceus. Segarkan katalog di PC.
+  CAD_CONNECTION_ERROR: Tidak bisa menghubungi Caduceus. Periksa koneksi, lalu tekan Select untuk mencoba lagi.
+  CAD_BACK_REFRESH: Kembali kembali ke OPL. Select menyegarkan halaman ini.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: halaman   Terima: buka   Select: segarkan'
+  CAD_GAME_CONTROLS: 'L1/R1: halaman   Kotak: filter   Select: segarkan'
+  CAD_BACK: Kembali
+  CAD_UNTRACKED: Caduceus belum siap. Kali ini diluncurkan tanpa pencapaian.
+  PS1_RA_USB_REQUIRED: Pencapaian PS1 butuh VCD di USB lewat POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Tidak bisa menghapus modul pencapaian PS1 sebelumnya
+  PS1_RA_PREPARE_FAILED: Tidak bisa menyiapkan pencapaian PS1. Simpan atau pindahkan POPS/MODULE_9.IRX dan periksa izin tulis perangkat.
+  PS1_RA_CLEAN_DELETE: 'Modul RA RiptOPL yang tak terpakai: POPS/MODULE_9.IRX. Hapus agar peluncuran bersih?'
+  PS1_RA_CLEAN_FAILED: Tidak bisa menghapus modul RA yang tak terpakai.
+  PS1_RA_CLEAN_CONTINUE: Tetap lanjutkan? Modul RA yang tertinggal bisa menjalankan telemetri usang. Tidak membatalkan peluncuran.
+  FAV_REMOVED: Dihapus dari Game Berbintang
+  FAV_REMOVE_FAILED: Tidak bisa menghapus dari Game Berbintang
+  POPS_UDPFS_SETTINGS: Pengaturan Jaringan POPS UDPFS
+  POPS_UDPFS_DISCOVERY: Menyimpan ke setiap folder POPS di USB. Server 0.0.0.0 memakai penemuan otomatis.
+  POPS_UDPFS_NOT_READY: POPS UDPFS butuh IPCONFIG.DAT dan UDPFSCONFIG.DAT yang valid dan cocok di setiap folder POPS di USB. Atur di Pengaturan Jaringan POPS.
+  HINT_POPS_UDPFS_IP: IP statis PS2 yang dipakai driver POPS UDPFS setelah reset IOP-nya.
+  POPS_UDPFS_ALL_USB_FOLDERS: Semua folder POPS di USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (tidak valid)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (tidak lengkap)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS butuh pasangan driver .udpfs terpasang di kartu memori. Pasang manual atau nyalakan BDMA Terapkan saat Peluncuran.
+  VMC_REPLACE_REQUIRES_DELETE: Mengubah ukuran VMC akan menghapus game yang tersimpan di dalamnya. Cadangkan VMC yang ada dan pakai Hapus sebelum membuat ukuran baru.
+  VMC_CREATE_FAILED: Tidak bisa membuat VMC. Periksa perangkat, koneksi, dan izin tulis. Simpanan yang ada tidak diganti.
+  RA_EXPERIMENTAL_CARDS: Kartu eksperimental Caduceus
+  HINT_RA_EXPERIMENTAL_CARDS: Kartu pencapaian eksperimental di dalam game PS2. Bisa berkedip atau membuat game macet. Hanya Caduceus; Mati memakai denyut emas. Berlaku di peluncuran game berikutnya.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA tidak tersedia untuk peluncuran ini. Periksa runtime RA, IP pendamping, dan daftar pantau yang disimpan. Diluncurkan tanpa pencapaian.
+  UDPFS_IP_CONFLICT: Perangkat lain di jaringanmu memakai alamat IP PS2 ini, jadi jawaban server UDPFS sampai ke sana. Atur IP PS2 yang berbeda di Pengaturan Jaringan.
+  XERA_ACHIEVEMENTS: Pustaka RetroAchievements (xeRAbora)
+  XERA_USE_LIBRARY: Jelajahi game ini lewat pustaka RetroAchievements di menu utama.
+  XERA_OPEN_NETWORK: Tidak bisa menjangkau xeRAbora. Nyalakan OPEN TO THE NETWORK di pengaturannya, periksa IP pendamping RA dan firewall PC.
+  XERA_UNKNOWN_GAME: xeRAbora tidak mengenal image ini. Jalankan pemeriksaan dukungan game RA lebih dulu.
+  XERA_NOT_PLAYED: Belum ada di pustaka RetroAchievements-mu. Mainkan sekali dengan pencapaian, lalu tekan Select.
+  XERA_CONNECTION_ERROR: Tidak bisa membaca daftar dari xeRAbora. Tekan Select untuk mencoba lagi.
+  CAD_PAIR_UDPFS: Tidak bisa menjangkau Caduceus. Pasangkan ART/CADUCEUS.KEY di folder yang dibagikan PS2-Servers, dan atur IP pendamping RA.
+  RA_WL_NOT_SAVED: Tidak bisa menyimpan daftar pantau. Pastikan perangkat atau share game bisa ditulisi, lalu periksa lagi.
+  RA_UDPFS_LOAD_FIRST: Buka halaman UDPFS sekali agar modul jaringannya dimuat, lalu coba lagi.
+  CAD_UDPFS_IMG: 'Peramban Caduceus butuh SMB atau UDPFS File: UDPFS IMG tidak punya folder bersama untuk kuncinya.'
+  XERA_SET_CLOCK: Belum ada di pustaka RetroAchievements-mu. Atur jam konsol di pengaturan sistem untuk melihat daftar lengkapnya, atau mainkan sekali dengan pencapaian.
+  CFG_TITLES: Tampilkan Judul CFG di Daftar Game
+  HINT_CFG_TITLES: Menampilkan Judul dari CFG setiap game alih-alih nama filenya, dan mengurutkan berdasarkan itu. Membaca setiap CFG saat daftar disegarkan, jadi daftar dimuat lebih lambat. Hanya tampilan.
+  AUTO_VMC_INVALID: File VMC game ini ada tetapi bukan kartu memori yang valid, jadi tidak dipakai atau diganti. Game dimulai tanpa VMC; periksa di menu VMC.
+  AUTO_VMC_STILL_RUNNING: VMC game ini masih dibuat. Luncurkan game lagi sebentar lagi.
+  NEUTRINO_DVR_QUICKBOOT: Peluncuran DVR butuh transisi ke mode PSX. Hapus -qb dari argumen Neutrino global dan per game.
+  NEUTRINO_DVR_FILE_MISSING: 'Instalasi Neutrino untuk DVR tidak lengkap. File wajib tidak ada:'
+  PARENLOCK_GAME: Kunci Orang Tua
+  PARENLOCK_GAME_HINT: Minta kata sandi kunci orang tua untuk menjalankan game ini.
+  PARENLOCK_GAME_NO_PASSWORD: Atur kata sandi kunci orang tua, kalau tidak game ini tidak akan terkunci.
+  HINT_ENABLE_PCCF: CompactFlash PC CARD di PS2 Jepang awal. Hanya game PS2 asli; CF butuh akses eksklusif ke PC CARD. Mulai ulang untuk melepasnya.
+  PCCF_GAMES: Game PC CARD CF
+  PCCF_UNAVAILABLE: 'CF tidak tersedia: butuh PS2 Jepang awal dengan PC CARD, kartu yang kompatibel, dan tanpa driver DEV9/HDD/jaringan yang aktif.'
+  PCCF_UNSUPPORTED_GAME: CF saat ini hanya mendukung game PS2 asli. VMC di CF, pemuatan PS1, dan pencapaian jaringan tidak tersedia.
+  HINT_ENABLE_DVR: Penemuan ISO DESR DVR eksperimental. Butuh sumber HDD menyala; peluncuran game butuh Neutrino eksternal yang mendukung DVR.
