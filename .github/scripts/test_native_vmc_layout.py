@@ -13,7 +13,8 @@ bdm_slots = bdm[start:bdm.index('    void *irx = NULL;', start)]
 start = hdd.index('    if (part_valid) {', hdd.index('void hddLaunchGame('))
 hdd_slots = hdd[start:hdd.index('    if (gRememberLastPlayed)', start)]
 start = hdd.index('static int hddSyncForVMCMap(void)')
-hdd_helpers = hdd[start:hdd.index('void hddLaunchGame(', start)]
+end = hdd.index('int hddVMCMapFits(const char *path)\n{', start)
+hdd_helpers = hdd[start:hdd.index('\n}\n', end) + 3]
 
 program = r'''
 #include <assert.h>
