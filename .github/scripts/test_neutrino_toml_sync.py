@@ -231,6 +231,43 @@ int main(void)
         snprintf(what, sizeof(what), "torn tail of %d bytes, ip in sync", k);
         expect(stock, sysSyncNeutrinoUdpfsToml(path, "udpfs"), what);
     }
+    /* The same tear on a toml whose last line has no newline: the stale bytes land on that line, and
+       the repair must keep the line itself (`env = ["EE"]"]` -> `env = ["EE"]`). */
+    {
+        char bare[4096];
+        snprintf(bare, sizeof(bare), "%s", stock);
+        bare[strlen(bare) - 1] = '\0';
+        for (k = 2; k <= 8; k++) {
+            char what[64];
+            snprintf(torn, sizeof(torn), "%s%s", bare, bare + strlen(bare) - k);
+            setFile(torn, 1);
+            setIp(192, 168, 1, 10);
+            snprintf(what, sizeof(what), "no final newline, torn by %d bytes", k);
+            expect(bare, sysSyncNeutrinoUdpfsToml(path, "udpfs"), what);
+        }
+        snprintf(torn, sizeof(torn), "%s\"]", bare);
+        setFile(torn, 1);
+        setIp(10, 0, 0, 9);
+        expect(withIp(bare, "10.0.0.9"), sysSyncNeutrinoUdpfsToml(path, "udpfs"), "no final newline, torn, new ip");
+        if (sysTomlTornTailCut(bare, (int)strlen(bare)) != (int)strlen(bare)) { printf("FAIL stock without a final newline judged torn\n"); fails++; }
+    }
+    {
+        /* The hand-edited toml without its final newline, torn on that last line. */
+        char want[4096];
+        snprintf(want, sizeof(want), "%.*s", (int)strlen(hand) - 1, hand);
+        snprintf(torn, sizeof(torn), "%s\"]", want);
+        setFile(torn, 1);
+        setIp(192, 168, 1, 10);
+        expect(want, sysSyncNeutrinoUdpfsToml(path, "udpfs"), "hand-edited, no final newline, torn");
+
+        /* A multi-line array that closes the file, torn right after its `]`. */
+        snprintf(want, sizeof(want), "args = [\n    \"ip=192.168.1.10\",\n    \"x\",\n]");
+        snprintf(torn, sizeof(torn), "%s\"]", want);
+        setFile(torn, 1);
+        setIp(192, 168, 1, 10);
+        expect(want, sysSyncNeutrinoUdpfsToml(path, "udpfs"), "multi-line array, no final newline, torn");
+    }
+
     snprintf(torn, sizeof(torn), "%s\"]\n]\n", stock);
     setFile(torn, 1);
     setIp(192, 168, 1, 10);

@@ -1490,11 +1490,14 @@ static const char *sysLastPathSeparator(const char *path)
 
 // Length of the toml with a torn tail cut off, `len` when there is none, or -1 when it is broken some
 // other way -- a hand-edited file is the user's to fix and is left alone. Reads just enough TOML for
-// this: comments, the four string forms and bracket depth. The cut is the last line end where the
-// document was complete, and only a short tail is ever dropped.
+// this: comments, the four string forms and bracket depth. A line is complete at its end, or as soon
+// as its key's value or its table header closes; past that point only spaces and a comment may follow,
+// which is how a tear on a final line WITHOUT a newline (`env = ["EE"]"]`) is found. The cut is the
+// last complete point, and only a short tail is ever dropped.
 static int sysTomlTornTailCut(const char *text, int len)
 {
     int depth = 0, complete = 0, i = 0;
+    int lineStart = 1, header = 0, assigned = 0, ended = 0;
 
     while (i < len) {
         char c = text[i];
@@ -1503,6 +1506,10 @@ static int sysTomlTornTailCut(const char *text, int len)
             i++;
             if (depth == 0)
                 complete = i;
+            lineStart = 1;
+            ended = 0;
+            if (depth == 0) // a multi-line array keeps its key's line going until it closes
+                header = assigned = 0;
             continue;
         }
         if (c == '#') {
@@ -1510,6 +1517,15 @@ static int sysTomlTornTailCut(const char *text, int len)
                 i++;
             continue;
         }
+        if (c == ' ' || c == '\t' || c == '\r') {
+            i++;
+            continue;
+        }
+        if (ended)
+            goto broken; // something after a finished value or header on the same line
+        if (lineStart && depth == 0 && c == '[')
+            header = 1;
+        lineStart = 0;
         if (c == '"' || c == '\'') {
             if (i + 2 < len && text[i + 1] == c && text[i + 2] == c) {
                 // Multi-line string: runs to the next triple quote, across lines.
@@ -1520,23 +1536,33 @@ static int sysTomlTornTailCut(const char *text, int len)
                 if (i + 2 >= len)
                     goto broken;
                 i += 3;
-                continue;
+            } else {
+                // Single-line string: must close before the line ends.
+                for (i++; i < len && text[i] != c && text[i] != '\n'; i++) {
+                    if (c == '"' && text[i] == '\\' && i + 1 < len && text[i + 1] != '\n')
+                        i++;
+                }
+                if (i >= len || text[i] != c)
+                    goto broken;
+                i++;
             }
-            // Single-line string: must close before the line ends.
-            for (i++; i < len && text[i] != c && text[i] != '\n'; i++) {
-                if (c == '"' && text[i] == '\\' && i + 1 < len && text[i + 1] != '\n')
-                    i++;
+            if (depth == 0 && assigned) {
+                ended = 1;
+                complete = i;
             }
-            if (i >= len || text[i] != c)
-                goto broken;
-            i++;
             continue;
         }
+        if (c == '=' && depth == 0)
+            assigned = 1;
         if (c == '[' || c == '{')
             depth++;
         else if ((c == ']' || c == '}') && --depth < 0)
             goto broken;
         i++;
+        if ((c == ']' || c == '}') && depth == 0 && (assigned || header)) {
+            ended = 1;
+            complete = i;
+        }
     }
     if (depth == 0)
         return len;
