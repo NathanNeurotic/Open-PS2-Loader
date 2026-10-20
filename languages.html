@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Languages · RiptOPL Docs</title>
-<meta name="description" content="Installing and choosing a RiptOPL interface language: the LANGS zip, the LNG folder, file naming, fonts, and troubleshooting.">
+<meta name="description" content="Install RiptOPL interface languages beside the ELF or under LNG, including CWD priority, language packs, fonts, translation coverage, and troubleshooting.">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <meta property="og:site_name" content="RiptOPL Docs">
 <meta property="og:type" content="website">
@@ -83,6 +83,11 @@ missing a particular string, that string appears in English rather than blank. Y
 switching language.</p>
 
 <h2 id="install">Installing extra languages</h2>
+<div class="callout info"><div class="h">New discovery order starts with PR #1017</div>
+<p>Directly beside the ELF (CWD) and CWD/LNG lookup are introduced by
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1017">PR #1017</a>.
+They work only in builds containing that change. On older releases, use the
+traditional enabled-device <code>LNG/</code> folder or memory-card OPL directory.</p></div>
 <p>The language files are published as a <b>separate release asset</b>, not inside the main package:</p>
 
 <pre>RIPTOPL-LANGS-*.zip</pre>
@@ -92,16 +97,45 @@ switching language.</p>
 <ol>
 <li>Download <code>RIPTOPL-LANGS-*.zip</code> from the <a href="releases.html">release</a>.</li>
 <li>Extract it.</li>
-<li>Copy the files into the <code>LNG/</code> folder on the device you boot RiptOPL from.</li>
+<li>For a build with CWD language support, put the selected <code>lang_&lt;Name&gt;.lng</code>
+directly beside the launched RiptOPL ELF, or inside an <code>LNG/</code> directory beside it.
+The legacy device <code>LNG/</code> folder is also supported.</li>
+<li>If the pack contains a matching <code>font_&lt;Name&gt;.ttf</code> or <code>.otf</code>,
+copy that file into <strong>the same directory as the .lng</strong>.</li>
 </ol>
 
-<p>RiptOPL looks for an <code>LNG/</code> folder under each enabled source's configured prefix, and on the
-memory card. Any device you have enabled can supply languages — they do not all have to live in one place.</p>
+<p>Once PR #1017 is included in the build, language lookup has a defined
+<strong>priority order</strong>: <b>launched ELF directory (CWD)</b> → <b>CWD/LNG/</b> →
+<b>legacy memory-card OPL and enabled-device LNG/ folders</b>. If the same
+language is installed in multiple places, only one entry is shown, and the
+highest-priority readable copy is selected. Available devices can still
+contribute languages during discovery; the CWD path is retried after boot-path
+resolution when the device was not initially readable.</p>
+<p>These are alternatives, not folders to install three copies into:</p>
+<pre>mass0:/APPS/APP_RIPTOPL/
+  RIPTOPL.ELF
+  lang_French.lng
+  lang_Japanese.lng
+  font_Japanese.ttf
 
-<pre>LNG/
+# OR:
+mass0:/APPS/APP_RIPTOPL/LNG/
+  lang_French.lng
+  lang_Japanese.lng
+  font_Japanese.ttf
+
+# OR, legacy device layout:
+mass0:/LNG/
   lang_French.lng
   lang_Japanese.lng
   font_Japanese.ttf</pre>
+<p>The language registry is dynamically sized in PR #1017 rather than capped at
+15 external languages, so multiple installed packs no longer compete for a
+fixed fifteen-entry table.</p>
+
+<p>The <code>RIPTOPL-LANGS</code> archive includes separate versioned language
+subfolders. Copy the files <em>inside</em> the selected language subfolder;
+do not nest the versioned directory itself under the destination.</p>
 
 <h2 id="naming">File naming</h2>
 <div class="callout amber"><div class="h">The filename is the language name</div>
@@ -110,7 +144,7 @@ A language file must be named <code>lang_&lt;Name&gt;.lng</code>. RiptOPL takes 
 <code>lang_French.lng</code> appears as <b>French</b>. Renaming the file renames the entry.</div>
 
 <p>A language that needs characters the default font does not carry — Japanese, Chinese, Korean, Russian,
-Greek, Arabic, Thai — can ship its own font beside it, named to match: <code>font_&lt;Name&gt;.ttf</code> or
+Greek or Arabic — can ship its own font beside it, named to match: <code>font_&lt;Name&gt;.ttf</code> or
 <code>font_&lt;Name&gt;.otf</code>. RiptOPL loads it automatically when that language is selected, and returns
 to the built-in font when you switch back to English. The <code>RIPTOPL-LANGS</code> pack already includes these
 fonts. Serbian's is the Croatian font, because the built-in font has no <code>č</code>, <code>ć</code> or
@@ -118,12 +152,15 @@ fonts. Serbian's is the Croatian font, because the built-in font has no <code>č
 
 <h2 id="unicode-titles">Japanese game titles with English menus</h2><p>RiptOPL supports <a href="unicode-titles.html">Unicode/CJK glyph fallback</a> while leaving the interface language in English. Put <code>font_CJK.ttf</code> next to the active <code>settings_riptopl.cfg</code> and restart — <em>not merely in LNG/</em>. No toggle is needed. See the <a href="unicode-titles.html">activation guide</a>.</p>
 <h2 id="selecting">Choosing a language</h2>
-<p><em>Settings → Interface → Language.</em> The list contains English plus every <code>.lng</code> file
-RiptOPL found. Save settings to keep the choice.</p>
+<p><em>Settings → Interface → Language</em> (also accessible from
+<em>General &amp; System</em> in supported layouts). The list contains English and
+the discovered <code>lang_*.lng</code> files. Confirm the choice, then save settings.</p>
 
-<div class="callout info"><div class="h">Languages are discovered per device, as devices come up</div>
-A language on a device that was not ready when RiptOPL started will not be in the list yet. If a language is
-missing, make sure that device is enabled and its page has populated, then reopen Settings.</div>
+<div class="callout info"><div class="h">Discovery happens as devices become available</div>
+If a device was not mounted at startup, wait for its source to initialize and
+reopen Settings. In PR #1017, CWD is retried after boot-directory resolution.
+Copying new files into a folder already scanned in this session generally
+requires restarting RiptOPL.</div>
 
 <h2 id="per-game-osd">This is not the OSD language setting</h2>
 <p>Two different things are called "language" in RiptOPL:</p>
@@ -138,16 +175,26 @@ missing, make sure that device is enabled and its page has populated, then reope
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 
-<p><b>The language is not in the list.</b> Confirm the file is in an <code>LNG/</code> folder under an
-<em>enabled</em> device's configured prefix, that it is named <code>lang_&lt;Name&gt;.lng</code>, and that the
-device page has finished populating.</p>
+<p><b>The language is not in the list.</b> Confirm your build includes the
+new CWD discovery feature if using files beside the ELF. Otherwise move the
+language into a legacy <code>LNG/</code> directory. Check the spelling
+<code>lang_&lt;Name&gt;.lng</code>, the enabled device/source, and whether the
+source has finished initializing. Restart if files were copied while RiptOPL
+was already running.</p>
 
 <p><b>The language appears but the text is boxes or blanks.</b> The font is missing. Copy the matching
-<code>font_&lt;Name&gt;.ttf</code> / <code>.otf</code> into the same <code>LNG/</code> folder — the language
+<code>font_&lt;Name&gt;.ttf</code> / <code>.otf</code> beside the matching language file — the language
 pack zip contains the fonts alongside the language files.</p>
 
-<p><b>Some strings are still English.</b> Expected. Untranslated strings fall back to English rather than
-appearing blank, and a language pack from an older build will not have RiptOPL's newest strings.</p>
+<p><b>Some strings are still English.</b> That is an untranslated-entry fallback,
+not proof that your installation is broken. The current build includes
+<b>34 external language names</b>, but only <b>32 fork translation overlays</b>
+are present (Galician and Serbian currently have none). Several recently
+added PS1, RetroAchievements, VMC, parental-lock and DVR messages remain
+English in many language packs. The number of selectable languages does
+not mean all menu strings have been translated. For contributors, see
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/LANGUAGES.md">language maintenance and the coverage audit</a>.
+A language pack from an older build can also lack the newest entries.</p>
 
 <div class="callout amber"><div class="h">Match the language pack to the build</div>
 <code>.lng</code> files are read <b>by line position</b>, so a pack from a different build can show the
