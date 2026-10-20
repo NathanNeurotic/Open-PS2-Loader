@@ -66,7 +66,7 @@ Repeat per language you want to cover. Untranslated languages fall back to Engli
 ## Important: there is **no auto-translator** in the build
 
 `tools/lang_compiler.py` only *merges* translations that already exist in `lng_fork/*.yml`. The
-initial bulk fill of the 31 fork-language overlays was a **one-off external step** (a machine
+initial bulk fill of the fork-language overlays was a **one-off external step** (a machine
 translation pass), not part of this repo's build. So to keep translations current you must
 supply the translated text for `lng_fork/*.yml` yourself (by hand, an external MT tool, or
 an assistant) — the build will not invent it.
@@ -82,8 +82,7 @@ language exists upstream as `lng_src/<Language>.yml`; to ship it, add its name t
 - **Serbian** has no font upstream, and the built-in font has no `č`, `ć` or `đ`. Serbian Latin uses
   exactly Croatian's letters, so `lng_pack.sh` ships `font_Croatian.ttf` as `font_Serbian.ttf`.
   Check a new language's characters against the built-in font before assuming it needs no font.
-- **Fork strings.** A language with no `lng_fork/<Language>.yml` (Galician and Serbian today) shows
-  the fork's own strings in English until someone adds that file.
+- **Fork strings.** All 33 configured external languages now have a `lng_fork/<Language>.yml` overlay. Missing individual labels still fall back to English; an overlay's existence does not guarantee complete localization.
 
 ## Optional Japanese/CJK game-title font
 
@@ -126,12 +125,14 @@ see which are still English-only in a given language, run `make languages` and l
 
 ## Auditing actual translation coverage
 
-The release builds **33 external languages**, but the fork currently maintains overlays for
-**31** of them; Galician and Serbian do not have fork overlays. The upstream
-community's older strings remain intact. New fork-only menu labels are **not
-automatically translated** and appear in English until a matching overlay
-entry is supplied. Packaging 33 complete-length `.lng` files therefore does
-**not** mean every string is translated in all 33 languages.
+The release builds **33 external languages**, all now supplied with fork-specific
+overlays. The upstream community's older strings remain intact. Many recently
+added labels were backfilled from Akilluminati47's
+[RIPPS2 translations](https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang),
+with existing RiptOPL translations retained. These translations are community
+and machine-assisted work and still need language-speaker and on-console review.
+Some newly introduced fork labels may still show English fallback: a complete
+`.lng` file is not proof that every string has been localized.
 
 Run `python3 tools/audit_translations.py` to print per-language coverage,
 including the most recently appended 60 UI labels; pass `--json` for a
@@ -147,6 +148,18 @@ untranslated English copies as completed translations**. Preserve all
 `%s`, `%d`, `%i` placeholders and keep their order. Inspect the result
 on a PS2; a syntactically valid translation can still be confusing, truncated,
 or missing font glyphs. Missing status is distinct from broken packaging.
+
+## Translation provenance and review
+
+RIPPS2's keyed `labels:` maps contributed additional localized text for 32
+overlapping language names; Ryukyuan retains the existing RiptOPL overlay,
+because RIPPS2 has no Ryukyuan source. The imported overlay files credit
+Akilluminati47 and preserve RiptOPL's existing keys. The language compiler
+always prioritizes an already translated upstream community entry over the
+fork overlay. Compare source phrasing against the **current** `_base.yml`
+English definition before changing a translation: even correctly parsed
+strings can have stale feature descriptions. Review particularly UTF-8 glyphs,
+right-to-left rendering, and placeholders in each language on PS2 hardware.
 
 ## Installing and selecting language files
 
