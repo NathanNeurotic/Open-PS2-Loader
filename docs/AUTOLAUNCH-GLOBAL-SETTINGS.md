@@ -109,6 +109,15 @@ discovery by itself. Nothing here creates, formats or edits APA partitions, and 
 nothing creates folders in them either. The hybrid probe only reads, and the exFAT side is
 written only when the user saves settings.
 
+### APA HDL games started by sector
+
+OPL-Launcher, HDD-OSD and PSBBN start an APA HDL game with `startup`, `start_sector`, the OPL
+partition and `mini`. That carries no partition name, so RiptOPL reads the APA table (the same
+list the HDD tab shows, read-only) and takes the HDL partition whose game data starts at that
+sector. Both cores then get the partition name and size: Neutrino receives `-dvd=hdl:<partition>`.
+A sector that matches no HDL partition returns to the menu. Between 2026-10-14 (`9cf34fdd`) and
+this fix, every such launch returned to the menu.
+
 ## Source review (not runtime tests)
 
 | Layout/state | Result |
@@ -154,6 +163,7 @@ against the intended source revision.
 | Cheats enabled, no `.cht`: "continue" launches from the menu | Any | Pending hardware |
 | Missing ISO on Auto Loading returns to the menu | Any BDM | Pending hardware |
 | Plain APA and MC launchers unchanged | APA HDD, MC | Pending hardware |
+| APA HDL game from OPL-Launcher / PSBBN starts on both cores | APA HDD, native and Neutrino core | Pending hardware |
 
 A tester who pressed Save in RiptOPL's menu on a hybrid disk with an older build has
 `settings_riptopl.cfg` in `__common/OPL`. Those settings are now carried over to the exFAT home,
