@@ -24,12 +24,22 @@ def format_tokens(value: str) -> list[str]:
 
 
 def languages() -> list[str]:
-    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-    match = re.search(r"^TRANSLATIONS\s*=\s*(.*(?:\\\n[ \t]+.*)*)", makefile, re.M)
-    if match is None:
-        raise ValueError("Makefile TRANSLATIONS list not found")
-    return match.group(1).replace("\\\n", " ").split()
-
+    """Read every continuation line in Makefile's TRANSLATIONS assignment."""
+    lines = (ROOT / "Makefile").read_text(encoding="utf-8").splitlines()
+    for i, line in enumerate(lines):
+        if re.match(r"^TRANSLATIONS[ \t]*=", line) is None:
+            continue
+        value = line.split("=", 1)[1].strip()
+        while value.endswith("\\"):
+            if i + 1 >= len(lines):
+                raise ValueError("Unterminated TRANSLATIONS line continuation")
+            value = value[:-1].rstrip() + " " + lines[i + 1].strip()
+            i += 1
+        names = value.split()
+        if not names or len(names) != len(set(names)) or any("\\" in x for x in names):
+            raise ValueError("Malformed or duplicate Makefile TRANSLATIONS entries")
+        return names
+    raise ValueError("Makefile TRANSLATIONS list not found")
 
 def read_map(path: Path) -> dict[str, str]:
     if not path.exists():
