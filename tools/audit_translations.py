@@ -20,7 +20,27 @@ SPEC = re.compile(r"%(?:\d+\$)?[-+#0 ]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|h|ll|l|
 
 
 def format_tokens(value: str) -> list[str]:
-    return SPEC.findall(value.replace("%%", ""))
+    """Preserve printf tokens and reject unknown percent-letter conversions."""
+    tokens = []
+    i = 0
+    while i < len(value):
+        if value[i] != "%":
+            i += 1
+            continue
+        if i + 1 < len(value) and value[i + 1] == "%":
+            i += 2
+            continue
+        spec = SPEC.match(value, i)
+        if spec is not None:
+            tokens.append(spec.group())
+            i = spec.end()
+            continue
+        # Plain percentages ("100% full") remain literal; "%q" is not a
+        # valid printf conversion and must not pass the placeholder audit.
+        if i + 1 < len(value) and value[i + 1].isalpha():
+            raise ValueError(f"Invalid printf format near: {value[i:i+8]!r}")
+        i += 1
+    return tokens
 
 
 def languages() -> list[str]:
@@ -72,10 +92,18 @@ def audit() -> dict:
         for key in unknown:
             errors.append(f"{name}: overlay has unknown label {key}")
         for key, value in overlay.items():
-            if key in english and format_tokens(value) != format_tokens(english[key]):
+            if key not in english:
+                continue
+            try:
+                actual_tokens = format_tokens(value)
+                english_tokens = format_tokens(english[key])
+            except ValueError as error:
+                errors.append(f"{name}/{key}: {error}")
+                continue
+            if actual_tokens != english_tokens:
                 errors.append(
-                    f"{name}/{key}: printf tokens {format_tokens(value)} differ from "
-                    f"English {format_tokens(english[key])}"
+                    f"{name}/{key}: printf tokens {actual_tokens} differ from "
+                    f"English {english_tokens}"
                 )
         translated = {key for key in labels if key in merged and merged[key] != english[key]}
         fallback = [key for key in labels if key not in merged or merged[key] == english[key]]
@@ -110,6 +138,9 @@ def main() -> int:
             f"{report['built_languages']} languages / {report['total_strings']} strings; "
             f"upstream translations present: {report['upstream_present']}"
         )
+        if not report["upstream_present"]:
+            print("NOTE: fallback and translated figures below are overlay-only estimates;")
+            print("      run make download_lng first for effective packaged-language totals.")
         for language, counts in report["languages"].items():
             print(
                 f"{language:17} overlay={counts['overlay_entries']:3} "
