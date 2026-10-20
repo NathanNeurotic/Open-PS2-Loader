@@ -71,6 +71,8 @@ static struct sfxEffect sfx_files[SFX_COUNT] = {
 static struct audsrv_adpcm_t sfx[SFX_COUNT];
 static int audio_initialized = 0;
 
+#define SFX_CLOCKS_PER_MS 147456 // EE cpu_ticks() rate
+
 #define CURSOR_SFX_CHANNEL_BASE  SFX_COUNT
 #define CURSOR_SFX_CHANNEL_COUNT 6
 
@@ -87,22 +89,98 @@ static void sfxSetCursorChannelsVolume(int volume)
         audsrv_adpcm_set_volume_and_pan(sfxGetCursorChannel(i), volume, 0);
 }
 
-// COALESCE the one-shot UI sounds instead of interrupting them.
+// The one-shot UI sounds (confirm / cancel / message / transition): THE NEWEST PRESS CUTS THE OLD ONE.
+//
+// audsrv can neither replace nor stop an adpcm voice. audsrv_ch_play_adpcm() on a voice that has not
+// reached the end of its sample REFUSES (-AUDSRV_ERR_NO_MORE_CHANNELS) and nothing plays, and there
+// is no key-off RPC. With one voice per sound, a second confirm inside confirm's ~0.8 s was silent
+// until the first ended -- the "cooldown" in #504 -- and confirm then cancel layered instead of
+// cutting. #582 put all four on ONE voice and so made every press inside the previous sound silent.
+//
+// So a one-shot plays on a pool of voices. When it arrives while the previous one is still sounding,
+// the previous voice is MUTED -- that is the cut -- and the new sound starts on the next pool voice.
+// A muted voice runs out silently and is reused once it has ended; its volume comes back only after
+// the replay has started on it, so a cut sound is never heard again. A press costs one RPC when
+// nothing is sounding and up to three (mute, play, restore) when it cuts: short round trips, none of
+// them a wait. Fifteen voices keep up with presses 72 ms apart against the 1.07 s built-in
+// transition sound; a press that finds every voice still busy stays silent.
 //
 // #575 is two of these raised on the SAME frame -- confirming a rename plays SFX_CONFIRM in
-// diaShowKeyb and then SFX_TRANSITION from the guiSwitchScreen right after it -- which stacked into
-// one distorted noise. Sharing a channel fixed that but broke worse: audsrv has no way to stop an
-// adpcm voice, so replaying a BUSY channel left it wedged and the NEXT press went silent (#504, and
-// #575's own follow-up).
-//
-// So never interrupt. Each sound keeps its own channel, and a one-shot arriving within a frame of
-// the previous one is simply dropped -- that is the double-raise, and one sound is what was asked
-// for either way. Deliberate presses are far more than a frame apart and all still play.
+// diaShowKeyb and then SFX_TRANSITION from the guiSwitchScreen right after it. A one-shot arriving
+// within a frame of the previous one is dropped: that is the double-raise, not a press, and one
+// sound is what was asked for. Deliberate presses are far more than a frame apart and all play.
 #define SFX_ONESHOT_COALESCE_MS 50
+
+// Every SPU2 core 1 voice nothing else plays on: 0 is the boot sound, SFX_BD_CONNECT and
+// SFX_BD_DISCONNECT keep their own, and 8-13 are the cursor rotation. 3 was SFX_CURSOR's own voice,
+// which the rotation never used.
+static const u8 oneShotVoices[] = {1, 2, 3, 4, 5, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+#define SFX_ONESHOT_VOICE_COUNT ((int)(sizeof(oneShotVoices) / sizeof(oneShotVoices[0])))
+
+static int oneShotIndex = 0;          // pool slot of the newest one-shot
+static unsigned int oneShotMuted = 0; // pool slots whose volume is 0
+static u32 oneShotStartTicks = 0;
+static int oneShotDurationMs = 0; // of the sound in oneShotIndex; 0 = nothing sounding there
 
 static int sfxIsUiOneShot(int id)
 {
     return (id == SFX_CONFIRM) || (id == SFX_CANCEL) || (id == SFX_MESSAGE) || (id == SFX_TRANSITION);
+}
+
+static void sfxResetOneShots(void)
+{
+    oneShotIndex = 0;
+    oneShotMuted = 0;
+    oneShotStartTicks = 0;
+    oneShotDurationMs = 0;
+}
+
+static void sfxSetOneShotVoicesVolume(int volume)
+{
+    for (int i = 0; i < SFX_ONESHOT_VOICE_COUNT; i++) {
+        // A muted voice may still be running a cut sound; it gets the volume back when it is reused.
+        if (!(oneShotMuted & (1u << i)))
+            audsrv_adpcm_set_volume(oneShotVoices[i], volume);
+    }
+}
+
+// Silence the newest one-shot's voice and move to the next slot.
+static void sfxCutOneShot(void)
+{
+    if (!(oneShotMuted & (1u << oneShotIndex))) {
+        audsrv_adpcm_set_volume(oneShotVoices[oneShotIndex], 0);
+        oneShotMuted |= 1u << oneShotIndex;
+    }
+    oneShotIndex = (oneShotIndex + 1) % SFX_ONESHOT_VOICE_COUNT;
+    oneShotDurationMs = 0;
+}
+
+static void sfxPlayOneShot(int id, u32 nowTicks)
+{
+    // The length is only an estimate (it assumes 44.1 kHz), so it just saves the mute when the last
+    // sound has plainly ended. A voice that is still sounding is caught by the refusal below either way.
+    if (oneShotDurationMs > 0 && (nowTicks - oneShotStartTicks) / SFX_CLOCKS_PER_MS < (u32)oneShotDurationMs)
+        sfxCutOneShot();
+
+    for (int tries = 0; tries < SFX_ONESHOT_VOICE_COUNT; tries++) {
+        int voice = oneShotVoices[oneShotIndex];
+        int ret = audsrv_ch_play_adpcm(voice, &sfx[id]);
+
+        if (ret == voice) {
+            if (oneShotMuted & (1u << oneShotIndex)) {
+                audsrv_adpcm_set_volume(voice, gSFXVolume);
+                oneShotMuted &= ~(1u << oneShotIndex);
+            }
+            oneShotStartTicks = nowTicks;
+            oneShotDurationMs = sfx_files[id].duration_ms;
+            return;
+        }
+        if (ret != -AUDSRV_ERR_NO_MORE_CHANNELS)
+            return; // the sample is not loaded; no voice would play it
+
+        // Still sounding: a cut sound running out, or the last one outliving its estimate. Cut it.
+        sfxCutOneShot();
+    }
 }
 
 // Returns 0 if the specified file was read. The sfxEffect structure will not be updated unless the file is successfully read.
@@ -223,8 +301,9 @@ int sfxInit(int bootSnd)
         return -1;
     }
 
-    audsrv_adpcm_init();
+    audsrv_adpcm_init(); // keys off every voice
     cursorChannelIndex = 0;
+    sfxResetOneShots();
     sfxInitDefaults();
     audioSetVolume();
 
@@ -281,7 +360,6 @@ int sfxGetSoundDuration(int id)
 // is a SYNCHRONOUS SIF RPC on the GUI thread (one per nav press); under IOP contention it stalls
 // the menu mid-navigation. Always measured (two tick reads), rendered only when Settings ->
 // Debug Colors is on (gui.c / dia.c).
-#define SFX_CLOCKS_PER_MS 147456 // EE cpu_ticks() rate
 
 /* MENU RUMBLE TIMING -- the RETROLauncher model, which is the reference for feedback that actually
    reads as feedback on hardware. Two shapes, and the split matters more than either value:
@@ -408,17 +486,17 @@ void sfxPlay(int id)
             cursorChannelIndex = (cursorChannelIndex + 1) % CURSOR_SFX_CHANNEL_COUNT;
             channel = sfxGetCursorChannel(chosenSlot);
 
-            // Volumes are configured once by audioSetVolume(). Replaying a
-            // rotation channel replaces its old sample in one SIF RPC.
+            // Volumes are configured once by audioSetVolume(). A rotation voice still sounding refuses
+            // the replay and that tick is skipped; six voices at 45 ms cover a 270 ms cursor sound.
             audsrv_ch_play_adpcm(channel, &sfx[id]);
+        } else if (sfxIsUiOneShot(id)) { // see sfxPlayOneShot
+            static u32 lastOneShotTicks = 0;
+            if (lastOneShotTicks != 0 &&
+                (sfxStartTicks - lastOneShotTicks) / SFX_CLOCKS_PER_MS < SFX_ONESHOT_COALESCE_MS)
+                return;
+            lastOneShotTicks = sfxStartTicks;
+            sfxPlayOneShot(id, sfxStartTicks);
         } else {
-            if (sfxIsUiOneShot(id)) { // see SFX_ONESHOT_COALESCE_MS
-                static u32 lastOneShotTicks = 0;
-                if (lastOneShotTicks != 0 &&
-                    (sfxStartTicks - lastOneShotTicks) / SFX_CLOCKS_PER_MS < SFX_ONESHOT_COALESCE_MS)
-                    return;
-                lastOneShotTicks = sfxStartTicks;
-            }
             audsrv_ch_play_adpcm(id, &sfx[id]);
         }
 
@@ -1145,17 +1223,15 @@ void audioEnd(void)
 
 void audioSetVolume(void)
 {
-    int i;
-
     if (!audio_initialized) {
         LOG("AUDIO: %s: ERROR: not initialized!\n", __FUNCTION__);
         return;
     }
 
-    for (i = 1; i < SFX_COUNT; i++)
-        audsrv_adpcm_set_volume(i, gSFXVolume);
-
+    audsrv_adpcm_set_volume(SFX_BD_CONNECT, gSFXVolume);
+    audsrv_adpcm_set_volume(SFX_BD_DISCONNECT, gSFXVolume);
     sfxSetCursorChannelsVolume(gSFXVolume);
+    sfxSetOneShotVoicesVolume(gSFXVolume);
     audsrv_adpcm_set_volume(0, gBootSndVolume);
     audsrv_set_volume(gBGMVolume);
 }
