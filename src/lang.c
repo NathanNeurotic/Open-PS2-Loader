@@ -6,14 +6,19 @@
 #include "include/themes.h"
 #include "include/sound.h"
 #include "include/gui.h" // guiLock/guiUnlock -- serialize the language name-list rebuild
+#include <dirent.h>
+#include <limits.h>
 
 static int guiLangID = 0;
 static char **lang_strs = internalEnglish;
 static int nValidEntries = LANG_STR_COUNT;
 
 static int nLanguages = 0;
-static language_t languages[MAX_LANGUAGE_FILES];
+static int languageCapacity = 0;
+static language_t *languages;
 static char **guiLangNames;
+static char scannedBootDir[sizeof(gBootDir)];
+static unsigned char scanPriority; // 2: CWD, 1: CWD/LNG, 0: other LNG locations
 
 // localised string getter
 char *_l(unsigned int id)
@@ -36,26 +41,37 @@ static void lngFreeFromFile(char **lang_strs)
 
 static int lngLoadFont(const char *dir, const char *name)
 {
-    char path[256];
+    size_t dirLen = strlen(dir);
+    size_t nameLen = strlen(name);
+    if (dirLen > (size_t)-1 - nameLen - sizeof("font_.ttf"))
+        return -1;
+    size_t pathSize = dirLen + nameLen + sizeof("font_.ttf");
+    char *path = malloc(pathSize);
+    if (path == NULL)
+        return -1;
 
-    snprintf(path, sizeof(path), "%sfont_%s.ttf", dir, name);
+    snprintf(path, pathSize, "%sfont_%s.ttf", dir, name);
     LOG("LANG Custom TTF font path: %s\n", path);
-    if (fntLoadDefault(path) == 0)
+    if (fntLoadDefault(path) == 0) {
+        free(path);
         return 0;
+    }
 
-    snprintf(path, sizeof(path), "%sfont_%s.otf", dir, name);
+    snprintf(path, pathSize, "%sfont_%s.otf", dir, name);
     LOG("LANG Custom OTF font path: %s\n", path);
-    if (fntLoadDefault(path) == 0)
+    if (fntLoadDefault(path) == 0) {
+        free(path);
         return 0;
+    }
 
     LOG("LANG cannot load font.\n");
-
+    free(path);
     return -1;
 }
 
 static int lngLoadFromFile(char *path, char *name)
 {
-    char dir[128];
+    char *dir;
 
     file_buffer_t *fileBuffer = openFileBuffer(path, O_RDONLY, 1, 1024);
     if (fileBuffer) {
@@ -84,11 +100,15 @@ static int lngLoadFromFile(char *path, char *name)
         // remember how many entries were read from the file (for the free later)
         nValidEntries = newEntries;
 
-        int len = strlen(path) - strlen(name) - 9; // -4 for extension,  -5 for prefix
-        memcpy(dir, path, len);
-        dir[len] = '\0';
-
-        lngLoadFont(dir, name);
+        // "lang_" + language name + ".lng": parent path can exceed 128 bytes.
+        size_t dirLen = strlen(path) - strlen(name) - 9;
+        dir = malloc(dirLen + 1);
+        if (dir != NULL) {
+            memcpy(dir, path, dirLen);
+            dir[dirLen] = '\0';
+            lngLoadFont(dir, name);
+            free(dir);
+        }
 
         return 1;
     }
@@ -100,78 +120,168 @@ char *lngGetValue(void)
     return guiLangNames[guiLangID];
 }
 
+static int lngEnsureCapacity(int count)
+{
+    if (count <= languageCapacity)
+        return 1;
+
+    int capacity = languageCapacity ? languageCapacity : 32;
+    while (capacity < count) {
+        if (capacity > INT_MAX / 2) {
+            capacity = count;
+            break;
+        }
+        capacity *= 2;
+    }
+    if ((size_t)capacity > (size_t)-1 / sizeof(*languages))
+        return 0;
+
+    language_t *expanded = realloc(languages, (size_t)capacity * sizeof(*languages));
+    if (expanded == NULL)
+        return 0;
+    languages = expanded;
+    languageCapacity = capacity;
+    return 1;
+}
+
 static int lngReadEntry(int index, const char *path, const char *separator, const char *name, unsigned char d_type)
 {
-    if (d_type != DT_DIR) {
-        if (strstr(name, ".lng") || strstr(name, ".LNG")) {
+    size_t nameLen = strlen(name);
+    if (d_type == DT_DIR || nameLen <= 9 || strncasecmp(name, "lang_", 5) != 0 ||
+        strcasecmp(name + nameLen - 4, ".lng") != 0 || index >= INT_MAX - nLanguages - 1)
+        return index;
 
-            language_t *currLang = &languages[nLanguages + index];
-
-            // filepath for this language file
-            int length = strlen(path) + 1 + strlen(name) + 1;
-            currLang->filePath = (char *)malloc(length * sizeof(char));
-            sprintf(currLang->filePath, "%s%s%s", path, separator, name);
-
-            // extract name for this language (will be used for the English translation)
-            length = strlen(name) - 5 - 4 + 1;
-            currLang->name = (char *)malloc(length * sizeof(char));
-            memcpy(currLang->name, name + 5, length);
-            currLang->name[length - 1] = '\0';
-
-            /*file_buffer_t* fileBuffer = openFileBuffer(currLang->filePath, 1, 1024);
-            if (fileBuffer) {
-                // read localized name of language from file
-                if (readLineContext(fileBuffer, &currLang->name))
-                    readLineContext(fileBuffer, &currLang->fontName);
-                closeFileBuffer(fileBuffer);
-            }*/
-
-            index++;
+    size_t langLen = nameLen - 9;
+    int existing = -1;
+    int count = nLanguages + index;
+    for (int i = 0; i < count; i++) {
+        if (strlen(languages[i].name) == langLen && strncasecmp(languages[i].name, name + 5, langLen) == 0) {
+            existing = i;
+            break;
         }
     }
-    return index;
+    // First discovered wins unless a higher-priority CWD copy becomes readable
+    // later (e.g. once network or BDM modules finish initializing).
+    if (existing >= 0 && scanPriority <= languages[existing].sourcePriority)
+        return index;
+
+    size_t pathLen = strlen(path);
+    size_t sepLen = pathLen && (path[pathLen - 1] == '/' || path[pathLen - 1] == '\\' ||
+                               path[pathLen - 1] == ':') ? 0 : strlen(separator);
+    if (pathLen > (size_t)-1 - sepLen - nameLen - 1)
+        return index;
+
+    char *filePath = malloc(pathLen + sepLen + nameLen + 1);
+    if (filePath == NULL)
+        return index;
+    memcpy(filePath, path, pathLen);
+    if (sepLen)
+        memcpy(filePath + pathLen, separator, sepLen);
+    memcpy(filePath + pathLen + sepLen, name, nameLen + 1);
+
+    if (existing >= 0) {
+        free(languages[existing].filePath);
+        languages[existing].filePath = filePath;
+        languages[existing].sourcePriority = scanPriority;
+        return index;
+    }
+
+    if (!lngEnsureCapacity(count + 1)) {
+        free(filePath);
+        return index;
+    }
+    char *langName = malloc(langLen + 1);
+    if (langName == NULL) {
+        free(filePath);
+        return index;
+    }
+    memcpy(langName, name + 5, langLen);
+    langName[langLen] = '\0';
+
+    languages[count].filePath = filePath;
+    languages[count].name = langName;
+    languages[count].sourcePriority = scanPriority;
+    return index + 1;
 }
 
 static void lngRebuildLangNames(void)
 {
-    if (guiLangNames)
-        free(guiLangNames);
+    char **newNames = malloc((size_t)(nLanguages + 2) * sizeof(*newNames));
+    if (newNames == NULL)
+        return;
 
-    // build the languages name list
-    guiLangNames = (char **)malloc((nLanguages + 2) * sizeof(char **));
-
-    // add default internal (english)
-    guiLangNames[0] = internalEnglish[0];
-
-    int i = 0;
-    for (; i < nLanguages; i++) {
-        guiLangNames[i + 1] = languages[i].name;
-    }
-
-    guiLangNames[nLanguages + 1] = NULL;
+    newNames[0] = internalEnglish[0];
+    for (int i = 0; i < nLanguages; i++)
+        newNames[i + 1] = languages[i].name;
+    newNames[nLanguages + 1] = NULL;
+    free(guiLangNames);
+    guiLangNames = newNames;
 }
 
-int lngAddLanguages(char *path, const char *separator, int mode)
+static int lngScanDirectory(char *path, const char *separator, unsigned char priority)
 {
-    int result;
+    if (path == NULL || path[0] == '\0' || nLanguages >= INT_MAX - 1)
+        return 0;
 
-    result = listDir(path, separator, MAX_LANGUAGE_FILES - nLanguages, &lngReadEntry);
-    nLanguages += result;
-    // Serialize the name-list free+swap against the GUI's readers (see thmRebuildGuiNames, which is
-    // already locked this way in themes.c): this runs on the IO worker for device-triggered language
-    // discovery, and guiShowUIConfig hands the very same list to its dialog. The lock is a
-    // not-ready no-op during pre-GUI init.
+    scanPriority = priority;
+    int added = listDir(path, separator, INT_MAX - nLanguages - 1, &lngReadEntry);
+    nLanguages += added;
+    scanPriority = 0;
+    return added;
+}
+
+static int lngScanBootDirectory(void)
+{
+    if (gBootDir[0] == '\0' || strcmp(gBootDir, scannedBootDir) == 0)
+        return 0;
+
+    // Defer latching a boot path until it is readable. Storage may mount late.
+    DIR *dir = opendir(gBootDir);
+    if (dir == NULL)
+        return 0;
+    closedir(dir);
+
+    const char *separator = strchr(gBootDir, '\\') ? "\\" : "/";
+    int added = lngScanDirectory(gBootDir, separator, 2);
+
+    char path[sizeof(gBootDir) + sizeof("/LNG")];
+    size_t len = strlen(gBootDir);
+    const char *join = (gBootDir[len - 1] == '/' || gBootDir[len - 1] == '\\' ||
+                        gBootDir[len - 1] == ':') ? "" : separator;
+    int written = snprintf(path, sizeof(path), "%s%sLNG", gBootDir, join);
+    if (written >= 0 && (size_t)written < sizeof(path))
+        added += lngScanDirectory(path, separator, 1);
+
+    snprintf(scannedBootDir, sizeof(scannedBootDir), "%s", gBootDir);
+    return added;
+}
+
+static void lngPublishLanguages(int mode)
+{
     guiLock();
     lngRebuildLangNames();
     guiUnlock();
 
-    const char *temp;
-    if (configGetStr(configGetByType(CONFIG_OPL), "language_text", &temp)) {
-        if (lngSetGuiValue(lngFindGuiID(temp)))
+    const char *saved;
+    if (configGetStr(configGetByType(CONFIG_OPL), "language_text", &saved)) {
+        if (lngSetGuiValue(lngFindGuiID(saved)))
             moduleUpdateMenu(mode, 0, 1);
     }
+}
 
-    return result;
+void lngRefreshBootLanguages(int mode)
+{
+    if (lngScanBootDirectory() > 0)
+        lngPublishLanguages(mode);
+}
+
+int lngAddLanguages(char *path, const char *separator, int mode)
+{
+    // Retry CWD before scanning each newly mounted device's conventional LNG.
+    int added = lngScanBootDirectory();
+    added += lngScanDirectory(path, separator, 0);
+    lngPublishLanguages(mode);
+    return added;
 }
 
 // An optional CJK font belongs to the settings home, NOT the selected UI
@@ -214,6 +324,9 @@ void lngEnd(void)
     }
 
     free(guiLangNames);
+    free(languages);
+    languages = NULL;
+    languageCapacity = nLanguages = 0;
 
     fntEnd();
 }
