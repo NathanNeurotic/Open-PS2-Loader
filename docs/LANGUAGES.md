@@ -123,3 +123,29 @@ run clones the upstream lang repo into `lng_src/`). CI does this automatically.
 Fork-added strings are the labels in `lng_tmpl/_base.yml` that upstream doesn't have. To
 see which are still English-only in a given language, run `make languages` and look for
 `untranslated` entries in `lng_src/<Language>.yml` after the overlay step.
+
+## Installing and selecting language files
+
+From the release matching your ELF, download `RIPTOPL-LANGS-*.zip` and
+extract your chosen `lang_<Language>.lng`. Copy its matching
+`font_<Language>.ttf` or `font_<Language>.otf` (if included) beside the
+language file. Keep the original filenames.
+
+Languages are discovered in this precedence order:
+
+1. **Beside RiptOPL's launched ELF (CWD)**, e.g.
+   `mass0:/APPS/APP_RIPTOPL/lang_French.lng`.
+2. **CWD/LNG/**, e.g. `mass0:/APPS/APP_RIPTOPL/LNG/lang_French.lng`.
+3. **Existing locations**, including `mc0:/OPL/` and each enabled
+   device's `LNG/` directory.
+
+The language menu shows a language only once: the higher-priority location
+wins when duplicates exist. Scans retry an initially inaccessible boot path
+after the storage drivers mount. Language registration grows dynamically rather
+than stopping at 15 files. Restart RiptOPL after copying files into folders
+already scanned during the current session.
+
+Select **Settings → Interface → Language** (also under General & System
+where available), confirm, and **Save Settings**. English is always built
+in; missing newer translations fall back to English. Games and OSDSYS keep
+their own independent language settings.
