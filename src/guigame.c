@@ -1358,6 +1358,7 @@ static void guiGameSetCoreAwareState(void)
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);  // Mode 7 -gc=7 fix buffer overrun: Neutrino only
+    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 7, !neutrino); // Mode 8 Slow Reads: OPL core only
 }
 
 static int guiGameCompatUpdater(int modified)
