@@ -317,3 +317,346 @@ translations:
   HINT_EMBER_DISPLAY: Den udgangstilstand, Ember bruger til PS1-spil. 240p eller 480p skrives til settings.txt i EMBER-mappen på den enhed, der startes. Standard fjerner indstillingen igen -- og filen med, hvis den ikke indeholdt andet.
   LOGOART: "Spillogoer"
   HINT_LOGOART: "Viser spillets logo (<ID>_LGO), når temaet bruger det. Deaktivering skjuler også standardbilledet uden at ændre covers, diskbilleder eller baggrunde."
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  OK: OK
+  MEDIUM: Mellem
+  BDMMODE: Starttilstand for BDM
+  GATEWAY: Gateway
+  START: Start
+  VMC_STATUS: Status
+  INFO: Info
+  VSYNC: Lodret synkronisering
+  DS34BT_MODE: DualShock3/4 BT
+  HCIVER: 'HCI-version:'
+  LMPVER: 'LMP-version:'
+  MTAP_ENABLE: Multitap-emulering
+  HINT_PADEMU_WORKAROUND: Nogle falske DS3'er har brug for en omgåelse; denne indstilling slår den til.
+  CFG_NOTIFICATION: Konfiguration indlæst fra %s
+  THM_NOTIFICATION: Tema indlæst fra %s
+  LNG_NOTIFICATION: Sprog indlæst fra %s
+  PARTITION_NOTIFICATION: Partitionen %s er monteret.
+  HINT_NEUTRINO_AUTO_ELF: Sender spillets start-ELF til Neutrino for at slå konfiguration op pr. titel. Slået til som standard; en manuelt indstillet Boot ELF-indstilling går forud.
+  HINT_POPSTARTER_PATH: Hvor POPSTARTER.ELF ligger. Står feltet tomt, udfylder RIPPS2 det med en, den finder på et drev; skriv over den for at bruge en anden, som usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Neutrino-argumenterne er længere, end der kan gemmes. Gør et felt kortere, før du gemmer.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Neutrinos startargumenter overskrider den sikre grænse. Gør de globale argumenter eller spillets argumenter kortere.
+  NEUTRINO_AUTO_ELF: Automatisk Boot ELF (-elf)
+  HINT_NEUTRINO_PATH: 'Hvor ligger neutrino.elf? <ikke angivet> = spillets enhed -> mc0/mc1. En egen fuld sti prøves først. Eksempler: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Visning af PS2/PS1-spil
+  HINT_GAME_VIEW_MODE: Alle viser PS2- og PS1-spil sammen, og L3 skifter mellem Alle, PS1, PS2. PS2 eller PS1 viser kun den type og slår L3 fra. APPS og Stjernemarkerede spil har deres egne visningsregler.
+  VIEW_MIXED: Viser PS2- + PS1-spil
+  VIEW_PS1_ELF: Viser PS1 ELF-apps
+  APPS_DISPLAY: Visning af programmer
+  HINT_APPS_DISPLAY: Alle viser hver ELF i én APPS-liste med L3 slået fra. Apps / PS1ELF deler titler, der indeholder [PS1], over på en anden L3-side; startadfærden ændres ikke.
+  VIEW: Visning
+  VIEW_PS2: Viser stjernemarkerede PS2-spil
+  VIEW_PS1: Viser stjernemarkerede PS1-spil
+  VIEW_ELF: Viser stjernemarkerede ELF'er
+  VIEW_ALL: Viser alle stjernemarkerede spil
+  VMC_FRAGMENTED_ON_CREATE: VMC oprettet, men den er fragmenteret. Emulering af memorykort kræver én sammenhængende fil, så denne VMC springes over ved start, og det rigtige kort bruges i stedet. Frigør plads, og opret den igen, eller kopier en ind fra en anden enhed.
+  KEYB_MOVE_CURSOR: Flyt markøren
+  TITLECOLOR: Farve på spiltitler
+  RA_CHECK_GAME: Tjek understøttelse af RetroAchievements
+  RA_TEST_LINK: Test RetroAchievements-forbindelsen til pc
+  RA_CHECKING_IMAGE: Tjekker billedet, det tager et par sekunder...
+  RA_CHECK_RUNNING: Et tjek af et billede kører allerede
+  RA_LOOKING_FOR_PC: Leder efter pc-klienten...
+  RA_UL_UNSUPPORTED: UL/USBExtreme-spil kan ikke tjekkes endnu
+  RA_UL_UNSUPPORTED2: Kun almindelige .iso-billeder i DVD/ eller CD/ understøttes
+  RA_UNKNOWN_IMAGE: RetroAchievements kender ikke dette billede
+  RA_STILL_IDENTIFYING: Pc'en identificerer stadig billedet
+  RA_TRY_AGAIN: Prøv igen om et par sekunder
+  RA_NO_SOCKET: Konsollen kunne ikke åbne en netværkssocket
+  RA_NO_SOCKET2: Genstart konsollen, eller tjek ETH-enheden i indstillingerne
+  RA_TEST_NO_SOCKET2: Tjek kablet og ETH i indstillingerne; hvis netværket kører, så genstart konsollen
+  RA_PC_NO_ANSWER: Pc-klienten svarede ikke
+  RA_PC_NO_ANSWER2: Tjek, at xeRAbora kører, eller prøv testen af pc-forbindelsen
+  RA_SUPPORTED: Understøttet af RetroAchievements
+  RA_START_TO_TRACK: Start spillet for at spore præstationer
+  RA_ACHIEVEMENTS: '%d præstationer'
+  RA_ACHIEVEMENTS_FULL: '%d præstationer -- %d låst op, %d ikke understøttet'
+  RA_HASH_FAILED: Billedets hash kunne ikke beregnes
+  RA_HASH_FAILED2: Se RA/hashes.txt ved siden af spillene for årsagen
+  RA_NET_BUSY: Netværket bruges af en UDP-overførsel
+  RA_NET_BUSY2: RA kræver SMB-stakken -- skift protokol, eller byg .wl på pc'en
+  RA_NET_BUSY_HASH: Hashen ligger i RA/hashes.txt -- xeRAbora kan bygge .wl ud fra den
+  RA_NO_IP: Konsollen har ingen IP-adresse
+  RA_NO_IP2: Tjek DHCP eller den statiske adresse i netværksindstillingerne
+  RA_TEST_NO_ANSWER: Ingen pc-klient svarede inden for 3 sekunder
+  RA_TEST_NO_ANSWER2: Konsol%s. Tjek, at xeRAbora kører, og at UDP 18194 er åben
+  RA_TEST_FOUND: Pc-klient fundet%s%s %s
+  RA_TEST_FOUND2: Svar på %u ms, konsol%s
+  RA_NA_NEUTRINO: RA-sporing kræver <OPL>-kernen -- starter via Neutrino indlæser aldrig ee_core
+  RA_NA_UDPFS: RA-sporing findes ikke på UDPFS -- spil starter via Neutrino
+  RA_NA_PS1: RA-sporing findes ikke for PS1-spil
+  RA_NA_HDD: APA-spiloplysninger eller HDD'ens indstillingsmappe er ikke tilgængelig
+  RA_NA_HDD2: Angiv en gyldig indstillingsmappe på HDD'en, og opdater, før du tjekker understøttelsen
+  RA_TELEMETRY: RetroAchievements-telemetri
+  RA_BADGES: RetroAchievements-mærker
+  HTTP_GAMES: HTTP-spil
+  HTTP_SERVER: HTTP-server
+  HTTP_PORT: HTTP-port
+  HTTP_BASE_PATH: HTTP-basissti
+  HTTP_TEST: Test HTTP-serveren
+  HTTP_TEST_OK: Serveren OK -- spil vist
+  HTTP_TEST_EMPTY: Kataloget er tomt -- gyldigt, men det beviser intet om byteintervaller
+  HTTP_TEST_NO_ISO: Kataloget har intet understøttet billede at teste et byteinterval på
+  HTTP_ERR_CONNECT: Kan ikke nå HTTP-serveren
+  HTTP_ERR_CATALOG: games.csv mangler, kan ikke læses eller er for stor
+  HTTP_ERR_RANGE: Serveren returnerede ikke præcis de byte, der blev bedt om
+  HTTP_LAUNCH_UNAVAILABLE: Start via HTTP er ikke implementeret endnu -- kataloget kan kun gennemses
+  HTTP_ERR_COMPRESSED: Komprimerede billeder (.zso) understøttes ikke via HTTP endnu
+  HTTP_NO_VMC: Virtuelle memorykort er ikke tilgængelige via HTTP -- brug et fysisk kort
+  HTTP_TAB_HINT: HTTP læser games.csv fra din server. Angiv adresse, port og basissti i netværksindstillingerne, og brug så Test.
+  RA_DISC_CHECK: 'RA: tjek diskunderstøttelse'
+  RA_DISC_LAUNCH: 'RA: start disk'
+  RA_DISC_CHECKING: Tjekker disken for RetroAchievements
+  RA_DISC_HASH_FAILED: Diskens hash kunne ikke beregnes -- tjek RA/hashes.txt i indstillingsmappen
+  RA_DISC_HOME_ERROR: Indstillingsstien kan ikke bruges til diskenes overvågningslister
+  RA_DISC_ENABLE: Slå RetroAchievements-telemetri til i netværksindstillingerne først
+  RA_DISC_CHECK_FIRST: 'Ingen overvågningsliste for denne disk -- brug RA: tjek diskunderstøttelse først'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: HDD fundet, men dens APA-partitionstabel kan ikke læses. Formater den ikke -- dine spil kan måske reddes.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: Et drev blev ikke monteret, fordi dets sektorer ikke er på 512 byte (f.eks. et drev med 4K-sektorer). OPL kan kun læse sektorer på 512 byte.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Denne titel er sin egen APA-partition, og OPL redigerer aldrig partitionstabellen. Omdøb den på en pc.
+  POPS_SETTINGS_UNREADABLE: Kunne ikke læse POPSTARTER's indstillinger -- memorykortet er optaget eller kan ikke læses. Prøv igen, når indlæsningen er færdig.
+  GLOBAL_PS_EMULATION_SETTINGS: Globale indstillinger for PS-emulering
+  RA_NO_LINK_UNTRACKED: Netværket er ikke tilgængeligt -- starter uden RetroAchievements denne gang.
+  IGR_USB_DRIVERS_PROMPT: IGR-stien ligger på USB, men %s mangler USBD.IRX og USBHDFSD.IRX, som konsollen skal bruge for at nå USB efter en In-Game Reset. Uden dem havner IGR i PS2-browseren. Kopier RiptOPL's drivere derhen nu? FMCB, OpenTuna og andre exploits indlæser også disse filer og kan opføre sig anderledes med dem. Eksisterende filer erstattes aldrig. Kun FAT32-USB.
+  IGR_USB_DRIVERS_FAILED: Kunne ikke kopiere USB-driverne til %s (kortet er fuldt eller kan ikke skrives til). IGR havner i PS2-browseren.
+  OFFICIAL_CFG_NOTIFICATION: Officielle OPL-indstillinger indlæst fra %s
+  CFM_VMODE_HOLD_KEEP: Hold nede for at beholde
+  BDM_PS2_FOLDERS_UNREADABLE: Kunne ikke åbne CD- eller DVD-mappen i %s (fejl %d), så den enhed viser ingen PS2-spil. Tryk på SELECT på dens side for at prøve igen.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Neutrinos filsystem er sat til bd, men denne enhed har aldrig oplyst sit enhedsnummer, så Neutrino kan ikke peges mod den. Sæt Neutrinos filsystem for dette spil til Auto eller exfat.
+  CFM_VMODE_REVERT_IN: Går tilbage om %d s
+  EMBER_DITHER: Ember-dithering
+  HINT_EMBER_DITHER: Ember-dithering (Til eller Fra), skrevet til EMBER/settings.txt på den startede enhed. En værdi pr. spil går forud.
+  EMBER_SHADING: Ember-skygning
+  HINT_EMBER_SHADING: 'Embers farvedybde: 15 bit, eller 24 bit (eksperimentelt). Skrevet til EMBER/settings.txt på den startede enhed. En værdi pr. spil går forud.'
+  EMBER_CONTROLLER: Ember-controller
+  HINT_EMBER_CONTROLLER: 'Embers controllertilstand: Auto, Analog eller D2A. Bedst indstillet pr. spil (Trekant > Ember-spilindstillinger), som går forud.'
+  EMBER_480P_CONFIRM: Ember i 480p giver intet billede over komposit. Brug 480p?
+  EMBER_SHADING_24: 24 bit (eksperimentelt)
+  EMBER_GAME_SETTINGS: Ember-spilindstillinger
+  HINT_EMBER_GAME_SETTING: Kun dette spil. Tryk på OK for at skrive EMBER/games/<navn>/settings.txt før start. En urørt Standard beholder en eksisterende værdi i filen; at sætte en værdi tilbage til Standard fjerner dens tilsidesættelse.
+  EMBER_TIMING: Ember-timing
+  HINT_EMBER_TIMING: 'Embers videotiming: Auto følger diskens region, NTSC tvinger 60 Hz, PAL tvinger 50 Hz. Skrevet til EMBER/settings.txt på den startede enhed.'
+  EMBER_GLOBAL_WARNING: Disse Ember-indstillinger gælder hvert PS1-spil, og nogle spil går ned med dem. For kun at ændre ét spil skal du bruge Trekant > Ember-spilindstillinger på det spil.
+  HINT_COVERFLOW_COUNT: Hvor mange covers RIPFLOW viser på hver side af det valgte.
+  HINT_COVERFLOW_SCALE: Hvor stort RIPFLOW tegner det valgte cover i forhold til de andre.
+  HINT_COVERFLOW_ANIM: Hvor hurtigt covers glider, når du bevæger dig langs flowet.
+  HINT_NARGS_QB: 'Quick Boot: springer Neutrinos egen startskærm over. Til her sendes den for hvert spil; fra sender RIPPS2 den stadig selv for USB-, iLink- og netværksspil, hvor den er nødvendig.'
+  HINT_NARGS_DBC: 'Fejlfindingsfarver: Neutrino fylder skærmen med en farve ved hvert indlæsningstrin, så et foto viser, hvor et spil stopper.'
+  HINT_NARGS_LOGO: Viser PS2-logoet før spillet (en anden genstart af IOP, som nogle iLink-drev har brug for). Fra her følger RIPPS2 Spilstart > PS2-logo og sender det aldrig for MMCE- eller netværksspil.
+  HINT_NARGS_CWD: 'Mappen, spillet ser som sin egen. Tom: Neutrinos standard.'
+  HINT_NARGS_CFG: 'En egen Neutrino-konfigurationsfil (-cfg). Tom: Neutrinos.'
+  HINT_NARGS_ELF: 'Starter denne ELF i stedet for den startfil, disken angiver. Tom: spillets egen.'
+  HINT_NARGS_ATA0: Et HDD-billede, som Neutrino monterer som konsollens interne HDD, til spil, der bruger HDD'en (-ata0).
+  HINT_NARGS_ATA0ID: ID-filen, der hører til det HDD-billede (-ata0id).
+  HINT_NARGS_ATA1: Et andet HDD-billede (-ata1).
+  PS1_SAVE_GUIDANCE: PS1-gemte spil afhænger af Ember eller POPSTARTER; PS2's VMC-indstillinger gælder ikke.
+  NEUTRINO_SHOW_ARGS: Vis startargumenter
+  HINT_NEUTRINO_SHOW_ARGS: Før hver start via Neutrino vises hvert argument, Neutrino får, og du bliver spurgt, om du vil fortsætte. Tilbage går tilbage til menuen uden at starte.
+  NEUTRINO_ARGS_CONFIRM: Neutrino starter med disse argumenter. Start?
+  HINT_NARGS_EXTRA: Andre Neutrino-flag, adskilt af mellemrum, sendt efter alt ovenfor. RIPPS2 tilføjer altid -bsd og -dvd for spillets drev og ISO, -mc0 og -mc1 for dets VMC'er, -gsm for dets videotilstand og spillets egne kompatibilitetstilstande. Et flag med sin egen række ovenfor (som -logo) flyttes til den række, når du gemmer, og sendes stadig.
+  GAME_TYPE_LABELS: Vis etiketterne [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: Snydelisten kunne ikke gemmes i Neutrino-mappen, så Neutrino kan ikke bruge den. Start uden snyd?
+  AUTO_CREATE_VMC: Opret VMC ved første start
+  HINT_AUTO_CREATE_VMC: At starte et PS2-spil uden VMC i stik 1 opretter et kort på 8 MB på spillets enhed, navngivet som VMC-skærmen foreslår (delt af alle spillets diske), og tildeler det. Ikke til den interne HDD under Neutrino.
+  AUTO_VMC_CREATING: Opretter dette spils VMC...
+  AUTO_VMC_FAILED: Kunne ikke oprette dette spils VMC. Spillet starter uden.
+  SAVE_ICONS: 3D-gemmeikoner
+  HINT_SAVE_ICONS: Viser det valgte spils gemmeikon, snurrende, hvor temaet har plads til det. Læser spillets egen VMC først, derefter memorykortene.
+  NETBOOT_RESTART_NOW: Netværksprotokollen ændres efter en genstart. Gem indstillingerne, og genstart OPL nu?
+  HINT_NET_PROTOCOL: 'Hvilken netværkstjeneste RiptOPL bruger: en SMB-deling, UDPFS, UDPBD eller HTTP. Samme indstilling som i Spilkilder. At skifte væk fra en, der allerede kører, kræver en genstart.'
+  HINT_UDPFS_ACCESS: Kun UDPFS. Filer læser løse ISO'er fra serverens spilmappe; IMG læser et diskbillede som et drev. SMB og HTTP bruger altid Filer, UDPBD altid IMG.
+  HINT_SMB_VERSION: Hvilken SMB-version der bruges over for pc-delingen.
+  HINT_NET_ADVANCED: Låser Ethernet-forbindelsestilstand og SMB-porten op for redigering.
+  HINT_ETH_LINK_MODE: Tvinger netværksforbindelsens hastighed og duplex. Lad den stå på Auto, medmindre forbindelsen bliver ved med at falde ud.
+  HINT_IP_ADDR_TYPE: Statisk bruger adressen nedenfor; DHCP spørger din router. UDPFS og UDPBD bruger altid Statisk.
+  HINT_PS2_IP: PS2'ens egen IP-adresse. Vælg en, som ingen anden enhed bruger, i samme område som din pc.
+  HINT_NETMASK: Undernetmaske, som regel 255.255.255.0.
+  HINT_GATEWAY: Din routers adresse, som regel med de samme første tre tal og slutter på .1.
+  HINT_DNS: DNS-serverens adresse. Som regel den samme som gatewayen.
+  HINT_SMB_ADDR_TYPE: Nå pc'en via dens IP-adresse eller dens NetBIOS-navn (computernavn).
+  HINT_SMB_ADDRESS: 'Pc''en, der deler dine spil: dens IP-adresse, eller dens computernavn, når Adressetype er NetBIOS.'
+  HINT_SMB_PORT: 'SMB-port. Den skal passe til pc''en: PS2 Servers bruger 1111, Windows- og Samba-delinger bruger 445.'
+  HINT_SMB_USER: SMB-brugernavn. guest virker til de fleste delinger.
+  HINT_HTTP_SERVER: HTTP-spilserverens IP-adresse.
+  HINT_HTTP_PORT: Porten, HTTP-spilserveren lytter på.
+  HINT_HTTP_BASE: Mappen på HTTP-serveren, der indeholder games.csv. / er serverens rod.
+  HINT_HTTP_TEST: Prøver HTTP-serveren med værdierne ovenfor og melder, hvad den fandt.
+  HINT_RA_TELEMETRY: Hovedkontakt for RetroAchievements. Fra starter spil uden netværksstak eller øjebliksbilleder, ligesom en normal build.
+  HINT_RA_BADGES: Markerer spil med præstationer i listen. Forbliver mørkt, mens telemetrien er slået fra.
+  HINT_POPS_NET_BUTTON: Redigerer POPSTARTER's egne netværksfiler (IPCONFIG.DAT, SMBCONFIG.DAT), som PS1-spil over SMB har brug for.
+  HINT_POPS_IP_TYPE: 'Hvordan PS2''en får sin adresse, mens et PS1-spil kører over SMB: Statisk eller DHCP.'
+  HINT_POPS_IP: PS2'ens IP-adresse, mens et PS1-spil kører over SMB.
+  HINT_POPS_SMB_IP: IP-adressen på pc'en, der deler dine PS1-spil.
+  HINT_POPS_SMB_SHARE: Navnet på delingen på den pc, der indeholder POPS-mappen.
+  HINT_LASTPLAYED: Starter på det spil, du startede sidst.
+  HINT_LANGUAGE: Menusprog. Tilføj flere ved at lægge lang_*.lng-filer i en LNG-mappe.
+  HINT_GSM_DEFAULTS_BUTTON: Rettelser af videotilstand, som hvert spil får, medmindre det har sine egne GSM-indstillinger.
+  HINT_DEFDEVICE: Den side, RiptOPL åbner ved opstart.
+  HINT_MMCE_MODE: Spil på en SD2PSX eller MemCard PRO2. Auto starter ved opstart, Manuel når du åbner siden, Fra skjuler den.
+  HINT_MMCE_SETTINGS_BUTTON: Stik, IGR bootcard, GameID og timingindstillinger for MMCE.
+  HINT_ENABLE_USB: Indlæser driveren til USB-lager.
+  HINT_ENABLE_MX4SIO: Indlæser driveren til SD-kortadapteren MX4SIO.
+  HINT_ENABLE_ILINK: Indlæser driveren til iLink-lager (FireWire).
+  HINT_NETSTART: 'Starter netværket: Auto ved opstart, Manuel når du åbner dets side. Fra lader netværksadapteren være.'
+  HINT_APPMODE: Appsiden. Auto starter ved opstart, Manuel når du åbner den, Fra skjuler den.
+  HINT_FAVMODE: Siden Stjernemarkerede spil. Auto starter ved opstart, Manuel når du åbner den, Fra skjuler den.
+  HINT_BDMA_BUTTON: Hvilken exFAT-driver POPSTARTER bruger til PS1-spil på USB, MX4SIO, MMCE, HDD eller iLink.
+  HINT_VCD_LIST_BUTTON: 'Hvordan PS1-spil vises: skjul spil-id''er, vis kun disk 1, vis HDD''ens PP-partitioner.'
+  HINT_MMCE_SLOT: Hvilket memorykortstik MMCE-enheden sidder i. Auto finder det.
+  HINT_MMCE_GAMEID: Fortæller MMCE-enheden, hvilket spil der starter, så den kan skifte til det spils memorykort.
+  HINT_MMCE_COMM_BUTTON: Timingindstillinger for MMCE-forbindelsen. Skift dem kun, hvis spil fryser eller indlæses langsomt.
+  HINT_MMCE_PATH_BUTTON: Hvor på MMCE-kortet spilmapperne ligger.
+  HINT_MMCE_PREFIX: Undermappe på MMCE-kortet, der indeholder CD, DVD og de andre OPL-mapper. Tom bruger kortets rod.
+  HINT_GAME_TYPE_LABELS: Indleder hvert spilnavn med [PS1] eller [PS2]. Kun visning.
+  HINT_MENU_VMODE: Menuens videoudgang. Spil bruger GSM i stedet. Hold Bekræft nede for at beholde en ny tilstand.
+  HINT_THEME: Menuens udseende. Temaer læses fra THM-mappen på hver enhed.
+  HINT_COVERFLOW_BUTTON: Antal covers, størrelse, animation og dæmpning for Coverflow-temaet.
+  HINT_ARTWORK_BUTTON: 'Hvilke billeder der indlæses: covers, diskbilleder, baggrunde og gemmeikoner.'
+  HINT_COLORS_BUTTON: Farver for tekst, fremhævning, dialoger og baggrund.
+  HINT_NOTIFICATIONS: Korte meddelelser, når en konfigurations-, tema- eller sprogfil indlæses.
+  HINT_AUTOSORT: Sorterer spillister fra A til Å. Fra beholder den rækkefølge, de blev fundet i.
+  HINT_AUTOREFRESH: Tilføjer spil fra nyligt tilsluttede enheder uden manuel opdatering.
+  HINT_COVERART: Indlæser covers fra ART-mappen.
+  HINT_DISCART: Viser diskbilleder (<ID>_ICO). Fra skjuler disken, men beholder covers og baggrunde.
+  HINT_BGART: Viser et spils baggrund (<ID>_BG), når temaet bruger en.
+  HINT_ART_TAR: Læser også billeder pakket i ART/art.tar.
+  HINT_ART_DELAY: Hvor længe markøren hviler på et spil, før dets billeder indlæses. Højere springer billeder over, når du ruller hurtigt.
+  HINT_TXTCOLOR: Farve på almindelig menutekst.
+  HINT_SELCOLOR: Farve på det fremhævede element.
+  HINT_UICOLOR: Baggrundsnuance for dialogbokse.
+  HINT_TITLECOLOR: Farve på spiltitler i listen.
+  HINT_BGCOLOR: Menuens baggrundsfarve.
+  HINT_PLASCOLOR: Farve, der blandes ind i den animerede baggrund.
+  HINT_RESETCOLOR: Gendanner RiptOPL's indbyggede farver, ikke temaets.
+  HINT_WIDESCREEN: Tegner menuen til et 16:9-tv.
+  HINT_XOFF: Flytter menuen til venstre eller højre på skærmen.
+  HINT_YOFF: Flytter menuen op eller ned på skærmen.
+  HINT_MENU_OVERSCAN: Gør menuen mindre indad, hvis tv'et skærer kanterne af.
+  HINT_APPLYGAMEID: Viser en stregkode, når et spil starter, så Pixel FX-, RetroGEM- og PS2Digital-enheder skifter profil.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Neutrinos sti, videotilstand og argumenter for hvert spil.
+  HINT_OSD_DEFAULTS_BUTTON: Konsolsprog, skærmstørrelse og videotilstand, der gives videre til spil.
+  HINT_ENWRITEOP: Tillader at omdøbe og slette spil og at oprette VMC'er. Rører aldrig HDD'ens partitionstabel.
+  HINT_DEBUG: 'Hjælp til udviklere: farvede skærme, mens et spil starter, og tællere for billedindlæsning i menuen.'
+  HINT_BDMPREFIX: Undermappe på USB-, MX4SIO-, iLink- og exFAT-drev, der indeholder spilmapperne. Tom bruger drevets rod.
+  HINT_ETHPREFIX: Undermappe på SMB-delingen, der indeholder spilmapperne. Tom bruger delingens rod.
+  HINT_HDDGAMELISTCACHE: Husker spillisten fra APA-HDD'en for at gøre senere scanninger hurtigere.
+  HINT_BDMCACHE: Forudlæsningscache til USB og andre BDM-drev i spillet. Større kan gøre streaming jævnere, men bruger mere hukommelse.
+  HINT_HDDCACHE: Forudlæsningscache til den interne HDD i spillet.
+  HINT_SMBCACHE: Forudlæsningscache til SMB i spillet.
+  HINT_CORE_LOADER: Kerne til dette spil, hvor begge understøttes. UDPFS/UDPBD er kun Neutrino; SMB/HTTP er kun <OPL>. Standard følger Spilstart.
+  HINT_DMA_MODE: Overførselstilstand for den interne HDD til dette spil. Sænk den, hvis spillet hakker eller fryser.
+  HINT_DNAS_GAMEID: Disk-id til DNAS-onlinespil. Indlæs fra disk læser det fra den originale disk.
+  HINT_LOAD_FROM_DISC: Læser DNAS-id'et fra den originale disk i drevet.
+  HINT_ALTSTARTUP: Starter denne ELF fra diskbilledet i stedet for den, SYSTEM.CNF angiver.
+  HINT_VMC_DEFINE: Vælg, opret eller ændr størrelsen på dette stiks virtuelle memorykort.
+  HINT_VMC_ACTION: Brug generelt giver dette stik et delt kort; Nulstil rydder valget.
+  HINT_VMC_NAME: Navnet på kortfilen, der gemmes i VMC-mappen.
+  HINT_VMC_CREATE: Opretter kortet eller anvender en ny størrelse på det.
+  HINT_VMC_DELETE: Sletter denne kortfil.
+  HINT_SETTINGS_SOURCE: Global bruger de delte indstillinger; Pr. spil beholder dem kun til dette spil.
+  HINT_PADMACRO_TOGGLE: Mens knappen holdes sænker kun pindens fart, mens du holder knappen; Skiftes med knap slår det til og fra.
+  HINT_SFX: Menuens lydeffekter.
+  HINT_BOOT_SND: Afspiller en lyd, når RiptOPL starter.
+  HINT_BGM: Afspiller temaets musik eller din fil med standardtemamusik.
+  HINT_SFX_VOLUME: Lydstyrke for menuens lydeffekter.
+  HINT_BOOT_SND_VOLUME: Lydstyrke for opstartslyden.
+  HINT_BGM_VOLUME: Lydstyrke for baggrundsmusikken.
+  HINT_SCROLL: Hvor hurtigt lister ruller, mens du holder en retning nede.
+  HINT_SELECTBUTTON: 'Hvilken knap der bekræfter: Kryds eller Cirkel.'
+  HINT_XSENSITIVITY: Hvor let venstre pind flytter markøren til venstre og højre. Fra ignorerer den.
+  HINT_YSENSITIVITY: Hvor let venstre pind flytter markøren op og ned. Fra ignorerer den.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 over USB eller Bluetooth, og multitap, til hvert spil.
+  HINT_PADMACRO_GLOBAL: Nedsat pindhastighed, akseinvertering og turbo til hvert spil.
+  HINT_COVERFLOW_DIM: Gør sidecovers mørkere.
+  HINT_OSD_ENABLE: Giver indstillingerne nedenfor videre til spillet. Fra bruger konsollens egne.
+  HINT_OSD_TVASPECT: Tv-form, der gives videre til spillet.
+  HINT_OSD_VMODE: Videotilstand, der gives videre til spillet.
+  DNAS_ID: DNAS-id
+  NEUTRINO_PADEMU_WARN: Controlleremulering er ikke tilgængelig med Neutrino. Brug en PS2-controller eller en kilde, der understøtter <OPL>-kernen.
+  RA_MODE: RA-tilstand
+  RA_HOST_IP: RA-hjælperens IP (0.0.0.0 = automatisk)
+  HINT_RA_HOST_IP: Valgfri IPv4 for en pc, der kun bruges til RetroAchievements. Brug 0.0.0.0 til den gamle SMB/HTTP-reserve eller Xerabora-registrering. Ændrer ikke spilserverens indstillinger.
+  HINT_RA_MODE: Vælg pc-klienten. Xerabora er standard; Caduceus tjekker først sin loggede session.
+  RA_CADUCEUS_OFFLINE: Caduceus' RA-session er offline.
+  RA_CADUCEUS_SIGN_IN: Log ind på RetroAchievements i Caduceus, og prøv igen.
+  FAV_SAVING: Gemmer i Stjernemarkerede spil...
+  FAV_SAVED: Gemt i Stjernemarkerede spil
+  FAV_SAVE_FAILED: Kunne ikke gemme i Stjernemarkerede spil
+  CAD_ACHIEVEMENTS: Caduceus-præstationer
+  CAD_VIEW_ACHIEVEMENTS: Se præstationer
+  CAD_USE_LIBRARY: Gennemse dette spil via Caduceus-præstationer i hovedmenuen.
+  CAD_HASH_UNSUPPORTED: Dette format kan ikke hashes. Gennemse kontobiblioteket i stedet.
+  CAD_HEADING: PRÆSTATIONER
+  CAD_LIBRARY: RetroAchievements-kontobibliotek
+  CAD_FILTER_ALL: Alle
+  CAD_EARNED: Optjent
+  CAD_LOCKED: Låst
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: '%d / %d optjent  |  %s'
+  CAD_ONE_GAME: '%d spil på kontoen'
+  CAD_GAMES: '%d spil på kontoen'
+  CAD_GAME_PROGRESS: '%d / %d præstationer  |  %d hardcore'
+  CAD_POINTS: '%d point  |  %s'
+  CAD_EMPTY_LIBRARY: Ingen spil med fremskridt på denne konto.
+  CAD_EMPTY_FILTER: Ingen præstationer passer til dette filter.
+  CAD_LOADING: Indlæser præstationer...
+  CAD_PAIR: Log ind på Caduceus, og par ART/CADUCEUS.KEY på din SMB-deling.
+  CAD_UNKNOWN_GAME: Dette spil er ikke i Caduceus' katalog. Opdater kataloget på pc'en.
+  CAD_CONNECTION_ERROR: Kan ikke forespørge Caduceus. Tjek forbindelsen, og tryk derefter på Select for at prøve igen.
+  CAD_BACK_REFRESH: Tilbage går tilbage til OPL. Select opdaterer denne side.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: side   Bekræft: åbn   Select: opdater'
+  CAD_GAME_CONTROLS: 'L1/R1: side   Firkant: filter   Select: opdater'
+  CAD_BACK: Tilbage
+  CAD_UNTRACKED: Caduceus er ikke klar. Starter uden præstationer denne gang.
+  PS1_RA_USB_REQUIRED: PS1-præstationer kræver en USB-VCD via POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Kan ikke fjerne det tidligere PS1-præstationsmodul
+  PS1_RA_PREPARE_FAILED: Kan ikke forberede PS1-præstationer. Bevar eller flyt POPS/MODULE_9.IRX, og tjek enhedens skriveadgang.
+  PS1_RA_CLEAN_DELETE: 'Ubrugt RA-modul fra RiptOPL: POPS/MODULE_9.IRX. Slet det for en ren start?'
+  PS1_RA_CLEAN_FAILED: Kan ikke slette det ubrugte RA-modul.
+  PS1_RA_CLEAN_CONTINUE: Fortsæt alligevel? Et efterladt RA-modul kan køre forældet telemetri. Nej annullerer starten.
+  FAV_REMOVED: Fjernet fra Stjernemarkerede spil
+  FAV_REMOVE_FAILED: Kunne ikke fjerne fra Stjernemarkerede spil
+  POPS_UDPFS_SETTINGS: Netværksindstillinger for POPS UDPFS
+  POPS_UDPFS_DISCOVERY: Gemmer i hver POPS-mappe på USB. Serveren 0.0.0.0 bruger registrering.
+  POPS_UDPFS_NOT_READY: POPS UDPFS kræver matchende gyldige IPCONFIG.DAT og UDPFSCONFIG.DAT i hver POPS-mappe på USB. Konfigurer dem i netværksindstillingerne for POPS.
+  HINT_POPS_UDPFS_IP: Statisk PS2-IP, som POPS UDPFS-driveren bruger efter sin IOP-nulstilling.
+  POPS_UDPFS_ALL_USB_FOLDERS: Alle POPS-mapper på USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (ugyldig)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (ufuldstændig)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS kræver driverparret .udpfs installeret på memorykortet. Læg det på manuelt, eller slå BDMA Anvend ved start til.
+  VMC_REPLACE_REQUIRES_DELETE: At ændre VMC-størrelsen ville slette dens gemte spil. Tag en sikkerhedskopi af den eksisterende VMC, og brug Slet, før du opretter en ny størrelse.
+  VMC_CREATE_FAILED: Kunne ikke oprette VMC'en. Tjek enheden, forbindelsen og skriveadgangen. Eksisterende gemte spil blev ikke erstattet.
+  RA_EXPERIMENTAL_CARDS: Eksperimentelle Caduceus-kort
+  HINT_RA_EXPERIMENTAL_CARDS: Eksperimentelle præstationskort i PS2-spil. Kan flimre eller fryse spil. Kun Caduceus; Fra bruger den gyldne puls. Træder i kraft ved næste spilstart.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA er ikke tilgængeligt for denne start. Tjek RA-kørselsmiljøet, hjælperens IP og den gemte overvågningsliste. Starter uden præstationer.
+  UDPFS_IP_CONFLICT: En anden enhed på dit netværk bruger denne PS2's IP-adresse, så UDPFS-serverens svar går til den. Angiv en anden PS2-IP i netværksindstillingerne.
+  XERA_ACHIEVEMENTS: RetroAchievements-bibliotek (xeRAbora)
+  XERA_USE_LIBRARY: Gennemse dette spil via RetroAchievements-biblioteket i hovedmenuen.
+  XERA_OPEN_NETWORK: Kan ikke nå xeRAbora. Slå OPEN TO THE NETWORK til i dens indstillinger, og tjek RA-hjælperens IP og pc'ens firewall.
+  XERA_UNKNOWN_GAME: xeRAbora kender ikke dette billede. Kør RA-tjekket af spilunderstøttelse først.
+  XERA_NOT_PLAYED: Ikke i dit RetroAchievements-bibliotek endnu. Spil det én gang med præstationer, og tryk derefter på Select.
+  XERA_CONNECTION_ERROR: Kan ikke læse listen fra xeRAbora. Tryk på Select for at prøve igen.
+  CAD_PAIR_UDPFS: Kan ikke nå Caduceus. Par ART/CADUCEUS.KEY i den mappe, PS2-Servers deler, og angiv RA-hjælperens IP.
+  RA_WL_NOT_SAVED: Kunne ikke gemme overvågningslisten. Sørg for, at spillets enhed eller deling kan skrives til, og tjek igen.
+  RA_UDPFS_LOAD_FIRST: Åbn UDPFS-siden én gang, så dens netværksmodul indlæses, og prøv igen.
+  CAD_UDPFS_IMG: 'Caduceus-browseren kræver SMB eller UDPFS Filer: UDPFS IMG har ingen delt mappe til sin nøgle.'
+  XERA_SET_CLOCK: Ikke i dit RetroAchievements-bibliotek endnu. Indstil konsollens ur i systemindstillingerne for at se hele listen, eller spil det én gang med præstationer.
+  CFG_TITLES: Vis CFG-titler i spillister
+  HINT_CFG_TITLES: Viser titlen fra hvert spils CFG i stedet for filnavnet og sorterer efter den. Læser hver CFG, når en liste opdateres, så lister indlæses langsommere. Kun visning.
+  AUTO_VMC_INVALID: Dette spils VMC-fil findes, men er ikke et gyldigt memorykort, så den blev hverken brugt eller erstattet. Spillet starter uden; tjek den i VMC-menuen.
+  AUTO_VMC_STILL_RUNNING: Dette spils VMC er stadig ved at blive oprettet. Start spillet igen om lidt.
+  NEUTRINO_DVR_QUICKBOOT: DVR-start kræver overgangen til PSX-tilstand. Fjern -qb fra de globale og spilspecifikke Neutrino-argumenter.
+  NEUTRINO_DVR_FILE_MISSING: 'Neutrino-installationen til DVR er ufuldstændig. Påkrævet fil mangler:'
+  PARENLOCK_GAME: Forældrelås
+  PARENLOCK_GAME_HINT: Kræv forældrelåsens adgangskode for at starte dette spil.
+  PARENLOCK_GAME_NO_PASSWORD: Angiv en adgangskode til forældrelåsen, ellers bliver dette spil ikke låst.
+  HINT_ENABLE_PCCF: PC CARD CompactFlash i tidlige japanske PS2'er. Kun indbyggede PS2-spil; CF kræver eneadgang til PC CARD. Genstart for at frigive den.
+  PCCF_GAMES: PC CARD CF-spil
+  PCCF_UNAVAILABLE: 'CF er ikke tilgængeligt: kræver en tidlig japansk PS2 med PC CARD, et kompatibelt kort og ingen aktiv DEV9-, HDD- eller netværksdriver.'
+  PCCF_UNSUPPORTED_GAME: CF understøtter i øjeblikket kun indbyggede PS2-spil. VMC på CF, PS1-indlæsning og netværkspræstationer er ikke tilgængelige.
+  HINT_ENABLE_DVR: Eksperimentel registrering af DESR DVR-ISO'er. Kræver, at HDD-kilden er slået til; spilstart kræver en ekstern Neutrino med DVR-understøttelse.
