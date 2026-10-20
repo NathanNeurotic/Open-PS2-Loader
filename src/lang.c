@@ -258,10 +258,19 @@ static int lngScanBootDirectory(void)
     if (gBootDir[len - 1] == '/' || gBootDir[len - 1] == '\\' || gBootDir[len - 1] == ':')
         join = "";
     int written = snprintf(path, sizeof(path), "%s%sLNG", gBootDir, join);
-    if (written >= 0 && (size_t)written < sizeof(path))
-        added += lngScanDirectory(path, separator, 1);
+    int lngReadable = 0;
+    if (written >= 0 && (size_t)written < sizeof(path)) {
+        // A boot device may expose its root before the LNG subfolder is ready.
+        DIR *lngDir = opendir(path);
+        if (lngDir != NULL) {
+            closedir(lngDir);
+            added += lngScanDirectory(path, separator, 1);
+            lngReadable = 1;
+        }
+    }
 
-    snprintf(scannedBootDir, sizeof(scannedBootDir), "%s", gBootDir);
+    if (lngReadable)
+        snprintf(scannedBootDir, sizeof(scannedBootDir), "%s", gBootDir);
     return added;
 }
 
