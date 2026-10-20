@@ -438,7 +438,16 @@ int hddGetFileBlockInfo(const char *name, const apa_sub_t *subs, pfs_blockinfo_t
         inode = (pfs_inode_t *)IOBuffer;
 
         if (hddReadSectors(lba, sizeof(pfs_inode_t) / 512, inode) == 0) {
-            if (inode->number_data < max) {
+            const u32 *word = (const u32 *)inode;
+            u32 sum = 0;
+            for (unsigned int w = 1; w < sizeof(pfs_inode_t) / sizeof(u32); w++)
+                sum += word[w];
+
+            // This reads the disk, not PFS's cache: anything but a committed inode -- the magic and
+            // checksum PFS itself demands before it trusts one -- is a map nobody may write through.
+            if (inode->magic != PFS_SEGD_MAGIC || inode->checksum != sum)
+                result = -EIO;
+            else if (inode->number_data < max) {
                 memcpy(blocks, inode->data, inode->number_data * sizeof(pfs_blockinfo_t));
                 result = inode->number_data;
             } else

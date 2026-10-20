@@ -65,7 +65,7 @@ HARNESS = r'''
 
 enum { BDM_MODE = 0, ETH_MODE, HDD_MODE, APP_MODE, FAV_MODE, HTTP_MODE, MMCE_MODE, UDPFS_MODE };
 enum { LIB_VIEW_PS2 = 0, LIB_VIEW_PS1 };
-enum { _STR_AUTO_VMC_CREATING = 1, _STR_AUTO_VMC_FAILED, _STR_VMC_FRAGMENTED_ON_CREATE, _STR_AUTO_VMC_INVALID, _STR_AUTO_VMC_STILL_RUNNING };
+enum { _STR_AUTO_VMC_CREATING = 1, _STR_AUTO_VMC_FAILED, _STR_VMC_FRAGMENTED_ON_CREATE, _STR_AUTO_VMC_INVALID, _STR_AUTO_VMC_STILL_RUNNING, _STR_VMC_PFS_LIMIT_ON_CREATE };
 #define CONFIG_ITEM_CORE_LOADER "$CoreLoader"
 #define LOG(...) ((void)0)
 struct UIItem;
@@ -83,7 +83,7 @@ struct item_list {
 static int gAutoCreateVmc = 1, gDefaultCoreLoader, guiActive = 1, rowView, favSource = BDM_MODE;
 static int cfgCore = -1, cfgDisabled;
 static char cfgVmc[32];
-static int fileExists, checkCalls, createSize, renders, saves, lastMsg, msgs, cancelAtPoll = -1, fragmented;
+static int fileExists, checkCalls, createSize, renders, saves, lastMsg, msgs, cancelAtPoll = -1, fragmented, pfsMapTooLong;
 static int jobPolls, jobDoneAfter = 3, jobError, jobNeverEnds, aborts, polls, jobActive, wedged;
 static char createdName[32];
 
@@ -130,7 +130,7 @@ static int getKeyOn(int k) { return k == 99 && polls == cancelAtPoll; }
 static char *_l(int id) { static char t[8]; snprintf(t, sizeof(t), "#%d", id); return t; }
 static void guiRenderTextScreen(const char *t) { (void)t; renders++; }
 static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)accept; (void)ui; msgs++; sscanf(t, "#%d", &lastMsg); return 0; }
-static int sysVMCContiguity(void) { return fragmented ? 0 : 1; }
+static int sysVMCLayoutWarning(void) { return fragmented ? _STR_VMC_FRAGMENTED_ON_CREATE : pfsMapTooLong ? _STR_VMC_PFS_LIMIT_ON_CREATE : -1; }
 static int menuSaveConfig(void) { saves++; return 1; }
 
 static char rowStartup[32];
@@ -163,7 +163,7 @@ static void reset(void)
 {
     gAutoCreateVmc = 1; gDefaultCoreLoader = 0; guiActive = 1; rowView = LIB_VIEW_PS2; favSource = BDM_MODE;
     cfgCore = -1; cfgDisabled = 0; cfgVmc[0] = 0; fileExists = 0; checkCalls = 0; createSize = 0;
-    renders = saves = lastMsg = msgs = aborts = polls = jobPolls = jobError = jobNeverEnds = fragmented = jobActive = wedged = 0;
+    renders = saves = lastMsg = msgs = aborts = polls = jobPolls = jobError = jobNeverEnds = fragmented = pfsMapTooLong = jobActive = wedged = 0;
     jobDoneAfter = 3; cancelAtPoll = -1; createdName[0] = 0; dev.mode = BDM_MODE;
 }
 
@@ -213,6 +213,12 @@ int main(void)
     reset(); fragmented = 1;
     CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && lastMsg == _STR_VMC_FRAGMENTED_ON_CREATE && !strcmp(cfgVmc, "SLUS_GROUP_0"),
           "a fragmented card gets the VMC dialog's warning and is still assigned, as the dialog does");
+
+    reset(); pfsMapTooLong = 1;
+    CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && lastMsg == _STR_VMC_PFS_LIMIT_ON_CREATE && !strcmp(cfgVmc, "SLUS_GROUP_0"),
+          "an HDD card whose PFS map is too long gets its own warning, not the fragmented one");
+    reset(); pfsMapTooLong = 1; cfgCore = 1;
+    CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && msgs == 0, "Neutrino does not inherit the native PFS map warning");
 
     reset(); fragmented = 1; cfgCore = 1;
     CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && msgs == 0 && saves == 1,

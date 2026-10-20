@@ -288,6 +288,18 @@ int main(void)
         CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) < 0, "copy requests cannot reserve new files");
         CHECK(created == 0, "invalid requests start nothing");
     }
+    SCENARIO("pfs_reservation_flag_accepted_unknown_flags_refused") {
+        memset(&a, 0, sizeof(a));
+        strcpy(a.VMC_filename, "pfs0:VMC/A.bin");
+        a.VMC_size_mb = 8; a.VMC_blocksize = 16; a.VMC_thread_priority = 0x0f; a.VMC_card_slot = -1;
+        a.VMC_flags = 4;
+        CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) < 0 && created == 0, "an unknown flag is still refused");
+        a.VMC_flags = VMC_CREATE_PFS_RESERVE;
+        CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) == 0 && created == 1, "an HDD card's PFS reservation flag is accepted");
+        CHECK(genvmc_job.VMC_flags == VMC_CREATE_PFS_RESERVE, "and reaches the job");
+        runWorker();
+        CHECK(status().VMC_status == GENVMC_STAT_AVAIL && genvmc_stats.VMC_error == 0, "and the job completes normally");
+    }
     SCENARIO("contiguous_preopen_failure_preserves_file") {
         CHECK(create(&a, "mass:VMC/A.bin") == 0, "accepted");
         genvmc_job.VMC_flags = VMC_CREATE_CONTIGUOUS;

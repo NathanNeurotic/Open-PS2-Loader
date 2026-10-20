@@ -142,7 +142,7 @@ def function(name):
 start = source.index('// SONY superblock magic')
 end = source.index('static int genvmc_io_sema', start)
 formatter = source[start:end] + '\nstatic int genvmc_abort_sema, genvmc_abort, genvmc_owns_file;\nstatic createVMCparam_t genvmc_job;\n'
-for name in ('long_multiply(', 'mc_writecluster(', 'vmc_open_contiguous(', 'vmc_mcformat('):
+for name in ('long_multiply(', 'mc_writecluster(', 'vmc_open_contiguous(', 'vmc_reserve_pfs(', 'vmc_mcformat('):
     formatter += function(name) + '\n'
 # Host adapters retain the SDK libmc-common.h on-disk entry ABI. Clock,
 # interrupt and semaphore adapters do not model IOP scheduling; lifecycle
@@ -170,6 +170,9 @@ typedef struct {
 #define O_RDWR 3
 #define O_CREAT 0x200
 #define O_TRUNC 0x400
+#define PIOCALLOC 0x7001
+#define DPRINTF(...) ((void)0)
+#define MODNAME "genvmc"
 #define FIO_O_EXCL 0x800
 #define ALLOC_FIRST 0
 static FIL formatted;

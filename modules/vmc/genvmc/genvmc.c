@@ -17,6 +17,7 @@
 #include <sysmem.h>
 #include <thbase.h>
 #include <errno.h>
+#include <hdd-ioctl.h> // PIOCALLOC
 
 #include "genvmc.h"
 #include "vmc_alloc.h"
@@ -308,6 +309,17 @@ static int vmc_open_contiguous(char *filename, unsigned int bytes)
     return fd;
 }
 
+// PFS grows a file a write at a time from free runs of about 32 zones, so on a used partition a
+// card can land in more segments than native mcemu's PFS map holds. One request for every zone
+// takes the largest free runs first. Best effort: if PFS refuses, the writes allocate as they always
+// did, and the EE's completion check reports a map that will not fit.
+static void vmc_reserve_pfs(int fd, int bytes)
+{
+    int r = ioctl2(fd, PIOCALLOC, &bytes, sizeof(bytes), NULL, 0);
+    if (r < 0)
+        DPRINTF("%s: PFS reservation of %d bytes failed: %d\n", MODNAME, bytes, r);
+}
+
 static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progress, char *msg)
 {
     register int i, r, b, ifc_index, fat_index;
@@ -326,6 +338,8 @@ static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progres
         genvmc_fh = open(filename, O_RDWR | O_CREAT | O_TRUNC);
         if (genvmc_fh < 0)
             return -101;
+        if (genvmc_job.VMC_flags & VMC_CREATE_PFS_RESERVE)
+            vmc_reserve_pfs(genvmc_fh, size_kb * 1024);
     }
 
     // set superblock magic & version
@@ -655,7 +669,7 @@ static int vmc_create(const createVMCparam_t *param)
     register int r, thid;
     iop_thread_t thread_param;
 
-    if ((param->VMC_flags & ~VMC_CREATE_CONTIGUOUS) ||
+    if ((param->VMC_flags & ~(VMC_CREATE_CONTIGUOUS | VMC_CREATE_PFS_RESERVE)) ||
         ((param->VMC_flags & VMC_CREATE_CONTIGUOUS) &&
          (param->VMC_card_slot != -1 || param->VMC_blocksize != 16 ||
           (param->VMC_size_mb != 8 && param->VMC_size_mb != 16 && param->VMC_size_mb != 32 && param->VMC_size_mb != 64))))

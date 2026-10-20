@@ -115,6 +115,10 @@ jobs:
           python3 .github/scripts/test_vmc_fatfs_images.py
       - name: Check native VMC mapping refusals and both slot lifetimes
         run: python3 .github/scripts/test_native_vmc_layout.py
+      - name: Check HDD VMC creation reserves PFS space and only committed inodes are mapped
+        run: |
+          python3 .github/scripts/test_vmc_pfs_reserve.py
+          python3 .github/scripts/test_pfs_vmc_inode.py
       - name: Check Back on a Settings page keeps its edits and only a real change reconnects SMB
         run: python3 .github/scripts/test_settings_back_keeps_edits.py
       - name: Check a memory-card settings path saves and POPSTARTER is made only when needed, with icons

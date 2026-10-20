@@ -60,6 +60,14 @@ typedef struct
     vmc_spec_t specs;           /* Card specifications */
 } hdd_vmc_infos_t;
 
+// hddGetFileBlockInfo() bound for a VMC: the inode's own segment plus the data segments copied
+// into hdd_vmc_infos_t.blocks (number_data must stay below it).
+#define HDD_VMC_MAP_ENTRIES 11
+
+// Does a just-created card at this HDD path fit native mcemu's PFS block map, by the launch check's
+// own test? 1 yes, 0 no (more pieces than the map holds), -1 cannot tell.
+int hddVMCMapFits(const char *path);
+
 typedef enum {
     HDD_LOADMODULES_STATUS_ERROR = -2,
     HDD_LOADMODULES_STATUS_UNK = -1,
