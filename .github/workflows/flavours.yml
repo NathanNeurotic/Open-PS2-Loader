@@ -177,7 +177,7 @@ jobs:
         run: python3 .github/scripts/test_vmc_preserve_existing.py
       - name: Check Create VMC on First Launch creates, reuses, skips and reports correctly
         run: python3 .github/scripts/test_auto_create_vmc.py
-      - name: Check Neutrino VMC budget recovery and Beat Down compat defaults
+      - name: Check Neutrino VMC budget recovery and #831 compat defaults
         run: python3 .github/scripts/test_issues_830_831.py
 
   release-notes-tests:

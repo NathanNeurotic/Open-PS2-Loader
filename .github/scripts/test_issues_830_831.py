@@ -10,11 +10,17 @@ src_support = (root / 'src/supportbase.c').read_text(encoding='utf-8')
 src_bdm = (root / 'src/bdmsupport.c').read_text(encoding='utf-8')
 src_gui = (root / 'src/guigame.c').read_text(encoding='utf-8')
 
-# 1. Verify sbTitleCompatDefaults in src/supportbase.c
-for startup in ('SLUS_212.42', 'SLES_535.58', 'SLPM_660.94', 'SLKA_253.13'):
-    assert f'"{startup}", COMPAT_MODE_2' in src_support, f"Expected {startup} in sbTitleCompatDefaults with COMPAT_MODE_2"
+# 1. sbTitleCompatDefaults must not carry the serials #968 added for Beat Down. None of them is Beat Down
+# (SLUS_212.42 is Burnout Revenge USA), so they forced Synchronous Reads on other games and never reached
+# Beat Down itself (SLUS_211.50 / SLES_535.05 / SLPM_661.81 / SLPM_668.19 / SLPM_664.46). No real Beat Down
+# serial gets a default either until a console test shows a mode that fixes the #831 hang.
+table = src_support[src_support.index('sbTitleCompatDefaults[] = {'):]
+table = table[:table.index('};')]
+for startup in ('SLUS_212.42', 'SLES_535.58', 'SLPM_660.94', 'SLKA_253.13',
+                'SLUS_211.50', 'SLES_535.05', 'SLPM_661.81', 'SLPM_668.19', 'SLPM_664.46'):
+    assert f'"{startup}"' not in table, f"{startup} must not have a title compat default"
 
-print("PASS: sbTitleCompatDefaults covers Beat Down: Fists of Vengeance across regions with COMPAT_MODE_2")
+print("PASS: sbTitleCompatDefaults has no unverified Beat Down (#831) entries")
 
 # 2. Verify guiGameResolveEffectiveCore exists in src/guigame.c and reuses configSet in VMC paths
 assert 'guiGameResolveEffectiveCore(config_set_t *configSet, item_list_t *support, int id)' in src_gui, \
