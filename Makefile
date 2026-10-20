@@ -1264,6 +1264,7 @@ INTERNAL_LANGUAGE_H = include/lang_autogen.h
 LANG_COMPILER = tools/lang_compiler.py
 
 languages: | download_lng $(ENGLISH_TEMPLATE_YML) $(TRANSLATIONS_YML) $(ENGLISH_LNG) $(TRANSLATIONS_LNG) $(INTERNAL_LANGUAGE_C) $(INTERNAL_LANGUAGE_H)
+	@python3 tools/audit_translations.py --strict
 
 download_lng:
 	./tools/download_lng.sh
