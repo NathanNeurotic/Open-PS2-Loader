@@ -19,6 +19,7 @@ static language_t *languages;
 static char **guiLangNames;
 static char scannedBootDir[sizeof(gBootDir)];
 static unsigned char scanPriority; // 2: CWD, 1: CWD/LNG, 0: other LNG locations
+static int scanFoundFiles; // valid matching filenames, including duplicates
 
 // localised string getter
 char *_l(unsigned int id)
@@ -151,6 +152,9 @@ static int lngReadEntry(int index, const char *path, const char *separator, cons
         strcasecmp(name + nameLen - 4, ".lng") != 0 || index >= INT_MAX - nLanguages - 1)
         return index;
 
+    // Device callers use a positive return to stop polling this LNG folder;
+    // count valid files even if CWD registered an identically named language.
+    scanFoundFiles++;
     size_t langLen = nameLen - 9;
     int existing = -1;
     int count = nLanguages + index;
@@ -224,10 +228,12 @@ static int lngScanDirectory(char *path, const char *separator, unsigned char pri
         return 0;
 
     scanPriority = priority;
+    scanFoundFiles = 0;
     int added = listDir(path, separator, INT_MAX - nLanguages - 1, &lngReadEntry);
+    int found = scanFoundFiles;
     nLanguages += added;
     scanPriority = 0;
-    return added;
+    return found;
 }
 
 static int lngScanBootDirectory(void)
@@ -278,10 +284,10 @@ void lngRefreshBootLanguages(int mode)
 int lngAddLanguages(char *path, const char *separator, int mode)
 {
     // Retry CWD before scanning each newly mounted device's conventional LNG.
-    int added = lngScanBootDirectory();
-    added += lngScanDirectory(path, separator, 0);
+    (void)lngScanBootDirectory();
+    int found = lngScanDirectory(path, separator, 0);
     lngPublishLanguages(mode);
-    return added;
+    return found;
 }
 
 // An optional CJK font belongs to the settings home, NOT the selected UI
