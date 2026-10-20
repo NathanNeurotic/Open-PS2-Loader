@@ -20,6 +20,7 @@
 #include "include/guigame.h"
 #include "include/ds34common.h"
 #include "include/vmc_groups.h"
+#include "include/vmcrebuild.h"
 
 #ifdef PADEMU
 #include <libds34bt.h>
@@ -136,6 +137,8 @@ static statusVMCparam_t vmc_status;
 // Armed when the user starts a creation, cleared if they abort it. Gates the one-shot contiguity
 // report below so an aborted job -- whose file is gone -- never draws a complaint about its layout.
 static short vmc_check_layout;
+// The card shown can be rebuilt (#986), and a rebuild job is the one running.
+static short vmc_rebuild_offer, vmc_rebuilding;
 
 int guiGameVmcNameHandler(char *text, int maxLen)
 {
@@ -236,6 +239,50 @@ static int guiGameResolveEffectiveCore(config_set_t *configSet, item_list_t *sup
     return core;
 }
 
+// <device>VMC/<name>.bin on the row's own device -- the file the native launch maps. 0 if none.
+static int guiGameVMCCardPath(int id, item_list_t *support, const char *name, char *path, int size)
+{
+    const char *prefix = support->mode == FAV_MODE      ? favGetItemPrefix(id) :
+                         support->itemGetPrefix != NULL ? support->itemGetPrefix(support) :
+                                                          NULL;
+    return prefix != NULL && (unsigned int)snprintf(path, size, "%sVMC/%s.bin", prefix, name) < (unsigned int)size;
+}
+
+// Offer Rebuild (#986) for a valid card the native core would skip at launch: a fragmented one on
+// BDM, one with too long a PFS map on the HDD. Only a definite verdict offers it; Neutrino maps
+// cards its own way, and other stores cannot say how a card lies.
+static void guiGameRefreshVMCRebuild(int id, item_list_t *support, config_set_t *configSet, const char *name, int sizeMb)
+{
+    char path[256];
+    int sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(id) : support->mode;
+
+    vmc_rebuild_offer = sizeMb > 0 && gEnableWrite && guiGameResolveEffectiveCore(configSet, support, id) != 1 &&
+                        (sourceMode == HDD_MODE || (sourceMode >= BDM_MODE && sourceMode <= BDM_MODE_LAST && !bdmModeIsPCCF(sourceMode))) &&
+                        guiGameVMCCardPath(id, support, name, path, sizeof(path)) && vmcRebuildLayout(path, sizeMb) == 0;
+    diaSetVisible(diaVMC, VMC_BUTTON_REBUILD, vmc_rebuild_offer);
+    diaSetEnabled(diaVMC, VMC_BUTTON_REBUILD, vmc_rebuild_offer);
+    if (vmc_rebuild_offer)
+        diaSetLabel(diaVMC, VMC_STATUS, _l(_STR_VMC_FILE_NEEDS_REBUILD));
+}
+
+static int guiGameVMCRebuildMessage(int outcome)
+{
+    switch (outcome) {
+        case VMC_REBUILD_DONE:
+            return _STR_VMC_REBUILD_DONE;
+        case VMC_REBUILD_NO_ROOM:
+            return _STR_VMC_REBUILD_NO_ROOM;
+        case VMC_REBUILD_ABORTED:
+            return _STR_VMC_REBUILD_ABORTED;
+        case VMC_REBUILD_LEFTOVER:
+            return _STR_VMC_REBUILD_LEFTOVER;
+        case VMC_REBUILD_STUCK:
+            return _STR_VMC_REBUILD_STUCK;
+        default:
+            return _STR_VMC_REBUILD_FAILED;
+    }
+}
+
 static int guiGameCreateVMC(item_list_t *support, char *name, int size, int core)
 {
     if (support->itemCreateVMC != NULL)
@@ -266,6 +313,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
     }
 
     vmc_refresh = 0;
+    vmc_rebuilding = 0;
     vmc_operation = OPERATION_CREATE;
     diaSetEnabled(diaVMC, VMC_NAME, 1);
     diaSetEnabled(diaVMC, VMC_SIZE, 1);
@@ -274,6 +322,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
     const char *VMCSizes[] = {"8 Mb", "16 Mb", "32 Mb", "64 Mb", NULL};
     diaSetEnum(diaVMC, VMC_SIZE, VMCSizes);
     int size = guiGameRefreshVMCConfig(support, vmc);
+    guiGameRefreshVMCRebuild(id, support, configSet, vmc, validate ? 0 : size); // never offered while validating
     diaSetString(diaVMC, VMC_NAME, vmc);
 
     do {
@@ -306,6 +355,16 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                     }
                 } else
                     break;
+            } else if (vmc_operation == OPERATION_ENDING && vmc_rebuilding) {
+                // The copy job is over. The swap (or the clean-up of a copy that cannot be used)
+                // happens here, once, and the dialog then shows the card as it now is.
+                int outcome = vmcRebuildFinish(vmc_status.VMC_error);
+                vmc_rebuilding = 0;
+                guiMsgBox(_l(guiGameVMCRebuildMessage(outcome)), 0, diaVMC);
+                vmc_operation = OPERATION_CREATE;
+                diaSetEnabled(diaVMC, VMC_NAME, 1);
+                size = guiGameRefreshVMCConfig(support, vmc);
+                guiGameRefreshVMCRebuild(id, support, configSet, vmc, size);
             } else if (vmc_operation == OPERATION_ENDING) {
                 // Creation finished: a fragmented VMC (on the HDD, one with too long a PFS map) is
                 // dropped at launch, so say so now, in the dialog that made it. Raised from the loop,
@@ -334,7 +393,23 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                 vmc_operation = OPERATION_ABORTING;
                 vmc_check_layout = 0; // nothing was finished; do not report on a cancelled file
             }
-        } else if (result == VMC_BUTTON_DELETE) {
+        } else if (result == VMC_BUTTON_REBUILD) {
+            if (vmc_operation == OPERATION_CREATE && vmc_rebuild_offer && guiMsgBox(_l(_STR_VMC_REBUILD_CONFIRM), 1, diaVMC)) {
+                char path[256];
+                int started = guiGameVMCCardPath(id, support, vmc, path, sizeof(path)) ? vmcRebuildStart(path, size) : VMC_REBUILD_FAILED;
+                if (started == 0) {
+                    diaSetEnabled(diaVMC, VMC_NAME, 0);
+                    diaSetEnabled(diaVMC, VMC_SIZE, 0);
+                    diaSetEnabled(diaVMC, VMC_BUTTON_DELETE, 0);
+                    diaSetEnabled(diaVMC, VMC_BUTTON_REBUILD, 0);
+                    diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_ABORT));
+                    diaSetEnabled(diaVMC, VMC_BUTTON_CREATE, 1);
+                    vmc_operation = OPERATION_CREATING;
+                    vmc_rebuilding = 1;
+                } else
+                    guiMsgBox(_l(guiGameVMCRebuildMessage(started)), 0, diaVMC);
+            }
+        } else if (result == VMC_BUTTON_DELETE && vmc_operation == OPERATION_CREATE) {
             if (guiMsgBox(_l(_STR_DELETE_WARNING), 1, diaVMC)) {
                 support->itemCheckVMC(support, vmc, -1);
                 diaSetString(diaVMC, VMC_NAME, "");
@@ -343,6 +418,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
         } else if (result == VMC_REFRESH) { // User changed the VMC name
             diaGetString(diaVMC, VMC_NAME, vmc, sizeof(vmc));
             size = guiGameRefreshVMCConfig(support, vmc);
+            guiGameRefreshVMCRebuild(id, support, configSet, vmc, size);
         }
 
         result = diaExecuteDialog(diaVMC, result, 1, &guiGameVMCUpdater);

@@ -7,6 +7,7 @@ I_DelDrv
 I_AddDrv
 I_open
 I_lseek
+I_read
 I_write
 I_close
 I_remove
@@ -43,6 +44,8 @@ I_memcpy
 I_strcat
 I_strcpy
 I_memcmp
+I_strlen
+I_strcmp
 sysclib_IMPORTS_end
 
 thbase_IMPORTS_start

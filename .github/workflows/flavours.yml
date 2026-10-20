@@ -119,6 +119,10 @@ jobs:
         run: |
           python3 .github/scripts/test_vmc_pfs_reserve.py
           python3 .github/scripts/test_pfs_vmc_inode.py
+      - name: Check rebuilding a fragmented VMC keeps the card through every fault, and fixes a real image
+        run: |
+          python3 .github/scripts/test_vmc_rebuild.py
+          python3 .github/scripts/test_vmc_rebuild_fatfs.py
       - name: Check Back on a Settings page keeps its edits and only a real change reconnects SMB
         run: python3 .github/scripts/test_settings_back_keeps_edits.py
       - name: Check a memory-card settings path saves and POPSTARTER is made only when needed, with icons

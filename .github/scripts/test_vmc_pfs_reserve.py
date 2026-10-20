@@ -158,5 +158,5 @@ check = hdd[start:hdd.index('\n}\n', start)]
 assert 'sysCheckVMCEx(gHDDPrefix, "/", name, createSize, NULL, VMC_CREATE_PFS_RESERVE)' in check, check
 start = source.index('static int vmc_create(')
 create = source[start:source.index('\n}\n', start)]
-assert '~(VMC_CREATE_CONTIGUOUS | VMC_CREATE_PFS_RESERVE)' in create, create
+assert '~(VMC_CREATE_CONTIGUOUS | VMC_CREATE_PFS_RESERVE | VMC_CREATE_REBUILD)' in create, create
 print('genvmc PFS reservation: HDD creation requests it and genvmc accepts the flag')

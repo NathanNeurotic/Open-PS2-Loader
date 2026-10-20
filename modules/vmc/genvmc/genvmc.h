@@ -15,6 +15,9 @@
 #define VMC_CREATE_CONTIGUOUS  1
 // New card on PFS: ask for all its zones in one PIOCALLOC before formatting (best effort).
 #define VMC_CREATE_PFS_RESERVE 2
+// Rebuild an existing card (#986): VMC_filename is "<name>.new", copied from "<name>.bin" next to it.
+// Combined with exactly one of the two reservations above; the swap is the EE's job, never genvmc's.
+#define VMC_CREATE_REBUILD     4
 
 #define GENVMC_STAT_AVAIL 0x00
 #define GENVMC_STAT_BUSY  0x01
@@ -27,7 +30,7 @@ typedef struct
     int VMC_blocksize;
     int VMC_thread_priority;
     int VMC_card_slot; // 0=slot 1, 1=slot 2, anything else=blank
-    int VMC_flags;     // appended: VMC_CREATE_CONTIGUOUS for new native BDM cards, VMC_CREATE_PFS_RESERVE for HDD
+    int VMC_flags;     // appended: VMC_CREATE_CONTIGUOUS for new native BDM cards, VMC_CREATE_PFS_RESERVE for HDD, VMC_CREATE_REBUILD
 } createVMCparam_t;
 
 typedef struct

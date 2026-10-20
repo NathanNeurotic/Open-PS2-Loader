@@ -118,6 +118,10 @@ static int vmc_mccopy(char *filename, int slot, int *progress, char *msg)
     (void)slot;
     return vmc_mcformat(filename, 0, 0, progress, msg);
 }
+static int vmc_rebuild(char *filename, int size_kb, int *progress, char *msg)
+{
+    return vmc_mcformat(filename, size_kb, 16, progress, msg); /* copy mode: test_vmc_rebuild.py */
+}
 int fs_remove(const char *path)
 {
     removes++;
