@@ -145,6 +145,8 @@ jobs:
         run: python3 .github/scripts/test_mcemu_slots.py
       - name: Check the media size CDVDMAN bounds reads by is exact or unknown, never a partial guess
         run: python3 .github/scripts/test_media_lsn_count.py
+      - name: Check an HDD mini argv autolaunch resolves its HDL partition and refuses unmatched sectors
+        run: python3 .github/scripts/test_hdd_mini_autolaunch.py
       - name: Check that turning Network Connectivity off and on keeps the chosen protocol
         run: python3 .github/scripts/test_net_protocol_pick.py
       - name: Check quoted config values survive repeated save and reload
