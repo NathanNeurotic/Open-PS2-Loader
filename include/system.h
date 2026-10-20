@@ -108,6 +108,10 @@ int sysCheckVMCEx(const char *prefix, const char *sep, char *name, int createSiz
 // Only meaningful once genvmc reports the job finished. -1 means "this backing store cannot say"
 // (mmce, APA/pfs, SMB, udpfs) and must be treated as silence -- never as a pass or a failure.
 int sysVMCContiguity(void);
+// What to tell the user about the VMC whose creation just finished for the native core: a language
+// string id, or -1 for nothing (usable, or the store cannot tell). BDM needs one unbroken file
+// (sysVMCContiguity); a card on the HDD needs a PFS block map native mcemu can hold (hddVMCMapFits).
+int sysVMCLayoutWarning(void);
 
 #ifdef RETROACHIEVEMENTS
 /* Prepare ORBIT's external-runtime handoff before argv preflight and teardown. */

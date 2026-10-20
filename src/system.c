@@ -2756,6 +2756,13 @@ int sysVMCContiguity(void)
     return -1; // anything else is the ioctl itself failing, not a verdict about the file
 }
 
+int sysVMCLayoutWarning(void)
+{
+    if (!strncmp(gVMCCreatePath, "pfs", 3))
+        return hddVMCMapFits(gVMCCreatePath) == 0 ? _STR_VMC_PFS_LIMIT_ON_CREATE : -1;
+    return sysVMCContiguity() == 0 ? _STR_VMC_FRAGMENTED_ON_CREATE : -1;
+}
+
 // createSize == -1 : delete, createSize == 0 : probing, createSize > 0 : creation
 int sysCheckVMCEx(const char *prefix, const char *sep, char *name, int createSize, vmc_superblock_t *vmc_superblock, int flags)
 {

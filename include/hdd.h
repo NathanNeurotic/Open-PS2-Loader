@@ -52,6 +52,7 @@ typedef struct
 } apa_header_t;
 
 #define PFS_INODE_MAX_BLOCKS 114
+#define PFS_SEGD_MAGIC       0x53454744 // "SEGD": a file's own inode (segment descriptor, direct)
 
 typedef struct
 {

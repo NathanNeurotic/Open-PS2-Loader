@@ -22,6 +22,7 @@
 #include "include/cheatman.h"
 #include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
 #include "modules/iopcore/common/cdvd_config.h"
+#include "modules/vmc/genvmc/genvmc.h" // VMC_CREATE_PFS_RESERVE
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioFormat, fileXioMount, fileXioUmount, fileXioDevctl
@@ -2530,6 +2531,45 @@ static void hddLaunchDvrIso(int id, config_set_t *configSet)
     sysLaunchNeutrino("dvr", dvdPath, startup, compat, 0, neutrinoPath, args, video, gsmComp, 0, -1, NULL);
 }
 
+// pfs0: is mounted write-back (FIO_MT_RDWR), so a card genvmc made this session can have its inode
+// only in PFS's RAM cache, while hddGetFileBlockInfo reads the inode sector off the disk. Commit the
+// cache before reading a VMC's block map; 1 = committed, 0 = not, and then no map is trusted.
+static int hddSyncForVMCMap(void)
+{
+    int result = fileXioSync(hddPrefix, 0);
+    if (result < 0)
+        LOG("HDDSUPPORT PFS sync before the VMC map read failed: %d\n", result);
+    return result >= 0;
+}
+
+// Launch verdict on a hddGetFileBlockInfo() count: the inode's own segment plus at least one data
+// segment, and no more than native mcemu's map holds (-ENOMEM). Anything else cannot be trusted.
+static int hddClassifyVMCMap(int nparts)
+{
+    if (nparts > 1)
+        return NATIVE_VMC_OK;
+    return nparts == -ENOMEM ? NATIVE_VMC_PFS_LIMIT : NATIVE_VMC_LAYOUT_UNKNOWN;
+}
+
+int hddVMCMapFits(const char *path)
+{
+    apa_sub_t parts[APA_MAXSUB + 1];
+    pfs_blockinfo_t blocks[HDD_VMC_MAP_ENTRIES];
+    int nparts, verdict;
+
+    if (gHDDPrefix == NULL || !hddSyncForVMCMap())
+        return -1;
+    nparts = hddGetPartitionInfo(gOPLPart, parts);
+    if (nparts <= 0 || nparts > 5)
+        return -1; // the launch check would not map this partition either
+    nparts = hddGetFileBlockInfo(path, parts, blocks, HDD_VMC_MAP_ENTRIES);
+    verdict = hddClassifyVMCMap(nparts);
+    LOG("HDDSUPPORT VMC map check on %s: %d\n", path, nparts);
+    if (verdict == NATIVE_VMC_OK)
+        return 1;
+    return verdict == NATIVE_VMC_PFS_LIMIT ? 0 : -1;
+}
+
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
 #ifdef RETROACHIEVEMENTS
@@ -2629,7 +2669,9 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         char vmc_path[256];
         int vmc_id, have_error = 0;
         vmc_superblock_t vmc_superblock;
-        pfs_blockinfo_t blocks[11];
+        pfs_blockinfo_t blocks[HDD_VMC_MAP_ENTRIES];
+        // The block map is read off the disk; commit PFS's cache first (see hddSyncForVMCMap).
+        int synced = hddSyncForVMCMap();
 
         for (vmc_id = 0; vmc_id < 2; vmc_id++) {
             if (vmc_name[vmc_id][0]) {
@@ -2644,8 +2686,8 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
                     // Check vmc inode block chain (write operation can cause damage)
                     snprintf(vmc_path, sizeof(vmc_path), "%sVMC/%s.bin", gHDDPrefix, vmc_name[vmc_id]);
-                    if ((nparts = hddGetFileBlockInfo(vmc_path, parts, blocks, 11)) > 0) {
-                        have_error = 0;
+                    nparts = synced ? hddGetFileBlockInfo(vmc_path, parts, blocks, HDD_VMC_MAP_ENTRIES) : -EIO;
+                    if ((have_error = hddClassifyVMCMap(nparts)) == NATIVE_VMC_OK) {
                         hdd_vmc_infos.active = 1;
                         for (i = 0; i < nparts - 1; i++) {
                             hdd_vmc_infos.blocks[i].number = blocks[i + 1].number;
@@ -2655,10 +2697,8 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                             LOG("HDDSUPPORT hdd_vmc_infos.blocks[%d].subpart    : 0x%X\n", i, hdd_vmc_infos.blocks[i].subpart);
                             LOG("HDDSUPPORT hdd_vmc_infos.blocks[%d].count      : 0x%X\n", i, hdd_vmc_infos.blocks[i].count);
                         }
-                    } else {
+                    } else
                         LOG("HDDSUPPORT VMC slot %d block mapping failed: %d\n", vmc_id, nparts);
-                        have_error = nparts == -ENOMEM ? NATIVE_VMC_PFS_LIMIT : NATIVE_VMC_LAYOUT_UNKNOWN;
-                    }
                 }
 
                 if (have_error) {
@@ -2945,7 +2985,9 @@ static void hddCleanUp(item_list_t *itemList, int exception)
 
 static int hddCheckVMC(item_list_t *itemList, char *name, int createSize)
 {
-    return gHDDPrefix != NULL ? sysCheckVMC(gHDDPrefix, "/", name, createSize, NULL) : -1;
+    // A new card asks PFS for all of its zones up front (genvmc), the best chance of a block map
+    // short enough for native mcemu; the flag only affects creation.
+    return gHDDPrefix != NULL ? sysCheckVMCEx(gHDDPrefix, "/", name, createSize, NULL, VMC_CREATE_PFS_RESERVE) : -1;
 }
 
 // This may be called, even if hddInit() was not.

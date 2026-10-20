@@ -110,7 +110,7 @@ static int getKeyOn(int key) { (void)key; return frame == cancelAt; }
 static const char *_l(int id) { return id == _STR_AUTO_VMC_CREATING ? "Creating" : "msg"; }
 static void guiRenderTextScreen(const char *s) { (void)s; }
 static int guiMsgBox(const char *t, int a, void *b) { (void)t; (void)a; (void)b; msgs++; return 0; }
-static int sysVMCContiguity(void) { return 1; }
+static int sysVMCLayoutWarning(void) { return -1; }
 '''
 
 tests = r'''
