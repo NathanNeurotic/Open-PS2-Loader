@@ -66,7 +66,7 @@ Repeat per language you want to cover. Untranslated languages fall back to Engli
 ## Important: there is **no auto-translator** in the build
 
 `tools/lang_compiler.py` only *merges* translations that already exist in `lng_fork/*.yml`. The
-initial bulk fill of the 32 fork-language overlays was a **one-off external step** (a machine
+initial bulk fill of the 31 fork-language overlays was a **one-off external step** (a machine
 translation pass), not part of this repo's build. So to keep translations current you must
 supply the translated text for `lng_fork/*.yml` yourself (by hand, an external MT tool, or
 an assistant) — the build will not invent it.
@@ -126,12 +126,12 @@ see which are still English-only in a given language, run `make languages` and l
 
 ## Auditing actual translation coverage
 
-The release builds **34 external languages**, but the fork currently maintains overlays for
-**32** of them; Galician and Serbian do not have fork overlays. The upstream
+The release builds **33 external languages**, but the fork currently maintains overlays for
+**31** of them; Galician and Serbian do not have fork overlays. The upstream
 community's older strings remain intact. New fork-only menu labels are **not
 automatically translated** and appear in English until a matching overlay
-entry is supplied. Packaging 34 complete-length `.lng` files therefore does
-**not** mean every string is translated in all 34 languages.
+entry is supplied. Packaging 33 complete-length `.lng` files therefore does
+**not** mean every string is translated in all 33 languages.
 
 Run `python3 tools/audit_translations.py` to print per-language coverage,
 including the most recently appended 60 UI labels; pass `--json` for a
