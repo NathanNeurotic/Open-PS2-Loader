@@ -390,6 +390,12 @@ effect** (OPL shows the usual restart-to-apply notice).
 > other subnet. **RiptOPL now rewrites the active toml's `ip=` to your configured PS2 IP at every UDPFS
 > launch**, so no hand-edit is needed; if the toml has been restructured so the `"ip=` token isn't
 > found, OPL logs it and leaves the file alone (the old hand-edit contract applies).
+>
+> **Neutrino on a Memory Card:** before #1010 this rewrite could not shorten a file on `mc0:`/`mc1:` —
+> the card's driver keeps a file's old length unless it is recreated — so a shorter IP left the end of
+> the old file behind it (a stray `]` or `"]` line). Neutrino could not read the damaged toml and every
+> UDPFS game went straight back to the browser. RiptOPL now recreates the file on every rewrite, and
+> repairs a toml already damaged this way the next time you launch a game; nothing to delete or copy.
 
 > **Hardware note:** the UDPRDMA path (both Files and Image) is validated on emulator only so far —
 > real-PS2 confirmation is pending.
