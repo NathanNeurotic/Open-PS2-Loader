@@ -307,19 +307,20 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                 } else
                     break;
             } else if (vmc_operation == OPERATION_ENDING) {
-                // Creation finished: a fragmented VMC is silently dropped at launch, so say so now,
-                // in the dialog that made it. Raised from the loop, not guiGameVMCUpdater, which
-                // runs inside diaExecuteDialog and cannot open a message box.
+                // Creation finished: a fragmented VMC (on the HDD, one with too long a PFS map) is
+                // dropped at launch, so say so now, in the dialog that made it. Raised from the loop,
+                // not guiGameVMCUpdater, which runs inside diaExecuteDialog and cannot open a message box.
                 //
-                // Only a definite 0 speaks: -1 means the backing store cannot answer. VMC_error
+                // Only a definite verdict speaks: -1 means the backing store cannot answer. VMC_error
                 // must be clear too -- the updater lands here on a FAILED creation as well, and
                 // blaming "fragmented" for an out-of-space would point at the wrong fix.
                 if (vmc_check_layout) {
+                    int warning;
                     vmc_check_layout = 0;
                     coreLoader = guiGameResolveEffectiveCore(configSet, support, id);
                     if (coreLoader != 1 &&
-                        vmc_status.VMC_error == 0 && sysVMCContiguity() == 0)
-                        guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, diaVMC);
+                        vmc_status.VMC_error == 0 && (warning = sysVMCLayoutWarning()) >= 0)
+                        guiMsgBox(_l(warning), 0, diaVMC);
                 }
 
                 if (validate)
@@ -476,9 +477,10 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
             guiMsgBox(_l(_STR_AUTO_VMC_FAILED), 0, NULL);
             return 1;
         }
-        // Same report as the VMC dialog: only a definite 0 speaks (-1 = the store cannot answer).
-        if (coreLoader != 1 && sysVMCContiguity() == 0)
-            guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, NULL);
+        // Same report as the VMC dialog: only a definite verdict speaks (-1 = the store cannot answer).
+        int warning = coreLoader != 1 ? sysVMCLayoutWarning() : -1;
+        if (warning >= 0)
+            guiMsgBox(_l(warning), 0, NULL);
     }
 
     // The wait yields to source refreshes: assign only if the row still holds the same game.

@@ -8,6 +8,8 @@ source = (root / 'src/system.c').read_text(encoding='utf-8')
 start = source.index('int sysVMCContiguity(void)')
 end = source.index('\n}\n', start) + 3
 function = source[start:end]
+start = source.index('int sysVMCLayoutWarning(void)')
+function += source[start:source.index('\n}\n', start) + 3]
 program = r'''
 #include <assert.h>
 #include <stddef.h>
@@ -17,7 +19,10 @@ typedef unsigned long long u64;
 #define USBMASS_IOCTL_GET_LBA 1
 #define USBMASS_IOCTL_GET_FRAGLIST 2
 #define LOG(...) ((void)0)
+enum { _STR_VMC_FRAGMENTED_ON_CREATE = 7, _STR_VMC_PFS_LIMIT_ON_CREATE = 9 };
 static char gVMCCreatePath[256];
+static int mapFits, mapChecks;
+static int hddVMCMapFits(const char *path) { assert(!strcmp(path, gVMCCreatePath)); mapChecks++; return mapFits; }
 static int openResult=4, result, suppliesLba, fragments, calls, closes;
 static int open(const char *path, int flags) { (void)path; (void)flags; return openResult; }
 static int close(int fd) { (void)fd; closes++; return 0; }
@@ -47,6 +52,19 @@ int main(void) {
     fragments=0; assert(sysVMCContiguity() == -1 && calls == 4 && closes == 5);
     result=-1; assert(sysVMCContiguity() == -1 && calls == 4 && closes == 6);
     openResult=-1; assert(sysVMCContiguity() == -1 && closes == 6);
+
+    /* The warning shown after creation: BDM asks the fragment count, the HDD its PFS map. */
+    openResult=4; result=0; suppliesLba=1; fragments=2;
+    strcpy(gVMCCreatePath, "mass0:/VMC/card.bin");
+    assert(sysVMCLayoutWarning() == _STR_VMC_FRAGMENTED_ON_CREATE && mapChecks == 0);
+    fragments=1; assert(sysVMCLayoutWarning() == -1);
+    fragments=-5; assert(sysVMCLayoutWarning() == -1);
+    calls=0; strcpy(gVMCCreatePath, "pfs0:VMC/card.bin");
+    mapFits=0; assert(sysVMCLayoutWarning() == _STR_VMC_PFS_LIMIT_ON_CREATE && mapChecks == 1 && calls == 0);
+    mapFits=1; assert(sysVMCLayoutWarning() == -1);
+    mapFits=-1; assert(sysVMCLayoutWarning() == -1);
+    strcpy(gVMCCreatePath, "pfs0:OPL/VMC/card.bin"); mapFits=0;
+    assert(sysVMCLayoutWarning() == _STR_VMC_PFS_LIMIT_ON_CREATE && calls == 0);
     return 0;
 }
 '''.replace('@FUNCTION@', function)
@@ -57,3 +75,4 @@ with tempfile.TemporaryDirectory() as temp:
     subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', str(cfile), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
 print('VMC completion: unsupported MMCE ioctl stays unknown; positive fragment counts distinguish contiguous, fragmented and failed/empty queries')
+print('VMC completion: BDM cards get the fragmented warning, HDD cards the PFS map warning, unknown stays silent')

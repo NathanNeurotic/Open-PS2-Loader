@@ -12,7 +12,9 @@
 #define GENVMC_DEVCTL_ABORT      0xC0DE0002
 #define GENVMC_DEVCTL_STATUS     0xC0DE0003
 
-#define VMC_CREATE_CONTIGUOUS 1
+#define VMC_CREATE_CONTIGUOUS  1
+// New card on PFS: ask for all its zones in one PIOCALLOC before formatting (best effort).
+#define VMC_CREATE_PFS_RESERVE 2
 
 #define GENVMC_STAT_AVAIL 0x00
 #define GENVMC_STAT_BUSY  0x01
@@ -25,7 +27,7 @@ typedef struct
     int VMC_blocksize;
     int VMC_thread_priority;
     int VMC_card_slot; // 0=slot 1, 1=slot 2, anything else=blank
-    int VMC_flags;     // appended: VMC_CREATE_CONTIGUOUS for new native BDM cards
+    int VMC_flags;     // appended: VMC_CREATE_CONTIGUOUS for new native BDM cards, VMC_CREATE_PFS_RESERVE for HDD
 } createVMCparam_t;
 
 typedef struct
