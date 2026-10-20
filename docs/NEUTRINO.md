@@ -434,9 +434,11 @@ When a game's core is **Neutrino**:
   > the game's rendering resolution or frame rate. x3 is not a 1080p mode or a universal
   > recommendation. Start with video forcing Off when diagnosing a launch; see
   > [the scaling explanation](SETUP-QUESTIONS.md#what-do-neutrinos-1080i-x1-x2-and-x3-mean).
-  OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
-  they're OPL ee-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, and
-  no PSS/BIK video-skip), so OPL never forwards them. Modes 1/2/3/5 *do* map to `-gc`, and a Neutrino-only
+  OPL compat **mode 4 (Skip Videos)**, **mode 6 (Disable IGR)** and **mode 8 (Slow Reads)** are greyed —
+  they're OPL-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, no
+  PSS/BIK video-skip, and no read-rate cap), so OPL never forwards them. Mode 8 is Accurate Reads
+  (mode 1) with DVD games read at the CD rate, ~900 KB/s instead of ~2200 KB/s, for titles whose
+  streamed audio breaks at the faster rate (#924, Tales of the Abyss). Modes 1/2/3/5 *do* map to `-gc`, and a Neutrino-only
   **mode 7** (greyed under the OPL core — the inverse of 4/6) maps to `-gc=7` (fix games that overrun
   an IOP buffer).
 - **Neutrino GSM Compatibility** (Compatibility screen, beside Neutrino Video) — **Off / Type 1

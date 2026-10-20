@@ -955,6 +955,11 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
         settings->flags |= IOPCORE_COMPAT_ACCU_READS;
     }
 
+    // Slow Reads is Accurate Reads at the CD rate, so it turns Accurate Reads on by itself (#924).
+    if (compatmask & COMPAT_MODE_8) {
+        settings->flags |= IOPCORE_COMPAT_ACCU_READS | IOPCORE_COMPAT_SLOW_READS;
+    }
+
     if (compatmask & COMPAT_MODE_2) {
         settings->flags |= IOPCORE_COMPAT_ALT_READ;
     }

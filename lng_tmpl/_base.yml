@@ -1899,6 +1899,10 @@ gui_strings:
 
 - label: VMC_PFS_LIMIT_ON_CREATE
   string: "VMC created, but the HDD stored it in more pieces than the native core can map, so it will be skipped at launch and the real card used instead. Free up space on the OPL partition and make it again."
+- label: MODE8
+  string: Mode 8
+- label: HINT_MODE8
+  string: Slow Reads -- Accurate Reads capped at CD speed (~900KB/s) for DVD games whose audio breaks under Mode 1
 
 - label: VMC_REBUILD
   string: "Rebuild"
