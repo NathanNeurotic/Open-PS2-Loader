@@ -19,7 +19,8 @@ static language_t *languages;
 static char **guiLangNames;
 static char scannedBootDir[sizeof(gBootDir)];
 static unsigned char scanPriority; // 2: CWD, 1: CWD/LNG, 0: other LNG locations
-static int scanFoundFiles; // valid matching filenames, including duplicates
+// Valid matching filenames, including duplicates.
+static int scanFoundFiles;
 
 // localised string getter
 char *_l(unsigned int id)
@@ -170,8 +171,9 @@ static int lngReadEntry(int index, const char *path, const char *separator, cons
         return index;
 
     size_t pathLen = strlen(path);
-    size_t sepLen = pathLen && (path[pathLen - 1] == '/' || path[pathLen - 1] == '\\' ||
-                               path[pathLen - 1] == ':') ? 0 : strlen(separator);
+    size_t sepLen = strlen(separator);
+    if (pathLen && (path[pathLen - 1] == '/' || path[pathLen - 1] == '\\' || path[pathLen - 1] == ':'))
+        sepLen = 0;
     if (pathLen > (size_t)-1 - sepLen - nameLen - 1)
         return index;
 
@@ -252,8 +254,9 @@ static int lngScanBootDirectory(void)
 
     char path[sizeof(gBootDir) + sizeof("/LNG")];
     size_t len = strlen(gBootDir);
-    const char *join = (gBootDir[len - 1] == '/' || gBootDir[len - 1] == '\\' ||
-                        gBootDir[len - 1] == ':') ? "" : separator;
+    const char *join = separator;
+    if (gBootDir[len - 1] == '/' || gBootDir[len - 1] == '\\' || gBootDir[len - 1] == ':')
+        join = "";
     int written = snprintf(path, sizeof(path), "%s%sLNG", gBootDir, join);
     if (written >= 0 && (size_t)written < sizeof(path))
         added += lngScanDirectory(path, separator, 1);
