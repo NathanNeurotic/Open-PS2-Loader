@@ -66,7 +66,7 @@ Repeat per language you want to cover. Untranslated languages fall back to Engli
 ## Important: there is **no auto-translator** in the build
 
 `tools/lang_compiler.py` only *merges* translations that already exist in `lng_fork/*.yml`. The
-initial bulk fill of the 31 fork languages was a **one-off external step** (a machine
+initial bulk fill of the 32 fork-language overlays was a **one-off external step** (a machine
 translation pass), not part of this repo's build. So to keep translations current you must
 supply the translated text for `lng_fork/*.yml` yourself (by hand, an external MT tool, or
 an assistant) — the build will not invent it.
@@ -123,6 +123,30 @@ run clones the upstream lang repo into `lng_src/`). CI does this automatically.
 Fork-added strings are the labels in `lng_tmpl/_base.yml` that upstream doesn't have. To
 see which are still English-only in a given language, run `make languages` and look for
 `untranslated` entries in `lng_src/<Language>.yml` after the overlay step.
+
+## Auditing actual translation coverage
+
+The release builds **34 external languages**, but the fork currently maintains overlays for
+**32** of them; Galician and Serbian do not have fork overlays. The upstream
+community's older strings remain intact. New fork-only menu labels are **not
+automatically translated** and appear in English until a matching overlay
+entry is supplied. Packaging 34 complete-length `.lng` files therefore does
+**not** mean every string is translated in all 34 languages.
+
+Run `python3 tools/audit_translations.py` to print per-language coverage,
+including the most recently appended 60 UI labels; pass `--json` for a
+machine-readable report. The tool uses the same translation precedence as
+`make languages`, and reads `lng_src/` if `make download_lng` has been
+run. Run `python3 tools/audit_translations.py --strict` to reject invalid
+format placeholders and obsolete overlay keys without blocking valid
+English fallback. CI runs the strict audit on translation and source changes.
+
+To translate recent strings, review the report, add genuinely localized text
+to each `lng_fork/<Language>.yml`, and rerun the audit. **Do not mark
+untranslated English copies as completed translations**. Preserve all
+`%s`, `%d`, `%i` placeholders and keep their order. Inspect the result
+on a PS2; a syntactically valid translation can still be confusing, truncated,
+or missing font glyphs. Missing status is distinct from broken packaging.
 
 ## Installing and selecting language files
 
