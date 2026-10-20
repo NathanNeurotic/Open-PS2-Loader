@@ -256,7 +256,7 @@ static void guiGameRefreshVMCRebuild(int id, item_list_t *support, config_set_t 
     char path[256];
     int sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(id) : support->mode;
 
-    vmc_rebuild_offer = sizeMb > 0 && gEnableWrite && guiGameResolveEffectiveCore(configSet, support, id) != 1 &&
+    vmc_rebuild_offer = (sizeMb == 8 || sizeMb == 16 || sizeMb == 32 || sizeMb == 64) && gEnableWrite && guiGameResolveEffectiveCore(configSet, support, id) != 1 &&
                         (sourceMode == HDD_MODE || (sourceMode >= BDM_MODE && sourceMode <= BDM_MODE_LAST && !bdmModeIsPCCF(sourceMode))) &&
                         guiGameVMCCardPath(id, support, name, path, sizeof(path)) && vmcRebuildLayout(path, sizeMb) == 0;
     diaSetVisible(diaVMC, VMC_BUTTON_REBUILD, vmc_rebuild_offer);
