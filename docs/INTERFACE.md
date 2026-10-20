@@ -133,6 +133,11 @@ eight:
 All three built-in themes use effects embedded in the ELF and read nothing from the card. A disk theme
 supplying only some of the eight falls back to the built-in sound for the rest.
 
+Confirm, cancel, message and transition never wait for each other: a new one stops the one still
+playing, so pressing confirm twice quickly plays confirm twice, and confirm then cancel is heard as
+the cancel. The cursor sound, the boot sound and the device connect/disconnect sounds play alongside
+them instead. A long `transition.adp` or `confirm.adp` in a theme is cut short the same way.
+
 Sound effects, the boot sound, and background music each have their own on/off switch and their own
 volume. See [THEME_ENGINE.md](THEME_ENGINE.md) for packaging audio with a theme.
 
