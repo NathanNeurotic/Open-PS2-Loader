@@ -2530,6 +2530,48 @@ static void hddLaunchDvrIso(int id, config_set_t *configSet)
     sysLaunchNeutrino("dvr", dvdPath, startup, compat, 0, neutrinoPath, args, video, gsmComp, 0, -1, NULL);
 }
 
+// The HDD "mini" argv autolaunch (OPL-Launcher / HDD-OSD / PSBBN: startup, start_sector, partition
+// hint, "mini") carries only the startup and the game's data LBA. Both cores need the rest of the
+// HDL row: Neutrino opens the game by partition name (-dvd=hdl:<part>) and the native core bounds
+// reads by total_size_in_kb. Take the row of the APA HDL partition whose data LBA is argv[2] -- the
+// same list the HDD tab shows, so the LBA is computed the same way. Read-only: a directory walk of
+// hdd0: plus header-sector reads. No match means this is not a proven HDL game (a stale shortcut,
+// a DVR/ISO row), and the caller refuses the launch.
+static int hddResolveAutoLaunchGame(hdl_game_info_t *game)
+{
+    hdl_games_list_t list = {0, NULL};
+    char startup[sizeof(game->startup)];
+    u32 i;
+    int found = 0;
+
+    if (game->start_sector == 0)
+        return -1;
+    if (hddGetHDLGamelist(&list) == 0) {
+        for (i = 0; i < list.count; i++) {
+            if (list.games[i].start_sector != game->start_sector)
+                continue;
+            // Keep the launcher's startup: the per-game CFG was already read under that name.
+            snprintf(startup, sizeof(startup), "%s", game->startup);
+            if (startup[0] != '\0' && strcmp(startup, list.games[i].startup) != 0)
+                LOG("HDD mini launch: startup %s differs from the HDL header's %s; keeping %s\n", startup, list.games[i].startup, startup);
+            *game = list.games[i];
+            if (startup[0] != '\0')
+                snprintf(game->startup, sizeof(game->startup), "%s", startup);
+            found = 1;
+            break;
+        }
+    }
+    hddFreeHDLGamelist(&list);
+
+    if (!found) {
+        LOG("HDD mini launch: no HDL partition starts at sector %u\n", (unsigned int)game->start_sector);
+        return -1;
+    }
+    LOG("HDD mini launch: sector %u is HDL partition %s (%u KB)\n", (unsigned int)game->start_sector, game->partition_name,
+        (unsigned int)game->total_size_in_kb);
+    return 0;
+}
+
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
 #ifdef RETROACHIEVEMENTS
@@ -2592,7 +2634,9 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // An ISO row cannot ever be used as a raw HDL APA partition. The
         // automatic loader currently carries only HDL game metadata, not
         // the DVRP mount identity: fail safely until DESR auto-boot is tested.
-        if (game->partition_name[0] == '\0') {
+        // A "mini" argv launch arrives with only startup + start_sector, so it
+        // must first be matched to a real HDL partition; no match = refuse.
+        if (game->partition_name[0] == '\0' && hddResolveAutoLaunchGame(game) < 0) {
             LOG("[DVR] auto launch requires a proven APA/HDL partition; refusing\n");
             return;
         }
