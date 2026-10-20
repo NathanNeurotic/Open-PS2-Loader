@@ -10,12 +10,14 @@
 // file ever removed is the copy this rebuild made, and only while the card is known to be in place.
 
 #include "include/opl.h"
+#include "include/ioman.h"
 #include "include/system.h"
 #include "include/bdmsupport.h"
 #include "include/nativevmc.h"
 #include "include/vmcrebuild.h"
 #include "modules/vmc/genvmc/genvmc.h"
 #include <ps2sdkapi.h>
+#define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h>
 
 static struct
