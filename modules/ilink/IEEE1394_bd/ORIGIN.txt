@@ -1,0 +1,47 @@
+Vendored from: ps2dev/ps2sdk
+  iop/iLink/IEEE1394_bd/src/*.c, imports.lst, irx_imports.h -> src/
+  iop/iLink/IEEE1394_bd/src/include/*                          -> src/include/
+Built like the SDK (see Makefile): IEEE1394_bd.irx, and with MINI=1 the printf-free
+IEEE1394_bd_mini.irx (the SDK's iop/iLink/IEEE1394_bd_mini only adds -DMINI_DRIVER).
+Pin: 329e2bb43287e16af16c4dde1c614e2662c24468 (2026-10-12; the driver's last upstream change is
+ab18b360ef, 2026-07-23, "bdm: added read16/write16 to support large disks").
+License: Academic Free License 2.0, included as LICENSE (headers retained in the sources).
+
+The first commit adds the files unmodified; the second only runs repository clang-format 12 over
+them. Every functional change is isolated in the commits that follow; diff against those to review.
+
+WHERE IT RUNS: release builds embed IEEE1394_bd_mini.irx (DEBUG=1 builds embed IEEE1394_bd.irx),
+which the menu loads to list i.LINK games and ee_core loads again after every in-game IOP reset
+(src/system.c, ee_core/src/iopmgr.c). rolling-release.yml also replaces
+neutrino/modules/IEEE1394_bd_mini.irx in the bundled Neutrino with this build, because Neutrino's
+in-game environment loads its own copy after its IOP reboot (config/bsd-ilink.toml).
+POPSTARTER's i.LINK pair (modules/bdmassault/ilink_bd_assault, shipped as usbhdfsd.irx.ilink) is a
+separate build of an older copy of the same SDK code and carries the same three changes (#1024,
+tested by .github/scripts/test_ilink_bd_assault_reset.py). A change to one belongs in both.
+
+WHY VENDORED (#1018): with i.LINK storage every game listed, Ember booted, and native OPL (PS2 logo,
+then nothing), Neutrino and POPSTARTER did not. Ember is the only core that never resets the IOP.
+
+LOCAL CHANGES (marked "RiptOPL" in the sources; .github/scripts/test_ilink_bd_reset.py compiles the
+real code against simulated drives and a simulated clock, and fails on the SDK original):
+1. src/sbp2_driver.c initConfigureSBP2Device: the login window outlasts the drive's reconnect hold.
+   The driver never logs out (SBP2_LOGOUT_REQUEST is defined but never sent) and an IOP reset ends it
+   without warning, so the next driver finds the drive still holding the old EXCLUSIVE login. SBP-2
+   has the drive keep it for 2^reconnect seconds after the bus reset -- 1 s for the
+   MANAGEMENT_ORB_RECONNECT(0) every login here asks for, longer on bridges that round it up -- and
+   refuse every new LOGIN meanwhile. The SDK tried 5 times 200 ms apart (~0.8 s), inside the hold, and
+   only the next bus reset retries, which a running game never causes: the device never attached and
+   CDVDMAN waited forever. Logins are now retried every 200 ms for up to 5 s of elapsed time.
+2. src/scsi.c scsi_warmup: TEST UNIT READY is asked at most 300 times, 100 ms apart (30 s, enough for
+   a cold 3.5" drive spinning up in its enclosure). The SDK looped with no limit and no delay.
+   A READ CAPACITY block length of 0 is a failure (it was a divisor in the log and in every consumer;
+   the in-game CDVDMAN divides 2048 by it), and a READ CAPACITY(16) answer with block length 0 is
+   ignored.
+3. src/scsi.c scsi_connect: the device is published to BDM only after a successful warm-up. The SDK
+   ignored scsi_warmup's result and connected a drive whose inquiry, readiness or capacity had failed.
+   A failed attempt frees its slot, so the next bus reset can still bring the drive up.
+
+NOT HARDWARE-VERIFIED when added (2026-10-20). Worth offering upstream to ps2sdk once confirmed.
+
+RE-VENDOR: fetch the files above from the new pin, clang-format 12, then re-apply LOCAL CHANGES and
+update the pin. Keep test_ilink_bd_reset.py passing.

@@ -1334,7 +1334,33 @@ int vcdReadBdmaMode(void)
     return VCD_BDMA_FAT32;
 }
 
-static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, char *diag, int diagSize)
+static int vcdBdmaPairIsShipped(const char *src0, const char *src1, int mode); // beside vcdBdmaPairSig below
+
+// Probe one folder's variant pair (src0 + src1): 1 = a pair to install. A launch (shippedOnly) passes
+// over a pair whose sizes are not the ones this release ships -- a device POPS/ folder an older release
+// left behind -- and notes the first such file in stale, so a pair later in the seek order still wins.
+static int vcdProbeBdmaPair(const char *src0, const char *src1, int mode, int shippedOnly, char *stale, int staleSize)
+{
+    int fd = open(src0, O_RDONLY);
+    LOG("[BDMA] probe %s -> %d\n", src0, fd);
+    if (fd < 0)
+        return 0;
+    close(fd);
+    fd = open(src1, O_RDONLY);
+    LOG("[BDMA] probe %s -> %d\n", src1, fd);
+    if (fd < 0)
+        return 0;
+    close(fd);
+    if (!shippedOnly || vcdBdmaPairIsShipped(src0, src1, mode))
+        return 1;
+    if (stale[0] == '\0')
+        snprintf(stale, staleSize, "%s", src1);
+    return 0;
+}
+
+// shippedOnly: a launch installs only the pair this release ships (-5 when the seek path holds only
+// another one, which is never copied). The Settings page passes 0: a manually chosen pair is the user's.
+static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shippedOnly, char *diag, int diagSize)
 {
     if (diag != NULL && diagSize > 0)
         diag[0] = '\0';
@@ -1363,7 +1389,7 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, char *dia
     }
 
     const char *suffix = vcdBdmaSuffix[mode];
-    char src0[96], src1[96];
+    char src0[96], src1[96], stale[96] = "";
     int found = 0;
 
     // FifthFox's adaptive seek order (maintainer-approved): look for the variant pair at the CUSTOM
@@ -1421,17 +1447,7 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, char *dia
         for (int i = 0; i < npre && !found; i++) {
             snprintf(src0, sizeof(src0), "%s%s.%s", pre[i], vcdBdmaModule[0], suffix);
             snprintf(src1, sizeof(src1), "%s%s.%s", pre[i], vcdBdmaModule[1], suffix);
-            int f0 = open(src0, O_RDONLY);
-            LOG("[BDMA] pre-probe %s -> %d\n", src0, f0);
-            if (f0 < 0)
-                continue;
-            close(f0);
-            int f1 = open(src1, O_RDONLY);
-            LOG("[BDMA] pre-probe %s -> %d\n", src1, f1);
-            if (f1 < 0)
-                continue;
-            close(f1);
-            found = 1;
+            found = vcdProbeBdmaPair(src0, src1, mode, shippedOnly, stale, sizeof(stale));
         }
     }
 
@@ -1484,18 +1500,14 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, char *dia
     for (int i = 0; i < nc && !found; i++) {
         snprintf(src0, sizeof(src0), "%s" POPS_FOLDER "/%s.%s", cands[i], vcdBdmaModule[0], suffix);
         snprintf(src1, sizeof(src1), "%s" POPS_FOLDER "/%s.%s", cands[i], vcdBdmaModule[1], suffix);
-        int f0 = open(src0, O_RDONLY);
-        LOG("[BDMA] probe %s -> %d\n", src0, f0);
-        if (f0 < 0)
-            continue;
-        close(f0);
-        int f1 = open(src1, O_RDONLY);
-        LOG("[BDMA] probe %s -> %d\n", src1, f1);
-        if (f1 < 0)
-            continue;
-        close(f1);
-        found = 1;
-        break;
+        found = vcdProbeBdmaPair(src0, src1, mode, shippedOnly, stale, sizeof(stale));
+    }
+    if (!found && stale[0] != '\0') {
+        // Copying it would only fail the launch's size check afterwards and report a card write error.
+        LOG("[BDMA] only another release's %s.%s pair was found (%s) -- card left as it is\n", vcdBdmaModule[1], suffix, stale);
+        if (diag != NULL && diagSize > 0)
+            snprintf(diag, diagSize, "%s is not this release's driver; copy the release's POPS/ folder there.", stale);
+        return -5;
     }
     if (!found) {
         LOG("[BDMA] %s.%s + %s.%s not found in any seek-path POPS/ folder (%s)\n",
@@ -1574,12 +1586,12 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, char *dia
 
 int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
 {
-    return vcdEquipBdmaFrom(source, mode, NULL, diag, diagSize);
+    return vcdEquipBdmaFrom(source, mode, NULL, 0, diag, diagSize);
 }
 
 int vcdEquipBdmaFromPops(const char *popsDir, int mode, char *diag, int diagSize)
 {
-    return vcdEquipBdmaFrom(VCD_BDMA_SRC_USB, mode, popsDir, diag, diagSize);
+    return vcdEquipBdmaFrom(VCD_BDMA_SRC_USB, mode, popsDir, 1, diag, diagSize);
 }
 
 // 1.0.1-style fast path for the launch equip: a card with NO marker but BOTH driver modules present is
@@ -1603,7 +1615,7 @@ static const bdma_pair_sig_t vcdBdmaPairSig[VCD_BDMA_MODE_COUNT] = {
     {48500, 14993}, // mx4sio
     {11841, 19733}, // mmce
     {42749, 21837}, // ata
-    {48500, 21609}, // iLink
+    {48500, 21977}, // iLink (21609 before the #1018 login fix, so an old card pair re-equips)
     {76365, 34508}  // UDPFS Alpha
 };
 
@@ -1618,6 +1630,42 @@ static int vcdGetFileSize(const char *path)
     int sz = lseek(fd, 0, SEEK_END);
     close(fd);
     return sz;
+}
+
+// vcdGetFileSize for a SOURCE device: MMCE's newlib has no SEEK_END (see vcdSafeCopyFile), so there
+// the file is counted by reading it through. -1 if absent / unreadable.
+static int vcdSourceFileSize(const char *path)
+{
+    int fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return -1;
+    int sz = lseek(fd, 0, SEEK_END);
+    if (sz < 0) {
+        char *buf = (char *)malloc(VCD_COPY_CHUNK);
+        int r = -1;
+        sz = 0;
+        if (buf != NULL) {
+            while ((r = read(fd, buf, VCD_COPY_CHUNK)) > 0)
+                sz += r;
+            free(buf);
+        }
+        if (r < 0)
+            sz = -1;
+    }
+    close(fd);
+    return sz;
+}
+
+// Is the device pair src0 + src1 the one this release ships for mode? A size that cannot be read is
+// left to the copy, which reports it.
+static int vcdBdmaPairIsShipped(const char *src0, const char *src1, int mode)
+{
+    int sz0 = vcdSourceFileSize(src0), sz1 = vcdSourceFileSize(src1);
+    if ((sz0 < 0 || sz0 == vcdBdmaPairSig[mode].usbdSize) && (sz1 < 0 || sz1 == vcdBdmaPairSig[mode].hdfsdSize))
+        return 1;
+    LOG("[BDMA] %s + %s are %d + %d bytes, this release's are %d + %d\n", src0, src1, sz0, sz1,
+        vcdBdmaPairSig[mode].usbdSize, vcdBdmaPairSig[mode].hdfsdSize);
+    return 0;
 }
 
 // Strict BDMA environment validation: verifies that the MC environment matches the requested family.
@@ -1717,15 +1765,24 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
         return;
     }
 
-    // 2. Perform transactional equip
-    int er = vcdEquipBdma(source, mode, diag, sizeof(diag));
+    // 2. Perform transactional equip of the pair this release ships
+    int er = vcdEquipBdmaFrom(source, mode, NULL, 1, diag, sizeof(diag));
     if (mode == VCD_BDMA_UDPFS) {
-        // The game's source chooses the variant, not where its support files live.
-        for (int candidate = 0; er == -4 && candidate < VCD_BDMA_SRC_COUNT; candidate++)
-            if (candidate != source)
-                er = vcdEquipBdma(candidate, mode, diag, sizeof(diag));
-        if (er == -4)
+        // The game's source chooses the variant, not where its support files live. Another source can
+        // still hold this release's pair when an earlier one had only an older release's (-5).
+        int older = (er == -5);
+        for (int candidate = 0; (er == -4 || er == -5) && candidate < VCD_BDMA_SRC_COUNT; candidate++) {
+            if (candidate == source)
+                continue;
+            er = vcdEquipBdmaFrom(candidate, mode, NULL, 1, diag, sizeof(diag));
+            older |= (er == -5);
+        }
+        if (er == -4 || er == -5) {
             er = hddEquipPopstarterBdmaFromCommon(mode, diag, sizeof(diag));
+            older |= (er == -5);
+        }
+        if (er == -4 && older)
+            er = -5; // the older pair is what to fix; the LOG above names it
     }
     if (er == 0 && vcdBdmaEnvironmentValid(mode))
         return;
@@ -1733,6 +1790,8 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
     LOG("VCD BDMA equip failed (%d: %s) -- launching as-is (card keeps its current driver pair)\n", er, diag);
     if (er == -4)
         guiWarning(_l(_STR_BDMA_ERR_SRC), 6);
+    else if (er == -5)
+        guiWarning(_l(_STR_BDMA_ERR_OLD), 6);
     else if (er == -2)
         guiWarning(_l(_STR_BDMA_ERR_SPACE), 6);
     else
@@ -1751,13 +1810,15 @@ void vcdApplyUsbModeForLaunch(int mode)
     if (vcdBdmaEnvironmentValid(mode) || (mode == VCD_BDMA_USBEXFAT && vcdBdmaManualPairMatches(mode)))
         return;
 
-    int er = vcdEquipBdma(VCD_BDMA_SRC_USB, mode, diag, sizeof(diag));
+    int er = vcdEquipBdmaFrom(VCD_BDMA_SRC_USB, mode, NULL, 1, diag, sizeof(diag));
     if (er == 0 && vcdBdmaEnvironmentValid(mode))
         return;
 
     LOG("VCD USB-mode equip failed (%d: %s) -- launching as-is (card keeps its current driver pair)\n", er, diag);
     if (er == -4)
         guiWarning(_l(_STR_BDMA_ERR_SRC), 6);
+    else if (er == -5)
+        guiWarning(_l(_STR_BDMA_ERR_OLD), 6);
     else if (er == -2)
         guiWarning(_l(_STR_BDMA_ERR_SPACE), 6);
     else

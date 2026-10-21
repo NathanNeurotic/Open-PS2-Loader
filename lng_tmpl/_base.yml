@@ -1903,6 +1903,8 @@ gui_strings:
   string: Mode 8
 - label: HINT_MODE8
   string: Slow Reads -- Accurate Reads capped at CD speed (~900KB/s) for DVD games whose audio breaks under Mode 1
+- label: BDMA_ERR_OLD
+  string: The device's POPS folder has old BDMA drivers -- copy this release's POPS folder there.
 
 - label: VMC_REBUILD
   string: "Rebuild"

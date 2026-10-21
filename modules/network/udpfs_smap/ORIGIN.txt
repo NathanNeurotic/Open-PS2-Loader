@@ -13,3 +13,14 @@ Local boot-hardening fix: smap_transmit() (src/xfer.c) waits up to 2 seconds for
 and returns -1 if the link never comes up, instead of entering the TX path with an uninitialized
 driver. Once SMAP is initialized, transmission retains the established blocking contract and waits
 for TX-ring space until HandleTxReqs() succeeds.
+
+Local data fix (#1010): smap_fifo_read() (src/xfer.c) now delivers the last byte of an odd byte
+count. Upstream's PIO tail stored whole words and then one u16, with no step for a single last
+byte, so the final packet of every odd-sized file read over UDPFS came back with its last byte
+left as whatever the buffer held before. Copying a Neutrino folder from a UDPFS share to a memory
+card left every odd-sized file with a stray last byte; the NUL that ended i_dev9_hidden.toml
+stopped Neutrino ("bad control char in comment") before any UDPFS game started. The tail is now
+read as one whole word (the FIFO pads each frame to 4 bytes) and only its valid bytes are stored.
+Upstream master (673e5ec9) still has the old tail, and so do the smap.irx/udpfs IRXs in Neutrino
+releases. .github/scripts/test_udpfs_smap_fifo_tail.py compiles the real function against a
+simulated FIFO and fails on upstream's version. Keep on re-vendor.

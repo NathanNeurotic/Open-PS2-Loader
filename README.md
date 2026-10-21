@@ -128,7 +128,7 @@ PSU imports and companion placement. [Test builds](docs/TEST-BUILDS.md) covers P
 
 - **HTTP:** implemented and host-tested, but not yet tested on PS2 hardware. ISO only; no VMC, Neutrino or PS1. DVD9 probing is implemented but unproven. [HTTP guide](docs/HTTP.md).
 - **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; in-game notices use the pulse by default. Settings > Network offers default-Off Caduceus experimental title/points cards for tracked PS2 OPL launches; they may flicker or freeze games because safe GS ownership is unresolved. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
-- **iLink:** revision 2692 passed Ember on the tested SCPH-39001 but failed native OPL, Neutrino and POPSTARTER handoffs. The Neutrino `-qb` correction is implemented; a passing retest is still needed.
+- **iLink:** revision 2692 passed Ember on the tested SCPH-39001 but failed native OPL, Neutrino and POPSTARTER handoffs. The Neutrino `-qb` correction is implemented, and the i.LINK drivers used by native OPL, the bundled Neutrino and POPSTARTER now keep logging in to the drive after an IOP reset (#1018); a passing retest is still needed.
 - **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS/UDPBD use Neutrino. See the [source table](#introduction).
 
 ## Introduction
@@ -211,7 +211,8 @@ Use [the PS1 reference](docs/VCD.md) for the complete folder layout, BIOS/runtim
 Ember global/per-game settings, APA containers, alternate POPSTARTER builds, BDMA selection,
 SMB and POPS UDPFS. POPS UDPFS uses Okeanos's separate USB-first driver and valid matching
 USB runtime configs; UDPBD and UDPFS IMG remain Ember-only for PS1. iLink POPSTARTER is
-wired but still awaits a passing hardware retest. Neutrino and OPL's PS2 core do not launch PS1 rows.
+wired, and its driver now waits out the drive's post-reset login hold (#1018), but it still awaits a
+passing hardware retest. Neutrino and OPL's PS2 core do not launch PS1 rows.
 
 ## Controls and In-Game Reset
 
@@ -303,7 +304,10 @@ FAT32 and exFAT are the usual folder-based layouts. MBR is the conventional setu
 > handoff mismatch (`-qb` was not auto-emitted for iLink); only hardware retesting can establish
 > whether that was the complete cause. POPSTARTER's
 > external `.ilink` BDMA equip and `mass:/POPS/XX.<name>.ELF` handoff are present, but remain
-> unconfirmed, and the native OPL iLink reset path is still under investigation. See
+> unconfirmed. The i.LINK drivers used by native OPL, the bundled Neutrino and POPSTARTER (its
+> `.ilink` driver) now retry the drive's login for up to 5 s after an IOP reset instead of giving up
+> inside the drive's reconnect hold (#1018), the cause found in the source for all three failures;
+> this is not yet confirmed on hardware. See
 > [Neutrino](docs/NEUTRINO.md) and [PS1/VCD](docs/VCD.md) for the exact status and isolation checks.
 
 > [!NOTE]
