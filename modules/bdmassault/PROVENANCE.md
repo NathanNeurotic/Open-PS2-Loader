@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 21609 | 9b47d90b03804ea9ef47c3702911d83d488405cc64285b62073ce88a7b6bfc63 |
+| usbhdfsd.irx.ilink | 21977 | 8f9a9e4e6984a58435fe7e24e1e5832f027dc537b3274bc4220245bbe1844714 |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
@@ -43,6 +43,15 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   `sceCdRM`) to query the console GUID/model, which crashes POPSTARTER because POPSTARTER does not
   load `cdvdman`. The vendored source removes `cdvdman` imports and substitutes a static Sony OUI
   EUI-64 GUID and model string, building cleanly with PS2SDK/Docker.
+  Since #1018 it also logs back in after POPSTARTER's IOP reset (login retried for up to 5 s instead
+  of ~0.8 s), polls TEST UNIT READY a bounded number of times, and offers the drive to BDM only after
+  a successful warm-up; see `ilink_bd_assault/README.md`. The previous build was 21609 bytes,
+  sha256 `9b47d90b03804ea9ef47c3702911d83d488405cc64285b62073ce88a7b6bfc63`.
+  **Rebuilt, not fetched:** the bytes above are the output of `make` in that directory inside
+  `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11` (the
+  PS2DEVPINNED container), which also reproduces the 21609-byte build from its source exactly. CI
+  (`popstarter-ilink-driver` in `.github/workflows/flavours.yml`) rebuilds it on every PR and fails
+  unless `modules/bdmassault/`, `POPS/` and the `Example/` kit all carry exactly that output.
 
 ## License
 

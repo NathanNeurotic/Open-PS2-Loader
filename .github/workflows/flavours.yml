@@ -392,6 +392,54 @@ jobs:
           "$RUNNER_TEMP/site-sync/bin/pip" install --quiet beautifulsoup4==4.15.0 markdown-it-py==4.0.0
           "$RUNNER_TEMP/site-sync/bin/python" .github/scripts/test_site_sync.py
 
+  # POPS/usbhdfsd.irx.ilink is a checked-in binary built from modules/bdmassault/ilink_bd_assault.
+  # Rebuild it with that module's own Makefile in the PS2DEVPINNED container and require the bytes
+  # to match every checked-in copy, so the shipped driver is always the output of the committed
+  # source (#1018). This container reproduces both the pre-#1018 binary and the current one exactly.
+  # A source change therefore needs the rebuilt binary in the same PR: take it from this job's
+  # artifact, or build it locally in the same image.
+  popstarter-ilink-driver:
+    runs-on: ubuntu-24.04
+    container: ghcr.io/ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
+    steps:
+      - name: Install make
+        run: apk add --no-cache make
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Build ilink_bd_assault.irx with its Makefile
+        run: |
+          make -C modules/bdmassault/ilink_bd_assault clean
+          make -C modules/bdmassault/ilink_bd_assault
+          mipsel-none-elf-gcc --version | head -1
+      - name: Require the checked-in usbhdfsd.irx.ilink copies to be this build
+        run: |
+          built=modules/bdmassault/ilink_bd_assault/ilink_bd_assault.irx
+          echo "built: $(wc -c < "$built") bytes, $(sha256sum "$built" | cut -d' ' -f1)"
+          status=0
+          for copy in modules/bdmassault/usbhdfsd.irx.ilink POPS/usbhdfsd.irx.ilink \
+                      Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/usbhdfsd.irx.ilink; do
+            if cmp -s "$built" "$copy"; then
+              echo "OK   $copy"
+            else
+              echo "DIFF $copy: $(wc -c < "$copy") bytes, $(sha256sum "$copy" | cut -d' ' -f1)" >&2
+              status=1
+            fi
+          done
+          if [ "$status" != 0 ]; then
+            echo "Checked-in usbhdfsd.irx.ilink is not the output of modules/bdmassault/ilink_bd_assault." >&2
+            echo "Replace every copy with this job's artifact and update the pinned size/sha256" >&2
+            echo "(src/vcdsupport.c, modules/bdmassault/PROVENANCE.md, docs/VCD.md)." >&2
+          fi
+          exit $status
+      - name: Upload the built driver
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: popstarter-usbhdfsd-irx-ilink
+          path: modules/bdmassault/ilink_bd_assault/ilink_bd_assault.irx
+          if-no-files-found: ignore
+
   build-flavour:
     strategy:
       fail-fast: false
