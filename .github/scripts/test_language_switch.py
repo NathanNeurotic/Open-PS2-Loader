@@ -10,14 +10,30 @@ function = source[start:source.index('\n}', start) + 2]
 harness = r'''
 #include <assert.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 typedef struct { char *filePath; char *name; } language_t;
 static language_t languages[1] = {{"lang_test.lng", "test"}};
-static int guiLangID, nLanguages = 1, nValidEntries, frees, themes, muted, loads, fail;
+static int guiLangID, nLanguages = 1, nValidEntries, frees, themes, muted, loads, fail, guiLockDepth;
 static char *internalEnglish[1], *foreign[1], **lang_strs = internalEnglish;
 #define LANG_STR_COUNT 1
+/* The IO worker may replace the registry's path meanwhile: it is copied under the GUI lock, and the
+   file is read with the lock released (the lock is not recursive). */
+void guiLock(void) { assert(guiLockDepth == 0); guiLockDepth++; }
+void guiUnlock(void) { assert(guiLockDepth == 1); guiLockDepth--; }
 void bgmMute(void) { muted++; }
 void bgmUnMute(void) { muted--; }
-int lngLoadFromFile(char *path, char *name) { loads++; if (fail) return 0; lang_strs = foreign; return 1; }
+int lngLoadFromFile(char *path, char *name)
+{
+    assert(guiLockDepth == 0);
+    assert(path != languages[0].filePath && strcmp(path, languages[0].filePath) == 0);
+    assert(name == languages[0].name);
+    loads++;
+    if (fail)
+        return 0;
+    lang_strs = foreign;
+    return 1;
+}
 void lngFreeFromFile(char **strings) { if (guiLangID) { assert(strings == foreign); frees++; } }
 int thmGetGuiValue(void) { return 0; }
 void thmSetGuiValue(int id, int force) { themes++; }

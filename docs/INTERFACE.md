@@ -10,7 +10,7 @@ For the button map, see [CONTROLS.md](CONTROLS.md). For UTF-8 Japanese and other
 ## Theme selection
 
 **Settings → Interface → Theme.** Choose `<OPL>` for the list, `<Coverflow>` for the centered
-carousel, or `<PSBBN Flow>` for the Collection-style perspective fan. Apply and save to retain
+carousel, or `<PSBBN Flow>` for the PSBBN Definitive Project Game Collection look. Apply and save to retain
 the choice. Fresh configurations start with `<OPL>`, 4:3 and Auto video mode; theme and aspect
 are separate settings.
 

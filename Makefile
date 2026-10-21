@@ -140,7 +140,7 @@ endif
 
 FRONTEND_OBJS = pad.o xparam.o fntsys.o renderman.o menusys.o OSDHistory.o system.o elfldr_noreset.o elfldr.o lang.o lang_internal.o config.o hdd.o dialogs.o favsupport.o \
 		dia.o ioman.o texcache.o themes.o supportbase.o bdmsupport.o netsupport.o ethsupport.o httpcatalog.o httpsupport.o udpfssupport.o hddsupport.o zso.o lz4.o launchdiag.o \
-		appsupport.o mmcesupport.o artindex.o vcdsupport.o cuesupport.o libview.o retrogem.o folderbrowse.o gui.o guigame.o vmc_groups.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o cheatconfig.o sound.o ps2cnf.o tar.o saveicon.o cfgtitle.o
+		appsupport.o mmcesupport.o artindex.o vcdsupport.o cuesupport.o libview.o retrogem.o folderbrowse.o gui.o guigame.o vmcrebuild.o vmc_groups.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o cheatconfig.o sound.o ps2cnf.o tar.o saveicon.o cfgtitle.o
 
 IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o usbhdfsd.o bdmevent.o dvrdrv.o dvrfile.o \
 		pccf_bd.o pccf_game.o pccf_cdvdman.o bdm.o bdmfs_fatfs.o usbmass_bd.o iLinkman.o IEEE1394_bd.o mx4sio_bd.o \
@@ -169,7 +169,7 @@ PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
 	logo0 logo1 logo2 logo3 \
 	case case_ps1 apps_case disc_ps1 \
 	Players_1 Players_2 Players_3 Players_4 \
-	Index_0 Index_1 Index_2 Index_3 Index_4 fav fav_mark R3 L3 L1 R1 PS1 PS2
+	Index_0 Index_1 Index_2 Index_3 Index_4 fav fav_mark R3 L3 L1 R1 PS1 PS2 psbbn_bg
 	# unused icons - up down l2 r2
 	# Korium Komblete drops incebtion/ip (the old background pair, now background +
 	# background_info) and coverapp (aliased to cover in textures.c).
@@ -1285,6 +1285,7 @@ INTERNAL_LANGUAGE_H = include/lang_autogen.h
 LANG_COMPILER = tools/lang_compiler.py
 
 languages: | download_lng $(ENGLISH_TEMPLATE_YML) $(TRANSLATIONS_YML) $(ENGLISH_LNG) $(TRANSLATIONS_LNG) $(INTERNAL_LANGUAGE_C) $(INTERNAL_LANGUAGE_H)
+	@python3 tools/audit_translations.py --strict
 
 download_lng:
 	./tools/download_lng.sh

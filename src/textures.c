@@ -49,6 +49,7 @@ extern void *R2_png; */
 extern void *L1_png;
 extern void *L3_png;
 extern void *R1_png;
+extern void *psbbn_bg_png;
 extern void *R3_png;
 extern void *fav_png;
 extern void *fav_mark_png;
@@ -293,6 +294,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {PLAYERS_2, "Players_2", &Players_2_png},
     {PLAYERS_3, "Players_3", &Players_3_png},
     {PLAYERS_4, "Players_4", &Players_4_png},
+    {PSBBN_BACKGROUND, "psbbn_bg", &psbbn_bg_png},
 #ifdef RETROACHIEVEMENTS
     // Positional: guarded by the same #ifdef as RA_MARK in enum INTERNAL_TEXTURE. Without
     // this row TEXTURES_COUNT grows but the initialiser does not, leaving the last slot

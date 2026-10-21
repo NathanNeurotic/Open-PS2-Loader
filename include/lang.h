@@ -3,9 +3,6 @@
 
 #include "lang_autogen.h"
 
-// Maximum external languages supported
-#define MAX_LANGUAGE_FILES 15
-
 extern char *internalEnglish[LANG_STR_COUNT];
 // getter for a localised string version
 extern char *_l(unsigned int id);
@@ -14,10 +11,13 @@ typedef struct
 {
     char *filePath;
     char *name;
+    unsigned char sourcePriority; // CWD > CWD/LNG > other LNG directories
 } language_t;
 
 int lngAddLanguages(char *path, const char *separator, int mode);
 void lngInit(void);
+/** Retry discovery when the boot path becomes readable after driver initialization. */
+void lngRefreshBootLanguages(int mode);
 /** Load the optional Unicode fallback after settings home relocation is resolved. */
 void lngInitFallbackFont(void);
 char *lngGetValue(void);

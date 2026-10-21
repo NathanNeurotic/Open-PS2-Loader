@@ -625,17 +625,23 @@ void rmDrawLine(int x1, int y1, int x2, int y2, u64 color)
     order++;
 }
 
-void rmDrawTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors)
+static void rmQueueTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors, int blend)
 {
     float sx = iDisplayWidth / 640.0f, sy = iDisplayHeight / 480.0f;
     int i;
 
-    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    // A texture without its own alpha channel (CT24) has none to blend with, so a fade uses the first
+    // vertex's alpha as the GS's fixed blend factor instead; the default blend comes back afterwards.
+    int fixed = blend && txt != NULL && count > 0 && txt->PSM != GS_PSM_CT32 &&
+                !(txt->Clut && txt->ClutPSM == GS_PSM_CT32);
+    if (fixed)
+        gsKit_set_primalpha(gsGlobal, GS_SETREG_ALPHA(0, 1, 2, 1, (colors[0] >> 24) & 0xff), 0);
+    gsGlobal->PrimAlphaEnable = blend ? GS_SETTING_ON : GS_SETTING_OFF;
     gsKit_set_test(gsGlobal, GS_ATEST_OFF);
     // One bind for the batch: nothing else binds between these triangles, so it stays resident.
     if (txt != NULL)
         gsKit_TexManager_bind(gsGlobal, txt);
-    for (i = 0; i < count; i++, xy += 6, uv += 6, colors += 3) {
+    for (i = 0; i < count; i++, xy += 6, uv += (txt != NULL) ? 6 : 0, colors += 3) {
         float x0 = xy[0] * sx + fRenderXOff, y0 = xy[1] * sy + fRenderYOff;
         float x1 = xy[2] * sx + fRenderXOff, y1 = xy[3] * sy + fRenderYOff;
         float x2 = xy[4] * sx + fRenderXOff, y2 = xy[5] * sy + fRenderYOff;
@@ -647,6 +653,18 @@ void rmDrawTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv
             gsKit_prim_triangle_gouraud_3d(gsGlobal, x0, y0, order, x1, y1, order, x2, y2, order, colors[0], colors[1], colors[2]);
     }
     order++;
+    if (fixed)
+        gsKit_set_primalpha(gsGlobal, gDefaultAlpha, 0);
+}
+
+void rmDrawTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors)
+{
+    rmQueueTriangles(txt, count, xy, uv, colors, 0);
+}
+
+void rmDrawBlendedTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors)
+{
+    rmQueueTriangles(txt, count, xy, uv, colors, 1);
 }
 
 void rmSetDisplayOffset(int x, int y)

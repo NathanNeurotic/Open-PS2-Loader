@@ -118,6 +118,10 @@ static int vmc_mccopy(char *filename, int slot, int *progress, char *msg)
     (void)slot;
     return vmc_mcformat(filename, 0, 0, progress, msg);
 }
+static int vmc_rebuild(char *filename, int size_kb, int *progress, char *msg)
+{
+    return vmc_mcformat(filename, size_kb, 16, progress, msg); /* copy mode: test_vmc_rebuild.py */
+}
 int fs_remove(const char *path)
 {
     removes++;
@@ -292,7 +296,7 @@ int main(void)
         memset(&a, 0, sizeof(a));
         strcpy(a.VMC_filename, "pfs0:VMC/A.bin");
         a.VMC_size_mb = 8; a.VMC_blocksize = 16; a.VMC_thread_priority = 0x0f; a.VMC_card_slot = -1;
-        a.VMC_flags = 4;
+        a.VMC_flags = 8; /* 4 is VMC_CREATE_REBUILD */
         CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) < 0 && created == 0, "an unknown flag is still refused");
         a.VMC_flags = VMC_CREATE_PFS_RESERVE;
         CHECK(genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_CREATE_VMC, &a, sizeof(a), NULL, 0) == 0 && created == 1, "an HDD card's PFS reservation flag is accepted");

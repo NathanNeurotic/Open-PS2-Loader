@@ -315,3 +315,582 @@ translations:
   VIEW_APPS: نمایش برنامه‌ها
   EMBER_DISPLAY: حالت نمایش Ember
   HINT_EMBER_DISPLAY: حالت خروجی‌ای که Ember برای بازی‌های PS1 استفاده می‌کند. مقدار 240p یا 480p در فایل settings.txt داخل پوشه EMBER دستگاهی که اجرا می‌شود نوشته می‌شود. گزینه پیش‌فرض این تنظیم را دوباره حذف می‌کند و اگر چیز دیگری در فایل نبود، خود فایل را هم حذف می‌کند.
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  SAVE_CHANGES: ذخیره تغییرات
+  BACK: بازگشت
+  NETCONFIG: تنظیمات شبکه
+  SHOW_ADVANCED_OPTS: گزینه‌های پیشرفته
+  NO_ITEMS: پیش‌فرض
+  SETTINGS_SAVED: تنظیمات در %s ذخیره شد
+  ERROR_SAVING_SETTINGS: خطا در نوشتن تنظیمات!
+  EXIT: خروج
+  SETTINGS: تنظیمات
+  MENU: منو
+  BDM_GAMES: بازی‌های BDM
+  HDD_GAMES: بازی‌های HDD
+  NET_GAMES: بازی‌های ETH
+  APPS: برنامه‌ها
+  THEME: پوسته
+  LANGUAGE: زبان
+  CONFIRMATION_POFF: سیستم خاموش می‌شود.
+  CONFIRMATION_EXIT: خروج به مرورگر؟
+  CONFIRMATION_CANCEL_UPDATE: به‌روزرسانی لغو شود؟
+  HDD_NOT_CONNECTED_ERROR: '%d: هارد شناسایی نشد.'
+  HDD_NOT_FORMATTED_ERROR: '%d: هارد فرمت نشده است.'
+  NETWORK_STARTUP_ERROR_NETIF: '%d: هیچ آداپتور شبکه‌ای شناسایی نشد.'
+  NETWORK_STARTUP_ERROR_CONN: '%d: اتصال به سرور SMB ممکن نیست.'
+  NETWORK_STARTUP_ERROR_LOGON: '%d: ورود به سرور SMB ممکن نیست.'
+  NETWORK_STARTUP_ERROR_SHARE: '%d: باز کردن اشتراک SMB ممکن نیست.'
+  NETWORK_SHARE_LIST_ERROR: '%d: فهرست کردن اشتراک‌های SMB ممکن نیست.'
+  NETWORK_GAMES_LIST_ERROR: '%d: فهرست کردن بازی‌ها ممکن نیست.'
+  NETWORK_ERROR_DHCP_FAIL: '%d: سرور DHCP در دسترس نیست.'
+  NETWORK_ERROR_LINK_FAIL: '%d: اتصال شبکه وجود ندارد.'
+  OK: تأیید
+  SELECT: انتخاب
+  CANCEL: لغو
+  CIRCLE: دایره
+  CROSS: ضربدر
+  GAMES_LIST: فهرست بازی‌ها
+  COMPAT_SETTINGS: تنظیمات بازی
+  REMOVE_ALL_SETTINGS: حذف تنظیمات
+  SCROLLING: سرعت پیمایش
+  SLOW: کند
+  MEDIUM: متوسط
+  FAST: سریع
+  DEFDEVICE: منوی پیش‌فرض
+  LOAD_FROM_DISC: بارگذاری از دیسک
+  PLEASE_WAIT: لطفاً صبر کنید.
+  ERROR_LOADING_ID: خطا در بارگذاری شناسه بازی.
+  ERR_LOADING_LANGFILE: خطا در بارگذاری فایل زبان.
+  NO_CONTROLLER: دسته‌ای شناسایی نشد، در انتظار...
+  WIDE_SCREEN: صفحه عریض
+  POWEROFF: خاموش کردن
+  LOADING_SETTINGS: در حال بارگذاری پیکربندی...
+  SAVING_SETTINGS: در حال ذخیره پیکربندی...
+  START_DEVICE: شروع دستگاه
+  REFRESH: تازه‌سازی
+  BDMMODE: حالت شروع BDM
+  HDDMODE: حالت شروع هارد (APA)
+  ETHMODE: حالت شروع ETH
+  APPMODE: حالت شروع برنامه‌ها
+  AUTO: خودکار
+  MANUAL: دستی
+  STARTNBD: شروع سرور NBD
+  STARTINGNBD: در حال شروع سرور NBD...
+  RUNNINGNBD: سرور NBD در حال اجراست...
+  STARTFAILNBD: شروع سرور NBD ناموفق بود.
+  UNLOADNBD: در حال بستن سرور NBD...
+  EXITTO: مسیر IGR
+  BGCOLOR: رنگ پس‌زمینه
+  TXTCOLOR: رنگ متن
+  CAT_SMB_SERVER: '- سرور SMB -'
+  IP_ADDRESS_TYPE: نوع نشانی IP
+  IP_ADDRESS_TYPE_STATIC: ثابت
+  IP_ADDRESS: نشانی IP
+  MASK: ماسک
+  DNS_SERVER: سرور DNS
+  PORT: درگاه
+  SHARE: اشتراک
+  USER: کاربر
+  PASSWORD: رمز عبور
+  NOT_SET: <تنظیم نشده>
+  ADDRESS_TYPE: نوع نشانی
+  ADDR_TYPE_IP: IP
+  ACCEPT: پذیرفتن
+  DELETE_WARNING: این مورد برای همیشه حذف می‌شود، ادامه می‌دهید؟
+  RENAME: تغییر نام
+  DELETE: حذف
+  RUN: اجرا
+  GFX_SETTINGS: تنظیمات نمایش
+  LASTPLAYED: به خاطر سپردن آخرین بازی
+  SELECTBUTTON: دکمه انتخاب
+  ERR_FRAGMENTED: خطا، بازی تکه‌تکه است.
+  ERR_FILE_INVALID: خطا، اجرای این مورد ممکن نشد.
+  TEST: آزمایش تغییرات
+  HINT_GUEST: برای ورود مهمان (GUEST) خالی بگذارید.
+  HINT_MODE1: خواندن دقیق
+  HINT_MODE2: حالت همزمان
+  HINT_MODE3: جدا کردن فراخوان‌های سیستمی
+  HINT_MODE4: رد کردن ویدیوها
+  HINT_MODE5: شبیه‌سازی DVD-DL
+  HINT_MODE6: غیرفعال کردن IGR
+  HINT_VMC_SIZE: تغییر اندازه، VMC را دوباره فرمت می‌کند.
+  CREATE: ساختن
+  START: شروع
+  MODIFY: ویرایش
+  ABORT: توقف
+  RESET: بازنشانی
+  USE_GENERIC: استفاده از عمومی
+  VMC_SCREEN: پیکربندی VMC
+  VMC_NAME: نام
+  SIZE: اندازه
+  VMC_STATUS: وضعیت
+  VMC_PROGRESS: پیشرفت
+  VMC_FILE_EXISTS: فایل VMC وجود دارد.
+  VMC_FILE_ERROR: فایل VMC نامعتبر است، اندازه نادرست است.
+  VMC_FILE_NEW: فایل VMC باید ساخته شود.
+  ERR_VMC_CONTINUE: خطا در دسترسی به VMC %s. با کارت حافظه در شیار %d ادامه شود؟
+  AUTOREFRESH: تازه‌سازی خودکار
+  ABOUT: درباره
+  DEVS: برنامه‌نویسان
+  QANDA: تضمین کیفیت
+  BDM_PREFIX: مسیر پیشوند BDM
+  HINT_EXITPATH: پس از IGR یک ELF سفارشی را اجرا می‌کند. از کارت حافظه (mc0:/mc1:) یا فلش USB با FAT32 (mass:/) استفاده کنید؛ برای USB، RiptOPL پیشنهاد می‌کند درایورهایی را که بازنشانی لازم دارد به پوشه SYS-CONF کارت حافظه بیفزاید. پس از بازنشانی به MMCE نمی‌توان رسید؛ از طریق یک لودر کارت حافظه مانند PS2BBL زنجیره کنید.
+  HINT_SPINDOWN: مقدار به دقیقه، 0 برای غیرفعال کردن توقف چرخش.
+  HDD_SPINDOWN: توقف خودکار چرخش هارد
+  VMODE: حالت ویدیو
+  UICOLOR: رنگ کادر گفت‌وگو
+  SELCOLOR: رنگ انتخاب
+  RESETCOLOR: بازنشانی رنگ‌ها
+  INFO: اطلاعات
+  ALTSTARTUP: ELF سفارشی
+  COLOR_SELECTION: انتخاب رنگ
+  RECONNECT: اتصال دوباره
+  HINT_SHARENAME: برای فهرست کردن اشتراک‌ها خالی بگذارید.
+  ETH_PREFIX: مسیر پیشوند ETH
+  BACKSPACE: پاک کردن
+  SPACE: فاصله
+  ENTER: ورود
+  MODE: حالت
+  VMC_SLOT1: شیار VMC 1
+  VMC_SLOT2: شیار VMC 2
+  GAME_ID: شناسه بازی
+  DMA_MODE: حالت DMA
+  VSYNC: V-Sync
+  MODE1: حالت 1
+  MODE2: حالت 2
+  MODE3: حالت 3
+  MODE4: حالت 4
+  MODE5: حالت 5
+  MODE6: حالت 6
+  GSCONFIG: پیکربندی GSM
+  ETH_OPMODE: حالت پیوند اترنت
+  ETH_100MFDX: 100Mbit دوطرفه کامل
+  ETH_100MHDX: 100Mbit نیم‌دوطرفه
+  ETH_10MFDX: 10Mbit دوطرفه کامل
+  ETH_10MHDX: 10Mbit نیم‌دوطرفه
+  GSM_SETTINGS: تنظیمات GSM
+  HINT_ENABLEGSM: GSM را روشن یا خاموش می‌کند.
+  HINT_GSMVMODE: حالت نمایش سفارشی اجباری.
+  XOFFSET: موقعیت افقی
+  HINT_XOFFSET: تنظیم افقی.
+  YOFFSET: موقعیت عمودی
+  HINT_YOFFSET: تنظیم عمودی.
+  OVERSCAN: اورسکن
+  HINT_OVERSCAN: تنظیم اورسکن.
+  GSMSKIPVIDEOS: رد کردن FMV
+  HINT_GSMSKIPVIDEOS: ویدیوهای تمام‌حرکتی را رد می‌کند.
+  CHEAT_SETTINGS: تنظیمات تقلب
+  HINT_ENABLECHEAT: به موتور تقلب PS2RD اجازه می‌دهد بازی شما را وصله کند.
+  CHEATMODE: حالت موتور تقلب PS2RD
+  HINT_CHEATMODE: انتخاب خودکار یا انتخاب تقلب‌های بازی.
+  CHEATMODEAUTO: انتخاب خودکار تقلب‌ها
+  CHEATMODESELECT: انتخاب تقلب‌های بازی
+  ERR_CHEATS_LOAD_FAILED: 'خطا: بارگذاری فایل تقلب ناموفق بود.'
+  NO_CHEATS_FOUND: هیچ تقلبی پیدا نشد.
+  DL_DEFAULTS: دریافت پیش‌فرض‌ها
+  NET_UPDATE: به‌روزرسانی شبکه
+  NET_UPDATE_ALL: بازنویسی سوابق موجود
+  NET_UPDATE_FAILED: به‌روزرسانی ناموفق بود.
+  NET_UPDATE_CONN_FAILED: اتصال به سرور به‌روزرسانی ممکن نشد.
+  NET_UPDATE_DONE: به‌روزرسانی کامل شد.
+  NET_UPDATE_CANCELLED: به‌روزرسانی لغو شد.
+  CONFIRMATION_SETTINGS_UPDATE: تنظیمات از شبکه دریافت شود؟
+  CUSTOMIZED_SETTINGS: تنظیمات سفارشی
+  DOWNLOADED_DEFAULTS: پیش‌فرض‌های دریافت‌شده
+  AUTO_START_IN_N_SECS: شروع خودکار تا %i ثانیه...
+  AUTOSTARTLAST: شروع خودکار
+  HINT_AUTOSTARTLAST: مقدار به ثانیه، 0 برای غیرفعال کردن شروع خودکار.
+  PS2LOGO: لوگوی PS2
+  HINT_PS2LOGO: برای لوگوی دیسک معتبری که با منطقه کنسول جور باشد نمایش داده می‌شود.
+  PADEMUCONFIG: شبیه‌سازی دسته
+  PADEMU_SETTINGS: تنظیمات شبیه‌ساز دسته
+  HINT_PADEMU_ENABLE: شبیه‌ساز دسته را برای بازی انتخاب‌شده روشن یا خاموش می‌کند.
+  PADEMU_MODE: حالت شبیه‌ساز دسته
+  HINT_PADEMU_MODE: حالت شبیه‌ساز دسته را انتخاب کنید.
+  DS34USB_MODE: DualShock3/4 USB
+  DS34BT_MODE: DualShock3/4 BT
+  PADPORT: 'تنظیمات برای درگاه:'
+  HINT_PAD_PORT: درگاه شبیه‌ساز دسته را برای تنظیمات انتخاب کنید.
+  HINT_PADEMU_PORT: شبیه‌ساز دسته را برای درگاه انتخاب‌شده روشن یا خاموش می‌کند.
+  HINT_PADEMU_VIB: لرزش را برای درگاه انتخاب‌شده شبیه‌ساز دسته روشن یا خاموش می‌کند.
+  USBDG_MAC: 'نشانی MAC آداپتور بلوتوث USB:'
+  PAD_MAC: 'دسته DS جفت‌شده با نشانی MAC:'
+  PAIR: جفت کردن
+  PAIR_PAD: جفت کردن دسته DS
+  HINT_PAIRPAD: دسته DS را با نشانی MAC آداپتور بلوتوث جفت می‌کند.
+  NOT_CONNECTED: وصل نیست
+  BTINFO: اطلاعات آداپتور بلوتوث
+  HINT_BTINFO: اطلاعات بیشتر و قابلیت‌های پشتیبانی‌شده را نشان می‌دهد.
+  HCIVER: 'نسخه HCI:'
+  LMPVER: 'نسخه LMP:'
+  MANUFACTURER: 'شناسه سازنده:'
+  SUPFEATURES: 'قابلیت‌های پشتیبانی‌شده:'
+  BT_SUPPORTED: آداپتور بلوتوث باید با دسته‌های DS3/DS4 کاملاً سازگار باشد.
+  BT_NOTSUPPORTED: آداپتور بلوتوث ممکن است با دسته‌های DS3/DS4 درست کار نکند.
+  MTAP_ENABLE: شبیه‌سازی مولتی‌تپ
+  HINT_MTAP_ENABLE: شبیه‌سازی مولتی‌تپ را برای بازی انتخاب‌شده روشن یا خاموش می‌کند.
+  MTAP_PORT: 'شبیه‌ساز مولتی‌تپ روی درگاه:'
+  HINT_MTAP_PORT: درگاه شبیه‌سازی مولتی‌تپ را انتخاب کنید.
+  HINT_PADEMU_WORKAROUND: برخی دسته‌های DS3 تقلبی به یک راه‌حل جایگزین نیاز دارند؛ این گزینه آن را فعال می‌کند.
+  GSM_FIELD_FIX: شبیه‌سازی جابه‌جایی فیلد
+  HINT_GSM_FIELD_FIX: اصلاح برای بازی‌هایی که در حالت‌های ویدیوی پیش‌رونده دچار اشکال می‌شوند.
+  PARENLOCKCONFIG: تنظیمات قفل والدین
+  PARENLOCK_PASSWORD: رمز قفل والدین
+  PARENLOCK_PASSWORD_HINT: برای غیرفعال کردن قفل والدین خالی بگذارید.
+  PARENLOCK_ENTER_PASSWORD_TITLE: رمز قفل والدین را وارد کنید
+  PARENLOCK_PASSWORD_INCORRECT: رمز قفل والدین نادرست است.
+  PARENLOCK_DISABLE_WARNING: قفل والدین غیرفعال شد.
+  BUILD_DETAILS: 'گزینه‌های بیلد:'
+  PARENLOCK_INVALID_PASSWORD: 'خطا: این رمز قابل استفاده نیست.'
+  ERR_VMC_FRAGMENTED_CONTINUE: فایل VMC %s تکه‌تکه است. با کارت حافظه در شیار %d ادامه شود؟
+  AUDIO_SETTINGS: تنظیمات صدا
+  SFX_VOLUME: بلندی جلوه‌های صوتی
+  BOOT_SND_VOLUME: بلندی صدای راه‌اندازی
+  CFM_VMODE_CHG: تغییر حالت ویدیو تأیید شود؟
+  CACHE_HDD_GAME_LIST: حافظه نهان فهرست بازی‌ها (HDD APA)
+  CFG_NOTIFICATION: پیکربندی از %s بارگذاری شد
+  THM_NOTIFICATION: پوسته از %s بارگذاری شد
+  LNG_NOTIFICATION: زبان از %s بارگذاری شد
+  PARTITION_NOTIFICATION: پارتیشن %s سوار شد.
+  GAME_SETTINGS_SAVED: تنظیمات بازی ذخیره شد.
+  GAME_SETTINGS_REMOVED: تنظیمات %s حذف شد.
+  NET_UPDATE_HINT: وقتی روشن باشد، تنظیمات سازگاری بازی‌های موجود را بازنویسی می‌کند.
+  SETTINGS_SOURCE: حالت تنظیمات
+  GLOBAL_SETTINGS: سراسری
+  PERGAME_SETTINGS: هر بازی
+  ALL_SETTINGS: همه
+  GAME_SETTINGS_PROMPT: تنظیماتی را که باید حذف شوند انتخاب کنید.
+  FORUM_DETAILS: 'انجمن‌های پشتیبانی:'
+  INFO_TITLE: عنوان
+  INFO_GENRE: ژانر
+  INFO_RELEASE: انتشار
+  INFO_DEVELOPER: سازنده
+  INFO_DESCRIPTION: توضیحات
+  HINT_NEUTRINO_AUTO_ELF: ELF راه‌اندازی بازی را برای یافتن پیکربندی هر عنوان به Neutrino می‌دهد. به‌طور پیش‌فرض روشن است؛ گزینه ELF راه‌اندازی که دستی تنظیم شود اولویت دارد.
+  HINT_POPSTARTER_PATH: جای POPSTARTER.ELF. اگر خالی بماند، RIPPS2 یکی را که روی یک درایو پیدا کند در آن می‌نویسد؛ برای استفاده از دیگری روی آن بنویسید، مانند usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: آرگومان‌های Neutrino از طول قابل ذخیره بیشترند. پیش از ذخیره یک فیلد را کوتاه کنید.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: آرگومان‌های اجرای Neutrino از حد ایمن فراتر رفته‌اند. آرگومان‌های سراسری یا بازی را کوتاه کنید.
+  NEUTRINO_AUTO_ELF: ELF راه‌اندازی خودکار (-elf)
+  HINT_NEUTRINO_PATH: 'neutrino.elf کجاست؟ <not set> = دستگاه بازی -> mc0/mc1. مسیر کامل سفارشی اول امتحان می‌شود. نمونه‌ها: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: نمایش بازی‌های PS2/PS1
+  HINT_GAME_VIEW_MODE: همه بازی‌های PS2 و PS1 را با هم نشان می‌دهد و L3 میان همه، PS1 و PS2 می‌چرخد. PS2 یا PS1 فقط همان نوع را نشان می‌دهد و L3 را غیرفعال می‌کند. برنامه‌ها و علاقه‌مندی‌ها قواعد نمایش خودشان را دارند.
+  VIEW_MIXED: نمایش بازی‌های PS2 + PS1
+  VIEW_PS1_ELF: نمایش برنامه‌های PS1 ELF
+  APPS_DISPLAY: نمایش برنامه‌ها
+  HINT_APPS_DISPLAY: همه هر ELF را در یک فهرست APPS با L3 غیرفعال نشان می‌دهد. برنامه‌ها / PS1ELF عنوان‌های دارای [PS1] را به صفحه دوم L3 می‌برد؛ رفتار اجرا تغییر نمی‌کند.
+  VIEW: نما
+  VIEW_PS2: نمایش بازی‌های PS2 مورد علاقه
+  VIEW_PS1: نمایش بازی‌های PS1 مورد علاقه
+  VIEW_ELF: نمایش ELFهای مورد علاقه
+  VIEW_ALL: نمایش همه علاقه‌مندی‌ها
+  VMC_FRAGMENTED_ON_CREATE: VMC ساخته شد، اما تکه‌تکه است. شبیه‌سازی کارت حافظه به یک فایل پیوسته نیاز دارد، پس این VMC هنگام اجرا نادیده گرفته می‌شود و کارت واقعی به کار می‌رود. فضا آزاد کنید و دوباره آن را بسازید، یا از دستگاه دیگری کپی کنید.
+  KEYB_MOVE_CURSOR: جابه‌جایی نشانگر
+  TITLECOLOR: رنگ عنوان بازی
+  RA_CHECK_GAME: بررسی پشتیبانی RetroAchievements
+  RA_TEST_LINK: آزمایش اتصال RetroAchievements به رایانه
+  RA_CHECKING_IMAGE: در حال بررسی تصویر، چند ثانیه طول می‌کشد...
+  RA_CHECK_RUNNING: یک بررسی تصویر از قبل در حال اجراست
+  RA_LOOKING_FOR_PC: در حال جست‌وجوی کلاینت رایانه...
+  RA_UL_UNSUPPORTED: بازی‌های UL/USBExtreme هنوز قابل بررسی نیستند
+  RA_UL_UNSUPPORTED2: فقط تصویرهای ساده .iso در DVD/ یا CD/ پشتیبانی می‌شوند
+  RA_UNKNOWN_IMAGE: RetroAchievements این تصویر را نمی‌شناسد
+  RA_STILL_IDENTIFYING: رایانه هنوز در حال شناسایی تصویر است
+  RA_TRY_AGAIN: چند ثانیه دیگر دوباره تلاش کنید
+  RA_NO_SOCKET: کنسول نتوانست یک سوکت شبکه باز کند
+  RA_NO_SOCKET2: کنسول را دوباره راه‌اندازی کنید، یا دستگاه ETH را در تنظیمات بررسی کنید
+  RA_TEST_NO_SOCKET2: کابل و ETH را در تنظیمات بررسی کنید؛ اگر شبکه برقرار است، کنسول را دوباره راه‌اندازی کنید
+  RA_PC_NO_ANSWER: کلاینت رایانه پاسخ نداد
+  RA_PC_NO_ANSWER2: بررسی کنید xeRAbora اجرا شود، یا آزمایش اتصال رایانه را امتحان کنید
+  RA_SUPPORTED: پشتیبانی‌شده توسط RetroAchievements
+  RA_START_TO_TRACK: برای دنبال کردن دستاوردها بازی را اجرا کنید
+  RA_ACHIEVEMENTS: '%d دستاورد'
+  RA_ACHIEVEMENTS_FULL: '%d دستاورد: %d باز، %d پشتیبانی‌نشده'
+  RA_HASH_FAILED: هش تصویر محاسبه نشد
+  RA_HASH_FAILED2: دلیل در RA/hashes.txt کنار بازی‌هاست
+  RA_NET_BUSY: شبکه در اختیار یک انتقال UDP است
+  RA_NET_BUSY2: 'RA به پشته SMB نیاز دارد: پروتکل را عوض کنید، یا فایل .wl را روی رایانه بسازید'
+  RA_NET_BUSY_HASH: 'هش در RA/hashes.txt است: xeRAbora می‌تواند فایل .wl را از آن بسازد'
+  RA_NO_IP: کنسول نشانی IP ندارد
+  RA_NO_IP2: DHCP یا نشانی ثابت را در تنظیمات شبکه بررسی کنید
+  RA_TEST_NO_ANSWER: هیچ کلاینت رایانه‌ای در 3 ثانیه پاسخ نداد
+  RA_TEST_NO_ANSWER2: کنسول%s. بررسی کنید xeRAbora اجرا شود و UDP 18194 باز باشد
+  RA_TEST_FOUND: کلاینت رایانه پیدا شد%s%s %s
+  RA_TEST_FOUND2: پاسخ در %u میلی‌ثانیه، کنسول%s
+  RA_NA_NEUTRINO: 'دنبال کردن RA به هسته <OPL> نیاز دارد: اجرای Neutrino هرگز ee_core را بارگذاری نمی‌کند'
+  RA_NA_UDPFS: 'دنبال کردن RA روی UDPFS در دسترس نیست: بازی‌ها از طریق Neutrino اجرا می‌شوند'
+  RA_NA_PS1: دنبال کردن RA برای بازی‌های PS1 در دسترس نیست
+  RA_NA_HDD: اطلاعات بازی APA یا محل تنظیمات هارد در دسترس نیست
+  RA_NA_HDD2: پیش از بررسی پشتیبانی، یک محل معتبر برای تنظیمات هارد تعیین کنید و تازه‌سازی کنید
+  RA_TELEMETRY: تله‌متری RetroAchievements
+  RA_BADGES: نشان‌های RetroAchievements
+  HTTP_GAMES: بازی‌های HTTP
+  HTTP_SERVER: سرور HTTP
+  HTTP_PORT: درگاه HTTP
+  HTTP_BASE_PATH: مسیر پایه HTTP
+  HTTP_TEST: آزمایش سرور HTTP
+  HTTP_TEST_OK: 'سرور سالم است: بازی‌ها فهرست شدند'
+  HTTP_TEST_EMPTY: 'کاتالوگ خالی است: معتبر است، اما چیزی درباره بازه‌های بایت ثابت نمی‌کند'
+  HTTP_TEST_NO_ISO: کاتالوگ تصویر پشتیبانی‌شده‌ای برای آزمایش بازه بایت ندارد
+  HTTP_ERR_CONNECT: دسترسی به سرور HTTP ممکن نیست
+  HTTP_ERR_CATALOG: games.csv موجود نیست، خوانا نیست یا بیش از حد بزرگ است
+  HTTP_ERR_RANGE: سرور دقیقاً همان بایت‌هایی را که خواسته شد برنگرداند
+  HTTP_LAUNCH_UNAVAILABLE: 'اجرا از طریق HTTP هنوز پیاده نشده است: کاتالوگ فقط قابل مرور است'
+  HTTP_ERR_COMPRESSED: تصویرهای فشرده (.zso) هنوز از طریق HTTP پشتیبانی نمی‌شوند
+  HTTP_NO_VMC: 'کارت‌های حافظه مجازی از طریق HTTP در دسترس نیستند: از کارت واقعی استفاده کنید'
+  HTTP_TAB_HINT: HTTP فایل games.csv را از سرور شما می‌خواند. نشانی، درگاه و مسیر پایه را در تنظیمات شبکه تعیین کنید، سپس از آزمایش استفاده کنید.
+  RA_DISC_CHECK: 'RA: بررسی پشتیبانی دیسک'
+  RA_DISC_LAUNCH: 'RA: اجرای دیسک'
+  RA_DISC_CHECKING: در حال بررسی دیسک برای RetroAchievements
+  RA_DISC_HASH_FAILED: 'هش دیسک محاسبه نشد: RA/hashes.txt را در پوشه تنظیمات بررسی کنید'
+  RA_DISC_HOME_ERROR: مسیر تنظیمات برای فهرست‌های پایش دیسک قابل استفاده نیست
+  RA_DISC_ENABLE: اول تله‌متری RetroAchievements را در تنظیمات شبکه روشن کنید
+  RA_DISC_CHECK_FIRST: 'این دیسک فهرست پایش ندارد: اول از بررسی پشتیبانی دیسک RA استفاده کنید'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: هارد پیدا شد، اما جدول پارتیشن APA آن خوانده نمی‌شود. آن را فرمت نکنید: شاید بازی‌های شما قابل بازیابی باشند.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: یک درایو سوار نشد چون سکتورهایش 512 بایتی نیستند (مثلاً درایو با سکتور 4K). OPL فقط سکتورهای 512 بایتی را می‌خواند.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: این عنوان پارتیشن APA مستقلی است و OPL هرگز جدول پارتیشن را ویرایش نمی‌کند. نام آن را روی رایانه تغییر دهید.
+  POPS_SETTINGS_UNREADABLE: 'تنظیمات POPSTARTER خوانده نشد: کارت حافظه مشغول یا ناخواناست. پس از پایان بارگذاری دوباره تلاش کنید.'
+  GLOBAL_PS_EMULATION_SETTINGS: تنظیمات سراسری شبیه‌سازی PS
+  RA_NO_LINK_UNTRACKED: 'شبکه در دسترس نیست: این بار بدون RetroAchievements اجرا می‌شود.'
+  IGR_USB_DRIVERS_PROMPT: مسیر IGR روی USB است، اما %s فاقد USBD.IRX و USBHDFSD.IRX است که کنسول برای رسیدن به USB پس از بازنشانی درون بازی به آن‌ها نیاز دارد. بدون آن‌ها IGR به مرورگر PS2 می‌افتد. درایورهای RiptOPL اکنون آنجا کپی شوند؟ FMCB، OpenTuna و اکسپلویت‌های دیگر هم این فایل‌ها را بارگذاری می‌کنند و ممکن است با آن‌ها رفتار متفاوتی داشته باشند. فایل‌های موجود هرگز جایگزین نمی‌شوند. فقط USB با FAT32.
+  IGR_USB_DRIVERS_FAILED: درایورهای USB در %s کپی نشدند (کارت پر است یا قابل نوشتن نیست). IGR به مرورگر PS2 می‌افتد.
+  OFFICIAL_CFG_NOTIFICATION: تنظیمات رسمی OPL از %s بارگذاری شد
+  CFM_VMODE_HOLD_KEEP: برای نگه داشتن، نگه دارید
+  BDM_PS2_FOLDERS_UNREADABLE: پوشه CD یا DVD در %s باز نشد (خطای %d)، پس آن دستگاه هیچ بازی PS2ای فهرست نمی‌کند. برای تلاش دوباره، SELECT را در صفحه آن بزنید.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: سیستم فایل Neutrino روی bd تنظیم شده، اما این دستگاه هرگز شماره دستگاه خود را گزارش نکرد، پس Neutrino را نمی‌توان به آن ارجاع داد. سیستم فایل Neutrino این بازی را روی Auto یا exfat بگذارید.
+  CFM_VMODE_REVERT_IN: بازگشت تا %d ثانیه دیگر
+  EMBER_DITHER: دیترینگ Ember
+  HINT_EMBER_DITHER: دیترینگ Ember (روشن یا خاموش)، که در EMBER/settings.txt دستگاه اجراشده نوشته می‌شود. مقدار هر بازی اولویت دارد.
+  EMBER_SHADING: سایه‌زنی Ember
+  HINT_EMBER_SHADING: 'عمق رنگ Ember: 15 بیتی، یا 24 بیتی (آزمایشی). در EMBER/settings.txt دستگاه اجراشده نوشته می‌شود. مقدار هر بازی اولویت دارد.'
+  EMBER_CONTROLLER: دسته Ember
+  HINT_EMBER_CONTROLLER: 'حالت دسته Ember: Auto، Analog یا D2A. معمولاً بهتر است برای هر بازی تنظیم شود (مثلث > تنظیمات بازی Ember)، که بر این اولویت دارد.'
+  EMBER_480P_CONFIRM: Ember با 480p روی کابل کامپوزیت تصویری نشان نمی‌دهد. از 480p استفاده شود؟
+  EMBER_SHADING_24: 24 بیتی (آزمایشی)
+  EMBER_GAME_SETTINGS: تنظیمات بازی Ember
+  HINT_EMBER_GAME_SETTING: فقط این بازی. برای نوشتن EMBER/games/<name>/settings.txt پیش از اجرا، OK را بزنید. پیش‌فرضِ دست‌نخورده مقدار موجود در فایل را نگه می‌دارد؛ برگرداندن یک مقدار به پیش‌فرض، جایگزینی آن را حذف می‌کند.
+  EMBER_TIMING: زمان‌بندی Ember
+  HINT_EMBER_TIMING: 'زمان‌بندی ویدیوی Ember: Auto از منطقه دیسک پیروی می‌کند، NTSC روی 60 هرتز و PAL روی 50 هرتز اجبار می‌کند. در EMBER/settings.txt دستگاه اجراشده نوشته می‌شود.'
+  EMBER_GLOBAL_WARNING: این تنظیمات Ember برای همه بازی‌های PS1 اعمال می‌شوند و برخی بازی‌ها با آن‌ها از کار می‌افتند. برای تغییر فقط یک بازی، از مثلث > تنظیمات بازی Ember روی همان بازی استفاده کنید.
+  HINT_COVERFLOW_COUNT: RIPFLOW در هر سوی جلد انتخاب‌شده چند جلد نشان دهد.
+  HINT_COVERFLOW_SCALE: RIPFLOW جلد انتخاب‌شده را نسبت به بقیه چقدر بزرگ بکشد.
+  HINT_COVERFLOW_ANIM: جلدها هنگام حرکت شما در جریان با چه سرعتی بلغزند.
+  HINT_NARGS_QB: 'راه‌اندازی سریع: صفحه شروع Neutrino را رد می‌کند. اگر اینجا روشن باشد، برای هر بازی فرستاده می‌شود؛ اگر خاموش باشد، RIPPS2 همچنان خودش آن را برای بازی‌های USB، iLink و شبکه، جایی که لازم است، می‌فرستد.'
+  HINT_NARGS_DBC: 'رنگ‌های اشکال‌زدایی: Neutrino در هر گام بارگذاری صفحه را با یک رنگ پر می‌کند، پس یک عکس نشان می‌دهد بازی کجا می‌ایستد.'
+  HINT_NARGS_LOGO: لوگوی PS2 را پیش از بازی نشان می‌دهد (راه‌اندازی دوباره دوم IOP، که برخی درایوهای iLink لازم دارند). اگر اینجا خاموش باشد، RIPPS2 از اجرای بازی‌ها > لوگوی PS2 پیروی می‌کند و آن را هرگز برای بازی‌های MMCE یا شبکه نمی‌فرستد.
+  HINT_NARGS_CWD: 'پوشه‌ای که بازی آن را پوشه خودش می‌بیند. خالی: پیش‌فرض Neutrino.'
+  HINT_NARGS_CFG: 'یک فایل پیکربندی Neutrino از خود شما (-cfg). خالی: فایل خود Neutrino.'
+  HINT_NARGS_ELF: 'به جای فایل راه‌اندازی‌ای که دیسک نام می‌برد، این ELF را اجرا می‌کند. خالی: فایل خود بازی.'
+  HINT_NARGS_ATA0: تصویر هاردی که Neutrino آن را به‌عنوان هارد داخلی کنسول سوار می‌کند، برای بازی‌هایی که از هارد استفاده می‌کنند (-ata0).
+  HINT_NARGS_ATA0ID: فایل شناسه‌ای که همراه آن تصویر هارد است (-ata0id).
+  HINT_NARGS_ATA1: تصویر هارد دوم (-ata1).
+  PS1_SAVE_GUIDANCE: ذخیره‌های PS1 به Ember یا POPSTARTER بستگی دارند؛ تنظیمات VMC مربوط به PS2 اعمال نمی‌شوند.
+  NEUTRINO_SHOW_ARGS: نمایش آرگومان‌های اجرا
+  HINT_NEUTRINO_SHOW_ARGS: پیش از هر اجرای Neutrino، همه آرگومان‌هایی را که Neutrino می‌گیرد نشان می‌دهد و برای ادامه می‌پرسد. بازگشت بدون اجرا به منو برمی‌گرداند.
+  NEUTRINO_ARGS_CONFIRM: Neutrino با این آرگومان‌ها شروع می‌شود. اجرا شود؟
+  HINT_NARGS_EXTRA: پرچم‌های دیگر Neutrino، جداشده با فاصله، که پس از همه موارد بالا فرستاده می‌شوند. RIPPS2 همیشه -bsd و -dvd را برای درایو و ISO بازی، -mc0 و -mc1 را برای VMCهای آن، -gsm را برای حالت ویدیوی آن، و حالت‌های سازگاری خود بازی را اضافه می‌کند. پرچمی که سطر خودش را در بالا دارد (مانند -logo) هنگام ذخیره به آن سطر می‌رود و همچنان فرستاده می‌شود.
+  GAME_TYPE_LABELS: نمایش برچسب‌های [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: فهرست تقلب‌ها در پوشه Neutrino ذخیره نشد، پس Neutrino نمی‌تواند از آن استفاده کند. بدون تقلب اجرا شود؟
+  AUTO_CREATE_VMC: ساخت VMC در نخستین اجرا
+  HINT_AUTO_CREATE_VMC: اجرای یک بازی PS2 بدون VMC در شیار 1، یک کارت 8 مگابایتی روی دستگاه بازی می‌سازد، با نامی که صفحه VMC پیشنهاد می‌دهد (مشترک میان همه دیسک‌های بازی)، و آن را اختصاص می‌دهد. برای هارد داخلی زیر Neutrino نیست.
+  AUTO_VMC_CREATING: در حال ساخت VMC این بازی...
+  AUTO_VMC_FAILED: VMC این بازی ساخته نشد. بازی بدون آن شروع می‌شود.
+  SAVE_ICONS: آیکون‌های سه‌بعدی ذخیره
+  HINT_SAVE_ICONS: آیکون ذخیره بازی انتخاب‌شده را، در حال چرخش، جایی که پوسته برای آن جا دارد نشان می‌دهد. اول VMC خود بازی و سپس کارت‌های حافظه را می‌خواند.
+  NETBOOT_RESTART_NOW: پروتکل شبکه پس از راه‌اندازی دوباره تغییر می‌کند. تنظیمات ذخیره و OPL اکنون دوباره راه‌اندازی شود؟
+  HINT_NET_PROTOCOL: 'RiptOPL از کدام سرویس شبکه استفاده کند: اشتراک SMB، UDPFS، UDPBD یا HTTP. همان تنظیم منابع بازی است. رفتن از سرویسی که در حال اجراست به راه‌اندازی دوباره نیاز دارد.'
+  HINT_UDPFS_ACCESS: فقط UDPFS. فایل‌ها، ISOهای جداگانه را از پوشه بازی‌های سرور می‌خواند؛ IMG یک تصویر دیسک را به‌عنوان درایو می‌خواند. SMB و HTTP همیشه از فایل‌ها، و UDPBD همیشه از IMG استفاده می‌کنند.
+  HINT_SMB_VERSION: با کدام نسخه SMB با اشتراک رایانه گفت‌وگو شود.
+  HINT_NET_ADVANCED: حالت پیوند اترنت و درگاه SMB را برای ویرایش باز می‌کند.
+  HINT_ETH_LINK_MODE: سرعت و دوطرفگی پیوند شبکه را اجبار می‌کند. مگر اینکه پیوند مدام قطع شود، آن را روی Auto بگذارید.
+  HINT_IP_ADDR_TYPE: ثابت از نشانی زیر استفاده می‌کند؛ DHCP از روتر شما می‌پرسد. UDPFS و UDPBD همیشه از ثابت استفاده می‌کنند.
+  HINT_PS2_IP: نشانی IP خود PS2. یکی را انتخاب کنید که هیچ دستگاه دیگری از آن استفاده نکند، در همان بازه رایانه شما.
+  HINT_NETMASK: ماسک زیرشبکه، معمولاً 255.255.255.0.
+  HINT_GATEWAY: نشانی روتر شما، معمولاً با همان سه عدد نخست که به .1 ختم می‌شود.
+  HINT_DNS: نشانی سرور DNS. معمولاً همان دروازه است.
+  HINT_SMB_ADDR_TYPE: دسترسی به رایانه با نشانی IP آن یا با نام NetBIOS (نام رایانه).
+  HINT_SMB_ADDRESS: 'رایانه‌ای که بازی‌های شما را به اشتراک می‌گذارد: نشانی IP آن، یا نام رایانه وقتی نوع نشانی NetBIOS است.'
+  HINT_SMB_PORT: 'درگاه SMB. باید با رایانه یکی باشد: PS2 Servers از 1111 و اشتراک‌های Windows و Samba از 445 استفاده می‌کنند.'
+  HINT_SMB_USER: نام کاربری SMB. guest برای بیشتر اشتراک‌ها کار می‌کند.
+  HINT_HTTP_SERVER: نشانی IP سرور بازی HTTP.
+  HINT_HTTP_PORT: درگاهی که سرور بازی HTTP روی آن گوش می‌دهد.
+  HINT_HTTP_BASE: پوشه‌ای روی سرور HTTP که games.csv در آن است. / ریشه سرور است.
+  HINT_HTTP_TEST: سرور HTTP را با مقادیر بالا امتحان می‌کند و آنچه یافته گزارش می‌دهد.
+  HINT_RA_TELEMETRY: کلید اصلی RetroAchievements. خاموش، بازی‌ها را بدون پشته شبکه یا عکس‌های لحظه‌ای اجرا می‌کند، مانند یک بیلد معمولی.
+  HINT_RA_BADGES: بازی‌های دارای دستاورد را در فهرست علامت می‌زند. تا وقتی تله‌متری خاموش است تیره می‌ماند.
+  HINT_POPS_NET_BUTTON: فایل‌های شبکه خود POPSTARTER (IPCONFIG.DAT، SMBCONFIG.DAT) را ویرایش می‌کند، که بازی‌های PS1 روی SMB به آن‌ها نیاز دارند.
+  HINT_POPS_IP_TYPE: 'PS2 هنگام اجرای یک بازی PS1 روی SMB نشانی خود را چگونه می‌گیرد: ثابت یا DHCP.'
+  HINT_POPS_IP: نشانی IP کنسول PS2 هنگام اجرای یک بازی PS1 روی SMB.
+  HINT_POPS_SMB_IP: نشانی IP رایانه‌ای که بازی‌های PS1 شما را به اشتراک می‌گذارد.
+  HINT_POPS_SMB_SHARE: نام اشتراک روی آن رایانه که پوشه POPS در آن است.
+  HINT_LASTPLAYED: روی بازی‌ای شروع می‌کند که دفعه پیش اجرا کردید.
+  HINT_LANGUAGE: زبان منو. با گذاشتن فایل‌های lang_*.lng در یک پوشه LNG زبان‌های بیشتری بیفزایید.
+  HINT_GSM_DEFAULTS_BUTTON: اصلاحات حالت ویدیو که هر بازی می‌گیرد، مگر آنکه تنظیمات GSM خودش را داشته باشد.
+  HINT_DEFDEVICE: صفحه‌ای که RiptOPL هنگام راه‌اندازی روی آن باز می‌شود.
+  HINT_MMCE_MODE: بازی‌ها روی SD2PSX یا MemCard PRO2. خودکار هنگام راه‌اندازی شروع می‌شود، دستی وقتی صفحه را باز کنید، خاموش آن را پنهان می‌کند.
+  HINT_MMCE_SETTINGS_BUTTON: گزینه‌های شیار، کارت راه‌اندازی IGR، GameID و زمان‌بندی برای MMCE.
+  HINT_ENABLE_USB: درایور ذخیره‌سازی USB را بارگذاری می‌کند.
+  HINT_ENABLE_MX4SIO: درایور آداپتور کارت SD نوع MX4SIO را بارگذاری می‌کند.
+  HINT_ENABLE_ILINK: درایور ذخیره‌سازی iLink (FireWire) را بارگذاری می‌کند.
+  HINT_NETSTART: 'شبکه را شروع می‌کند: خودکار هنگام راه‌اندازی، دستی وقتی صفحه آن را باز کنید. خاموش به آداپتور شبکه دست نمی‌زند.'
+  HINT_APPMODE: صفحه برنامه‌ها. خودکار هنگام راه‌اندازی شروع می‌شود، دستی وقتی آن را باز کنید، خاموش آن را پنهان می‌کند.
+  HINT_FAVMODE: صفحه علاقه‌مندی‌ها. خودکار هنگام راه‌اندازی شروع می‌شود، دستی وقتی آن را باز کنید، خاموش آن را پنهان می‌کند.
+  HINT_BDMA_BUTTON: POPSTARTER برای بازی‌های PS1 روی USB، MX4SIO، MMCE، هارد یا iLink از کدام درایور exFAT استفاده کند.
+  HINT_VCD_LIST_BUTTON: 'بازی‌های PS1 چگونه فهرست شوند: پنهان کردن شناسه بازی، فقط دیسک 1، نمایش پارتیشن‌های PP هارد.'
+  HINT_MMCE_SLOT: دستگاه MMCE در کدام شیار کارت حافظه است. خودکار آن را پیدا می‌کند.
+  HINT_MMCE_GAMEID: به دستگاه MMCE می‌گوید کدام بازی شروع می‌شود تا به کارت حافظه آن بازی برود.
+  HINT_MMCE_COMM_BUTTON: گزینه‌های زمان‌بندی برای پیوند MMCE. فقط اگر بازی‌ها هنگ می‌کنند یا کند بارگذاری می‌شوند آن‌ها را تغییر دهید.
+  HINT_MMCE_PATH_BUTTON: پوشه‌های بازی کجای کارت MMCE هستند.
+  HINT_MMCE_PREFIX: زیرپوشه‌ای روی کارت MMCE که CD، DVD و دیگر پوشه‌های OPL در آن است. خالی از ریشه کارت استفاده می‌کند.
+  HINT_GAME_TYPE_LABELS: هر نام بازی را با [PS1] یا [PS2] آغاز می‌کند. فقط برای نمایش.
+  HINT_MENU_VMODE: خروجی ویدیو برای منو. بازی‌ها به جای آن از GSM استفاده می‌کنند. برای نگه داشتن حالت تازه، تأیید را نگه دارید.
+  HINT_THEME: ظاهر منو. پوسته‌ها از پوشه THM روی هر دستگاه خوانده می‌شوند.
+  HINT_COVERFLOW_BUTTON: تعداد جلد، اندازه، پویانمایی و تیرگی برای پوسته Coverflow.
+  HINT_ARTWORK_BUTTON: 'کدام تصویرها بارگذاری شوند: جلدها، تصویر دیسک، پس‌زمینه‌ها و آیکون‌های ذخیره.'
+  HINT_COLORS_BUTTON: رنگ‌های متن، برجسته‌سازی، کادر گفت‌وگو و پس‌زمینه.
+  HINT_NOTIFICATIONS: اعلان‌های کوتاه هنگام بارگذاری یک فایل پیکربندی، پوسته یا زبان.
+  HINT_AUTOSORT: فهرست بازی‌ها را از A تا Z مرتب می‌کند. خاموش ترتیبی را که پیدا شده‌اند نگه می‌دارد.
+  HINT_AUTOREFRESH: بازی‌های دستگاه‌های تازه‌وصل‌شده را بدون تازه‌سازی دستی اضافه می‌کند.
+  HINT_COVERART: تصویر جلد را از پوشه ART بارگذاری می‌کند.
+  HINT_DISCART: تصویر دیسک (<ID>_ICO) را نشان می‌دهد. خاموش دیسک را پنهان می‌کند اما جلدها و پس‌زمینه‌ها را نگه می‌دارد.
+  HINT_BGART: پس‌زمینه بازی (<ID>_BG) را وقتی پوسته از آن استفاده می‌کند نشان می‌دهد.
+  HINT_ART_TAR: تصویرهای بسته‌بندی‌شده در ART/art.tar را هم می‌خواند.
+  HINT_ART_DELAY: نشانگر چه مدت روی یک بازی بماند تا تصویرهایش بارگذاری شوند. مقدار بیشتر هنگام پیمایش سریع از تصویرها می‌گذرد.
+  HINT_TXTCOLOR: رنگ متن عادی منو.
+  HINT_SELCOLOR: رنگ مورد برجسته.
+  HINT_UICOLOR: رنگ پس‌زمینه کادرهای گفت‌وگو.
+  HINT_TITLECOLOR: رنگ عنوان بازی‌ها در فهرست.
+  HINT_BGCOLOR: رنگ پس‌زمینه منو.
+  HINT_PLASCOLOR: رنگی که با پس‌زمینه متحرک آمیخته می‌شود.
+  HINT_RESETCOLOR: رنگ‌های داخلی RiptOPL را برمی‌گرداند، نه رنگ‌های پوسته را.
+  HINT_WIDESCREEN: منو را برای تلویزیون 16:9 می‌کشد.
+  HINT_XOFF: منو را روی صفحه به چپ یا راست می‌برد.
+  HINT_YOFF: منو را روی صفحه به بالا یا پایین می‌برد.
+  HINT_MENU_OVERSCAN: اگر تلویزیون لبه‌های منو را می‌برد، منو را به درون جمع می‌کند.
+  HINT_APPLYGAMEID: هنگام شروع بازی یک بارکد نشان می‌دهد تا دستگاه‌های Pixel FX، RetroGEM و PS2Digital نمایه را عوض کنند.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: مسیر، حالت ویدیو و آرگومان‌های Neutrino برای همه بازی‌ها.
+  HINT_OSD_DEFAULTS_BUTTON: زبان کنسول، اندازه صفحه و حالت ویدیویی که به بازی‌ها داده می‌شود.
+  HINT_ENWRITEOP: تغییر نام و حذف بازی‌ها و ساخت VMC را مجاز می‌کند. هرگز به جدول پارتیشن هارد دست نمی‌زند.
+  HINT_DEBUG: 'کمک برای توسعه‌دهندگان: صفحه‌های رنگی هنگام راه‌اندازی بازی و شمارنده‌های بارگذاری تصویر در منو.'
+  HINT_BDMPREFIX: زیرپوشه‌ای روی درایوهای USB، MX4SIO، iLink و exFAT که پوشه‌های بازی در آن است. خالی از ریشه درایو استفاده می‌کند.
+  HINT_ETHPREFIX: زیرپوشه‌ای روی اشتراک SMB که پوشه‌های بازی در آن است. خالی از ریشه اشتراک استفاده می‌کند.
+  HINT_HDDGAMELISTCACHE: فهرست بازی‌های هارد APA را به خاطر می‌سپارد تا پویش‌های بعدی سریع‌تر شوند.
+  HINT_BDMCACHE: حافظه پیش‌خوانی برای USB و دیگر درایوهای BDM در بازی. بزرگ‌تر می‌تواند پخش را نرم‌تر کند اما حافظه بیشتری مصرف می‌کند.
+  HINT_HDDCACHE: حافظه پیش‌خوانی برای هارد داخلی در بازی.
+  HINT_SMBCACHE: حافظه پیش‌خوانی برای SMB در بازی.
+  HINT_CORE_LOADER: هسته برای این بازی، جایی که هر دو پشتیبانی می‌شوند. UDPFS/UDPBD فقط Neutrino؛ SMB/HTTP فقط <OPL>. پیش‌فرض از اجرای بازی‌ها پیروی می‌کند.
+  HINT_DMA_MODE: حالت انتقال هارد داخلی برای این بازی. اگر بازی لگ دارد یا هنگ می‌کند آن را پایین بیاورید.
+  HINT_DNAS_GAMEID: شناسه دیسک برای بازی‌های آنلاین DNAS. بارگذاری از دیسک آن را از دیسک اصلی می‌خواند.
+  HINT_LOAD_FROM_DISC: شناسه DNAS را از دیسک اصلی داخل درایو می‌خواند.
+  HINT_ALTSTARTUP: به جای ELFی که SYSTEM.CNF نام می‌برد، این ELF را از تصویر دیسک راه‌اندازی می‌کند.
+  HINT_VMC_DEFINE: کارت حافظه مجازی این شیار را انتخاب کنید، بسازید یا اندازه‌اش را تغییر دهید.
+  HINT_VMC_ACTION: استفاده از عمومی به این شیار یک کارت مشترک می‌دهد؛ بازنشانی انتخاب را پاک می‌کند.
+  HINT_VMC_NAME: نام فایل کارت، که در پوشه VMC نگه داشته می‌شود.
+  HINT_VMC_CREATE: کارت را می‌سازد یا اندازه تازه را روی آن اعمال می‌کند.
+  HINT_VMC_DELETE: این فایل کارت را حذف می‌کند.
+  HINT_SETTINGS_SOURCE: سراسری از تنظیمات مشترک استفاده می‌کند؛ هر بازی آن‌ها را فقط برای این بازی نگه می‌دارد.
+  HINT_PADMACRO_TOGGLE: هنگام فشردن دکمه استیک را فقط وقتی دکمه را نگه داشته‌اید کند می‌کند؛ روشن/خاموش با دکمه آن را روشن و خاموش می‌کند.
+  HINT_SFX: جلوه‌های صوتی منو.
+  HINT_BOOT_SND: هنگام شروع RiptOPL صدایی پخش می‌کند.
+  HINT_BGM: موسیقی پوسته، یا فایل موسیقی پیش‌فرض پوسته شما را پخش می‌کند.
+  HINT_SFX_VOLUME: بلندی جلوه‌های صوتی منو.
+  HINT_BOOT_SND_VOLUME: بلندی صدای راه‌اندازی.
+  HINT_BGM_VOLUME: بلندی موسیقی پس‌زمینه.
+  HINT_SCROLL: فهرست‌ها هنگام نگه داشتن یک جهت با چه سرعتی پیمایش شوند.
+  HINT_SELECTBUTTON: 'کدام دکمه تأیید می‌کند: ضربدر یا دایره.'
+  HINT_XSENSITIVITY: استیک چپ با چه سهولتی نشانگر را به چپ و راست می‌برد. خاموش آن را نادیده می‌گیرد.
+  HINT_YSENSITIVITY: استیک چپ با چه سهولتی نشانگر را به بالا و پایین می‌برد. خاموش آن را نادیده می‌گیرد.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 روی USB یا بلوتوث، و مولتی‌تپ، برای همه بازی‌ها.
+  HINT_PADMACRO_GLOBAL: کند کردن استیک، وارونه کردن محور و توربو برای همه بازی‌ها.
+  HINT_COVERFLOW_DIM: جلدهای کناری را تیره می‌کند.
+  HINT_OSD_ENABLE: تنظیمات زیر را به بازی می‌دهد. خاموش از تنظیمات خود کنسول استفاده می‌کند.
+  HINT_OSD_TVASPECT: شکل تلویزیون که به بازی داده می‌شود.
+  HINT_OSD_VMODE: حالت ویدیویی که به بازی داده می‌شود.
+  DNAS_ID: شناسه DNAS
+  NEUTRINO_PADEMU_WARN: شبیه‌سازی دسته با Neutrino در دسترس نیست. از دسته PS2 یا منبعی که هسته <OPL> را پشتیبانی می‌کند استفاده کنید.
+  RA_MODE: حالت RA
+  RA_HOST_IP: IP همراه RA (0.0.0.0 = خودکار)
+  HINT_RA_HOST_IP: نشانی IPv4 اختیاری و اختصاصی رایانه RetroAchievements. برای پشتیبان قدیمی SMB/HTTP یا کشف Xerabora از 0.0.0.0 استفاده کنید. تنظیمات سرور بازی را تغییر نمی‌دهد.
+  HINT_RA_MODE: کلاینت رایانه را انتخاب کنید. Xerabora پیش‌فرض است؛ Caduceus اول نشست واردشده خود را بررسی می‌کند.
+  RA_CADUCEUS_OFFLINE: نشست RA در Caduceus آفلاین است.
+  RA_CADUCEUS_SIGN_IN: در Caduceus وارد RetroAchievements شوید، سپس دوباره تلاش کنید.
+  FAV_SAVING: در حال ذخیره در علاقه‌مندی‌ها...
+  FAV_SAVED: در علاقه‌مندی‌ها ذخیره شد
+  FAV_SAVE_FAILED: ذخیره در علاقه‌مندی‌ها ممکن نشد
+  CAD_ACHIEVEMENTS: دستاوردهای Caduceus
+  CAD_VIEW_ACHIEVEMENTS: مشاهده دستاوردها
+  CAD_USE_LIBRARY: این بازی را از طریق دستاوردهای Caduceus در منوی اصلی مرور کنید.
+  CAD_HASH_UNSUPPORTED: هش این قالب محاسبه نمی‌شود. به جای آن کتابخانه حساب را مرور کنید.
+  CAD_HEADING: دستاوردها
+  CAD_LIBRARY: کتابخانه حساب RetroAchievements
+  CAD_FILTER_ALL: همه
+  CAD_EARNED: کسب‌شده
+  CAD_LOCKED: قفل
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: '%d / %d کسب‌شده  |  %s'
+  CAD_ONE_GAME: '%d بازی در حساب'
+  CAD_GAMES: '%d بازی در حساب'
+  CAD_GAME_PROGRESS: '%d / %d دستاورد  |  %d hardcore'
+  CAD_POINTS: '%d امتیاز  |  %s'
+  CAD_EMPTY_LIBRARY: در این حساب بازی‌ای با پیشرفت نیست.
+  CAD_EMPTY_FILTER: هیچ دستاوردی با این فیلتر جور نیست.
+  CAD_LOADING: در حال بارگذاری دستاوردها...
+  CAD_PAIR: وارد Caduceus شوید و ART/CADUCEUS.KEY را روی اشتراک SMB خود جفت کنید.
+  CAD_UNKNOWN_GAME: این بازی در کاتالوگ Caduceus نیست. کاتالوگ را روی رایانه تازه کنید.
+  CAD_CONNECTION_ERROR: پرس‌وجو از Caduceus ممکن نیست. اتصال را بررسی کنید، سپس برای تلاش دوباره Select را بزنید.
+  CAD_BACK_REFRESH: بازگشت به OPL برمی‌گردد. Select این صفحه را تازه می‌کند.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: صفحه   تأیید: باز کردن   Select: تازه‌سازی'
+  CAD_GAME_CONTROLS: 'L1/R1: صفحه   مربع: فیلتر   Select: تازه‌سازی'
+  CAD_BACK: بازگشت
+  CAD_UNTRACKED: Caduceus آماده نیست. این بار بدون دستاوردها اجرا می‌شود.
+  PS1_RA_USB_REQUIRED: دستاوردهای PS1 به VCD روی USB از طریق POPStarter نیاز دارند
+  PS1_RA_REMOVE_PREVIOUS: ماژول دستاورد PS1 قبلی حذف نمی‌شود
+  PS1_RA_PREPARE_FAILED: دستاوردهای PS1 آماده نمی‌شوند. POPS/MODULE_9.IRX را نگه دارید یا جابه‌جا کنید و دسترسی نوشتن دستگاه را بررسی کنید.
+  PS1_RA_CLEAN_DELETE: 'ماژول RA بلااستفاده RiptOPL: POPS/MODULE_9.IRX. برای اجرای تمیز حذف شود؟'
+  PS1_RA_CLEAN_FAILED: ماژول RA بلااستفاده حذف نمی‌شود.
+  PS1_RA_CLEAN_CONTINUE: با این حال ادامه شود؟ یک ماژول RA جامانده ممکن است تله‌متری کهنه را اجرا کند. خیر اجرا را لغو می‌کند.
+  FAV_REMOVED: از علاقه‌مندی‌ها حذف شد
+  FAV_REMOVE_FAILED: حذف از علاقه‌مندی‌ها ممکن نشد
+  POPS_UDPFS_SETTINGS: تنظیمات شبکه POPS UDPFS
+  POPS_UDPFS_DISCOVERY: در همه پوشه‌های POPS روی USB ذخیره می‌کند. سرور 0.0.0.0 از کشف استفاده می‌کند.
+  POPS_UDPFS_NOT_READY: POPS UDPFS به IPCONFIG.DAT و UDPFSCONFIG.DAT معتبر و هم‌خوان در همه پوشه‌های POPS روی USB نیاز دارد. آن‌ها را در تنظیمات شبکه POPS پیکربندی کنید.
+  HINT_POPS_UDPFS_IP: IP ثابت PS2 که درایور POPS UDPFS پس از بازنشانی IOP خود به کار می‌برد.
+  POPS_UDPFS_ALL_USB_FOLDERS: همه پوشه‌های POPS روی USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (نامعتبر)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (ناقص)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS نیاز دارد جفت درایور .udpfs روی کارت حافظه نصب باشد. آن را دستی آماده کنید یا اعمال BDMA هنگام اجرا را روشن کنید.
+  VMC_REPLACE_REQUIRES_DELETE: تغییر اندازه VMC ذخیره‌هایش را پاک می‌کند. از VMC موجود پشتیبان بگیرید و پیش از ساخت اندازه تازه از حذف استفاده کنید.
+  VMC_CREATE_FAILED: VMC ساخته نشد. دستگاه، اتصال و دسترسی نوشتن را بررسی کنید. ذخیره‌های موجود جایگزین نشدند.
+  RA_EXPERIMENTAL_CARDS: کارت‌های آزمایشی Caduceus
+  HINT_RA_EXPERIMENTAL_CARDS: کارت‌های آزمایشی دستاورد درون بازی PS2. ممکن است بازی‌ها را چشمک‌زن یا هنگ کنند. فقط Caduceus؛ خاموش از پالس طلایی استفاده می‌کند. از اجرای بعدی بازی اعمال می‌شود.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA برای این اجرا در دسترس نیست. محیط اجرای RA، IP همراه و فهرست پایش ذخیره‌شده را بررسی کنید. اجرا بدون دستاوردها.
+  UDPFS_IP_CONFLICT: دستگاه دیگری در شبکه شما از نشانی IP این PS2 استفاده می‌کند، پس پاسخ‌های سرور UDPFS به آن می‌رود. در تنظیمات شبکه یک IP دیگر برای PS2 تعیین کنید.
+  XERA_ACHIEVEMENTS: کتابخانه RetroAchievements (xeRAbora)
+  XERA_USE_LIBRARY: این بازی را از طریق کتابخانه RetroAchievements در منوی اصلی مرور کنید.
+  XERA_OPEN_NETWORK: دسترسی به xeRAbora ممکن نیست. OPEN TO THE NETWORK را در تنظیمات آن روشن کنید، IP همراه RA و دیوار آتش رایانه را بررسی کنید.
+  XERA_UNKNOWN_GAME: xeRAbora این تصویر را نمی‌شناسد. اول بررسی پشتیبانی بازی RA را اجرا کنید.
+  XERA_NOT_PLAYED: هنوز در کتابخانه RetroAchievements شما نیست. یک بار با دستاوردها آن را بازی کنید، سپس Select را بزنید.
+  XERA_CONNECTION_ERROR: فهرست از xeRAbora خوانده نمی‌شود. برای تلاش دوباره Select را بزنید.
+  CAD_PAIR_UDPFS: دسترسی به Caduceus ممکن نیست. ART/CADUCEUS.KEY را در پوشه‌ای که PS2-Servers به اشتراک می‌گذارد جفت کنید، و IP همراه RA را تعیین کنید.
+  RA_WL_NOT_SAVED: فهرست پایش ذخیره نشد. مطمئن شوید دستگاه یا اشتراک بازی قابل نوشتن است، سپس دوباره بررسی کنید.
+  RA_UDPFS_LOAD_FIRST: یک بار صفحه UDPFS را باز کنید تا ماژول شبکه آن بارگذاری شود، سپس دوباره تلاش کنید.
+  CAD_UDPFS_IMG: 'مرورگر Caduceus به SMB یا فایل‌های UDPFS نیاز دارد: UDPFS IMG پوشه مشترکی برای کلید آن ندارد.'
+  XERA_SET_CLOCK: هنوز در کتابخانه RetroAchievements شما نیست. ساعت کنسول را در تنظیمات سیستم تنظیم کنید تا فهرست کامل آن را ببینید، یا یک بار با دستاوردها آن را بازی کنید.
+  CFG_TITLES: نمایش عنوان‌های CFG در فهرست بازی‌ها
+  HINT_CFG_TITLES: عنوان CFG هر بازی را به جای نام فایل آن نشان می‌دهد و بر اساس آن مرتب می‌کند. هنگام تازه‌سازی فهرست همه CFGها را می‌خواند، پس فهرست‌ها کندتر بارگذاری می‌شوند. فقط برای نمایش.
+  AUTO_VMC_INVALID: فایل VMC این بازی هست اما کارت حافظه معتبری نیست، پس استفاده یا جایگزین نشد. بازی بدون آن شروع می‌شود؛ آن را در منوی VMC بررسی کنید.
+  AUTO_VMC_STILL_RUNNING: VMC این بازی هنوز در حال ساخت است. کمی بعد بازی را دوباره اجرا کنید.
+  NEUTRINO_DVR_QUICKBOOT: اجرای DVR به گذار به حالت PSX نیاز دارد. -qb را از آرگومان‌های سراسری و هر بازی Neutrino حذف کنید.
+  NEUTRINO_DVR_FILE_MISSING: 'نصب Neutrino برای DVR کامل نیست. فایل لازم موجود نیست:'
+  LOGOART: تصویر لوگو
+  HINT_LOGOART: لوگوی بازی (<ID>_LGO) را وقتی پوسته از آن استفاده می‌کند نشان می‌دهد. خاموش تصویر پیش‌فرض آن را هم پنهان می‌کند، اما جلدها، تصویر دیسک‌ها و پس‌زمینه‌ها را نگه می‌دارد.
+  PARENLOCK_GAME: قفل والدین
+  PARENLOCK_GAME_HINT: برای اجرای این بازی، رمز قفل والدین را می‌خواهد.
+  PARENLOCK_GAME_NO_PASSWORD: یک رمز قفل والدین تعیین کنید، وگرنه این بازی قفل نمی‌شود.
+  HINT_ENABLE_PCCF: CompactFlash روی PC CARD برای PS2های ژاپنی اولیه. فقط بازی‌های بومی PS2؛ CF به دسترسی انحصاری به PC CARD نیاز دارد. برای آزاد کردن آن دوباره راه‌اندازی کنید.
+  PCCF_GAMES: بازی‌های PC CARD CF
+  PCCF_UNAVAILABLE: 'CF در دسترس نیست: یک PS2 ژاپنی اولیه با PC CARD، یک کارت سازگار و نبود هیچ درایور فعال DEV9/هارد/شبکه لازم است.'
+  PCCF_UNSUPPORTED_GAME: CF اکنون فقط بازی‌های بومی PS2 را پشتیبانی می‌کند. VMC روی CF، بارگذاری PS1 و دستاوردهای شبکه در دسترس نیستند.
+  HINT_ENABLE_DVR: کشف آزمایشی ISOهای DESR DVR. به منبع هارد روشن نیاز دارد؛ اجرای بازی به Neutrino خارجی با پشتیبانی DVR نیاز دارد.
