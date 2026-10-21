@@ -168,3 +168,13 @@ against the intended source revision.
 A tester who pressed Save in RiptOPL's menu on a hybrid disk with an older build has
 `settings_riptopl.cfg` in `__common/OPL`. Those settings are now carried over to the exFAT home,
 so nothing needs deleting; remove the file only to test a true first run.
+
+## Auto Loading discovery latency (#1000)
+
+Argv Auto Loading skips the menu-only USB (600 ms), MX4SIO (up to 600 ms),
+and iLink (up to 3 s) discovery settles. It still loads the transports and retries
+its mass device through the existing bounded launch path. Skipping a settle does
+not consume its one-shot flag: returning to the menu retains normal discovery.
+The HDD initialization settle and settings-home discovery remain necessary for
+late drives and hybrid APA/exFAT settings; they are unchanged. This is source and
+host-test evidence, without physical-console timing confirmation.

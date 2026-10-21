@@ -1320,6 +1320,8 @@ static void bdmLoadBlockDeviceModules(void)
     if (modsNow != modsWere && !wasFirstPass)
         bdmForceDeviceRefresh();
 
+    // Auto Loading retries its own mass device; these menu discovery settles must not
+    // delay its IO drain or consume the probes needed if it falls back to the menu.
     // MX4SIO initial discovery ("double tap"): the SIO2 SD card may still be completing its
     // internal power-up / SPI handshake after mx4sio_bd_irx links. If MX4SIO is enabled and loaded,
     // check if it was immediately found. If not, perform one bounded settle (~600ms) on this IO worker
@@ -1327,7 +1329,7 @@ static void bdmLoadBlockDeviceModules(void)
     static int mx4sioSecondProbeDone = 0;
     if (!gEnableMX4SIO)
         mx4sioSecondProbeDone = 0;
-    else if (mx4sioModLoaded && !mx4sioSecondProbeDone) {
+    else if (mx4sioModLoaded && !mx4sioSecondProbeDone && !bdmAutoLaunch) {
         char sdcRoot[16];
         if (!bdmGetDeviceRootByType(BDM_TYPE_SDC, sdcRoot, sizeof(sdcRoot))) {
             mx4sioSecondProbeDone = 1;
@@ -1372,7 +1374,7 @@ static void bdmLoadBlockDeviceModules(void)
      * remaining fault is something other than "not enough time", and adding delay only hides how
      * little is understood about it. */
     static int usbSecondProbeDone = 0;
-    if (iUSBModLoaded && !usbSecondProbeDone) {
+    if (iUSBModLoaded && !usbSecondProbeDone && !bdmAutoLaunch) {
         usbSecondProbeDone = 1;
         DelayThread(600 * 1000);               // bounded settle for USB enumeration + FAT mount
         bdmProbeMassSlots("after-usb-settle"); // forces FatFs's lazy mount on every slot
