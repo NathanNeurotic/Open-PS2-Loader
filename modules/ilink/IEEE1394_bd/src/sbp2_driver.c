@@ -120,26 +120,46 @@ void init_ieee1394DiskDriver(void)
     iLinkEnableSBus();
 }
 
+/* RiptOPL: how long a fresh driver keeps asking the drive for a login (#1018).
+ *
+ * Nothing in this driver ever logs out, and an IOP reset ends it without warning. The drive therefore
+ * still holds the old exclusive login when the next IEEE1394_bd -- OPL's or Neutrino's in-game copy,
+ * or the one a game's own IOP reset loads -- brings the bus back up. SBP-2 has the drive keep a login
+ * for 2^reconnect seconds after a bus reset in case its owner reconnects: 1 s for the
+ * MANAGEMENT_ORB_RECONNECT(0) every login here asks for, longer on bridges that round it up. Until it
+ * lets go, every new LOGIN is refused. The SDK gave up after 5 tries 200 ms apart (about 0.8 s),
+ * inside that hold, and nothing tries again until the next bus reset, which a running game never
+ * causes: the device never attached, CDVDMAN waited for it forever, and only Ember -- the one core
+ * that keeps the IOP -- booted. Keep asking at the same 200 ms pace until the hold is certainly over.
+ * The budget is elapsed time, not a try count, so a drive that answers slowly cannot stretch it. */
+#define SBP2_LOGIN_RETRY_US  (200 * 1000)
+#define SBP2_LOGIN_BUDGET_US (5 * 1000 * 1000)
+
+static u32 sbp2ElapsedUs(const iop_sys_clock_t *start)
+{
+    iop_sys_clock_t now, diff;
+    u64 ticks;
+    u32 sec, usec;
+
+    GetSystemTime(&now);
+    ticks = (((u64)now.hi << 32) | now.lo) - (((u64)start->hi << 32) | start->lo);
+    diff.hi = (u32)(ticks >> 32);
+    diff.lo = (u32)ticks;
+    SysClock2USec(&diff, &sec, &usec);
+    return sec * 1000000 + usec;
+}
+
 static int initConfigureSBP2Device(struct SBP2Device *dev)
 {
-    unsigned char retries;
+    iop_sys_clock_t start;
 
-    // Try 5 x 200ms to login (same as Linux: drivers/firewire/sbp2.c)
-    retries = 5;
-    while (1) {
-        if (ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST, dev) >= 0)
-            break;
-
-        retries--;
-        if (retries == 0)
-            break;
-
-        DelayThread(200 * 1000); // 200ms
-    }
-
-    if (retries == 0) {
-        M_DEBUG("Failed to log into the SBP-2 device.\n");
-        return -1;
+    GetSystemTime(&start);
+    while (ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST, dev) < 0) {
+        if (sbp2ElapsedUs(&start) >= SBP2_LOGIN_BUDGET_US) {
+            M_DEBUG("Failed to log into the SBP-2 device.\n");
+            return -1;
+        }
+        DelayThread(SBP2_LOGIN_RETRY_US);
     }
 
     if (ieee1394_InitializeFetchAgent(dev) < 0) {
