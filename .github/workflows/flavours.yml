@@ -363,6 +363,8 @@ jobs:
           /tmp/test_ministack_conflict
       - name: Check DEV9-gated UDP chains, UDPFS sub-make dependencies and the IP-conflict notice
         run: python3 .github/scripts/test_udpfs_network_hardening.py
+      - name: Check UDPFS delivers the last byte of odd-sized reads
+        run: python3 .github/scripts/test_udpfs_smap_fifo_tail.py
       - name: Check UDPFS discovery announces the PS2's IP before the server replies
         run: |
           N=modules/network
