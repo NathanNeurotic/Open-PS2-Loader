@@ -41,7 +41,15 @@ real code against simulated drives and a simulated clock, and fails on the SDK o
    ignored scsi_warmup's result and connected a drive whose inquiry, readiness or capacity had failed.
    A failed attempt frees its slot, so the next bus reset can still bring the drive up.
 
-NOT HARDWARE-VERIFIED when added (2026-10-20). Worth offering upstream to ps2sdk once confirmed.
+4. src/sbp2_driver.c fetch-agent initialization: clear LOGIN's completed status before publishing
+   the dummy ORB, wait for that ORB's own response before freeing it, and propagate a failed
+   completion. The old FIFO let Sync return on LOGIN and free a still-pending dummy request.
+   sbp2_queue_cmd also returns a failed command-pointer publication instead of entering Sync
+   indefinitely. The matching POPSTARTER copy carries the same changes.
+   test_ilink_sbp2_completion.py compiles these real functions from both drivers against immediate,
+   delayed, stale and failed completions. See docs/ILINK_TIMING_INVESTIGATION_2026-10-21.md.
+
+NOT HARDWARE-VERIFIED when added (2026-10-20/21). Worth offering upstream to ps2sdk once confirmed.
 
 RE-VENDOR: fetch the files above from the new pin, clang-format 12, then re-apply LOCAL CHANGES and
 update the pin. Keep test_ilink_bd_reset.py passing.

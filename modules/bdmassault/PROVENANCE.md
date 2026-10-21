@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 21977 | 8f9a9e4e6984a58435fe7e24e1e5832f027dc537b3274bc4220245bbe1844714 |
+| usbhdfsd.irx.ilink | 22041 | 1ba360d7b06f8e364c38a0db50b6fa4f7a256e0a61842dbe2c6bc8c37c94c4a5 |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
@@ -47,6 +47,10 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   of ~0.8 s), polls TEST UNIT READY a bounded number of times, and offers the drive to BDM only after
   a successful warm-up; see `ilink_bd_assault/README.md`. The previous build was 21609 bytes,
   sha256 `9b47d90b03804ea9ef47c3702911d83d488405cc64285b62073ce88a7b6bfc63`.
+  The October 21 completion-ordering correction also clears stale LOGIN status before the dummy
+  ORB, propagates its completion error, and returns command-submission failures before waiting.
+  Before that correction the #1024 binary was 21977 bytes, sha256
+  `8f9a9e4e6984a58435fe7e24e1e5832f027dc537b3274bc4220245bbe1844714`.
   **Rebuilt, not fetched:** the bytes above are the output of `make` in that directory inside
   `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11` (the
   PS2DEVPINNED container), which also reproduces the 21609-byte build from its source exactly. CI
