@@ -141,11 +141,19 @@ void smap_fifo_read(uint16_t offset, void *dst, uint32_t bytes)
             dev9DmaTransfer(1, dst, bcr, DMAC_TO_MEM);
     }
 
-    /* PIO remaining bytes (u32 chunks, then u16 for trailing 2 bytes) */
+    /* PIO remaining bytes (u32 chunks, then the last 1-3 bytes out of one more word).
+     * RiptOPL (#1010): upstream stored a u16 for the tail and had no step for a single last byte,
+     * so an odd byte count -- the end of every odd-sized file read over UDPFS -- left the final
+     * byte as whatever the buffer held before. The FIFO stores each frame padded to 4 bytes, so the
+     * last word can be read whole; only its valid bytes are stored. */
     for (i = dma_bytes; i + 4 <= bytes; i += 4)
         *(u32 *)(d + i) = SMAP_REG32(SMAP_R_RXFIFO_DATA);
-    if (i + 2 <= bytes)
-        *(u16 *)(d + i) = SMAP_REG16(SMAP_R_RXFIFO_DATA);
+    if (i < bytes) {
+        u32 tail = SMAP_REG32(SMAP_R_RXFIFO_DATA);
+
+        for (; i < bytes; i++, tail >>= 8)
+            d[i] = (u8)tail;
+    }
 }
 
 int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData)

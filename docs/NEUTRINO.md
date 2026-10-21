@@ -409,6 +409,15 @@ effect** (OPL shows the usual restart-to-apply notice).
 > the old file behind it (a stray `]` or `"]` line). Neutrino could not read the damaged toml and every
 > UDPFS game went straight back to the browser. RiptOPL now recreates the file on every rewrite, and
 > repairs a toml already damaged this way the next time you launch a game; nothing to delete or copy.
+>
+> **Files read from a UDPFS share lost their last byte when their size was odd (#1010).** The UDPFS
+> network driver never stored the final byte of an odd-length reply, so the file arrived at the right
+> size with a stray last byte. RiptOPL now delivers every byte. The same driver is inside Neutrino's
+> release modules, so a `neutrino` folder copied from a UDPFS share to a memory card with a file
+> manager that uses them can be damaged: Neutrino then stops on a config such as
+> `config/i_dev9_hidden.toml` ("bad control char in comment") and every UDPFS game goes back to the
+> browser. Copy the `neutrino` folder from the release zip to the card again from a USB drive. In
+> RiptOPL itself the lost byte could stop PNG covers on UDPFS from loading.
 
 > **Hardware note:** the UDPRDMA path (both Files and Image) is validated on emulator only so far —
 > real-PS2 confirmation is pending.
