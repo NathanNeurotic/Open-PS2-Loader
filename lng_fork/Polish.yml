@@ -317,3 +317,337 @@ translations:
   HINT_EMBER_DISPLAY: Tryb wyjścia używany przez Ember dla gier PS1. 240p lub 480p zostaje zapisane w pliku settings.txt w katalogu EMBER uruchamianego urządzenia. Domyślnie usuwa to ustawienie, a także sam plik, jeśli nie zawierał nic więcej.
   LOGOART: "Logotypy gier"
   HINT_LOGOART: "Wyświetla logo gry (<ID>_LGO), jeśli używa go motyw. Wyłączenie ukrywa również obraz domyślny, bez wpływu na okładki, grafiki płyt i tła."
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  OK: OK
+  START: Uruchom
+  RESET: Resetuj
+  VMC_STATUS: Stan
+  ENTER: Enter
+  VSYNC: Synchronizacja pionowa
+  AUTOSTARTLAST: Autostart
+  DS34BT_MODE: DualShock3/4 BT
+  HINT_NEUTRINO_AUTO_ELF: Przekazuje rozruchowy ELF gry do Neutrino, aby znalazło konfigurację dla danego tytułu. Domyślnie włączone; ręcznie ustawiona opcja Boot ELF ma pierwszeństwo.
+  HINT_POPSTARTER_PATH: Gdzie jest POPSTARTER.ELF. Gdy puste, RIPPS2 wpisuje ten znaleziony na dysku; nadpisz, aby użyć innego, np. usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Argumenty Neutrino przekraczają długość, którą można zapisać. Skróć jakieś pole przed zapisem.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Argumenty uruchomienia Neutrino przekraczają bezpieczny limit. Skróć argumenty globalne lub gry.
+  NEUTRINO_AUTO_ELF: Automatyczny Boot ELF (-elf)
+  HINT_NEUTRINO_PATH: 'Gdzie jest neutrino.elf? <nie ustawiono> = urządzenie gry -> mc0/mc1. Własna pełna ścieżka jest próbowana jako pierwsza. Przykłady: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Wyświetlanie gier PS2/PS1
+  HINT_GAME_VIEW_MODE: Wszystko pokazuje gry PS2 i PS1 razem, a L3 przełącza Wszystko, PS1, PS2. PS2 lub PS1 pokazuje tylko ten typ i wyłącza L3. APPS i Ulubione gry mają własne zasady wyświetlania.
+  VIEW_MIXED: Pokazywane gry PS2 + PS1
+  VIEW_PS1_ELF: Pokazywane aplikacje PS1 ELF
+  APPS_DISPLAY: Wyświetlanie aplikacji
+  HINT_APPS_DISPLAY: Wszystko pokazuje każdy ELF na jednej liście APPS z wyłączonym L3. Aplikacje / PS1ELF przenosi tytuły zawierające [PS1] na drugą stronę L3; sposób uruchamiania się nie zmienia.
+  VIEW: Widok
+  VIEW_PS2: Pokazywane ulubione gry PS2
+  VIEW_PS1: Pokazywane ulubione gry PS1
+  VIEW_ELF: Pokazywane ulubione ELF-y
+  VIEW_ALL: Pokazywane wszystkie ulubione gry
+  VMC_FRAGMENTED_ON_CREATE: VMC utworzono, ale jest pofragmentowany. Emulacja karty pamięci potrzebuje jednego nieprzerwanego pliku, więc przy uruchomieniu ten VMC zostanie pominięty, a użyta zostanie prawdziwa karta. Zwolnij miejsce i utwórz go ponownie albo skopiuj z innego urządzenia.
+  KEYB_MOVE_CURSOR: Przesuń kursor
+  TITLECOLOR: Kolor tytułów gier
+  RA_CHECK_GAME: Sprawdź obsługę RetroAchievements
+  RA_TEST_LINK: Testuj połączenie RetroAchievements z PC
+  RA_CHECKING_IMAGE: Sprawdzanie obrazu, to potrwa kilka sekund...
+  RA_CHECK_RUNNING: Sprawdzanie obrazu już trwa
+  RA_LOOKING_FOR_PC: Szukanie klienta na PC...
+  RA_UL_UNSUPPORTED: Gier UL/USBExtreme nie da się jeszcze sprawdzić
+  RA_UL_UNSUPPORTED2: Obsługiwane są tylko zwykłe obrazy .iso w DVD/ lub CD/
+  RA_UNKNOWN_IMAGE: RetroAchievements nie zna tego obrazu
+  RA_STILL_IDENTIFYING: PC wciąż rozpoznaje obraz
+  RA_TRY_AGAIN: Spróbuj ponownie za kilka sekund
+  RA_NO_SOCKET: Konsola nie mogła otworzyć gniazda sieciowego
+  RA_NO_SOCKET2: Uruchom ponownie konsolę albo sprawdź urządzenie ETH w ustawieniach
+  RA_TEST_NO_SOCKET2: Sprawdź kabel i ETH w ustawieniach; jeśli sieć działa, uruchom ponownie konsolę
+  RA_PC_NO_ANSWER: Klient na PC nie odpowiedział
+  RA_PC_NO_ANSWER2: Sprawdź, czy xeRAbora działa, albo spróbuj testu połączenia z PC
+  RA_SUPPORTED: Obsługiwane przez RetroAchievements
+  RA_START_TO_TRACK: Uruchom grę, aby śledzić osiągnięcia
+  RA_ACHIEVEMENTS: '%d osiągnięć'
+  RA_ACHIEVEMENTS_FULL: '%d osiągnięć -- %d odblokowanych, %d nieobsługiwanych'
+  RA_HASH_FAILED: Nie udało się obliczyć skrótu obrazu
+  RA_HASH_FAILED2: Przyczynę znajdziesz w RA/hashes.txt obok gier
+  RA_NET_BUSY: Sieć jest zajęta przez transport UDP
+  RA_NET_BUSY2: RA potrzebuje stosu SMB -- zmień protokół albo zbuduj plik .wl na PC
+  RA_NET_BUSY_HASH: Skrót jest w RA/hashes.txt -- xeRAbora może z niego zbudować .wl
+  RA_NO_IP: Konsola nie ma adresu IP
+  RA_NO_IP2: Sprawdź DHCP albo adres statyczny w ustawieniach sieci
+  RA_TEST_NO_ANSWER: Żaden klient na PC nie odpowiedział w ciągu 3 sekund
+  RA_TEST_NO_ANSWER2: Konsola%s. Sprawdź, czy xeRAbora działa i czy UDP 18194 jest otwarty
+  RA_TEST_FOUND: Znaleziono klienta na PC%s%s %s
+  RA_TEST_FOUND2: Odpowiedź w %u ms, konsola%s
+  RA_NA_NEUTRINO: Śledzenie RA wymaga rdzenia <OPL> -- uruchomienia przez Neutrino nigdy nie wczytują ee_core
+  RA_NA_UDPFS: Śledzenie RA nie jest dostępne na UDPFS -- gry uruchamiają się przez Neutrino
+  RA_NA_PS1: Śledzenie RA nie jest dostępne dla gier PS1
+  RA_NA_HDD: Informacje o grze APA lub katalog ustawień HDD są niedostępne
+  RA_NA_HDD2: Ustaw prawidłowy katalog ustawień HDD i odśwież przed sprawdzeniem obsługi
+  RA_TELEMETRY: Telemetria RetroAchievements
+  RA_BADGES: Odznaki RetroAchievements
+  HTTP_GAMES: Gry HTTP
+  HTTP_SERVER: Serwer HTTP
+  HTTP_PORT: Port HTTP
+  HTTP_BASE_PATH: Ścieżka bazowa HTTP
+  HTTP_TEST: Testuj serwer HTTP
+  HTTP_TEST_OK: Serwer OK -- gry na liście
+  HTTP_TEST_EMPTY: Katalog jest pusty -- poprawny, ale nic nie dowodzi w sprawie zakresów bajtów
+  HTTP_TEST_NO_ISO: Katalog nie ma obsługiwanego obrazu, na którym można przetestować zakres bajtów
+  HTTP_ERR_CONNECT: Nie można połączyć się z serwerem HTTP
+  HTTP_ERR_CATALOG: Brak games.csv, nie da się go odczytać albo jest za duży
+  HTTP_ERR_RANGE: Serwer nie zwrócił dokładnie tych bajtów, o które proszono
+  HTTP_LAUNCH_UNAVAILABLE: Uruchamianie przez HTTP nie jest jeszcze zaimplementowane -- katalog można tylko przeglądać
+  HTTP_ERR_COMPRESSED: Skompresowane obrazy (.zso) nie są jeszcze obsługiwane przez HTTP
+  HTTP_NO_VMC: Wirtualne karty pamięci nie są dostępne przez HTTP -- użyj fizycznej karty
+  HTTP_TAB_HINT: HTTP czyta games.csv z twojego serwera. Ustaw adres, port i ścieżkę bazową w ustawieniach sieci, a potem użyj Testu.
+  RA_DISC_CHECK: 'RA: sprawdź obsługę płyty'
+  RA_DISC_LAUNCH: 'RA: uruchom płytę'
+  RA_DISC_CHECKING: Sprawdzanie płyty pod kątem RetroAchievements
+  RA_DISC_HASH_FAILED: Nie udało się obliczyć skrótu płyty -- sprawdź RA/hashes.txt w folderze ustawień
+  RA_DISC_HOME_ERROR: Ścieżki ustawień nie można użyć dla list śledzenia płyt
+  RA_DISC_ENABLE: Najpierw włącz telemetrię RetroAchievements w ustawieniach sieci
+  RA_DISC_CHECK_FIRST: 'Brak listy śledzenia dla tej płyty -- najpierw użyj RA: sprawdź obsługę płyty'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: znaleziono HDD, ale nie da się odczytać jego tablicy partycji APA. Nie formatuj go -- twoje gry mogą dać się odzyskać.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: dysk nie został zamontowany, bo jego sektory nie mają 512 bajtów (np. dysk z sektorami 4K). OPL czyta tylko sektory 512-bajtowe.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Ten tytuł jest osobną partycją APA, a OPL nigdy nie edytuje tablicy partycji. Zmień nazwę na PC.
+  POPS_SETTINGS_UNREADABLE: Nie udało się odczytać ustawień POPSTARTER -- karta pamięci jest zajęta lub nieczytelna. Spróbuj ponownie po zakończeniu wczytywania.
+  GLOBAL_PS_EMULATION_SETTINGS: Globalne ustawienia emulacji PS
+  RA_NO_LINK_UNTRACKED: Sieć niedostępna -- tym razem uruchamianie bez RetroAchievements.
+  IGR_USB_DRIVERS_PROMPT: Ścieżka IGR jest na USB, ale w %s brakuje USBD.IRX i USBHDFSD.IRX, których konsola potrzebuje, by dostać się do USB po resecie w grze. Bez nich IGR wraca do przeglądarki PS2. Skopiować tam teraz sterowniki RiptOPL? FMCB, OpenTuna i inne exploity też wczytują te pliki i mogą z nimi działać inaczej. Istniejące pliki nigdy nie są zastępowane. Tylko USB FAT32.
+  IGR_USB_DRIVERS_FAILED: Nie udało się skopiować sterowników USB do %s (karta pełna lub niezapisywalna). IGR będzie wracać do przeglądarki PS2.
+  OFFICIAL_CFG_NOTIFICATION: Oficjalne ustawienia OPL wczytane z %s
+  CFM_VMODE_HOLD_KEEP: Przytrzymaj, aby zachować
+  BDM_PS2_FOLDERS_UNREADABLE: Nie udało się otworzyć folderu CD ani DVD w %s (błąd %d), więc to urządzenie nie pokazuje gier PS2. Naciśnij SELECT na jego stronie, aby spróbować ponownie.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: System plików Neutrino ustawiono na bd, ale to urządzenie nigdy nie podało swojego numeru, więc Neutrino nie może na nie wskazać. Ustaw system plików Neutrino dla tej gry na Auto lub exfat.
+  CFM_VMODE_REVERT_IN: Przywrócenie za %d s
+  EMBER_DITHER: Dithering Ember
+  HINT_EMBER_DITHER: Dithering Ember (Wł. lub Wył.), zapisywany do EMBER/settings.txt na urządzeniu uruchamiania. Wartość dla gry ma pierwszeństwo.
+  EMBER_SHADING: Cieniowanie Ember
+  HINT_EMBER_SHADING: 'Głębia kolorów Ember: 15 bitów lub 24 bity (eksperymentalne). Zapisywana do EMBER/settings.txt na urządzeniu uruchamiania. Wartość dla gry ma pierwszeństwo.'
+  EMBER_CONTROLLER: Kontroler Ember
+  HINT_EMBER_CONTROLLER: 'Tryb kontrolera Ember: Auto, Analog lub D2A. Zwykle najlepiej ustawić go dla gry (Trójkąt > Ustawienia gry Ember), co ma pierwszeństwo.'
+  EMBER_480P_CONFIRM: Ember w 480p nie daje obrazu przez kompozyt. Użyć 480p?
+  EMBER_SHADING_24: 24 bity (eksperymentalne)
+  EMBER_GAME_SETTINGS: Ustawienia gry Ember
+  HINT_EMBER_GAME_SETTING: Tylko ta gra. Naciśnij OK, aby przed uruchomieniem zapisać EMBER/games/<nazwa>/settings.txt. Nieruszona Domyślna zachowuje istniejącą wartość z pliku; zmiana wartości z powrotem na Domyślną usuwa jej nadpisanie.
+  EMBER_TIMING: Taktowanie Ember
+  HINT_EMBER_TIMING: 'Taktowanie obrazu Ember: Auto podąża za regionem płyty, NTSC wymusza 60 Hz, PAL wymusza 50 Hz. Zapisywane do EMBER/settings.txt na urządzeniu uruchamiania.'
+  EMBER_GLOBAL_WARNING: Te ustawienia Ember dotyczą każdej gry PS1, a niektóre gry się z nimi wysypują. Aby zmienić tylko jedną grę, użyj Trójkąt > Ustawienia gry Ember na tej grze.
+  HINT_COVERFLOW_COUNT: Ile okładek RIPFLOW pokazuje po każdej stronie wybranej.
+  HINT_COVERFLOW_SCALE: Jak dużą RIPFLOW rysuje wybraną okładkę względem pozostałych.
+  HINT_COVERFLOW_ANIM: Jak szybko okładki przesuwają się, gdy poruszasz się po przepływie.
+  HINT_NARGS_QB: 'Quick Boot: pomija ekran startowy Neutrino. Włączone tutaj jest wysyłane dla każdej gry; wyłączone, RIPPS2 i tak wysyła je samo dla gier z USB, iLink i sieci, gdzie jest potrzebne.'
+  HINT_NARGS_DBC: 'Kolory debugowania: Neutrino wypełnia ekran kolorem na każdym etapie wczytywania, więc zdjęcie pokazuje, gdzie gra się zatrzymuje.'
+  HINT_NARGS_LOGO: Pokazuje logo PS2 przed grą (drugi restart IOP, którego potrzebują niektóre dyski iLink). Wyłączone tutaj, RIPPS2 kieruje się opcją Uruchamianie gier > Logo PS2 i nigdy nie wysyła go dla gier z MMCE ani z sieci.
+  HINT_NARGS_CWD: 'Folder, który gra uważa za własny. Puste: domyślny Neutrino.'
+  HINT_NARGS_CFG: 'Twój własny plik konfiguracji Neutrino (-cfg). Puste: ten od Neutrino.'
+  HINT_NARGS_ELF: 'Uruchamia ten ELF zamiast pliku rozruchowego wskazanego przez płytę. Puste: własny plik gry.'
+  HINT_NARGS_ATA0: Obraz HDD, który Neutrino montuje jako wewnętrzny HDD konsoli, dla gier używających HDD (-ata0).
+  HINT_NARGS_ATA0ID: Plik ID pasujący do tego obrazu HDD (-ata0id).
+  HINT_NARGS_ATA1: Drugi obraz HDD (-ata1).
+  PS1_SAVE_GUIDANCE: Zapisy PS1 zależą od Ember lub POPSTARTER; ustawienia VMC PS2 nie mają zastosowania.
+  NEUTRINO_SHOW_ARGS: Pokaż argumenty uruchomienia
+  HINT_NEUTRINO_SHOW_ARGS: Przed każdym uruchomieniem przez Neutrino pokazuje każdy argument, który Neutrino otrzyma, i pyta, czy kontynuować. Wstecz wraca do menu bez uruchamiania.
+  NEUTRINO_ARGS_CONFIRM: Neutrino uruchomi się z tymi argumentami. Uruchomić?
+  HINT_NARGS_EXTRA: Inne flagi Neutrino, rozdzielone spacjami, wysyłane po wszystkim powyżej. RIPPS2 zawsze dodaje -bsd i -dvd dla dysku i ISO gry, -mc0 i -mc1 dla jej VMC, -gsm dla trybu obrazu oraz własne tryby zgodności gry. Flaga z własnym wierszem powyżej (np. -logo) przy zapisie trafia do tego wiersza i nadal jest wysyłana.
+  GAME_TYPE_LABELS: Pokaż etykiety [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: Nie udało się zapisać listy kodów w folderze Neutrino, więc Neutrino nie może jej użyć. Uruchomić bez kodów?
+  AUTO_CREATE_VMC: Utwórz VMC przy pierwszym uruchomieniu
+  HINT_AUTO_CREATE_VMC: Uruchomienie gry PS2 bez VMC w gnieździe 1 tworzy kartę 8 MB na urządzeniu gry, nazwaną tak, jak proponuje ekran VMC (wspólną dla wszystkich płyt gry), i ją przypisuje. Nie dla wewnętrznego HDD w Neutrino.
+  AUTO_VMC_CREATING: Tworzenie VMC tej gry...
+  AUTO_VMC_FAILED: Nie udało się utworzyć VMC tej gry. Gra uruchomi się bez niego.
+  SAVE_ICONS: Ikony zapisów 3D
+  HINT_SAVE_ICONS: Pokazuje obracającą się ikonę zapisu wybranej gry tam, gdzie motyw ma na nią miejsce. Najpierw czyta własny VMC gry, potem karty pamięci.
+  NETBOOT_RESTART_NOW: Protokół sieciowy zmieni się po ponownym uruchomieniu. Zapisać ustawienia i uruchomić teraz ponownie OPL?
+  HINT_NET_PROTOCOL: 'Której usługi sieciowej używa RiptOPL: udziału SMB, UDPFS, UDPBD lub HTTP. To samo ustawienie co w Źródłach gier. Zmiana z już działającej wymaga ponownego uruchomienia.'
+  HINT_UDPFS_ACCESS: Tylko UDPFS. Pliki czyta pojedyncze ISO z folderu gier na serwerze; IMG czyta obraz dysku jako dysk. SMB i HTTP zawsze używają Plików, UDPBD zawsze IMG.
+  HINT_SMB_VERSION: Którą wersją SMB rozmawiać z udziałem na PC.
+  HINT_NET_ADVANCED: Odblokowuje edycję trybu łącza Ethernet i portu SMB.
+  HINT_ETH_LINK_MODE: Wymusza prędkość i dupleks łącza sieciowego. Zostaw Auto, chyba że łącze ciągle się zrywa.
+  HINT_IP_ADDR_TYPE: Statyczny używa adresu poniżej; DHCP pyta router. UDPFS i UDPBD zawsze używają statycznego.
+  HINT_PS2_IP: Własny adres IP konsoli PS2. Wybierz taki, którego nie używa żadne inne urządzenie, w tym samym zakresie co PC.
+  HINT_NETMASK: Maska podsieci, zwykle 255.255.255.0.
+  HINT_GATEWAY: Adres twojego routera, zwykle z tymi samymi trzema pierwszymi liczbami i zakończony na .1.
+  HINT_DNS: Adres serwera DNS. Zwykle taki sam jak brama.
+  HINT_SMB_ADDR_TYPE: Łączenie z PC przez jego adres IP lub nazwę NetBIOS (komputera).
+  HINT_SMB_ADDRESS: 'PC udostępniający twoje gry: jego adres IP albo nazwa komputera, gdy Typ adresu to NetBIOS.'
+  HINT_SMB_PORT: 'Port SMB. Musi pasować do PC: PS2 Servers używa 1111, udziały Windows i Samba używają 445.'
+  HINT_SMB_USER: Nazwa użytkownika SMB. guest działa dla większości udziałów.
+  HINT_HTTP_SERVER: Adres IP serwera gier HTTP.
+  HINT_HTTP_PORT: Port, na którym nasłuchuje serwer gier HTTP.
+  HINT_HTTP_BASE: Folder na serwerze HTTP, w którym jest games.csv. / to katalog główny serwera.
+  HINT_HTTP_TEST: Próbuje serwera HTTP z powyższymi wartościami i podaje, co znalazł.
+  HINT_RA_TELEMETRY: Główny przełącznik RetroAchievements. Wył. uruchamia gry bez stosu sieciowego i migawek, tak samo jak zwykła kompilacja.
+  HINT_RA_BADGES: Oznacza na liście gry, które mają osiągnięcia. Pozostaje ciemne, gdy telemetria jest wyłączona.
+  HINT_POPS_NET_BUTTON: Edytuje własne pliki sieciowe POPSTARTER (IPCONFIG.DAT, SMBCONFIG.DAT), których potrzebują gry PS1 przez SMB.
+  HINT_POPS_IP_TYPE: 'Jak PS2 dostaje adres, gdy gra PS1 działa przez SMB: Statyczny lub DHCP.'
+  HINT_POPS_IP: Adres IP PS2, gdy gra PS1 działa przez SMB.
+  HINT_POPS_SMB_IP: Adres IP PC udostępniającego twoje gry PS1.
+  HINT_POPS_SMB_SHARE: Nazwa udziału na tym PC, w którym jest folder POPS.
+  HINT_LASTPLAYED: Zaczyna od gry uruchomionej ostatnio.
+  HINT_LANGUAGE: Język menu. Dodaj kolejne, wkładając pliki lang_*.lng do folderu LNG.
+  HINT_GSM_DEFAULTS_BUTTON: Poprawki trybu obrazu, które dostaje każda gra, chyba że ma własne ustawienia GSM.
+  HINT_DEFDEVICE: Strona, którą RiptOPL otwiera przy starcie.
+  HINT_MMCE_MODE: Gry na SD2PSX lub MemCard PRO2. Auto startuje przy starcie, Ręcznie po otwarciu strony, Wył. ukrywa ją.
+  HINT_MMCE_SETTINGS_BUTTON: Gniazdo, IGR bootcard, GameID i opcje taktowania dla MMCE.
+  HINT_ENABLE_USB: Wczytuje sterownik pamięci masowej USB.
+  HINT_ENABLE_MX4SIO: Wczytuje sterownik adaptera kart SD MX4SIO.
+  HINT_ENABLE_ILINK: Wczytuje sterownik pamięci masowej iLink (FireWire).
+  HINT_NETSTART: 'Uruchamia sieć: Auto przy starcie, Ręcznie po otwarciu jej strony. Wył. nie rusza karty sieciowej.'
+  HINT_APPMODE: Strona aplikacji. Auto startuje przy starcie, Ręcznie po otwarciu, Wył. ukrywa ją.
+  HINT_FAVMODE: Strona ulubionych gier. Auto startuje przy starcie, Ręcznie po otwarciu, Wył. ukrywa ją.
+  HINT_BDMA_BUTTON: Którego sterownika exFAT POPSTARTER używa dla gier PS1 na USB, MX4SIO, MMCE, HDD lub iLink.
+  HINT_VCD_LIST_BUTTON: 'Jak wyświetlane są gry PS1: ukryj ID gier, pokaż tylko płytę 1, pokaż partycje PP na HDD.'
+  HINT_MMCE_SLOT: W którym gnieździe karty pamięci jest urządzenie MMCE. Auto je znajdzie.
+  HINT_MMCE_GAMEID: Mówi urządzeniu MMCE, która gra się uruchamia, aby mogło przełączyć się na kartę pamięci tej gry.
+  HINT_MMCE_COMM_BUTTON: Opcje taktowania łącza MMCE. Zmieniaj je tylko wtedy, gdy gry się zawieszają lub wolno wczytują.
+  HINT_MMCE_PATH_BUTTON: Gdzie na karcie MMCE są foldery gier.
+  HINT_MMCE_PREFIX: Podfolder na karcie MMCE, w którym są CD, DVD i inne foldery OPL. Puste używa katalogu głównego karty.
+  HINT_GAME_TYPE_LABELS: Poprzedza nazwę każdej gry znacznikiem [PS1] lub [PS2]. Tylko wyświetlanie.
+  HINT_MENU_VMODE: Wyjście obrazu menu. Gry używają zamiast tego GSM. Przytrzymaj Zatwierdź, aby zachować nowy tryb.
+  HINT_THEME: Wygląd menu. Motywy są czytane z folderu THM na każdym urządzeniu.
+  HINT_COVERFLOW_BUTTON: Liczba okładek, rozmiar, animacja i przyciemnianie dla motywu Coverflow.
+  HINT_ARTWORK_BUTTON: 'Które grafiki się wczytują: okładki, grafiki płyt, tła i ikony zapisów.'
+  HINT_COLORS_BUTTON: Kolory tekstu, podświetlenia, okien dialogowych i tła.
+  HINT_NOTIFICATIONS: Krótkie powiadomienia, gdy wczytuje się plik konfiguracji, motywu lub języka.
+  HINT_AUTOSORT: Sortuje listy gier od A do Z. Wył. zachowuje kolejność, w jakiej je znaleziono.
+  HINT_AUTOREFRESH: Dodaje gry z nowo podłączonych urządzeń bez ręcznego odświeżania.
+  HINT_COVERART: Wczytuje okładki z folderu ART.
+  HINT_DISCART: Pokazuje grafikę płyty (<ID>_ICO). Wył. ukrywa płytę, ale zachowuje okładki i tła.
+  HINT_BGART: Pokazuje tło gry (<ID>_BG), gdy motyw go używa.
+  HINT_ART_TAR: Czyta też grafiki spakowane w ART/art.tar.
+  HINT_ART_DELAY: Jak długo kursor zatrzymuje się na grze, zanim wczyta się jej grafika. Wyższe pomija grafiki przy szybkim przewijaniu.
+  HINT_TXTCOLOR: Kolor zwykłego tekstu menu.
+  HINT_SELCOLOR: Kolor podświetlonej pozycji.
+  HINT_UICOLOR: Odcień tła okien dialogowych.
+  HINT_TITLECOLOR: Kolor tytułów gier na liście.
+  HINT_BGCOLOR: Kolor tła menu.
+  HINT_PLASCOLOR: Kolor wmieszany w animowane tło.
+  HINT_RESETCOLOR: Przywraca wbudowane kolory RiptOPL, a nie kolory motywu.
+  HINT_WIDESCREEN: Rysuje menu dla telewizora 16:9.
+  HINT_XOFF: Przesuwa menu w lewo lub w prawo na ekranie.
+  HINT_YOFF: Przesuwa menu w górę lub w dół na ekranie.
+  HINT_MENU_OVERSCAN: Zmniejsza menu do środka, jeśli telewizor obcina jego krawędzie.
+  HINT_APPLYGAMEID: Pokazuje kod kreskowy przy starcie gry, aby urządzenia Pixel FX, RetroGEM i PS2Digital przełączyły profile.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Ścieżka, tryb obrazu i argumenty Neutrino dla każdej gry.
+  HINT_OSD_DEFAULTS_BUTTON: Język konsoli, rozmiar ekranu i tryb obrazu przekazywane grom.
+  HINT_ENWRITEOP: Pozwala zmieniać nazwy i usuwać gry oraz tworzyć VMC. Nigdy nie rusza tablicy partycji HDD.
+  HINT_DEBUG: 'Pomoc dla twórców: kolorowe ekrany podczas startu gry i liczniki wczytywania grafik w menu.'
+  HINT_BDMPREFIX: Podfolder na dyskach USB, MX4SIO, iLink i exFAT, w którym są foldery gier. Puste używa katalogu głównego dysku.
+  HINT_ETHPREFIX: Podfolder w udziale SMB, w którym są foldery gier. Puste używa katalogu głównego udziału.
+  HINT_HDDGAMELISTCACHE: Zapamiętuje listę gier z HDD APA, aby przyspieszyć późniejsze skanowania.
+  HINT_BDMCACHE: Bufor odczytu z wyprzedzeniem dla USB i innych dysków BDM w grze. Większy może wygładzić strumieniowanie, ale zużywa więcej pamięci.
+  HINT_HDDCACHE: Bufor odczytu z wyprzedzeniem dla wewnętrznego HDD w grze.
+  HINT_SMBCACHE: Bufor odczytu z wyprzedzeniem dla SMB w grze.
+  HINT_CORE_LOADER: Rdzeń dla tej gry tam, gdzie oba są obsługiwane. UDPFS/UDPBD tylko Neutrino; SMB/HTTP tylko <OPL>. Domyślne podąża za Uruchamianiem gier.
+  HINT_DMA_MODE: Tryb transferu wewnętrznego HDD dla tej gry. Obniż go, jeśli gra się zacina lub zawiesza.
+  HINT_DNAS_GAMEID: ID płyty dla gier online DNAS. Wczytaj z płyty odczytuje je z oryginalnej płyty.
+  HINT_LOAD_FROM_DISC: Odczytuje ID DNAS z oryginalnej płyty w napędzie.
+  HINT_ALTSTARTUP: Uruchamia ten ELF z obrazu płyty zamiast tego, który wskazuje SYSTEM.CNF.
+  HINT_VMC_DEFINE: Wybierz, utwórz lub zmień rozmiar wirtualnej karty pamięci tego gniazda.
+  HINT_VMC_ACTION: Użyj ogólnej daje temu gniazdu wspólną kartę; Resetuj czyści wybór.
+  HINT_VMC_NAME: Nazwa pliku karty, przechowywanego w folderze VMC.
+  HINT_VMC_CREATE: Tworzy kartę albo stosuje do niej nowy rozmiar.
+  HINT_VMC_DELETE: Usuwa ten plik karty.
+  HINT_SETTINGS_SOURCE: Globalne używa wspólnych ustawień; Dla gry zachowuje je tylko dla tej gry.
+  HINT_PADMACRO_TOGGLE: Gdy przycisk wciśnięty spowalnia drążek tylko wtedy, gdy trzymasz przycisk; Przełączane przyciskiem włącza je i wyłącza.
+  HINT_SFX: Efekty dźwiękowe menu.
+  HINT_BOOT_SND: Odtwarza dźwięk przy starcie RiptOPL.
+  HINT_BGM: Odtwarza muzykę motywu albo twój plik Domyślnej muzyki motywu.
+  HINT_SFX_VOLUME: Głośność efektów dźwiękowych menu.
+  HINT_BOOT_SND_VOLUME: Głośność dźwięku startowego.
+  HINT_BGM_VOLUME: Głośność muzyki w tle.
+  HINT_SCROLL: Jak szybko przewijają się listy, gdy trzymasz kierunek.
+  HINT_SELECTBUTTON: 'Który przycisk zatwierdza: Krzyżyk czy Kółko.'
+  HINT_XSENSITIVITY: Jak łatwo lewy drążek przesuwa kursor w lewo i w prawo. Wył. go ignoruje.
+  HINT_YSENSITIVITY: Jak łatwo lewy drążek przesuwa kursor w górę i w dół. Wył. go ignoruje.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 przez USB lub Bluetooth oraz multitap, dla każdej gry.
+  HINT_PADMACRO_GLOBAL: Spowolnienie drążka, odwrócenie osi i turbo, dla każdej gry.
+  HINT_COVERFLOW_DIM: Przyciemnia boczne okładki.
+  HINT_OSD_ENABLE: Przekazuje grze poniższe ustawienia. Wył. używa ustawień konsoli.
+  HINT_OSD_TVASPECT: Kształt telewizora przekazywany grze.
+  HINT_OSD_VMODE: Tryb obrazu przekazywany grze.
+  DNAS_ID: ID DNAS
+  NEUTRINO_PADEMU_WARN: Emulacja pada jest niedostępna z Neutrino. Użyj kontrolera PS2 albo źródła obsługującego rdzeń <OPL>.
+  RA_MODE: Tryb RA
+  RA_HOST_IP: IP pomocnika RA (0.0.0.0 = automatycznie)
+  HINT_RA_HOST_IP: Opcjonalny adres IPv4 PC przeznaczonego dla RetroAchievements. Użyj 0.0.0.0 dla starego zapasowego SMB/HTTP lub wykrywania Xerabora. Nie zmienia ustawień serwera gier.
+  HINT_RA_MODE: Wybierz klienta na PC. Domyślny jest Xerabora; Caduceus najpierw sprawdza swoją zalogowaną sesję.
+  RA_CADUCEUS_OFFLINE: Sesja RA Caduceus jest offline.
+  RA_CADUCEUS_SIGN_IN: Zaloguj się do RetroAchievements w Caduceus i spróbuj ponownie.
+  FAV_SAVING: Zapisywanie do Ulubionych gier...
+  FAV_SAVED: Zapisano do Ulubionych gier
+  FAV_SAVE_FAILED: Nie udało się zapisać do Ulubionych gier
+  CAD_ACHIEVEMENTS: Osiągnięcia Caduceus
+  CAD_VIEW_ACHIEVEMENTS: Zobacz osiągnięcia
+  CAD_USE_LIBRARY: Przeglądaj tę grę przez Osiągnięcia Caduceus w menu głównym.
+  CAD_HASH_UNSUPPORTED: Dla tego formatu nie da się obliczyć skrótu. Zamiast tego przeglądaj bibliotekę konta.
+  CAD_HEADING: OSIĄGNIĘCIA
+  CAD_LIBRARY: Biblioteka konta RetroAchievements
+  CAD_FILTER_ALL: Wszystkie
+  CAD_EARNED: Zdobyte
+  CAD_LOCKED: Zablokowane
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: '%d / %d zdobytych  |  %s'
+  CAD_ONE_GAME: '%d gra na koncie'
+  CAD_GAMES: '%d gier na koncie'
+  CAD_GAME_PROGRESS: '%d / %d osiągnięć  |  %d hardcore'
+  CAD_POINTS: '%d pkt  |  %s'
+  CAD_EMPTY_LIBRARY: Na tym koncie nie ma gier z postępem.
+  CAD_EMPTY_FILTER: Żadne osiągnięcia nie pasują do tego filtra.
+  CAD_LOADING: Wczytywanie osiągnięć...
+  CAD_PAIR: Zaloguj się do Caduceus i sparuj ART/CADUCEUS.KEY w swoim udziale SMB.
+  CAD_UNKNOWN_GAME: Tej gry nie ma w katalogu Caduceus. Odśwież katalog na PC.
+  CAD_CONNECTION_ERROR: Nie można odpytać Caduceus. Sprawdź połączenie, a potem naciśnij Select, aby spróbować ponownie.
+  CAD_BACK_REFRESH: Wstecz wraca do OPL. Select odświeża tę stronę.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: strona   Zatwierdź: otwórz   Select: odśwież'
+  CAD_GAME_CONTROLS: 'L1/R1: strona   Kwadrat: filtr   Select: odśwież'
+  CAD_BACK: Wstecz
+  CAD_UNTRACKED: Caduceus nie jest gotowy. Tym razem uruchamianie bez osiągnięć.
+  PS1_RA_USB_REQUIRED: Osiągnięcia PS1 wymagają VCD z USB przez POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Nie można usunąć poprzedniego modułu osiągnięć PS1
+  PS1_RA_PREPARE_FAILED: Nie można przygotować osiągnięć PS1. Zachowaj lub przenieś POPS/MODULE_9.IRX i sprawdź prawo zapisu na urządzeniu.
+  PS1_RA_CLEAN_DELETE: 'Nieużywany moduł RA RiptOPL: POPS/MODULE_9.IRX. Usunąć dla czystego uruchomienia?'
+  PS1_RA_CLEAN_FAILED: Nie można usunąć nieużywanego modułu RA.
+  PS1_RA_CLEAN_CONTINUE: Kontynuować mimo to? Pozostały moduł RA może uruchomić nieaktualną telemetrię. Nie anuluje uruchomienie.
+  FAV_REMOVED: Usunięto z Ulubionych gier
+  FAV_REMOVE_FAILED: Nie udało się usunąć z Ulubionych gier
+  POPS_UDPFS_SETTINGS: Ustawienia sieci POPS UDPFS
+  POPS_UDPFS_DISCOVERY: Zapisuje do każdego folderu POPS na USB. Serwer 0.0.0.0 używa wykrywania.
+  POPS_UDPFS_NOT_READY: POPS UDPFS potrzebuje pasujących, poprawnych IPCONFIG.DAT i UDPFSCONFIG.DAT w każdym folderze POPS na USB. Skonfiguruj je w Ustawieniach sieci POPS.
+  HINT_POPS_UDPFS_IP: Statyczny IP PS2 używany przez sterownik POPS UDPFS po resecie IOP.
+  POPS_UDPFS_ALL_USB_FOLDERS: Wszystkie foldery POPS na USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (nieprawidłowe)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (niekompletne)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS potrzebuje pary sterowników .udpfs zainstalowanej na karcie pamięci. Wgraj ją ręcznie albo włącz BDMA Zastosuj przy uruchomieniu.
+  VMC_REPLACE_REQUIRES_DELETE: Zmiana rozmiaru VMC wymazałaby zapisane gry. Zrób kopię istniejącego VMC i użyj Usuń przed utworzeniem nowego rozmiaru.
+  VMC_CREATE_FAILED: Nie udało się utworzyć VMC. Sprawdź urządzenie, połączenie i prawo zapisu. Istniejące zapisy nie zostały zastąpione.
+  RA_EXPERIMENTAL_CARDS: Eksperymentalne karty Caduceus
+  HINT_RA_EXPERIMENTAL_CARDS: Eksperymentalne karty osiągnięć w grach PS2. Mogą migać lub zawieszać gry. Tylko Caduceus; Wył. używa złotego pulsu. Działa od następnego uruchomienia gry.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA jest niedostępne dla tego uruchomienia. Sprawdź środowisko RA, IP pomocnika i zapisaną listę śledzenia. Uruchamianie bez osiągnięć.
+  UDPFS_IP_CONFLICT: Inne urządzenie w twojej sieci używa adresu IP tej PS2, więc odpowiedzi serwera UDPFS trafiają do niego. Ustaw inny IP PS2 w Ustawieniach sieci.
+  XERA_ACHIEVEMENTS: Biblioteka RetroAchievements (xeRAbora)
+  XERA_USE_LIBRARY: Przeglądaj tę grę przez bibliotekę RetroAchievements w menu głównym.
+  XERA_OPEN_NETWORK: Nie można połączyć się z xeRAbora. Włącz OPEN TO THE NETWORK w jego ustawieniach, sprawdź IP pomocnika RA i zaporę PC.
+  XERA_UNKNOWN_GAME: xeRAbora nie zna tego obrazu. Najpierw uruchom sprawdzanie obsługi gry RA.
+  XERA_NOT_PLAYED: Jeszcze nie ma w twojej bibliotece RetroAchievements. Zagraj raz z osiągnięciami, a potem naciśnij Select.
+  XERA_CONNECTION_ERROR: Nie można odczytać listy z xeRAbora. Naciśnij Select, aby spróbować ponownie.
+  CAD_PAIR_UDPFS: Nie można połączyć się z Caduceus. Sparuj ART/CADUCEUS.KEY w folderze udostępnianym przez PS2-Servers i ustaw IP pomocnika RA.
+  RA_WL_NOT_SAVED: Nie udało się zapisać listy śledzenia. Upewnij się, że urządzenie lub udział gry jest zapisywalny, a potem sprawdź ponownie.
+  RA_UDPFS_LOAD_FIRST: Otwórz raz stronę UDPFS, aby wczytał się jej moduł sieciowy, a potem spróbuj ponownie.
+  CAD_UDPFS_IMG: 'Przeglądarka Caduceus potrzebuje SMB lub UDPFS Pliki: UDPFS IMG nie ma udostępnionego folderu na jej klucz.'
+  XERA_SET_CLOCK: Jeszcze nie ma w twojej bibliotece RetroAchievements. Ustaw zegar konsoli w ustawieniach systemu, aby zobaczyć pełną listę, albo zagraj raz z osiągnięciami.
+  CFG_TITLES: Pokaż tytuły CFG na listach gier
+  HINT_CFG_TITLES: Pokazuje Tytuł z CFG każdej gry zamiast nazwy pliku i sortuje według niego. Czyta każdy CFG przy odświeżaniu listy, więc listy wczytują się wolniej. Tylko wyświetlanie.
+  AUTO_VMC_INVALID: Plik VMC tej gry istnieje, ale nie jest prawidłową kartą pamięci, więc nie został użyty ani zastąpiony. Gra uruchomi się bez niego; sprawdź go w menu VMC.
+  AUTO_VMC_STILL_RUNNING: VMC tej gry wciąż jest tworzony. Uruchom grę ponownie za chwilę.
+  NEUTRINO_DVR_QUICKBOOT: Uruchomienie DVR wymaga przejścia w tryb PSX. Usuń -qb z globalnych i przypisanych do gry argumentów Neutrino.
+  NEUTRINO_DVR_FILE_MISSING: 'Instalacja Neutrino dla DVR jest niekompletna. Brak wymaganego pliku:'
+  PARENLOCK_GAME: Blokada rodzicielska
+  PARENLOCK_GAME_HINT: Wymagaj hasła blokady rodzicielskiej, aby uruchomić tę grę.
+  PARENLOCK_GAME_NO_PASSWORD: Ustaw hasło blokady rodzicielskiej, inaczej ta gra nie będzie zablokowana.
+  HINT_ENABLE_PCCF: CompactFlash w PC CARD wczesnych japońskich PS2. Tylko natywne gry PS2; CF potrzebuje wyłącznego dostępu do PC CARD. Uruchom ponownie, aby go zwolnić.
+  PCCF_GAMES: Gry PC CARD CF
+  PCCF_UNAVAILABLE: 'CF niedostępne: wymaga wczesnej japońskiej PS2 z PC CARD, zgodnej karty i braku aktywnego sterownika DEV9/HDD/sieci.'
+  PCCF_UNSUPPORTED_GAME: CF obecnie obsługuje tylko natywne gry PS2. VMC na CF, wczytywanie PS1 i osiągnięcia sieciowe są niedostępne.
+  HINT_ENABLE_DVR: Eksperymentalne wykrywanie ISO DESR DVR. Wymaga włączonego źródła HDD; uruchamianie gier wymaga zewnętrznego Neutrino z obsługą DVR.

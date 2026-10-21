@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Report RiptOPL translation coverage without mistaking English fallback for translation.
+
+Usage: python3 tools/audit_translations.py [--strict] [--json]
+Reads the same Makefile language names, base labels, upstream community files (if
+downloaded) and fork overlays used by the release compiler. No files are changed.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+SPEC = re.compile(r"%(?:\d+\$)?[-+#0 ]*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|h|ll|l|j|z|t|L)?[diouxXfFeEgGaAcspn]")
+# Literal %% is not a conversion placeholder.
+
+
+def format_tokens(value: str) -> list[str]:
+    """Preserve printf tokens and reject unknown percent-letter conversions."""
+    tokens = []
+    i = 0
+    while i < len(value):
+        if value[i] != "%":
+            i += 1
+            continue
+        if i + 1 < len(value) and value[i + 1] == "%":
+            i += 2
+            continue
+        spec = SPEC.match(value, i)
+        if spec is not None:
+            tokens.append(spec.group())
+            i = spec.end()
+            continue
+        # Plain percentages ("100% full") remain literal; "%q" is not a
+        # valid printf conversion and must not pass the placeholder audit.
+        if i + 1 < len(value) and value[i + 1].isalpha():
+            raise ValueError(f"Invalid printf format near: {value[i:i+8]!r}")
+        i += 1
+    return tokens
+
+
+def languages() -> list[str]:
+    """Read every continuation line in Makefile's TRANSLATIONS assignment."""
+    lines = (ROOT / "Makefile").read_text(encoding="utf-8").splitlines()
+    for i, line in enumerate(lines):
+        if re.match(r"^TRANSLATIONS[ \t]*=", line) is None:
+            continue
+        value = line.split("=", 1)[1].strip()
+        while value.endswith("\\"):
+            if i + 1 >= len(lines):
+                raise ValueError("Unterminated TRANSLATIONS line continuation")
+            value = value[:-1].rstrip() + " " + lines[i + 1].strip()
+            i += 1
+        names = value.split()
+        if not names or len(names) != len(set(names)) or any("\\" in x for x in names):
+            raise ValueError("Malformed or duplicate Makefile TRANSLATIONS entries")
+        return names
+    raise ValueError("Makefile TRANSLATIONS list not found")
+
+def read_map(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    entries = document.get("translations", {})
+    if not isinstance(entries, dict):
+        raise ValueError(f"{path}: translations is not a map")
+    return {key: value for key, value in entries.items() if isinstance(value, str)}
+
+
+def audit() -> dict:
+    base = yaml.safe_load((ROOT / "lng_tmpl/_base.yml").read_text(encoding="utf-8"))
+    entries = base["gui_strings"]
+    labels = [entry["label"] for entry in entries]
+    if len(labels) != len(set(labels)):
+        raise ValueError("Duplicate translation IDs in lng_tmpl/_base.yml")
+    english = {entry["label"]: entry["string"] for entry in entries}
+    by_language = {}
+    errors = []
+    warnings = []
+    for name in languages():
+        overlay_path = ROOT / "lng_fork" / (name + ".yml")
+        overlay = read_map(overlay_path)
+        upstream = read_map(ROOT / "lng_src" / (name + ".yml"))
+        # Mirrors lang_compiler.py: a valid upstream translation wins; overlay
+        # fills only strings that upstream marks untranslated/missing.
+        merged = dict(overlay)
+        merged.update(upstream)
+        unknown = sorted(set(overlay) - set(english))
+        for key in unknown:
+            errors.append(f"{name}: overlay has unknown label {key}")
+        # Check the strings that ship (merged), not only the overlay. The fork's own strings must
+        # match; an upstream one that does not is reported, since lang.c's lngFormatFits shows the
+        # English string instead of one that would read other arguments.
+        for key, value in merged.items():
+            if key not in english:
+                continue
+            from_upstream = key in upstream
+            problems = warnings if from_upstream else errors
+            where = f"{name}/{key} ({'upstream' if from_upstream else 'overlay'})"
+            try:
+                actual_tokens = format_tokens(value)
+                english_tokens = format_tokens(english[key])
+            except ValueError as error:
+                problems.append(f"{where}: {error}")
+                continue
+            if actual_tokens != english_tokens:
+                problems.append(
+                    f"{where}: printf tokens {actual_tokens} differ from "
+                    f"English {english_tokens}"
+                )
+        translated = {key for key in labels if key in merged and merged[key] != english[key]}
+        fallback = [key for key in labels if key not in merged or merged[key] == english[key]]
+        by_language[name] = {
+            "upstream_available": (ROOT / "lng_src" / (name + ".yml")).exists(),
+            "overlay_entries": len(overlay),
+            "translated_entries": len(translated),
+            "english_fallback_entries": len(fallback),
+            "recent_fallback_labels": [key for key in labels[-60:] if key in fallback],
+            "missing_overlay": not overlay_path.exists(),
+        }
+    return {
+        "total_strings": len(labels),
+        "built_languages": len(by_language),
+        "recent_window": min(len(labels), 60),
+        "upstream_present": (ROOT / "lng_src").is_dir(),
+        "languages": by_language,
+        "errors": errors,
+        "warnings": warnings,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--strict", action="store_true", help="fail on unsafe format changes and unknown keys")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+    report = audit()
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(
+            f"{report['built_languages']} languages / {report['total_strings']} strings; "
+            f"upstream translations present: {report['upstream_present']}"
+        )
+        if not report["upstream_present"]:
+            print("NOTE: fallback and translated figures below are overlay-only estimates;")
+            print("      run make download_lng first for effective packaged-language totals.")
+        for language, counts in report["languages"].items():
+            print(
+                f"{language:17} overlay={counts['overlay_entries']:3} "
+                f"translated={counts['translated_entries']:3} "
+                f"English fallback={counts['english_fallback_entries']:3} "
+                f"recent fallback={len(counts['recent_fallback_labels']):2}/{report['recent_window']}"
+            )
+        if report["warnings"]:
+            print("Upstream strings whose printf tokens differ from English. RiptOPL shows English")
+            print("instead of any that would read other arguments (lngFormatFits in src/lang.c):")
+        for warning in report["warnings"]:
+            print("WARNING:", warning)
+        for err in report["errors"]:
+            print("ERROR:", err)
+    return 1 if args.strict and report["errors"] else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

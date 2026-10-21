@@ -317,3 +317,329 @@ translations:
   HINT_EMBER_DISPLAY: Výstupní režim, který Ember používá pro hry PS1. 240p nebo 480p se zapíše do souboru settings.txt ve složce EMBER spouštěného zařízení. Výchozí toto nastavení zase odstraní, a spolu s ním i soubor, pokud v něm nic dalšího nebylo.
   LOGOART: "Loga her"
   HINT_LOGOART: "Zobrazí logo hry (<ID>_LGO), pokud jej téma používá. Vypnutí skryje i výchozí obrázek; obaly, obrázky disků a pozadí zůstanou beze změny."
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  HINT_NEUTRINO_AUTO_ELF: Předá zaváděcí ELF hry Neutrinu, aby vyhledalo nastavení pro daný titul. Ve výchozím stavu zapnuto; ručně nastavená volba Boot ELF má přednost.
+  HINT_POPSTARTER_PATH: Kde je POPSTARTER.ELF. Když zůstane prázdné, RIPPS2 doplní ten, který najde na disku; přepište, chcete-li jiný, např. usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Argumenty Neutrina přesahují délku, kterou lze uložit. Před uložením některé pole zkraťte.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Spouštěcí argumenty Neutrina přesahují bezpečný limit. Zkraťte globální nebo herní argumenty.
+  NEUTRINO_AUTO_ELF: Automatický Boot ELF (-elf)
+  HINT_NEUTRINO_PATH: 'Kde je neutrino.elf? <nenastaveno> = zařízení hry -> mc0/mc1. Vlastní úplná cesta se zkouší první. Příklady: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Zobrazení her PS2/PS1
+  HINT_GAME_VIEW_MODE: Vše zobrazí hry PS2 a PS1 dohromady a L3 přepíná Vše, PS1, PS2. PS2 nebo PS1 zobrazí jen ten typ a vypne L3. APPS a Oblíbené hry mají vlastní pravidla zobrazení.
+  VIEW_MIXED: Zobrazeny hry PS2 + PS1
+  VIEW_PS1_ELF: Zobrazeny aplikace PS1 ELF
+  APPS_DISPLAY: Zobrazení aplikací
+  HINT_APPS_DISPLAY: Vše zobrazí každý ELF v jednom seznamu APPS s vypnutým L3. Aplikace / PS1ELF oddělí tituly s [PS1] na druhou stránku L3; spouštění se nemění.
+  VIEW: Zobrazení
+  VIEW_PS2: Zobrazeny oblíbené hry PS2
+  VIEW_PS1: Zobrazeny oblíbené hry PS1
+  VIEW_ELF: Zobrazeny oblíbené ELF
+  VIEW_ALL: Zobrazeny všechny oblíbené hry
+  VMC_FRAGMENTED_ON_CREATE: VMC byla vytvořena, ale je fragmentovaná. Emulace paměťové karty potřebuje jeden souvislý soubor, takže se tato VMC při spuštění přeskočí a použije se skutečná karta. Uvolněte místo a vytvořte ji znovu, nebo ji zkopírujte z jiného zařízení.
+  KEYB_MOVE_CURSOR: Posunout kurzor
+  TITLECOLOR: Barva názvů her
+  RA_CHECK_GAME: Zkontrolovat podporu RetroAchievements
+  RA_TEST_LINK: Otestovat spojení RetroAchievements s PC
+  RA_CHECKING_IMAGE: Kontrola obrazu, potrvá to pár sekund...
+  RA_CHECK_RUNNING: Kontrola obrazu už běží
+  RA_LOOKING_FOR_PC: Hledání klienta na PC...
+  RA_UL_UNSUPPORTED: Hry UL/USBExtreme zatím nelze kontrolovat
+  RA_UL_UNSUPPORTED2: Podporovány jsou jen obyčejné obrazy .iso v DVD/ nebo CD/
+  RA_UNKNOWN_IMAGE: RetroAchievements tento obraz nezná
+  RA_STILL_IDENTIFYING: PC obraz stále rozpoznává
+  RA_TRY_AGAIN: Zkuste to znovu za pár sekund
+  RA_NO_SOCKET: Konzole nemohla otevřít síťový socket
+  RA_NO_SOCKET2: Restartujte konzoli, nebo zkontrolujte zařízení ETH v nastavení
+  RA_TEST_NO_SOCKET2: Zkontrolujte kabel a ETH v nastavení; pokud síť běží, restartujte konzoli
+  RA_PC_NO_ANSWER: Klient na PC neodpověděl
+  RA_PC_NO_ANSWER2: Zkontrolujte, že běží xeRAbora, nebo zkuste test spojení s PC
+  RA_SUPPORTED: Podporováno RetroAchievements
+  RA_START_TO_TRACK: Spusťte hru pro sledování úspěchů
+  RA_ACHIEVEMENTS: '%d úspěchů'
+  RA_ACHIEVEMENTS_FULL: '%d úspěchů -- %d odemčeno, %d nepodporováno'
+  RA_HASH_FAILED: Hash obrazu nešlo spočítat
+  RA_HASH_FAILED2: Důvod najdete v RA/hashes.txt vedle her
+  RA_NET_BUSY: Síť používá přenos UDP
+  RA_NET_BUSY2: RA potřebuje zásobník SMB -- přepněte protokol, nebo vytvořte .wl na PC
+  RA_NET_BUSY_HASH: Hash je v RA/hashes.txt -- xeRAbora z něj může vytvořit .wl
+  RA_NO_IP: Konzole nemá IP adresu
+  RA_NO_IP2: Zkontrolujte DHCP nebo statickou adresu v nastavení sítě
+  RA_TEST_NO_ANSWER: Do 3 sekund neodpověděl žádný klient na PC
+  RA_TEST_NO_ANSWER2: Konzole%s. Zkontrolujte, že běží xeRAbora a UDP 18194 je otevřený
+  RA_TEST_FOUND: Klient na PC nalezen%s%s %s
+  RA_TEST_FOUND2: Odpověď za %u ms, konzole%s
+  RA_NA_NEUTRINO: Sledování RA potřebuje jádro <OPL> -- spuštění přes Neutrino nikdy nenačte ee_core
+  RA_NA_UDPFS: Sledování RA není na UDPFS dostupné -- hry se spouštějí přes Neutrino
+  RA_NA_PS1: Sledování RA není dostupné pro hry PS1
+  RA_NA_HDD: Informace o hře APA nebo složka nastavení HDD nejsou dostupné
+  RA_NA_HDD2: Před kontrolou podpory nastavte platnou složku nastavení HDD a obnovte
+  RA_TELEMETRY: Telemetrie RetroAchievements
+  RA_BADGES: Odznaky RetroAchievements
+  HTTP_GAMES: Hry HTTP
+  HTTP_SERVER: Server HTTP
+  HTTP_PORT: Port HTTP
+  HTTP_BASE_PATH: Základní cesta HTTP
+  HTTP_TEST: Otestovat server HTTP
+  HTTP_TEST_OK: Server OK -- hry vypsány
+  HTTP_TEST_EMPTY: Katalog je prázdný -- platný, ale o rozsazích bajtů nic nedokazuje
+  HTTP_TEST_NO_ISO: Katalog nemá podporovaný obraz, na kterém by šel otestovat rozsah bajtů
+  HTTP_ERR_CONNECT: Server HTTP není dosažitelný
+  HTTP_ERR_CATALOG: games.csv chybí, nejde přečíst nebo je příliš velký
+  HTTP_ERR_RANGE: Server nevrátil přesně ty bajty, o které se žádalo
+  HTTP_LAUNCH_UNAVAILABLE: Spouštění přes HTTP zatím není hotové -- katalog lze jen procházet
+  HTTP_ERR_COMPRESSED: Komprimované obrazy (.zso) přes HTTP zatím nejsou podporované
+  HTTP_NO_VMC: Virtuální paměťové karty přes HTTP nejsou dostupné -- použijte fyzickou kartu
+  HTTP_TAB_HINT: HTTP čte games.csv z vašeho serveru. Nastavte adresu, port a základní cestu v nastavení sítě a pak použijte Test.
+  RA_DISC_CHECK: 'RA: zkontrolovat podporu disku'
+  RA_DISC_LAUNCH: 'RA: spustit disk'
+  RA_DISC_CHECKING: Kontrola disku pro RetroAchievements
+  RA_DISC_HASH_FAILED: Hash disku nešlo spočítat -- zkontrolujte RA/hashes.txt ve složce nastavení
+  RA_DISC_HOME_ERROR: Cestu nastavení nelze použít pro seznamy sledování disků
+  RA_DISC_ENABLE: Nejdřív zapněte telemetrii RetroAchievements v nastavení sítě
+  RA_DISC_CHECK_FIRST: 'Pro tento disk není seznam sledování -- nejdřív použijte RA: zkontrolovat podporu disku'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: HDD nalezen, ale jeho tabulku oddílů APA nelze přečíst. Neformátujte ho -- vaše hry možná půjde zachránit.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: Disk nebyl připojen, protože jeho sektory nemají 512 bajtů (např. disk se sektory 4K). OPL umí číst jen sektory 512 bajtů.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Tento titul je samostatný oddíl APA a OPL tabulku oddílů nikdy neupravuje. Přejmenujte ho na PC.
+  POPS_SETTINGS_UNREADABLE: Nastavení POPSTARTER nešlo přečíst -- paměťová karta je zaneprázdněná nebo nečitelná. Zkuste to znovu po dokončení načítání.
+  GLOBAL_PS_EMULATION_SETTINGS: Globální nastavení emulace PS
+  RA_NO_LINK_UNTRACKED: Síť není dostupná -- tentokrát spuštění bez RetroAchievements.
+  IGR_USB_DRIVERS_PROMPT: Cesta IGR je na USB, ale v %s chybí USBD.IRX a USBHDFSD.IRX, které konzole potřebuje, aby se po In-Game Resetu dostala k USB. Bez nich IGR spadne do prohlížeče PS2. Zkopírovat tam teď ovladače RiptOPL? FMCB, OpenTuna a další exploity tyto soubory také načítají a mohou se s nimi chovat jinak. Existující soubory se nikdy nenahrazují. Jen USB s FAT32.
+  IGR_USB_DRIVERS_FAILED: Ovladače USB nešlo zkopírovat do %s (karta plná nebo nezapisovatelná). IGR spadne do prohlížeče PS2.
+  OFFICIAL_CFG_NOTIFICATION: Oficiální nastavení OPL načteno z %s
+  CFM_VMODE_HOLD_KEEP: Podržením ponecháte
+  BDM_PS2_FOLDERS_UNREADABLE: Složku CD ani DVD v %s nešlo otevřít (chyba %d), takže toto zařízení nevypisuje žádné hry PS2. Stiskněte SELECT na jeho stránce pro nový pokus.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Souborový systém Neutrina je nastaven na bd, ale toto zařízení nikdy nenahlásilo své číslo, takže na něj Neutrino nelze nasměrovat. Nastavte souborový systém Neutrina pro tuto hru na Auto nebo exfat.
+  CFM_VMODE_REVERT_IN: Vrácení za %d s
+  EMBER_DITHER: Rozptyl Ember
+  HINT_EMBER_DITHER: Rozptyl (dithering) Ember (zapnuto nebo vypnuto), zapisuje se do EMBER/settings.txt na spouštěném zařízení. Hodnota pro hru má přednost.
+  EMBER_SHADING: Stínování Ember
+  HINT_EMBER_SHADING: 'Barevná hloubka Ember: 15bitová, nebo 24bitová (experimentální). Zapisuje se do EMBER/settings.txt na spouštěném zařízení. Hodnota pro hru má přednost.'
+  EMBER_CONTROLLER: Ovladač Ember
+  HINT_EMBER_CONTROLLER: 'Režim ovladače Ember: Auto, Analog nebo D2A. Obvykle nejlépe nastavit pro hru (Trojúhelník > Nastavení hry Ember), což má přednost.'
+  EMBER_480P_CONFIRM: Ember v 480p přes kompozit nedává obraz. Použít 480p?
+  EMBER_SHADING_24: 24bitová (experimentální)
+  EMBER_GAME_SETTINGS: Nastavení hry Ember
+  HINT_EMBER_GAME_SETTING: Jen tato hra. Stiskněte OK pro zápis EMBER/games/<název>/settings.txt před spuštěním. Nedotčené Výchozí ponechá existující hodnotu v souboru; vrácení hodnoty na Výchozí odstraní její přepsání.
+  EMBER_TIMING: Časování Ember
+  HINT_EMBER_TIMING: 'Časování videa Ember: Auto se řídí regionem disku, NTSC vynutí 60 Hz, PAL vynutí 50 Hz. Zapisuje se do EMBER/settings.txt na spouštěném zařízení.'
+  EMBER_GLOBAL_WARNING: Tato nastavení Ember platí pro každou hru PS1 a některé hry s nimi padají. Chcete-li změnit jen jednu hru, použijte u ní Trojúhelník > Nastavení hry Ember.
+  HINT_COVERFLOW_COUNT: Kolik obalů RIPFLOW ukazuje po každé straně vybraného.
+  HINT_COVERFLOW_SCALE: Jak velký RIPFLOW kreslí vybraný obal oproti ostatním.
+  HINT_COVERFLOW_ANIM: Jak rychle obaly kloužou, když se pohybujete proudem.
+  HINT_NARGS_QB: 'Quick Boot: přeskočí vlastní úvodní obrazovku Neutrina. Zapnuto tady se posílá pro každou hru; vypnuto ho RIPPS2 stejně posílá samo pro hry z USB, iLink a sítě, kde je potřeba.'
+  HINT_NARGS_DBC: 'Ladicí barvy: Neutrino při každém kroku načítání vyplní obrazovku barvou, takže fotka ukáže, kde se hra zastavila.'
+  HINT_NARGS_LOGO: Před hrou ukáže logo PS2 (druhý restart IOP, který některé disky iLink potřebují). Vypnuto tady se RIPPS2 řídí podle Spouštění her > Logo PS2 a pro hry z MMCE ani ze sítě ho nikdy neposílá.
+  HINT_NARGS_CWD: 'Složka, kterou hra považuje za svou. Prázdné: výchozí Neutrina.'
+  HINT_NARGS_CFG: 'Váš vlastní soubor nastavení Neutrina (-cfg). Prázdné: ten od Neutrina.'
+  HINT_NARGS_ELF: 'Spustí tento ELF místo zaváděcího souboru, který určuje disk. Prázdné: vlastní soubor hry.'
+  HINT_NARGS_ATA0: Obraz HDD, který Neutrino připojí jako interní HDD konzole, pro hry, které HDD používají (-ata0).
+  HINT_NARGS_ATA0ID: Soubor ID, který k tomuto obrazu HDD patří (-ata0id).
+  HINT_NARGS_ATA1: Druhý obraz HDD (-ata1).
+  PS1_SAVE_GUIDANCE: Uložené pozice PS1 závisejí na Ember nebo POPSTARTER; nastavení VMC pro PS2 neplatí.
+  NEUTRINO_SHOW_ARGS: Zobrazit spouštěcí argumenty
+  HINT_NEUTRINO_SHOW_ARGS: Před každým spuštěním přes Neutrino ukáže všechny argumenty, které Neutrino dostane, a zeptá se, zda pokračovat. Zpět se vrátí do menu bez spuštění.
+  NEUTRINO_ARGS_CONFIRM: Neutrino se spustí s těmito argumenty. Spustit?
+  HINT_NARGS_EXTRA: Další příznaky Neutrina, oddělené mezerami, posílané po všem výše. RIPPS2 vždy přidá -bsd a -dvd pro disk a ISO hry, -mc0 a -mc1 pro její VMC, -gsm pro režim videa a vlastní režimy kompatibility hry. Příznak s vlastním řádkem výše (například -logo) se při uložení přesune do toho řádku a posílá se dál.
+  GAME_TYPE_LABELS: Zobrazit štítky [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: Seznam cheatů nešlo uložit do složky Neutrina, takže ho Neutrino nemůže použít. Spustit bez cheatů?
+  AUTO_CREATE_VMC: Vytvořit VMC při prvním spuštění
+  HINT_AUTO_CREATE_VMC: Spuštění hry PS2 bez VMC ve slotu 1 vytvoří 8 MB kartu na zařízení hry, pojmenovanou tak, jak navrhuje obrazovka VMC (sdílenou všemi disky hry), a přiřadí ji. Neplatí pro interní HDD s Neutrinem.
+  AUTO_VMC_CREATING: Vytváření VMC této hry...
+  AUTO_VMC_FAILED: VMC této hry nešlo vytvořit. Hra se spustí bez ní.
+  SAVE_ICONS: 3D ikony uložených pozic
+  HINT_SAVE_ICONS: Ukáže otáčející se ikonu uložené pozice vybrané hry tam, kde pro ni má motiv místo. Nejdřív čte vlastní VMC hry, pak paměťové karty.
+  NETBOOT_RESTART_NOW: Síťový protokol se změní po restartu. Uložit nastavení a restartovat OPL teď?
+  HINT_NET_PROTOCOL: 'Kterou síťovou službu RiptOPL používá: sdílení SMB, UDPFS, UDPBD nebo HTTP. Stejné nastavení jako ve Zdrojích her. Přepnutí z již běžící vyžaduje restart.'
+  HINT_UDPFS_ACCESS: Jen UDPFS. Soubory čte jednotlivá ISO ze složky her na serveru; IMG čte obraz disku jako disk. SMB a HTTP vždy používají Soubory, UDPBD vždy IMG.
+  HINT_SMB_VERSION: Kterou verzí SMB mluvit se sdílenou složkou na PC.
+  HINT_NET_ADVANCED: Odemkne úpravy režimu spojení Ethernet a portu SMB.
+  HINT_ETH_LINK_MODE: Vynutí rychlost a duplex síťového spojení. Nechte na Auto, pokud spojení stále nepadá.
+  HINT_IP_ADDR_TYPE: Statická použije adresu níže; DHCP se zeptá routeru. UDPFS a UDPBD vždy používají Statickou.
+  HINT_PS2_IP: Vlastní IP adresa PS2. Vyberte takovou, kterou žádné jiné zařízení nepoužívá, ve stejném rozsahu jako vaše PC.
+  HINT_NETMASK: Maska podsítě, obvykle 255.255.255.0.
+  HINT_GATEWAY: Adresa vašeho routeru, obvykle se stejnými prvními třemi čísly a končící .1.
+  HINT_DNS: Adresa serveru DNS. Obvykle stejná jako brána.
+  HINT_SMB_ADDR_TYPE: Připojit se k PC přes jeho IP adresu, nebo přes jméno NetBIOS (název počítače).
+  HINT_SMB_ADDRESS: 'PC, které sdílí vaše hry: jeho IP adresa, nebo název počítače, když je Typ adresy NetBIOS.'
+  HINT_SMB_PORT: 'Port SMB. Musí odpovídat PC: PS2 Servers používá 1111, sdílení Windows a Samba používá 445.'
+  HINT_SMB_USER: Uživatelské jméno SMB. Pro většinu sdílení funguje guest.
+  HINT_HTTP_SERVER: IP adresa herního serveru HTTP.
+  HINT_HTTP_PORT: Port, na kterém herní server HTTP naslouchá.
+  HINT_HTTP_BASE: Složka na serveru HTTP, ve které je games.csv. / je kořen serveru.
+  HINT_HTTP_TEST: Vyzkouší server HTTP s hodnotami výše a ohlásí, co našel.
+  HINT_RA_TELEMETRY: Hlavní vypínač RetroAchievements. Vypnuto spouští hry bez síťového zásobníku i snímků, stejně jako běžné sestavení.
+  HINT_RA_BADGES: Označí v seznamu hry, které mají úspěchy. Zůstává tmavé, dokud je telemetrie vypnutá.
+  HINT_POPS_NET_BUTTON: Upraví vlastní síťové soubory POPSTARTER (IPCONFIG.DAT, SMBCONFIG.DAT), které hry PS1 přes SMB potřebují.
+  HINT_POPS_IP_TYPE: 'Jak PS2 získá adresu, zatímco hra PS1 běží přes SMB: Statická nebo DHCP.'
+  HINT_POPS_IP: IP adresa PS2, zatímco hra PS1 běží přes SMB.
+  HINT_POPS_SMB_IP: IP adresa PC, které sdílí vaše hry PS1.
+  HINT_POPS_SMB_SHARE: Název sdílení na tom PC, ve kterém je složka POPS.
+  HINT_LASTPLAYED: Začne na hře, kterou jste spustili naposledy.
+  HINT_LANGUAGE: Jazyk menu. Další přidáte vložením souborů lang_*.lng do složky LNG.
+  HINT_GSM_DEFAULTS_BUTTON: Opravy režimu videa, které dostane každá hra, pokud nemá vlastní nastavení GSM.
+  HINT_DEFDEVICE: Stránka, kterou RiptOPL otevře při startu.
+  HINT_MMCE_MODE: Hry na SD2PSX nebo MemCard PRO2. Auto se spustí při startu, Ručně při otevření stránky, Vypnuto ji skryje.
+  HINT_MMCE_SETTINGS_BUTTON: Slot, IGR bootcard, GameID a volby časování pro MMCE.
+  HINT_ENABLE_USB: Načte ovladač úložiště USB.
+  HINT_ENABLE_MX4SIO: Načte ovladač adaptéru SD karet MX4SIO.
+  HINT_ENABLE_ILINK: Načte ovladač úložiště iLink (FireWire).
+  HINT_NETSTART: 'Spustí síť: Auto při startu, Ručně při otevření její stránky. Vypnuto nechá síťový adaptér na pokoji.'
+  HINT_APPMODE: Stránka aplikací. Auto se spustí při startu, Ručně při otevření, Vypnuto ji skryje.
+  HINT_FAVMODE: Stránka oblíbených her. Auto se spustí při startu, Ručně při otevření, Vypnuto ji skryje.
+  HINT_BDMA_BUTTON: Který ovladač exFAT POPSTARTER používá pro hry PS1 na USB, MX4SIO, MMCE, HDD nebo iLink.
+  HINT_VCD_LIST_BUTTON: 'Jak se vypisují hry PS1: skrýt ID her, ukázat jen disk 1, ukázat oddíly PP na HDD.'
+  HINT_MMCE_SLOT: Ve kterém slotu paměťové karty je zařízení MMCE. Auto ho najde.
+  HINT_MMCE_GAMEID: Řekne zařízení MMCE, která hra se spouští, aby mohlo přepnout na paměťovou kartu té hry.
+  HINT_MMCE_COMM_BUTTON: Volby časování spojení MMCE. Měňte je jen tehdy, když hry zamrzají nebo se pomalu načítají.
+  HINT_MMCE_PATH_BUTTON: Kde jsou na kartě MMCE složky her.
+  HINT_MMCE_PREFIX: Podsložka na kartě MMCE, ve které jsou CD, DVD a další složky OPL. Prázdné použije kořen karty.
+  HINT_GAME_TYPE_LABELS: Začne název každé hry značkou [PS1] nebo [PS2]. Jen zobrazení.
+  HINT_MENU_VMODE: Video výstup menu. Hry místo toho používají GSM. Pro ponechání nového režimu podržte Potvrdit.
+  HINT_THEME: Vzhled menu. Motivy se čtou ze složky THM na každém zařízení.
+  HINT_COVERFLOW_BUTTON: Počet obalů, velikost, animace a ztmavení pro motiv Coverflow.
+  HINT_ARTWORK_BUTTON: 'Které obrázky se načítají: obaly, obrázky disků, pozadí a ikony uložených pozic.'
+  HINT_COLORS_BUTTON: Barvy textu, zvýraznění, dialogů a pozadí.
+  HINT_NOTIFICATIONS: Krátká upozornění, když se načte soubor nastavení, motivu nebo jazyka.
+  HINT_AUTOSORT: Seřadí seznamy her od A do Z. Vypnuto ponechá pořadí, v jakém byly nalezeny.
+  HINT_AUTOREFRESH: Přidá hry z nově připojených zařízení bez ručního obnovení.
+  HINT_COVERART: Načte obaly ze složky ART.
+  HINT_DISCART: Ukáže obrázek disku (<ID>_ICO). Vypnuto skryje disk, ale ponechá obaly a pozadí.
+  HINT_BGART: Ukáže pozadí hry (<ID>_BG), když ho motiv používá.
+  HINT_ART_TAR: Čte také obrázky zabalené v ART/art.tar.
+  HINT_ART_DELAY: Jak dlouho kurzor stojí na hře, než se načtou její obrázky. Vyšší hodnota přeskakuje obrázky při rychlém posouvání.
+  HINT_TXTCOLOR: Barva běžného textu menu.
+  HINT_SELCOLOR: Barva zvýrazněné položky.
+  HINT_UICOLOR: Odstín pozadí dialogových oken.
+  HINT_TITLECOLOR: Barva názvů her v seznamu.
+  HINT_BGCOLOR: Barva pozadí menu.
+  HINT_PLASCOLOR: Barva přimíchaná do animovaného pozadí.
+  HINT_RESETCOLOR: Obnoví vestavěné barvy RiptOPL, ne barvy motivu.
+  HINT_WIDESCREEN: Kreslí menu pro televizor 16:9.
+  HINT_XOFF: Posune menu na obrazovce doleva nebo doprava.
+  HINT_YOFF: Posune menu na obrazovce nahoru nebo dolů.
+  HINT_MENU_OVERSCAN: Zmenší menu dovnitř, pokud televizor ořezává okraje.
+  HINT_APPLYGAMEID: Při startu hry ukáže čárový kód, aby zařízení Pixel FX, RetroGEM a PS2Digital přepnula profily.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Cesta, režim videa a argumenty Neutrina pro každou hru.
+  HINT_OSD_DEFAULTS_BUTTON: Jazyk konzole, velikost obrazovky a režim videa předávané hrám.
+  HINT_ENWRITEOP: Povolí přejmenování a mazání her a vytváření VMC. Nikdy nesahá na tabulku oddílů HDD.
+  HINT_DEBUG: 'Pomůcka pro vývojáře: barevné obrazovky při startu hry a počítadla načítání obrázků v menu.'
+  HINT_BDMPREFIX: Podsložka na discích USB, MX4SIO, iLink a exFAT, ve které jsou složky her. Prázdné použije kořen disku.
+  HINT_ETHPREFIX: Podsložka ve sdílení SMB, ve které jsou složky her. Prázdné použije kořen sdílení.
+  HINT_HDDGAMELISTCACHE: Zapamatuje si seznam her z HDD APA, aby byla další skenování rychlejší.
+  HINT_BDMCACHE: Mezipaměť čtení dopředu pro USB a další disky BDM ve hře. Větší může vyhladit streamování, ale bere víc paměti.
+  HINT_HDDCACHE: Mezipaměť čtení dopředu pro interní HDD ve hře.
+  HINT_SMBCACHE: Mezipaměť čtení dopředu pro SMB ve hře.
+  HINT_CORE_LOADER: Jádro pro tuto hru tam, kde jsou podporována obě. UDPFS/UDPBD jen Neutrino; SMB/HTTP jen <OPL>. Výchozí se řídí Spouštěním her.
+  HINT_DMA_MODE: Režim přenosu interního HDD pro tuto hru. Snižte ho, pokud se hra trhá nebo zamrzá.
+  HINT_DNAS_GAMEID: ID disku pro online hry DNAS. Načíst z disku ho přečte z originálního disku.
+  HINT_LOAD_FROM_DISC: Přečte ID DNAS z originálního disku v mechanice.
+  HINT_ALTSTARTUP: Spustí tento ELF z obrazu disku místo toho, který určuje SYSTEM.CNF.
+  HINT_VMC_DEFINE: Vyberte, vytvořte nebo změňte velikost virtuální paměťové karty tohoto slotu.
+  HINT_VMC_ACTION: Použít obecnou dá tomuto slotu sdílenou kartu; Resetovat zruší volbu.
+  HINT_VMC_NAME: Název souboru karty, uloženého ve složce VMC.
+  HINT_VMC_CREATE: Vytvoří kartu, nebo na ni použije novou velikost.
+  HINT_VMC_DELETE: Smaže tento soubor karty.
+  HINT_SETTINGS_SOURCE: Globální používá sdílená nastavení; Pro hru je uchová jen pro tuto hru.
+  HINT_PADMACRO_TOGGLE: Při stisku tlačítka zpomalí páčku jen tehdy, když tlačítko držíte; Přepínáno tlačítkem ho zapíná a vypíná.
+  HINT_SFX: Zvukové efekty menu.
+  HINT_BOOT_SND: Při startu RiptOPL zahraje zvuk.
+  HINT_BGM: Přehrává hudbu motivu, nebo váš soubor Výchozí hudba motivu.
+  HINT_SFX_VOLUME: Hlasitost zvukových efektů menu.
+  HINT_BOOT_SND_VOLUME: Hlasitost úvodního zvuku.
+  HINT_BGM_VOLUME: Hlasitost hudby v pozadí.
+  HINT_SCROLL: Jak rychle se seznamy posouvají, když držíte směr.
+  HINT_SELECTBUTTON: 'Které tlačítko potvrzuje: Křížek, nebo Kroužek.'
+  HINT_XSENSITIVITY: Jak snadno levá páčka posouvá kurzor doleva a doprava. Vypnuto ji ignoruje.
+  HINT_YSENSITIVITY: Jak snadno levá páčka posouvá kurzor nahoru a dolů. Vypnuto ji ignoruje.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 přes USB nebo Bluetooth a multitap, pro každou hru.
+  HINT_PADMACRO_GLOBAL: Zpomalení páčky, obrácení osy a turbo pro každou hru.
+  HINT_COVERFLOW_DIM: Ztmaví boční obaly.
+  HINT_OSD_ENABLE: Předá hře nastavení níže. Vypnuto použije vlastní nastavení konzole.
+  HINT_OSD_TVASPECT: Tvar televizoru předávaný hře.
+  HINT_OSD_VMODE: Režim videa předávaný hře.
+  DNAS_ID: ID DNAS
+  NEUTRINO_PADEMU_WARN: S Neutrinem není emulace ovladače dostupná. Použijte ovladač PS2 nebo zdroj, který podporuje jádro <OPL>.
+  RA_MODE: Režim RA
+  RA_HOST_IP: IP pomocníka RA (0.0.0.0 = automaticky)
+  HINT_RA_HOST_IP: Volitelná IPv4 vyhrazeného PC pro RetroAchievements. Pro starou záložní cestu SMB/HTTP nebo hledání Xerabora použijte 0.0.0.0. Nemění nastavení herního serveru.
+  HINT_RA_MODE: Vyberte klienta na PC. Výchozí je Xerabora; Caduceus nejdřív zkontroluje svou přihlášenou relaci.
+  RA_CADUCEUS_OFFLINE: Relace RA v Caduceus je offline.
+  RA_CADUCEUS_SIGN_IN: Přihlaste se k RetroAchievements v Caduceus a zkuste to znovu.
+  FAV_SAVING: Ukládání do Oblíbených her...
+  FAV_SAVED: Uloženo do Oblíbených her
+  FAV_SAVE_FAILED: Do Oblíbených her nešlo uložit
+  CAD_ACHIEVEMENTS: Úspěchy Caduceus
+  CAD_VIEW_ACHIEVEMENTS: Zobrazit úspěchy
+  CAD_USE_LIBRARY: Tuto hru procházejte přes Úspěchy Caduceus v hlavním menu.
+  CAD_HASH_UNSUPPORTED: U tohoto formátu nelze spočítat hash. Procházejte místo toho knihovnu účtu.
+  CAD_HEADING: ÚSPĚCHY
+  CAD_LIBRARY: Knihovna účtu RetroAchievements
+  CAD_FILTER_ALL: Vše
+  CAD_EARNED: Získané
+  CAD_LOCKED: Zamčené
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: Získáno %d / %d  |  %s
+  CAD_ONE_GAME: '%d hra v účtu'
+  CAD_GAMES: '%d her v účtu'
+  CAD_GAME_PROGRESS: '%d / %d úspěchů  |  %d hardcore'
+  CAD_POINTS: '%d bodů  |  %s'
+  CAD_EMPTY_LIBRARY: V tomto účtu nejsou hry s postupem.
+  CAD_EMPTY_FILTER: Tomuto filtru neodpovídají žádné úspěchy.
+  CAD_LOADING: Načítání úspěchů...
+  CAD_PAIR: Přihlaste se do Caduceus a spárujte ART/CADUCEUS.KEY na svém sdílení SMB.
+  CAD_UNKNOWN_GAME: Tato hra není v katalogu Caduceus. Obnovte katalog na PC.
+  CAD_CONNECTION_ERROR: Caduceus nelze dotázat. Zkontrolujte spojení a pak stiskněte Select pro nový pokus.
+  CAD_BACK_REFRESH: Zpět se vrátí do OPL. Select obnoví tuto stránku.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: stránka   Potvrdit: otevřít   Select: obnovit'
+  CAD_GAME_CONTROLS: 'L1/R1: stránka   Čtverec: filtr   Select: obnovit'
+  CAD_BACK: Zpět
+  CAD_UNTRACKED: Caduceus není připraven. Tentokrát spuštění bez úspěchů.
+  PS1_RA_USB_REQUIRED: Úspěchy PS1 vyžadují VCD na USB přes POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Předchozí modul úspěchů PS1 nelze odebrat
+  PS1_RA_PREPARE_FAILED: Úspěchy PS1 nelze připravit. Ponechte nebo přesuňte POPS/MODULE_9.IRX a zkontrolujte právo zápisu na zařízení.
+  PS1_RA_CLEAN_DELETE: 'Nepoužívaný modul RA z RiptOPL: POPS/MODULE_9.IRX. Smazat pro čisté spuštění?'
+  PS1_RA_CLEAN_FAILED: Nepoužívaný modul RA nelze smazat.
+  PS1_RA_CLEAN_CONTINUE: Přesto pokračovat? Zbylý modul RA může spustit zastaralou telemetrii. Ne zruší spuštění.
+  FAV_REMOVED: Odebráno z Oblíbených her
+  FAV_REMOVE_FAILED: Z Oblíbených her nešlo odebrat
+  POPS_UDPFS_SETTINGS: Síťová nastavení POPS UDPFS
+  POPS_UDPFS_DISCOVERY: Ukládá do každé složky POPS na USB. Server 0.0.0.0 použije vyhledání.
+  POPS_UDPFS_NOT_READY: POPS UDPFS potřebuje odpovídající platné IPCONFIG.DAT a UDPFSCONFIG.DAT v každé složce POPS na USB. Nastavte je v Síťových nastaveních POPS.
+  HINT_POPS_UDPFS_IP: Statická IP PS2, kterou ovladač POPS UDPFS použije po resetu IOP.
+  POPS_UDPFS_ALL_USB_FOLDERS: Všechny složky POPS na USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (neplatné)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (neúplné)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS potřebuje na paměťové kartě nainstalovanou dvojici ovladačů .udpfs. Nainstalujte ji ručně, nebo zapněte BDMA Použít při spuštění.
+  VMC_REPLACE_REQUIRES_DELETE: Změna velikosti VMC by smazala její uložené pozice. Zálohujte stávající VMC a před vytvořením nové velikosti použijte Smazat.
+  VMC_CREATE_FAILED: VMC nešlo vytvořit. Zkontrolujte zařízení, spojení a právo zápisu. Stávající uložené pozice nebyly nahrazeny.
+  RA_EXPERIMENTAL_CARDS: Experimentální karty Caduceus
+  HINT_RA_EXPERIMENTAL_CARDS: Experimentální karty úspěchů ve hrách PS2. Mohou blikat nebo hru zamrazit. Jen Caduceus; Vypnuto použije zlatý puls. Projeví se při příštím spuštění hry.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA není pro toto spuštění dostupné. Zkontrolujte běhové prostředí RA, IP pomocníka a uložený seznam sledování. Spuštění bez úspěchů.
+  UDPFS_IP_CONFLICT: Jiné zařízení ve vaší síti používá IP adresu tohoto PS2, takže odpovědi serveru UDPFS jdou jemu. V Síťových nastaveních nastavte PS2 jinou IP.
+  XERA_ACHIEVEMENTS: Knihovna RetroAchievements (xeRAbora)
+  XERA_USE_LIBRARY: Tuto hru procházejte přes knihovnu RetroAchievements v hlavním menu.
+  XERA_OPEN_NETWORK: xeRAbora není dosažitelná. Zapněte OPEN TO THE NETWORK v jejím nastavení, zkontrolujte IP pomocníka RA a bránu firewall na PC.
+  XERA_UNKNOWN_GAME: xeRAbora tento obraz nezná. Nejdřív spusťte kontrolu podpory hry RA.
+  XERA_NOT_PLAYED: Zatím není ve vaší knihovně RetroAchievements. Zahrajte si ji jednou s úspěchy a pak stiskněte Select.
+  XERA_CONNECTION_ERROR: Seznam z xeRAbora nelze přečíst. Stiskněte Select pro nový pokus.
+  CAD_PAIR_UDPFS: Caduceus není dosažitelný. Spárujte ART/CADUCEUS.KEY ve složce, kterou sdílí PS2-Servers, a nastavte IP pomocníka RA.
+  RA_WL_NOT_SAVED: Seznam sledování nešlo uložit. Ověřte, že zařízení nebo sdílení hry je zapisovatelné, a pak zkontrolujte znovu.
+  RA_UDPFS_LOAD_FIRST: Otevřete jednou stránku UDPFS, aby se načetl její síťový modul, a zkuste to znovu.
+  CAD_UDPFS_IMG: 'Prohlížeč Caduceus potřebuje SMB nebo UDPFS Soubory: UDPFS IMG nemá sdílenou složku pro svůj klíč.'
+  XERA_SET_CLOCK: Zatím není ve vaší knihovně RetroAchievements. Nastavte hodiny konzole v nastavení systému, abyste viděli celý seznam, nebo si ji jednou zahrajte s úspěchy.
+  CFG_TITLES: Zobrazit názvy z CFG v seznamech her
+  HINT_CFG_TITLES: Zobrazí Název z CFG každé hry místo názvu souboru a řadí podle něj. Při obnovení seznamu čte každý CFG, takže se seznamy načítají pomaleji. Jen zobrazení.
+  AUTO_VMC_INVALID: Soubor VMC této hry existuje, ale není to platná paměťová karta, takže nebyl použit ani nahrazen. Hra se spustí bez něj; zkontrolujte ho v menu VMC.
+  AUTO_VMC_STILL_RUNNING: VMC této hry se stále vytváří. Spusťte hru znovu za chvíli.
+  NEUTRINO_DVR_QUICKBOOT: Spuštění DVR vyžaduje přechod do režimu PSX. Odstraňte -qb z globálních i herních argumentů Neutrina.
+  NEUTRINO_DVR_FILE_MISSING: 'Instalace Neutrina pro DVR je neúplná. Chybí potřebný soubor:'
+  PARENLOCK_GAME: Rodičovský zámek
+  PARENLOCK_GAME_HINT: Pro spuštění této hry vyžadovat heslo rodičovského zámku.
+  PARENLOCK_GAME_NO_PASSWORD: Nastavte heslo rodičovského zámku, jinak tato hra nebude zamčená.
+  HINT_ENABLE_PCCF: CompactFlash v PC CARD raných japonských PS2. Jen nativní hry PS2; CF potřebuje výhradní přístup k PC CARD. Pro uvolnění restartujte.
+  PCCF_GAMES: Hry PC CARD CF
+  PCCF_UNAVAILABLE: 'CF nedostupné: vyžaduje ranou japonskou PS2 s PC CARD, kompatibilní kartu a žádný aktivní ovladač DEV9/HDD/sítě.'
+  PCCF_UNSUPPORTED_GAME: CF zatím podporuje jen nativní hry PS2. VMC na CF, načítání PS1 a síťové úspěchy nejsou dostupné.
+  HINT_ENABLE_DVR: Experimentální vyhledávání ISO DESR DVR. Vyžaduje zapnutý zdroj HDD; spuštění her vyžaduje externí Neutrino s podporou DVR.

@@ -9,6 +9,15 @@
 
 > **Planned collaboration: ps2build C++ edition.** A ps2build C++ edition is planned in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**.
 
+## Interface languages
+
+English is built into the ELF. The rolling release also provides **33 external language packs**
+(`RIPTOPL-LANGS-*.zip`), though not every recently added RiptOPL-specific string
+is localized yet. See the [installation instructions](https://nathanneurotic.github.io/Open-PS2-Loader/languages.html)
+for the CWD-first lookup introduced by [#1017](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1017),
+legacy `LNG/` locations and fonts; see the [translation coverage guide](docs/LANGUAGES.md)
+to contribute missing strings. CWD support requires a build containing #1017.
+
 ## Test builds and save-card recovery
 
 For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves. For build flavours, app placement, Browser/OSDSYS and launch-failure reports, see [Setup questions](docs/SETUP-QUESTIONS.md).
@@ -47,7 +56,7 @@ Review the LICENSE file for further details.<br><br>
 ![Written in C](https://img.shields.io/badge/Written%20in-C-skyblue?style=flat&logo=c&logoColor=white&labelColor=navy)
 ![Platform](https://img.shields.io/badge/Platform-PlayStation%202-skyblue?style=flat&logo=playstation2&logoColor=white&labelColor=navy)
 ![Toolchain](https://img.shields.io/badge/Toolchain-ps2dev%20%2F%20PS2SDK-skyblue?style=flat&logo=docker&logoColor=white&labelColor=navy)
-![Translations](https://img.shields.io/badge/Translations-31%20languages-skyblue?style=flat&logo=googletranslate&logoColor=white&labelColor=navy)
+![Translations](https://img.shields.io/badge/Translations-33%20language%20packs-skyblue?style=flat&logo=googletranslate&logoColor=white&labelColor=navy)
 ![Repo Size](https://img.shields.io/github/repo-size/NathanNeurotic/Open-PS2-Loader?style=flat&labelColor=navy&color=skyblue&logo=github&label=Repo%20Size)
 
 ![Last Commit](https://img.shields.io/github/last-commit/NathanNeurotic/Open-PS2-Loader/rebuild/main?style=flat&labelColor=navy&color=skyblue&logo=git&logoColor=white&label=Last%20Commit)

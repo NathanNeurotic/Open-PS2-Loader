@@ -315,3 +315,355 @@ translations:
   VIEW_APPS: Po shfaqen aplikacionet
   EMBER_DISPLAY: Modaliteti i pamjes i Ember
   HINT_EMBER_DISPLAY: Modaliteti i daljes që Ember përdor për lojërat PS1. 240p ose 480p shkruhet në settings.txt brenda dosjes EMBER të pajisjes që niset. E parazgjedhura e heq sërish këtë cilësim, si dhe vetë skedarin nëse nuk përmbante gjë tjetër.
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  OK: OK
+  EXITTO: Shtegu IGR
+  MASK: Maska
+  GATEWAY: Porta e kalimit
+  SHARE: Dosja e ndarë
+  USER: Përdoruesi
+  PASSWORD: Fjalëkalimi
+  BDM_PREFIX: Shtegu i prefiksit BDM
+  INFO: Informacion
+  ETH_PREFIX: Shtegu i prefiksit ETH
+  BACKSPACE: Fshi pas
+  VMC_SLOT1: Foleja VMC 1
+  VMC_SLOT2: Foleja VMC 2
+  VSYNC: V-Sync
+  ETH_100MFDX: 100Mbit full-duplex
+  ETH_100MHDX: 100Mbit half-duplex
+  ETH_10MFDX: 10Mbit full-duplex
+  ETH_10MHDX: 10Mbit half-duplex
+  XOFFSET: H-POS
+  YOFFSET: V-POS
+  DS34BT_MODE: DualShock3/4 BT
+  HCIVER: 'Versioni HCI:'
+  LMPVER: 'Versioni LMP:'
+  MANUFACTURER: 'ID e prodhuesit:'
+  HINT_NEUTRINO_AUTO_ELF: I jep Neutrino-s ELF-in e nisjes së lojës për të kërkuar konfigurimin e çdo titulli. Ndezur si parazgjedhje; opsioni ELF i nisjes i vendosur me dorë ka përparësi.
+  HINT_POPSTARTER_PATH: Ku është POPSTARTER.ELF. Nëse lihet bosh, RIPPS2 vendos një që gjen në një njësi; shkruaj mbi të për të përdorur një tjetër, si usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Argumentet e Neutrino e kalojnë gjatësinë që mund të ruhet. Shkurto një fushë para ruajtjes.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Argumentet e nisjes së Neutrino e kalojnë kufirin e sigurt. Shkurto argumentet globale ose të lojës.
+  NEUTRINO_AUTO_ELF: ELF nisjeje automatik (-elf)
+  HINT_NEUTRINO_PATH: 'Ku ndodhet neutrino.elf? <not set> = Pajisja e lojës -> mc0/mc1. Një shteg i plotë i personalizuar provohet i pari. Shembuj: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Shfaqja e lojërave PS2/PS1
+  HINT_GAME_VIEW_MODE: Të gjitha liston lojërat PS2 dhe PS1 bashkë dhe L3 kalon nëpër Të gjitha, PS1, PS2. PS2 ose PS1 shfaq vetëm atë lloj dhe çaktivizon L3. APPS dhe Lojërat e preferuara kanë rregullat e tyre të shfaqjes.
+  VIEW_MIXED: Duke shfaqur lojërat PS2 + PS1
+  VIEW_PS1_ELF: Duke shfaqur aplikacionet PS1 ELF
+  APPS_DISPLAY: Shfaqja e aplikacioneve
+  HINT_APPS_DISPLAY: Të gjitha shfaq çdo ELF në një listë APPS me L3 të çaktivizuar. Aplikacionet / PS1ELF ndan titujt që përmbajnë [PS1] në një faqe të dytë L3; nisja nuk ndryshon.
+  VIEW: Pamja
+  VIEW_PS2: Duke shfaqur lojërat PS2 të preferuara
+  VIEW_PS1: Duke shfaqur lojërat PS1 të preferuara
+  VIEW_ELF: Duke shfaqur ELF-et e preferuara
+  VIEW_ALL: Duke shfaqur të gjitha të preferuarat
+  VMC_FRAGMENTED_ON_CREATE: VMC u krijua, por është i fragmentuar. Emulimi i kartës së memories ka nevojë për një skedar të pandërprerë, ndaj ky VMC do të anashkalohet në nisje dhe do të përdoret karta e vërtetë. Liro hapësirë dhe krijoje përsëri, ose kopjo një nga një pajisje tjetër.
+  KEYB_MOVE_CURSOR: Lëviz kursorin
+  TITLECOLOR: Ngjyra e titullit të lojës
+  RA_CHECK_GAME: Kontrollo mbështetjen e RetroAchievements
+  RA_TEST_LINK: Testo lidhjen RetroAchievements me kompjuterin
+  RA_CHECKING_IMAGE: Duke kontrolluar imazhin, zgjat disa sekonda...
+  RA_CHECK_RUNNING: Një kontroll imazhi është tashmë në punë
+  RA_LOOKING_FOR_PC: Duke kërkuar klientin e kompjuterit...
+  RA_UL_UNSUPPORTED: Lojërat UL/USBExtreme ende nuk mund të kontrollohen
+  RA_UL_UNSUPPORTED2: Mbështeten vetëm imazhe të thjeshta .iso në DVD/ ose CD/
+  RA_UNKNOWN_IMAGE: RetroAchievements nuk e njeh këtë imazh
+  RA_STILL_IDENTIFYING: Kompjuteri ende po e identifikon imazhin
+  RA_TRY_AGAIN: Provo përsëri pas disa sekondash
+  RA_NO_SOCKET: Konsola nuk mundi të hapte një fole rrjeti
+  RA_NO_SOCKET2: Rinis konsolën, ose kontrollo pajisjen ETH te cilësimet
+  RA_TEST_NO_SOCKET2: Kontrollo kabllin dhe ETH te cilësimet; nëse rrjeti punon, rinis konsolën
+  RA_PC_NO_ANSWER: Klienti i kompjuterit nuk u përgjigj
+  RA_PC_NO_ANSWER2: Kontrollo që xeRAbora të jetë në punë, ose provo testin e lidhjes me kompjuterin
+  RA_SUPPORTED: E mbështetur nga RetroAchievements
+  RA_START_TO_TRACK: Nis lojën për të ndjekur arritjet
+  RA_ACHIEVEMENTS: '%d arritje'
+  RA_ACHIEVEMENTS_FULL: '%d arritje: %d të zhbllokuara, %d të pambështetura'
+  RA_HASH_FAILED: Hash-i i imazhit nuk u llogarit dot
+  RA_HASH_FAILED2: Shih RA/hashes.txt pranë lojërave për arsyen
+  RA_NET_BUSY: Rrjeti po përdoret nga një transport UDP
+  RA_NET_BUSY2: 'RA ka nevojë për stivën SMB: ndrysho protokollin, ose ndërto .wl në kompjuter'
+  RA_NET_BUSY_HASH: 'Hash-i është në RA/hashes.txt: xeRAbora mund të ndërtojë .wl prej tij'
+  RA_NO_IP: Konsola nuk ka adresë IP
+  RA_NO_IP2: Kontrollo DHCP ose adresën statike te cilësimet e rrjetit
+  RA_TEST_NO_ANSWER: Asnjë klient kompjuteri nuk u përgjigj brenda 3 sekondave
+  RA_TEST_NO_ANSWER2: Konsola%s. Kontrollo që xeRAbora të jetë në punë dhe UDP 18194 të jetë i hapur
+  RA_TEST_FOUND: Klienti i kompjuterit u gjet%s%s %s
+  RA_TEST_FOUND2: Përgjigje në %u ms, konsola%s
+  RA_NA_NEUTRINO: 'Ndjekja RA ka nevojë për bërthamën <OPL>: nisjet me Neutrino nuk ngarkojnë kurrë ee_core'
+  RA_NA_UDPFS: 'Ndjekja RA nuk është e disponueshme në UDPFS: lojërat nisen përmes Neutrino'
+  RA_NA_PS1: Ndjekja RA nuk është e disponueshme për lojërat PS1
+  RA_NA_HDD: Informacioni i lojës APA ose vendi i cilësimeve të HDD nuk është i disponueshëm
+  RA_NA_HDD2: Vendos një vend të vlefshëm për cilësimet e HDD dhe rifresko para se të kontrollosh mbështetjen
+  RA_TELEMETRY: Telemetria e RetroAchievements
+  RA_BADGES: Distinktivët e RetroAchievements
+  HTTP_GAMES: Lojërat HTTP
+  HTTP_SERVER: Serveri HTTP
+  HTTP_PORT: Porta HTTP
+  HTTP_BASE_PATH: Shtegu bazë HTTP
+  HTTP_TEST: Testo serverin HTTP
+  HTTP_TEST_OK: 'Serveri në rregull: lojërat u listuan'
+  HTTP_TEST_EMPTY: 'Katalogu është bosh: i vlefshëm, por nuk provon asgjë për intervalet e bajteve'
+  HTTP_TEST_NO_ISO: Katalogu nuk ka imazh të mbështetur për të testuar një interval bajtesh
+  HTTP_ERR_CONNECT: Serveri HTTP nuk arrihet dot
+  HTTP_ERR_CATALOG: games.csv mungon, nuk lexohet ose është shumë i madh
+  HTTP_ERR_RANGE: Serveri nuk ktheu saktësisht bajtet që u kërkuan
+  HTTP_LAUNCH_UNAVAILABLE: 'Nisja përmes HTTP ende nuk është bërë: katalogu vetëm mund të shfletohet'
+  HTTP_ERR_COMPRESSED: Imazhet e ngjeshura (.zso) ende nuk mbështeten përmes HTTP
+  HTTP_NO_VMC: 'Kartat virtuale të memories nuk janë të disponueshme përmes HTTP: përdor një kartë fizike'
+  HTTP_TAB_HINT: HTTP lexon games.csv nga serveri yt. Vendos adresën, portën dhe shtegun bazë te cilësimet e rrjetit, pastaj përdor Testo.
+  RA_DISC_CHECK: 'RA: kontrollo mbështetjen e diskut'
+  RA_DISC_LAUNCH: 'RA: nis diskun'
+  RA_DISC_CHECKING: Duke kontrolluar diskun për RetroAchievements
+  RA_DISC_HASH_FAILED: 'Hash-i i diskut nuk u llogarit dot: kontrollo RA/hashes.txt në dosjen e cilësimeve'
+  RA_DISC_HOME_ERROR: Shtegu i cilësimeve nuk mund të përdoret për listat e ndjekjes së disqeve
+  RA_DISC_ENABLE: Ndiz së pari telemetrinë e RetroAchievements te cilësimet e rrjetit
+  RA_DISC_CHECK_FIRST: 'Nuk ka listë ndjekjeje për këtë disk: përdor së pari kontrollin RA të mbështetjes së diskut'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: HDD u gjet, por tabela e saj e particioneve APA nuk lexohet. Mos e formato: lojërat e tua mund të rikuperohen.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: Një njësi nuk u montua sepse sektorët e saj nuk janë 512 bajte (p.sh. një njësi me sektorë 4K). OPL lexon vetëm sektorë 512 bajte.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Ky titull është particion APA më vete, dhe OPL nuk e ndryshon kurrë tabelën e particioneve. Riemërtoje në një kompjuter.
+  POPS_SETTINGS_UNREADABLE: 'Cilësimet e POPSTARTER nuk u lexuan dot: karta e memories është e zënë ose e palexueshme. Provo përsëri kur të përfundojë ngarkimi.'
+  GLOBAL_PS_EMULATION_SETTINGS: Cilësimet globale të emulimit PS
+  RA_NO_LINK_UNTRACKED: 'Rrjeti nuk është i disponueshëm: kësaj here po niset pa RetroAchievements.'
+  IGR_USB_DRIVERS_PROMPT: Shtegu IGR është në USB, por %s nuk ka USBD.IRX dhe USBHDFSD.IRX, të cilat konsolës i duhen për të arritur USB-në pas një In-Game Reset. Pa to IGR bie te shfletuesi PS2. Të kopjohen drajverët e RiptOPL atje tani? FMCB, OpenTuna dhe exploit-e të tjera i ngarkojnë gjithashtu këta skedarë dhe mund të sillen ndryshe me ta. Skedarët ekzistues nuk zëvendësohen kurrë. Vetëm USB FAT32.
+  IGR_USB_DRIVERS_FAILED: Drajverët USB nuk u kopjuan dot në %s (karta plot ose e pashkrueshme). IGR do të bjerë te shfletuesi PS2.
+  OFFICIAL_CFG_NOTIFICATION: Cilësimet zyrtare të OPL u ngarkuan nga %s
+  CFM_VMODE_HOLD_KEEP: Mbaje për ta ruajtur
+  BDM_PS2_FOLDERS_UNREADABLE: Dosja CD ose DVD në %s nuk u hap dot (gabimi %d), ndaj ajo pajisje nuk liston lojëra PS2. Shtyp SELECT në faqen e saj për të provuar përsëri.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Sistemi i skedarëve Neutrino është vendosur në bd, por kjo pajisje nuk e raportoi kurrë numrin e saj, ndaj Neutrino nuk mund të drejtohet tek ajo. Vendos sistemin e skedarëve Neutrino të kësaj loje në Auto ose exfat.
+  CFM_VMODE_REVERT_IN: Kthim pas %d s
+  EMBER_DITHER: Dithering i Ember
+  HINT_EMBER_DITHER: Dithering i Ember (ndezur ose fikur), i shkruar në EMBER/settings.txt të pajisjes së nisur. Një vlerë për lojë ka përparësi.
+  EMBER_SHADING: Hijëzimi i Ember
+  HINT_EMBER_SHADING: 'Thellësia e ngjyrave e Ember: 15-bit, ose 24-bit (eksperimentale). Shkruhet në EMBER/settings.txt të pajisjes së nisur. Një vlerë për lojë ka përparësi.'
+  EMBER_CONTROLLER: Kontrolluesi i Ember
+  HINT_EMBER_CONTROLLER: 'Mënyra e kontrolluesit të Ember: Auto, Analog ose D2A. Zakonisht më mirë për çdo lojë (Trekëndëshi > Cilësimet e lojës Ember), që ka përparësi mbi këtë.'
+  EMBER_480P_CONFIRM: Ember në 480p nuk shfaq figurë përmes kabllit kompozit. Të përdoret 480p?
+  EMBER_SHADING_24: 24-bit (eksperimentale)
+  EMBER_GAME_SETTINGS: Cilësimet e lojës Ember
+  HINT_EMBER_GAME_SETTING: Vetëm kjo lojë. Shtyp OK për të shkruar EMBER/games/<name>/settings.txt para nisjes. Një Parazgjedhje e paprekur mban vlerën ekzistuese të skedarit; kthimi i një vlere në Parazgjedhje heq zëvendësimin e saj.
+  EMBER_TIMING: Koha e Ember
+  HINT_EMBER_TIMING: 'Koha e videos së Ember: Auto ndjek rajonin e diskut, NTSC detyron 60 Hz, PAL detyron 50 Hz. Shkruhet në EMBER/settings.txt të pajisjes së nisur.'
+  EMBER_GLOBAL_WARNING: Këto cilësime Ember vlejnë për çdo lojë PS1, dhe disa lojëra rrëzohen me to. Për të ndryshuar vetëm një lojë, përdor Trekëndëshi > Cilësimet e lojës Ember te ajo lojë.
+  HINT_COVERFLOW_COUNT: Sa kopertina shfaq RIPFLOW në secilën anë të asaj të zgjedhur.
+  HINT_COVERFLOW_SCALE: Sa e madhe e vizaton RIPFLOW kopertinën e zgjedhur kundrejt të tjerave.
+  HINT_COVERFLOW_ANIM: Sa shpejt rrëshqasin kopertinat kur lëviz përgjatë rrjedhës.
+  HINT_NARGS_QB: 'Nisje e shpejtë: anashkalon ekranin e nisjes së Neutrino. Ndezur këtu, dërgohet për çdo lojë; fikur, RIPPS2 e dërgon ende vetë për lojërat USB, iLink dhe rrjeti, ku duhet.'
+  HINT_NARGS_DBC: 'Ngjyrat e korrigjimit: Neutrino mbush ekranin me një ngjyrë në çdo hap ngarkimi, ndaj një foto tregon ku ndalet një lojë.'
+  HINT_NARGS_LOGO: Shfaq logon PS2 para lojës (një rinisje e dytë e IOP, që u duhet disa njësive iLink). Fikur këtu, RIPPS2 ndjek Nisja e lojërave > Logo PS2, dhe nuk e dërgon kurrë për lojërat MMCE ose të rrjetit.
+  HINT_NARGS_CWD: 'Dosja që loja e sheh si të vetën. Bosh: parazgjedhja e Neutrino.'
+  HINT_NARGS_CFG: 'Një skedar konfigurimi Neutrino i yti (-cfg). Bosh: ai i Neutrino.'
+  HINT_NARGS_ELF: 'Nis këtë ELF në vend të skedarit të nisjes që emërton disku. Bosh: ai i vetë lojës.'
+  HINT_NARGS_ATA0: Një imazh HDD që Neutrino e monton si HDD-në e brendshme të konsolës, për lojërat që përdorin HDD-në (-ata0).
+  HINT_NARGS_ATA0ID: Skedari ID që shkon me atë imazh HDD (-ata0id).
+  HINT_NARGS_ATA1: Një imazh i dytë HDD (-ata1).
+  PS1_SAVE_GUIDANCE: Ruajtjet PS1 varen nga Ember ose POPSTARTER; cilësimet VMC të PS2 nuk zbatohen.
+  NEUTRINO_SHOW_ARGS: Shfaq argumentet e nisjes
+  HINT_NEUTRINO_SHOW_ARGS: Para çdo nisjeje me Neutrino, shfaq çdo argument që do të marrë Neutrino dhe pyet nëse të vazhdojë. Prapa kthehet te menyja pa nisur.
+  NEUTRINO_ARGS_CONFIRM: Neutrino do të niset me këto argumente. Ta nis?
+  HINT_NARGS_EXTRA: Flamuj të tjerë Neutrino, të ndarë me hapësira, dërguar pas gjithçkaje më sipër. RIPPS2 shton gjithmonë -bsd dhe -dvd për njësinë dhe ISO-n e lojës, -mc0 dhe -mc1 për VMC-të e saj, -gsm për mënyrën e saj të videos, dhe mënyrat e veta të përputhshmërisë së lojës. Një flamur me rreshtin e vet më sipër (si -logo) kalon në atë rresht kur ruhet, dhe dërgohet ende.
+  GAME_TYPE_LABELS: Shfaq etiketat [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: Lista e mashtrimeve nuk u ruajt dot në dosjen Neutrino, ndaj Neutrino nuk mund ta përdorë. Të niset pa mashtrime?
+  AUTO_CREATE_VMC: Krijo VMC në nisjen e parë
+  HINT_AUTO_CREATE_VMC: Nisja e një loje PS2 pa VMC në folenë 1 krijon një kartë 8 MB në pajisjen e lojës, me emrin që sugjeron ekrani VMC (i përbashkët për të gjithë disqet e lojës), dhe e cakton. Jo për HDD-në e brendshme nën Neutrino.
+  AUTO_VMC_CREATING: Duke krijuar VMC-në e kësaj loje...
+  AUTO_VMC_FAILED: VMC e kësaj loje nuk u krijua dot. Loja fillon pa të.
+  SAVE_ICONS: Ikonat 3D të ruajtjeve
+  HINT_SAVE_ICONS: Shfaq ikonën e ruajtjes së lojës së zgjedhur, duke u rrotulluar, aty ku tema ka vend për të. Lexon së pari VMC-në e vetë lojës, pastaj kartat e memories.
+  NETBOOT_RESTART_NOW: Protokolli i rrjetit ndryshon pas një rinisjeje. Të ruhen cilësimet dhe të riniset OPL tani?
+  HINT_NET_PROTOCOL: 'Cilin shërbim rrjeti përdor RiptOPL: një dosje të ndarë SMB, UDPFS, UDPBD ose HTTP. I njëjti cilësim si te Burimet e lojërave. Largimi nga një që është tashmë në punë kërkon rinisje.'
+  HINT_UDPFS_ACCESS: Vetëm UDPFS. Skedarët lexon ISO të veçanta nga dosja e lojërave të serverit; IMG lexon një imazh disku si njësi. SMB dhe HTTP përdorin gjithmonë Skedarët, UDPBD gjithmonë IMG.
+  HINT_SMB_VERSION: Me cilin version SMB të flitet me dosjen e ndarë të kompjuterit.
+  HINT_NET_ADVANCED: Zhbllokon për ndryshim mënyrën e lidhjes Ethernet dhe portën SMB.
+  HINT_ETH_LINK_MODE: Detyron shpejtësinë dhe dupleksin e lidhjes së rrjetit. Lëre në Auto përveç nëse lidhja bie vazhdimisht.
+  HINT_IP_ADDR_TYPE: Statike përdor adresën më poshtë; DHCP pyet ruterin tënd. UDPFS dhe UDPBD përdorin gjithmonë Statike.
+  HINT_PS2_IP: Adresa IP e vetë PS2. Zgjidh një që nuk e përdor asnjë pajisje tjetër, në të njëjtin interval me kompjuterin tënd.
+  HINT_NETMASK: Maska e nënrrjetit, zakonisht 255.255.255.0.
+  HINT_GATEWAY: Adresa e ruterit tënd, zakonisht me të njëjtat tre numra të parë që mbaron me .1.
+  HINT_DNS: Adresa e serverit DNS. Zakonisht e njëjtë me portën e kalimit.
+  HINT_SMB_ADDR_TYPE: Arrij kompjuterin me adresën e tij IP ose me emrin e tij NetBIOS (emri i kompjuterit).
+  HINT_SMB_ADDRESS: 'Kompjuteri që ndan lojërat e tua: adresa e tij IP, ose emri i kompjuterit kur Lloji i adresës është NetBIOS.'
+  HINT_SMB_PORT: 'Porta SMB. Duhet të përputhet me kompjuterin: PS2 Servers përdor 1111, dosjet e ndara Windows dhe Samba përdorin 445.'
+  HINT_SMB_USER: Emri i përdoruesit SMB. guest punon për shumicën e dosjeve të ndara.
+  HINT_HTTP_SERVER: Adresa IP e serverit HTTP të lojërave.
+  HINT_HTTP_PORT: Porta ku dëgjon serveri HTTP i lojërave.
+  HINT_HTTP_BASE: Dosja në serverin HTTP që mban games.csv. / është rrënja e serverit.
+  HINT_HTTP_TEST: Provon serverin HTTP me vlerat më sipër dhe raporton çfarë gjeti.
+  HINT_RA_TELEMETRY: Çelësi kryesor për RetroAchievements. Fikur nis lojërat pa stivë rrjeti ose fotografi, njësoj si një ndërtim normal.
+  HINT_RA_BADGES: Shënon në listë lojërat që kanë arritje. Mbetet i errët ndërsa telemetria është fikur.
+  HINT_POPS_NET_BUTTON: Ndryshon skedarët e rrjetit të vetë POPSTARTER (IPCONFIG.DAT, SMBCONFIG.DAT), që u duhen lojërave PS1 përmes SMB.
+  HINT_POPS_IP_TYPE: 'Si e merr PS2 adresën e saj ndërsa një lojë PS1 punon përmes SMB: Statike ose DHCP.'
+  HINT_POPS_IP: Adresa IP e PS2 ndërsa një lojë PS1 punon përmes SMB.
+  HINT_POPS_SMB_IP: Adresa IP e kompjuterit që ndan lojërat e tua PS1.
+  HINT_POPS_SMB_SHARE: Emri i dosjes së ndarë në atë kompjuter që mban dosjen POPS.
+  HINT_LASTPLAYED: Fillon te loja që nise herën e fundit.
+  HINT_LANGUAGE: Gjuha e menysë. Shto të tjera duke vendosur skedarë lang_*.lng në një dosje LNG.
+  HINT_GSM_DEFAULTS_BUTTON: Rregullimet e mënyrës së videos që merr çdo lojë përveç nëse ka cilësimet e veta GSM.
+  HINT_DEFDEVICE: Faqja ku hapet RiptOPL në nisje.
+  HINT_MMCE_MODE: Lojëra në një SD2PSX ose MemCard PRO2. Auto niset në nisje, Manuale kur hap faqen, Fikur e fsheh.
+  HINT_MMCE_SETTINGS_BUTTON: Opsionet e folesë, kartës së nisjes IGR, GameID dhe kohës për MMCE.
+  HINT_ENABLE_USB: Ngarkon drajverin e ruajtjes USB.
+  HINT_ENABLE_MX4SIO: Ngarkon drajverin e përshtatësit të kartave SD MX4SIO.
+  HINT_ENABLE_ILINK: Ngarkon drajverin e ruajtjes iLink (FireWire).
+  HINT_NETSTART: 'Nis rrjetin: Auto në nisje, Manuale kur hap faqen e tij. Fikur nuk e prek përshtatësin e rrjetit.'
+  HINT_APPMODE: Faqja e aplikacioneve. Auto niset në nisje, Manuale kur e hap, Fikur e fsheh.
+  HINT_FAVMODE: Faqja e Lojërave të preferuara. Auto niset në nisje, Manuale kur e hap, Fikur e fsheh.
+  HINT_BDMA_BUTTON: Cilin drajver exFAT përdor POPSTARTER për lojërat PS1 në USB, MX4SIO, MMCE, HDD ose iLink.
+  HINT_VCD_LIST_BUTTON: 'Si listohen lojërat PS1: fshih ID-të e lojërave, shfaq vetëm diskun 1, shfaq particionet PP të HDD.'
+  HINT_MMCE_SLOT: Në cilën fole të kartës së memories është pajisja MMCE. Auto e gjen.
+  HINT_MMCE_GAMEID: I tregon pajisjes MMCE cila lojë po fillon, që të kalojë te karta e memories së asaj loje.
+  HINT_MMCE_COMM_BUTTON: Opsionet e kohës për lidhjen MMCE. Ndryshoji vetëm nëse lojërat ngrijnë ose ngarkohen ngadalë.
+  HINT_MMCE_PATH_BUTTON: Ku ndodhen dosjet e lojërave në kartën MMCE.
+  HINT_MMCE_PREFIX: Nëndosja në kartën MMCE që mban CD, DVD dhe dosjet e tjera OPL. Bosh përdor rrënjën e kartës.
+  HINT_GAME_TYPE_LABELS: Fillon çdo emër loje me [PS1] ose [PS2]. Vetëm për shfaqje.
+  HINT_MENU_VMODE: Dalja e videos për menynë. Lojërat përdorin GSM në vend të saj. Mbaj Konfirmo për të mbajtur një mënyrë të re.
+  HINT_THEME: Pamja e menysë. Temat lexohen nga dosja THM në çdo pajisje.
+  HINT_COVERFLOW_BUTTON: Numri i kopertinave, madhësia, animacioni dhe errësimi për temën Coverflow.
+  HINT_ARTWORK_BUTTON: 'Cilat imazhe ngarkohen: kopertinat, imazhet e disqeve, sfondet dhe ikonat e ruajtjeve.'
+  HINT_COLORS_BUTTON: Ngjyrat e tekstit, theksimit, dialogut dhe sfondit.
+  HINT_NOTIFICATIONS: Njoftime të shkurtra kur ngarkohet një skedar konfigurimi, teme ose gjuhe.
+  HINT_AUTOSORT: Rendit listat e lojërave nga A në Z. Fikur mban rendin në të cilin u gjetën.
+  HINT_AUTOREFRESH: Shton lojëra nga pajisjet e sapolidhura pa rifreskim me dorë.
+  HINT_COVERART: Ngarkon kopertinat nga dosja ART.
+  HINT_DISCART: Shfaq imazhin e diskut (<ID>_ICO). Fikur fsheh diskun por mban kopertinat dhe sfondet.
+  HINT_BGART: Shfaq sfondin e një loje (<ID>_BG) kur tema e përdor.
+  HINT_ART_TAR: Lexon edhe imazhet e paketuara në ART/art.tar.
+  HINT_ART_DELAY: Sa gjatë qëndron kursori mbi një lojë para se të ngarkohen imazhet e saj. Më e lartë anashkalon imazhet ndërsa lëviz shpejt.
+  HINT_TXTCOLOR: Ngjyra e tekstit normal të menysë.
+  HINT_SELCOLOR: Ngjyra e elementit të theksuar.
+  HINT_UICOLOR: Nuanca e sfondit të kutive të dialogut.
+  HINT_TITLECOLOR: Ngjyra e titujve të lojërave në listë.
+  HINT_BGCOLOR: Ngjyra e sfondit të menysë.
+  HINT_PLASCOLOR: Ngjyra e përzier në sfondin e animuar.
+  HINT_RESETCOLOR: Rikthen ngjyrat e integruara të RiptOPL, jo ato të temës.
+  HINT_WIDESCREEN: Vizaton menynë për një televizor 16:9.
+  HINT_XOFF: Lëviz menynë majtas ose djathtas në ekran.
+  HINT_YOFF: Lëviz menynë lart ose poshtë në ekran.
+  HINT_MENU_OVERSCAN: Tkurr menynë drejt brendësisë nëse televizori i pret skajet.
+  HINT_APPLYGAMEID: Shfaq një barkod kur fillon një lojë, që pajisjet Pixel FX, RetroGEM dhe PS2Digital të ndërrojnë profil.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Shtegu, mënyra e videos dhe argumentet e Neutrino për çdo lojë.
+  HINT_OSD_DEFAULTS_BUTTON: Gjuha e konsolës, madhësia e ekranit dhe mënyra e videos që u jepen lojërave.
+  HINT_ENWRITEOP: Lejon riemërtimin dhe fshirjen e lojërave dhe krijimin e VMC-ve. Nuk e prek kurrë tabelën e particioneve të HDD.
+  HINT_DEBUG: 'Ndihmë për zhvilluesit: ekrane me ngjyra ndërsa niset një lojë, dhe numërues të ngarkimit të imazheve në meny.'
+  HINT_BDMPREFIX: Nëndosja në njësitë USB, MX4SIO, iLink dhe exFAT që mban dosjet e lojërave. Bosh përdor rrënjën e njësisë.
+  HINT_ETHPREFIX: Nëndosja në dosjen e ndarë SMB që mban dosjet e lojërave. Bosh përdor rrënjën e saj.
+  HINT_HDDGAMELISTCACHE: Mban mend listën e lojërave të HDD APA për të shpejtuar skanimet e mëvonshme.
+  HINT_BDMCACHE: Memorie leximi paraprak për USB dhe njësitë e tjera BDM gjatë lojës. Më e madhe mund ta bëjë transmetimin më të butë por përdor më shumë memorie.
+  HINT_HDDCACHE: Memorie leximi paraprak për HDD-në e brendshme gjatë lojës.
+  HINT_SMBCACHE: Memorie leximi paraprak për SMB gjatë lojës.
+  HINT_CORE_LOADER: Bërthama për këtë lojë aty ku mbështeten të dyja. UDPFS/UDPBD vetëm Neutrino; SMB/HTTP vetëm <OPL>. Parazgjedhja ndjek Nisja e lojërave.
+  HINT_DMA_MODE: Mënyra e transferimit të HDD-së së brendshme për këtë lojë. Uleje nëse loja ngec ose ngrin.
+  HINT_DNAS_GAMEID: ID e diskut për lojërat online DNAS. Ngarko nga disku e lexon nga disku origjinal.
+  HINT_LOAD_FROM_DISC: Lexon ID-në DNAS nga disku origjinal në njësi.
+  HINT_ALTSTARTUP: Nis këtë ELF nga imazhi i diskut në vend të atij që emërton SYSTEM.CNF.
+  HINT_VMC_DEFINE: Zgjidh, krijo ose ndrysho madhësinë e kartës virtuale të memories së kësaj foleje.
+  HINT_VMC_ACTION: Përdor të përgjithshmen i jep kësaj foleje një kartë të përbashkët; Rivendos fshin zgjedhjen.
+  HINT_VMC_NAME: Emri i skedarit të kartës, i mbajtur në dosjen VMC.
+  HINT_VMC_CREATE: Krijon kartën, ose i zbaton një madhësi të re.
+  HINT_VMC_DELETE: Fshin këtë skedar karte.
+  HINT_SETTINGS_SOURCE: Globale përdor cilësimet e përbashkëta; Për lojë i mban vetëm për këtë lojë.
+  HINT_PADMACRO_TOGGLE: Ndërsa butoni shtypet ngadalëson levën vetëm ndërsa mban butonin; Ndërrohet nga butoni e ndez dhe e fik.
+  HINT_SFX: Efektet zanore të menysë.
+  HINT_BOOT_SND: Luan një tingull kur niset RiptOPL.
+  HINT_BGM: Luan muzikën e temës, ose skedarin tënd të Muzikës së parazgjedhur të temës.
+  HINT_SFX_VOLUME: Volumi i efekteve zanore të menysë.
+  HINT_BOOT_SND_VOLUME: Volumi i tingullit të nisjes.
+  HINT_BGM_VOLUME: Volumi i muzikës së sfondit.
+  HINT_SCROLL: Sa shpejt lëvizin listat ndërsa mban një drejtim.
+  HINT_SELECTBUTTON: 'Cili buton konfirmon: Kryqi ose Rrethi.'
+  HINT_XSENSITIVITY: Sa lehtë e lëviz leva e majtë kursorin majtas dhe djathtas. Fikur e shpërfill.
+  HINT_YSENSITIVITY: Sa lehtë e lëviz leva e majtë kursorin lart dhe poshtë. Fikur e shpërfill.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 përmes USB ose Bluetooth, dhe multitap, për çdo lojë.
+  HINT_PADMACRO_GLOBAL: Ngadalësimi i levës, përmbysja e boshteve dhe turbo për çdo lojë.
+  HINT_COVERFLOW_DIM: Errëson kopertinat anësore.
+  HINT_OSD_ENABLE: I jep lojës cilësimet më poshtë. Fikur përdor ato të vetë konsolës.
+  HINT_OSD_TVASPECT: Forma e televizorit që i jepet lojës.
+  HINT_OSD_VMODE: Mënyra e videos që i jepet lojës.
+  DNAS_ID: ID DNAS
+  NEUTRINO_PADEMU_WARN: Emulimi i kontrolluesit nuk është i disponueshëm me Neutrino. Përdor një kontrollues PS2 ose një burim që mbështet bërthamën <OPL>.
+  RA_MODE: Mënyra RA
+  RA_HOST_IP: IP e shoqëruesit RA (0.0.0.0 = automatike)
+  HINT_RA_HOST_IP: IPv4 opsionale e dedikuar e kompjuterit të RetroAchievements. Përdor 0.0.0.0 për rezervën e vjetër SMB/HTTP ose zbulimin e Xerabora. Nuk ndryshon cilësimet e serverit të lojërave.
+  HINT_RA_MODE: Zgjidh klientin e kompjuterit. Xerabora është parazgjedhja; Caduceus kontrollon së pari sesionin e tij të identifikuar.
+  RA_CADUCEUS_OFFLINE: Sesioni RA i Caduceus është jashtë linje.
+  RA_CADUCEUS_SIGN_IN: Identifikohu në RetroAchievements te Caduceus, pastaj provo përsëri.
+  FAV_SAVING: Duke ruajtur te Lojërat e preferuara...
+  FAV_SAVED: U ruajt te Lojërat e preferuara
+  FAV_SAVE_FAILED: Nuk u ruajt dot te Lojërat e preferuara
+  CAD_ACHIEVEMENTS: Arritjet e Caduceus
+  CAD_VIEW_ACHIEVEMENTS: Shih arritjet
+  CAD_USE_LIBRARY: Shfleto këtë lojë përmes arritjeve të Caduceus në menynë kryesore.
+  CAD_HASH_UNSUPPORTED: Ky format nuk mund të hash-ohet. Shfleto në vend të kësaj bibliotekën e llogarisë.
+  CAD_HEADING: ARRITJET
+  CAD_LIBRARY: Biblioteka e llogarisë RetroAchievements
+  CAD_FILTER_ALL: Të gjitha
+  CAD_EARNED: Të fituara
+  CAD_LOCKED: Të kyçura
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: '%d / %d të fituara  |  %s'
+  CAD_ONE_GAME: '%d lojë në llogari'
+  CAD_GAMES: '%d lojëra në llogari'
+  CAD_GAME_PROGRESS: '%d / %d arritje  |  %d hardcore'
+  CAD_POINTS: '%d pikë  |  %s'
+  CAD_EMPTY_LIBRARY: Nuk ka lojëra me përparim në këtë llogari.
+  CAD_EMPTY_FILTER: Asnjë arritje nuk përputhet me këtë filtër.
+  CAD_LOADING: Duke ngarkuar arritjet...
+  CAD_PAIR: Identifikohu në Caduceus dhe çifto ART/CADUCEUS.KEY në dosjen tënde të ndarë SMB.
+  CAD_UNKNOWN_GAME: Kjo lojë nuk është në katalogun e Caduceus. Rifresko katalogun në kompjuter.
+  CAD_CONNECTION_ERROR: Caduceus nuk mund të pyetet. Kontrollo lidhjen, pastaj shtyp Select për të provuar përsëri.
+  CAD_BACK_REFRESH: Prapa kthehet te OPL. Select rifreskon këtë faqe.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: faqja   Konfirmo: hap   Select: rifresko'
+  CAD_GAME_CONTROLS: 'L1/R1: faqja   Katrori: filtri   Select: rifresko'
+  CAD_BACK: Prapa
+  CAD_UNTRACKED: Caduceus nuk është gati. Kësaj here po niset pa arritje.
+  PS1_RA_USB_REQUIRED: Arritjet PS1 kërkojnë një VCD në USB përmes POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Moduli i mëparshëm i arritjeve PS1 nuk mund të hiqet
+  PS1_RA_PREPARE_FAILED: Arritjet PS1 nuk mund të përgatiten. Ruaj ose zhvendos POPS/MODULE_9.IRX dhe kontrollo qasjen e shkrimit të pajisjes.
+  PS1_RA_CLEAN_DELETE: 'Modul RA i papërdorur i RiptOPL: POPS/MODULE_9.IRX. Ta fshij për një nisje të pastër?'
+  PS1_RA_CLEAN_FAILED: Moduli RA i papërdorur nuk mund të fshihet.
+  PS1_RA_CLEAN_CONTINUE: Të vazhdohet gjithsesi? Një modul RA i mbetur mund të ekzekutojë telemetri të vjetër. Jo anulon nisjen.
+  FAV_REMOVED: U hoq nga Lojërat e preferuara
+  FAV_REMOVE_FAILED: Nuk u hoq dot nga Lojërat e preferuara
+  POPS_UDPFS_SETTINGS: Cilësimet e rrjetit UDPFS të POPS
+  POPS_UDPFS_DISCOVERY: Ruan në çdo dosje POPS në USB. Serveri 0.0.0.0 përdor zbulimin.
+  POPS_UDPFS_NOT_READY: POPS UDPFS ka nevojë për IPCONFIG.DAT dhe UDPFSCONFIG.DAT të vlefshëm dhe të përputhur në çdo dosje POPS në USB. Konfiguroji te Cilësimet e rrjetit të POPS.
+  HINT_POPS_UDPFS_IP: IP statike e PS2 që përdor drajveri POPS UDPFS pas rinisjes së tij të IOP.
+  POPS_UDPFS_ALL_USB_FOLDERS: Të gjitha dosjet POPS në USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (e pavlefshme)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (e paplotë)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS ka nevojë që çifti i drajverëve .udpfs të jetë i instaluar në kartën e memories. Përgatite me dorë ose ndiz Zbato BDMA të VCD në nisje.
+  VMC_REPLACE_REQUIRES_DELETE: Ndryshimi i madhësisë së VMC do t'i fshinte ruajtjet e tij. Ruaj një kopje rezervë të VMC ekzistuese dhe përdor Fshi para se të krijosh një madhësi të re.
+  VMC_CREATE_FAILED: VMC nuk u krijua dot. Kontrollo pajisjen, lidhjen dhe qasjen e shkrimit. Ruajtjet ekzistuese nuk u zëvendësuan.
+  RA_EXPERIMENTAL_CARDS: Kartat eksperimentale të Caduceus
+  HINT_RA_EXPERIMENTAL_CARDS: Karta eksperimentale arritjesh brenda lojërave PS2. Mund të bëjnë lojërat të dridhen ose të ngrijnë. Vetëm Caduceus; Fikur përdor pulsin e artë. Vlen nga nisja e radhës e lojës.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA nuk është i disponueshëm për këtë nisje. Kontrollo mjedisin RA, IP-në e shoqëruesit dhe listën e ruajtur të ndjekjes. Po niset pa arritje.
+  UDPFS_IP_CONFLICT: Një pajisje tjetër në rrjetin tënd po përdor adresën IP të kësaj PS2, ndaj përgjigjet e serverit UDPFS shkojnë tek ajo. Vendos një IP tjetër për PS2 te Cilësimet e rrjetit.
+  XERA_ACHIEVEMENTS: Biblioteka RetroAchievements (xeRAbora)
+  XERA_USE_LIBRARY: Shfleto këtë lojë përmes bibliotekës RetroAchievements në menynë kryesore.
+  XERA_OPEN_NETWORK: xeRAbora nuk arrihet dot. Ndiz OPEN TO THE NETWORK te cilësimet e tij, kontrollo IP-në e shoqëruesit RA dhe murin mbrojtës të kompjuterit.
+  XERA_UNKNOWN_GAME: xeRAbora nuk e njeh këtë imazh. Ekzekuto së pari kontrollin RA të mbështetjes së lojës.
+  XERA_NOT_PLAYED: Ende jo në bibliotekën tënde RetroAchievements. Luaje një herë me arritje, pastaj shtyp Select.
+  XERA_CONNECTION_ERROR: Lista nuk lexohet dot nga xeRAbora. Shtyp Select për të provuar përsëri.
+  CAD_PAIR_UDPFS: Caduceus nuk arrihet dot. Çifto ART/CADUCEUS.KEY në dosjen që ndan PS2-Servers, dhe vendos IP-në e shoqëruesit RA.
+  RA_WL_NOT_SAVED: Lista e ndjekjes nuk u ruajt dot. Sigurohu që pajisja ose dosja e ndarë e lojës të jetë e shkrueshme, pastaj kontrollo përsëri.
+  RA_UDPFS_LOAD_FIRST: Hap një herë faqen UDPFS që të ngarkohet moduli i saj i rrjetit, pastaj provo përsëri.
+  CAD_UDPFS_IMG: 'Shfletuesi i Caduceus ka nevojë për SMB ose Skedarët UDPFS: UDPFS IMG nuk ka dosje të përbashkët për çelësin e tij.'
+  XERA_SET_CLOCK: Ende jo në bibliotekën tënde RetroAchievements. Vendos orën e konsolës te cilësimet e sistemit për të parë listën e plotë, ose luaje një herë me arritje.
+  CFG_TITLES: Shfaq titujt CFG në listat e lojërave
+  HINT_CFG_TITLES: Shfaq titullin nga CFG e çdo loje në vend të emrit të skedarit, dhe rendit sipas tij. Lexon çdo CFG kur rifreskohet një listë, ndaj listat ngarkohen më ngadalë. Vetëm për shfaqje.
+  AUTO_VMC_INVALID: Skedari VMC i kësaj loje ekziston por nuk është kartë memorieje e vlefshme, ndaj nuk u përdor as u zëvendësua. Loja fillon pa të; kontrolloje te menyja VMC.
+  AUTO_VMC_STILL_RUNNING: VMC e kësaj loje ende po krijohet. Nise lojën përsëri pas pak.
+  NEUTRINO_DVR_QUICKBOOT: Nisja DVR kërkon kalimin në mënyrën PSX. Hiq -qb nga argumentet globale dhe për lojë të Neutrino.
+  NEUTRINO_DVR_FILE_MISSING: 'Instalimi i Neutrino për DVR është i paplotë. Mungon skedari i nevojshëm:'
+  LOGOART: Imazhi i logos
+  HINT_LOGOART: Shfaq logon e një loje (<ID>_LGO) kur tema e përdor. Fikur fsheh edhe imazhin e saj të parazgjedhur, por mban kopertinat, imazhet e disqeve dhe sfondet.
+  PARENLOCK_GAME: Kyçi prindëror
+  PARENLOCK_GAME_HINT: Kërkon fjalëkalimin e kyçit prindëror për të nisur këtë lojë.
+  PARENLOCK_GAME_NO_PASSWORD: Vendos një fjalëkalim për kyçin prindëror, përndryshe kjo lojë nuk do të kyçet.
+  HINT_ENABLE_PCCF: CompactFlash përmes PC CARD i PS2-ve të hershme japoneze. Vetëm lojëra native PS2; CF kërkon qasje ekskluzive në PC CARD. Rinis për ta liruar.
+  PCCF_GAMES: Lojërat PC CARD CF
+  PCCF_UNAVAILABLE: 'CF nuk është i disponueshëm: kërkon një PS2 të hershme japoneze me PC CARD, një kartë të përputhshme dhe asnjë drajver aktiv DEV9/HDD/rrjeti.'
+  PCCF_UNSUPPORTED_GAME: CF aktualisht mbështet vetëm lojëra native PS2. VMC në CF, ngarkimi PS1 dhe arritjet në rrjet nuk janë të disponueshme.
+  HINT_ENABLE_DVR: Zbulim eksperimental i ISO-ve DESR DVR. Kërkon burimin HDD të ndezur; nisja e lojës kërkon një Neutrino të jashtëm që mbështet DVR.

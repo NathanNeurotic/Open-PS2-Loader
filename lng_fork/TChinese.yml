@@ -317,3 +317,340 @@ translations:
   HINT_EMBER_DISPLAY: Ember 用於 PS1 遊戲的輸出模式。選擇 240p 或 480p 會寫入所啟動裝置 EMBER 目錄下的 settings.txt。預設會再次移除該設定；若檔案中沒有其他內容，檔案也會一併刪除。
   LOGOART: "遊戲標誌"
   HINT_LOGOART: "顯示佈景主題使用的遊戲標誌 (<ID>_LGO)。關閉後也會隱藏預設圖片，不影響封面、光碟圖片或背景。"
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  BDMMODE: BDM 裝置啟動模式
+  RESETCOLOR: 重設顏色
+  MTAP_ENABLE: 多分接器模擬
+  HINT_PADEMU_WORKAROUND: 部分仿製 DS3 需要變通處理，此選項會啟用它。
+  CFG_NOTIFICATION: 已從 %s 載入設定
+  THM_NOTIFICATION: 已從 %s 載入主題
+  LNG_NOTIFICATION: 已從 %s 載入語言
+  PARTITION_NOTIFICATION: 已掛載 %s 分割區。
+  FORUM_DETAILS: 支援論壇：
+  INFO_TITLE: 標題
+  INFO_DEVELOPER: 開發商
+  HINT_NEUTRINO_AUTO_ELF: 把遊戲的開機 ELF 傳給 Neutrino，用來查找該遊戲的設定。預設開啟；手動設定的 Boot ELF 選項優先。
+  HINT_POPSTARTER_PATH: POPSTARTER.ELF 的位置。留空時，RIPPS2 會填入在磁碟機上找到的那個；改寫即可使用別的，例如 usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Neutrino 參數超過可儲存的長度。請先縮短某個欄位再儲存。
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Neutrino 啟動參數超過安全上限。請縮短全域參數或遊戲參數。
+  NEUTRINO_AUTO_ELF: 自動 Boot ELF（-elf）
+  HINT_NEUTRINO_PATH: neutrino.elf 在哪裡？<未設定> = 遊戲所在裝置 -> mc0/mc1。會優先嘗試自訂的完整路徑。範例：mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf
+  GAME_VIEW_MODE: PS2/PS1 遊戲顯示
+  HINT_GAME_VIEW_MODE: 「全部」把 PS2 與 PS1 遊戲列在一起，L3 在全部、PS1、PS2 之間切換。PS2 或 PS1 只顯示該類型並停用 L3。APPS 與最愛遊戲有各自的顯示規則。
+  VIEW_MIXED: 顯示 PS2 + PS1 遊戲
+  VIEW_PS1_ELF: 顯示 PS1 ELF 應用程式
+  APPS_DISPLAY: 應用程式顯示
+  HINT_APPS_DISPLAY: 「全部」把每個 ELF 放在同一個 APPS 清單中並停用 L3。「應用程式 / PS1ELF」把含 [PS1] 的標題分到 L3 的第二頁；啟動方式不變。
+  VIEW: 檢視
+  VIEW_PS2: 顯示最愛的 PS2 遊戲
+  VIEW_PS1: 顯示最愛的 PS1 遊戲
+  VIEW_ELF: 顯示最愛的 ELF
+  VIEW_ALL: 顯示全部最愛遊戲
+  VMC_FRAGMENTED_ON_CREATE: VMC 已建立，但有磁碟碎片。記憶卡模擬需要一個連續的檔案，所以啟動時會略過這個 VMC，改用實體記憶卡。請騰出空間後重新建立，或從其他裝置複製一個過來。
+  KEYB_MOVE_CURSOR: 移動游標
+  TITLECOLOR: 遊戲標題顏色
+  RA_CHECK_GAME: 檢查 RetroAchievements 支援
+  RA_TEST_LINK: 測試 RetroAchievements 電腦連線
+  RA_CHECKING_IMAGE: 正在檢查映像，需要幾秒鐘...
+  RA_CHECK_RUNNING: 已有一個映像檢查正在進行
+  RA_LOOKING_FOR_PC: 正在尋找電腦用戶端...
+  RA_UL_UNSUPPORTED: 暫時無法檢查 UL/USBExtreme 遊戲
+  RA_UL_UNSUPPORTED2: 只支援 DVD/ 或 CD/ 中的一般 .iso 映像
+  RA_UNKNOWN_IMAGE: RetroAchievements 不認得這個映像
+  RA_STILL_IDENTIFYING: 電腦仍在辨識映像
+  RA_TRY_AGAIN: 請幾秒後重試
+  RA_NO_SOCKET: 主機無法開啟網路通訊端
+  RA_NO_SOCKET2: 請重新啟動主機，或在設定中檢查 ETH 裝置
+  RA_TEST_NO_SOCKET2: 請檢查網路線與設定中的 ETH；若網路正常，請重新啟動主機
+  RA_PC_NO_ANSWER: 電腦用戶端沒有回應
+  RA_PC_NO_ANSWER2: 請確認 xeRAbora 正在執行，或嘗試電腦連線測試
+  RA_SUPPORTED: RetroAchievements 支援
+  RA_START_TO_TRACK: 啟動遊戲以追蹤成就
+  RA_ACHIEVEMENTS: '%d 個成就'
+  RA_ACHIEVEMENTS_FULL: '%d 個成就 -- %d 個已解鎖，%d 個不支援'
+  RA_HASH_FAILED: 無法計算映像的雜湊
+  RA_HASH_FAILED2: 原因請見遊戲旁的 RA/hashes.txt
+  RA_NET_BUSY: 網路正被 UDP 傳輸使用
+  RA_NET_BUSY2: RA 需要 SMB 網路堆疊 -- 請切換協定，或在電腦上產生 .wl
+  RA_NET_BUSY_HASH: 雜湊已寫入 RA/hashes.txt -- xeRAbora 可以據此產生 .wl
+  RA_NO_IP: 主機沒有 IP 位址
+  RA_NO_IP2: 請檢查網路設定中的 DHCP 或靜態位址
+  RA_TEST_NO_ANSWER: 3 秒內沒有電腦用戶端回應
+  RA_TEST_NO_ANSWER2: 主機%s。請確認 xeRAbora 正在執行，且 UDP 18194 已開放
+  RA_TEST_FOUND: 已找到電腦用戶端%s%s %s
+  RA_TEST_FOUND2: '%u 毫秒內回應，主機%s'
+  RA_NA_NEUTRINO: RA 追蹤需要 <OPL> 核心 -- 透過 Neutrino 啟動從不載入 ee_core
+  RA_NA_UDPFS: UDPFS 上無法使用 RA 追蹤 -- 遊戲透過 Neutrino 啟動
+  RA_NA_PS1: PS1 遊戲無法使用 RA 追蹤
+  RA_NA_HDD: 無法使用 APA 遊戲資訊或硬碟設定資料夾
+  RA_NA_HDD2: 請設定有效的硬碟設定資料夾並重新整理後再檢查支援
+  RA_TELEMETRY: RetroAchievements 遙測
+  RA_BADGES: RetroAchievements 徽章
+  HTTP_GAMES: HTTP 遊戲
+  HTTP_SERVER: HTTP 伺服器
+  HTTP_PORT: HTTP 連接埠
+  HTTP_BASE_PATH: HTTP 基礎路徑
+  HTTP_TEST: 測試 HTTP 伺服器
+  HTTP_TEST_OK: 伺服器正常 -- 已列出遊戲
+  HTTP_TEST_EMPTY: 目錄是空的 -- 有效，但無法證明位元組範圍是否正常
+  HTTP_TEST_NO_ISO: 目錄中沒有可用來測試位元組範圍的支援映像
+  HTTP_ERR_CONNECT: 無法連線到 HTTP 伺服器
+  HTTP_ERR_CATALOG: games.csv 遺失、無法讀取或太大
+  HTTP_ERR_RANGE: 伺服器傳回的不是所要求的那些位元組
+  HTTP_LAUNCH_UNAVAILABLE: HTTP 啟動尚未實作 -- 目錄只能瀏覽
+  HTTP_ERR_COMPRESSED: HTTP 暫不支援壓縮映像（.zso）
+  HTTP_NO_VMC: HTTP 下無法使用虛擬記憶卡 -- 請使用實體記憶卡
+  HTTP_TAB_HINT: HTTP 從你的伺服器讀取 games.csv。請在網路設定中設定位址、連接埠與基礎路徑，然後使用「測試」。
+  RA_DISC_CHECK: RA：檢查光碟支援
+  RA_DISC_LAUNCH: RA：啟動光碟
+  RA_DISC_CHECKING: 正在為 RetroAchievements 檢查光碟
+  RA_DISC_HASH_FAILED: 無法計算光碟的雜湊 -- 請查看設定資料夾中的 RA/hashes.txt
+  RA_DISC_HOME_ERROR: 設定路徑不能用於光碟的追蹤清單
+  RA_DISC_ENABLE: 請先在網路設定中開啟 RetroAchievements 遙測
+  RA_DISC_CHECK_FIRST: 這張光碟沒有追蹤清單 -- 請先使用「RA：檢查光碟支援」
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d：找到硬碟，但無法讀取其 APA 分割表。請不要格式化 -- 你的遊戲也許還能救回。'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d：有一個磁碟機沒有掛載，因為它的磁區不是 512 位元組（例如 4K 磁區的硬碟）。OPL 只能讀取 512 位元組的磁區。'
+  HDD_PARTITION_RENAME_UNSUPPORTED: 這個遊戲自成一個 APA 分割區，而 OPL 從不修改分割表。請在電腦上重新命名。
+  POPS_SETTINGS_UNREADABLE: 無法讀取 POPSTARTER 的設定 -- 記憶卡忙碌中或無法讀取。請在載入完成後重試。
+  GLOBAL_PS_EMULATION_SETTINGS: 全域 PS 模擬設定
+  RA_NO_LINK_UNTRACKED: 網路無法使用 -- 這次不帶 RetroAchievements 啟動。
+  IGR_USB_DRIVERS_PROMPT: IGR 路徑在 USB 上，但 %s 中缺少 USBD.IRX 與 USBHDFSD.IRX，主機在遊戲內重設後需要它們來存取 USB。沒有它們，IGR 會回到 PS2 瀏覽器。現在把 RiptOPL 的驅動程式複製過去嗎？FMCB、OpenTuna 等漏洞程式也會載入這些檔案，表現可能有所不同。已有的檔案絕不會被取代。僅限 FAT32 的 USB。
+  IGR_USB_DRIVERS_FAILED: 無法把 USB 驅動程式複製到 %s（記憶卡已滿或無法寫入）。IGR 將回到 PS2 瀏覽器。
+  OFFICIAL_CFG_NOTIFICATION: 已從 %s 載入 OPL 官方設定
+  CFM_VMODE_HOLD_KEEP: 按住以保留
+  BDM_PS2_FOLDERS_UNREADABLE: 無法開啟 %s 中的 CD 或 DVD 資料夾（錯誤 %d），所以該裝置不列出 PS2 遊戲。在其頁面按 SELECT 重試。
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Neutrino 檔案系統設為 bd，但這個裝置從未回報裝置編號，所以 Neutrino 無法指向它。請把此遊戲的 Neutrino 檔案系統設為 Auto 或 exfat。
+  CFM_VMODE_REVERT_IN: '%d 秒後還原'
+  EMBER_DITHER: Ember 混色
+  HINT_EMBER_DITHER: Ember 的混色（開啟或關閉），寫入啟動裝置上的 EMBER/settings.txt。個別遊戲的設定優先。
+  EMBER_SHADING: Ember 著色
+  HINT_EMBER_SHADING: Ember 的色彩深度：15 位元，或 24 位元（實驗性）。寫入啟動裝置上的 EMBER/settings.txt。個別遊戲的設定優先。
+  EMBER_CONTROLLER: Ember 控制器
+  HINT_EMBER_CONTROLLER: Ember 的控制器模式：自動、類比或 D2A。通常最好依遊戲設定（三角 > Ember 遊戲設定），它會優先。
+  EMBER_480P_CONFIRM: Ember 的 480p 透過複合視訊沒有畫面。要使用 480p 嗎？
+  EMBER_SHADING_24: 24 位元（實驗性）
+  EMBER_GAME_SETTINGS: Ember 遊戲設定
+  HINT_EMBER_GAME_SETTING: 僅此遊戲。按 OK 會在啟動前寫入 EMBER/games/<名稱>/settings.txt。未變動的「預設」保留檔案中已有的值；把某個值改回「預設」會移除它的覆寫。
+  EMBER_TIMING: Ember 時序
+  HINT_EMBER_TIMING: Ember 的視訊時序：自動依光碟區域，NTSC 強制 60 Hz，PAL 強制 50 Hz。寫入啟動裝置上的 EMBER/settings.txt。
+  EMBER_GLOBAL_WARNING: 這些 Ember 設定對每個 PS1 遊戲生效，有些遊戲會因此當機。若只想改一個遊戲，請在該遊戲上使用 三角 > Ember 遊戲設定。
+  HINT_COVERFLOW_COUNT: RIPFLOW 在所選封面兩側各顯示多少個封面。
+  HINT_COVERFLOW_SCALE: RIPFLOW 中所選封面相對於其他封面的大小。
+  HINT_COVERFLOW_ANIM: 在封面流中移動時封面滑動的速度。
+  HINT_NARGS_QB: Quick Boot：略過 Neutrino 自己的啟動畫面。在這裡開啟時，每個遊戲都會傳送；關閉時，RIPPS2 仍會為需要它的 USB、iLink 與網路遊戲自動傳送。
+  HINT_NARGS_DBC: 除錯顏色：Neutrino 在每個載入步驟用一種顏色填滿螢幕，拍張照片就能看出遊戲停在哪裡。
+  HINT_NARGS_LOGO: 在遊戲前顯示 PS2 標誌（再重新啟動一次 IOP，某些 iLink 磁碟機需要）。在這裡關閉時，RIPPS2 依照 遊戲啟動 > PS2 標誌，而且從不為 MMCE 或網路遊戲傳送。
+  HINT_NARGS_CWD: 遊戲視為自己目錄的資料夾。留空：Neutrino 的預設值。
+  HINT_NARGS_CFG: 你自己的 Neutrino 設定檔（-cfg）。留空：Neutrino 內建的。
+  HINT_NARGS_ELF: 啟動這個 ELF，而不是光碟指定的開機檔。留空：遊戲自己的。
+  HINT_NARGS_ATA0: Neutrino 掛載為主機內建硬碟的硬碟映像，用於會使用硬碟的遊戲（-ata0）。
+  HINT_NARGS_ATA0ID: 與該硬碟映像搭配的 ID 檔案（-ata0id）。
+  HINT_NARGS_ATA1: 第二個硬碟映像（-ata1）。
+  PS1_SAVE_GUIDANCE: PS1 存檔取決於 Ember 或 POPSTARTER；PS2 的 VMC 設定不適用。
+  NEUTRINO_SHOW_ARGS: 顯示啟動參數
+  HINT_NEUTRINO_SHOW_ARGS: 每次透過 Neutrino 啟動前，顯示 Neutrino 將收到的全部參數並詢問是否繼續。返回會回到選單而不啟動。
+  NEUTRINO_ARGS_CONFIRM: Neutrino 將以這些參數啟動。要啟動嗎？
+  HINT_NARGS_EXTRA: 其他 Neutrino 參數，以空格分隔，在上面所有參數之後傳送。RIPPS2 一律會為遊戲的磁碟機與 ISO 加上 -bsd 與 -dvd，為其 VMC 加上 -mc0 與 -mc1，為其視訊模式加上 -gsm，以及遊戲自己的相容模式。在上面有專屬列的參數（例如 -logo）儲存時會移到那一列，並照常傳送。
+  GAME_TYPE_LABELS: 顯示 [PS1]/[PS2] 標籤
+  NEUTRINO_CHEATS_WRITE_FAILED: 無法把金手指清單儲存到 Neutrino 資料夾，因此 Neutrino 無法使用。要不帶金手指啟動嗎？
+  AUTO_CREATE_VMC: 首次啟動時建立 VMC
+  HINT_AUTO_CREATE_VMC: 啟動插槽 1 中沒有 VMC 的 PS2 遊戲時，會在遊戲所在裝置上建立一張 8 MB 的記憶卡，依 VMC 畫面建議的名稱命名（該遊戲的所有光碟共用），並指派給它。不適用於 Neutrino 下的內建硬碟。
+  AUTO_VMC_CREATING: 正在建立這個遊戲的 VMC...
+  AUTO_VMC_FAILED: 無法建立這個遊戲的 VMC。遊戲將在沒有 VMC 的情況下啟動。
+  SAVE_ICONS: 3D 存檔圖示
+  HINT_SAVE_ICONS: 在主題留有位置的地方顯示所選遊戲的旋轉存檔圖示。先讀取遊戲自己的 VMC，再讀取記憶卡。
+  NETBOOT_RESTART_NOW: 網路協定會在重新啟動後變更。現在儲存設定並重新啟動 OPL 嗎？
+  HINT_NET_PROTOCOL: RiptOPL 使用哪種網路服務：SMB 共用、UDPFS、UDPBD 或 HTTP。與「遊戲來源」中的設定相同。從已在執行的服務切換走需要重新啟動。
+  HINT_UDPFS_ACCESS: 僅 UDPFS。「檔案」從伺服器的遊戲資料夾讀取個別的 ISO；IMG 把磁碟映像當作磁碟機讀取。SMB 與 HTTP 一律使用「檔案」，UDPBD 一律使用 IMG。
+  HINT_SMB_VERSION: 與電腦共用資料夾通訊時使用的 SMB 版本。
+  HINT_NET_ADVANCED: 解鎖乙太網路連線模式與 SMB 連接埠的編輯。
+  HINT_ETH_LINK_MODE: 強制網路連線的速度與雙工模式。除非連線經常中斷，否則請保持自動。
+  HINT_IP_ADDR_TYPE: 靜態使用下面的位址；DHCP 向你的路由器取得。UDPFS 與 UDPBD 一律使用靜態。
+  HINT_PS2_IP: PS2 自己的 IP 位址。請選一個沒有其他裝置使用、與電腦在同一網段的位址。
+  HINT_NETMASK: 子網路遮罩，通常為 255.255.255.0。
+  HINT_GATEWAY: 你路由器的位址，通常前三段相同、以 .1 結尾。
+  HINT_DNS: DNS 伺服器位址。通常與閘道相同。
+  HINT_SMB_ADDR_TYPE: 透過 IP 位址或 NetBIOS 名稱（電腦名稱）連到電腦。
+  HINT_SMB_ADDRESS: 分享你遊戲的電腦：它的 IP 位址；位址類型為 NetBIOS 時為電腦名稱。
+  HINT_SMB_PORT: SMB 連接埠。必須與電腦一致：PS2 Servers 使用 1111，Windows 與 Samba 共用使用 445。
+  HINT_SMB_USER: SMB 使用者名稱。大多數共用可用 guest。
+  HINT_HTTP_SERVER: HTTP 遊戲伺服器的 IP 位址。
+  HINT_HTTP_PORT: HTTP 遊戲伺服器監聽的連接埠。
+  HINT_HTTP_BASE: HTTP 伺服器上存放 games.csv 的資料夾。/ 表示伺服器根目錄。
+  HINT_HTTP_TEST: 用上面的值測試 HTTP 伺服器並回報結果。
+  HINT_RA_TELEMETRY: RetroAchievements 總開關。關閉時遊戲啟動不帶網路堆疊與快照，與一般版本相同。
+  HINT_RA_BADGES: 在清單中標出有成就的遊戲。遙測關閉時保持暗色。
+  HINT_POPS_NET_BUTTON: 編輯 POPSTARTER 自己的網路檔案（IPCONFIG.DAT、SMBCONFIG.DAT），透過 SMB 執行 PS1 遊戲時需要。
+  HINT_POPS_IP_TYPE: PS1 遊戲透過 SMB 執行時 PS2 取得位址的方式：靜態或 DHCP。
+  HINT_POPS_IP: PS1 遊戲透過 SMB 執行時 PS2 的 IP 位址。
+  HINT_POPS_SMB_IP: 分享你 PS1 遊戲的電腦的 IP 位址。
+  HINT_POPS_SMB_SHARE: 那台電腦上存放 POPS 資料夾的共用名稱。
+  HINT_LASTPLAYED: 從你上次啟動的遊戲開始。
+  HINT_LANGUAGE: 選單語言。把 lang_*.lng 檔案放進 LNG 資料夾即可新增更多語言。
+  HINT_GSM_DEFAULTS_BUTTON: 每個遊戲都會套用的視訊模式修正，除非它有自己的 GSM 設定。
+  HINT_DEFDEVICE: RiptOPL 開機時開啟的頁面。
+  HINT_MMCE_MODE: SD2PSX 或 MemCard PRO2 上的遊戲。自動在開機時啟動，手動在開啟頁面時啟動，關閉則隱藏它。
+  HINT_MMCE_SETTINGS_BUTTON: MMCE 的插槽、IGR bootcard、GameID 與時序選項。
+  HINT_ENABLE_USB: 載入 USB 儲存裝置驅動程式。
+  HINT_ENABLE_MX4SIO: 載入 MX4SIO SD 卡轉接器驅動程式。
+  HINT_ENABLE_ILINK: 載入 iLink（FireWire）儲存裝置驅動程式。
+  HINT_NETSTART: 啟動網路：自動在開機時，手動在開啟其頁面時。關閉則不碰網路轉接器。
+  HINT_APPMODE: 應用程式頁面。自動在開機時啟動，手動在開啟時啟動，關閉則隱藏。
+  HINT_FAVMODE: 最愛遊戲頁面。自動在開機時啟動，手動在開啟時啟動，關閉則隱藏。
+  HINT_BDMA_BUTTON: POPSTARTER 為 USB、MX4SIO、MMCE、硬碟或 iLink 上的 PS1 遊戲使用哪個 exFAT 驅動程式。
+  HINT_VCD_LIST_BUTTON: PS1 遊戲的列出方式：隱藏遊戲 ID、只顯示光碟 1、顯示硬碟的 PP 分割區。
+  HINT_MMCE_SLOT: MMCE 裝置插在哪個記憶卡插槽。自動會找到它。
+  HINT_MMCE_GAMEID: 告訴 MMCE 裝置正在啟動哪個遊戲，讓它切換到該遊戲的記憶卡。
+  HINT_MMCE_COMM_BUTTON: MMCE 連線的時序選項。僅在遊戲當機或載入緩慢時變更。
+  HINT_MMCE_PATH_BUTTON: MMCE 卡上遊戲資料夾的位置。
+  HINT_MMCE_PREFIX: MMCE 卡上存放 CD、DVD 與其他 OPL 資料夾的子資料夾。留空使用卡的根目錄。
+  HINT_GAME_TYPE_LABELS: 在每個遊戲名稱前加上 [PS1] 或 [PS2]。僅影響顯示。
+  HINT_MENU_VMODE: 選單的視訊輸出。遊戲改用 GSM。按住確認可保留新模式。
+  HINT_THEME: 選單的外觀。主題從各裝置的 THM 資料夾讀取。
+  HINT_COVERFLOW_BUTTON: Coverflow 主題的封面數量、大小、動畫與變暗。
+  HINT_ARTWORK_BUTTON: 載入哪些圖片：封面、光碟圖、背景與存檔圖示。
+  HINT_COLORS_BUTTON: 文字、醒目提示、對話方塊與背景的顏色。
+  HINT_NOTIFICATIONS: 載入設定、主題或語言檔案時的簡短通知。
+  HINT_AUTOSORT: 依 A 到 Z 排序遊戲清單。關閉則保持找到時的順序。
+  HINT_AUTOREFRESH: 不必手動重新整理即可加入新連接裝置上的遊戲。
+  HINT_COVERART: 從 ART 資料夾載入封面。
+  HINT_DISCART: 顯示光碟圖（<ID>_ICO）。關閉會隱藏光碟，但保留封面與背景。
+  HINT_BGART: 主題使用背景時顯示遊戲的背景（<ID>_BG）。
+  HINT_ART_TAR: 也讀取打包在 ART/art.tar 中的圖片。
+  HINT_ART_DELAY: 游標停在遊戲上多久後才載入其圖片。數值越高，快速捲動時越會略過圖片。
+  HINT_TXTCOLOR: 一般選單文字的顏色。
+  HINT_SELCOLOR: 醒目提示項目的顏色。
+  HINT_UICOLOR: 對話方塊的背景色調。
+  HINT_TITLECOLOR: 清單中遊戲標題的顏色。
+  HINT_BGCOLOR: 選單背景色。
+  HINT_PLASCOLOR: 混入動態背景的顏色。
+  HINT_RESETCOLOR: 恢復 RiptOPL 的內建顏色，而不是主題的顏色。
+  HINT_WIDESCREEN: 依 16:9 電視繪製選單。
+  HINT_XOFF: 在螢幕上左右移動選單。
+  HINT_YOFF: 在螢幕上上下移動選單。
+  HINT_MENU_OVERSCAN: 如果電視切掉邊緣，就把選單向內縮小。
+  HINT_APPLYGAMEID: 遊戲啟動時顯示條碼，讓 Pixel FX、RetroGEM 與 PS2Digital 裝置切換設定檔。
+  HINT_NEUTRINO_DEFAULTS_BUTTON: 所有遊戲的 Neutrino 路徑、視訊模式與參數。
+  HINT_OSD_DEFAULTS_BUTTON: 傳給遊戲的主機語言、螢幕比例與視訊模式。
+  HINT_ENWRITEOP: 允許重新命名和刪除遊戲以及建立 VMC。從不改動硬碟分割表。
+  HINT_DEBUG: 開發輔助：遊戲開機時顯示彩色畫面，並在選單中顯示圖片載入計數。
+  HINT_BDMPREFIX: USB、MX4SIO、iLink 與 exFAT 磁碟機上存放遊戲資料夾的子資料夾。留空使用磁碟機根目錄。
+  HINT_ETHPREFIX: SMB 共用上存放遊戲資料夾的子資料夾。留空使用共用根目錄。
+  HINT_HDDGAMELISTCACHE: 記住 APA 硬碟的遊戲清單，加快之後的掃描。
+  HINT_BDMCACHE: 遊戲中 USB 與其他 BDM 磁碟機的預先讀取快取。越大越能讓串流順暢，但佔用更多記憶體。
+  HINT_HDDCACHE: 遊戲中內建硬碟的預先讀取快取。
+  HINT_SMBCACHE: 遊戲中 SMB 的預先讀取快取。
+  HINT_CORE_LOADER: 兩者都支援時此遊戲使用的核心。UDPFS/UDPBD 僅限 Neutrino；SMB/HTTP 僅限 <OPL>。預設依照「遊戲啟動」。
+  HINT_DMA_MODE: 此遊戲的內建硬碟傳輸模式。遊戲卡頓或當機時調低。
+  HINT_DNAS_GAMEID: DNAS 連線遊戲的光碟 ID。「從光碟載入」會從原版光碟讀取。
+  HINT_LOAD_FROM_DISC: 從光碟機中的原版光碟讀取 DNAS ID。
+  HINT_ALTSTARTUP: 從光碟映像啟動這個 ELF，而不是 SYSTEM.CNF 指定的那個。
+  HINT_VMC_DEFINE: 選擇、建立或調整此插槽虛擬記憶卡的大小。
+  HINT_VMC_ACTION: 「使用通用」給此插槽一張共用記憶卡；「重設」清除選擇。
+  HINT_VMC_NAME: 記憶卡檔案的名稱，存放在 VMC 資料夾中。
+  HINT_VMC_CREATE: 建立記憶卡，或為它套用新大小。
+  HINT_VMC_DELETE: 刪除這個記憶卡檔案。
+  HINT_SETTINGS_SOURCE: 「全域」使用共用設定；「依遊戲」只為這個遊戲保存。
+  HINT_PADMACRO_TOGGLE: 「按住時」只在你按住按鍵時減慢搖桿；「按鍵切換」用按鍵開關。
+  HINT_SFX: 選單音效。
+  HINT_BOOT_SND: RiptOPL 啟動時播放聲音。
+  HINT_BGM: 播放主題的音樂，或你的預設主題音樂檔案。
+  HINT_SFX_VOLUME: 選單音效的音量。
+  HINT_BOOT_SND_VOLUME: 啟動聲音的音量。
+  HINT_BGM_VOLUME: 背景音樂的音量。
+  HINT_SCROLL: 按住方向時清單捲動的速度。
+  HINT_SELECTBUTTON: 哪個按鍵確認：叉或圓圈。
+  HINT_XSENSITIVITY: 左搖桿左右移動游標的靈敏度。關閉則忽略它。
+  HINT_YSENSITIVITY: 左搖桿上下移動游標的靈敏度。關閉則忽略它。
+  HINT_PADEMU_GLOBAL: 為所有遊戲啟用 USB 或藍牙的 DualShock 3/4 以及多分接器。
+  HINT_PADMACRO_GLOBAL: 為所有遊戲啟用搖桿減速、軸反轉與連發。
+  HINT_COVERFLOW_DIM: 讓兩側的封面變暗。
+  HINT_OSD_ENABLE: 把下面的設定傳給遊戲。關閉則使用主機自己的設定。
+  HINT_OSD_TVASPECT: 傳給遊戲的電視比例。
+  HINT_OSD_VMODE: 傳給遊戲的視訊模式。
+  DNAS_ID: DNAS ID
+  NEUTRINO_PADEMU_WARN: 使用 Neutrino 時無法使用手把模擬。請使用 PS2 控制器，或支援 <OPL> 核心的來源。
+  RA_MODE: RA 模式
+  RA_HOST_IP: RA 輔助程式 IP（0.0.0.0 = 自動）
+  HINT_RA_HOST_IP: 選用的專屬 RetroAchievements 電腦 IPv4。使用 0.0.0.0 表示舊的 SMB/HTTP 備援方式或 Xerabora 自動探索。不影響遊戲伺服器設定。
+  HINT_RA_MODE: 選擇電腦用戶端。預設是 Xerabora；Caduceus 會先檢查其登入工作階段。
+  RA_CADUCEUS_OFFLINE: Caduceus 的 RA 工作階段處於離線狀態。
+  RA_CADUCEUS_SIGN_IN: 請在 Caduceus 中登入 RetroAchievements 後重試。
+  FAV_SAVING: 正在儲存到最愛遊戲...
+  FAV_SAVED: 已儲存到最愛遊戲
+  FAV_SAVE_FAILED: 無法儲存到最愛遊戲
+  CAD_ACHIEVEMENTS: Caduceus 成就
+  CAD_VIEW_ACHIEVEMENTS: 檢視成就
+  CAD_USE_LIBRARY: 請在主選單中透過 Caduceus 成就瀏覽這個遊戲。
+  CAD_HASH_UNSUPPORTED: 此格式無法計算雜湊。請改為瀏覽帳號遊戲庫。
+  CAD_HEADING: 成就
+  CAD_LIBRARY: RetroAchievements 帳號遊戲庫
+  CAD_FILTER_ALL: 全部
+  CAD_EARNED: 已獲得
+  CAD_LOCKED: 未解鎖
+  CAD_HARDCORE: 硬核
+  CAD_PROGRESS: 已獲得 %d / %d  |  %s
+  CAD_ONE_GAME: 帳號中有 %d 個遊戲
+  CAD_GAMES: 帳號中有 %d 個遊戲
+  CAD_GAME_PROGRESS: '%d / %d 個成就  |  硬核 %d'
+  CAD_POINTS: '%d 分  |  %s'
+  CAD_EMPTY_LIBRARY: 此帳號中沒有有進度的遊戲。
+  CAD_EMPTY_FILTER: 沒有符合此篩選條件的成就。
+  CAD_LOADING: 正在載入成就...
+  CAD_PAIR: 請登入 Caduceus，並在你的 SMB 共用上配對 ART/CADUCEUS.KEY。
+  CAD_UNKNOWN_GAME: 這個遊戲不在 Caduceus 目錄中。請在電腦上重新整理目錄。
+  CAD_CONNECTION_ERROR: 無法查詢 Caduceus。請檢查連線，然後按 Select 重試。
+  CAD_BACK_REFRESH: 返回會回到 OPL。Select 重新整理本頁。
+  CAD_LIBRARY_CONTROLS: L1/R1：翻頁   確認：開啟   Select：重新整理
+  CAD_GAME_CONTROLS: L1/R1：翻頁   方塊：篩選   Select：重新整理
+  CAD_BACK: 返回
+  CAD_UNTRACKED: Caduceus 尚未就緒。這次不帶成就啟動。
+  PS1_RA_USB_REQUIRED: PS1 成就需要透過 POPStarter 執行 USB 上的 VCD
+  PS1_RA_REMOVE_PREVIOUS: 無法移除先前的 PS1 成就模組
+  PS1_RA_PREPARE_FAILED: 無法準備 PS1 成就。請保留或移動 POPS/MODULE_9.IRX，並檢查裝置的寫入權限。
+  PS1_RA_CLEAN_DELETE: 未使用的 RiptOPL RA 模組：POPS/MODULE_9.IRX。刪除它以便乾淨啟動嗎？
+  PS1_RA_CLEAN_FAILED: 無法刪除未使用的 RA 模組。
+  PS1_RA_CLEAN_CONTINUE: 仍要繼續嗎？殘留的 RA 模組可能執行過時的遙測。選否會取消啟動。
+  FAV_REMOVED: 已從最愛遊戲中移除
+  FAV_REMOVE_FAILED: 無法從最愛遊戲中移除
+  POPS_UDPFS_SETTINGS: POPS UDPFS 網路設定
+  POPS_UDPFS_DISCOVERY: 儲存到每個 USB 上的 POPS 資料夾。伺服器 0.0.0.0 表示自動探索。
+  POPS_UDPFS_NOT_READY: POPS UDPFS 需要每個 USB 上的 POPS 資料夾中都有有效且相符的 IPCONFIG.DAT 與 UDPFSCONFIG.DAT。請在 POPS 網路設定中設定。
+  HINT_POPS_UDPFS_IP: POPS 的 UDPFS 驅動程式在 IOP 重設後使用的 PS2 靜態 IP。
+  POPS_UDPFS_ALL_USB_FOLDERS: 所有 USB 上的 POPS 資料夾
+  POPS_UDPFS_INVALID_SUFFIX: ' （無效）'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' （不完整）'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS 需要在記憶卡上安裝 .udpfs 驅動程式組。請手動安裝，或開啟 BDMA「啟動時套用」。
+  VMC_REPLACE_REQUIRES_DELETE: 變更 VMC 大小會清除其中的存檔。請先備份現有 VMC 並使用「刪除」，再建立新大小。
+  VMC_CREATE_FAILED: 無法建立 VMC。請檢查裝置、連線與寫入權限。已有的存檔沒有被取代。
+  RA_EXPERIMENTAL_CARDS: Caduceus 實驗性卡片
+  HINT_RA_EXPERIMENTAL_CARDS: PS2 遊戲內的實驗性成就卡片。可能閃爍或讓遊戲當機。僅限 Caduceus；關閉則使用金色脈衝。下次啟動遊戲時生效。
+  RA_NEUTRINO_UNTRACKED: 這次啟動無法使用 Neutrino RA。請檢查 RA 執行模組、輔助程式 IP 與已儲存的追蹤清單。將不帶成就啟動。
+  UDPFS_IP_CONFLICT: 你網路中的另一台裝置正在使用這台 PS2 的 IP 位址，所以 UDPFS 伺服器的回應傳給了它。請在網路設定中給 PS2 設定其他 IP。
+  XERA_ACHIEVEMENTS: RetroAchievements 遊戲庫（xeRAbora）
+  XERA_USE_LIBRARY: 請在主選單中透過 RetroAchievements 遊戲庫瀏覽這個遊戲。
+  XERA_OPEN_NETWORK: 無法連到 xeRAbora。請在其設定中開啟 OPEN TO THE NETWORK，並檢查 RA 輔助程式 IP 與電腦防火牆。
+  XERA_UNKNOWN_GAME: xeRAbora 不認得這個映像。請先執行 RA 遊戲支援檢查。
+  XERA_NOT_PLAYED: 尚不在你的 RetroAchievements 遊戲庫中。帶成就玩一次，然後按 Select。
+  XERA_CONNECTION_ERROR: 無法從 xeRAbora 讀取清單。按 Select 重試。
+  CAD_PAIR_UDPFS: 無法連到 Caduceus。請在 PS2-Servers 分享的資料夾中配對 ART/CADUCEUS.KEY，並設定 RA 輔助程式 IP。
+  RA_WL_NOT_SAVED: 無法儲存追蹤清單。請確認遊戲所在裝置或共用可寫入，然後再檢查一次。
+  RA_UDPFS_LOAD_FIRST: 請先開啟一次 UDPFS 頁面以載入其網路模組，然後重試。
+  CAD_UDPFS_IMG: Caduceus 瀏覽器需要 SMB 或 UDPFS「檔案」：UDPFS IMG 沒有可存放其金鑰的共用資料夾。
+  XERA_SET_CLOCK: 尚不在你的 RetroAchievements 遊戲庫中。請在系統設定中設定主機時鐘以查看完整清單，或帶成就玩一次。
+  CFG_TITLES: 在遊戲清單中顯示 CFG 標題
+  HINT_CFG_TITLES: 顯示每個遊戲 CFG 中的標題而不是檔名，並依它排序。重新整理清單時會讀取每個 CFG，所以清單載入較慢。僅影響顯示。
+  AUTO_VMC_INVALID: 這個遊戲的 VMC 檔案存在，但不是有效的記憶卡，因此既沒有使用也沒有取代。遊戲將不帶 VMC 啟動；請在 VMC 選單中檢查它。
+  AUTO_VMC_STILL_RUNNING: 這個遊戲的 VMC 仍在建立中。請稍後再次啟動遊戲。
+  NEUTRINO_DVR_QUICKBOOT: DVR 啟動需要切換到 PSX 模式。請從 Neutrino 的全域參數與遊戲參數中移除 -qb。
+  NEUTRINO_DVR_FILE_MISSING: Neutrino 的 DVR 安裝不完整。缺少必要檔案：
+  PARENLOCK_GAME: 家長鎖
+  PARENLOCK_GAME_HINT: 啟動這個遊戲時需要家長鎖密碼。
+  PARENLOCK_GAME_NO_PASSWORD: 請設定家長鎖密碼，否則這個遊戲不會被鎖定。
+  HINT_ENABLE_PCCF: 早期日版 PS2 的 PC CARD CompactFlash。僅限原生 PS2 遊戲；CF 需要獨佔 PC CARD。重新啟動後釋放。
+  PCCF_GAMES: PC CARD CF 遊戲
+  PCCF_UNAVAILABLE: CF 無法使用：需要有 PC CARD 的早期日版 PS2、相容的卡，且沒有已啟用的 DEV9/硬碟/網路驅動程式。
+  PCCF_UNSUPPORTED_GAME: CF 目前只支援原生 PS2 遊戲。CF 上的 VMC、PS1 載入與網路成就無法使用。
+  HINT_ENABLE_DVR: 實驗性的 DESR DVR ISO 探索。需要開啟硬碟來源；啟動遊戲需要外部支援 DVR 的 Neutrino。

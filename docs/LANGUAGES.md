@@ -66,7 +66,7 @@ Repeat per language you want to cover. Untranslated languages fall back to Engli
 ## Important: there is **no auto-translator** in the build
 
 `tools/lang_compiler.py` only *merges* translations that already exist in `lng_fork/*.yml`. The
-initial bulk fill of the 31 fork languages was a **one-off external step** (a machine
+initial bulk fill of the fork-language overlays was a **one-off external step** (a machine
 translation pass), not part of this repo's build. So to keep translations current you must
 supply the translated text for `lng_fork/*.yml` yourself (by hand, an external MT tool, or
 an assistant) — the build will not invent it.
@@ -82,8 +82,7 @@ language exists upstream as `lng_src/<Language>.yml`; to ship it, add its name t
 - **Serbian** has no font upstream, and the built-in font has no `č`, `ć` or `đ`. Serbian Latin uses
   exactly Croatian's letters, so `lng_pack.sh` ships `font_Croatian.ttf` as `font_Serbian.ttf`.
   Check a new language's characters against the built-in font before assuming it needs no font.
-- **Fork strings.** A language with no `lng_fork/<Language>.yml` (Galician and Serbian today) shows
-  the fork's own strings in English until someone adds that file.
+- **Fork strings.** All 33 configured external languages now have a `lng_fork/<Language>.yml` overlay. Missing individual labels still fall back to English; an overlay's existence does not guarantee complete localization.
 
 ## Optional Japanese/CJK game-title font
 
@@ -123,3 +122,74 @@ run clones the upstream lang repo into `lng_src/`). CI does this automatically.
 Fork-added strings are the labels in `lng_tmpl/_base.yml` that upstream doesn't have. To
 see which are still English-only in a given language, run `make languages` and look for
 `untranslated` entries in `lng_src/<Language>.yml` after the overlay step.
+
+## Auditing actual translation coverage
+
+The release builds **33 external languages**, all now supplied with fork-specific
+overlays. The upstream community's older strings remain intact. Many recently
+added labels were backfilled from Akilluminati47's
+[RIPPS2 translations](https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang),
+with existing RiptOPL translations retained. These translations are community
+and machine-assisted work and still need language-speaker and on-console review.
+Some newly introduced fork labels may still show English fallback: a complete
+`.lng` file is not proof that every string has been localized.
+
+Run `python3 tools/audit_translations.py` to print per-language coverage,
+including the most recently appended 60 UI labels; pass `--json` for a
+machine-readable report. The tool uses the same translation precedence as
+`make languages`, and reads `lng_src/` if `make download_lng` has been
+run. Run `python3 tools/audit_translations.py --strict` to reject invalid
+format placeholders and obsolete overlay keys without blocking valid
+English fallback. CI runs the strict audit on translation and source changes.
+It checks the strings that ship, upstream ones included. A fork overlay string
+with the wrong placeholders fails `--strict`. An upstream one is listed as a
+warning: RiptOPL checks every string in a `.lng` file when it loads it and
+shows the English string instead of any whose placeholders would read other
+arguments (for example upstream French "Auto start" has `%s` where English has
+`%i`, which crashed the countdown). Placeholders the same as English, or fewer
+of them in the same order, are kept.
+
+To translate recent strings, review the report, add genuinely localized text
+to each `lng_fork/<Language>.yml`, and rerun the audit. **Do not mark
+untranslated English copies as completed translations**. Preserve all
+`%s`, `%d`, `%i` placeholders and keep their order. Inspect the result
+on a PS2; a syntactically valid translation can still be confusing, truncated,
+or missing font glyphs. Missing status is distinct from broken packaging.
+
+## Translation provenance and review
+
+RIPPS2's keyed `labels:` maps contributed additional localized text for 32
+overlapping language names; Ryukyuan retains the existing RiptOPL overlay,
+because RIPPS2 has no Ryukyuan source. The imported overlay files credit
+Akilluminati47 and preserve RiptOPL's existing keys. The language compiler
+always prioritizes an already translated upstream community entry over the
+fork overlay. Compare source phrasing against the **current** `_base.yml`
+English definition before changing a translation: even correctly parsed
+strings can have stale feature descriptions. Review particularly UTF-8 glyphs,
+right-to-left rendering, and placeholders in each language on PS2 hardware.
+
+## Installing and selecting language files
+
+From the release matching your ELF, download `RIPTOPL-LANGS-*.zip` and
+extract your chosen `lang_<Language>.lng`. Copy its matching
+`font_<Language>.ttf` or `font_<Language>.otf` (if included) beside the
+language file. Keep the original filenames.
+
+Languages are discovered in this precedence order:
+
+1. **Beside RiptOPL's launched ELF (CWD)**, e.g.
+   `mass0:/APPS/APP_RIPTOPL/lang_French.lng`.
+2. **CWD/LNG/**, e.g. `mass0:/APPS/APP_RIPTOPL/LNG/lang_French.lng`.
+3. **Existing locations**, including `mc0:/OPL/` and each enabled
+   device's `LNG/` directory.
+
+The language menu shows a language only once: the higher-priority location
+wins when duplicates exist. Scans retry an initially inaccessible boot path
+after the storage drivers mount. Language registration grows dynamically rather
+than stopping at 15 files. Restart RiptOPL after copying files into folders
+already scanned during the current session.
+
+Select **Settings → Interface → Language** (also under General & System
+where available), confirm, and **Save Settings**. English is always built
+in; missing newer translations fall back to English. Games and OSDSYS keep
+their own independent language settings.
