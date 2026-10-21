@@ -6,7 +6,7 @@ import tempfile
 root = Path(__file__).resolve().parents[2]
 bdm = (root / 'src/bdmsupport.c').read_text(encoding='utf-8')
 hdd = (root / 'src/hddsupport.c').read_text(encoding='utf-8')
-start = bdm.index('static int bdmCheckNativeVmcLayout(')
+start = bdm.index('int bdmCheckNativeVmcLayout(int iop_fd')
 helper = bdm[start:bdm.index('\n}\n', start) + 3]
 start = bdm.index('    char vmc_name[32], vmc_path[256];', bdm.index('void bdmLaunchGame('))
 bdm_slots = bdm[start:bdm.index('    void *irx = NULL;', start)]

@@ -115,12 +115,12 @@ if 'diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 7, !neutrino);' not in rea
 if 'COMPAT_MODE_8' in function(read('src/system.c'), r'^static int convertCompatmaskToModes\(', 'system.c'):
     failures.append('system.c: Mode 8 is OPL-core only and must not reach Neutrino -gc')
 
-# External .lng files are positional: the new labels went at the end, right after the label that was
-# last before them. Later labels may only be appended after them.
+# External .lng files are positional: the two labels were appended right after the label that ended
+# the list when they shipped, and must stay there. Labels added later go after them, never before.
 labels = re.findall(r'^- label: (\S+)', read('lng_tmpl/_base.yml'), re.M)
 at = labels.index('MODE8') if 'MODE8' in labels else -1
-if labels[at - 1:at + 2] != ['VMC_PFS_LIMIT_ON_CREATE', 'MODE8', 'HINT_MODE8']:
-    failures.append('lng_tmpl/_base.yml: MODE8 and HINT_MODE8 must stay appended right after VMC_PFS_LIMIT_ON_CREATE')
+if at < 1 or labels[at - 1:at + 2] != ['VMC_PFS_LIMIT_ON_CREATE', 'MODE8', 'HINT_MODE8']:
+    failures.append('lng_tmpl/_base.yml: MODE8 and HINT_MODE8 must stay right after VMC_PFS_LIMIT_ON_CREATE, where they were appended')
 
 if failures:
     print('\n'.join('FAIL: ' + f for f in failures))
