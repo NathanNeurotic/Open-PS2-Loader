@@ -1,0 +1,2200 @@
+{
+  "markdown_files": 69,
+  "website_pages": 35,
+  "local_links_checked": 2221,
+  "errors": [
+    "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md: missing file ../LICENSE",
+    "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md: missing file docs/README_CONFIG.txt",
+    "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md: missing file docs/THIRD_PARTY_NOTICES.md",
+    "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md: missing file licenses/"
+  ],
+  "preserved_upstream_layout_links": [],
+  "external_urls": {
+    "http://sx.sytes.net/oplcl/games.aspx": [
+      "README.md",
+      "site/cheats.html"
+    ],
+    "https://akilluminati47.github.io/RIPPS2/": [
+      "README.md",
+      "site/index.html"
+    ],
+    "https://boliviaos.site/": [
+      "site/fork-gaps.html"
+    ],
+    "https://cloudbase.it/ceph-for-windows/": [
+      "site/nbd.html"
+    ],
+    "https://en.wikipedia.org/wiki/Network_block_device": [
+      "site/nbd.html"
+    ],
+    "https://git.techwritescode.dev/techwritescode/PSUManager": [
+      "README.md",
+      "ROLLING_RELEASE.md",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "third_party\\PSUManager\\README.md"
+    ],
+    "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md",
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2/commit/13bdb68ce85dd18effd1acb9ac4e4f2ffb4038bd": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Based-Skid/iLaunchELF": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/CTurt/FreeDVDBoot": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/CosmicScale/PSBBN-Definitive-English-Patch": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://github.com/CosmicScale/PSBBN-Definitive-Project": [
+      "docs\\EXFAT.md",
+      "site/fork-gaps.html",
+      "site/hdd.html"
+    ],
+    "https://github.com/CosmicScale/Retro-GEM-POPStarter-Starter": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/CosmicScale/Retro-GEM-PS2-Disc-Launcher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/DKWDRV/DKWDRV": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Docmine17": [
+      "README.md",
+      "docs\\HTTP.md",
+      "site/http.html",
+      "site/index.html"
+    ],
+    "https://github.com/Docmine17/Open-PS2-Loader-HTTP": [
+      "README.md",
+      "docs\\HTTP.md",
+      "docs\\NEUTRINO.md",
+      "site/fork-gaps.html",
+      "site/http.html",
+      "site/index.html"
+    ],
+    "https://github.com/Docmine17/Open-PS2-Loader-HTTP/commit/6ee5bef262f0e7ea8dff1ae464d7e25aad8174f8": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/GDX-X/PS2-OPL-CFG-Compatibility-Database": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/GSTDiandre/ps2-discord-rpc": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Gageformer": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html"
+    ],
+    "https://github.com/Gageformer/Ember": [
+      "README.md",
+      "site/fork-gaps.html",
+      "site/index.html"
+    ],
+    "https://github.com/Gageformer/Ember/blob/main/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Gageformer/Ember/releases": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html",
+      "site/ps1-vcd.html"
+    ],
+    "https://github.com/GeekRhapsody/OdysseyLauncher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Gionnio/ps2manager": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/GorGylka/Server2PS2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/GorGylka/Server2PS2/commit/58c6f97b28dbd6b8c0ca7c308d53b7f530a85486": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/GorGylka/UDPBD-A5-V11": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/HiroTex/OSD-XMB": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/HiroTex/OSD-XMB-ARTDB": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/HowlingWolfHWC/OSDSYS-Launcher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/IcySon55/OPL-Theme-Editor": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Irfanlesnar/PS2-Launcher": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Irfanlesnar/PS2-Launcher-Manager": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/ee_core/src/padhook.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Irfanlesnar/PS2-Launcher/commit/46bad5a4a469c51e45eb1ed879fe43c100b8cb7b": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Irfanlesnar/PS2-Launcher/tree/main/modules/xboxusb": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/commit/aa531a858c583104bfd577c4715339c8ce68d534": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Kyllemn/PS2TVCRT": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/L10N37/Open-PS2-Loader-Extended-APA": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/L10N37/Open-PS2-Loader-Extended-APA/blob/main/EXTENDED_APA.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/L10N37/Open-PS2-Loader-Extended-APA/commit/5cb8058907204501f425b5c170316063ef18f69a": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Luden02": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html"
+    ],
+    "https://github.com/Luden02/OrbitPS2-Manager": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/install.html"
+    ],
+    "https://github.com/Luden02/OrbitPS2-Manager/blob/cb915ca62d650a298fd951ec781ea3d39cf1f8cf/src/services/ps1-import.service.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Luden02/OrbitPS2-Manager/blob/cb915ca62d650a298fd951ec781ea3d39cf1f8cf/src/services/rename.service.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Luden02/OrbitPS2-Manager/blob/cb915ca62d650a298fd951ec781ea3d39cf1f8cf/src/services/zso.service.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Luden02/OrbitPS2-Manager/commit/cb915ca62d650a298fd951ec781ea3d39cf1f8cf": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Luden02/psx-ps2-opl-art-database": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Mbed-TLS/mbedtls": [
+      "third_party\\mbedtls\\README.md"
+    ],
+    "https://github.com/MechaResearch/MechaPwn": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MegaBitmap/PS2-SNL": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MegaBitmap/PS2-SNL/commit/10f41f12d731666aa4591d8941d1ab626ca2a0f2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MiguelQueiroz010/OPL-DS4RTBT": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/commit/e016d934e117a645e476564eddfd7f14f0188e01": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/commit/f638621cdd40d834877745bda75fa01dae0e1d84": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/compare/e016d934e117a645e476564eddfd7f14f0188e01...rt-2.7.0": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/releases/tag/rt-2.7.0": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/tree/2cf308511b187f8a0b209140f71936dca0bb0bae/modules/ds34bt": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/tree/rtl-fw-loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html"
+    ],
+    "https://github.com/NathanNeurotic/Launchstation": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Launchstation/pull/156": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md",
+      "site/apps.html",
+      "site/cheats.html",
+      "site/controls.html",
+      "site/coverflow.html",
+      "site/credits.html",
+      "site/favourites.html",
+      "site/fork-gaps.html",
+      "site/getting-started.html",
+      "site/gsm.html",
+      "site/hdd.html",
+      "site/http.html",
+      "site/igr.html",
+      "site/index.html",
+      "site/install.html",
+      "site/languages.html",
+      "site/mmce.html",
+      "site/nbd.html",
+      "site/network-boot.html",
+      "site/neutrino.html",
+      "site/pademu.html",
+      "site/pc-card-cf.html",
+      "site/per-game-settings.html",
+      "site/ps1-vcd.html",
+      "site/ps3-bc.html",
+      "site/psx-dvr.html",
+      "site/releases.html",
+      "site/retroachievements.html",
+      "site/settings.html",
+      "site/smb.html",
+      "site/themes.html",
+      "site/troubleshooting.html",
+      "site/unicode-titles.html",
+      "site/usb.html",
+      "site/vmc.html",
+      "site/zso.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/36293060322": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/38194512093": [
+      "notes\\RA-PARITY-2026-10-11.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/38194512093/artifacts/11722644208": [
+      "notes\\RA-PARITY-2026-10-11.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/check-format.yml": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/check-format.yml/badge.svg?branch=rebuild/main": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/flavours.yml": [
+      "README.md",
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/flavours.yml/badge.svg?branch=rebuild/main": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/rolling-release.yml": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/rolling-release.yml/badge.svg?branch=rebuild/main": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/7452341a076d3e7a5e14e613429c7eca594f4888/docs/RETROACHIEVEMENTS.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/9ef8d643a739d88a4f4b5fd055a209d0b27299c4/docs/NEUTRINO.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/plan/pc-card-cf-support-20261015/docs/PC-CARD-CF.md": [
+      "site/pc-card-cf.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/0f2b5e6966715b711a91f3d5d8a5ea5d333361a4": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/1a6639410beaf8dd9c5505be0f470fd5f5a60259": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/2eb0d37629215491bfc31ea57cdce5630d4f1450": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/68405e2392d3bb6606f46863365cb0f1f844784b": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/7988eff5": [
+      "docs\\DOCUMENTATION-AUDIT-2026-10.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/9ef8d643a739d88a4f4b5fd055a209d0b27299c4": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dc6206f60bf8175d88946c175e839d59ada9d9ab": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/e8561ca8": [
+      "docs\\DOCUMENTATION-AUDIT-2026-10.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/f83e6f9f6166015dbdecb8b6f024c988daf58b1b": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/issues": [
+      "README.md",
+      "site/credits.html",
+      "site/ps1-vcd.html",
+      "site/troubleshooting.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/issues/317": [
+      "docs\\MX4SIO.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/issues/545": [
+      "docs\\AUTOLAUNCH-GLOBAL-SETTINGS.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918": [
+      "docs\\UNICODE-GAME-TITLES.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/issues/972": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/issues/984": [
+      "docs\\IGR.md",
+      "notes\\INTERNAL-EXFAT-EMBER-IGR-2026-10-19.md",
+      "site/igr.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1017": [
+      "site/languages.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/702": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/703": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/704": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/705": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733": [
+      "README.md",
+      "docs\\THEME_ENGINE.md",
+      "site/coverflow.html",
+      "site/credits.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/789": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/795": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/825": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+      "docs\\TECH_CONTRIBUTOR_ROADMAP_2026-10-03.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/826": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+      "docs\\TECH_CONTRIBUTOR_ROADMAP_2026-10-03.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/835": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+      "docs\\TECH_CONTRIBUTOR_ROADMAP_2026-10-03.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/836": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+      "docs\\TECH_CONTRIBUTOR_ROADMAP_2026-10-03.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/840": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/841": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/842": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/843": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/846": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/877": [
+      "site/vmc.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/881": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/889": [
+      "docs\\VMC.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/894": [
+      "docs\\EXFAT.md",
+      "notes\\PS1-RA-ALPHA16-AUDIT.md",
+      "site/hdd.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/898": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/916": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/917": [
+      "docs\\TEST-BUILDS.md",
+      "docs\\UNICODE-GAME-TITLES.md",
+      "site/unicode-titles.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/923": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/945": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/947": [
+      "site/credits.html",
+      "site/psx-dvr.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/955": [
+      "site/fork-gaps.html",
+      "site/pc-card-cf.html",
+      "site/settings.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/973": [
+      "notes\\INTERNAL-EXFAT-EMBER-IGR-2026-10-19.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977": [
+      "README.md",
+      "site/coverflow.html",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/themes.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/990": [
+      "notes\\INTERNAL-EXFAT-EMBER-IGR-2026-10-19.md",
+      "site/igr.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/994": [
+      "docs\\VMC.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/999": [
+      "docs\\VCD.md",
+      "site/ps1-vcd.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/pulls": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases": [
+      "README.md",
+      "site/install.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-Korium.ELF": [
+      "site/releases.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-inceBtion.ELF": [
+      "site/releases.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF": [
+      "ROLLING_RELEASE.md",
+      "site/install.html",
+      "site/releases.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite": [
+      "README.md",
+      "ROLLING_RELEASE.md",
+      "site/releases.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling": [
+      "README.md",
+      "ROLLING_RELEASE.md",
+      "site/releases.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium": [
+      "README.md",
+      "ROLLING_RELEASE.md",
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+      "site/releases.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra": [
+      "README.md",
+      "ROLLING_RELEASE.md",
+      "docs\\NEUTRINO.md",
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/index.html",
+      "site/releases.html",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/stargazers": [
+      "README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/tree/2808a4cd579e4294c520e35149bbfc87d79cce45": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/tree/7452341a076d3e7a5e14e613429c7eca594f4888": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/tree/rebuild/main": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/wiki": [
+      "docs\\README.md"
+    ],
+    "https://github.com/NathanNeurotic/Open-PS2-Loader/wiki/Unicode-Game-Titles": [
+      "site/unicode-titles.html"
+    ],
+    "https://github.com/NathanNeurotic/POPSLoader": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/PS2-Servers": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/install.html",
+      "site/network-boot.html",
+      "site/settings.html",
+      "site/smb.html"
+    ],
+    "https://github.com/NathanNeurotic/PS2-Servers/blob/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/PS2-Servers/blob/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5/docs/EDITIONS.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/PS2-Servers/blob/main/docs/EDITIONS.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/PS2-Servers/blob/main/launcher/game_library.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/PS2-Servers/commit/c04106c16f563e5f808474ee40bfaac7728249c6": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/PS2-Servers/tree/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/launcHER": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/neutrino": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/neutrino/blob/master/iop/cdvdfsv/src/cdvdfsv.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/neutrino/commit/a7b673648254942e11315c9006c4c7bb776e58a1": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/uOPL": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/uOPL/commit/4ae7414877ba566177ef1130de29ce850a5e15b3": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/xerabora": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NathanNeurotic/xerabora/commit/ebd18ed68a28c901f437d0ec381e52fc26d5698a": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md": [
+      "README.md",
+      "site/nbd.html"
+    ],
+    "https://github.com/Okeanos86": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html"
+    ],
+    "https://github.com/Okeanos86/BDMAssault": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Okeanos86/BDMAssault/releases": [
+      "README.md",
+      "ROLLING_RELEASE.md",
+      "site/credits.html",
+      "site/index.html",
+      "site/ps1-vcd.html"
+    ],
+    "https://github.com/Okeanos86/BDMAssault/releases/tag/Alpha": [
+      "POPS\\UDPFS-NOTICES\\README.md",
+      "docs\\VCD.md",
+      "site/ps1-vcd.html"
+    ],
+    "https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats/commit/f5b67cd6586eedf0ee30cba7b754e4209bc14180": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/PixeliGer/OPL-Theme-Pixel-Prime": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/RetroAchievements/rcheevos": [
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/Rian6/caduceus": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/ee_core/src/ra_overlay.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/ethsupport.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/opl.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/supportbase.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/cc1713a893a976c9b26ae1dd9975c200a461edfe/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/cc1713a893a976c9b26ae1dd9975c200a461edfe/docs/OPL-XMB.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/blob/cc1713a893a976c9b26ae1dd9975c200a461edfe/docs/protocol/PROTOCOL.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f": [
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/fork-gaps.html",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/Rian6/caduceus-opl/tree/cc1713a893a976c9b26ae1dd9975c200a461edfe": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts": [
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/catalog-backup.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/cover-art.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/discord-presence.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/main.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/opl-activity.ts": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/src/GettingStarted.tsx": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/vendor/xerabora/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Rian6/caduceus/tree/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Snaggly/PS2_Pnacher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher/commit/e6f95081d71c43d58f2c3790ac9528828554c683": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/SvenGDK/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/SvenGDK/Open-PS2-Loader/commit/b7e6498143c6f8a7aff544cd13c57564d7cb1255": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/SvenGDK/PSX-XMB-Manager": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/TheRealNextria": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html"
+    ],
+    "https://github.com/TheRealNextria/PS2RD-CHT-Manager": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/install.html"
+    ],
+    "https://github.com/TnA-Plastic/FreeMcBoot": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Tom-Bruise/PS2-OPL-CFG-Database": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Veritas83/PS2_FORTUNA_Launcher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Veritas83/VTSPS2-HBDL": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/Wolf3s": [
+      "site/credits.html"
+    ],
+    "https://github.com/Xferno2/PS2RPC": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/YouKnow-sys": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/index.html",
+      "site/network-boot.html"
+    ],
+    "https://github.com/YouKnow-sys/udpfs-server": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/install.html",
+      "site/network-boot.html"
+    ],
+    "https://github.com/YouKnow-sys/udpfs-server/commit/19718a39d16cf2f62d5a3ad4bf29d52988809797": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2": [
+      "README.md",
+      "site/fork-gaps.html",
+      "site/index.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0104-ripps2-languages.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0106-ripps2-poweroff-star.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0108-ripps2-ripshot.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0110-ripps2-quicklists.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/CHANGELOG.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/docs/plans/builds-104-on.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/elf/lang/ripps2lang.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/main/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0086-ripps2-build86-card-manager-neutrino-logo-first.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0087-ripps2-build87-in-game-menu.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0098-ripps2-build98-memory-files.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/commit/a26a9843312e45ed272f3437148bd7a3df431f78": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/commit/e8f317b2196f625ae1947f3d1aeae547d232ee62": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/releases": [
+      "README.md"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/releases/tag/v1.0.2-beta": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang": [
+      "site/languages.html"
+    ],
+    "https://github.com/akilluminati47/RIPPS2/tree/main/tools/audio-studio": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/athegreat90/olp-server": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/belek666/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/hidusb/hidusb.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/xbox360usb/xbox360usb.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/belek666/Open-PS2-Loader/commit/41f7cf0b782628ef237527598225a2f628a376dd": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/belek666/Open-PS2-Loader/tree/modularPademu": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/bignaux/lwNBD": [
+      "README.md",
+      "site/nbd.html"
+    ],
+    "https://github.com/brainstream/OPL-PC-Tools": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/brunlx/OPL-Future---BETA": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_QA_REPORT.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_UI.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/brunlx/OPL-Future---BETA/commit/0ca08d10a792687566dae524e0e17de5db2301e9": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/bucanero/apollo-ps2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/cha0ticd4rksid3/PS2-Webcore-Launcher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/.github/workflows/hw.yml": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/ophtml_console.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/tests/play_input.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/docs/findings.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/examples/console-min/Makefile": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/caps.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/fontgen.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/serve.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/serve_page.html": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/vram.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/limits.js": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/lint.js": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/tests/fuzz_load.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/tools/check-vram-model.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/commit/03a5d56f724055f4d46e0eaf44806e95f0202cb1": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/commit/60810bd2ec0e2656d7425603e760ac010883f53a": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPHTML/tree/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/opl-theme-previewer.html": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/07-texture-safety.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/08-play-stats.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/check-art.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/import-igs.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/palettize-art.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/commit/32f3fd7bcefc96d9130fc27b364e2e8d41de9540": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/compare/c411879898c9dfb7fb7705534d08080677361f1c...32f3fd7bcefc96d9130fc27b364e2e8d41de9540": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/coffeedevsolutions/OPLattice/tree/main/tools": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/cristianCanek/SMB4PS2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld": [
+      "README.md",
+      "site/fork-gaps.html",
+      "site/index.html"
+    ],
+    "https://github.com/danielnuld/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/rmblur.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/themes.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/themes/PS5/conf_theme.cfg": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/Open-PS2-Loader/commit/fca8fcb03e8ca366a49123cd85e7ec43d39697f9": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/Open-PS2-Loader/tree/master/themes/PS5": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/achievements.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase13-results.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase16b-results.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/third_party/neutrino-igr/ra.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/tools/orbit_catalog.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/commit/28a23666fbc8b11b5edabcfff0f780b2b2161219": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/commit/d015baf7e4c004fa5db6964dc6bedd16484ea45d": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/compare/d015baf7e4c004fa5db6964dc6bedd16484ea45d...28a23666fbc8b11b5edabcfff0f780b2b2161219": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2": [
+      "README.md",
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/retroachievements.html",
+      "third_party\\orbit-neutrino\\README.md"
+    ],
+    "https://github.com/danielnuld/ps2-launcher/tree/7a88a6a5fdc935001d977497460716762edef404/third_party/neutrino-igr": [
+      "third_party\\orbit-neutrino\\README.md"
+    ],
+    "https://github.com/dnunezx": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html"
+    ],
+    "https://github.com/dnunezx/LUNA": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html"
+    ],
+    "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/tools/build-luna-psxcore.sh": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/LUNA/commit/23112ecce73823b13d11d57fda0abd5968808d7c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/LUNA/commit/4614b0c53e0f904a57afb18572b15090a6afd657": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/LUNA/commit/475f7b2513e739cf63af9cd4ed8c84280e93a762": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/LUNA/commit/9c5be408df787000a7e650f66f0a43411060e1d7": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/LUNA/compare/475f7b2513e739cf63af9cd4ed8c84280e93a762...9c5be408df787000a7e650f66f0a43411060e1d7": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/LUNA/compare/9c5be408df787000a7e650f66f0a43411060e1d7...4614b0c53e0f904a57afb18572b15090a6afd657": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/Open-PS2-Loader/tree/56470efdcce8edfecd2cc32ccf86f43e14b7a9a4": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/Open-PS2-Loader/tree/opl-luna": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/OrbitPS2-Manager-LUNA-edition": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/360a788ff7bb7c6853702a8edec6860cae49c0a2/runtime/igrloader/main.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/DISC-MAPPING.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/INTEGRATION.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/runtime/Makefile": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/compat.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/compat_profiles.generated.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/discset.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/patch.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/runtime_corrections.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/blob/main/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/commit/2f35645aa9c35a4af83feee91da79f39155ced1c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/commit/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/commit/9d9c7a36c493abd741793fec4dafb018883b0212": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/commit/dcf1fc868de33a957ae14072145a2d6810abc3ff": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/commit/f1333504bdd43815f295081f434276dcfae80eff": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/compare/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9...0d4348ea5fff50a16c303c5c1910038e65bf7915": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/PSXCore/tree/360a788ff7bb7c6853702a8edec6860cae49c0a2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/neutrino-luna": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/luna_igr_rpc.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/padhook.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/main.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/pfs_vmc.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_discset.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_vmc.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/ui/file_manager.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/include/ui/navigation.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/devices/iso.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/options.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/gui.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_3d.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_classic.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_orbit.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_scroll.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/commit/1580671bab32d124cc6affaac3a3251d515b4664": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/dnunezx/nhddl-luna/tree/127d012b07322dc0805ce62f877e5ba5e8cd6dbc": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/edisnord/PyOPLM": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/elmariolo/OPL-Server": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exaconn/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exaconn/Open-PS2-Loader/commit/3ab34d2028e3da9592b99b4681a7cdb324e3a070": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exaconn/Open-PS2-Loader/commit/73a4921dee722837c18150d0c0f1a7f3675e8349": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exaconn/Open-PS2-Loader/commit/e70e6cbddf39a68497c28b302d19695ee2ce753a": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exaconn/Open-PS2-Loader/commit/f9717f7676a6d7db588a1c042c3eaff36ec414b0": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/disc-launcher.cnf": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/src/main.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/commit/1bc315fa8872f955aadcf2d127ae733c8cea7b09": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ffgriever-pl/Memory-Card-Annihilator": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ffgriever-pl/Memory-Card-Annihilator/commit/769d581db10b02134591b9e3de1747007bce59e2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/forbenaj/ps2smb": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/forbenaj/ps2smb/blob/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8/ps2smb/cache.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/forbenaj/ps2smb/blob/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8/ps2smb/remote.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/forbenaj/ps2smb/blob/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8/ps2smb/smb/server.py": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/forbenaj/ps2smb/commit/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/grimdoomer/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/grimdoomer/Open-PS2-Loader/blob/d1f51be4452074c2352931e0b9c474da9242e481/src/hddsupport.c": [
+      "docs\\EXFAT.md",
+      "site/hdd.html"
+    ],
+    "https://github.com/grimdoomer/Open-PS2-Loader/commit/02ff1224d056d6965fca57eb7f7500070139962a": [
+      "notes\\INTERNAL-EXFAT-EMBER-IGR-2026-10-19.md"
+    ],
+    "https://github.com/grimdoomer/Open-PS2-Loader/commit/24340b5ec9303d209a73efcdd68e741f48641aec": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/grimdoomer/Open-PS2-Loader/commit/d1f51be4452074c2352931e0b9c474da9242e481": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/grimdoomer/Open-PS2-Loader/releases/tag/v1.2.0.6-1996-Beta": [
+      "notes\\INTERNAL-EXFAT-EMBER-IGR-2026-10-19.md"
+    ],
+    "https://github.com/hacan359": [
+      "README.md",
+      "site/index.html"
+    ],
+    "https://github.com/hacan359/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/hacan359/Open-PS2-Loader/commit/205223e2d5f838674676d6f8c171dd909eb6c01d": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/hacan359/Open-PS2-Loader/commit/759b12a2dff0cf49736b27991c73399a7e7971e8": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/hacan359/Open-PS2-Loader/commit/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a": [
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/fork-gaps.html",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/hacan359/Open-PS2-Loader/pull/1": [
+      "README.md",
+      "docs\\RETROACHIEVEMENTS-INTEGRATION-PLAN.md",
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/hacan359/Open-PS2-Loader/tree/cb713e686acb2fb63de20aa44b3fd4e8c59ca680": [
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/hacan359/xerabora": [
+      "README.md",
+      "docs\\RETROACHIEVEMENTS-INTEGRATION-PLAN.md",
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/hacan359/xerabora/blob/0e5d35a3e9c64594973aff995f5d1a2db62310d4/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/hacan359/xerabora/commit/d36ee3a54c8769825c99756f908367b2cc2622f3": [
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/fork-gaps.html",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17": [
+      "README.md",
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/index.html",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.19": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/BDMAssault": [
+      "modules\\bdmassault\\ilink_bd_assault\\README.md",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/BDMAssault/releases": [
+      "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md"
+    ],
+    "https://github.com/israpps/FreeMcBoot-Installer": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/HDL-Batch-installer": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/PlayStation2-Basic-BootLoader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/neutrino": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/romman": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/israpps/udpbd-server": [
+      "docs\\NEUTRINO.md"
+    ],
+    "https://github.com/israpps/wLaunchELF_ISR": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/johnson-cooper/PS2SP": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/juanklimonplay/EonPS2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/commit/160c3e18c508432323946fca9bb5cb989705f28e": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/microsoft/WSL/issues/5968": [
+      "site/nbd.html"
+    ],
+    "https://github.com/mihhru/PS2CF": [
+      "docs\\plans\\pc-card-cf-integration.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/pc-card-cf.html"
+    ],
+    "https://github.com/mihhru/PS2CF/blob/9b6ed3702b59a87512426952e003125a5b4f0e3c/src/opl/Makefile": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mihhru/PS2CF/blob/9b6ed3702b59a87512426952e003125a5b4f0e3c/src/opl/modules/pccf/main.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mihhru/PS2CF/blob/9b6ed3702b59a87512426952e003125a5b4f0e3c/src/opl/modules/pccf/pccf_hw.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mihhru/PS2CF/blob/main/CHANGES.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mihhru/PS2CF/blob/main/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mihhru/PS2CF/blob/main/VALIDATION.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mihhru/PS2CF/blob/main/src/wlaunchelf/iop/pccf/main.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mihhru/PS2CF/commit/9b6ed3702b59a87512426952e003125a5b4f0e3c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mlafeldt/ps2rd": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mystyq/Stable-Open-PS2-Loader": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mystyq/Stable-Open-PS2-Loader/blob/master/modules/iopcore/cdvdman/atad.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mystyq/Stable-Open-PS2-Loader/commit/3495d55b96ce72497b6a922ab540ac76a58ca74a": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/mystyq/Stable-Open-PS2-Loader/commit/770d5323928ff20990d07d70a5ce266a95e0f6c4": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ninjadynamics/PS2Docs/blob/main/EE_Users_Manual.pdf": [
+      "notes\\RA-PARITY-2026-10-11.md"
+    ],
+    "https://github.com/oMrRexD": [
+      "README.md",
+      "docs\\RETROACHIEVEMENTS-INTEGRATION-PLAN.md",
+      "docs\\RETROACHIEVEMENTS.md",
+      "site/credits.html",
+      "site/index.html",
+      "site/retroachievements.html"
+    ],
+    "https://github.com/oMrRexD/wLaunchELF_R3Z_FTP": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/officialjuicedesigns/OPL-Evolution": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/officialjuicedesigns/OPL-Evolution/blob/evo-development/src/evo_ui.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/officialjuicedesigns/OPL-Evolution/commit/47119b7128f347eb046c52a48dee36a9559b2d1b": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html"
+    ],
+    "https://github.com/pcm720/OSDMenu": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720/bbnl": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://github.com/pcm720/neutrino/tree/bsd-dvr": [
+      "docs\\DESR-DVR.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/neutrino.html",
+      "site/psx-dvr.html"
+    ],
+    "https://github.com/pcm720/nhddl": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md",
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720/nhddl/blob/v1.2.2/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720/nhddl/commit/81905e1f68f50ded828fe59a04f6313a9c4f21de": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720/nhddl/commit/821b6c9b4a19678d33a4166fd2abdd0034dcaba2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720/nhddl/tree/v1.2.2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/pcm720/udpfsd": [
+      "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md",
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/network-boot.html"
+    ],
+    "https://github.com/pcm720/udpfsd/commit/58d7c8f11ac196d4a5ca7b65b78743fbeedfdd80": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2-mmce/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2-mmce/Open-PS2-Loader/commit/e2090114e8e70d8966438b96dfa87a452ff54153": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2-mmce/mmceman": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2dev/ps2client": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://github.com/ps2dev/ps2link": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://github.com/ps2dev/ps2sdk": [
+      "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md",
+      "site/credits.html",
+      "site/psx-dvr.html"
+    ],
+    "https://github.com/ps2dev/ps2sdk/issues/892": [
+      "docs\\MX4SIO.md"
+    ],
+    "https://github.com/ps2dev/ps2sdk/pull/862": [
+      "docs\\MX4SIO.md"
+    ],
+    "https://github.com/ps2homebrew": [
+      "README.md",
+      "site/apps.html",
+      "site/cheats.html",
+      "site/controls.html",
+      "site/coverflow.html",
+      "site/credits.html",
+      "site/favourites.html",
+      "site/fork-gaps.html",
+      "site/getting-started.html",
+      "site/gsm.html",
+      "site/hdd.html",
+      "site/http.html",
+      "site/igr.html",
+      "site/index.html",
+      "site/install.html",
+      "site/languages.html",
+      "site/mmce.html",
+      "site/nbd.html",
+      "site/network-boot.html",
+      "site/neutrino.html",
+      "site/pademu.html",
+      "site/pc-card-cf.html",
+      "site/per-game-settings.html",
+      "site/ps1-vcd.html",
+      "site/ps3-bc.html",
+      "site/psx-dvr.html",
+      "site/releases.html",
+      "site/retroachievements.html",
+      "site/settings.html",
+      "site/smb.html",
+      "site/themes.html",
+      "site/troubleshooting.html",
+      "site/unicode-titles.html",
+      "site/usb.html",
+      "site/vmc.html",
+      "site/zso.html"
+    ],
+    "https://github.com/ps2homebrew/HDLGameInstaller": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/HDLGameInstaller/commit/ec37c81f8edb6fc45e2be51c86a322780641275a": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader": [
+      "README.md",
+      "site/apps.html",
+      "site/cheats.html",
+      "site/controls.html",
+      "site/coverflow.html",
+      "site/credits.html",
+      "site/favourites.html",
+      "site/fork-gaps.html",
+      "site/getting-started.html",
+      "site/gsm.html",
+      "site/hdd.html",
+      "site/http.html",
+      "site/igr.html",
+      "site/index.html",
+      "site/install.html",
+      "site/languages.html",
+      "site/mmce.html",
+      "site/nbd.html",
+      "site/network-boot.html",
+      "site/neutrino.html",
+      "site/pademu.html",
+      "site/pc-card-cf.html",
+      "site/per-game-settings.html",
+      "site/ps1-vcd.html",
+      "site/ps3-bc.html",
+      "site/psx-dvr.html",
+      "site/releases.html",
+      "site/retroachievements.html",
+      "site/settings.html",
+      "site/smb.html",
+      "site/themes.html",
+      "site/troubleshooting.html",
+      "site/unicode-titles.html",
+      "site/usb.html",
+      "site/vmc.html",
+      "site/zso.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader-Compatibility-list": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader-lang": [
+      "docs\\LANGUAGES.md",
+      "lng\\README.md",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader-lang/commit/b23b743d9f8c65e7a305db945f442e5755019221": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/blob/master/CREDITS": [
+      "site/credits.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/commit/4cc74baabb73be9ca43f817474b321cd70fbcc2d": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/issues/1731": [
+      "docs\\MX4SIO.md"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/issues/1750": [
+      "docs\\MX4SIO.md"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/issues/1768": [
+      "docs\\AUTOLAUNCH-GLOBAL-SETTINGS.md"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1675": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1736": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1762": [
+      "notes\\INTERNAL-EXFAT-EMBER-IGR-2026-10-19.md"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1779": [
+      "docs\\PARENTAL-LOCK.md",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1785": [
+      "docs\\SIO2MAN-COMPATIBILITY.md"
+    ],
+    "https://github.com/ps2homebrew/Open-PS2-Loader/pulls": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/PS1VModeNeg": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/hdl-dump": [
+      "site/fork-gaps.html",
+      "site/zso.html"
+    ],
+    "https://github.com/ps2homebrew/pfsshell": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wLaunchELF": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wOPL": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md",
+      "site/credits.html",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/textures.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wOPL/commit/4ae7414877ba566177ef1130de29ce850a5e15b3": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wOPL/pull/308": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wOPL/pull/370": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2homebrew/wOPL/pull/378": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2max32/neutrino": [
+      "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md",
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/ps2max32/neutrino/blob/7be8de2798c99af433c91993e021746a54d6800d/ee/ee_core/src/gsm_api.c": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+      "docs\\SETUP-QUESTIONS.md",
+      "site/troubleshooting.html"
+    ],
+    "https://github.com/ps2max32/neutrino/blob/7be8de2798c99af433c91993e021746a54d6800d/ee/ee_core/src/main.c": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md"
+    ],
+    "https://github.com/ps2max32/neutrino/blob/7be8de2798c99af433c91993e021746a54d6800d/ee/loader/src/main.c": [
+      "docs\\COMMUNITY_REPORTS_HANDOFF_2026-10-02.md"
+    ],
+    "https://github.com/ps2max32/neutrino/blob/master/README.md": [
+      "docs\\NEUTRINO.md"
+    ],
+    "https://github.com/retronas/retronas": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rickgaiser": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/index.html",
+      "site/neutrino.html"
+    ],
+    "https://github.com/rickgaiser/Open-PS2-Loader": [
+      "README.md",
+      "site/credits.html"
+    ],
+    "https://github.com/rickgaiser/neutrino": [
+      "README.md",
+      "docs\\NEUTRINO.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/neutrino.html",
+      "site/releases.html"
+    ],
+    "https://github.com/rickgaiser/neutrino/blob/7be8de2/iop/mc_emu/src/mcemu_var.c": [
+      "site/vmc.html"
+    ],
+    "https://github.com/rickgaiser/neutrino/issues": [
+      "site/troubleshooting.html"
+    ],
+    "https://github.com/rickgaiser/neutrino/releases": [
+      "README.md",
+      "site/index.html"
+    ],
+    "https://github.com/rodrigo1593-dev/oplfork": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rodrigo1593-dev/oplfork/commit/0dbb0d354b6587b8aee65b1b75fe5609abaaff38": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/include/btkeys.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/ds34bt/iop/ds34bt.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/pademu/ds34bt.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/src/dialogs.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/commit/971ae6e505a2822e2affb3a819e076b5b1a288d2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/root670/CheatDevicePS2": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/saildot4k/PlayStation2-Basic-BootLoader-Extended": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/saildot4k/wLaunchELF_R3Z": [
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/psx-dvr.html"
+    ],
+    "https://github.com/sd2psXtd/Open-PS2-Loader": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sd2psXtd/firmware": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/shaanhomebrew-cloud": [
+      "README.md",
+      "site/credits.html",
+      "site/index.html"
+    ],
+    "https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI": [
+      "README.md",
+      "site/credits.html",
+      "site/fork-gaps.html",
+      "site/index.html",
+      "site/install.html"
+    ],
+    "https://github.com/slimpuggamer/uOPL": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/include/ioman.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/src/ioman.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/slimpuggamer/uOPL/commit/0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/slimpuggamer/uOPL/tree/uOPL-1": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/VERSION": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/apps/internet-browser/README.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/SYSTEM_UPDATE_PUP.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/THEME_AUTHORING.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_DOWNLOAD_SERVICE.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_GAME_PATCHES.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_PACKAGE_FORMAT.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_STORE_ARCHITECTURE.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_MODERN_CONTROLLER_MATRIX.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_SMART_IGR.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/reference/TITAN_STANDALONE_SDK.md": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_profile_storage.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_user_profile.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_notifications.h": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_shell_catalog.c": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/stenzek/duckstation": [
+      "site/credits.html"
+    ],
+    "https://github.com/sync-on-luma/xebplus-neutrino-loader-plugin": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md",
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/thestr4ng3r/mymcplus": [
+      "site/fork-gaps.html"
+    ],
+    "https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c": [
+      "README.md"
+    ],
+    "https://github.com/xlenore/ps2-covers": [
+      "site/fork-gaps.html"
+    ],
+    "https://gitlab.com/nbdkit/libnbd": [
+      "site/nbd.html"
+    ],
+    "https://img.shields.io/badge/Documentation-RiptOPL-skyblue?style=flat&logo=githubpages&logoColor=white&labelColor=navy": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/MEGA-Rolling%20Archive-%23D90007?style=flat&logo=mega&logoColor=white": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/Network-SMB%20%C2%B7%20UDPBD%20%C2%B7%20UDPFS%20%C2%B7%20HTTP-2ea043?style=flat&labelColor=0b3d18": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/PS1%20Cores-POPStarter%20%C2%B7%20Ember-2ea043?style=flat&labelColor=0b3d18": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/PS2%20Cores-OPL%20%C2%B7%20Neutrino-2ea043?style=flat&labelColor=0b3d18": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/Platform-PlayStation%202-skyblue?style=flat&logo=playstation2&logoColor=white&labelColor=navy": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/RetroAchievements-dev%20build%2C%20partly%20hardware--tested-orange?style=flat&labelColor=7a3e00": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/Storage-USB%20%C2%B7%20MX4SIO%20%C2%B7%20iLink%20%C2%B7%20MMCE%20%C2%B7%20HDD-2ea043?style=flat&labelColor=0b3d18": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/Toolchain-ps2dev%20%2F%20PS2SDK-skyblue?style=flat&logo=docker&logoColor=white&labelColor=navy": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/Translations-31%20languages-skyblue?style=flat&logo=googletranslate&logoColor=white&labelColor=navy": [
+      "README.md"
+    ],
+    "https://img.shields.io/badge/Written%20in-C-skyblue?style=flat&logo=c&logoColor=white&labelColor=navy": [
+      "README.md"
+    ],
+    "https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/commit-activity/m/NathanNeurotic/Open-PS2-Loader/rebuild/main?style=flat&labelColor=navy&color=skyblue&logo=github&label=Commits%2FMonth": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/contributors/NathanNeurotic/Open-PS2-Loader?style=flat&labelColor=navy&color=skyblue&logo=github&label=Contributors": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/downloads/NathanNeurotic/Open-PS2-Loader/total?style=plastic&logo=github&logoSize=auto&label=Total%20Downloads&labelColor=navy&color=skyblue": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/issues/NathanNeurotic/Open-PS2-Loader?style=flat&labelColor=navy&color=skyblue&logo=github&label=Open%20Issues": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/last-commit/NathanNeurotic/Open-PS2-Loader/rebuild/main?style=flat&labelColor=navy&color=skyblue&logo=git&logoColor=white&label=Last%20Commit": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/license/NathanNeurotic/Open-PS2-Loader?style=flat&labelColor=navy&color=skyblue&logo=opensourceinitiative&logoColor=white&label=License": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/release-date-pre/NathanNeurotic/Open-PS2-Loader?style=plastic&logo=github&label=Released&labelColor=navy&color=skyblue": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/repo-size/NathanNeurotic/Open-PS2-Loader?style=flat&labelColor=navy&color=skyblue&logo=github&label=Repo%20Size": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/stars/NathanNeurotic/Open-PS2-Loader?style=flat&labelColor=navy&color=skyblue&logo=github&label=Stars": [
+      "README.md"
+    ],
+    "https://img.shields.io/github/v/release/NathanNeurotic/Open-PS2-Loader?style=plastic&logo=github&label=Latest%20Release&labelColor=navy&color=skyblue&include_prereleases": [
+      "README.md"
+    ],
+    "https://irfanlesnar.github.io/PS2-Launcher-Manager/": [
+      "site/fork-gaps.html"
+    ],
+    "https://letsencrypt.org/certs/isrg-root-x2.der": [
+      "third_party\\ca-roots\\README.md"
+    ],
+    "https://letsencrypt.org/certs/isrgrootx1.der": [
+      "third_party\\ca-roots\\README.md"
+    ],
+    "https://mega.nz/folder/74pRHKRB": [
+      "README.md",
+      "site/releases.html"
+    ],
+    "https://nathanneurotic.github.io/POPSLoader/": [
+      "site/apps.html",
+      "site/cheats.html",
+      "site/controls.html",
+      "site/coverflow.html",
+      "site/credits.html",
+      "site/favourites.html",
+      "site/fork-gaps.html",
+      "site/getting-started.html",
+      "site/gsm.html",
+      "site/hdd.html",
+      "site/http.html",
+      "site/igr.html",
+      "site/index.html",
+      "site/install.html",
+      "site/languages.html",
+      "site/mmce.html",
+      "site/nbd.html",
+      "site/network-boot.html",
+      "site/neutrino.html",
+      "site/pademu.html",
+      "site/pc-card-cf.html",
+      "site/per-game-settings.html",
+      "site/ps1-vcd.html",
+      "site/ps3-bc.html",
+      "site/psx-dvr.html",
+      "site/releases.html",
+      "site/retroachievements.html",
+      "site/settings.html",
+      "site/smb.html",
+      "site/themes.html",
+      "site/troubleshooting.html",
+      "site/unicode-titles.html",
+      "site/usb.html",
+      "site/vmc.html",
+      "site/zso.html"
+    ],
+    "https://nathanneurotic.github.io/POPSLoader/cheats.html": [
+      "site/per-game-settings.html",
+      "site/ps1-vcd.html"
+    ],
+    "https://nathanneurotic.github.io/POPSLoader/config.html": [
+      "site/ps1-vcd.html"
+    ],
+    "https://nathanneurotic.github.io/POPSLoader/igr.html": [
+      "site/ps1-vcd.html"
+    ],
+    "https://nathanneurotic.github.io/POPSLoader/multidisc.html": [
+      "site/ps1-vcd.html"
+    ],
+    "https://nathanneurotic.github.io/POPSLoader/storage.html": [
+      "site/ps1-vcd.html"
+    ],
+    "https://oplmanager.com/": [
+      "site/fork-gaps.html"
+    ],
+    "https://pki.goog/repo/certs/gtsr1.der": [
+      "third_party\\ca-roots\\README.md"
+    ],
+    "https://pki.goog/repo/certs/gtsr2.der": [
+      "third_party\\ca-roots\\README.md"
+    ],
+    "https://pki.goog/repo/certs/gtsr3.der": [
+      "third_party\\ca-roots\\README.md"
+    ],
+    "https://pki.goog/repo/certs/gtsr4.der": [
+      "third_party\\ca-roots\\README.md"
+    ],
+    "https://progress-bar.xyz/10": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/100": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/10?scale=2&suffix=MB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/1150?scale=2200&suffix=KB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/1350?scale=2200&suffix=KB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/1500?scale=2200&suffix=KB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/1700?scale=2200&suffix=KB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/30?scale=2&suffix=MB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/60": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/6?scale=2&suffix=MB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/750?scale=2200&suffix=KB/s&&progress_color=d9534f": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/80": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://progress-bar.xyz/900?scale=2200&suffix=KB/s": [
+      "Example\\APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP\\neutrino\\README.md"
+    ],
+    "https://sites.google.com/view/ysai187/home/projects/fmcbfhdb": [
+      "site/fork-gaps.html"
+    ],
+    "https://sourceforge.net/p/e2opl/code/HEAD/tree/trunk/README": [
+      "site/fork-gaps.html"
+    ],
+    "https://sourceforge.net/projects/e2opl/": [
+      "site/fork-gaps.html"
+    ],
+    "https://tinyurl.com/PS2SPACE": [
+      "README.md"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=10&t=15": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=107&t=5016": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=107&t=5589": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=107&t=9448": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=12&t=53": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=120&t=8542": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=125&t=1240": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=129&t=9991": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2-home.com/forum/viewtopic.php?f=83&t=3047": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.ps2homebrew.org/Open-PS2-Loader-Compatibility-list/List/R/SLUS_211.34.html": [
+      "notes\\RE4-STARTUP-FREEZE-2026-10-14.md"
+    ],
+    "https://www.psdevwiki.com/ps3/COK-00x": [
+      "site/ps3-bc.html"
+    ],
+    "https://www.psdevwiki.com/ps3/PS2_Compatibility": [
+      "site/ps3-bc.html"
+    ],
+    "https://www.psx-place.com/forums/open-ps2-loader-opl.77/": [
+      "README.md"
+    ],
+    "https://www.psx-place.com/resources/popstarter.683/": [
+      "README.md",
+      "site/fork-gaps.html",
+      "site/index.html"
+    ],
+    "https://www.psx-place.com/threads/funtuna-fork.32555/": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.psx-place.com/threads/my-ps2-freezes-in-the-first-loading-screen-solved.41622/": [
+      "notes\\RE4-STARTUP-FREEZE-2026-10-14.md"
+    ],
+    "https://www.psx-place.com/threads/open-ps2-loader-game-bug-reports.19401/": [
+      "README.md",
+      "site/troubleshooting.html"
+    ],
+    "https://www.psx-place.com/threads/opentuna-an-open-source-version-of-fortuna-based-on-reverse-engineering.33010/": [
+      "site/fork-gaps.html"
+    ],
+    "https://www.psx-place.com/threads/xtremeeliteboot-s-dashboard-special-xmas-showcase.38959/": [
+      "site/fork-gaps.html"
+    ]
+  }
+}
