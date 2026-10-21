@@ -127,6 +127,10 @@ void rmDrawLine(int x1, int y1, int x2, int y2, u64 color);
  * Textured from txt (uv in texels) when it is not NULL, otherwise the vertex colours alone. */
 void rmDrawTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors);
 
+/** rmDrawTriangles with alpha blending: vertex alpha fades the triangles (0x80 = opaque). A texture
+ * without an alpha channel fades by the first vertex's alpha. uv may be NULL when txt is NULL. */
+void rmDrawBlendedTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors);
+
 /** Starts the frame - first to call every frame */
 void rmStartFrame(void);
 

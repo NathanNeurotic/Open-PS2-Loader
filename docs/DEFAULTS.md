@@ -33,7 +33,7 @@ and **Theme: `<Coverflow>`** under **Settings → Interface**, apply the changes
 then save. Coverflow works in both 4:3 and 16:9; selecting it does not enable
 widescreen. A theme supplied with a separate package may have a different name.
 
-For the Collection-style perspective fan, choose **Theme: `<PSBBN Flow>`** in the same picker,
+For the PSBBN Definitive Project Game Collection look, choose **Theme: `<PSBBN Flow>`** in the same picker,
 then apply and save. It also supports 4:3 and 16:9 without changing the aspect setting.
 Both flow themes use Left/Right to browse covers and Up/Down to change sources; R3 remains Favorite.
 See [PSBBN Flow](THEME_ENGINE.md#psbbn-flow) for artwork and authoring details.
@@ -53,6 +53,6 @@ Implementation references: `setDefaults()` and saved-setting loading in
 in [src/themes.c](../src/themes.c). Coverflow tuning defaults are three covers,
 Large center scale (45), 200 ms animation, and side-cover dimming off; they take
 effect when a theme uses the `Coverflow` renderer. PSBBN Flow keeps its own fixed perspective
-layout, six-cover tail and 25-frame cubic animation; these tuning values do not change it.
+layout (rounded square focal cover, six-cover turned tail) and 25-frame cubic animation; these tuning values do not change it.
 
 Experimental PC CARD CF and DESR DVR ISO discovery both default to **Off**. Enable them explicitly in Game Sources; hardware checks still apply. See [PC CARD CF](PC-CARD-CF.md) and [DESR DVR](DESR-DVR.md).
