@@ -1,0 +1,1171 @@
+{
+  "date": "2026-10-21",
+  "riptopl": "2808a4cd579e4294c520e35149bbfc87d79cce45",
+  "site": "4c349e2d5cb42dc2b96777c7cb93c1b73bb84c6e",
+  "github_sweep_utc": "2026-10-21T15:34:55Z to 2026-10-21T15:35:15Z",
+  "later_frontend_branch": "1580671bab32d124cc6affaac3a3251d515b4664",
+  "comparisons": {
+    "lunadelta": {
+      "status": "ahead",
+      "total_commits": 7,
+      "base": "4614b0c53e0f904a57afb18572b15090a6afd657",
+      "merge_base": "4614b0c53e0f904a57afb18572b15090a6afd657",
+      "commits": [
+        {
+          "sha": "b6276455fc0713ba26edabb28076e5f711863441",
+          "message": "Update PSXCore to 66c70e9 after build validation"
+        },
+        {
+          "sha": "72bf2bfb8e0d7e896503c94869bdbfadd66a12ef",
+          "message": "Update PSXCore to f89258f after build validation"
+        },
+        {
+          "sha": "575a8a646ac69d60b2f5bc299165a116a8dab38b",
+          "message": "Update PSXCore to dcf1fc8 after build validation"
+        },
+        {
+          "sha": "691daac44db35d75e30ee3daaa84011d8a6f0c2f",
+          "message": "Update PSXCore to 9d9c7a3 after build validation"
+        },
+        {
+          "sha": "23dbf10cebc9719f301e855c76a691170bb975e9",
+          "message": "Fix USB startup and pin the validated PSXCore update"
+        },
+        {
+          "sha": "b5605594ad554253517288ef719183f1c77ef547",
+          "message": "Update PSXCore to 9326041 after build validation"
+        },
+        {
+          "sha": "f3c765e23eee9fb9ff0829d4e63a22a542cd2199",
+          "message": "Update PSXCore to 0d4348e after build validation"
+        }
+      ],
+      "files": [
+        "nhddl",
+        "psxcore"
+      ]
+    },
+    "pxdelta": {
+      "status": "ahead",
+      "total_commits": 11,
+      "base": "66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9",
+      "merge_base": "66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9",
+      "commits": [
+        {
+          "sha": "6ce9475d97496ae78b758a1a05e230e80957db06",
+          "message": "Stream bounded upload rows with aligned quadword loads"
+        },
+        {
+          "sha": "2f35645aa9c35a4af83feee91da79f39155ced1c",
+          "message": "Apply GP1 DMA control while the native worker is parked"
+        },
+        {
+          "sha": "f89258f1210bfdf6ba21bc19918fbc4feda68cb3",
+          "message": "Keep main focused on PSXCore and retain standalone tools on tester\n\nPreserve the standalone tester, inventory probe, and their build support on the existing tester branch. Remove those applications from main and ignore local development copies."
+        },
+        {
+          "sha": "dcf1fc868de33a957ae14072145a2d6810abc3ff",
+          "message": "Publish buffered interlaced display descriptor changes\n\nMark the native display descriptor dirty after the existing NTSC PS15/480 tuple guard. This lets the native caller publish the completed output bank through its existing GS completion path before subsequent uploads, while retaining masks, commands, waits and nonmatching-mode fallbacks."
+        },
+        {
+          "sha": "9d9c7a36c493abd741793fec4dafb018883b0212",
+          "message": "Fix signed INTPL geometry interpolation in POPS"
+        },
+        {
+          "sha": "f1333504bdd43815f295081f434276dcfae80eff",
+          "message": "Increase adapter capacity and report startup planner failures"
+        },
+        {
+          "sha": "7919858233b0be7bea63b447bea57ba63be43d4c",
+          "message": "Precompute generated memory addresses by default"
+        },
+        {
+          "sha": "933eaaede9a7ee4a6b5688605157e0702312cc76",
+          "message": "Add optional DMA, GP1 and empty GP0 flush optimizations\n\nPreserve fewer wide temporaries in DMA accounting, reject ineligible GP1 commands before the full save, and reduce the empty GP0 flush path. Keep all three new options disabled by default and retain existing accounting, ownership checks, and fixed code bounds."
+        },
+        {
+          "sha": "932604153a880bdeaa7dbd01cc25e7dd3487404d",
+          "message": "Enable DMA, GP1 and GP0 flush optimizations by default\n\nSet root/runtime build defaults and assembly fallbacks to enabled. Preserve explicit disable overrides. Default-enabled and disabled builds match the previously verified enabled candidate and prior default loadable programs respectively."
+        },
+        {
+          "sha": "2cdb639aecc784bab92e7c02cd0b7d43fbd1f0cd",
+          "message": "Add optional smaller GP0 submission register saves\n\nReuse the overwritten return-value register for publisher calculations, removing one wide save/restore pair per submission. Preserve the original stack layout, command guards, native semaphore sequence and subsequent helper addresses. Keep NP_GP0_PUBLISH_TWO_TEMPS disabled by default pending gameplay validation."
+        },
+        {
+          "sha": "0d4348ea5fff50a16c303c5c1910038e65bf7915",
+          "message": "Enable smaller GP0 submission saves by default\n\nEnable NP_GP0_PUBLISH_TWO_TEMPS in root/runtime build defaults and its assembly fallback. Retain explicit disable support. The default and disabled builds match the previously verified candidate and baseline loadable programs."
+        }
+      ],
+      "files": [
+        ".gitignore",
+        "Makefile",
+        "include/psxcore_patch.h",
+        "iop/Makefile",
+        "iop/imports.lst",
+        "iop/irx_imports.h",
+        "iop/readonly.c",
+        "runtime/Makefile",
+        "runtime/dmacycles.S",
+        "runtime/gp0.S",
+        "runtime/gp1idle.S",
+        "runtime/gp1idle_patch.h",
+        "runtime/gteintpl.S",
+        "runtime/gteintpl_patch.h",
+        "runtime/main.c",
+        "runtime/memoryaccess.S",
+        "runtime/memoryaccess.c",
+        "runtime/memoryaccess.h",
+        "runtime/resident.ld",
+        "runtime/rgb24.S",
+        "runtime/uploadcopy.S",
+        "src/probe.c",
+        "src/tester.c"
+      ]
+    },
+    "ridelta": {
+      "status": "ahead",
+      "total_commits": 24,
+      "base": "e8f317b2196f625ae1947f3d1aeae547d232ee62",
+      "merge_base": "e8f317b2196f625ae1947f3d1aeae547d232ee62",
+      "commits": [
+        {
+          "sha": "1d826b661d386d680fa05c77c6808ddb32eaaaee",
+          "message": "Build 104: Arabic and Persian drawn right to left, letters joined\n\nRIPPS2 draws text glyph by glyph from the left with no shaping engine, so\nArabic and Persian showed their letters unjoined and backwards. fntsys now\nhands any string with right-to-left letters to ripps2Rtl (ripps2tr.c): each\nArabic letter becomes the presentation form its neighbours call for (lam with\nalef as one ligature, ZWNJ stopping a join, vowel marks passed over), and\neach line is laid out right to left, Latin words and numbers (with their %,\n. and :) kept in reading order and brackets turned round. Text is measured\nfrom the same joined letters and wrapped before it is turned, so wrapped\nhints read top to bottom.\n\nA mark with no advance that its font draws right of the pen (DejaVu's Arabic\nvowel marks, Noto Sans Lao's vowels and tone marks: placed by OpenType, which\nfntsys does not read) is now centred over the letter before it, a second mark\nabove stacking over the first.\n\nThe pack carries RIPPS2's own font for Arabic and Persian (DejaVu Sans 2.37\ncut to Latin-1, the Arabic block and both presentation-form blocks: upstream's\ncut had none of the joined forms) and Noto Sans Lao 2.003 for Laotian, each\nwith its licence text (elf/lang/fonts, make_lang_fonts.py). Upstream's older\nPersian lines were stored pre-joined in an order made for another renderer;\nthe pack leaves those 248 out and Persian.yml has them written plain.\n\nThe joining table is generated from Unicode's data (make_arabic_forms.py).\nThe build 104 host test checks ripps2Rtl against vectors from a Python twin,\nand Lao line breaks (never before a vowel or tone mark of the letter before,\nnor after a vowel written ahead of its letter).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "462504872759e1ece096ee223ba0c2f25bbc552b",
+          "message": "Build 104: Laotian\n\nLao: 779 of 800 strings and the 480 settings upstream's file lacks (it had 180\nreal lines), in the terms upstream uses, with spaces between phrases as Lao\nwrites them. Drawn with Noto Sans Lao (in the pack since the last commit), its\nvowel and tone marks centred over their letters, and line breaks kept off the\nmarks and the vowels that belong to a letter.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "a6300d6577227c3a9fd4aaaf223264e3fbdc7517",
+          "message": "Build 104: RTL and Lao in the notes; the Lao pack drops RiptOPL's half-Thai lines\n\nThe changelog, README and plan say Arabic and Persian are drawn right to left\nand joined, and Laotian is done. RiptOPL's Lao overlay has 9 lines half in\nThai, which Noto Sans Lao has no letters for: the pack leaves them out and\nelf/lang/Laotian.yml translates them. The plan maps RIPDISC onto the code.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "4a0b44584a6d4c1d9aa76c057e0a41a64284a0d5",
+          "message": "Build 104: a full stop after a number stays with the right-to-left line\n\nThe lab's Persian take showed \"MemCard PRO2.\" with its full stop on the\nnumber's side: a . , : / + or - now joins a number only between two digits\n(1.5, 12:00, 3/4), and % only beside one, as Unicode's bidi rules have it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "f98be1b3eeae4ea89ff9ec60388918c3edb3115b",
+          "message": "Build 105: RIPDISC, a disc to storage or files from Launch Disc\n\nAfter 4.2 s on Launch Disc a glass panel offers RIPDISC for a disc it can\nrip; SELECT held 4.2 s opens a confirm step with the size and the place,\nthen START rips. PS2 games go to an ISO in a drive's CD or DVD folder (1 GB\nparts and ul.cfg when over 4 GB on a drive that may be FAT32), PS1 games to\na BIN and CUE for Ember. Audio CDs and DVD videos go through Memory Files:\nRIPPED on the clipboard, PASTE in the folder picked, an audio CD's folder\nthen named on the keyboard. AUDIO and MEDIA get a README.txt, and every\n.ogg or .wav in AUDIO is music whatever its name.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "a2ffa28a2cbb6a105274227e745c8881c73cdf8a",
+          "message": "Build 105: a dual layer DVD's size found as OPL finds it\n\nps2sdk's EE libcdvd has no sceCdReadDvdDualInfo. Layer 1's own volume\ndescriptor sits at the sector layer 0's gives as its size, as OPL reads a\ndual layer ISO: one quick read there, no retries.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "ea666fc3abab042b0beb6e0865d759ab25b3343e",
+          "message": "Build 105: a game with no title rips to <ID>.iso\n\nWith no title in the metadata and a disc label that is only its ID again\n(POINIES POIN's is SCPS_150.13), the ISO was SCPS_150.13.SCPS_150.13.iso;\nit is now SCPS_150.13.iso, whose ID OPL reads from inside. The plan gets\nthe user's power-off item for the in-game menu (build 106).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "9138602551fdbf345d8398c6472110fdcd738433",
+          "message": "Build 105: the rip's time before START, learned per storage; RIPDISC in 33 languages\n\nThe confirm step says how long the rip will take: a careful guess for the\nkind of storage and disc until a rip has measured this console, then what\nthat rip really ran at, kept in the settings (ripdisc_kbs_<storage>_<cd|dvd>).\nThe running estimate shows hours past 90 minutes. Lab: POINIES POIN ripped\nfrom PCSX2's drive to a fresh exFAT HDD image is byte for byte the source\n(md5 7e7a1db3...). RIPDISC's 38 new strings are translated in every language.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "ead169aaae30971216056f56ebddb17d4af41895",
+          "message": "Build 106: POWER OFF in the in-game menu; the star on the left and keys for the list's row icons\n\nThe in-game menu's last choice turns the PS2 off, on a second press as\nEXIT GAME leaves (a disc game keeps the ROM's power button and says so).\nA starred game's star now sits left by default, in its own column, with\nSettings > Game Sources > Starred Games Star (Theme, Left, Right, Hidden);\na theme's row icon moves to the row's end when the star is on the left.\nNew ItemsList keys: star, star_image, highlight (bar, line, none),\ndecorator_all and decorator_ps2 / _ps1 / _app. Translated in every language.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "6d896b0a28637abec96277c514e1be926cd0cb08",
+          "message": "Build 107: SEARCH in Memory Files, where MC EXPLOIT INSTALLER was\n\nThe settings grid's fourth tile searches every drive the browser lists for\na file or folder name (any case), breadth first, one folder open at a time,\nten levels down, 150 results; back stops it. A result opens the tree where\nit is, the cursor on it. New magnifier icon in the grid atlas. Also folds in\nthe build 105 fix CI found (rdMinutes declared before rdTick uses it).\nTranslated in every language; the installer's strings are gone from them.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "fac86263270df54513f4b144cdd051c67ec8cd7e",
+          "message": "Build 107: Search copies each folder's path before it queues the ones in it (-Wrestrict)\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "ae85a5d2af1cf1e2f7786a928ff2334914b02d87",
+          "message": "v1.0.7-beta: README, changelog, banner and test images for builds 103-107\n\nRIPDISC, 33 languages, POWER OFF in the in-game menu, SEARCH FILES and\nthe star on the left, written up in the README (a Rip a disc section, the\nrelease box, the pages) and the changelog; test images from the lab runs\n(media/b107); the Test me banner for build 107; the plan ticked, RIPSHOT\nmoved to its own build with what was found.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "9530d755232c385ded2bd10597f994557eb0feca",
+          "message": "Plan: RIPSHOT, screenshots from the in-game menu (handoff)\n\nThe user's decisions of 10/19-10/20, every word on screen, rolls and slots,\nthe in-game capture and write path, developing (Manual by default, Auto\nsecond), the SCRn theme key, settings with per-choice hints, build order,\nthe console test list and open risks.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "83fef5c78018fd9a11c0a8247b0551aa6094bfca",
+          "message": "Build 108: RIPSHOT, screenshots from the in-game menu; the menu silent and on by default; SCRn\n\nSCREENSHOT is the in-game menu's third choice: the frame on screen when the\nmenu opened, read back from GS memory by ee_core, written over plain SIF DMA\n(no RPC while the game is paused) to the game's roll in MEDIA/RIPSHOT on a\nBDM drive (USB, exFAT HDD, MX4SIO, iLink), 6 slots a game, a blank roll kept\nready. ART, MEDIA or BOTH, with the names the files will have; SAVE fades the\nmenu off, KEEP / DELETE. Developing to 8-bit palette PNGs (median cut, ART at\n250 x 188, MEDIA full size): Manual from the roll pages in Memory Files (VIEW,\nACTIONS), or Auto in the background. The menu is silent (SPU2 hushed, every\nvoice held) and RESUME puts the frame under the panel back.\n\nThe menu is on by default (a one-time switch for older configs) with its own\nsettings page (In-Game Menu, RIPSHOT, Develop Shots), each choice with its own\nhint; disabled settings rows read dimmed. The SCRn theme key shows every shot\nin turn (boxes one shot apart, slides the next shot each round): RIPPS2's info\npage, RIPGRID and RIPFLOW use it. MEDIA's README explains RIPSHOT.\n\nAlso: the IOPRP image device is iprp (games hung in PCSX2 with its host\nfilesystem on), the menu switches GSM's data breakpoint off while open, a\npicture taller than the TV raster stops at 480 / 576 lines, the menu's stack\nand font sit after the modules. Translated in every language. CI uploads\nee_core.map with the symbols.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "f6fa5d1553defb61b251a8c9021cfda8e0b33485",
+          "message": "Build 108: found while making the reel (the info page knows a game, new shots show at once, PNGs checked)\n\nThe reel takes found four things before release. A device rescan rebuilds the\ngame list under an open info page, and the info group, the slideshow, the shot\nshow and the art fades keyed on the row's address, so all the page's art faded\nin again: they key on the game's id and title now. After Auto developed shots,\nthe art cache still held its earlier \"absent\" answers, so the info page showed\nnone: developing ART re-opens them. Once, an ART PNG reached the drive with an\nempty directory entry and held its number: each developed PNG's size on the\ndrive is compared with what was written, with one more try, and an empty file\ncounts as a free number. SCRn finds the shots in order, _SCR first, whatever\norder the reads come back in, and shows only a shot known to be there.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "8f135905382dcfd4380b97270173944f11be649c",
+          "message": "Build 109: MMCE boots fast, Save Settings To, page titles clear of their line\n\nFrom testers (10/19-10/20). MMCE: a card's game list is kept on the card\n(RIPPS2.LST beside CD and DVD): at boot the games show from it at once, then\nthe card is read again in the background and the list follows what changed.\nThe scan pauses after each entry, and a frame after each disc read, so the\npads keep working (a tester: 180 games took about 5 minutes to list, with\nnothing to press). Settings > General > Save Settings To: Memory Card (as\nbefore), Internal HDD (a RIPPS2 folder on the exFAT HDD, else the APA HDD's\nOPL partition, read first through the Custom Settings Path redirect) or Custom\nPath, each choice with its hint. A page's title row is taller, so the line\nunder it no longer cuts the letters. Translated in every language. RiptOPL's\nscan harness stubs DelayThread for the host test.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "373cd5c9ecaf312d0965bab0200c8864b818a706",
+          "message": "v1.0.9-beta: README, changelog, banner and test images for builds 108 and 109\n\nRIPSHOT, the silent in-game menu on by default, the MMCE card list and Save\nSettings To, written up in the README (a Screenshots in game section, the\nrelease box, the highlights) and the changelog; test images from the lab runs\n(media/b108, media/b109); the Rip it banner for build 109; release and Discord\nnotes, the test list for what the lab cannot show; the RIPSHOT plan ticked and\nbuild 109 added to the plan with what is still open. Every README in the\nfamily opens and ends with one small navigation line.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "e472a37cae9e724ce9e6cbb8ece660e5a44105a2",
+          "message": "Discord notes for build 109: boot to the game list on the test list\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "ffbc3beaffecc1ea98bbc9c4e6cd358f0aabaf0d",
+          "message": "Build 109 hotfix: Internal HDD is saved by its type (ata0:/RIPPS2), not by its mass slot\n\nFound in the reel takes: after Save Settings To > Internal HDD on the exFAT\nHDD, config.path held mass0:/RIPPS2 and the next boot froze. An untyped\nmassN: settings path makes the boot walk every transport (USB, MX4SIO,\nthen iLink and ATA; iLinkman hangs PCSX2) before the HDD answers, and a\nUSB stick can take the slot number. Internal HDD now saves ata0:/RIPPS2\n(its RIPPS2 folder made first, since the typed resolver finds the drive by\nit), config.path keeps a typed BDM path's own spelling, and build 109's\nfirst spelling still reads as Internal HDD and is rewritten on the next\nsave.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "e0f6416319ddec6e13921d01d83eee36fcd7c558",
+          "message": "v1.0.9-beta hotfix notes: Internal HDD saved by the drive's type\n\nThe changelog's build 109 hotfix, the release notes line and the plan,\nwith the lab result (saved on a drive with no RIPPS2 folder; the restart\nread the settings from the HDD).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "ae88c3c3392812ba44a757f5c35e2af4143e8084",
+          "message": "Build 110: every source lists at once, Save Settings To on every drive\n\nThe user (10/21): speed every source up, and save settings to USB or any\nother drive RiptOPL can read them from. Build 109's MMCE card list is now\nevery source's (supportbase.c sbSnap*): the list read last time is kept on\nthe source as RIPPS2.LST, shown the moment the source answers, and the\nsource is read again on its next idle pass. MMCE, every BDM drive (USB,\nexFAT HDD, MX4SIO, iLink) and SMB use it; SMB joins the idle poll until\nread, since its timed rescans need Automatic Refresh. An MX4SIO scan pauses\nfor the pads as an MMCE one does. The APA HDD's own list cache is on by\ndefault (once for older configs) and checked against the APA table on the\nnext idle pass. Save Settings To: Memory Card, Internal HDD, USB Drive,\nMX4SIO, iLink, MMCE, Custom Path, each drive by its type with its RIPPS2\nfolder made first; MMCE loads its driver for the settings at boot. A drive\nit cannot find is said in a message box (Settings pages run their own\ndialog loop, which draws no toast). The info page asks for the size of a\ngame the d-pad reaches (it read 0 MiB). RiptOPL's BDM harnesses know the\ndrive's list. Translated in every language.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "8a7210b4145f5a59119a77a60e2b8a48b9e83f6e",
+          "message": "v1.1.0-beta: README, changelog, banner and test images for build 110\n\nEvery source listing at once and Save Settings To on every drive, written\nup in the README (the release box, the Storage and settings highlights)\nand the changelog; test images from the lab runs (media/b110); the Rip it\nbanner for build 110; release and Discord notes, the test list for what\nthe lab cannot show; build 110 added to the plan with its lab results.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "e2254f9c5cc81a5fc6f3fd2235a156e2f627ebf7",
+          "message": "README and v1.1.0-beta notes: the v1.1 reel\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "e6b3fc9a5ad0bce0c08e30df84b697519aa9c803",
+          "message": "README and v1.1.0-beta notes: the reel is v1.1.0\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        }
+      ],
+      "files": [
+        ".github/workflows/build-elf.yml",
+        "CHANGELOG.md",
+        "README.md",
+        "docs/plans/builds-104-on.md",
+        "docs/plans/ripshot-handoff.md",
+        "docs/plans/ripshot.md",
+        "elf/lang/Albanian.yml",
+        "elf/lang/Arabic.yml",
+        "elf/lang/Bulgarian.yml",
+        "elf/lang/Cebuano.yml",
+        "elf/lang/Croatian.yml",
+        "elf/lang/Czech.yml",
+        "elf/lang/Danish.yml",
+        "elf/lang/Dutch.yml",
+        "elf/lang/Filipino.yml",
+        "elf/lang/French.yml",
+        "elf/lang/Galician.yml",
+        "elf/lang/German.yml",
+        "elf/lang/Greek.yml",
+        "elf/lang/Hungarian.yml",
+        "elf/lang/Indonesian.yml",
+        "elf/lang/Italian.yml",
+        "elf/lang/Japanese.yml",
+        "elf/lang/Korean.yml",
+        "elf/lang/Laotian.yml",
+        "elf/lang/Persian.yml",
+        "elf/lang/Polish.yml",
+        "elf/lang/Portuguese.yml",
+        "elf/lang/Portuguese_BR.yml",
+        "elf/lang/Romana.yml",
+        "elf/lang/Russian.yml",
+        "elf/lang/SChinese.yml",
+        "elf/lang/Serbian.yml",
+        "elf/lang/Spanish.yml",
+        "elf/lang/Swedish.yml",
+        "elf/lang/TChinese.yml",
+        "elf/lang/Turkish.yml",
+        "elf/lang/Vietnamese.yml",
+        "elf/lang/_strings.yml",
+        "elf/lang/fonts/DejaVuSans-Arabic.ttf",
+        "elf/lang/fonts/LICENSE-DejaVu.txt",
+        "elf/lang/fonts/NotoSansLao-Regular.ttf",
+        "elf/lang/fonts/OFL-NotoSansLao.txt",
+        "elf/lang/make_arabic_forms.py",
+        "elf/lang/make_lang_fonts.py",
+        "elf/lang/ripps2lang.py",
+        "elf/patches/0104-ripps2-languages.patch",
+        "elf/patches/0105-ripps2-ripdisc.patch",
+        "elf/patches/0106-ripps2-poweroff-star.patch",
+        "elf/patches/0107-ripps2-search.patch",
+        "elf/patches/0108-ripps2-ripshot.patch",
+        "elf/patches/0109-ripps2-fastlists.patch",
+        "elf/patches/0110-ripps2-quicklists.patch",
+        "elf/tests/test_ripps2_build102.py",
+        "elf/tests/test_ripps2_build104.py",
+        "elf/tests/test_ripps2_build105.py",
+        "elf/tests/test_ripps2_build106.py",
+        "elf/tests/test_ripps2_build107.py",
+        "elf/tests/test_ripps2_build108.py",
+        "elf/tests/test_ripps2_build109.py",
+        "elf/tests/test_ripps2_build110.py",
+        "elf/tests/test_ripps2_build87.py",
+        "elf/tests/test_ripps2_build94.py",
+        "elf/tests/test_ripps2_build95.py",
+        "elf/tests/test_ripps2_build97.py",
+        "elf/tests/test_ripps2_build98.py",
+        "elf/theme/conf_theme.cfg",
+        "elf/theme/gfx/ripps2_grid_icons.png",
+        "elf/theme/make_grid_icons.py",
+        "media/b107/01-ripdisc-panel.jpg",
+        "media/b107/02-ripdisc-confirm.jpg",
+        "media/b107/03-ripdisc-progress.jpg",
+        "media/b107/04-star-left.jpg",
+        "media/b107/05-search.jpg",
+        "media/b107/06-arabic.jpg",
+        "media/b107/07-lao.jpg",
+        "media/b108/01-screenshot.jpg",
+        "media/b108/02-where.jpg",
+        "media/b108/03-keep.jpg",
+        "media/b108/04-rolls.jpg",
+        "media/b108/05-view.jpg",
+        "media/b108/06-info-shots.jpg",
+        "media/b108/07-settings.jpg",
+        "media/b109/01-save-settings-to.jpg",
+        "media/b109/02-saved-to-hdd.jpg",
+        "media/b110/01-save-settings-usb.jpg",
+        "media/b110/02-info-metadata.jpg",
+        "media/ripps2-test-me.png",
+        "tools/discord/make_test_embed.py",
+        "tools/discord/notes/build107.md",
+        "tools/discord/notes/build109.md",
+        "tools/discord/notes/build110.md",
+        "tools/discord/notes/release109.md",
+        "tools/discord/notes/release110.md"
+      ]
+    },
+    "xadelta": {
+      "status": "ahead",
+      "total_commits": 4,
+      "base": "0e5d35a3e9c64594973aff995f5d1a2db62310d4",
+      "merge_base": "0e5d35a3e9c64594973aff995f5d1a2db62310d4",
+      "commits": [
+        {
+          "sha": "a3438b4d52ed920ae910689bc75b8019c845ed8d",
+          "message": "Linux ARM64 client build for the Raspberry Pi\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "97e91d191ee7b64b476d369d6f731300293e18e8",
+          "message": "Bump opl to a9f97397: RA mark after the name, smaller cover mark\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "a9e214a3669d35880db97546ff87dc739578d878",
+          "message": "Name the version alpha.19\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "28c6531ceb9f247cd88f37a2bfbac23b93265a27",
+          "message": "Bring client/ui up to the shipped page\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        }
+      ],
+      "files": [
+        ".github/workflows/build.yml",
+        "README.md",
+        "client/src/ui_page.c",
+        "client/src/version.h",
+        "client/ui/index.html",
+        "client/ui/lang/es.json",
+        "client/ui/lang/pt-BR.json",
+        "client/ui/src/css/30-components.css",
+        "client/ui/src/js/02-store.js",
+        "client/ui/src/js/10-components.js",
+        "client/ui/src/js/20-live.js",
+        "client/ui/src/js/22-game.js",
+        "client/ui/src/js/23-boards.js",
+        "client/ui/src/js/24-settings.js",
+        "client/xerabora.rc",
+        "docs/USAGE.md",
+        "docs/demo.html",
+        "docs/es.html",
+        "docs/index.html",
+        "docs/lang/en.json",
+        "docs/lang/es.json",
+        "docs/lang/pt-BR.json",
+        "docs/pt-br.html",
+        "opl"
+      ]
+    },
+    "opldelta": {
+      "status": "ahead",
+      "total_commits": 4,
+      "base": "4cc74baabb73be9ca43f817474b321cd70fbcc2d",
+      "merge_base": "4cc74baabb73be9ca43f817474b321cd70fbcc2d",
+      "commits": [
+        {
+          "sha": "b7075ffb9347db67f6b7ed359ddf663fe6952ea1",
+          "message": "docs: add contributing guidelines"
+        },
+        {
+          "sha": "a677f272f53db3d6716ac3b1005cb5e8d7b8c673",
+          "message": "docs: use markdownlint on README.md"
+        },
+        {
+          "sha": "7fdf949c9fce1cd416025f9d097e408610fbc2a1",
+          "message": "docs: grammar fixes"
+        },
+        {
+          "sha": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+          "message": "docs: Add note about different proejcts"
+        }
+      ],
+      "files": [
+        "CONTRIBUTING.md",
+        "README.md"
+      ]
+    },
+    "lunafiles": {
+      "status": null,
+      "total_commits": null,
+      "base": null,
+      "merge_base": null,
+      "commits": [],
+      "files": [
+        "nhddl",
+        "psxcore"
+      ]
+    },
+    "ripdelta": {
+      "status": "ahead",
+      "total_commits": 95,
+      "base": "2082cac381a457416b0c006300a8830e9b795988",
+      "merge_base": "2082cac381a457416b0c006300a8830e9b795988",
+      "commits": [
+        {
+          "sha": "70841538868a25be88a802120f61ea48dc02498b",
+          "message": "VMC: opt-in Rebuild for a card too fragmented for the native core (#986)\n\nAn existing card that holds saves but is in too many pieces for native\nmcemu (BDM: more than one extent; HDD: PFS map too long) was skipped at\nevery launch with no way to fix it from the loader. The per-game VMC\ndialog now offers Rebuild for exactly that case, after confirmation:\n\n- genvmc gets a copy mode (VMC_CREATE_REBUILD): it creates <name>.new\n  exclusively with the same reservation a new card gets (BDM one extent\n  via VMC_ALLOC, HDD one PIOCALLOC, refusal = no room), copies every\n  byte, reads both back and compares, and on BDM confirms the extent.\n  It only accepts a .new target and derives the .bin source itself, so\n  it can never write or remove a card; the card is opened read-only.\n- The EE (src/vmcrebuild.c) proves .bak/.new absent by reading the\n  folder (PFS rename replaces its target), runs the launch's own layout\n  check on the copy, then renames card -> .bak and copy -> .bin, undoing\n  the first rename if the second fails and syncing PFS after renames.\n  Only the copy this rebuild made is ever removed, and only while the\n  card is confirmed in place. Card and backup are never deleted.\n\nHost tests: test_vmc_rebuild.py drives the real genvmc and EE code over\nan in-memory fs with a fault at every step on BDM and PFS (mutation-\nchecked); test_vmc_rebuild_fatfs.py fragments a real card on FAT32 and\nexFAT images, gets \"no room\" with nothing changed, then rebuilds it to\none extent with identical bytes and the backup kept across remount.\nZERO hardware testing.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "d0f2c6500e400d2d7d3971becbaf9feb1c4312d9",
+          "message": "vmcrebuild: include ioman.h for LOG and opt in to fileXio under newlib\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "21a31e638ceb3393e07d248216e3a645753069ed",
+          "message": "VMC rebuild: offer only at sizes Rebuild accepts; keep the unknown-flag test on an unused bit\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "6f7c7cdd60f74e983d274a50e81ddc6186c2d66e",
+          "message": "Add compat Mode 8 Slow Reads: Accurate Reads at the CD rate for DVD (#924)\n\nTales of the Abyss loses its music and SFX after Shurrey Hill and corrupts\nSFX boarding the flying ship. Testers on the psx-place OPL thread found it\nplays clean at <=1000KB/s and breaks at >=1200KB/s; OPL 0.9's Mode 1\n(~900KB/s) fixed it. Our Mode 1 throttles DVD media to 33512 ticks/sector\n(~2200KB/s), so it stays too fast.\n\nHonouring the game's requested spindle speed was ruled out: nothing in our\ncode shows what this title asks for, and changing how sceCdRead's mode is\nread would change the read rate of every Mode 1 game that passes a\nnon-maximum speed.\n\nMode 8 (OPL core only, greyed under Neutrino) turns Accurate Reads on and\nreads DVD media at the CD rate (81920 ticks/sector, ~900KB/s). Mode 1 alone\nkeeps CD 81920 / DVD 33512, so no other game changes speed. No title\ndefault is added until the reporter confirms on hardware.\n\nCOMPAT_MODE_COUNT goes 6 -> 8 so the per-game screen reads and saves bit 7.\nThat also makes the existing Mode 7 checkbox (Neutrino -gc=7) save: it has\nbeen drawn since rebuild-08 but its bit was dropped on save.\n\nHost test test_accurate_read_rate.py compiles the real rate function and\npins the ticks/sector for CD/DVD with and without Mode 8.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "e147ef8a6f2fec7a7ab8d8365477533c906023f6",
+          "message": "fix(lang): prefer CWD paths and dynamically register translations"
+        },
+        {
+          "sha": "17357aae1db06216b6a96488963cfd80b757595f",
+          "message": "fix(lang): finalize discovery contract for include/lang.h"
+        },
+        {
+          "sha": "0e06345abd490748233694c42e1970ece006a16a",
+          "message": "fix(lang): finalize discovery contract for src/opl.c"
+        },
+        {
+          "sha": "02eba83ea095f567ab6d1e2149374ed2a6ac4dc6",
+          "message": "fix(lang): finalize discovery contract for docs/LANGUAGES.md"
+        },
+        {
+          "sha": "3ac462d029935481877aae9ab11f6f6a4ee9d9be",
+          "message": "fix(lang): preserve device scan retry semantics with deduplicated names"
+        },
+        {
+          "sha": "8e31bf5e11fecaad92d9c8060fefaf36b24269fe",
+          "message": "test(lang): validate live registration and CWD precedence with host C harness"
+        },
+        {
+          "sha": "b79c2a0a6bab49d5dfaa6834301d4f4f273a221d",
+          "message": "ci(lang): run host registration and CWD priority tests"
+        },
+        {
+          "sha": "bade56eee56024626aacc508faf4ca5240e357fc",
+          "message": "style(lang): format registration control flow"
+        },
+        {
+          "sha": "e2fc34a8335d917e8846aa45e256c9b8421c145e",
+          "message": "style(lang): keep startup discovery comments formatter-clean"
+        },
+        {
+          "sha": "58b96265e170ae69e5e9f08226961596dd21220e",
+          "message": "tools(lang): audit all shipped translations and fallback gaps"
+        },
+        {
+          "sha": "5c03506b4e4da32f69902728e0afe5cc5f7eaf5c",
+          "message": "docs(lang): audit translated UI coverage and preserve wiki publication steps"
+        },
+        {
+          "sha": "a05ed93f7af04ba374b3b2d527126b5281bca49a",
+          "message": "docs(lang): audit translated UI coverage and preserve wiki publication steps"
+        },
+        {
+          "sha": "e1bd16129c47f608a161d5ceed744ec779b660c0",
+          "message": "docs(lang): audit translated UI coverage and preserve wiki publication steps"
+        },
+        {
+          "sha": "9d6776e05ed04b90740b7660b08c3acdd9bc56f1",
+          "message": "docs(lang): audit translated UI coverage and preserve wiki publication steps"
+        },
+        {
+          "sha": "2cae0aa643b03b3410449bb25eca7afa4de56138",
+          "message": "i18n(Spanish): translate recent VMC, DVR, PC CARD and settings messages"
+        },
+        {
+          "sha": "8aba382b255dec180aee8f5cb54ecb1f432c4b58",
+          "message": "i18n(French): translate recent VMC, DVR, PC CARD and settings messages"
+        },
+        {
+          "sha": "0ebebd9ff06aa28eab743b7c37d884fe47dd85c5",
+          "message": "i18n(German): translate recent VMC, DVR, PC CARD and settings messages"
+        },
+        {
+          "sha": "86b348c7806258d99e841391f8cf3d061f007187",
+          "message": "i18n(Portuguese_BR): translate recent VMC, DVR, PC CARD and settings messages"
+        },
+        {
+          "sha": "dfb24f9c82f827a587e51d86836e0ba226508d8b",
+          "message": "docs(readme): correct language-pack count and link installer and coverage guide"
+        },
+        {
+          "sha": "fc60280b7c62b4646be9d18fa3eb181455cb0945",
+          "message": "fix(i18n-audit): parse all continued Makefile translation names"
+        },
+        {
+          "sha": "6c2df61f9b2c9c0e11d78c875ce1893e3b3e5e6e",
+          "message": "docs(lang): correct Makefile count to 33 packs and 31 overlays"
+        },
+        {
+          "sha": "3566c5c345ccdeb8c9e4c3485e1e1ef2ed90ecd0",
+          "message": "docs(lang): correct Makefile count to 33 packs and 31 overlays"
+        },
+        {
+          "sha": "e0075383b1457d38678bab2458d3fc72b46ed74c",
+          "message": "fix(lang-audit): reject unknown percent formats and label overlay-only estimates"
+        },
+        {
+          "sha": "c4c245cb5ec925d7cea5e794be84c6738d430347",
+          "message": "fix(lang): retry late CWD/LNG folder mounts before marking scanned"
+        },
+        {
+          "sha": "ad6f532a28b1f271c5286f6a486879ed533c9e36",
+          "message": "i18n(Galician): backfill missing fork UI strings using RIPPS2 language work"
+        },
+        {
+          "sha": "20cd626d130b1a54956fd45264408f0fdd76f7cd",
+          "message": "i18n(Serbian): backfill missing fork UI strings using RIPPS2 language work"
+        },
+        {
+          "sha": "f33ca4212a6a5df7588f68fd288738a3d75789ad",
+          "message": "i18n(French): backfill missing fork UI strings using RIPPS2 language work"
+        },
+        {
+          "sha": "43b503a07f63985ef26329030ab810dc8540e6bf",
+          "message": "i18n(German): backfill missing fork UI strings using RIPPS2 language work"
+        },
+        {
+          "sha": "2d222c7d1b2cd870d7783d08debd02bb4eb19d33",
+          "message": "i18n(Spanish): backfill missing fork UI strings using RIPPS2 language work"
+        },
+        {
+          "sha": "e64a25edca0634b919ee86377e0e465d43504226",
+          "message": "i18n(Portuguese_BR): backfill missing fork UI strings using RIPPS2 language work"
+        },
+        {
+          "sha": "872a08dad981c569cdafff76a1298da672ea3ad7",
+          "message": "i18n(Albanian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "81b73971b37315e002c68a58853cff94230ca9d3",
+          "message": "i18n(Arabic): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "42772589bfb44758a08d1c3b5ea678dc18467463",
+          "message": "i18n(Bulgarian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "f76a8668c2ac19795301374994f4dfac3ea843cc",
+          "message": "i18n(Cebuano): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "31ee13d4e71d74a3543e2656d056ce4a723f2d61",
+          "message": "i18n(Croatian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "2cc7a5ada7c8029f59420dc80ec7d77965ca28f9",
+          "message": "i18n(Czech): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "934d20c5d3b9e68d1ec12471d6e7582b9eac3356",
+          "message": "i18n(Danish): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "23586fe4b9140472533d2166126207798dedc3cc",
+          "message": "i18n(Dutch): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "defb927d8be22414a3f19d6b9127f778062f5da8",
+          "message": "i18n(Filipino): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "d873af6e9499d529eb6072b2c52548a82eb8b4b7",
+          "message": "i18n(Greek): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "0f10474821ec322775145c47ee5ac50d3b96e4e9",
+          "message": "i18n(Hungarian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "b1696e4c08bf78e9e921d5429182f18009852bce",
+          "message": "i18n(Indonesian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "cdf97a58fa18f5c69f678c41373a7ef8e0ddc001",
+          "message": "i18n(Italian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "e81429b0b8c24833b4a5b3ca7743dd67d48113d3",
+          "message": "i18n(Japanese): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "e5164b264d4a842278d3b4f9c3dcfc5a476561f2",
+          "message": "i18n(Korean): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "72805e067c5dc702ec0e959c02a740594ff73644",
+          "message": "i18n(Laotian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "d48f0dcbf10fc6a54694e0d8e17e63c0ba959ae6",
+          "message": "i18n(Persian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "42ad70c4156f29faf802d371cdc7b390bf8831e8",
+          "message": "i18n(Polish): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "be0073694bbd77bcff2c0b1fc0c330a19db34145",
+          "message": "i18n(Portuguese): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "7ba85a7e19d814e6c7012bf1c501890170502f60",
+          "message": "i18n(Romana): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "0941ae172adede36a1f28a83c82bee43bd33d75e",
+          "message": "i18n(Russian): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "13f958a756db6ba17a7bae17e08a6c8ac02961d5",
+          "message": "i18n(SChinese): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "48eb5a0ed4edd804f9acac440fc2bf1d4abf2f78",
+          "message": "i18n(Swedish): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "a654d7b6851266bac800573711a583f84400f3c5",
+          "message": "i18n(TChinese): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "72d9555f765b13c843e036e5f8e9f1e981a37e63",
+          "message": "i18n(Turkish): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "128114ce007f76d30cb0330719412751ef6ab96c",
+          "message": "i18n(Vietnamese): fill missing RiptOPL translations from RIPPS2"
+        },
+        {
+          "sha": "6a3cfb701728a47a7d7784492447984b79b97f1e",
+          "message": "docs(i18n): record completed 33-overlay backfill and RIPPS2 attribution"
+        },
+        {
+          "sha": "4ff89ad646973c20d76d5516789f28b07edd55ba",
+          "message": "build(i18n): validate effective upstream-plus-fork translations with every language build"
+        },
+        {
+          "sha": "c1681d7a16d74c9b5f9d92c6da8082e8f171c0c7",
+          "message": "Merge pull request #1016 from NathanNeurotic/fix/924-accu-read-spindle\n\nCompat Mode 8 Slow Reads: Accurate Reads at the CD rate for DVD games (#924)"
+        },
+        {
+          "sha": "471a5efc0888101e6ef62fc23aac01a762870435",
+          "message": "vendor(ilink): ps2sdk IEEE1394_bd sources, unmodified (329e2bb4)\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "e52ee750601d71fdf9b22a016518b81ef2b8bfe8",
+          "message": "style(ilink): clang-format 12 the vendored IEEE1394_bd sources\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "fb50180e9cde6646e8608a5b2341555e6795df5c",
+          "message": "Merge remote-tracking branch 'origin/rebuild/main' into fix/986-vmc-rebuild\n\n# Conflicts:\n#\tlng_tmpl/_base.yml"
+        },
+        {
+          "sha": "4cbe884cd79f0f1f7cfc6e69ba318bc76ff9e57a",
+          "message": "test_accurate_read_rate: pin Mode 8 labels to their shipped position, not the list's end\n\nLabels appended after them (the VMC rebuild strings) keep every earlier\nposition, which is what positional .lng files need.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "dde966b92ad11b1b38887df3648d6be56c89d080",
+          "message": "fix(autoload): skip USB and MX4SIO menu discovery settles\n\nReuse the existing autoload policy without consuming the menu probes. Exercise production probe blocks for ready and absent devices and fallback discovery.\n\nCo-authored-by: ChatGPT <noreply@openai.com>"
+        },
+        {
+          "sha": "192716a5ec347f3a4d8584e4ea6fa7023b3755b2",
+          "message": "fix(launch): gate VMC dependencies on an active MCEMU image\n\nA zero-sized MCEMU image means no VMC is active. Do not preload SDK SIO2MAN solely because the native launch supports VMC. Keep active VMC, PADEMU and MX4SIO dependencies, and the MMCE exclusion.\n\nCo-authored-by: OpenAI ChatGPT <noreply@openai.com>"
+        },
+        {
+          "sha": "53edac352584c7d3ac2e626d345e4cb21bf1c025",
+          "message": "Merge pull request #1021 from NathanNeurotic/codex/vapor-hdd-regression\n\nAvoid SDK SIO2MAN preload when no VMC image is active.\n\nThe dependency-selection correction passed all exact-head build and host checks and CodeRabbit review. Vapor's reported game failures still require console confirmation.\n\nCo-authored-by: OpenAI ChatGPT <noreply@openai.com>"
+        },
+        {
+          "sha": "e8b859ce056b915633ce1c140319032222e6a202",
+          "message": "fix(ilink): log back in after an IOP reset; offer only a ready drive (#1018)\n\ni.LINK games listed on every core, Ember booted, and native OPL (PS2\nlogo, then nothing), Neutrino and POPSTARTER did not. Ember is the only\ncore that never resets the IOP.\n\nps2sdk's IEEE1394_bd never logs out (SBP2_LOGOUT_REQUEST is defined but\nnever sent) and an IOP reset ends it without warning, so the next driver\nfinds the drive still holding the old exclusive login for its SBP-2\nreconnect hold: 2^0 = 1 s for the RECONNECT(0) every login here asks\nfor, longer on bridges that round it up. It tried 5 LOGINs 200 ms apart\n(~0.8 s), inside that hold, and only the next bus reset retries, which a\nrunning game never causes: the device never attached and CDVDMAN waited\nforever.\n\n- initConfigureSBP2Device: keep asking every 200 ms for up to 5 s of\n  elapsed time (a time budget, so slow refusals cannot stretch it).\n- scsi_warmup: TEST UNIT READY at most 300 times, 100 ms apart (30 s for\n  a cold 3.5\" drive); a block length of 0 is a failure.\n- scsi_connect: publish the device only after a successful warm-up; a\n  failed attempt frees its slot for the next bus reset.\n\nVendored as modules/ilink/IEEE1394_bd (ORIGIN.txt: pin, local changes);\nthe Makefile embeds this build, full or mini, instead of the SDK's.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "14af8c8b088a5be75b3fb9140e6958230426b344",
+          "message": "VMC rebuild: say so when PFS cannot commit the swap instead of reporting success\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "e0dd5debb8c7c4eb8c9c750c965d8a5f89ff8fce",
+          "message": "test(ilink): simulate the post-reset login hold and unready drives\n\ntest_ilink_bd_reset.py compiles initConfigureSBP2Device (extracted) and\nall of scsi.c (mini variant) against simulated drives and a simulated\nclock: logins refused for 1, 1.6 and 4.5 s, a drive that never lets go,\nslow refusals, TEST UNIT READY never ready or ready after 50 polls,\nfailed INQUIRY / READ CAPACITY, block length 0, and slot reuse after\nfailures. The SDK sources fail 12 of the checks; wired into flavours.yml.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "d9549483ad3aae619a5196cffefd59601957ece3",
+          "message": "build(neutrino): ship RiptOPL's i.LINK driver in the Neutrino bundle (#1018)\n\nNeutrino's in-game environment loads its own iLinkman + IEEE1394_bd_mini\nafter its IOP reboot (config/bsd-ilink.toml), the same SDK code with the\nsame post-reset login race. The required ps2dev-latest build stages\nmodules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx as its own artifact (not\nrolling/, which is published wholesale); publish-rolling replaces\nneutrino/modules/IEEE1394_bd_mini.irx with it and refuses to package if\nupstream stops shipping that file or the copy does not land.\npackage_release_app.py requires the file in ordinary packages; the RA kit\nkeeps ORBIT's Neutrino unmodified. docs/NEUTRINO.md says what changed.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "4b7db70d5947a5ce56b8bb47bbffcbda95f5207a",
+          "message": "feat(theme): make PSBBN Flow match the PSBBN-DP Game Collection\n\nThe built-in <PSBBN Flow> only borrowed the Collection fan: a plain blue wash, a\nlarge portrait cover, flat covers spread across the screen, the title and count\nin the bottom-left, and no selection highlight. It now follows the PSBBN\nDefinitive Project's Game Collection, measured from CosmicScale's published\nvideos (no PSBBN code or artwork):\n\n- black header and button-hint bands with thin rules, a blue nebula stage\n  (new 8-bit 160x120 psbbn_bg texture, filtered up) and a still star field\n- the page list where PSBBN lists Collection and Disc, with the stacked\n  Collection panel outline behind it\n- a rounded square focal cover (art cropped to its centre square) with PSBBN's\n  soft white rim; title above it, n/N count under its lower right corner\n- a tail of covers turned away into the distance, drawn in perspective strips\n  with perspective-correct art, darker and fading toward the far end\n- the outgoing cover swells toward the viewer and fades; title and count hide\n  while covers move and return when they settle\n\nDrawing uses rmDrawTriangles plus a blended variant; 24-bit art fades through\nthe GS fixed blend factor because it has no alpha of its own. Per frame this\nis under 200 triangles. The 25-frame cubic glide from #733/#977 is unchanged.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "4aa6c4a52dd6443de0d5a2135bceb66e9d6b0557",
+          "message": "fix(pops-ilink): log back in after POPSTARTER's IOP reset (#1018)\n\nPOPSTARTER resets the IOP and loads its i.LINK driver, usbhdfsd.irx.ilink\n(modules/bdmassault/ilink_bd_assault: an older ps2sdk IEEE1394_bd plus\niLinkman), from the memory card. That driver never logs out of the drive\n(SBP2_LOGOUT_REQUEST is defined but never sent), so after the reset the\ndrive still holds the previous driver's exclusive login for its SBP-2\nreconnect hold: 1 s for the RECONNECT(0) every login asks for, longer on\nbridges that round it up. It tried 5 LOGINs 200 ms apart (~0.8 s),\ninside that hold, and only the next bus reset retries, which POPSTARTER\nnever causes.\n\nSame three changes as OPL's own copy of the driver (PR #1022), with the\nsame constants and \"RiptOPL\" markers:\n\n- initConfigureSBP2Device: keep asking every 200 ms for up to 5 s of\n  elapsed time (GetSystemTime/SysClock2USec, already imported).\n- scsi_warmup: TEST UNIT READY at most 300 times, 100 ms apart; a block\n  length of 0 is a failure (the capacity printf divided by it). This\n  older driver has no READ CAPACITY(16) path to guard.\n- scsi_connect: offer the drive to BDM only after a successful warm-up;\n  a failed attempt frees its slot for the next bus reset.\n\nThe cdvdman removal and everything else in the driver are unchanged.\ntest_ilink_bd_assault_reset.py compiles the real scsi.c and the login\nfunction against simulated drives and a simulated clock; on the\nprevious sources it fails 11 checks and crashes on block length 0.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "7b07ff6372e9dbc5dd1143c30f68e6858f84d794",
+          "message": "build(pops-ilink): ship the rebuilt usbhdfsd.irx.ilink; CI proves it (#1018)\n\nRebuilt modules/bdmassault/ilink_bd_assault with its own Makefile in the\nPS2DEVPINNED container (ghcr.io/ps2dev/ps2dev@sha256:8fba50ec...): 21977\nbytes, sha256 8f9a9e4e6984a58435fe7e24e1e5832f027dc537b3274bc4220245bbe1844714.\nThe same container rebuilds the previous 21609-byte binary (9b47d90b...)\nfrom the previous source byte for byte, and CRLF and LF checkouts give\nidentical output, so the bytes are the committed source and nothing else.\n\n- Replace all three copies: modules/bdmassault/, POPS/ (what releases\n  ship) and the Example kit's root copy.\n- vcdBdmaPairSig iLink size 21609 -> 21977. A card still equipped with\n  the old driver now fails the size check, so Apply on Launch re-equips\n  it from the device's POPS/ folder.\n- New flavours job popstarter-ilink-driver rebuilds the module in that\n  container on every PR, fails unless every checked-in copy is exactly\n  that output, and uploads the build.\n- PROVENANCE.md, the module README (local changes 5-7, how to rebuild)\n  and docs/VCD.md (#1018 note; step 7 still listed the 23,452-byte\n  pre-September driver).\n\nNot tested on hardware.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "aad8614353526a0a944830e3094207e89120251f",
+          "message": "docs(readme): note the POPSTARTER i.LINK driver fix in the iLink status (#1018)\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "ec7383ff5c987b50287811f8efea4c41b3b01f04",
+          "message": "Merge pull request #1022 from NathanNeurotic/fix/ilink-login-hold\n\nfix(ilink): log back in after an IOP reset; offer only a ready drive (#1018)"
+        },
+        {
+          "sha": "859e5050bf265af838c27dbda6f7e6bd3bee4d85",
+          "message": "Merge pull request #1024 from NathanNeurotic/claude/popstarter-ilink-login-d2f828\n\nfix(pops-ilink): POPSTARTER's i.LINK driver logs back in after its IOP reset (#1018)"
+        },
+        {
+          "sha": "d25b03b75cc29fe76d89238043cc0a7348ca035c",
+          "message": "docs(ilink): both i.LINK driver builds now carry the #1018 fix\n\n#1022 (OPL's IEEE1394_bd, also shipped in the bundled Neutrino) and #1024\n(POPSTARTER's usbhdfsd.irx.ilink) were each written while the other was\nopen, so ORIGIN.txt and NEUTRINO.md still said POPSTARTER's pair was not\npatched, and the README credited only POPSTARTER's driver and called the\nnative OPL path \"still under investigation\". Say that all three cores'\ndrivers have the change, still not confirmed on hardware.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "ab3f3d4c4adbf9b4d2e3534feddbd88a8936beca",
+          "message": "Merge pull request #1025 from NathanNeurotic/docs/ilink-both-patched\n\ndocs(ilink): both i.LINK driver builds now carry the #1018 fix"
+        },
+        {
+          "sha": "8b2944dc7638f07765137cbd1106a411a9123c0b",
+          "message": "fix(bdma): name an older release's device POPS/ pair instead of a card write error\n\nA launch equip copied whatever usbd.irx.<mode> + usbhdfsd.irx.<mode> pair it\nfound first, then checked the card pair's sizes against vcdBdmaPairSig. A\ndevice POPS/ folder still holding an older release's pair (the 21609-byte\nusbhdfsd.irx.ilink after #1024) was copied on every launch, failed that\ncheck, and toasted \"Error writing the BDMA modules to the memory card\".\n\nThe launch equips (vcdEnsureBdmaForLaunch, the USB fat32/exFAT dialog and\nAPA __common) now measure each candidate pair before copying -- by reading\nit through on MMCE, which has no SEEK_END -- pass over a pair that is not\nthis release's, and keep searching the same seek order (custom dir, boot\nPOPS/, game device, other UDPFS sources, __common). With only an older pair\nfound they copy nothing, leave the card as it is, and show the new\nBDMA_ERR_OLD toast. The launch still goes ahead. The Settings page's manual\nequip is unchanged: it installs the pair the user chose.\n\nHost test test_bdma_stale_pair.py compiles the real equip and launch code;\nagainst the old source every stale case shows BDMA_ERR_IO after 4 card\ncopies. Not hardware-tested.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "daee6ed7f5ae4e4fb5a75fb7e8e005fee29b63f9",
+          "message": "Merge remote-tracking branch 'origin/rebuild/main' into claude/festive-jennings-0da2b8"
+        },
+        {
+          "sha": "1799b7cdf1f84dca6261fda3a29746f990403476",
+          "message": "docs(vcd): an older device BDMA pair is named, not copied; run its host test in CI\n\nRewrites the #1018 note's last sentence (it described the old write-error\ntoast) and adds the rule to the BDMA module-name callout.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "32d3563eedc195c1cef2c5c5b167e3bb6abd326e",
+          "message": "test(lang): Mode 8 labels stay right after their predecessor, later labels may follow\n\ntest_accurate_read_rate.py required MODE8/HINT_MODE8 to be the file's last two\nlabels, so appending BDMA_ERR_OLD after them (the append-only rule) failed it.\nCheck the positional contract instead: they directly follow\nVMC_PFS_LIMIT_ON_CREATE, as when they were added.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "582f562fc2791d7512c14214cb69badd4003eb84",
+          "message": "fix(udpfs): deliver the last byte of odd-sized reads (#1010)\n\nsmap_fifo_read() copied the PIO tail of a received frame as whole words\nand then one u16, with no step for a single last byte. Every odd-length\nreply -- the final packet of every odd-sized file read over UDPFS --\ncame back at the right size with its last byte left as whatever the\nbuffer held before.\n\nThe #1010 tester's Neutrino folder on mc1 shows exactly that: all 29\ndamaged files have an odd size and differ only in their last byte, and\nno even-sized file is touched. The NUL that ended i_dev9_hidden.toml\nstops Neutrino with \"bad control char in comment\" (his udptty log; the\nsame files fail the same way in Neutrino's own tomlc17 on a PC), so the\nUDPFS driver never loads and every game resets to the browser. In\nRiptOPL's own menu the lost byte breaks the IEND CRC of odd-sized PNG\ncovers read over UDPFS.\n\nRead the tail as one whole word (the FIFO pads each frame to 4 bytes)\nand store only its valid bytes. Upstream Neutrino master has the same\ntail. test_udpfs_smap_fifo_tail.py compiles the real function against a\nsimulated FIFO and fails on the old code for every odd byte count.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "da4eca8a5a7d1de626228a1df30ed0530b9f4682",
+          "message": "fix(lang): lock the language registry; show English for unsafe translations\n\nAddress the CodeRabbit review of #1017.\n\n1. The registry is now a growable array whose entries can be replaced,\n   and the IO worker changed it with no lock while the GUI thread read\n   it. lngReadEntry grows, fills and replaces a path only under the GUI\n   lock (old path freed after), nLanguages is published under it, and\n   lngSetGuiValue copies the path under it and reads the file with the\n   lock released. Every other reader runs on the IO worker or inside a\n   locked GUI frame. The discovery and switch tests now fail on an\n   unlocked realloc or a nested lock.\n\n2. The audit checked printf tokens on the fork overlay only, though the\n   upstream string wins. Run against upstream today, ten upstream\n   strings differ from English, and several would crash: French\n   AUTO_START_IN_N_SECS has %s for an int (the Auto Start countdown),\n   and three Persian strings swap or add a %s. lngLoadFromFile now\n   checks every loaded string (lngFormatFits) and uses the English one\n   when its conversions would read other argument types; the same ones\n   or fewer in order are kept. The audit checks the merged strings: an\n   overlay mismatch fails --strict, an upstream one is a warning, so an\n   upstream change cannot break the language build.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "cd906ce8dad3691d568055ca6e617cbcde240d9f",
+          "message": "Merge pull request #1020 from NathanNeurotic/codex/autoload-discovery-settles\n\nfix(autoload): skip USB and MX4SIO menu discovery settles"
+        },
+        {
+          "sha": "016de734bbdfdbf12bb7a3fabe2138b16c374869",
+          "message": "Merge pull request #1027 from NathanNeurotic/fix/udpfs-odd-tail-1010\n\nfix(udpfs): deliver the last byte of odd-sized reads (#1010)"
+        },
+        {
+          "sha": "705f949c3e0b2fd298a2693f15971ddab6336f78",
+          "message": "Merge pull request #1023 from NathanNeurotic/feat/psbbn-flow-faithful\n\nfeat(theme): make PSBBN Flow match the PSBBN-DP Game Collection"
+        },
+        {
+          "sha": "376577aa8cd8dd7f1f9ee9d60a0d53ca0fb3d046",
+          "message": "Merge pull request #1026 from NathanNeurotic/claude/festive-jennings-0da2b8\n\nfix(bdma): name an older device BDMA pair instead of a card write error"
+        },
+        {
+          "sha": "bd27948105cb17d34e32b99cd59381e06486634b",
+          "message": "Merge rebuild/main into fix/986-vmc-rebuild\n\nKeep #1026's BDMA_ERR_OLD where it merged and append the VMC rebuild\nlabels after it; take this branch's MODE8 position check (it also\nguards a missing label).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+        },
+        {
+          "sha": "3eec9d5791d0483ba17c7f80f5e9d723c90cbb6d",
+          "message": "Merge pull request #1017 from NathanNeurotic/fix/language-cwd-discovery\n\nfix(i18n): CWD language discovery, dynamic packs, translation backfill & docs"
+        },
+        {
+          "sha": "2808a4cd579e4294c520e35149bbfc87d79cce45",
+          "message": "Merge pull request #1015 from NathanNeurotic/fix/986-vmc-rebuild\n\nVMC: opt-in Rebuild for a card too fragmented for the native core (#986)"
+        }
+      ],
+      "files": [
+        ".github/requirements-docs.txt",
+        ".github/scripts/package_release_app.py",
+        ".github/scripts/test_accurate_read_rate.py",
+        ".github/scripts/test_autoload_discovery_settles.py",
+        ".github/scripts/test_bdma_stale_pair.py",
+        ".github/scripts/test_genvmc_lifecycle.py",
+        ".github/scripts/test_ilink_bd_assault_reset.py",
+        ".github/scripts/test_ilink_bd_reset.py",
+        ".github/scripts/test_lang_format_guard.py",
+        ".github/scripts/test_language_discovery.py",
+        ".github/scripts/test_language_switch.py",
+        ".github/scripts/test_mmce_sio2man_pack.py",
+        ".github/scripts/test_native_vmc_layout.py",
+        ".github/scripts/test_patch_zone_restore.py",
+        ".github/scripts/test_psbbn_flow.py",
+        ".github/scripts/test_udpfs_smap_fifo_tail.py",
+        ".github/scripts/test_vmc_pfs_reserve.py",
+        ".github/scripts/test_vmc_rebuild.py",
+        ".github/scripts/test_vmc_rebuild_fatfs.py",
+        ".github/workflows/docs-check.yml",
+        ".github/workflows/flavours.yml",
+        ".github/workflows/rolling-release.yml",
+        "Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/usbhdfsd.irx.ilink",
+        "Makefile",
+        "POPS/usbhdfsd.irx.ilink",
+        "README.md",
+        "docs/AUTOLAUNCH-GLOBAL-SETTINGS.md",
+        "docs/DEFAULTS.md",
+        "docs/INTERFACE.md",
+        "docs/LANGUAGES.md",
+        "docs/MAINTAINING-DOCS.md",
+        "docs/NEUTRINO.md",
+        "docs/THEME_ENGINE.md",
+        "docs/VCD.md",
+        "docs/VMC.md",
+        "gfx/psbbn_bg.png",
+        "include/bdmsupport.h",
+        "include/dialogs.h",
+        "include/iosupport.h",
+        "include/lang.h",
+        "include/psbbnflow.h",
+        "include/renderman.h",
+        "include/textures.h",
+        "include/vcdsupport.h",
+        "include/vmcrebuild.h",
+        "lng_fork/Albanian.yml",
+        "lng_fork/Arabic.yml",
+        "lng_fork/Bulgarian.yml",
+        "lng_fork/Cebuano.yml",
+        "lng_fork/Croatian.yml",
+        "lng_fork/Czech.yml",
+        "lng_fork/Danish.yml",
+        "lng_fork/Dutch.yml",
+        "lng_fork/Filipino.yml",
+        "lng_fork/French.yml",
+        "lng_fork/Galician.yml",
+        "lng_fork/German.yml",
+        "lng_fork/Greek.yml",
+        "lng_fork/Hungarian.yml",
+        "lng_fork/Indonesian.yml",
+        "lng_fork/Italian.yml",
+        "lng_fork/Japanese.yml",
+        "lng_fork/Korean.yml",
+        "lng_fork/Laotian.yml",
+        "lng_fork/Persian.yml",
+        "lng_fork/Polish.yml",
+        "lng_fork/Portuguese.yml",
+        "lng_fork/Portuguese_BR.yml",
+        "lng_fork/Romana.yml",
+        "lng_fork/Russian.yml",
+        "lng_fork/SChinese.yml",
+        "lng_fork/Serbian.yml",
+        "lng_fork/Spanish.yml",
+        "lng_fork/Swedish.yml",
+        "lng_fork/TChinese.yml",
+        "lng_fork/Turkish.yml",
+        "lng_fork/Vietnamese.yml",
+        "lng_tmpl/_base.yml",
+        "misc/theme_psbbn_flow.cfg",
+        "modules/bdmassault/PROVENANCE.md",
+        "modules/bdmassault/ilink_bd_assault/README.md",
+        "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/sbp2_driver.c",
+        "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/scsi.c",
+        "modules/bdmassault/usbhdfsd.irx.ilink",
+        "modules/ilink/IEEE1394_bd/LICENSE",
+        "modules/ilink/IEEE1394_bd/Makefile",
+        "modules/ilink/IEEE1394_bd/ORIGIN.txt",
+        "modules/ilink/IEEE1394_bd/src/imports.lst",
+        "modules/ilink/IEEE1394_bd/src/include/module_debug.h",
+        "modules/ilink/IEEE1394_bd/src/include/sbp2_disk.h",
+        "modules/ilink/IEEE1394_bd/src/include/scsi.h",
+        "modules/ilink/IEEE1394_bd/src/irx_imports.h",
+        "modules/ilink/IEEE1394_bd/src/main.c",
+        "modules/ilink/IEEE1394_bd/src/sbp2_driver.c",
+        "modules/ilink/IEEE1394_bd/src/scsi.c",
+        "modules/iopcore/cdvdman/cdvdman.c",
+        "modules/iopcore/common/cdvd_config.h",
+        "modules/network/udpfs_smap/ORIGIN.txt",
+        "modules/network/udpfs_smap/src/xfer.c",
+        "modules/vmc/genvmc/genvmc.c",
+        "modules/vmc/genvmc/genvmc.h",
+        "modules/vmc/genvmc/imports.lst",
+        "notes/VAPOR-HDD-REGRESSION-2026-10-20.md",
+        "src/bdmsupport.c",
+        "src/dialogs.c",
+        "src/guigame.c",
+        "src/lang.c",
+        "src/opl.c",
+        "src/renderman.c",
+        "src/supportbase.c",
+        "src/system.c",
+        "src/textures.c",
+        "src/themes.c",
+        "src/vcdsupport.c",
+        "src/vmcrebuild.c",
+        "tools/audit_translations.py"
+      ]
+    },
+    "dsrelease": {
+      "status": "ahead",
+      "total_commits": 18,
+      "base": "e016d934e117a645e476564eddfd7f14f0188e01",
+      "merge_base": "e016d934e117a645e476564eddfd7f14f0188e01",
+      "commits": [
+        {
+          "sha": "9a6c716fb8a67b5493408466e3359e10b9ccf07e",
+          "message": "PADEMU multitap: slot A without an emulated pad uses the real DS2 of the port; each slot keeps its own choice\n\nThe multitap of the chosen port is emulated and used to send everything on that port to the emulator, so the real DS2 of\nthe port stopped working as soon as the multitap option was on.\n\n- pademu: when the emulated multitap has slot A selected and slot A is not emulated, the transfer is left to the hardware\n  (the real pad plugged into the port). Slots B..D are unchanged (no real pad can be there without a real multitap).\n- menu: the emulate checkbox can be changed for every slot in multitap mode; the default 'slots B..D emulated' is applied\n  only when the multitap is switched on (it was forced again on every change and when the dialog opened, so the choice\n  of a slot could not be saved).\n\nNot tested on hardware (no physical multitap available).\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GpaNL1s5DWn4V7oBwiutz7"
+        },
+        {
+          "sha": "d8294a02df7d6fe016a4383708cd0a227cef8e52",
+          "message": "PADEMU multitap: route each slot / port on its own, also for two-port polls\n\nThe SIO2 hook only handled single-port transfers when the multitap was emulated.\nWhen the game polls port 1 and port 2 in one transfer, the old code ignored the\nselected slot and, with the multitap on port 2, switched off the wrong command\n(the real DS2 of port 1 stopped working).\n\n- pademu_route.h: pure routing rules (real DS2 or emulated pad index) per port,\n  tested on a PC by tools/test_pademu_route.c (555 checks, same result as before\n  for every setup without the multitap)\n- slot A not emulated = the real DS2 of the port; slots B-D always wireless\n- game without multitap support: the multitap port is a plain pad (slot A), the\n  other port stays with the real DS2\n- debug builds log the routing decisions (PADEMU_DEBUG, needs the stdio import)\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_011XcG3SCVhx3cHqAg5NVAQG"
+        },
+        {
+          "sha": "4d0873e99f5850b4bc82bc5e52df02ff8e751143",
+          "message": "MTAP Fix1"
+        },
+        {
+          "sha": "f992e52fa258d8f5238b512bfd0dc543e24be4dc",
+          "message": "PADEMU: REDESIGN DIALOGS"
+        },
+        {
+          "sha": "f638621cdd40d834877745bda75fa01dae0e1d84",
+          "message": "PADEMU menu: one control per row, new Bluetooth Pads screen\n\nThe Pad Emulator Settings screen put two 50%-wide labels and two controls\non the same row, so the second pair was pushed off screen and overlapped\nthe first (Pad Emulator Mode, Multitap Port, slot Vibration were lost).\n\n- Pad Emulator Settings: one control per row. Each port / multitap slot\n  is a single choice: Off / On / On + Vibration (same settings bits).\n- New Bluetooth Pads screen: adapter MAC, connected pads with type and\n  battery and a Disconnect button each, Search / Pair new pad, DS3 pairing\n  by USB cable (only shown with a DS3 plugged in), fake DS3 workaround and\n  adapter information.\n- Search screen: the adapter/driver debug lines only appear on errors; the\n  pairing message says to press PS to connect.\n- ds34bt: new DS34BT_DISCONNECT RPC (ds34bt_disconnect) that uses the\n  existing DISCONNECT_REQUEST flag of the pad.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "d3b83c5dbd20b0943bda9457eb62dadf90984c83",
+          "message": "guigame: include delaythread.h for the Disconnect refresh delay\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "e5489cb45c7bf6590823748ed470af764078c6d0",
+          "message": "PADEMU menu: say what each port / multitap slot really does\n\nOff now reads \"Real controller\" for the physical ports and for slot A of\nthe emulated multitap (the controller plugged in the port itself) and\n\"Empty\" for slots B-D. With the multitap on, a row shows that the other\nphysical port stays with its real controller.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "78616b689352a7a63833299a307a235e37e73734",
+          "message": "MTAP FIX/LED FIX SAVECFG"
+        },
+        {
+          "sha": "05e5ddbba6a05d3709094cbed13eb6e93e9965a4",
+          "message": "TEST MTAP FEATURE2"
+        },
+        {
+          "sha": "a0513bf061596543d723e74fecb6cfe07e5a58de",
+          "message": "LED BUG FIX"
+        },
+        {
+          "sha": "e46fe12b5fca63f8e82ce4650ac5e0210bf2dd76",
+          "message": "Makefile: only track .d for .o objects (fix 'No rule to make target obj/libds34usb.a')\n\nEE_OBJS also holds .a libraries; mapping %.o->%.d left them in the -include\nlist, so make tried to remake them as makefiles, marked them failed and\nlater refused to build them.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GpaNL1s5DWn4V7oBwiutz7"
+        },
+        {
+          "sha": "0caca926a12ce27b61c974cb98e84a3f4eaa0514",
+          "message": "pademu: start the pad driver early and send the real pad of a mixed poll alone\n\n- The pad driver (Bluetooth adapter / USB pads) now starts on the first pad or\n  multitap command as soon as any pad is enabled, not only when a command\n  reaches an emulated pad. With the multitap emulated and slot A real, the\n  wireless pads had nothing to connect to.\n- 2 port poll with one real and one emulated pad: the real command is sent to\n  the console's SIO2 as a transfer of its own (same buffers, queue holding only\n  that command) instead of running the whole transfer with the emulated\n  command's device byte zeroed, which addressed a device that is not there and\n  could leave padman waiting (\"DMA Busy\").\n- The second command of a 2 port poll is located from the command lengths in\n  regdata (exact); the old byte scan stays as the fallback.\n- tools/test_pademu_split.c: host test of the layout and split.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "65d22222bf5228f29d225e494f7655c98e10e422",
+          "message": "pademu: one early start of the pad driver (merge with the MTAP FIX one)\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "46a2b43b15cc32a7d105fee1d56472c56fead5f5",
+          "message": "pademu_split: regdata element type follows the SIO2 struct (u32 on the IOP)\n\nFixes the incompatible-pointer-types errors of the IOP build.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "f80e4c37894f1846b381a04557deb9ba0ee69d50",
+          "message": "pademu: copy the transfer with mips_memcpy (no memcpy import on the IOP)\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "43a3381764daa82f4274591f75b33befe8a59438",
+          "message": "PADEMU: diagnostic log lines for connection / multitap / settings\n\nOPL log: the PADEMU settings word the game gets (mode, slots, vibration,\nmultitap and its port).\nbt_pademu (debug builds): arguments received, pad driver start result, every\nmultitap command seen (port, port_ctrl2, answered or left to the console),\nwhich way a mixed 2 port poll goes, and when an emulated pad gets a controller.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HxjAGV1NNpMi44hNP3EJTh"
+        },
+        {
+          "sha": "3ccb979c4ad5d9666d129fa13a5cb829d1b037af",
+          "message": "MTAP FIX ROUTE"
+        },
+        {
+          "sha": "2cf308511b187f8a0b209140f71936dca0bb0bae",
+          "message": "FIX LOG"
+        }
+      ],
+      "files": [
+        "Makefile",
+        "README.md",
+        "RELEASE_NOTES_BT.md",
+        "ee_core/Makefile",
+        "ee_core/include/coreconfig.h",
+        "include/btkeys.h",
+        "include/dialogs.h",
+        "include/guigame.h",
+        "lng_tmpl/_base.yml",
+        "modules/ds34bt/ee/libds34bt.c",
+        "modules/ds34bt/ee/libds34bt.h",
+        "modules/ds34bt/iop/ds34bt.c",
+        "modules/pademu/Makefile",
+        "modules/pademu/ds34bt.c",
+        "modules/pademu/imports.lst",
+        "modules/pademu/pademu.c",
+        "modules/pademu/pademu_route.h",
+        "modules/pademu/pademu_split.h",
+        "src/dialogs.c",
+        "src/gui.c",
+        "src/guigame.c",
+        "src/system.c",
+        "tools/ps2_log.txt",
+        "tools/test_pademu_route.c",
+        "tools/test_pademu_split.c"
+      ]
+    },
+    "frontenddelta": {
+      "status": "ahead",
+      "total_commits": 1,
+      "base": "127d012b07322dc0805ce62f877e5ba5e8cd6dbc",
+      "merge_base": "127d012b07322dc0805ce62f877e5ba5e8cd6dbc",
+      "commits": [
+        {
+          "sha": "3ec0d650cab5b13e1e3264b5a8bae1491b1a902c",
+          "message": "Fix USB boot device discovery and defer MX4SIO initialization"
+        }
+      ],
+      "files": [
+        "src/main.c"
+      ]
+    },
+    "radelta": {
+      "status": "ahead",
+      "total_commits": 11,
+      "base": "f4d559a38f510bf644ac0f3f23431f15f6c9dc3a",
+      "merge_base": "f4d559a38f510bf644ac0f3f23431f15f6c9dc3a",
+      "commits": [
+        {
+          "sha": "b5cf52f7d9a9418fb8c77b6b638fa0f946876ecb",
+          "message": "RA: hash PS1 images for POPS (.VCD)\n\nraHashVcd reads a VCD the way rc_hash_psx reads a PS1 disc: skip the\n1 MiB POPS header, map 2048-byte offsets onto 2352-byte MODE2 sectors,\ntake BOOT from SYSTEM.CNF (PSX.EXE if there is none), size from the\nPS-X EXE header plus 2048, MD5 of name and bytes. Directory names now\ncompare case-insensitively, as rcheevos does for both consoles.\n\nNot called yet. Host test on Blade (USA): 3e64b72f..., RA game 14491.\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "b8a13423296a7f476e75eff2b615ebaac578d045",
+          "message": "PS1: list POPS/*.VCD with the PS2 games and launch POPStarter\n\nThe BDM pages append every POPS/<name>.VCD at the device root, marked\n\"PS1\", with the serial read out of the image's SYSTEM.CNF. Launching\none copies POPS/POPSTARTER.ELF to XX.<name>.ELF if it is missing and\nloads it as mass:/POPS/XX.<name>.ELF: POPStarter parses its argv[0],\nand the SDK loader sets argv[0] to the path it loads. First USB device\nonly for now. The RA check hashes the VCD and asks the PC as for PS2.\n\nA new UI setting, \"PS1 and PS2 order\": mixed by name, PS2 first or\nPS1 first. The sort now compares game names, not badged text.\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "7458ddbfde39beb535425fbed6aaaf8f3aa4600c",
+          "message": "PS1: drop the PS1/PS2 order setting\n\nThe build with it hung in the menu on hardware, and two probes showed\nthe hang is not in the POPS/ scan. Removed: the setting, the group and\nsort-key fields on menu items, the sort by them. The sort is stock again.\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "a3fd53588323bb16a5fbfbb1b15fbbc0915814d7",
+          "message": "RA: name the sector source instead of a sentinel fd and a flag\n\nread_at() took a file descriptor, with -100 standing for the drive and\na global flag switching it to VCD sectors around each call. It now\ntakes a struct ra_src with the descriptor and its kind. The PS1 code\nreads SYSTEM.CNF in one place for the list and for the hash.\n\nHost test: Blade.VCD 3e64b72f... (RA 14491) and Dynasty Warriors 2\n29e392c7... (RA 19047), both unchanged. cppcheck finds nothing in the\nchanged lines.\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "531aad4584d65d1779b744739b81402150c7669c",
+          "message": "PS1: achievements under POPStarter\n\nA PS1 image in POPS/<name>.VCD on a block device is listed with the PS2\ngames, marked PS1, hashed the way rcheevos hashes a PS1 disc and\nlaunched through POPStarter (krHACKen r13) as mass:/POPS/XX.<name>.ELF.\nNothing of OPL runs under POPS, so the watch list travels inside\nPOPS/MODULE_9.IRX: OPL writes a copy of rapops with the IP\nconfiguration, the serial and the list in its config block, POPStarter\nloads it on the IOP after its own reset. rapops brings up DEV9, SMAP,\nthe TCP/IP stack and raudp as under a PS2 game, then starts rapull,\nwhich reads the PS1 RAM windows through sceSifGetOtherData at 60 Hz and\nhands the snapshots to raudp. The first request waits 25 seconds: one\nduring POPS's boot leaves the screen black.\n\nPOPStarter reads the game's device with its own driver. OPL puts the\nBDMAssault pair for the device on the memory card before the launch\n(mc?:/POPSTARTER/, RA_BDMA.TXT names the variant): mx4sio, ata, ilink.\nUSB stays on the built-in FAT32 driver unless \"PS1 USB drive is exFAT\"\nis on in Settings; OPL cannot tell the formats apart, and the usbexfat\npair stalls POPS on its first video from a FAT32 stick.\n\nConfirmed on hardware: Blade from a FAT32 stick and from an exFAT\ndrive, 60 snapshots a second, achievements unlock. Not done: PS1 from\nMMCE, an APA HDD or a share; a second device of the same kind. The\nMX4SIO, iLink and exFAT HDD pairs follow RiptOPL and have not been\nrun here.\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "fa2d2e42cc76881afa914da943da303addbba928",
+          "message": "Keep the RA snapshot going when Mode 6 turns the IGR off\n\nRA_OnVblank ran only from the IGR's VBLANK_END handler, and Mode 6\nskips Install_IGR, so a game set to Mode 6 sent no telemetry at all.\nSly Cooper and the Thievius Raccoonus needs that mode: it takes the\nIGR's padOpen patch for tampering and hides collectibles (xerabora\nissue #15).\n\nUnder Mode 6 syshook now installs a handler that calls RA_OnVblank and\nnothing else: no IGR thread, no padOpen patch, no CreateThread/ExecPS2\nhooks. A reset asked for over the network has nothing to carry it out\nin that mode, so IGR_RequestReset drops it.\n\nBuilt, not run on hardware.\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "c6e14e6b943be74210981e3a7bd51a25702a8df0",
+          "message": "Remove the cheat engine and fix watch list chunk parsing\n\nOPL-RA no longer carries PS2RD, reads no CHT files and has no cheat\nmenu. A list chunk whose data started with a whitespace byte lost that\nbyte, and the console refused the whole list.\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "205223e2d5f838674676d6f8c171dd909eb6c01d",
+          "message": "Fix the in-game SMAP TX descriptor buffer address"
+        },
+        {
+          "sha": "1941e0d597c4bfbb32fabb0a4a1d0fca0fc295bf",
+          "message": "Merge pull request #2 from zokzot/fix/smap-tx-descriptor-base"
+        },
+        {
+          "sha": "759b12a2dff0cf49736b27991c73399a7e7971e8",
+          "message": "Option to show the RA mark after the game name\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        },
+        {
+          "sha": "a9f973974a5fd61707d069961ec0031be19399f7",
+          "message": "Smaller RA mark on the cover, without the frame\n\nCo-authored-by: Claude <noreply@anthropic.com>"
+        }
+      ],
+      "files": [
+        ".gitignore",
+        "Makefile",
+        "README.md",
+        "ee_core/Makefile",
+        "ee_core/include/cheat_api.h",
+        "ee_core/include/cheat_engine.h",
+        "ee_core/include/coreconfig.h",
+        "ee_core/include/padhook.h",
+        "ee_core/src/cheat_api.c",
+        "ee_core/src/cheat_engine.S",
+        "ee_core/src/main.c",
+        "ee_core/src/padhook.c",
+        "ee_core/src/ra.c",
+        "ee_core/src/syshook.c",
+        "gfx/ra_mark.png",
+        "include/cheatman.h",
+        "include/config.h",
+        "include/dialogs.h",
+        "include/extern_irx.h",
+        "include/gui.h",
+        "include/guigame.h",
+        "include/opl.h",
+        "include/rabadge.h",
+        "include/rahash.h",
+        "include/supportbase.h",
+        "lng_tmpl/_base.yml",
+        "modules/network/common/ra_watch.h",
+        "modules/network/common/rapops_cfg.h",
+        "modules/network/rapops/Makefile",
+        "modules/network/rapops/blobs.S",
+        "modules/network/rapops/imports.lst",
+        "modules/network/rapops/irx_imports.h",
+        "modules/network/rapops/rapops.c",
+        "modules/network/rapull/Makefile",
+        "modules/network/rapull/imports.lst",
+        "modules/network/rapull/irx_imports.h",
+        "modules/network/rapull/rapull.c",
+        "modules/network/raudp/raudp.c",
+        "modules/network/smap-ingame/xfer.c",
+        "src/bdmsupport.c",
+        "src/cheatman.c",
+        "src/dialogs.c",
+        "src/ethsupport.c",
+        "src/gui.c",
+        "src/guigame.c",
+        "src/hddsupport.c",
+        "src/menusys.c",
+        "src/mmcesupport.c",
+        "src/opl.c",
+        "src/rabadge.c",
+        "src/rahash.c",
+        "src/ranet.c",
+        "src/rawatch.c",
+        "src/supportbase.c",
+        "src/system.c",
+        "src/themes.c"
+      ]
+    },
+    "nlunapending": {
+      "status": "ahead",
+      "total_commits": 1,
+      "base": "3ec0d650cab5b13e1e3264b5a8bae1491b1a902c",
+      "merge_base": "3ec0d650cab5b13e1e3264b5a8bae1491b1a902c",
+      "commits": [
+        {
+          "sha": "1580671bab32d124cc6affaac3a3251d515b4664",
+          "message": "Play ambient music with native SPU2 ADPCM hardware looping"
+        }
+      ],
+      "files": [
+        "CMakeLists.txt",
+        "assets/ambient.adp",
+        "irx.cmake",
+        "src/ui/ambient.c"
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "register_ids": 212,
+  "deduplicated_rows": 106,
+  "directory_entries": 145,
+  "unique_ids": true,
+  "all_filter_groups_valid": true,
+  "all_gap_rows_sourced": true,
+  "source_markdown_files": 69,
+  "website_pages": 35,
+  "local_links_checked": 2216,
+  "local_link_errors": [],
+  "preserved_upstream_layout_links": [
+    {
+      "document": "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md",
+      "upstream_relative_link": "docs/README_CONFIG.txt"
+    },
+    {
+      "document": "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md",
+      "upstream_relative_link": "../LICENSE"
+    },
+    {
+      "document": "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md",
+      "upstream_relative_link": "docs/THIRD_PARTY_NOTICES.md"
+    },
+    {
+      "document": "POPS\\UDPFS-NOTICES\\UPSTREAM-README.md",
+      "upstream_relative_link": "licenses/"
+    }
+  ],
+  "validator_note": "Existing upstream-layout allowlist normalized to Windows separators; validator source unchanged.",
+  "ra_chunk_host_test": "PASS: current source, all 256 leading payload bytes plus layout/count/bounds checks; not a console/client-session test.",
+  "physical_console_tested": false
+}
