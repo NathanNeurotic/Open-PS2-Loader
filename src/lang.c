@@ -71,6 +71,80 @@ static int lngLoadFont(const char *dir, const char *name)
     return -1;
 }
 
+// The arguments a printf format reads, one letter each: i int (also a '*' width or precision), l long,
+// q long long, j/z/t their types, s string, w wide string, p pointer, f double, D long double.
+// h and hh read a promoted int. Returns the count, or -1 for %n, an unknown conversion or overflow.
+static int lngFormatArgs(const char *fmt, char *args, int size)
+{
+    int count = 0;
+
+    while ((fmt = strchr(fmt, '%')) != NULL) {
+        char length = 0, arg;
+
+        fmt++;
+        if (*fmt == '%') {
+            fmt++;
+            continue;
+        }
+        while (*fmt != '\0' && strchr("-+ #0'", *fmt) != NULL)
+            fmt++;
+        for (int part = 0; part < 2; part++) { // width, then precision
+            if (part == 1) {
+                if (*fmt != '.')
+                    break;
+                fmt++;
+            }
+            if (*fmt == '*') {
+                if (count >= size)
+                    return -1;
+                args[count++] = 'i';
+                fmt++;
+            }
+            while (*fmt >= '0' && *fmt <= '9')
+                fmt++;
+        }
+        if (*fmt == 'h') {
+            fmt += (fmt[1] == 'h') ? 2 : 1;
+        } else if (*fmt == 'l' && fmt[1] == 'l') {
+            length = 'q';
+            fmt += 2;
+        } else if (*fmt != '\0' && strchr("lqLjzt", *fmt) != NULL) {
+            length = *fmt++;
+        }
+
+        if (*fmt != '\0' && strchr("diouxXc", *fmt) != NULL)
+            arg = (length == 0 || length == 'L' || *fmt == 'c') ? 'i' : length;
+        else if (*fmt == 's')
+            arg = (length == 'l') ? 'w' : 's';
+        else if (*fmt == 'p')
+            arg = 'p';
+        else if (*fmt != '\0' && strchr("eEfFgGaA", *fmt) != NULL)
+            arg = (length == 'L') ? 'D' : 'f';
+        else
+            return -1;
+        if (count >= size)
+            return -1;
+        args[count++] = arg;
+        fmt++;
+    }
+    return count;
+}
+
+// RiptOPL: a translated string gets the arguments its English string is given. A translation whose
+// conversions read other types would read an int as a string pointer and crash (an upstream French
+// "Auto start" string has %s where English has %i), so it may read the same arguments or fewer of
+// them in the same order, never different ones.
+static int lngFormatFits(const char *translated, const char *english)
+{
+    char want[16], got[16];
+    int wantCount = lngFormatArgs(english, want, sizeof(want));
+    int gotCount = lngFormatArgs(translated, got, sizeof(got));
+
+    if (wantCount < 0)
+        return 1; // not a format this check understands: leave the translation alone
+    return gotCount >= 0 && gotCount <= wantCount && memcmp(got, want, gotCount) == 0;
+}
+
 static int lngLoadFromFile(char *path, char *name)
 {
     char *dir;
@@ -88,6 +162,19 @@ static int lngLoadFromFile(char *path, char *name)
         closeFileBuffer(fileBuffer);
 
         LOG("LANG Loaded %d entries\n", strId);
+
+        for (int i = 0; i < strId; i++) {
+            if (newL[i] == NULL || lngFormatFits(newL[i], internalEnglish[i]))
+                continue;
+            LOG("LANG entry %d does not take the English arguments, using English: %s\n", i, newL[i]);
+            char *english = strdup(internalEnglish[i]);
+            if (english != NULL) {
+                free(newL[i]);
+                newL[i] = english;
+            } else {
+                newL[i][0] = '\0'; // no conversions left to misread
+            }
+        }
 
         int newEntries = strId;
         // if necessary complete lang with default internal
@@ -185,17 +272,18 @@ static int lngReadEntry(int index, const char *path, const char *separator, cons
         memcpy(filePath + pathLen, separator, sepLen);
     memcpy(filePath + pathLen + sepLen, name, nameLen + 1);
 
+    // The GUI thread reads this registry (lngSetGuiValue, the language notification) while the IO
+    // worker adds to it, so the array is grown, filled and a path replaced only under the GUI lock.
     if (existing >= 0) {
-        free(languages[existing].filePath);
+        guiLock();
+        char *oldPath = languages[existing].filePath;
         languages[existing].filePath = filePath;
         languages[existing].sourcePriority = scanPriority;
+        guiUnlock();
+        free(oldPath);
         return index;
     }
 
-    if (!lngEnsureCapacity(count + 1)) {
-        free(filePath);
-        return index;
-    }
     char *langName = malloc(langLen + 1);
     if (langName == NULL) {
         free(filePath);
@@ -204,9 +292,19 @@ static int lngReadEntry(int index, const char *path, const char *separator, cons
     memcpy(langName, name + 5, langLen);
     langName[langLen] = '\0';
 
-    languages[count].filePath = filePath;
-    languages[count].name = langName;
-    languages[count].sourcePriority = scanPriority;
+    guiLock();
+    int added = lngEnsureCapacity(count + 1);
+    if (added) {
+        languages[count].filePath = filePath;
+        languages[count].name = langName;
+        languages[count].sourcePriority = scanPriority;
+    }
+    guiUnlock();
+    if (!added) {
+        free(filePath);
+        free(langName);
+        return index;
+    }
     return index + 1;
 }
 
@@ -233,7 +331,9 @@ static int lngScanDirectory(char *path, const char *separator, unsigned char pri
     scanFoundFiles = 0;
     int added = listDir(path, separator, INT_MAX - nLanguages - 1, &lngReadEntry);
     int found = scanFoundFiles;
+    guiLock();
     nLanguages += added;
+    guiUnlock();
     scanPriority = 0;
     return found;
 }
@@ -355,8 +455,16 @@ int lngSetGuiValue(int langID)
         if (guiLangID != langID) {
             bgmMute();
             if (langID != 0) {
-                language_t *currLang = &languages[langID - 1];
-                if (lngLoadFromFile(currLang->filePath, currLang->name)) {
+                // The IO worker may grow the registry or replace this path meanwhile (lngReadEntry):
+                // copy the path under the GUI lock. A language's name is never moved or freed.
+                char *path = NULL, *name = NULL;
+                guiLock();
+                path = strdup(languages[langID - 1].filePath);
+                name = languages[langID - 1].name;
+                guiUnlock();
+                int loaded = path != NULL && lngLoadFromFile(path, name);
+                free(path);
+                if (loaded) {
                     guiLangID = langID;
                     thmSetGuiValue(thmGetGuiValue(), 1);
                     bgmUnMute();

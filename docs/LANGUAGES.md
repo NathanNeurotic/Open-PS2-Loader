@@ -141,6 +141,13 @@ machine-readable report. The tool uses the same translation precedence as
 run. Run `python3 tools/audit_translations.py --strict` to reject invalid
 format placeholders and obsolete overlay keys without blocking valid
 English fallback. CI runs the strict audit on translation and source changes.
+It checks the strings that ship, upstream ones included. A fork overlay string
+with the wrong placeholders fails `--strict`. An upstream one is listed as a
+warning: RiptOPL checks every string in a `.lng` file when it loads it and
+shows the English string instead of any whose placeholders would read other
+arguments (for example upstream French "Auto start" has `%s` where English has
+`%i`, which crashed the countdown). Placeholders the same as English, or fewer
+of them in the same order, are kept.
 
 To translate recent strings, review the report, add genuinely localized text
 to each `lng_fork/<Language>.yml`, and rerun the audit. **Do not mark

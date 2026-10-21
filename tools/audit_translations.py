@@ -80,6 +80,7 @@ def audit() -> dict:
     english = {entry["label"]: entry["string"] for entry in entries}
     by_language = {}
     errors = []
+    warnings = []
     for name in languages():
         overlay_path = ROOT / "lng_fork" / (name + ".yml")
         overlay = read_map(overlay_path)
@@ -91,18 +92,24 @@ def audit() -> dict:
         unknown = sorted(set(overlay) - set(english))
         for key in unknown:
             errors.append(f"{name}: overlay has unknown label {key}")
-        for key, value in overlay.items():
+        # Check the strings that ship (merged), not only the overlay. The fork's own strings must
+        # match; an upstream one that does not is reported, since lang.c's lngFormatFits shows the
+        # English string instead of one that would read other arguments.
+        for key, value in merged.items():
             if key not in english:
                 continue
+            from_upstream = key in upstream
+            problems = warnings if from_upstream else errors
+            where = f"{name}/{key} ({'upstream' if from_upstream else 'overlay'})"
             try:
                 actual_tokens = format_tokens(value)
                 english_tokens = format_tokens(english[key])
             except ValueError as error:
-                errors.append(f"{name}/{key}: {error}")
+                problems.append(f"{where}: {error}")
                 continue
             if actual_tokens != english_tokens:
-                errors.append(
-                    f"{name}/{key}: printf tokens {actual_tokens} differ from "
+                problems.append(
+                    f"{where}: printf tokens {actual_tokens} differ from "
                     f"English {english_tokens}"
                 )
         translated = {key for key in labels if key in merged and merged[key] != english[key]}
@@ -122,6 +129,7 @@ def audit() -> dict:
         "upstream_present": (ROOT / "lng_src").is_dir(),
         "languages": by_language,
         "errors": errors,
+        "warnings": warnings,
     }
 
 
@@ -148,6 +156,11 @@ def main() -> int:
                 f"English fallback={counts['english_fallback_entries']:3} "
                 f"recent fallback={len(counts['recent_fallback_labels']):2}/{report['recent_window']}"
             )
+        if report["warnings"]:
+            print("Upstream strings whose printf tokens differ from English. RiptOPL shows English")
+            print("instead of any that would read other arguments (lngFormatFits in src/lang.c):")
+        for warning in report["warnings"]:
+            print("WARNING:", warning)
         for err in report["errors"]:
             print("ERROR:", err)
     return 1 if args.strict and report["errors"] else 0

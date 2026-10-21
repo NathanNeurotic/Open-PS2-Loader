@@ -31,6 +31,26 @@ typedef struct {
 static int nLanguages, languageCapacity, scanFoundFiles;
 static unsigned char scanPriority;
 static language_t *languages;
+/* The GUI lock: the GUI thread reads the registry while the IO worker adds to it, so the array may
+   only move while the lock is held, and taking it twice would deadlock the PS2. */
+static int guiLockDepth, guiLockTaken;
+static void guiLock(void)
+{
+    assert(guiLockDepth == 0);
+    guiLockDepth++;
+    guiLockTaken++;
+}
+static void guiUnlock(void)
+{
+    assert(guiLockDepth == 1);
+    guiLockDepth--;
+}
+static void *lockedRealloc(void *block, size_t size)
+{
+    assert(guiLockDepth == 1);
+    return realloc(block, size);
+}
+#define realloc(block, size) lockedRealloc(block, size)
 """ + registration + r"""
 static int scan(int priority, const char *path, const char *separator,
                 const char *const *names, int count)
@@ -80,6 +100,7 @@ int main(void)
     assert(nLanguages == 68);
     assert(languageCapacity >= nLanguages);
     assert(strcmp(languages[0].filePath, "mass1:/APPS/RIPTOPL/lang_French.lng") == 0);
+    assert(guiLockDepth == 0 && guiLockTaken > 0);
 
     for (int i = 0; i < nLanguages; i++) {
         free(languages[i].name);
