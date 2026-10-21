@@ -325,6 +325,9 @@ def verify(args: argparse.Namespace) -> None:
         elif any("raagent" in name.lower() or "/ORBIT-RA." in name or "/RA-EDITION-NEUTRINO." in name
                  for name in names):
             raise ValueError("ordinary package contains the ORBIT RA runtime")
+        if not args.ra:
+            # RiptOPL's i.LINK driver replaces upstream's in the ordinary Neutrino bundle (#1018).
+            required.add("neutrino/modules/IEEE1394_bd_mini.irx")
         if not args.ra and "LICENSE-MBEDTLS.txt" in names:
             raise ValueError("ordinary package carries the RA edition's mbedTLS licence")
         required.update(f"POPS/POPSTARTER VERSIONS/{version}/POPSTARTER.ELF" for version in (

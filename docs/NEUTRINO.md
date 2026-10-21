@@ -13,9 +13,13 @@ PS2 Device Emulator"*. Home: <https://github.com/rickgaiser/neutrino>.
 
 The RiptOPL release package
 bundles the upstream development pre-release selected at publish time (falling back to the upstream latest release when no pre-release is listed); a failed download or incomplete extraction fails packaging, under Neutrino's
-**AFL-3.0** licence. We add exactly one file to that folder — `config/bsd-udpfsbd.toml`, because
+**AFL-3.0** licence. We add one file to that folder — `config/bsd-udpfsbd.toml`, because
 Neutrino ships `udpfs_bd.irx` without a matching `-bsd` token and RiptOPL launches UDPFS as
-`-bsd=udpfsbd`. Nothing of rickgaiser's is altered or removed.
+`-bsd=udpfsbd` — and replace one module: `modules/IEEE1394_bd_mini.irx`, the i.LINK driver, is
+RiptOPL's build of the same ps2sdk driver (`modules/ilink/IEEE1394_bd`, see its `ORIGIN.txt`). The
+stock driver gives up logging in to an i.LINK drive before the drive lets go of the login held
+across an IOP reset, so i.LINK games never started (#1018). Nothing else of rickgaiser's is altered
+or removed.
 
 Neutrino is deliberately **UI-agnostic**: it has no interface of its own, and that is exactly what
 makes a front-end like this one possible. RiptOPL is one of several — **[LUNA](https://github.com/dnunezx/LUNA)**
@@ -163,6 +167,15 @@ paths are no longer limited to 31 characters.
 > MMCE, ATA, UDPBD and UDPFS -- and restricts it to **FAT PS2 models**. So a passing `-qb` retest is
 > necessary but may not be sufficient: some iLink enclosures are expected to fail upstream too. Use
 > the isolation checks below rather than assuming any single fix makes iLink universally work.
+
+> **i.LINK after an IOP reset (#1018).** The i.LINK driver never logs out of the drive, so after
+> every IOP reset the drive still holds the old exclusive login for its reconnect hold (at least
+> 1 s) and refuses the new driver. The stock driver stopped asking after about 0.8 s and never asked
+> again, so every core that resets the IOP lost the drive: native OPL got as far as the PS2 logo,
+> Neutrino and POPSTARTER did not start, and only Ember (which keeps the IOP) booted. RiptOPL's own
+> build keeps asking for up to 5 s, waits for the drive to become ready, and only offers it once it
+> is. It is used by the native core and shipped in the bundled Neutrino. POPSTARTER's i.LINK driver
+> pair does not have this change yet. Not yet confirmed on hardware.
 
 Unsupported cases fall back to the `<OPL>` core automatically with an on-screen warning.
 
