@@ -1,0 +1,1474 @@
+[
+  {
+    "id": "CA1",
+    "feature": "Curated SQLite desktop catalogue",
+    "category": "PC library",
+    "project": "Caduceus (PC)",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CA2",
+    "feature": "ISO import, installed status and transfer queue",
+    "category": "PC library",
+    "project": "Caduceus (PC)",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CA3",
+    "feature": "Cover conversion, migration and repair",
+    "category": "PC artwork",
+    "project": "Caduceus (PC)",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CA4",
+    "feature": "PC RetroAchievements account/live progress dashboard",
+    "category": "PC RetroAchievements",
+    "project": "Caduceus (PC)",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CA5",
+    "feature": "Live game detection and Discord presence",
+    "category": "PC companion",
+    "project": "Caduceus (PC)",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CA6",
+    "feature": "Importable catalogue and safe SQLite backups",
+    "category": "PC reliability",
+    "project": "Caduceus (PC)",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CA7",
+    "feature": "Guided first-run PS2 connection setup",
+    "category": "PC onboarding",
+    "project": "Caduceus (PC)",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CO1",
+    "feature": "Interpolated XMB category and game-list rail",
+    "category": "Console UI",
+    "project": "Caduceus OPL",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CO2",
+    "feature": "Game-details card with automatic RA checks",
+    "category": "Console RetroAchievements",
+    "project": "Caduceus OPL",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CO3",
+    "feature": "Browse RA account achievements on the console",
+    "category": "Console RetroAchievements",
+    "project": "Caduceus OPL",
+    "kind": "Feature overlaps OR4",
+    "state": "Implemented / verify on hardware"
+  },
+  {
+    "id": "CO4",
+    "feature": "Text-and-points in-game unlock card",
+    "category": "Console RetroAchievements",
+    "project": "Caduceus OPL",
+    "kind": "Experimental",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CO5",
+    "feature": "RA session-ready launch gating",
+    "category": "Console launching",
+    "project": "Caduceus OPL",
+    "kind": "Feature",
+    "state": "Implemented / verify on hardware"
+  },
+  {
+    "id": "CO6",
+    "feature": "SMB ECHO and conditional reconnect on Refresh",
+    "category": "Console network",
+    "project": "Caduceus OPL",
+    "kind": "Fix",
+    "state": "Implemented / verify on hardware"
+  },
+  {
+    "id": "CO7",
+    "feature": "Async initialize manual devices upon category focus",
+    "category": "Console device handling",
+    "project": "Caduceus OPL",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "CF1",
+    "feature": "PC CARD CF/ATA controller and adapter detection",
+    "category": "Hardware & storage",
+    "project": "PS2CF",
+    "kind": "Feature",
+    "state": "Integrated; hardware verification pending"
+  },
+  {
+    "id": "CF2",
+    "feature": "FAT32/exFAT CF game listing, including large ISOs",
+    "category": "Game storage",
+    "project": "PS2CF",
+    "kind": "Feature",
+    "state": "Integrated; hardware verification pending"
+  },
+  {
+    "id": "CF3",
+    "feature": "Read-only in-game PC CARD CF CD/DVD backend",
+    "category": "In-game I/O",
+    "project": "PS2CF",
+    "kind": "Feature",
+    "state": "Integrated; hardware verification pending"
+  },
+  {
+    "id": "CF4",
+    "feature": "PC CARD cf:/ file management via wLaunchELF",
+    "category": "Companion file manager",
+    "project": "PS2CF",
+    "kind": "Companion",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "DB1",
+    "feature": "DualSense Bluetooth input and feedback in menu/in-game",
+    "category": "Controllers & input",
+    "project": "OPL-DualSense-BT",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "DB2",
+    "feature": "Wireless pad scan and Secure Simple Pairing in OPL GUI",
+    "category": "Controllers & input",
+    "project": "OPL-DualSense-BT",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "RI1",
+    "feature": "VMC image browsing and PSU save management",
+    "category": "File and save tools",
+    "project": "RIPPS2",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "RI2",
+    "feature": "Native physical memory-card backup and management UI",
+    "category": "Memory cards",
+    "project": "RIPPS2",
+    "kind": "High-risk",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "RI3",
+    "feature": "In-game pause, resume, achievements and exit overlay",
+    "category": "In-game UI",
+    "project": "RIPPS2",
+    "kind": "Experimental",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "RI4",
+    "feature": "Offline BIOS audio-to-theme pack toolchain",
+    "category": "PC tools",
+    "project": "RIPPS2",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "DL1",
+    "feature": "Physical PS1 disc DKWDRV/PS1VModeNeg handoff",
+    "category": "Disc launching",
+    "project": "Enhanced Disc Launcher",
+    "kind": "Companion",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "DL2",
+    "feature": "Conditional import-disc OSD language override",
+    "category": "Disc launching",
+    "project": "Enhanced Disc Launcher",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OF1",
+    "feature": "Dedicated carousel/device dock/status HUD UI primitives",
+    "category": "Theme engine",
+    "project": "OPL FUTURE",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OM1",
+    "feature": "Convert PS1 VCD launcher layout between POPStarter and RiptOPL/POPSLoader, including batch migration",
+    "category": "PC PS1 library",
+    "project": "OrbitPS2 Manager",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OM2",
+    "feature": "Local bulk ISO ↔ ZSO compression/decompression and conversion jobs",
+    "category": "PC image tools",
+    "project": "OrbitPS2 Manager",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "SM1",
+    "feature": "HTTP-range-backed, persistent-cache virtual SMB1 ISO files",
+    "category": "PC SMB server",
+    "project": "PS2SMB",
+    "kind": "Hardware pending",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "DN1",
+    "feature": "Configurable frosted-glass framebuffer blur compositing",
+    "category": "Theme engine",
+    "project": "PS5-style OPL",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "DN2",
+    "feature": "Horizontal CardShelf and crossfading cover-art wallpaper theme elements",
+    "category": "Theme engine",
+    "project": "PS5-style OPL",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "W1",
+    "feature": "Themes loaded from a .tar archive",
+    "category": "Theme engine",
+    "project": "wOPL",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "W2",
+    "feature": "wsX widescreen X position",
+    "category": "Theme engine",
+    "project": "wOPL",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "W3",
+    "feature": "PADEMU, GSM and cheat status icons",
+    "category": "Theme engine",
+    "project": "wOPL",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "W6",
+    "feature": "Info page without list navigation",
+    "category": "Library & menu",
+    "project": "wOPL",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O1",
+    "feature": "Grid game list",
+    "category": "Theme engine",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O2",
+    "feature": "GameImage offset for non-selected games",
+    "category": "Theme engine",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O3",
+    "feature": "Recently played list",
+    "category": "Library & menu",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O4",
+    "feature": "Sort modes",
+    "category": "Library & menu",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O5",
+    "feature": "MenuTabs device tab strip",
+    "category": "Theme engine",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O6",
+    "feature": "GameCountText prefix and suffix",
+    "category": "Theme engine",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O7",
+    "feature": "x_scaled widescreen alignment",
+    "category": "Theme engine",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O8",
+    "feature": "VRAM texture budget clamp",
+    "category": "Theme engine",
+    "project": "OPLattice",
+    "kind": "Fix",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O9",
+    "feature": "Play stats",
+    "category": "Library & menu",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O10",
+    "feature": "SHELF sidebar interface",
+    "category": "Library & menu",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O11",
+    "feature": "App subtitles",
+    "category": "Library & menu",
+    "project": "OPLattice",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O12",
+    "feature": "Art conversion and VRAM checker",
+    "category": "PC tools",
+    "project": "OPLattice",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O13",
+    "feature": "In-game screenshot importer",
+    "category": "PC tools",
+    "project": "OPLattice",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O14",
+    "feature": "Browser theme previewer",
+    "category": "PC tools",
+    "project": "OPLattice",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "O15",
+    "feature": "Device staging and card sync scripts",
+    "category": "PC tools",
+    "project": "OPLattice",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH1",
+    "feature": "Declarative HTML/CSS flexbox compilation to zero-allocation C99 GS command list",
+    "category": "Theme engine",
+    "project": "OPHTML",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH2",
+    "feature": "Pre-resolved pairwise HarfBuzz font kerning on EE",
+    "category": "Theme engine",
+    "project": "OPHTML",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH3",
+    "feature": "Instant 1-byte palette theme switching without VRAM re-upload",
+    "category": "Theme engine",
+    "project": "OPHTML",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH4",
+    "feature": "Runtime 2D coordinate offsets for motion and expanding layouts",
+    "category": "Theme engine",
+    "project": "OPHTML",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH5",
+    "feature": "Runtime focus-subtree visibility masking with auto-bypassing navigation",
+    "category": "Theme engine",
+    "project": "OPHTML",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH6",
+    "feature": "Automated CRT overscan safe area and multi-layer alpha contrast linter",
+    "category": "PC tools",
+    "project": "OPHTML",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH7",
+    "feature": "Interactive web browser theme simulator and testbed",
+    "category": "PC tools",
+    "project": "OPHTML",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH8",
+    "feature": "Static VRAM budgeting and layout compiler",
+    "category": "PC tools",
+    "project": "OPHTML",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH9",
+    "feature": "Headless Play! emulator CI testbed with input scripting and frame diffs",
+    "category": "PC tools",
+    "project": "OPHTML",
+    "kind": "Tool",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH10",
+    "feature": "Fuzzed .uib loader with EE bus-alignment and malformed blob hardening",
+    "category": "Theme engine",
+    "project": "OPHTML",
+    "kind": "Fix",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH11",
+    "feature": "Hard compiler safety limits for untrusted themes",
+    "category": "Theme engine",
+    "project": "OPHTML",
+    "kind": "Fix",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "U1",
+    "feature": "Per-game parental lock",
+    "category": "Cheats, launching & network",
+    "project": "Upstream OPL",
+    "kind": "Feature",
+    "state": "Implemented; console verification pending"
+  },
+  {
+    "id": "U6",
+    "feature": "Launch announcement for Discord rich presence",
+    "category": "Cheats, launching & network",
+    "project": "Upstream OPL",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "U9",
+    "feature": "Bluetooth controller input lag",
+    "category": "Controllers & input",
+    "project": "Upstream OPL",
+    "kind": "Investigate",
+    "state": "Closed upstream proposal"
+  },
+  {
+    "id": "B1",
+    "feature": "File explorer",
+    "category": "Beyond game loading",
+    "project": "BoliviaOS",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "B2",
+    "feature": "Music player",
+    "category": "Beyond game loading",
+    "project": "BoliviaOS",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "B3",
+    "feature": "Image and font viewers",
+    "category": "Beyond game loading",
+    "project": "BoliviaOS",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "B4",
+    "feature": "Text editor, code editor and terminal",
+    "category": "Beyond game loading",
+    "project": "BoliviaOS",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "B5",
+    "feature": "Memory card format and repair",
+    "category": "Beyond game loading",
+    "project": "BoliviaOS",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "B6",
+    "feature": "USB keyboard",
+    "category": "Controllers & input",
+    "project": "BoliviaOS",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "B7",
+    "feature": "PDF viewer",
+    "category": "Beyond game loading",
+    "project": "BoliviaOS",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "P1",
+    "feature": "Xbox One and Series controllers over USB",
+    "category": "Controllers & input",
+    "project": "PS2-Launcher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "P2",
+    "feature": "Download covers from the PS2",
+    "category": "Library & menu",
+    "project": "PS2-Launcher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "P3",
+    "feature": "One games list across every device",
+    "category": "Library & menu",
+    "project": "PS2-Launcher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "P4",
+    "feature": "Hold SELECT to leave a game",
+    "category": "Controllers & input",
+    "project": "PS2-Launcher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "P5",
+    "feature": "Launch transition animation",
+    "category": "Library & menu",
+    "project": "PS2-Launcher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "P6",
+    "feature": "More USB controllers: Steam Controller, Shanwan PS3 clones, ANT Esports GP300",
+    "category": "Controllers & input",
+    "project": "PS2-Launcher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "P7",
+    "feature": "Connected controller count on screen",
+    "category": "Controllers & input",
+    "project": "PS2-Launcher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OR3",
+    "feature": "RetroAchievements telemetry with Neutrino games",
+    "category": "RetroAchievements",
+    "project": "ORBIT",
+    "kind": "Feature",
+    "state": "Implemented / verify on hardware"
+  },
+  {
+    "id": "OR4",
+    "feature": "Browse achievement titles and progress on the console",
+    "category": "RetroAchievements",
+    "project": "ORBIT",
+    "kind": "Feature",
+    "state": "Implemented / verify on hardware"
+  },
+  {
+    "id": "OR5",
+    "feature": "Companion catalog for UDPFS games",
+    "category": "Cheats, launching & network",
+    "project": "ORBIT",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T1",
+    "feature": "Graphics patches kept apart from cheats",
+    "category": "Cheats, launching & network",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T2",
+    "feature": "Installable TPKG apps, in-process runtime and SDK",
+    "category": "Beyond game loading",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T3",
+    "feature": "Smart IGR overlay with Resume / Return",
+    "category": "Game compatibility",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature Hardware pending",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T4",
+    "feature": "Named user profiles with per-profile VMC",
+    "category": "Beyond game loading",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T5",
+    "feature": "Notification center and background-progress UI",
+    "category": "Library & menu",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T6",
+    "feature": "Integrated lightweight web browser",
+    "category": "Beyond game loading",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T7",
+    "feature": "Transactional .pup system updater",
+    "category": "Beyond game loading",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T8",
+    "feature": "Installable animated scene themes with audio",
+    "category": "Theme engine",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T9",
+    "feature": "Xbox Bluetooth/BLE plus USB keyboard and mouse input",
+    "category": "Controllers & input",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature Hardware pending",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "T10",
+    "feature": "Repository-backed package download pipeline",
+    "category": "Beyond game loading",
+    "project": "Project Titan Magenta Edition",
+    "kind": "Feature Target pending",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "E1",
+    "feature": "Controller, memory card, storage and network status",
+    "category": "Library & menu",
+    "project": "OPL-Evolution",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "R1",
+    "feature": "Retro emulator ROM libraries",
+    "category": "Beyond game loading",
+    "project": "RETROLauncher",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "M1",
+    "feature": "Choose between several network servers",
+    "category": "Cheats, launching & network",
+    "project": "Modulo R1",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "N1",
+    "feature": "Generic forward-boot CLI",
+    "category": "Launcher integration",
+    "project": "NHDDL",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "N2",
+    "feature": "Reuse SYS-CONF/IPCONFIG.DAT for UDPFS IP",
+    "category": "Cheats, launching & network",
+    "project": "NHDDL",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU2",
+    "feature": "Orbit depth-sorted ring library view",
+    "category": "Library & menu",
+    "project": "LUNA",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU4",
+    "feature": "Animated rotating ICO disc-label artwork",
+    "category": "Library & menu",
+    "project": "LUNA",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU5",
+    "feature": "Per-drive Favorites that travel with the game HDD",
+    "category": "Library & menu",
+    "project": "LUNA",
+    "kind": "Optional",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU6",
+    "feature": "Staged temp-file writes for key persistent library state",
+    "category": "Reliability / persistence",
+    "project": "LUNA",
+    "kind": "Fix",
+    "state": "Partial parity"
+  },
+  {
+    "id": "LU7",
+    "feature": "Neutrino physical power-button DEV9-safe shutdown",
+    "category": "Game compatibility",
+    "project": "LUNA",
+    "kind": "Fix",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU8",
+    "feature": "Neutrino in-game return / IGR",
+    "category": "Game compatibility",
+    "project": "LUNA",
+    "kind": "Feature WIP",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "L1",
+    "feature": "APA HDDs over 2 TiB",
+    "category": "Internal HDD",
+    "project": "Extended APA",
+    "kind": "Not planned",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "X1",
+    "feature": "EXT2 USB filesystem support",
+    "category": "USB / game sources",
+    "project": "E2OPL",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "MP1",
+    "feature": "Xbox 360 controllers over USB",
+    "category": "Controllers & input",
+    "project": "Modular PADEMU",
+    "kind": "Feature Historical",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "MP2",
+    "feature": "Generic USB HID gamepads",
+    "category": "Controllers & input",
+    "project": "Modular PADEMU",
+    "kind": "Feature Historical",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "K1",
+    "feature": "Write debug logs to a BDM device",
+    "category": "Developer / diagnostics",
+    "project": "uOPL (historical)",
+    "kind": "Feature Debug build",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "RR1",
+    "feature": "USB Driving Force wheel with negCon presentation",
+    "category": "Controllers & input",
+    "project": "RRVE / exaconn OPL",
+    "kind": "Feature Experimental",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "S1",
+    "feature": "ATA DRDY waiting for slow-starting SMR / SSD drives",
+    "category": "Internal HDD",
+    "project": "Stable OPL",
+    "kind": "Fix",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "OH12",
+    "feature": "Reusable console-launcher core archive",
+    "category": "Launcher integration",
+    "project": "OPHTML",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU9",
+    "feature": "Projected 3D game-case grid",
+    "category": "Library & menu",
+    "project": "LUNA",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU10",
+    "feature": "Animated ambient-orb Scroll library view",
+    "category": "Library & menu",
+    "project": "LUNA",
+    "kind": "Experimental",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU11",
+    "feature": "Neutrino VMC backing on APA/PFS",
+    "category": "Game compatibility",
+    "project": "LUNA",
+    "kind": "Feature",
+    "state": "Tracked / reassess"
+  },
+  {
+    "id": "LU12",
+    "feature": "PS1 multi-disc playlists and in-game disc switching",
+    "category": "PS1 library",
+    "project": "LUNA",
+    "kind": "Experimental",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "LU13",
+    "feature": "Named PS1 VMC pairs, import/export, backup and recovery",
+    "category": "PS1 saves",
+    "project": "LUNA",
+    "kind": "Experimental",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "LU14",
+    "feature": "Console file manager with copy tray, safe moves and preview",
+    "category": "Companion file manager",
+    "project": "LUNA",
+    "kind": "Companion",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "PX1",
+    "feature": "PS1 guarded per-title code validation",
+    "category": "PS1 runtime",
+    "project": "PSXCore",
+    "kind": "Experimental",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "PX2",
+    "feature": "PS1 GPU/GTE compatibility runtime corrections",
+    "category": "PS1 runtime",
+    "project": "PSXCore",
+    "kind": "Experimental",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "PX3",
+    "feature": "Source-buildable POPS adapter and standalone tester",
+    "category": "PS1 tooling",
+    "project": "PSXCore",
+    "kind": "Alternative",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "DT1",
+    "feature": "Realtek RTL8761B/BU Bluetooth dongle firmware handling",
+    "category": "Controllers",
+    "project": "OPL-DS4RTBT",
+    "kind": "Feature",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "DT2",
+    "feature": "DS4 clone HID CRC and rumble handling",
+    "category": "Controllers",
+    "project": "OPL-DS4RTBT",
+    "kind": "Feature",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "DT3",
+    "feature": "Four-pad menu status and controller setup/test screens",
+    "category": "Controllers",
+    "project": "OPL-DS4RTBT",
+    "kind": "Feature",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "MA1",
+    "feature": "macOS PS1/PS2 import and POPStarter multi-disc packaging",
+    "category": "Desktop companion",
+    "project": "PS2 Manager (macOS)",
+    "kind": "Tool",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "MA2",
+    "feature": "POPS patch archive and reverse VCD conversion tools",
+    "category": "Desktop companion",
+    "project": "PS2 Manager (macOS)",
+    "kind": "Tool",
+    "state": "Tracked / verify"
+  },
+  {
+    "id": "RI5",
+    "feature": "Version-tolerant keyed translation packs with per-glyph fallback",
+    "category": "Language & localization",
+    "project": "RIPPS2",
+    "kind": "Feature",
+    "state": "Tracked / unreleased source"
+  },
+  {
+    "id": "LU15",
+    "feature": "PS1 native IGR menu with return-to-launcher",
+    "category": "PS1 lifecycle",
+    "project": "LUNA",
+    "kind": "Experimental",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "PX4",
+    "feature": "Third PS1 core, optional per-game PSXCore runtime choice",
+    "category": "PS1 integration",
+    "project": "PSXCore",
+    "kind": "Integration candidate",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "PX5",
+    "feature": "MDEC, RGB24 film and buffered interlace fixes",
+    "category": "PS1 FMV",
+    "project": "PSXCore",
+    "kind": "Runtime candidate",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "PX6",
+    "feature": "SPU, capture IRQ, reverb and CDDA audio fixes",
+    "category": "PS1 audio",
+    "project": "PSXCore",
+    "kind": "Runtime candidate",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "PX7",
+    "feature": "Guest memory, CPU timing and load-delay safeguards",
+    "category": "PS1 CPU",
+    "project": "PSXCore",
+    "kind": "Runtime candidate",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "PX8",
+    "feature": "Firmware identity and transactional POPS patch safety",
+    "category": "PS1 integrity",
+    "project": "PSXCore",
+    "kind": "Safety candidate",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "PX9",
+    "feature": "Native save-worker write, flush and ownership guards",
+    "category": "PS1 VMC",
+    "project": "PSXCore",
+    "kind": "Experimental",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "PX10",
+    "feature": "Disc and TOC fingerprinting with save binding",
+    "category": "PS1 multi-disc",
+    "project": "PSXCore",
+    "kind": "Runtime candidate",
+    "state": "Source difference / verify"
+  },
+  {
+    "id": "LU16",
+    "feature": "Per-game Neutrino/OPL core choice",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "LU17",
+    "feature": "Neutrino low/high resolution video modes",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "LU18",
+    "feature": "PS2 startup logo per-title override",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU19",
+    "feature": "Neutrino PS2RD cheat selection",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "LU20",
+    "feature": "File manager conflict choices and verified moves",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "LU21",
+    "feature": "File manager previews, ELF launch, filter/sort",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "LU22",
+    "feature": "Selectable devices and manual rescan",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "LU23",
+    "feature": "Enable or disable each browsing view",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU24",
+    "feature": "Orbit Random Scan and quick shortcuts",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU25",
+    "feature": "Separate or overlapping cover and disc art",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU26",
+    "feature": "PS1 jewel-case versus tall-case style",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU27",
+    "feature": "Scroll logo fallback to title text",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU28",
+    "feature": "Eleven background presets, glass, font",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU29",
+    "feature": "Ambient Orbs colors, trails, shapes",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "LU30",
+    "feature": "English/Spanish/Portuguese localizations",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "LU31",
+    "feature": "Favorites and PS1/PS2/Mix quick filters",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "LU32",
+    "feature": "Optional ambient WAV background music",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "LU33",
+    "feature": "PS1 shared-card auto-creation and named pairs",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "LU34",
+    "feature": "PS1 disc-set editing and image revalidation",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "LU35",
+    "feature": "APA/PFS PS2 VMC manager and capacity modes",
+    "category": "LU capability",
+    "project": "LUNA",
+    "kind": "Partial parity",
+    "state": "Partial parity"
+  },
+  {
+    "id": "PX11",
+    "feature": "Optional adaptive PCM output-rate feedback",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX12",
+    "feature": "Prepared native APA/PFS disc-mapping API",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX13",
+    "feature": "Auto/Default/Custom profile selection API",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX14",
+    "feature": "Guarded native license-string patch",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX15",
+    "feature": "Native USB/internal ATA FAT32/exFAT support",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "PX16",
+    "feature": "APA, MX4SIO, MMCE and multi-USB tester limitations",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Known limitation",
+    "state": "Known limitation"
+  },
+  {
+    "id": "PX17",
+    "feature": "Standalone seven-title paginated tester UI",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "PX18",
+    "feature": "Tester 128-VCD nonrecursive library limit",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Known limitation",
+    "state": "Known limitation"
+  },
+  {
+    "id": "PX19",
+    "feature": "Path-hash-derived game card identity",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX20",
+    "feature": "Create only absent 128 KiB PS1 card slots",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Already present / overlap",
+    "state": "Already present / overlap"
+  },
+  {
+    "id": "PX21",
+    "feature": "Confirmed card-mode pair copying",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "PX22",
+    "feature": "Read-only ATA/APA inventory developer utility",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "PX23",
+    "feature": "On-screen boot stage and save-worker diagnostics",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "PX24",
+    "feature": "Sector-tail cache and seek-status correction",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX25",
+    "feature": "Exact raster/polygon cost fast path",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX26",
+    "feature": "GP0 packet coalescing and callback fast paths",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX27",
+    "feature": "Pinned SDK/driver build dependency checks",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "PX28",
+    "feature": "Immediate power-button shutdown safety limitation",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Known limitation",
+    "state": "Known limitation"
+  },
+  {
+    "id": "PX29",
+    "feature": "Native pfs1 save partition and ownership guards",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "PX30",
+    "feature": "Bounded unaligned upload-row copy",
+    "category": "PX capability",
+    "project": "PSXCore",
+    "kind": "Experimental source",
+    "state": "Experimental source"
+  },
+  {
+    "id": "H4",
+    "feature": "Large achievement watch-list transport fix",
+    "category": "H capability",
+    "project": "xeRAbora",
+    "kind": "Investigate / compare",
+    "state": "Investigate / compare"
+  },
+  {
+    "id": "H5",
+    "feature": "Hardcore API unlock-date classification fix",
+    "category": "H capability",
+    "project": "xeRAbora",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "H6",
+    "feature": "Toggle unlock flash on console TV",
+    "category": "H capability",
+    "project": "xeRAbora",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "H7",
+    "feature": "Live Rich Presence in console status panel",
+    "category": "H capability",
+    "project": "xeRAbora",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "H8",
+    "feature": "Achievement/leaderboard list/grid + badge rings",
+    "category": "H capability",
+    "project": "xeRAbora",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "H9",
+    "feature": "Removal of PS2RD cheats in upstream OPL-RA",
+    "category": "H capability",
+    "project": "xeRAbora",
+    "kind": "Known limitation",
+    "state": "Known limitation"
+  },
+  {
+    "id": "H10",
+    "feature": "Android xeRAbora companion service",
+    "category": "H capability",
+    "project": "xeRAbora",
+    "kind": "Companion / tool",
+    "state": "Companion / tool"
+  },
+  {
+    "id": "RI6",
+    "feature": "RIPDISC optical-disc ripping workflow",
+    "category": "RI capability",
+    "project": "RIPPS2",
+    "kind": "Planned / not shipped",
+    "state": "Planned / not shipped"
+  },
+  {
+    "id": "RI7",
+    "feature": "RIPSHOT in-game screenshot action",
+    "category": "RI capability",
+    "project": "RIPPS2",
+    "kind": "Planned / not shipped",
+    "state": "Planned / not shipped"
+  },
+  {
+    "id": "RI8",
+    "feature": "Memory Files universal search",
+    "category": "RI capability",
+    "project": "RIPPS2",
+    "kind": "Planned / not shipped",
+    "state": "Planned / not shipped"
+  }
+]

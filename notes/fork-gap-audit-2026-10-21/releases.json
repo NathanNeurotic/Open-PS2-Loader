@@ -1,0 +1,1004 @@
+[
+  {
+    "repo": "dnunezx/LUNA",
+    "release": {
+      "tag": "v3.1.3",
+      "published": "2026-10-19T12:43:24Z",
+      "url": "https://github.com/dnunezx/LUNA/releases/tag/v3.1.3",
+      "body": "![LUNA 3.1.3 demonstration](https://github.com/dnunezx/LUNA/blob/35c7183427913005d58bdb9433ccf6420a9d6167/LUNA-3.1.3-demo.gif?raw=true)\r\n\r\n**Starting-disc selection and native in-game disc swapping is fully functional**\r\n\r\n>  PSXCore is now the most compatible PS1 emulator available for PS2. Please report any issues you encounter. \r\n\r\n## Changes since LUNA 2.0.0 Stable\r\n\r\n### PlayStation games, disc swapping, and in-game return\r\n\r\n- Added **PSXCore** integration: discover and launch PS1 VCD games from internal ATA and USB storage alongside PS2 games.\r\n- Added the **L3 platform filter** for Mix, PS2, and PS1 libraries, with saved selection and a brief mode-change notification.\r\n- Added **two-to-four-disc sets** grouped into one library entry. Create, edit, reorder, and remove sets in LUNA, or supply an `.m3u` playlist. Nearby disc-name matches can be offered as suggestions for confirmation.\r\n- Added saved **starting-disc selection** and native **in-game disc swapping**. Hold **L2 + R2 + Select** with one D-pad direction, then release. The pre-launch screen shows the direction-to-disc mapping for the chosen starting disc.\r\n- Added validation of disc identity, missing or duplicate images, changed content, shared volume identity, and memory-card bindings. Changed images can be explicitly revalidated through disc management.\r\n- Added **PS1 in-game return to LUNA**, using the familiar **L1 + L2 + R1 + R2 + Start + Select** combination to open the native menu. Confirm return to load `mc0:/APP_LUNA/luna.elf`.\r\n- Bundled the latest unchanged upstream **PSXCore `360a788`**, including its new LUNA-styled English return menu. **Disc swapping and in-game return are enabled together in this package.**\r\n- Replaced written button names in the disc-swap prompt with controller icons and directional arrows. Added a dark reading panel, brighter and larger text, larger grouped icons, a readable Select button, and clearer disc rows.\r\n- Added per-game **Code Validation** selection, fixed PS1 file launches on exFAT, and added firmware size/hash checks before leaving the library.\r\n\r\n### Memory cards and save management\r\n\r\n- Added automatic creation of missing **default shared PS1 memory cards**, plus named card pairs and per-game pair selection. Disc sets retain their selected pair across swaps.\r\n- Added a separate **PlayStation card manager** with import, export, paired backups, and recovery of interrupted card operations.\r\n- Connected **PS2 virtual memory-card assignments** to game launches, including the matching OPL runtime and supported APA/PFS mappings.\r\n- Improved card validation, interrupted-operation recovery, settings persistence, and staged-file handling. Existing saves remain on the game drive.\r\n\r\n### PS2 launch engines, compatibility, and cheats\r\n\r\n- Added **OPL as an alternate PS2 launch engine**, selectable globally or per game; Neutrino remains the default. Bundled OPL backends cover ATA/FAT32/exFAT, APA/HDL, USB, MX4SIO, iLink, MMCE, and UDPFS.\r\n- Added engine-specific compatibility and video controls, clearer default-option summaries, and a dedicated game-core section.\r\n- Added **per-game cheat selection** from `CHT/<TITLE_ID>.cht` through the matching Neutrino runtime. This path uses raw PS2RD codes; cheats are off by default.\r\n- Corrected OPL handoff memory layout and HDD addressing, and fixed launch handling of saved global and per-game startup-logo choices.\r\n- Updated the matching Neutrino runtime, virtual-card handling, and in-game return integration.\r\n\r\n### Library views, artwork, and responsiveness\r\n\r\n- Redesigned **Scroll** around a horizontal title-logo strip and cover carousel, with depth, a larger selected cover, neighboring-artwork loading, title-text fallback, and glass-themed missing-cover placeholders.\r\n- Scroll logos use `ART/SCROLL/<TITLE_ID>_LGO.png`. Removed the old per-title wallpaper and game-information panel from Scroll.\r\n- Added **PS1 jewel-case or tall-case styling** in List and 3D, plus configurable Separate or Overlap cover/disc layout in List. View appearance controls now sit together under Views.\r\n- Added **3D page transitions**, softer case thumbnails, and safer artwork uploads while drawing.\r\n- Improved **Collections** entry with seven prepared covers, cached-artwork reuse, and fewer loading interruptions.\r\n- Improved **Orbit** cover reuse and crossfades, reducing flashing placeholders during browsing.\r\n- Optimized artwork caching, thumbnail reuse, visible List rows, game lookup, Favorites updates, and view switching for larger libraries.\r\n- Restored and preserved **stable 2.0 animation and navigation timing** in Collections and Orbit while retaining artwork optimizations.\r\n\r\n### Backgrounds, languages, and menus\r\n\r\n- Added animated backgrounds including **Neo, Aurora, Ronin, Gridrunner, Torch, and Tempest**, with a nighttime Gridrunner scene.\r\n- Added saved **English, Spanish, and Brazilian Portuguese** selection, translated UI text, and UTF-8 support in both fonts.\r\n- Added configurable **Ambient Orbs formations**, including skull and atom shapes, with saved enabled-shape choices.\r\n- Polished the main menu and Options layout, blue selection accents, focus highlights, glass contrast, default-value summaries, and save feedback.\r\n- Improved quick-menu readability and closing behavior, added R1 dismissal, and removed duplicate icon shadows.\r\n- Fixed menu-title alignment, font fading, and overlapping per-game video-mode text.\r\n\r\n### File Explorer and storage\r\n\r\n- Expanded **File Explorer** with storage and memory-card browsing, folder navigation, paging, contextual actions, and clearer button prompts.\r\n- Added a persistent **copy tray**, multi-item marking, copy/move workflows, transfer progress, and **Skip / Keep Both / Replace** choices for name conflicts.\r\n- Added folder creation, rename, deletion, file/folder details, filtering, and sorting by name, size, or date. Moves verify copied data before removing their source.\r\n- Added read-only **text/configuration previews** and direct launching of compatible PS2 homebrew ELF files after confirmation.\r\n- Improved storage rescans, including empty-library recovery and preserving the display during refreshes.\r\n\r\n### Reliability and packaging\r\n\r\n- Fixed hardware-freeze causes involving runtime locks, artwork upload limits, and worker-stack reuse during shutdown.\r\n- Hardened ISO scanning and title-cache validation. Scan and transfer failures preserve previous library state and move sources.\r\n- Improved recovery of staged Favorites saves, configuration writes, graphics-allocation failures, texture lifetimes, and repeated cleanup.\r\n- Bundled matching hardware builds of LUNA, PSXCore, Neutrino, and OPL, with license notices and SHA-256 checksums. Optional music remains a separate add-on.\r\n\r\n## Installation\r\n\r\nDownload **`LUNA-v3.1.3-FMCB-mc0.zip`**, extract it, and copy the complete **`APP_LUNA`** folder to **`mc0:/APP_LUNA`**. \r\n\r\nFor PS1 games, place VCD images and optional `.m3u` playlists under **`/VCD/`** on a HDD or USB drive. Supply your own matching **`/POPS/POPS.ELF`** and **`/POPS/IOPRP252.IMG`**. Firmware, games, and saves are not included,\r\n\r\n## Verification\r\n\r\nThe versioned hardware launcher, unchanged PSXCore runtime, Neutrino runtime, and OPL backends built successfully. PSXCore launch-layout validation, package file checks, ZIP contents, and SHA-256 checksums passed.\r\n\r\n[Full source changes since LUNA 2.0.0 Stable](https://github.com/dnunezx/LUNA/compare/v2.0.0...v3.1.3)\r\n"
+    }
+  },
+  {
+    "repo": "coffeedevsolutions/OPLattice",
+    "release": {
+      "tag": "v0.1.0",
+      "published": "2026-08-20T00:02:05Z",
+      "url": "https://github.com/coffeedevsolutions/OPLattice/releases/tag/v0.1.0",
+      "body": "First published build of the SHELF UI for Open PS2 Loader.\n\n## Which file do I want?\n\n| Asset | For |\n|---|---|\n| `OPNPS2LD-MMCE.ELF` | **Most people.** Built from the MMCE fork; supports memory-card SD devices (SD2PSX, MemCard PRO2) |\n| `OPNPS2LD-mainline.ELF` | Mainline OPL only. **Has no MMCE support at all** — flashing this on an MMCE setup makes the memory-card SD disappear |\n\nPut the file wherever your chip already boots OPL from — usually\n`mc0:/OPL/OPNPS2LD.ELF`, or `mmce0:/APPS/OPNPS2LD.ELF` on an SD2PSX under FMCB.\nSee [docs/INSTALL.md](../blob/main/docs/INSTALL.md) and\n[docs/BOOTING.md](../blob/main/docs/BOOTING.md).\n\nSome tools (`tools/stage-device.sh`, `tools/sync-card.sh`) expect the MMCE build\nat `patches/build/OPNPS2LD-MMCE.ELF`; download it there if you use them.\n\n## What's in it\n\n- **SHELF** — a sidebar shell with Home, Library, Apps and Settings pages, drawn\n  over OPL rather than configured through it. Open it with **L3** from anywhere.\n- **Grid themes** — `ItemsList` lays out a real grid, `GameImage` can address a\n  slot other than the highlighted one, with two-axis navigation.\n- **Sort modes, recently-played, `MenuTabs`, play stats, texture-safety fixes.**\n- Builds with `IGS=1`, so **D-pad Up** takes an in-game screenshot where GSM is\n  enabled for that title.\n\n## Status, honestly\n\nSHELF has been run on real hardware and phase 4 was verified at 480p. Phase 8\n(game grouping) is not started. The standalone theme patches `01`–`03` compile\nclean with zero warnings and their effect is confirmed by diffing section sizes\nagainst an unpatched build, but they have not been booted in isolation.\n\n**Test on a setup you can recover.** On an FMCB setup the no-button boot path is\nyour fallback: it runs the ELF baked inside the card image, which nothing here\ntouches. If a build hangs, power-cycle without holding L1.\n\n## Verifying\n\nThese are LZMA-packed, so `strings` on them returns compressed noise and finds\nnone of the feature strings — that is expected and is not evidence of a bad\nbuild. Verify against `opl.elf` in a build tree instead.\n\n| Asset | Size | MD5 |\n|---|---|---|\n| `OPNPS2LD-MMCE.ELF` | 1,389,876 | `07f7fb7b2c0e56202054ca3bb02aa88a` |\n| `OPNPS2LD-mainline.ELF` | 1,363,860 | `6962fc05af24a31551864a2235bcedfc` |\n\nSource for these binaries is this repository: the patches in `patches/`, and the\nwhole-file copies in `patches/shelf/tree/` that patch 09 is regenerated from.\nGPL-3.0-or-later.\n"
+    }
+  },
+  {
+    "repo": "dnunezx/PSXCore",
+    "release": null
+  },
+  {
+    "repo": "NathanNeurotic/Open-PS2-Loader",
+    "release": {
+      "tag": "rolling-korium",
+      "published": "2026-10-21T07:08:58Z",
+      "url": "https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium",
+      "body": "**RiptOPL Rolling (Korium)** — Development build. Korium Komblete built-in theme. [0bd7da48](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/0bd7da480fc012bb0ac2859566196ba7f3c9046d) · `v1.2.0-Beta-4127-Korium-0bd7da4`\n\n<details>\n<summary>Changelog</summary>\n\nLatest 10 commits included in this build:\n\n- fix(udpfs): deliver the last byte of odd-sized reads (#1010) ([582f562f](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/582f562fc2791d7512c14214cb69badd4003eb84))\n- docs(ilink): both i.LINK driver builds now carry the #1018 fix ([d25b03b7](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/d25b03b75cc29fe76d89238043cc0a7348ca035c))\n- docs(readme): note the POPSTARTER i.LINK driver fix in the iLink status (#1018) ([aad86143](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/aad8614353526a0a944830e3094207e89120251f))\n- build(pops-ilink): ship the rebuilt usbhdfsd.irx.ilink; CI proves it (#1018) ([7b07ff63](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/7b07ff6372e9dbc5dd1143c30f68e6858f84d794))\n- fix(pops-ilink): log back in after POPSTARTER's IOP reset (#1018) ([4aa6c4a5](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/4aa6c4a52dd6443de0d5a2135bceb66e9d6b0557))\n- build(neutrino): ship RiptOPL's i.LINK driver in the Neutrino bundle (#1018) ([d9549483](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/d9549483ad3aae619a5196cffefd59601957ece3))\n- test(ilink): simulate the post-reset login hold and unready drives ([e0dd5deb](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/e0dd5debb8c7c4eb8c9c750c965d8a5f89ff8fce))\n- fix(ilink): log back in after an IOP reset; offer only a ready drive (#1018) ([e8b859ce](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/e8b859ce056b915633ce1c140319032222e6a202))\n- fix(launch): gate VMC dependencies on an active MCEMU image ([192716a5](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/192716a5ec347f3a4d8584e4ea6fa7023b3755b2))\n- fix(autoload): skip USB and MX4SIO menu discovery settles ([dde966b9](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dde966b92ad11b1b38887df3648d6be56c89d080))\n\n[Full changelog](https://github.com/NathanNeurotic/Open-PS2-Loader/commits/0bd7da480fc012bb0ac2859566196ba7f3c9046d)\n\n</details>\n\n<details>\n<summary>Downloads</summary>\n\n- [RIPTOPL-v1.2.0-Beta-4127-Korium.zip](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-korium/RIPTOPL-v1.2.0-Beta-4127-Korium.zip) — Full install: loader, artwork, PSU, POPStarter, Ember, Neutrino and companion-tool links.\n- [RIPTOPL.ELF](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-korium/RIPTOPL.ELF) — Standard loader update; replace your existing ELF.\n- [APP_RIPTOPL.psu](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-korium/APP_RIPTOPL.psu) — Standard app for memory-card import; app files only.\n- [RIPTOPL-DEBUG-v1.2.0-Beta-4127-Korium.zip](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-korium/RIPTOPL-DEBUG-v1.2.0-Beta-4127-Korium.zip) — Debug loaders for troubleshooting.\n- [RIPTOPL-LANGS-v1.2.0-Beta-4127-Korium.zip](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-korium/RIPTOPL-LANGS-v1.2.0-Beta-4127-Korium.zip) — Extra interface languages and fonts.\n- [RIPTOPL-VARIANTS-v1.2.0-Beta-4127-Korium.zip](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-korium/RIPTOPL-VARIANTS-v1.2.0-Beta-4127-Korium.zip) — Alternative loaders with extra features, controller emulation and DualSense support.\n- [RIPTOPL-v1.2.0-Beta-4127-Korium-src.zip](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-korium/RIPTOPL-v1.2.0-Beta-4127-Korium-src.zip) — Source code snapshot.\n\n[Installation and guides](https://nathanneurotic.github.io/Open-PS2-Loader/)\n\n</details>\n\n<details>\n<summary>Credits</summary>\n\n- **[PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)** by **[Ripto](https://github.com/NathanNeurotic)**\n- **[udpfs-server](https://github.com/YouKnow-sys/udpfs-server)** by **[YouKnow-sys](https://github.com/YouKnow-sys)**\n- **[OrbitPS2 Manager](https://github.com/Luden02/OrbitPS2-Manager)** by **[Luden](https://github.com/Luden02)**\n- **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)**\n- **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **Akilluminati47**\n- **[OPL PS1 AIO Converter GUI](https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI)** by **[shaan](https://github.com/shaanhomebrew-cloud)**\n- **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)**\n- **[OPL HTTP PC server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)** by **[Docmine17](https://github.com/Docmine17)**\n- **[PS2RD CHT Manager](https://github.com/TheRealNextria/PS2RD-CHT-Manager)** by **[TheRealNextria](https://github.com/TheRealNextria)**\n- **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** · [official releases](https://github.com/Gageformer/Ember/releases)\n- **[BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** by **[Okeanos](https://github.com/Okeanos86)**\n- **[POPStarter](https://www.psx-place.com/resources/popstarter.683/)** by **krHACKen**\n- **[ORBIT Neutrino RA runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **[Daniel (danielnuld)](https://github.com/danielnuld)**\n- **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)**\n- **[PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager)** by **techwritescode**\n\n</details>\n\n<!-- Neutrino Included build: v1.8.0-61-g7be8de2 -->\n\n"
+    }
+  },
+  {
+    "repo": "dnunezx/Open-PS2-Loader",
+    "release": null
+  },
+  {
+    "repo": "Gionnio/ps2manager",
+    "release": {
+      "tag": "v2.1.0",
+      "published": "2026-10-08T18:58:21Z",
+      "url": "https://github.com/Gionnio/ps2manager/releases/tag/v2.1.0",
+      "body": "## PS2 Manager 2.1.0\n\n### 🌍 Language\n* **Language picker** in Settings → Appearance: System, Italiano or English.\n* PS2 Manager asks to relaunch to apply it (**Relaunch Now** / **Later**) and reopens once it has really quit.\n\n### 📥 Install / Update\n```bash\nbrew install --cask gionnio/tap/ps2-manager\nbrew upgrade --cask ps2-manager\n```\n\nPS2 Manager is not signed with an Apple Developer ID. If macOS blocks the first launch, open System Settings → Privacy & Security and click **Open Anyway** (right-click → Open no longer works on macOS 15 or later).\n"
+    }
+  },
+  {
+    "repo": "danielnuld/ps2-launcher",
+    "release": {
+      "tag": "v1.0.2",
+      "published": "2026-10-06T06:00:02Z",
+      "url": "https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2",
+      "body": "A small one: covers show up right away again.\n\n**Website, screenshots, setup guide:** https://danielnuld.github.io/ps2-launcher/\n\n## Fixed\n\n- **Covers took a long time to appear** with the network cable in. In v1.0.1 the covers on screen waited for the\n  launcher's network work at boot (downloading missing covers, asking about achievements), so they could show up\n  only when the achievements chip did. The thread that loads them now goes first.\n\nEverything from [v1.0.1](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.1) is in here too: USB games\nbooting on a real PS2, up to 1024 games, DNS with DHCP, MemCard PRO 2 game IDs.\n\n## Updating\n\nCopy `launcher.elf` from the zip over the one on your USB drive (from v1.0, copy `neutrino/` too). Your `orbit/`\nfolder, covers and virtual memory cards stay as they are.\n\n## Known issues\n\n- The in-game menu doesn't react to a DualSense on an 8BitDo adapter; a wired controller works (#11).\n- \"Native\" video mode can give a black screen on some setups: keep the default 480p.\n- Loading over udpfs needs a wired network on both ends; Neutrino's UDP transport does not recover from WiFi\n  packet loss.\n\n## Checksums (SHA-256)\n\n```\nORBIT-v1.0.2.zip  A5CF88E2F27D3745B01C93D6D691B162972749B35452A38461046A02B3F178A5\nlauncher.elf      C7B900CDD9B0C6006872AC448FDE58B09F1E69950D357969CF438AD31B86F191\n```\n\nGPL-3.0. Ships a fork of [Neutrino](https://github.com/rickgaiser/neutrino) (AFL-3.0) with the in-game menu and the\nachievements agent. Developed with [Claude Code](https://claude.com/claude-code) as the coding assistant.\n"
+    }
+  },
+  {
+    "repo": "coffeedevsolutions/OPHTML",
+    "release": {
+      "tag": "v0.10.0",
+      "published": "2026-09-26T15:35:15Z",
+      "url": "https://github.com/coffeedevsolutions/OPHTML/releases/tag/v0.10.0",
+      "body": "`.uib` format **version 7**, unchanged from 0.9.0. `pip install ophtml` and\n`npm install -g @ophtml/layout` give you this release.\n\n## The console launcher\n\n`ophtml.elf` turns any ps2ui theme into a game launcher: it loads USB, exFAT\nHDD, MX4SIO and MMCE drivers, scans each drive for ISOs in OPL's `DVD/` and\n`CD/` layout, fills whatever theme it finds, and hands the selected game to\nNeutrino. A theme opts in by using names — nothing in C is the author's to\nwrite.\n\n**It is experimental. It has been booted in an emulator in CI and never on a\nPlayStation 2.** `hw.yml` boots a mock build in Play! and diffs its filled\nlist against the previewer drawing the same games, and `console/tests` covers\nthe file names, ISO9660, `SYSTEM.CNF`, the directory scan and Neutrino's\ncommand line on the host. But no drive has been mounted and no game started on\nreal hardware: bench cases **C1 through C8 in `console/README.md` are all\nopen**. Treat a first run on your own console as untested.\n\nStart here: **https://coffeedevsolutions.github.io/OPHTML/runtime/console-launcher/**\n— drive layout, installing Neutrino, putting your own `theme.uib` beside the\nELF, the names the launcher fills, the controls, and what each status line and\nstart-up colour means.\n\n### Downloads\n\n| file | sha256 |\n|---|---|\n| `ophtml.elf` | `9b3f796cdaeb5f9d7bddf2b9979d138106323f07b17b4efb206c5cfe5480f10a` |\n| `ophtml-mock.elf` | `9dfa8248bf0c543bee7a458041a54cfb18b49d2df28b2dc7360becd2a024c037` |\n\nBuilt in the unpinned `ps2dev` container with:\n\n```\nmips64r5900el-ps2-elf-gcc (GCC) 15.2.0\n```\n\n`ophtml-mock.elf` is the mock build CI boots in Play!; `ophtml.elf` is the one\nfor a console.\n\n---\n\n\n`.uib` format **version 7**, unchanged from the release below.\nZero format moves have landed since 0.9.0, which is what a section\nopened straight after a release should say: the release under it\nshipped the format this tree still writes, so a blob baked here loads\nunder a 0.9.0 runtime and the other way round.\n\nThat count is the one number in this file that starts correct and\ndecays. It becomes one the moment a format move lands, and\n`tools/check-versions.py` derives it from the section below rather than\nreading it back, so the check fails the change that moves the format\nwithout moving this line.\n\n### Added\n\n- **The OPHTML console: any ps2ui theme, driven as a game launcher\n  (`console/`).** Until now a baked UI could draw a game list and do\n  nothing with it: the runtime is display-only by design, and device\n  I/O and launching were the app's to write, so nobody's UI could list\n  or start a game. `ophtml.elf` loads USB, exFAT HDD, MX4SIO and MMCE\n  drivers, scans each drive for ISOs in OPL's `DVD/` and `CD/` layout\n  (title IDs from the name or the disc's `SYSTEM.CNF`), fills whatever\n  theme it finds — `theme.uib` beside the ELF, then `OPHTML/theme.uib`\n  on a drive, then the built-in `examples/console` — and hands the\n  selected game to Neutrino with `-qb` through elf-loader's no-reset\n  entry point, so Neutrino reads it through the drivers the console\n  loaded. A theme opts in by using names (`game-{i}` rows,\n  `game-{i}-title`, `sel-title`, `status` and the rest in\n  `console/README.md`), every one optional; nothing in C is the\n  author's to write. Proven so far: `console/tests` on the host (file\n  names, ISO9660, `SYSTEM.CNF`, the directory scan, Neutrino's command\n  line), and `hw.yml` booting a MOCK build in Play! and diffing its\n  filled list against the previewer drawing the same games. Not yet:\n  no drive has been mounted and no game started on a console. Bench\n  cases C1–C8 in `console/README.md` are that evidence, and each is\n  open.\n\n- **A console theme can be checked, previewed and navigated before it\n  reaches a console.** `ps2ui check` holds any blob with numbered\n  `game-N` rows or slots to the console's contract: an error for a row the console would\n  leave on its placeholder (a gap in `game-N`, rows on a screen it never\n  opens, a slot for a row that doesn't exist), a warning for a name it\n  never fills (`game-0-titel`, with \"did you mean 'title'?\"), a slot too\n  short for what it writes, or rows with no title; `ps2ui-check\n  --console` forces it on a blob with none. `sel-*` and `status` alone\n  do not opt a blob in, because other UIs use them for their own panels\n  (channel-6 has five sel-* slots); a blob with no numbered row gets\n  none of these results, so every other blob's count is unchanged. `ps2ui serve --console` fills a theme with the mock games\n  and walks its list the way the console does. And `hw.yml` now presses\n  buttons at the console in Play! — Down three times, R1, L1 — and\n  diffs each frame against the previewer replaying the same keys\n  (worst tile 14.4-15.1 correct, 62-72 for a selection or window one\n  step off). That build runs on the ROM's pad modules, because Play!\n  gives the SDK's `sio2man`+`freepad` no input after an IOP reset\n  (measured against the ROM pair, which it does answer); so it proves\n  the console's navigation, and `freepad` stays bench case C8. The\n  contract, the mock list and the list window now live in\n  `ps2ui_bake/console.py`, which the check, the server and CI's\n  reference frames all read.\n- **Hard caps on what an untrusted theme may ask the compilers for.** A\n  theme is a file somebody else wrote, and the compilers accepted\n  whatever it asked for. Four caps now, each measured before it was\n  chosen: canvas dimensions at 2048, elements at 10000, nesting at 64,\n  and a source image at 32 megapixels. Every one is overridable in\n  `ps2ui.json` beside `vramBudget` -- `{\"limits\": {\"nodes\": 40000}}` --\n  because a cap with no escape gets edited out of the source by the\n  first person it blocks.\n\n  The numbers come from the shipped corpus rather than from taste.\n  Across all 17 screens in `examples/` and `fixtures/`, counted with the\n  compiler's own walk after `data-repeat` expands, the largest is 93\n  elements at depth 5, every supported mode is 640x448 or 640x512, and\n  the largest source image is 1984x1408. The headroom is each cap's\n  own: about 108x for elements, about 13x for depth, and for the canvas\n  none of that kind at all, because 2048 is the widest framebuffer the\n  hardware scans out rather than a multiple of anything the corpus\n  says. *\"An order of magnitude above the biggest real thing\"* stood\n  here until it was read back against the three.\n\n  They fail rather than warn, which is the opposite of what\n  `check-doc-impact.py` argues for itself and right for the same reason:\n  a warning is correct where the work might be fine, and a PlayStation 2\n  cannot display a 30000px canvas under any circumstances.\n\n  The escape hatch broke two verbs before it worked. `ps2ui check` was\n  sent a `--limit` it does not take, and `ps2ui dev` was sent one it\n  did not take either -- the project-file page had listed `limits` as\n  reaching dev the whole time -- so a project declaring any cap got\n  `unrecognized arguments` from the first and a bare usage line from\n  the second, while `ps2ui build` on the same file was fine. Both are\n  fixed, and the fence is a test that reads the spawned tool's own\n  parser rather than a list maintained beside it. And the flag reached\n  both `--help` outputs before it reached any page that quotes one: the\n  two CLI pages and the diagnostics catalogue now carry `--limit`, the\n  three layout caps, the header-read image refusal and the scan-out\n  refusal, and a test holds each quoted usage line to the line its bin\n  prints, because nothing tied the two together. Re-running every\n  sabotage after that found one more: each cap has a test that its\n  check fires, and the image cap was the one whose *number* nothing\n  read, so raising it to ten billion left the whole suite green. It is\n  held to the corpus, to the default an ordinary bake gets, and to the\n  figure the project-file page prints. `ps2ui-bake --limit\n  nodes=5` says so too now: a real cap, correctly spelled, handed to\n  the tool that does not enforce it, answered until now by\n  *\"takes imagePixels=N with N a positive integer\"* -- a complaint\n  about the 5.\n\n- **The console launcher can be downloaded, and the docs site says how\n  to run it.** Until now `ophtml.elf` existed only as a CI artifact,\n  which needs a GitHub login and expires after fourteen days, or as a\n  Docker build of this repository. `console-release.yml` now runs when\n  a version is tagged: it bakes the built-in theme, builds `ophtml.elf`\n  and `ophtml-mock.elf` from the tag, and attaches both with\n  `SHA256SUMS` to that tag's GitHub Release. A tag with no release gets\n  a draft, and a person publishes it (`docs/releasing.md` step 8b).\n\n  The new site page, *Console launcher*, covers the drive layout,\n  installing Neutrino, putting your own `theme.uib` beside the ELF,\n  the names the launcher fills, the controls, and what each status\n  line and start-up colour means. It opens by saying the launcher has\n  booted only in an emulator, and it points at the bench cases that\n  are still open.\n\n- **A released CHANGELOG section is held to its tag.** A merge in #166\n  put four entries into the released `## 0.8.0` section with no conflict\n  marker, and every `tools/check-*.py` passed on that state (F53).\n  `check-versions.py` rule 23 now compares each release tag's section,\n  heading and body, with `git show <tag>:CHANGELOG.md`, and fails on a\n  difference. The one legitimate difference, v0.3.0's \"Tagged and\n  published\" paragraph written after its tag, is recorded with its\n  reason and pinned by hash, so it excuses that text and nothing else.\n  The rule runs on pull requests too, which is where that merge was.\n\n- **The `.uib` loader is fuzzed (S2).** `runtime/tests/fuzz_load.c`\n  runs libFuzzer over `ps2ui_arena_size`, `ps2ui_load` and everything a\n  program does with a blob that loaded, under ASan and UBSan, seeded\n  from every blob the repository builds, with each mutation's CRC\n  rewritten the way a hostile file would carry one. `ci.yml` gives it\n  60 seconds on every change, and `fuzz.yml` gives it half an hour\n  nightly, keeping its corpus between nights. `make -C runtime fuzz`\n  runs it locally. The Python half, `test_fuzz_uib.py`, mutates the\n  example blobs and requires `read_uib` to raise only ValueError and\n  `ps2ui check` never to raise. Both found real faults, listed under\n  Fixed.\n\n### Changed\n\n- **`registry.yml` stops carrying 0.8.0's fribidi remedy, now that 0.9.0\n  is what a stranger installs.** It kept the macOS and Windows remedy\n  steps, and the `-plain` jobs' assertion that fontgen refuses, while the\n  published release still needed Raqm, switching on whether the wheel\n  carried `_raqm_remedy`. 0.9.0 published, and run 35817721457 passed\n  every arm against it: the tutorial on all four with the remedies\n  skipped, and the committed tables from a plain install on macOS arm64,\n  macOS x86_64 and Windows. The remedies, the switch and the refusal\n  assertions are deleted. What replaces the switch is a guard: the\n  first run after the publish, 35817387412, was served 0.8.0 on both\n  Macs by an index that had not caught up, and the old refusal passed\n  there, measuring nothing. The `-plain` jobs now fail by name when pip\n  hands them a release from before F47, rather than later in fontgen\n  with a message that blames the machine.\n\n### Fixed\n\n- **A crafted `.uib` could crash the console before anything drew.**\n  Nothing checked where a table sat, only that it fit, and every table\n  is read in place through a struct pointer. On the EE a misaligned\n  32-bit load is an address error. The fuzzer's first run found\n  `ps2ui_arena_size`, the first call a program makes on a blob, reading\n  the slot table at an odd address. The console launcher makes that\n  call on any `theme.uib` it finds on a drive. `ps2ui_load` now refuses\n  a blob address, a table, or a font's glyph or kern table that is not\n  4-byte aligned, with `PS2UI_ERR_ALIGN`, and `ps2ui_arena_size`\n  returns 0 for one. Every blob the baker writes passes: its header is\n  84 bytes, every entry a multiple of 4, and glyph and kern tables are\n  16-aligned.\n\n- **`ps2ui check` printed a Python traceback for a malformed blob.**\n  `read_uib` promises ValueError on a bad file, and `ps2ui check`\n  catches that and prints the message. A table running past the end,\n  an unknown texture format or a glyph table outside the blob raised\n  `struct.error` or `KeyError` instead. A blob that read cleanly but\n  referenced past a table got `IndexError` from whichever later check\n  subscripted it. The reader now checks every table's extent and\n  alignment as the runtime does and refuses unknown formats. When a\n  reference or a screen range is bad, the checks that walk them are\n  skipped and the report says so; any other error stops nothing.\n\n- **A raised VRAM budget bought room for a framebuffer, which no budget\n  can.** `--vram-budget` exists to let a project declare the texture\n  space it really has. The refusal for a canvas too large to scan out\n  lived inside the advice printed only when no budget was given, so\n  passing one silenced the sentence and the failure together: a\n  30000x30000 canvas baked to a 17760-byte blob with exit 0, past a\n  message whose own last line reads \"a narrower canvas is the only fix\".\n  The budget charges textures and a framebuffer is not a texture, so the\n  check is now separate from the one a flag can reach.\n\n- **A 439 KiB image could cost 432 MB and eleven seconds, or end the\n  bake in a traceback.** An image is pre-scaled to its laid-out size, so\n  the baked bytes were already bounded: 40 distinct 1024x1024 sources\n  bake to 40 KiB. Nothing bounded the decode. A 12000x12000 PNG baked\n  clean in 11.0 seconds to produce 4 KiB of texture, and one step larger\n  Pillow's own `DecompressionBombError` reached the terminal raw. The\n  size is read from the header now, before any decode, so the same file\n  fails in 0.08 seconds with one error line.\n\n- **Nesting deep enough reported `Maximum call stack size\n  exceeded`.** That is V8's stack rather than a decision, so the real\n  limit moved with the machine and the message named neither the\n  element nor a number. How far it moves, bisected on one checkout:\n  1842 on node v22.22.2's default stack, 889 under `--stack-size=500`,\n  7781 under `--stack-size=4000`. The first version of this entry said\n  *\"deeper than about 1500\"*, which was the midpoint of the\n  1000-compiled / 2000-died bracket written as though it were a\n  reading; review of #166 asked for the reading. The refusal is the compiler's now, at 64, and\n  names the line the deepest element sits on. The check is iterative,\n  because a recursive walk to find the depth that breaks a recursive\n  walk overflows before it can report anything.\n\n"
+    }
+  },
+  {
+    "repo": "MiguelQueiroz010/OPL-DS4RTBT",
+    "release": {
+      "tag": "rt-2.7.0",
+      "published": "2026-10-20T21:17:57Z",
+      "url": "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/releases/tag/rt-2.7.0",
+      "body": "## OPL com Bluetooth (DS4 clone / DualSense) via dongle USB\r\n\r\nFork do Open PS2 Loader com suporte a controles sem fio Bluetooth no PADEMU, usando um dongle Bluetooth USB no PS2.\r\n\r\n### Novidades\r\n- Suporte a **DualShock 4 original e clones (\"Wireless Controller\")** e **DualSense** pelo PADEMU, no menu e dentro do jogo.\r\n- **Dongles Realtek RTL8761B(U)**: o firmware é carregado automaticamente ao iniciar (menu e jogo).\r\n- **Pareamento sem fio** pela tela PADEMU > Bluetooth Pads (busca, lista de dispositivos, chaves guardadas na configuração).\r\n- **Vibração no jogo** funcionando em DS4/clones (relatório de saída com CRC32, handshake do relatório 0x05, buffers L2CAP sem corrida).\r\n- Motor grande da vibração com faixa ampliada (96–255), porque os clones quase não respondem a valores baixos.\r\n- Menu minimalista\r\n- MULTITAP EMU + Misto com Controle Real\r\n\r\n### Correção: Kingdom Hearts II (SLPM-66675) com PADEMU + SMB\r\nCom o PADEMU ligado e a ISO no SMB, o KH2 não iniciava o som: o jogo pede 233.432 bytes **contínuos** da RAM da IOP para o buffer de efeitos sonoros e a alocação falhava (`SE(fffffffc)`). O PADEMU, o USBD e a pilha de rede deixavam o total livre e o maior bloco contínuo abaixo disso. O que mudou:\r\n- **Pilha de rede in-game (SMSTCPIP) sem remontagem/fragmentação IP.** Os buffers estáticos de remontagem (5,8 KB) e fragmentação (1,5 KB) ficavam residentes sem serem usados (TCP sobre MTU 1500 não fragmenta).\r\n- **Pool do USBD menor** para o PADEMU (endpoints 10, TDs 12, isoTDs 2, requisições 8), já que só um dongle Bluetooth é usado.\r\n- **Builds de debug** passam a usar o mesmo lwIP enxuto do release (com UDP para o log), para o log refletir a memória real. Antes eles usavam o lwIP completo, e por isso os ajustes de memória nunca apareciam nos testes.\r\n- Mantidos `CDVDMAN_FS_SECTORS = 8` e a janela TCP de 10240 / 8 buffers: reduzi esses valores numa tentativa e o SMB caiu de ~9 ms para ~318 ms por leitura de 16 KB (~50 KB/s), e leituras de 3 setores travavam o FMV.\r\n- Resultado medido no build de debug: o KH2 passa a alocar o buffer de efeitos (`SE(038fd8/038fd8:100%)`) com ~30 KB de sobra, e o SMB volta a ~8 ms por leitura.\r\n\r\n### Como usar\r\n1. Copie `OPL-DualSense-BT-*.ELF` para o PS2 e execute.\r\n2. Espete o dongle Bluetooth numa porta USB do PS2.\r\n3. Em **Configurações > PADEMU**, escolha o modo **DS3/DS4/DS5 BT** e use **Bluetooth Pads > Search** com o controle em modo de pareamento (PS + Share).\r\n4. Ative o PADEMU no jogo e jogue.\r\n\r\n### Limitações conhecidas\r\n- **Este é um release candidato:** a correção do KH2 foi validada num build de debug. Houve uma trava aos ~22 s do primeiro FMV nesse build de debug, ainda sob investigação (suspeita: log por UDP em alta taxa); o build de release ainda não foi testado nesse ponto.\r\n- O KH2 em SMB com PADEMU tem pouca folga de memória. Rodar a ISO por USB ou HDD libera a pilha de rede inteira da IOP.\r\n- A cor do LED de alguns clones ainda não muda (em investigação).\r\n- Sem teste em todos os modelos de dongle: relate o VID/PID do seu em uma issue.\r\n\r\n### Créditos\r\nBaseado no Open PS2 Loader e no PADEMU. Dongle Realtek: firmware do projeto linux-firmware.\r\n\r\n---\r\nBuild: `v1.2.0-Beta-2337-2cf3085` / commit `2cf30851`\r\n"
+    }
+  },
+  {
+    "repo": "akilluminati47/RIPPS2",
+    "release": {
+      "tag": "v1.1.0-beta",
+      "published": "2026-10-21T12:31:28Z",
+      "url": "https://github.com/akilluminati47/RIPPS2/releases/tag/v1.1.0-beta",
+      "body": "<p align=\"center\"><img src=\"https://raw.githubusercontent.com/akilluminati47/RIPPS2/v1.1.0-beta/media/ripps2-test-me.png\" alt=\"RIPPS2: Rip it, build 110\"></p>\n\n## Rip it: RIPPS2 v1.1.0 beta (build 110)\n\n**[Download RIPPS2.elf](https://github.com/akilluminati47/RIPPS2/releases/download/v1.1.0-beta/RIPPS2.elf)** (one file, about 3 MB) and put it in place of your old one. Your settings stay where they were. **[RIPPS2-languages.zip](https://github.com/akilluminati47/RIPPS2/releases/download/v1.1.0-beta/RIPPS2-languages.zip)** puts RIPPS2 in your language (copy its `LNG` folder to the top of a USB drive, the HDD's OPL partition or an MMCE card, then Settings > Display Settings > Language). The **[theme pack](https://github.com/akilluminati47/RIPPS2-themes/releases/latest)** is still edition 108; RIPGRID and RIPFLOW are built in.\n\n<p align=\"center\">\n<img src=\"https://raw.githubusercontent.com/akilluminati47/RIPPS2/v1.1.0-beta/media/b110/01-save-settings-usb.jpg\" width=\"48%\" alt=\"Settings > General: Save Settings To on USB Drive, its hint below\">\n<img src=\"https://raw.githubusercontent.com/akilluminati47/RIPPS2/v1.1.0-beta/media/b110/02-info-metadata.jpg\" width=\"48%\" alt=\"The info page reached with Right: Burnout 3 with its badges, five stars, genre, developer, release and size\">\n</p>\n\n### Every source lists at once\n- **Every source shows its last list the moment it answers.** Build 109 kept an MMCE card's game list on the card; now MMCE, USB, the internal exFAT HDD, MX4SIO, iLink and SMB all keep `RIPPS2.LST` beside their CD and DVD folders. The drive is read again the next time you are idle on Storage, and the list follows whatever changed. With Write Operations Off no list is written.\n- **The APA HDD's own list cache is on** (Cache Game List (HDD APA), switched on once for older settings), and the APA table is read again the next time you are idle, so a game installed from a PC still appears without a refresh.\n- **MX4SIO pauses for the pads while it is read**, as MMCE does: both share the controllers' bus.\n\n### Save Settings To, every drive\n- **Settings > General > Save Settings To** offers USB Drive, MX4SIO, iLink and MMCE as well as Memory Card, Internal HDD and Custom Path, each with its own hint. A drive is saved by its type (`usb0:/RIPPS2`, `mx4sio0:/RIPPS2`, `ilink0:/RIPPS2`, `mmce0:/RIPPS2`) with its RIPPS2 folder made for it, so at boot only that drive's driver loads. A drive that is not connected says so and nothing changes.\n- SMB and UDPBD cannot hold the settings: reaching them needs the settings.\n\n### Info page\n- **A game reached with the d-pad on the info page shows its size** (every game after the first read 0 MiB).\n\n### Underneath\n- The new words in all 33 languages.\n\n**[Full changelog](https://github.com/akilluminati47/RIPPS2/blob/main/CHANGELOG.md)** | **[Watch the v1.1.0 reel](https://youtu.be/Q8ZLd6ArV8s)** | **[Talk about it on psx-place](https://www.psx-place.com/threads/ripps2-a-ps2-front-end-in-one-elf-launch-disc-storage-memory-files.51316/)** | [RIPPCSX2](https://github.com/akilluminati47/RIPPCSX2/releases/latest) for seeing a theme in true 720p and 1080i\n\nBeta: keep your usual loader close by, and tell us what breaks in [the psx-place thread](https://www.psx-place.com/threads/ripps2-a-ps2-front-end-in-one-elf-launch-disc-storage-memory-files.51316/) or [an issue](https://github.com/akilluminati47/RIPPS2/issues). This one wants big libraries on real drives above all: how fast does your list show on the second boot, and do settings saved to a USB drive, MX4SIO, iLink or MMCE come back after a power cycle?\n"
+    }
+  },
+  {
+    "repo": "dnunezx/OrbitPS2-Manager-LUNA-edition",
+    "release": {
+      "tag": "v0.1.1",
+      "published": "2026-10-13T22:05:42Z",
+      "url": "https://github.com/dnunezx/OrbitPS2-Manager-LUNA-edition/releases/tag/v0.1.1",
+      "body": "Stable update for OrbitPS2 Manager - LUNA Edition.\r\n\r\n- Includes artwork download fixes and PS1 preparation improvements since v0.1.0.\r\n\r\nDownloads: Windows x64 installer, Windows x64 portable ZIP, and SHA-256 checksums.\r\n\r\nUnsigned Windows packages. Windows SmartScreen may show a warning.\r\n\r\n"
+    }
+  },
+  {
+    "repo": "hacan359/xerabora",
+    "release": {
+      "tag": "v0.1.0-alpha.19",
+      "published": "2026-10-19T17:25:24Z",
+      "url": "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.19",
+      "body": "- RA mark in the game list can go after the name (Display Settings), so the list stays alphabetical\n- Smaller RA mark on the cover, without the frame\n- Linux ARM64 client for the Raspberry Pi: xerabora-linux-aarch64\n\n"
+    }
+  },
+  {
+    "repo": "juanklimonplay/EonPS2",
+    "release": null
+  },
+  {
+    "repo": "rodrigoGalvanDev/OPL-DualSense-BT",
+    "release": {
+      "tag": "1.1",
+      "published": "2026-10-12T20:18:09Z",
+      "url": "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/releases/tag/1.1",
+      "body": "Fewer Bluetooth hiccups in-game: the dongle stops listening for new connections once your pad is connected (and starts again if it disconnects).\r\nDualSense rumble reports are only sent when the rumble actually changes."
+    }
+  },
+  {
+    "repo": "forbenaj/ps2smb",
+    "release": null
+  },
+  {
+    "repo": "danielnuld/Open-PS2-Loader",
+    "release": {
+      "tag": "ps5-ui-v2",
+      "published": "2026-09-29T06:04:55Z",
+      "url": "https://github.com/danielnuld/Open-PS2-Loader/releases/tag/ps5-ui-v2",
+      "body": "Tema PS5 para Open PS2 Loader, segunda versión.\r\n\r\n## Capturas\r\n\r\n| El fondo toma el color de cada portada | |\r\n|---|---|\r\n| ![Dragon Quest VIII](https://raw.githubusercontent.com/danielnuld/Open-PS2-Loader/ps5-ui-v2/notes/ps5-theme/main-screen.png) | ![Final Fantasy X](https://raw.githubusercontent.com/danielnuld/Open-PS2-Loader/ps5-ui-v2/notes/ps5-theme/gradient-main-ffx.png) |\r\n\r\n| Ficha de juego (□) | Versión Arte |\r\n|---|---|\r\n| ![Ficha de juego](https://raw.githubusercontent.com/danielnuld/Open-PS2-Loader/ps5-ui-v2/notes/ps5-theme/gradient-info.png) | ![Versión Arte](https://raw.githubusercontent.com/danielnuld/Open-PS2-Loader/ps5-ui-v2/notes/ps5-theme/arte-main-dq8.png) |\r\n\r\n<details>\r\n<summary>Vista de conjunto: seis juegos seguidos y dos fichas</summary>\r\n\r\n![Vista de conjunto](https://raw.githubusercontent.com/danielnuld/Open-PS2-Loader/ps5-ui-v2/notes/ps5-theme/overview-gradient.png)\r\n\r\n</details>\r\n\r\n## Novedades\r\n\r\n- **Todas tus fuentes como pestañas**: USB, iLink, MX4SIO, HDD, red y Apps. La activa va resaltada; las que están en modo manual salen atenuadas y se inician al pulsar ✕.\r\n- **El fondo toma el color de cada portada** y se funde al cambiar de juego.\r\n- **Ficha de juego** (□ la abre, ○ vuelve): género, año, estudio, valoración, jugadores, capturas y formato, leídos del `.cfg` de cada juego.\r\n- **Dos estilos**: `PS5` (degradado de color) y `PS5Arte` (el arte `_BG` del juego, desenfocado tras el cristal).\r\n- En una instalación nueva, HDD, red y Apps arrancan en modo manual, así que sus pestañas aparecen sin tocar Ajustes.\r\n\r\n## Instalación\r\n\r\n1. Descarga `OPL-PS5-tema.zip`.\r\n2. Copia `OPNPS2LD.ELF` a tu USB o HDD y lánzalo como lanzas OPL (uLaunchELF, FreeMcBoot, OSDMenu...).\r\n3. Copia la carpeta `THM` a la raíz del mismo dispositivo, junto a `DVD/` y `ART/`.\r\n4. En OPL: Start › Display Settings › Theme › **PS5** (o **PS5Arte**), y Save Changes.\r\n5. Start › Settings › Start Mode: BDM en Auto; HDD, ETH y Apps en Manual o Auto.\r\n6. Display Settings › Cover Art: On. El arte va en `ART/` con el serial del juego (`SLUS_203.28_COV.png`, `_BG`, `_LGO`, `_SCR`, `_SCR2`).\r\n\r\nLos detalles están en el `LEEME.txt` del zip.\r\n\r\n## Estado\r\n\r\nProbado en PS2 real y en PCSX2.\r\nFork no oficial de Open PS2 Loader (licencia AFL 3.0).\r\n\r\n\r\n"
+    }
+  },
+  {
+    "repo": "Rian6/caduceus",
+    "release": {
+      "tag": "v1.2.1",
+      "published": "2026-10-06T15:45:38Z",
+      "url": "https://github.com/Rian6/caduceus/releases/tag/v1.2.1",
+      "body": "O **Caduceus 1.2.1** conecta os desbloqueios do RetroAchievements às notificações na tela do PlayStation 2.\n\nAo conquistar uma medalha durante o jogo, o aplicativo envia automaticamente o nome da conquista e os pontos recebidos ao OPL Caduceus. Um card aparece no canto superior direito da tela do PS2, permitindo acompanhar suas conquistas durante a partida.\n\nEsta versão também inclui o OPL atualizado, disponível pela opção **Salvar OPL-RA**. Exporte o ELF e use-o no console para receber as notificações.\n\nPara começar, conecte sua conta RetroAchievements e mantenha o Caduceus aberto no computador enquanto joga.\n\n[Baixar Caduceus 1.2.1 para Windows x64](https://github.com/Rian6/caduceus/releases/download/v1.2.1/Caduceus-Setup-1.2.1-x64.exe)\n\nAs notificações no PS2 são um recurso experimental e ainda estão em validação no console físico."
+    }
+  },
+  {
+    "repo": "exalandru/Enhanced-PS2-Disc-Launcher",
+    "release": {
+      "tag": "1.1.3",
+      "published": "2026-10-01T06:13:27Z",
+      "url": "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/releases/tag/1.1.3",
+      "body": "# What's new ?\r\n* Added DKWDRV driver support for PS1 games. (Recommended for PAL games patched to 60hz and better overall PS1 experience)\r\n* Now properly works from HDD too\r\n* Fixed reset button during PS1 Games\r\n* Fixed GamePad not initializing sometimes.\r\n* Minor fixes\r\n\r\nSee `README.md` for installation and configuration"
+    }
+  },
+  {
+    "repo": "mihhru/PS2CF",
+    "release": {
+      "tag": "v1.0",
+      "published": "2026-10-14T20:59:09Z",
+      "url": "https://github.com/mihhru/PS2CF/releases/tag/v1.0",
+      "body": "# PS2CF — Release 1.0\n\nCompactFlash and MicroSD-through-CF support for early Japanese PlayStation 2 consoles\nwith a PC CARD slot. Tested on SCPH-10000; SCPH-15000/18000 are target models awaiting\nseparate hardware validation.\n\n- **PS2CF-1.0-release.zip**: OPL CF v1, wLaunchELF CF v1, a customized FMCB 1.966\n  installer, and the ready-to-copy SCPH-10000 PSxMemCard Gen2 image.\n- **PS2CF-1.0-source.zip / .tar.gz**: matching source trees with portable build scripts,\n  dependency provenance and English/Russian build instructions.\n- FAT32/exFAT read/write, single ISO files over 4 GiB on exFAT, validated faster PIO reads.\n- OPL software VMC on CF is not supported; saves to normal cards and Gen2 work separately.\n- See README and VALIDATION.md for hardware observations, measurements and limitations.\n- Verify downloads using **SHA256SUMS**. Automatic GitHub source archives are also\n  available; the explicitly named source archives are the validated packaged copies.\n\n---\n\nПоддержка CompactFlash и MicroSD через CF для ранних японских PS2 со слотом PC CARD.\nПроверено на SCPH-10000; SCPH-15000/18000 — целевые модели без отдельного аппаратного прогона.\n\n- **PS2CF-1.0-release.zip**: OPL CF v1, wLaunchELF CF v1, подготовленный установщик\n  FMCB 1.966 и готовый образ PSxMemCard Gen2 для SCPH-10000.\n- **PS2CF-1.0-source.zip / .tar.gz**: одинаковые исходники, переносимые сценарии сборки,\n  происхождение зависимостей и инструкция на двух языках.\n- FAT32/exFAT, цельные ISO больше 4 ГиБ на exFAT, ускоренное проверяемое PIO-чтение.\n- VMC OPL на CF отключены; обычные карты памяти и Gen2 сохраняют игры независимо от них.\n- Замеры, аппаратные наблюдения и ограничения описаны в README и VALIDATION.md.\n- Контрольные суммы загрузок — в **SHA256SUMS**.\n"
+    }
+  },
+  {
+    "repo": "brunlx/OPL-Future---BETA",
+    "release": {
+      "tag": "v2.0.0",
+      "published": "2026-09-07T01:24:01Z",
+      "url": "https://github.com/brunlx/OPL-Future---BETA/releases/tag/v2.0.0",
+      "body": "# 🚀 OPL FUTURE — v2.0.0\n\n> **O futuro do Open PS2 Loader chegou.** Frontend totalmente redesenhado com o\n> tema neon **FUTURE**, carousel de capas, dock de dispositivos e barra de status HUD.\n\n---\n\n## ✨ Novidades do Frontend FUTURE\n\n- **Carousel de capas** — capa central ampliada com brilho em gradiente, moldura\n  neon (FRAME) e covers vizinhos escalados\n- **SelectorBar (dock)** — seletor de dispositivos no rodapé\n  (`HDD · Ethernet · USB · MX4SIO · APPS`) com pills, ícones e dots de status\n- **StatusBar HUD** — linha de status no topo: `READY / STANDBY / ONLINE / OFFLINE`\n- **Lista de jogos renovada** — barra de seleção com gradiente + acento ciano neon\n- **Empty-state** — tela dedicada quando o dispositivo não tem jogos\n- Tudo **data-driven** via `misc/conf_theme_OPL.cfg`, sem novas APIs\n\nLayout em espaço lógico **640×480**, cores de alto contraste para leitura em\nCRT/vídeo-componente.\n\n## 🛡️ Correções (Fases 2 + 3)\n\n| Bug | Correção |\n| --- | --- |\n| P0 | Efeitos sonoros não carregavam (variável de laço compartilhada em `sfxInit`) |\n| BUG-001 | Divisão por zero no SelectorBar com texturas degeneradas |\n| BUG-002 | Leitura fora dos limites na StatusBar |\n| BUG-003 | Empacotamento do ELF via `make` (caminhos absolutos no ps2-packer) |\n| BUG-101 | Empty-state no carousel sem jogos |\n| BUG-102 | Fallback da capa padrão no cover central |\n| BUG-103 | StatusBar compacta (sem nome duplicado) |\n| BUG-104 | SelectorBar com tiles ícone + dot, sem texto sobreposto |\n\n## 🧬 Build validado\n\n| Artefato | Tamanho |\n| --- | --- |\n| `OPNPS2LD.ELF` | 1 347 044 B |\n| `opl_stripped.elf` | 3 242 676 B |\n| `opl.elf` | 10 336 184 B |\n\n```\nSHA-256 (OPNPS2LD.ELF): b141f06abe79d405f525ebfc47f024d5219a13180942b30364bb55bfa0a3ef19\n```\n\nCompilado com `mips64r5900el-ps2-elf-gcc 15.2.0` — ELF 32-bit MIPS-I,\nstatically linked, empacotado via `make` (BUG-003 corrigido).\n\n## 📥 Como usar\n\n1. Baixe `OPNPS2LD.ELF` abaixo\n2. Copie para o boot do PS2:\n   - Memory Card: `BOOT/BOOT.ELF`\n   - USB / HDD / SMB: pasta `APPS/` ou partição `+OPL`\n3. Organize os jogos em `DVD/` ou `CD/` no dispositivo\n\n## 📚 Documentação\n\n- [`README.md`](https://github.com/brunlx/OPL-Future---BETA) — guia completo\n- [`OPL_FUTURE_UI.md`](https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_UI.md) — design do tema\n- [`OPL_FUTURE_QA_REPORT.md`](https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_QA_REPORT.md) — relatório de QA\n- [`OPL_FUTURE_TEST_PLAN.md`](https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_TEST_PLAN.md) — plano de teste\n\n> ⚠️ **BETA**: build estático + análise validados. Teste em PS2 físico pendente —\n> reporte qualquer problema na aba *Issues*.\n\n---\n\n**Créditos**: OPL original © 2013 Ifcaro & jimmikaelkael (Academic Free License v3.0)."
+    }
+  },
+  {
+    "repo": "cristianCanek/SMB4PS2",
+    "release": null
+  },
+  {
+    "repo": "ps2homebrew/wOPL",
+    "release": {
+      "tag": "latest",
+      "published": "2026-07-23T10:25:10Z",
+      "url": "https://github.com/ps2homebrew/wOPL/releases/tag/latest",
+      "body": "This is the latest automatically compiled wOPL beta. Its files are replaced after each successful build of `wOPL-base`.\n\n[![CI](https://github.com/ps2homebrew/wOPL/actions/workflows/compilation.yml/badge.svg?branch=wOPL-base)](https://github.com/ps2homebrew/wOPL/actions/workflows/compilation.yml)\n[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8ee1eccd035c464eb0a985486b3f71bd)](https://app.codacy.com/gh/ps2homebrew/wOPL/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)\n[![Discord](https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord)](https://tinyurl.com/PS2SPACE)\n[![Downloads](https://img.shields.io/github/downloads/ps2homebrew/wOPL/total?style=plastic&logo=playstation&logoColor=blue&label=%7C%20DOUBLE%20UNOFFICIAL%20OPEN%20PS2%20LOADER%20%7C%20TOTAL%20DOWNLOADS%3A&labelColor=%23faf9f6&color=blue)](https://github.com/ps2homebrew/wOPL/releases)\n"
+    }
+  },
+  {
+    "repo": "Rian6/caduceus-opl",
+    "release": {
+      "tag": "v0.1.1-snapshot.20261006",
+      "published": "2026-10-06T15:41:25Z",
+      "url": "https://github.com/Rian6/caduceus-opl/releases/tag/v0.1.1-snapshot.20261006",
+      "body": "Esta versão traz notificações de conquistas diretamente na tela do **PlayStation 2**, enquanto o jogo está rodando.\n\nAo desbloquear uma conquista, um card compacto aparece no canto superior direito com o nome da conquista e os pontos recebidos. Você acompanha o desbloqueio sem sair da partida ou olhar para o computador.\n\nAs notificações são enviadas automaticamente pelo **Caduceus 1.2.1**, integrado ao RetroAchievements.\n\n- **OPL-RA.ELF:** versão com o card de conquistas durante o jogo.\n- **OPL-RA-debug.ELF:** build de diagnóstico, sem o card.\n- **SHA256SUMS:** hashes para verificar os arquivos baixados.\n\nEste snapshot é experimental. O card conectado ainda está em validação no PS2 físico."
+    }
+  },
+  {
+    "repo": "Luden02/OrbitPS2-Manager",
+    "release": {
+      "tag": "nightly-rc",
+      "published": "2026-10-04T17:10:46Z",
+      "url": "https://github.com/Luden02/OrbitPS2-Manager/releases/tag/nightly-rc",
+      "body": "Nightly\n\nCommit: https://github.com/Luden02/OrbitPS2-Manager/commit/cb915ca62d650a298fd951ec781ea3d39cf1f8cf\nBuild: cb915ca\n\nPre-release of main. This build installs beside the stable app as OrbitPS2Manager Nightly.\n\nUnsigned build. Windows SmartScreen may warn. On macOS, clear quarantine:\nxattr -dr com.apple.quarantine \"/Applications/OrbitPS2Manager Nightly.app\"\n\nThe in-app update check skips this pre-release and follows stable releases.\n"
+    }
+  },
+  {
+    "repo": "slimpuggamer/uOPL",
+    "release": null
+  },
+  {
+    "repo": "Irfanlesnar/PS2-Launcher",
+    "release": {
+      "tag": "v5.0.0",
+      "published": "2026-10-06T14:33:15Z",
+      "url": "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0",
+      "body": "<img width=\"1920\" height=\"1080\" alt=\"v5_release\" src=\"https://github.com/user-attachments/assets/981a624e-ab9c-450c-96cb-65e3e7d5c254\" />\r\n\r\n\r\n## PS2 Launcher v5.0.0\r\n\r\nThis release brings major new storage features, expanded video mode support, better performance, and wider controller compatibility.\r\n\r\nIn this build I release 2 versions\r\n1. PS2-Launcher-v5.0.0.ELF\r\n2. PS2-Launcher-v5.0.0.Black.screen.fix.ELF\r\n\r\nThe launcher may show a black screen when launched from certain versions of uLaunchELF. If you encounter this issue, use **PS2-Launcher-5.0.0 (Black Screen Fix).ELF** instead.\r\n\r\n### What's New\r\n\r\n- **MMCE Support**\r\n  - Added support for MMCE storage.\r\n\r\n- **New Files Tab**\r\n  - Access and manage connected storage devices directly from PS2 Launcher.\r\n  - Copy and paste files\r\n  - Delete files\r\n  - Launch games\r\n  - Launch ELF files\r\n  - Manage files across supported storage devices\r\n\r\n- **Expanded In-Game Resolution Options**\r\n  - Added support for:\r\n    - NTSC\r\n    - NTSC Non-Interlaced\r\n    - PAL\r\n    - PAL Non-Interlaced\r\n    - PAL @ 60Hz\r\n    - PAL @ 60Hz Non-Interlaced\r\n    - PS1 NTSC – HDTV 480p @ 60Hz\r\n    - PS1 PAL – HDTV 576p @ 50Hz\r\n    - HDTV 480p @ 60Hz\r\n    - HDTV 576p @ 50Hz\r\n    - VGA 640×480p @ 60/72/75/85Hz\r\n    - VGA 640×960i @ 60Hz\r\n    - VGA 800×600p @ 56/60/72/75/85Hz\r\n    - VGA 1024×768p @ 60/70/75/85Hz\r\n    - VGA 1280×1024p @ 60/75Hz\r\n\r\n- **Faster and More Stable Apps Loading**\r\n  - Improved apps tab loading speed and overall stability.\r\n\r\n- **New Controller Support**\r\n  - Shanwan PS3 Clone Controller\r\n  - ANT Esports GP300 Pro V2 Wireless Controller\r\n  - Steam Controller 2026\r\n  - Xbox 360 controller\r\n  - Flydigi Apex Wireless controller\r\n\r\n- **Device Sorting**\r\n  - Added device sorting options to the Games tab.\r\n\r\n- **Improved SMB Settings**\r\n  - Added more IP address configuration options for SMB connections.\r\n\r\n- **IGR Path Setting**\r\n  - Added an IGR path option to the Settings page.\r\n  - IGR may not work correctly on some PS2 consoles or configurations.\r\n\r\n- **Connected Controller Count**\r\n  - The UI now shows the number of currently connected controllers.\r\n\r\n### Other Improvements\r\n\r\nVarious internal improvements were also made to improve launcher responsiveness, stability, and overall usability.\r\n\r\nFeedback and bug reports are welcome."
+    }
+  },
+  {
+    "repo": "AdityaKumar7209/Modulo-R1-Beta-Preview---PS2",
+    "release": null
+  },
+  {
+    "repo": "Spaghetticode-Boon-Tobias/RETROLauncher",
+    "release": null
+  },
+  {
+    "repo": "belek666/Open-PS2-Loader",
+    "release": {
+      "tag": "latest",
+      "published": "2020-10-22T17:34:46Z",
+      "url": "https://github.com/belek666/Open-PS2-Loader/releases/tag/latest",
+      "body": ""
+    }
+  },
+  {
+    "repo": "exaconn/Open-PS2-Loader",
+    "release": null
+  },
+  {
+    "repo": "sobecapaklebs-dev/project-titan-magenta-edition",
+    "release": {
+      "tag": "rc4.5-big-update",
+      "published": "2026-08-31T16:21:20Z",
+      "url": "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/releases/tag/rc4.5-big-update",
+      "body": "# Project Titan Magenta Edition — BIG UPDATE\r\n\r\nThis release is one of the largest revisions of Project Titan Magenta Edition so far.\r\n\r\nThe **BIG UPDATE** brings a new round of system-level improvements focused on networking, game execution, stability, usability and the native Titan environment.\r\n\r\n> **Project Titan is not just a launcher.**\r\n> It is a PlayStation 2 operating-system project and native application platform with its own boot chain, runtime services, scheduling, package infrastructure, system APIs and integrated game backends.\r\n\r\n## Highlights\r\n\r\n### Cheats & Graphics Enhancements\r\n\r\nProject Titan now includes integrated per-game patch support for both **Titan Neutrino** and **Titan UL**.\r\n\r\nGames can now expose dedicated:\r\n\r\n- **Cheats**\r\n- **Graphics Enhancements**\r\n\r\nmenus directly from the Titan interface.\r\n\r\nThe system supports persistent selections, automatic enhancement presets, experimental patches and safe per-title patch databases.\r\n\r\nWhen graphical enhancements are active, Titan can identify the game as **Titan Enhanced** during launch.\r\n\r\nGameplay cheats are kept separate from visual enhancements, with dedicated handling and a few very Titan-like messages when you decide to make the game a little easier. :)\r\n\r\n### Network improvements\r\n\r\nThis revision contains another significant pass over Titan's network subsystem, including improvements to:\r\n\r\n- network initialization;\r\n- service stability;\r\n- connection handling;\r\n- background network activity;\r\n- resource ownership and cleanup;\r\n- integration with Titan system services.\r\n\r\nThe goal is not only to make networking more reliable, but to continue treating it as a real operating-system service rather than functionality owned by individual applications.\r\n\r\n### Stability improvements\r\n\r\nA large amount of work in this revision happened below the visible interface.\r\n\r\nThe BIG UPDATE includes fixes and hardening across:\r\n\r\n- runtime lifecycle management;\r\n- memory and resource ownership;\r\n- game handoff paths;\r\n- background services;\r\n- storage operations;\r\n- native application execution;\r\n- boot/runtime coordination;\r\n- failure recovery;\r\n- system cleanup between workloads.\r\n\r\nSeveral regressions discovered through real-world testing were also addressed during this development cycle.\r\n\r\n### Native application platform improvements\r\n\r\nProject Titan continues evolving beyond game launching.\r\n\r\nThe system provides its own environment for native Titan applications, including:\r\n\r\n- Titan runtime APIs;\r\n- package installation infrastructure;\r\n- TPKG applications;\r\n- scheduling and lifecycle services;\r\n- shared input, audio, graphics and storage services;\r\n- system notifications;\r\n- networking APIs;\r\n- memory/VRAM management strategies;\r\n- Titan-specific optimization systems for native software.\r\n\r\nGame launching remains an important part of Project Titan, but it is only one subsystem of the larger platform.\r\n\r\n## Game execution\r\n\r\nThe update preserves the established production game backends:\r\n\r\n- **Titan Neutrino**\r\n- **Titan UL**\r\n\r\nwhile adding the new game-patch infrastructure around them without replacing the validated production engine binaries.\r\n\r\nProject Titan now has a cleaner separation between:\r\n\r\n- game execution;\r\n- gameplay cheats;\r\n- graphical enhancements;\r\n- system runtime services.\r\n\r\n## Release packages\r\n\r\nTwo packages are provided.\r\n\r\n### `TITAN_SYSTEM.TINS`\r\n\r\nThe packaged Project Titan system image intended for supported Titan installation/update workflows.\r\n\r\n### Installerless package\r\n\r\nA manual installation package for users who want to deploy the system without using the Titan installer.\r\n\r\nThe installerless layout keeps the normal Titan boot architecture:\r\n\r\n`Memory Card BOOT.ELF → Titan Bootloader → USB kernel.elf → Project Titan`\r\n\r\n## BIG UPDATE\r\n\r\nThis release is called **BIG UPDATE** because it is not centered around one headline feature.\r\n\r\nIt represents another major consolidation of the entire Project Titan platform: networking, game patches, runtime behavior, stability, native applications, system services and many smaller improvements made throughout the project.\r\n\r\nThere is still work ahead — Project Titan remains an ambitious and actively developed system — but this revision moves the project considerably closer to the original goal:\r\n\r\n**turning the PlayStation 2 into a modern, extensible system platform instead of simply giving it another game launcher.**\r\n\r\n**Emotion enhanced.  \r\nFeel the processing.**"
+    }
+  },
+  {
+    "repo": "pcm720/nhddl",
+    "release": {
+      "tag": "v1.2.2",
+      "published": "2026-04-05T15:50:56Z",
+      "url": "https://github.com/pcm720/nhddl/releases/tag/v1.2.2",
+      "body": "## Changelog\r\n- Support for Neutrino 1.8.0\r\n- UDPBD backend has been replaced with UDPFS (#83)\r\n- `udpbd_ip` argument/option has been changed to `udpfs_ip`\r\n- Fixed HDL backend not showing all ISOs under certain circumstances (#80)\r\n- Fixed path arguments not being parsed correctly\r\n- Refactored NHDDL initialization process to fix config files not being loaded (#85/#90)\r\n\r\nYou can find the README for this release [here](https://github.com/pcm720/nhddl/blob/v1.2.2/README.md)\r\n\r\n### Notes\r\n- This release is based on the pre-2.0.0 legacy branch of NHDDL.\r\n- Make sure to use the latest Neutrino nightly (v1.8.0-13 or higher). \r\n  Neutrino v1.8.0-35 attached to this release is the currently recommended version.\r\n- Due to changes in the initialization process, NHDDL now looks for `nhddl.yaml`:\r\n  - Near `nhddl.elf`\r\n  - `/nhddl/nhddl.yaml` on the device it was loaded from.\r\n\r\n### Known issues (will be fixed in 2.0.0)\r\n- NHDDL will not load `nhddl.yaml` when launched from APA HDD"
+    }
+  },
+  {
+    "repo": "officialjuicedesigns/OPL-Evolution",
+    "release": {
+      "tag": "v0.27.0-alpha",
+      "published": "2026-07-26T03:08:03Z",
+      "url": "https://github.com/officialjuicedesigns/OPL-Evolution/releases/tag/v0.27.0-alpha",
+      "body": "OPL Evolution v0.27.0-alpha is the first public prototype release.\n\nThis is an unofficial experimental fork of Open PS2 Loader. Keep Free McBoot,\nwLaunchELF, and a known-good OPL recovery ELF available while testing.\n\nHighlights:\n\n- Standalone Evolution boot flow and dashboard\n- Native PS2 scanning and launching through OPL's loader engine\n- PS1 scanning and launching through an existing POPStarter setup\n- PS2 and PS1 artwork\n- Persistent controller, memory-card, storage, and network widgets\n- Native display and audio controls\n- Save, exit-to-Browser, and power-off system menu\n- Per-game physical, generic, and dedicated VMC assignments\n- 8, 16, 32, and 64 MB VMC creation with progress reporting\n\nKnown limitations:\n\n- Hardware coverage remains limited\n- Network settings are read-only in Evolution\n- Homebrew-library scanning is not complete\n- POPStarter and its required files are not distributed\n- 480p is only suitable for compatible cables, adapters, and displays\n\nThe attached ELF has SHA-256:\n\n`A76B46EA8339E573E46A23DAAD190DE264516D1E9482EF8DA10E04D2BDBBE67B`\n\nPlease include console model, region, storage type/filesystem, video\nconnection, game serial/format, and exact reproduction steps in test reports.\n"
+    }
+  },
+  {
+    "repo": "L10N37/Open-PS2-Loader-Extended-APA",
+    "release": {
+      "tag": "v1.2.0-Beta-2273-Extended-APA-1",
+      "published": "2026-09-06T17:10:50Z",
+      "url": "https://github.com/L10N37/Open-PS2-Loader-Extended-APA/releases/tag/v1.2.0-Beta-2273-Extended-APA-1",
+      "body": "# Open PS2 Loader Extended APA - Hardware-Tested Release 1\n\nThis is the first public hardware-tested release of **Open PS2 Loader Extended APA**.\n\nIt is intended for PlayStation 2 internal HDDs larger than 2 TiB that have been prepared using the matching **Extended APA / banked APA** layout.\n\n## Real-hardware validation\n\nValidated on a real PlayStation 2 with a 4 TB HDD:\n\n- FHDB / FreeHDBoot boot works.\n- Bank 0 HDL games are detected and launch.\n- Bank 1 HDL games are detected and launch.\n- OPL artwork and configuration remain in Bank 0 and work for Bank 1 games.\n- Bank 0 remains the conventional APA/PFS system and application area.\n\n## Layout\n\n- **Bank 0:** conventional bootable APA/PFS + FHDB + OPL + applications/art/config + optional HDL games.\n- **Bank 1+:** games-only APA banks.\n\nEach full bank covers `0x100000000` 512-byte sectors (2 TiB). Upper-bank APA addresses remain bank-relative; OPL translates them to physical LBAs using the bank base.\n\n```text\nphysical_lba = (bank_index * 0x100000000) + relative_lba\n```\n\nSee `EXTENDED_APA.md` for the complete technical description and Mermaid diagram.\n\n## Exact tested build\n\n- OPL base version: `v1.2.0-Beta-2273`\n- Extended APA source commit: `b2e39f0d6b569cf79a3235dc47050016d102cd31`\n- Release ELF SHA-256: `aa7d6765f88fec8d059ebb4fafc76e75e5cd8f8820e083fec0f45640ed32a244`\n\nThe attached ELF is the exact CI-produced binary used for the successful hardware test. It is intentionally pinned so PS2 HDD Manager can download and verify a known-good Extended APA loader when provisioning drives larger than 2 TiB.\n\n## Important\n\nThis remains experimental. It is not required for ordinary <=2 TiB APA HDDs. Use official Open PS2 Loader for normal configurations unless Extended APA support is specifically required.\n\nA >2 TiB Extended APA disk must be prepared by a compatible formatter/writer. An official OPL build will not enumerate the upper APA banks.\n"
+    }
+  },
+  {
+    "repo": "ps2homebrew/Open-PS2-Loader",
+    "release": {
+      "tag": "latest",
+      "published": "2026-10-13T04:07:00Z",
+      "url": "https://github.com/ps2homebrew/Open-PS2-Loader/releases/tag/latest",
+      "body": "## Documentation\n- add contributing guidelines ([Julian Uy](https://github.com/ps2homebrew/Open-PS2-Loader/commit/b7075ffb9347db67f6b7ed359ddf663fe6952ea1))\n- use markdownlint on README.md ([Julian Uy](https://github.com/ps2homebrew/Open-PS2-Loader/commit/a677f272f53db3d6716ac3b1005cb5e8d7b8c673))\n- grammar fixes ([Julian Uy](https://github.com/ps2homebrew/Open-PS2-Loader/commit/7fdf949c9fce1cd416025f9d097e408610fbc2a1))\n- Add note about different proejcts ([Julian Uy](https://github.com/ps2homebrew/Open-PS2-Loader/commit/b3a2199795fe89ba7e2dd7b843354472dff2c3eb))"
+    }
+  },
+  {
+    "repo": "mystyq/Stable-Open-PS2-Loader",
+    "release": {
+      "tag": "release",
+      "published": "2026-05-09T21:28:35Z",
+      "url": "https://github.com/mystyq/Stable-Open-PS2-Loader/releases/tag/release",
+      "body": "# **Stable OPL Release Summary**\r\n\r\nA faster, more stable OPL experience with improved device support and **high‑performance TAR loading** for artwork, per‑game config, and cheats.\r\n\r\n### **Key Improvements**\r\n- **IOP Reset Fixed** — IOP now resets cleanly, preventing black screens when exiting games or using IGR.\r\n- **[MMCE support](ca://s?q=Explain_MMCE_support_in_OPL)** — Game ID switching now works correctly across multiple devices.\r\n- **[Game list stability](ca://s?q=How_OPL_game_list_freezes_were_fixed)** — Eliminates freezes when loading very large game lists.\r\n- **[Faster sorting](ca://s?q=Why_OPL_game_list_sorting_is_faster_now)** — Significant speed‑ups when sorting games.\r\n- **[Improved boot reliability](ca://s?q=How_OPL_boot_stability_was_improved)** — Smoother startup without stalls.\r\n- **[High‑speed TAR loading](ca://s?q=How_OPL_art_tar_speeds_up_art_loading)** — ART, CFG, and CHT files now load from `.tar` archives for dramatically reduced I/O.\r\n- **Plus, other goodies like scrolling text on long file names**\r\n\r\n---\r\n\r\n# **TAR Support Overview (ART / CFG / CHT)**\r\n\r\nsOPL now supports loading **artwork**, **per‑game config**, and **cheat files** directly from TAR archives.  \r\nThis eliminates thousands of filesystem lookups and provides a massive speed boost on HDD, MMCE.\r\n\r\n### **Supported TAR files**\r\n- **ART/art.tar** — Covers, backgrounds, icons, titles, etc.\r\n- **CFG/cfg.tar** — Per‑game configuration files\r\n- **CHT/cht.tar** — Cheat files (`.cht`)\r\n\r\n### **How it works**\r\n- TARs are **lazy‑loaded** only when needed.\r\n- A **binary cache** (`*_cache.bin`) is generated on first load.\r\n- Cache is reused on every boot.\r\n- Cache auto‑invalidates **only if the TAR file size changes**.\r\n- Only one device can be used for each TAR file.  (e.g. art.tar on MMCE, cht.tar on MMCE, cfg.tar on HDD)"
+    }
+  },
+  {
+    "repo": "dnunezx/neutrino-luna",
+    "release": null
+  },
+  {
+    "repo": "GeekRhapsody/OdysseyLauncher",
+    "release": {
+      "tag": "v0.18.0",
+      "published": "2026-10-19T17:22:08Z",
+      "url": "https://github.com/GeekRhapsody/OdysseyLauncher/releases/tag/v0.18.0",
+      "body": "**Full Changelog**: https://github.com/GeekRhapsody/OdysseyLauncher/compare/v0.17.1...v0.18.0"
+    }
+  },
+  {
+    "repo": "elmariolo/OPL-Server",
+    "release": {
+      "tag": "v2.0",
+      "published": "2022-08-24T06:19:55Z",
+      "url": "https://github.com/elmariolo/OPL-Server/releases/tag/v2.0",
+      "body": "v2.0\r\n+Now you can select your folder path to Share.\r\n+Full Range of Server Port (1-65535).\r\n+New command line args: /SILENT /HIDE /NOLOG /START\r\n+App now can hide in system tray.\r\n+Code separated in regions.\r\n+Optimized code when no log is activated (Faster!)"
+    }
+  },
+  {
+    "repo": "NathanNeurotic/uOPL",
+    "release": {
+      "tag": "latest",
+      "published": "2026-07-23T10:25:10Z",
+      "url": "https://github.com/ps2homebrew/wOPL/releases/tag/latest",
+      "body": "This is the latest automatically compiled wOPL beta. Its files are replaced after each successful build of `wOPL-base`.\n\n[![CI](https://github.com/ps2homebrew/wOPL/actions/workflows/compilation.yml/badge.svg?branch=wOPL-base)](https://github.com/ps2homebrew/wOPL/actions/workflows/compilation.yml)\n[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8ee1eccd035c464eb0a985486b3f71bd)](https://app.codacy.com/gh/ps2homebrew/wOPL/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)\n[![Discord](https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord)](https://tinyurl.com/PS2SPACE)\n[![Downloads](https://img.shields.io/github/downloads/ps2homebrew/wOPL/total?style=plastic&logo=playstation&logoColor=blue&label=%7C%20DOUBLE%20UNOFFICIAL%20OPEN%20PS2%20LOADER%20%7C%20TOTAL%20DOWNLOADS%3A&labelColor=%23faf9f6&color=blue)](https://github.com/ps2homebrew/wOPL/releases)\n"
+    }
+  },
+  {
+    "repo": "cha0ticd4rksid3/PS2-Webcore-Launcher",
+    "release": {
+      "tag": "2.1.0-CodeName-FlashBack",
+      "published": "2026-10-20T17:58:41Z",
+      "url": "https://github.com/cha0ticd4rksid3/PS2-Webcore-Launcher/releases/tag/2.1.0-CodeName-FlashBack",
+      "body": "Controller Fix\r\n<img width=\"1920\" height=\"1080\" alt=\"Снимок экрана 2026-10-20 214724\" src=\"https://github.com/user-attachments/assets/ce10a6c6-3970-490e-9f78-658f0e3839cf\" />\r\n"
+    }
+  },
+  {
+    "repo": "ffgriever-pl/Memory-Card-Annihilator",
+    "release": {
+      "tag": "latest",
+      "published": "2026-09-30T10:15:19Z",
+      "url": "https://github.com/ffgriever-pl/Memory-Card-Annihilator/releases/tag/latest",
+      "body": ""
+    }
+  },
+  {
+    "repo": "NathanNeurotic/neutrino",
+    "release": {
+      "tag": "udpfs-ack-e6f1392",
+      "published": "2026-10-16T15:37:46Z",
+      "url": "https://github.com/NathanNeurotic/neutrino/releases/tag/udpfs-ack-e6f1392",
+      "body": "Candidate runtime with the UDPFS stale-ACK comparison and timeout-preserving stale-ACK wait. Source: e6f139240e3e64beb34807d2e9ba90a9def80ae6, based on upstream 7be8de2798c99af433c91993e021746a54d6800d. Exact-head CI target build and 24 actual-source send-loop tests passed. Cross-repository transport replay passed 144 expected outcomes, including stable official 1.8.0, development official, the repaired client, both send paths, wraparound and both Python server revisions. Console acceptance remains pending. Complete runtime archive SHA-256: 22d3304f7a9e4d79826ef90fd6233deacea900eab5752d58fbd65734d3cc0ff8. License: AFL-3.0. This candidate does not replace the latest release.\r\n"
+    }
+  },
+  {
+    "repo": "dnunezx/nhddl-luna",
+    "release": null
+  },
+  {
+    "repo": "saildot4k/PlayStation2-Basic-BootLoader-Extended",
+    "release": {
+      "tag": "v2.0.0",
+      "published": "2026-06-14T04:38:43Z",
+      "url": "https://github.com/saildot4k/PlayStation2-Basic-BootLoader-Extended/releases/tag/v2.0.0",
+      "body": "__No Thanks to TnA-Plasitc:__\r\nThis message will remain until TnA is no longer a mod/admin/server of ANYTHING PS2 related. He has already been kicked as mod and user from multiple places for harassement and his disgusting behavior. Other PS2 related Discord servers have already taken steps and removed his discord server as a \"Recommended Server\".\r\n\r\nReddit: r/PS2 - kicked as a moderator\r\n\r\nDiscord: Perma-Bans\r\n\r\nPSX-Place (yet still allowed to be a mod at website!?)\r\nPS2 Homebrew\r\nPS2 Space\r\nConsolemods.org\r\nAthena PS2 System\r\nBitfunx"
+    }
+  },
+  {
+    "repo": "NathanNeurotic/PS2-Servers",
+    "release": {
+      "tag": "main-267-42c0613",
+      "published": "2026-10-20T18:58:18Z",
+      "url": "https://github.com/NathanNeurotic/PS2-Servers/releases/tag/main-267-42c0613",
+      "body": "Automatic development build from `main`, published as a\n**pre-release**. For stable downloads use the\n[latest tagged release](https://github.com/NathanNeurotic/PS2-Servers/releases/latest).\n\nCommit: 42c0613bed67a603a06d59fd95375c7cc6a0fae3\n\n## Downloads\n\nThere are a lot of files below. **You need exactly one.** Find your\ncomputer in this table and ignore everything else:\n\n| Your computer | Download this |\n|---|---|\n| Windows, normal (64-bit) | **`PS2Servers-windows-x64-portable.zip`** |\n| Windows, older 32-bit PC | **`PS2Servers-windows-x86-portable.zip`** |\n| Linux | **`PS2Servers-linux-x64`** |\n| Mac, Apple Silicon (M1–M4) | **`PS2Servers-macos-arm64.zip`** |\n| Mac, Intel | **`PS2Servers-macos-x64.zip`** |\n\nOn Windows: unzip it, open the folder, run `PS2Servers.exe`. That's it.\n\n<details>\n<summary>Why \"portable\", and what are the other files?</summary>\n\nThe **portable** build is the same app laid out as a plain folder,\nwith no self-extracting wrapper. This avoids one source of heuristic\ndetections, but the portable app remains unsigned and can also be\nflagged. The single-file `PS2Servers-windows-x64.zip` is published\nfor convenience; verify the exact file with its checksum/attestation.\n\nOn Linux, `PS2Servers-linux-x64` is a single executable; take\n`PS2Servers-linux-x64-portable.tar.gz` instead if `/tmp` is mounted\n`noexec`. macOS ships as a `.app` inside the zip.\n\n`PS2Servers-source.zip` is the source, for running from Python\ndirectly or for inspection.\n\nEverything beginning **`PS2ServersEdge-`** is a different program —\nsee the section below. Choose it for headless use; Desktop is the\ngraphical launcher.\n</details>\n\n### PS2 Servers Edge — routers, NAS, Raspberry Pi\n\nThe `PS2ServersEdge-*` files are the native headless edition, with an optional\nweb dashboard and no Python runtime, for\ndevices where the launcher does not fit — routers, NAS units, Raspberry Pi and\nother embedded Linux. Windows and macOS builds exist for people who want one\nnative binary and no Python runtime.\n\nEach file is named for the device family it serves, for example\n`armv5-pogoplug-sheevaplug-dockstar`, `edgerouter-octeon-mips64`, or\n`router-mips-little-endian-mt7621`. Run `uname -m` on the device and match it in\n[EDGE-WHICH-BUILD.md](https://github.com/NathanNeurotic/PS2-Servers/blob/main/docs/EDGE-WHICH-BUILD.md);\nevery archive also contains a `WHICH-DEVICE.txt` confirming what it is for.\nAn incompatible build usually refuses to start; verify the OS and architecture\nbefore installing it.\n\nEdge serves **three** protocols, one subcommand each, and can run more than one\nat a time:\n\n```sh\nps2servers-edge udpfs --root /mnt/games      # folder as a network file share\nps2servers-edge udpbd --image /mnt/ps2.img   # disk image as a network drive\nps2servers-edge smb   --share games=/mnt/games   # SMBv1, for OPL and POPSTARTER\n\n# folder AND a disk image from one server, over UDPFS block access\nps2servers-edge udpfs --root /mnt/games --block-device /mnt/ps2.img\n```\n\n`smb` is what OPL's own network game list and POPSTARTER use. It listens on\n**TCP port `1111`** rather than 445, because ports below 1024 need root and Edge\nruns unprivileged — set OPL's \"SMB Port\" to match.\n\nThere is also a fourth subcommand, `webui`, which serves a small web dashboard\nfor configuring and restarting the others from a phone or a browser. **It binds\n`127.0.0.1` and refuses to start on any other address without a password**\n(`--auth-pass`, or `--insecure` to have one generated and logged), because it\nrewrites configuration and restarts services — reaching it is equivalent to\nshell access on the device. It speaks plain HTTP, so the password stops casual\naccess on the LAN, not someone capturing traffic.\n\nEdge supports **CSO and ZSO but not CHD** (CHD needs a native library that would\nbreak static linking — use the Desktop app for CHD). It **allows the console to\nwrite by default**; saves require a client that supports that write path.\nPass `--read-only` to prevent writes. `--metrics`\nlogs periodic transfer statistics, which is the way to tell a slow transfer from\na stalled one on a machine with no screen. `--compression-cache-size` tunes how\nmany decompressed blocks are held per image, which matters most on the slowest\ndevices.\n\nFor OpenWrt, build the source package for your exact target rather than using\nthese generic binaries — see\n[OPENWRT.md](https://github.com/NathanNeurotic/PS2-Servers/blob/main/docs/OPENWRT.md).\nThe OpenWrt package starts read-only; set `option read_only '0'` in\n`/etc/config/ps2servers-edge` to let the console save. The UCI configuration exposes the serving options, including `block_device`;\nCLI-only flags such as `--quiet` are not UCI options. Each subcommand is its own procd\ninstance, so a board can serve UDPFS and SMB at once. There are systemd units\nfor the same thing on ordinary Linux, where `systemctl restart\nps2servers-edge@smb` does restart just that one.\n\nOn OpenWrt the dashboard's **Save and Restart need root** — `uci commit` rewrites\na file in `/etc/config` and restarting goes through `/etc/init.d` — so they are\noff by default and report a permission error. Status, configuration and file\nbrowsing all work regardless. Set `option run_as_root '1'` to enable them, which\nruns the dashboard as root; that is a real trade, which is why it is a choice.\n\n> **Edge gameplay and writes have not been verified on a physical PlayStation 2 or an emulator.** Its\n> wire behaviour is checked in CI against the hardware-validated Python servers,\n> including a byte-for-byte comparison for UDPBD, which is the strongest evidence\n> available without a console — and not the same thing as one. Treat the write\n> paths as unproven.\n\n## Security transparency\n\nPS2 Servers is an open-source PS2 homebrew utility for user-controlled local\nserver setup. It runs local LAN servers for Open PS2 Loader:\n\n- **SMBv1** — guest file sharing. Desktop defaults to TCP `1025`; Core/standalone\n  and Edge default to TCP port `1111`. Match the running server’s printed port.\n- **SMB2/SMB3** — a separate, newer server for clients that speak them,\n  off by default and with NTLMv2 authentication when credentials are set.\n- **UDPFS** — UDP file serving, normally UDP port `0xF5F6` (62966).\n- **UDPBD** — UDP block-device serving, normally UDP port `0xBDBD` (48573).\n- **HTTP game serving** — experimental, read-only, normally TCP `1100`;\n  distinct from Edge’s management dashboard. Set the client port explicitly.\n\nFor UDPFS, Auto negotiates Standard/Modulo per peer. If games list but fail to\nlaunch on a multi-interface PC, use the UDPFS card’s **Bind address (PC)** /\n**Use LAN IP**, then stop/start UDPFS. The top LAN IP selector alone supplies\nsetup hints. See [UDPFS setup](https://github.com/NathanNeurotic/PS2-Servers/blob/main/README.md#udpfs-games-list-but-fail-to-launch).\n\nThe PS2 Servers Edge build additionally offers an optional HTTP management\ndashboard on TCP `8082` (`ps2servers-edge webui`). It is **off by default**,\nbinds loopback when started, and refuses any other bind address without a\npassword. No listener is opened unless you start it.\n\nEvery server here is started by the user and listens on the local network only.\nNothing phones home, and nothing opens a port at install time.\n\nWindows behavior:\n\nDirect-link setup also requires elevation to configure/restore its dedicated\ninterface and DHCP helper. Disable it before removing the app. The launcher\nstores per-user settings (including configured credentials); manually installed\nservices and containers require separate cleanup.\n\n\n- The Windows SMB server uses PS2 Servers' built-in SMB/CIFS implementation and does not enable Windows SMB1.\n- The app does not enable or disable Windows optional features.\n- Windows Firewall changes happen only after user action/consent and use rules named `PS2 Servers - ...`.\n- Advanced SMB port `445` mode is optional and requires administrator consent.\n- To uninstall, delete the extracted app folder. To remove PS2 Servers firewall rules, use the GUI action or `tools/remove-windows-firewall-rules.ps1`.\n\nVerification:\n\n- Release assets include SHA-256 checksums: a single `SHA256SUMS.txt` on\n  development builds from `main`, and a per-asset `<name>.sha256.txt` beside\n  each file on tagged releases.\n- GitHub artifact attestations are generated for binary and source artifacts.\n- For the lowest-trust path, use `PS2Servers-source.zip` and run from source.\n\nIf your antivirus flags a download, see\n[ANTIVIRUS-NOTICE.md](https://github.com/NathanNeurotic/PS2-Servers/blob/main/ANTIVIRUS-NOTICE.md)\n— it explains packaging-related detections and how to verify the exact file.\nPortable builds remain unsigned and may also be flagged.\n\nPS2 Servers has been submitted to Avast/Gen Threat Labs for false-positive review.\n\nThe application is open source and built from the public GitHub repository. It is a PS2 homebrew utility for user-controlled local server setup and does not contain malware, credential collection, persistence, adware, browser modification, or crypto-mining behavior.\n\nRepository: https://github.com/NathanNeurotic/PS2-Servers\n"
+    }
+  },
+  {
+    "repo": "MegaBitmap/PS2-SNL",
+    "release": {
+      "tag": "1.1.1.1",
+      "published": "2026-07-05T16:47:43Z",
+      "url": "https://github.com/MegaBitmap/PS2-SNL/releases/tag/1.1.1.1",
+      "body": "**Full Changelog**: https://github.com/MegaBitmap/PS2-SNL/compare/1.1.1.0...1.1.1.1\r\n\r\nUpdated to neutrino_v1.8.0-47-g06188cc\r\nFluentftp and pythonnet were updated\r\n(Uses Python 3.14)"
+    }
+  },
+  {
+    "repo": "NathanNeurotic/Launchstation",
+    "release": {
+      "tag": "latest",
+      "published": "2026-09-26T22:49:23Z",
+      "url": "https://github.com/NathanNeurotic/Launchstation/releases/tag/latest",
+      "body": "## Downloads\n\n| Version | ZIP | PSU |\n| --- | --- | --- |\n| Standard | [Download](https://github.com/NathanNeurotic/Launchstation/releases/download/latest/APP_LAUNCHSTATION.zip) | [Download](https://github.com/NathanNeurotic/Launchstation/releases/download/latest/APP_LAUNCHSTATION.psu) |\n| DS34 USB/Bluetooth controllers | [Download](https://github.com/NathanNeurotic/Launchstation/releases/download/latest/APP_LAUNCHSTATION-DS.zip) | [Download](https://github.com/NathanNeurotic/Launchstation/releases/download/latest/APP_LAUNCHSTATION-DS.psu) |\n\nExtract the ZIP and launch its ELF, or install the PSU with **PSU Paste**.\nExisting user settings are retained. The built-in updater preserves your controller version.\n\n## Changelog\n\n- **Safer file replacement:** an existing destination is retained until its replacement has been written and checked. Failed publication rolls back; recovery files survive interrupted operations.\n- **Copy failure details:** compact stage/error, device, byte-count and build information make failed transfers diagnosable. A failed source-folder listing is no longer reported as an empty successful copy.\n- **Cross-device copying:** positive short reads and writes complete the remaining bytes. Slot-2 card preparation happens before opening source files when leaving MX4SIO.\n- **Clearer file operations:** the dashboard shows the filename, remaining megabytes and a progress bar while copying, with progress updates during deletion and verification.\n- **Consistent storage names:** Home and the application library use MASS labels for mass-storage applications.\n- **Software clock:** setting a time now offers to save it immediately and waits for verified storage completion. Save current clock retains later runtime. The clock resumes the saved checkpoint after restart; elapsed time while unplugged is unavailable.\n- **Storage loading:** returned mount waits redraw more frequently while retaining the existing device discovery windows. MMCE returns each probed port's bus state to the normal card/controller drivers.\n- **Power-off:** setup starts only the power-off service, without loading unused DEV9 drivers, and detects failed initialization.\n\n[Full changelog](https://github.com/NathanNeurotic/Launchstation/compare/59bb62017283d6d4c8c06082246116d07f541dd4...593f16dc808f203d3d10638c16462eb1eb0c40e8) · [Documentation](https://nathanneurotic.github.io/Launchstation/)\n\nDevice and display behavior still require console validation; a passing build does not establish hardware compatibility.\n\n<details>\n<summary>Build verification and SHA-256 checksums</summary>\n\nBuilt from [593f16d](https://github.com/NathanNeurotic/Launchstation/tree/593f16dc808f203d3d10638c16462eb1eb0c40e8). [Build checks](https://github.com/NathanNeurotic/Launchstation/actions/runs/39433439957) passed:\nhost regressions, documentation, standard/DS34 builds, controller variants,\nloader memory layout and app-package verification. Published packages are downloaded and compared with the build outputs before the rolling tag moves.\n\n```text\n31ac93f1a53abcc501e8e8a6846ac5e271543a9d61eb9db67e6a64c58aa989ac  APP_LAUNCHSTATION.zip\nf09e2ba28c1b830904857929604bb94eb12f15eb05ff9b8afd6eeab9fdb743db  APP_LAUNCHSTATION.psu\na2a4308e2e92b198ee5a01b4a32ab395d057f87d1f5274e50f9b3fef6462923b  APP_LAUNCHSTATION-DS.zip\n2ce05514402d1f64024f18bb7a898f7208a8d676713541f634c0caabba6568fc  APP_LAUNCHSTATION-DS.psu\n```\n\n</details>\n"
+    }
+  },
+  {
+    "repo": "NathanNeurotic/xerabora",
+    "release": null
+  },
+  {
+    "repo": "ps2-mmce/Open-PS2-Loader",
+    "release": {
+      "tag": "OPL-MMCE-beta-2",
+      "published": "2025-01-15T12:48:25Z",
+      "url": "https://github.com/ps2-mmce/Open-PS2-Loader/releases/tag/OPL-MMCE-beta-2",
+      "body": "- Add IGR functionality\r\n- Add default Page setting\r\n- Add MMCE Prefix Path\r\n- Various Performance Improvements\r\n"
+    }
+  },
+  {
+    "repo": "GorGylka/Server2PS2",
+    "release": {
+      "tag": "3",
+      "published": "2026-06-27T13:39:48Z",
+      "url": "https://github.com/GorGylka/Server2PS2/releases/tag/3",
+      "body": "- HDD 2.5\" compatibility (preventing disk parking)"
+    }
+  },
+  {
+    "repo": "PS2-Widescreen/OPL-Widescreen-Cheats",
+    "release": {
+      "tag": "Latest",
+      "published": "2026-08-02T00:01:13Z",
+      "url": "https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats/releases/tag/Latest",
+      "body": "- __cheats count:__ _3610_\n- [__List of supported games__](https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats/blob/main/cheat_list.MD)\n![GitHub release (latest by date)](https://img.shields.io/github/downloads/PS2-Widescreen/OPL-Widescreen-Cheats/Latest/total?label=Downloads)\nlast week changes:\n- 5cb3158 2026-08-01 Matías Israelson  : Add Spider-Man 3 (SLES_547.23)"
+    }
+  },
+  {
+    "repo": "ps2homebrew/Open-PS2-Loader-lang",
+    "release": null
+  },
+  {
+    "repo": "pcm720/udpfsd",
+    "release": {
+      "tag": "v0.1.7",
+      "published": "2026-08-04T21:32:58Z",
+      "url": "https://github.com/pcm720/udpfsd/releases/tag/v0.1.7",
+      "body": "## Changelog\r\n\r\n- Fixed instability issues\r\n- Reimplemented UDPRDMA session handling\r\n\r\n| Platform | Architecture               | Release archive                      |\r\n|----------|----------------------------|--------------------------------------|\r\n| Linux    | IA-32 (x86)                | `udpfsd-linux-x86-<version>.zip`     |\r\n| Linux    | AMD64 (x86-64)             | `udpfsd-linux-amd64-<version>.zip`   |\r\n| Linux    | ARM 64-bit                 | `udpfsd-linux-arm64-<version>.zip`   |\r\n| Linux    | ARM v7 (32-bit)            | `udpfsd-linux-armv7-<version>.zip`   |\r\n| Linux    | ARM v6 (32-bit)            | `udpfsd-linux-armv6-<version>.zip`   |\r\n| Linux    | MIPS32 BE (softfloat)      | `udpfsd-linux-mipseb-<version>.zip`  |\r\n| Linux    | MIPS32 LE (softfloat)      | `udpfsd-linux-mipsel-<version>.zip`  |\r\n| Linux    | RISC-V (64-bit)            | `udpfsd-linux-riscv64-<version>.zip` |\r\n| macOS    | AMD64                      | `udpfsd-macos-amd64-<version>.zip`   |\r\n| macOS    | ARM 64-bit (Apple Silicon) | `udpfsd-macos-arm64-<version>.zip`   |\r\n| Windows  | IA-32 (x86)                | `udpfsd-windows-x86-<version>.zip`   |\r\n| Windows  | AMD64 (x86-64)             | `udpfsd-windows-amd64-<version>.zip` |\r\n| Windows  | ARM 64-bit                 | `udpfsd-windows-arm64-<version>.zip` |\r\n\r\n### Notes\r\n- Pre-built binaries support only CSO and ZSO. For CHD, build from source with CGO enabled.\r\n- Make sure to use the latest Neutrino nightly (v1.8.0-13 or higher)\r\n\r\nThanks to GhostTownUS- for testing!\n\n**Full Changelog**: https://github.com/pcm720/udpfsd/compare/v0.1.6...v0.1.7"
+    }
+  },
+  {
+    "repo": "rodrigo1593-dev/oplfork",
+    "release": {
+      "tag": "test",
+      "published": "2026-03-08T19:14:12Z",
+      "url": "https://github.com/rodrigo1593-dev/oplfork/releases/tag/test",
+      "body": "-somehow input lag doesn't exists anymore for bluetooth dongle CSR 5.0\r\n\r\nsee master branch changes (?.\r\n\r\nsee issues in any case."
+    }
+  },
+  {
+    "repo": "YouKnow-sys/udpfs-server",
+    "release": {
+      "tag": "v0.2.1",
+      "published": "2026-09-12T22:09:13Z",
+      "url": "https://github.com/YouKnow-sys/udpfs-server/releases/tag/v0.2.1",
+      "body": "**Full Changelog**: https://github.com/YouKnow-sys/udpfs-server/compare/v0.2.0...v0.2.1"
+    }
+  },
+  {
+    "repo": "Jay-Jay-OPL/OPL-Daily-Builds",
+    "release": {
+      "tag": "latest",
+      "published": "2022-01-02T22:46:10Z",
+      "url": "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/releases/tag/latest",
+      "body": "## Commits\n- aa531a8: update lang files (Jay-Jay-OPL)"
+    }
+  },
+  {
+    "repo": "SvenGDK/Open-PS2-Loader",
+    "release": {
+      "tag": "v1-MOD-2024-05-16",
+      "published": "2024-05-16T14:12:38Z",
+      "url": "https://github.com/SvenGDK/Open-PS2-Loader/releases/tag/v1-MOD-2024-05-16",
+      "body": "## General\r\n- Changed release name to Open PS2 Loader **v1-MOD-YYYY-MM-DD**\r\n  - Indicates that this is a modified build of v1.0.0\r\n  - The latest release version of this modified build is now based on the release date (YYYY-MM-DD)\r\n- Added supplemental asset below\r\n  - Used ps2dev build (Ubuntu) with missing code to compile\r\n\r\n## Updates and fixes applied from main [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader)\r\n\r\n- [Add in support for using PS3 Guitars as PS2 Guitars in PADEMU #896](https://github.com/ps2homebrew/Open-PS2-Loader/pull/896/files)\r\n- [Fix GSM H-position unaligment #970](https://github.com/ps2homebrew/Open-PS2-Loader/pull/970/files)\r\n- [Increased performance for png art loading by 2.5-3x #996](https://github.com/ps2homebrew/Open-PS2-Loader/pull/996/files)\r\n- [USB/SMB: Support for longer file names to accept redump names #1013](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1013/files)\r\n- [Fix patches being applied to wrong ELF files #1031](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1031/files)\r\n- [Align RPC data for IGR #1036](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1036/files)\r\n- [Fixed parsing issues on CNF files that cause infinite loops #1037](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1037/files)\r\n- [Fixed various null de-refs #1038](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1038/files)\r\n- [Avoid divide by zero when calculating FPS #1039](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1039/files)\r\n- [Do not transition while transition is processing #1041](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1041/files)\r\n"
+    }
+  },
+  {
+    "repo": "Docmine17/Open-PS2-Loader-HTTP",
+    "release": {
+      "tag": "123",
+      "published": "2026-09-04T22:05:23Z",
+      "url": "https://github.com/Docmine17/Open-PS2-Loader-HTTP/releases/tag/123",
+      "body": "This is a proof of concept; all code was written using AI and tested on two games: a port of Super Mario 64 for PS2 and Auto Modellista, both in .ISO format. The HTTP server used on the PC is the one in the `/pc/http_server.py` folder, but it should work with others like nginx."
+    }
+  },
+  {
+    "repo": "ps2homebrew/HDLGameInstaller",
+    "release": {
+      "tag": "latest",
+      "published": "2024-09-04T23:26:50Z",
+      "url": "https://github.com/ps2homebrew/HDLGameInstaller/releases/tag/latest",
+      "body": "## Bug Fixes\n- CI bump checkout version ([Julian Uy](https://github.com/ps2homebrew/HDLGameInstaller/commit/f0322092ea9b6b1e4d73993de00ee669e0765eba))\n- CI make cwd safe directory for git ([Julian Uy](https://github.com/ps2homebrew/HDLGameInstaller/commit/7b279cbc3004c11264865e950670e3c12e54ad90))\n- use winres instead of afxres in resource file ([Julian Uy](https://github.com/ps2homebrew/HDLGameInstaller/commit/ec37c81f8edb6fc45e2be51c86a322780641275a))\n\n## Commits\n- bump download and upload artifact version for CI ([Julian Uy](https://github.com/ps2homebrew/HDLGameInstaller/commit/ffc5ba593b86be4a43438ad39ea6de2771fab0db))"
+    }
+  },
+  {
+    "repo": "retronas/retronas",
+    "release": null
+  },
+  {
+    "repo": "hacan359/Open-PS2-Loader",
+    "release": null
+  },
+  {
+    "repo": "HiroTex/OSD-XMB",
+    "release": {
+      "tag": "latest",
+      "published": "2025-04-07T15:44:20Z",
+      "url": "https://github.com/HiroTex/OSD-XMB/releases/tag/latest",
+      "body": "⚠️ This is an automatically generated build from the latest commit on the `main` branch.\n\nIt may include **untested** or **experimental** changes.\n\nAlways prefer a stable release for production use.\n"
+    }
+  },
+  {
+    "repo": "israpps/HDL-Batch-installer",
+    "release": {
+      "tag": "Latest",
+      "published": "2026-03-25T20:24:04Z",
+      "url": "https://github.com/israpps/HDL-Batch-installer/releases/tag/Latest",
+      "body": "## Latest changes:\n\n- Fixed: now game image selection dialog for game installation remembers last path used correctly. thx to ricardo ochoa for reporting\n****\nSee Full changelog [__Here__](https://github.com/israpps/HDL-Batch-installer/blob/Latest/Release/changes.log)\n![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/israpps/HDL-Batch-installer/total?style=for-the-badge&logo=github&label=downloads&labelColor=000000)\n"
+    }
+  },
+  {
+    "repo": "grimdoomer/Open-PS2-Loader",
+    "release": {
+      "tag": "v1.2.0.6-1996-Beta",
+      "published": "2023-05-27T09:31:28Z",
+      "url": "https://github.com/grimdoomer/Open-PS2-Loader/releases/tag/v1.2.0.6-1996-Beta",
+      "body": "Change log:\r\n\r\n- Fixed issues with changing themes reverting to default before being able to save changes\r\n- Changed loading process for png artwork, png art files should load 2-3x faster now\r\n- Fixed parsing issues with cnf files, should prevent infinite loops for bad cnf files\r\n- Added UDMA 5/6 support (OPL_UDMA_PLUS.elf)"
+    }
+  },
+  {
+    "repo": "GorGylka/UDPBD-A5-V11",
+    "release": {
+      "tag": "1.3",
+      "published": "2025-10-25T16:24:10Z",
+      "url": "https://github.com/GorGylka/UDPBD-A5-V11/releases/tag/1.3",
+      "body": "-Added pre-configured MC image for  `SD2PSX` / `PSXMemCard Gen2` / `PSXMemCard Gen1` / `PicoMemcard+` users\r\n-Added pre-configured 8MB MC image "
+    }
+  },
+  {
+    "repo": "ps2-mmce/mmceman",
+    "release": {
+      "tag": "latest",
+      "published": "2026-08-01T07:01:10Z",
+      "url": "https://github.com/ps2-mmce/mmceman/releases/tag/latest",
+      "body": "## Bug Fixes\n- don't block mc1 (2nd port) [#9](https://github.com/ps2-mmce/mmceman/pull/9) ([Julian Uy](https://github.com/ps2-mmce/mmceman/commit/21dbc0a7e5640b4d77520ab362dab62bafccacd8))"
+    }
+  },
+  {
+    "repo": "bucanero/apollo-ps2",
+    "release": {
+      "tag": "v1.0.2",
+      "published": "2024-12-24T11:36:11Z",
+      "url": "https://github.com/bucanero/apollo-ps2/releases/tag/v1.0.2",
+      "body": "### Added\r\n\r\n* Support additional PS2 save formats when importing to PS2 VMCs\r\n  - Import to VMC - New supported formats: `.MAX`, `.CBS`, `.XPS`, `.SPS`\r\n* Add support to load an offline save database (from `cdfs:/`, `mass:/`)\r\n  - Note: requires `mass` drive to be available to unzip save files\r\n  - Try the [`sample-save-pack.zip`](https://github.com/bucanero/apollo-ps2/releases/download/v1.0.2/sample-save-pack.zip) as a quick Offline DB pack\r\n\r\n### Fixed\r\n\r\n* Solve issue when exporting PS1 saves from memory cards\r\n"
+    }
+  },
+  {
+    "repo": "Gageformer/Ember",
+    "release": {
+      "tag": "Launcher",
+      "published": "2026-10-07T03:18:55Z",
+      "url": "https://github.com/Gageformer/Ember/releases/tag/Launcher",
+      "body": "Embers basic frontend launcher to get you started\r\n\r\n- Now supports all devices. Drop it next to ember.elf like before, or utilize the config to choose your directory\r\n- Now can scroll, hold the d-pad instead of manually pressing each iteration\r\n\r\n**Using the config**\r\n\r\nYou only need `ember-launcher.cfg` if the launcher is NOT in the same folder as `ember.elf`. If it is, the file is ignored.\r\n\r\n1. Keep `ember-launcher.cfg` in the same folder as the launcher.\r\n2. Open it in a text editor and remove the `#` from the line for your device. Change the folder name if yours isn't `EMBER`.\r\n3. Start the launcher. Your games are listed from that folder's `games/` as usual.\r\n\r\nCommon lines:\r\n\r\n    ember=mmce?:/EMBER/                  MMCE (SD2PSX, MemCard PRO2)\r\n    ember=mass:/EMBER/                   USB\r\n    ember=mx4sio:/EMBER/                 MX4SIO\r\n    ember=ata:/EMBER/                    Internal HDD, exFAT\r\n    ember=hdd0:<partition>:pfs:/EMBER/   Internal HDD, APA/PFS\r\n\r\nPoint it at the folder that holds `ember.elf`, not at `ember.elf` itself or a game. If you leave every line commented out, the launcher searches MMCE, USB, exFAT HDD, MX4SIO and memory cards for `EMBER/ember.elf` on its own. APA/PFS hard disks and network shares always need their line.\r\n\r\nThis will be most of the updates for now. I will be putting most of my focus into the main application. In the future I may make a nicer official front end application"
+    }
+  },
+  {
+    "repo": "sync-on-luma/xebplus-neutrino-loader-plugin",
+    "release": {
+      "tag": "2.9.7",
+      "published": "2025-10-31T20:13:00Z",
+      "url": "https://github.com/sync-on-luma/xebplus-neutrino-loader-plugin/releases/tag/2.9.7",
+      "body": "### Changelog\r\n\r\n- Updated neutrino binaries\r\n- Major update to UDPBD sync app\r\n- Fixed bug in list builder"
+    }
+  },
+  {
+    "repo": "koraxial/Xbox-2-PlayStation-Emulator-AlFa",
+    "release": {
+      "tag": "SAS",
+      "published": "2024-12-10T20:01:06Z",
+      "url": "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/releases/tag/SAS",
+      "body": "## About Release\r\n- A slightly modified version of X2P which allows it to fit on an 8MB MemoryCard\r\n- The packages below can be directly pasted/extracted into the root of the MemoryCard and X2P should automatically be picked up by any APPs which support launching ELFs via the [Save Application System Standard](https://ps2wiki.github.io/documentation/homebrew/PS2-App-System/SAS/index.html)\r\n- New beautiful 3D icons are also added which show up in the OSDSYS (PS2 Browser)\r\n\r\n### Release Mirror: [SAS Apps Archive](https://ps2wiki.github.io/sas-apps-archive/applistings/Xbox-2-PlayStation/Xbox-2-PlayStation.html)\r\n\r\n#### **Note:** Using the smaller version [`EMU_X2PMC.psu`] sometimes breaks the Custom Dakota Speedway protocols which can result in some games not booting properly or crashing after a few minutes. If possible use the full non-MC release [`EMU_X2P.psu`] instead.\r\n-----\r\n\r\n### Credits:\r\n- Code by [Team OPL](https://github.com/ps2homebrew/Open-PS2-Loader/)\r\n- GFX by Berion\r\n- THM and SAS PSU packaging by [Ripto](https://github.com/kNOwAHitall) \r\n- Code Modifications, compilation and 3D-icons by [korax](https://github.com/koraxial)"
+    }
+  },
+  {
+    "repo": "israpps/BDMAssault",
+    "release": {
+      "tag": "mx4sio",
+      "published": "2025-10-15T04:31:31Z",
+      "url": "https://github.com/israpps/BDMAssault/releases/tag/mx4sio",
+      "body": "these IRX drivers will make POPSTARTER read PS1 games from an MX4SIO card located on memory card port 2 (the right one)\r\n\r\nput the IRX files at `mc0:/POPSTARTER/` and everything should work\r\n\r\n![GitHub Downloads (all assets, specific tag)](https://img.shields.io/github/downloads/israpps/bdmassault/mx4sio/total?style=for-the-badge&logo=github&label=Downloads&labelColor=black)\r\n"
+    }
+  },
+  {
+    "repo": "root670/CheatDevicePS2",
+    "release": {
+      "tag": "v1.7.5",
+      "published": "2020-06-16T02:33:28Z",
+      "url": "https://github.com/root670/CheatDevicePS2/releases/tag/v1.7.5",
+      "body": "## Bug Fixes\r\n* Fix hang when launching a disc or ELF after returning from the in-game-reset (IGR) feature in OpenPS2Loader (#29)."
+    }
+  },
+  {
+    "repo": "athegreat90/olp-server",
+    "release": null
+  },
+  {
+    "repo": "DKWDRV/DKWDRV",
+    "release": {
+      "tag": "1.7.6s",
+      "published": "2026-10-11T22:53:11Z",
+      "url": "https://github.com/DKWDRV/DKWDRV/releases/tag/1.7.6s",
+      "body": "1.7.6s\r\n\r\n<br>\r\n\r\n- Minor USB reset change before IOP reset to hopefully make USB detection easier.\r\n- Minor string changes #159\r\n- Another fix for menu drawing error. #156\r\n- USB CD Emu Rewrite STEP #4:\r\n- -Fix some bugs on OHCI usb init and make things boot a bit faster! #101\r\n- -Most failing or stuck games seem to be failing on reset cmd, still work to do on that."
+    }
+  },
+  {
+    "repo": "Veritas83/VTSPS2-HBDL",
+    "release": {
+      "tag": "latest",
+      "published": "2022-06-18T01:06:14Z",
+      "url": "https://github.com/VTSTech/VTSPS2-HBDL/releases/tag/latest",
+      "body": "## Commits\n- b806114: v0.35 (Nigel Todman)"
+    }
+  },
+  {
+    "repo": "TnA-Plastic/FreeMcBoot",
+    "release": null
+  },
+  {
+    "repo": "Based-Skid/iLaunchELF",
+    "release": null
+  },
+  {
+    "repo": "Veritas83/PS2_FORTUNA_Launcher",
+    "release": null
+  },
+  {
+    "repo": "israpps/FreeMcBoot-Installer",
+    "release": {
+      "tag": "latest",
+      "published": "2025-01-01T15:13:50Z",
+      "url": "https://github.com/israpps/FreeMcBoot-Installer/releases/tag/latest",
+      "body": ""
+    }
+  },
+  {
+    "repo": "israpps/Open-PS2-Loader",
+    "release": {
+      "tag": "latest",
+      "published": "2024-11-06T15:17:56Z",
+      "url": "https://github.com/israpps/Open-PS2-Loader/releases/tag/latest",
+      "body": "## Commits\n- efd2c88: add PowerPC UART Debugging (Matias Israelson) [#1269](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1269)\n- 4c51238: [ee_core]: use EE_SIO syscall from libkernel (Matias Israelson) [#1270](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1270)\n- 2123531: Using exit instead of Exit (Francisco Javier Trujillo Mata) [#1276](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1276)\n- b390bb8: Added support for multiple \"mass\" devices from grimdoomers fork (KrahJohlito) [#1287](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1287)\n- e076b84: add input/eject block device sfx (KrahJohlito) [#1287](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1287)\n- 4720e0a: Don't compile in unused up/down icons (KrahJohlito) [#1287](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1287)\n- add optional theme element type \"BdmIndex\" which will give visual feedback of which number mass device is selected [#1287](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1287) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/2d88f02309c6922c8eba1ab06c688e1f23430d60))\n- add optional app page elements [#1289](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1289) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/5d5fe3f3b2cee1a6171069adf316133913238748))\n- if apps populated from legacy apps cfg have a bootpath beginning with mass? find the unit number automatically on first found device [#1289](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1289) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/448ad9fd218c585bd99ed8bf5b6c0da837d34ac1))\n- scan mc for apps using title.cfg method [#1289](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1289) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/acf3ce60db893a99ecc551c87e08f72734483ba8))\n- 24981d6: icon.sys update (Ripto) [#1298](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1298)\n- read left analog stick inputs to navigate the gui [#1303](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1303) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/e6ceb078067a19987b161049bfd75e4e04013d13))\n- 034a3a1: Revert \"kr_ps2: remove UDNL (#1198)\" (AKuHAK) [#1307](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1307)\n- b1411fb: Credits updated (AKuHAK) [#1307](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1307)\n- change virtual device from img to host [#1307](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1307) ([AKuHAK](https://github.com/israpps/Open-PS2-Loader/commit/af80c71a1df16681417deb8846f3a85118e4bed7))\n- 29bfae3: Add apps as a default device page option (KrahJohlito) [#1315](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1315)\n- ce54e2b: clean up padmacro settings page (KrahJohlito) [#1315](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1315)\n- update check-format [#1315](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1315) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/629fe542c2665a2926da822aaf72f37796e90170))\n- 3617948: lang compiler: silence warnings for untranslated strings, just use defaults (KrahJohlito) [#1315](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1315)\n- e7cf5d9: bdmsupport.c: fix overflow (KrahJohlito) [#1315](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1315)\n- d74009d: Hold a button on start to force opl's interface force to 480p (Tom Pritchard) [#1332](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1332)\n- ed91363: Merge branch 'ps2homebrew:master' into powerpc-uart (Matías Israelson) [#1269](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1269)\n- ensure initalisation of io_module for all bdm modes and deinitalisation of all bdm modes [#1333](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1333) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/498497d79d82e704f01639f31705742d9f1c3e9f))\n- only render bdmIndex if current mode is visible [#1333](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1333) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/0e1b6a85dd472fdeef873ccddbef6be4c83124be))\n- ce99811: fix auto launching bdm games with args after changes to bdm handling (KrahJohlito) [#1333](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1333)\n- d3f1eb7: Fix for argv1 (AKuHAK) [#1338](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1338)\n- a47a43b: debug colors for errors related to IRX execution (Matías Israelson) [#1344](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1344)\n- 7d03a72: document debug colors (Matias Israelson) [#1344](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1344)\n- aa1a174: add script to list debug colors and list them on markdown (Matias Israelson) [#1344](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1344)\n- f61faed: format and fix compilation (Matias Israelson) [#1344](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1344)\n- 3072900: [iopcore] when debugging inform IOP Freeram (Matias Israelson) [#1348](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1348)\n- 05caa00: default theme adjustments (KrahJohlito) [#1349](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1349)\n- force disc icon default to 64x64 resolution [#1349](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1349) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/522498d3bf148a93ce59e1a618bd2b356406451f))\n- render the app name at top of menu [#1349](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1349) ([KrahJohlito](https://github.com/israpps/Open-PS2-Loader/commit/4c98be164ff75b06ce85046af34af20c51e69082))\n- 120fca8: tidy ppc uart implementation (Matías Israelson) [#1269](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1269)\n- 1d88b7a: Add NTSC 240p & PAL 288p video modes (KrahJohlito) [#1341](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1341)\n- 58c4001: config.c: improve memory safety and error handling (KrahJohlito) [#1352](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1352)\n- 3994b56: util.c: refactor some functions to prevent memory leaks on allocation failures (KrahJohlito) [#1352](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1352)\n- 87516c4: gui.c: add null termination for temporary string in guiShowKeyboard (KrahJohlito) [#1352](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1352)\n- e1a6842: system.c: add null terminaton in sysLaunchLoaderElf (KrahJohlito) [#1352](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1352)\n- 6db1733: README changes (Matías Israelson) [#1345](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1345)\n- 34904ac: textures.c: optimise PNG reading (KrahJohlito) [#1357](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1357)\n- c5a12a0: Remove .bmp and .jpg images support. (Wolfywolfy) [#1359](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1359)\n- 6f79c3c: Code refactor(including texture code). (Wolfywolfy) [#1359](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1359)\n- 05dc35f: Enhance GitHub Actions workflow (AKuHAK) [#1367](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1367)\n- 6075a2a: Merge branch 'master' into gfx-deprecated-functions (Wolf3s) [#1359](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1359)\n- aca4261: Revert \"Avoid potential memory leaks if memory fails to be allocated etc\" (AKuHAK) [#1373](https://github.com/ps2homebrew/Open-PS2-Loader/pull/1373)"
+    }
+  },
+  {
+    "repo": "Okeanos86/BDMAssault",
+    "release": {
+      "tag": "Alpha",
+      "published": "2026-10-11T14:14:42Z",
+      "url": "https://github.com/Okeanos86/BDMAssault/releases/tag/Alpha",
+      "body": "This is an ALPHA release. It may contain bugs. \r\n\r\nBDM Assault with read-only UDPFS fallback:\r\nif a .VCD file isn't found on the USB drive, POPStarter will attempt to read it from a UDPFS server (udpfsd or udpfs_server.py).\r\n\r\nFiles:\r\n- bdm_udp_fs_assault.irx -> mc?:/POPSTARTER/usbd.irx\r\n- usbd_bd_assault.irx    -> mc?:/POPSTARTER/usbhdfsd.irx\r\n\r\nREADY_TO_USE/POPSTARTER in the archive has both files with the right names.\r\nNo other file is needed: the PS2 uses defaults unless you add the optional IPCONFIG.DAT / UDPFSCONFIG.DAT.\r\n\r\nUsage and what goes where: __bdm_udp_fs_assault/README.MD\r\nNetwork configuration (IPCONFIG.DAT, UDPFSCONFIG.DAT): __bdm_udp_fs_assault/docs/README_CONFIG.txt\r\nThird-party licenses: __bdm_udp_fs_assault/docs/THIRD_PARTY_NOTICES.md\r\n\r\nThis is built specifically for POPStarter, other homebrew are out of scope."
+    }
+  },
+  {
+    "repo": "ps2homebrew/hdl-dump",
+    "release": {
+      "tag": "latest",
+      "published": "2024-06-06T06:08:28Z",
+      "url": "https://github.com/ps2homebrew/hdl-dump/releases/tag/latest",
+      "body": "## Commits\n- 32c296c: make progress display include a gauge (#81) (Matías Israelson) [#81](https://github.com/ps2homebrew/hdl-dump/pull/81)"
+    }
+  },
+  {
+    "repo": "CTurt/FreeDVDBoot",
+    "release": null
+  },
+  {
+    "repo": "IcySon55/OPL-Theme-Editor",
+    "release": null
+  },
+  {
+    "repo": "thestr4ng3r/mymcplus",
+    "release": {
+      "tag": "v3.0.2",
+      "published": "2018-06-10T11:56:43Z",
+      "url": "https://github.com/thestr4ng3r/mymcplus/releases/tag/v3.0.2",
+      "body": "* Renamed GUI extra to gui because of https://github.com/pypa/pip/issues/4617\r\n* Added pyopengl dependency for gui extra"
+    }
+  },
+  {
+    "repo": "rickgaiser/neutrino",
+    "release": {
+      "tag": "latest",
+      "published": "2026-08-31T10:38:50Z",
+      "url": "https://github.com/ps2max32/neutrino/releases/tag/latest",
+      "body": "## Commits\n- 239746c: Update README with new project links (NathanNeurotic (Ripto)) [#222](https://github.com/rickgaiser/neutrino/pull/222)\n- babfe1d: Fix formatting of project links in README.md (NathanNeurotic (Ripto)) [#222](https://github.com/rickgaiser/neutrino/pull/222)"
+    }
+  },
+  {
+    "repo": "israpps/neutrino",
+    "release": null
+  },
+  {
+    "repo": "shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI",
+    "release": {
+      "tag": "1.6.0",
+      "published": "2026-08-19T10:33:30Z",
+      "url": "https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI/releases/tag/1.6.0",
+      "body": "DOWNLOAD THE ZIP FILE!\r\n\r\nInitial public release of OPL PS1 AIO Converter GUI.\r\n\r\nIncludes:\r\n\r\n• PS1 game conversion tools\r\n• PS1 BDMA/SMB/APA HDD support\r\n• Artwork and CFG tools\r\n• Built-in updater\r\n• RiptOPL Integration\r\n\r\nand much more!"
+    }
+  },
+  {
+    "repo": "ps2homebrew/Open-PS2-Loader-Compatibility-list",
+    "release": null
+  },
+  {
+    "repo": "ps2max32/neutrino",
+    "release": {
+      "tag": "latest",
+      "published": "2026-08-31T10:38:50Z",
+      "url": "https://github.com/ps2max32/neutrino/releases/tag/latest",
+      "body": "## Commits\n- 239746c: Update README with new project links (NathanNeurotic (Ripto)) [#222](https://github.com/rickgaiser/neutrino/pull/222)\n- babfe1d: Fix formatting of project links in README.md (NathanNeurotic (Ripto)) [#222](https://github.com/rickgaiser/neutrino/pull/222)"
+    }
+  },
+  {
+    "repo": "Tom-Bruise/PS2-OPL-CFG-Database",
+    "release": {
+      "tag": "v1.1-tb",
+      "published": "2020-03-29T23:33:56Z",
+      "url": "https://github.com/Tom-Bruise/PS2-OPL-CFG-Database/releases/tag/v1.1-tb",
+      "body": "Changelog:\r\n\r\n- Added French version of the database, courtesy of t0mg.\r\n- Fixes to bash scripts."
+    }
+  },
+  {
+    "repo": "NathanNeurotic/launcHER",
+    "release": {
+      "tag": "nightly",
+      "published": "2026-10-17T05:48:46Z",
+      "url": "https://github.com/NathanNeurotic/launcHER/releases/tag/nightly",
+      "body": "## Features\n- **gs**: blank stale parent framebuffer at final loader handoff [#27](https://github.com/NathanNeurotic/launcHER/pull/27) ([NathanNeurotic (Ripto)](https://github.com/NathanNeurotic/launcHER/commit/1eacbee032b41dcffef2acc29af9e8e4dff2fe92))\n\n## Bug Fixes\n- **gs**: preserve MMIO state safely and order black handoff writes [#27](https://github.com/NathanNeurotic/launcHER/pull/27) ([NathanNeurotic (Ripto)](https://github.com/NathanNeurotic/launcHER/commit/ebfa3c4e6dfab6045b592510f477d104dc41ab84))"
+    }
+  },
+  {
+    "repo": "MechaResearch/MechaPwn",
+    "release": {
+      "tag": "latest",
+      "published": "2026-05-17T19:54:47Z",
+      "url": "https://github.com/MechaResearch/MechaPwn/releases/tag/latest",
+      "body": "## Commits\n- 83a2779: Fix memory safety and unsafe formatting issues (excluding workflow latest) (copilot-swe-agent[bot]) [#303](https://github.com/MechaResearch/MechaPwn/pull/303)\n- 5a0fd45: Address validation feedback for RPC/output safety and cleanup paths (copilot-swe-agent[bot]) [#303](https://github.com/MechaResearch/MechaPwn/pull/303)"
+    }
+  },
+  {
+    "repo": "brainstream/OPL-PC-Tools",
+    "release": {
+      "tag": "4.0",
+      "published": "2026-08-30T20:43:31Z",
+      "url": "https://github.com/brainstream/OPL-PC-Tools/releases/tag/4.0",
+      "body": "# What’s New\r\n\r\n## Highlights\r\n\r\n- **ZSO support** — compressed games are here! ([OPL 1.2.0 Beta](https://www.psx-place.com/threads/testers-needed-open-ps2-loader-with-zso-support-compressed-iso.37223/)) #34\r\n- **VMC write support**\r\n- **Cheats support** #29, including auto-download of widescreen cheats from [OPL-Widescreen-Cheats](https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats)\r\n- **Dual-layer DVD support** #15\r\n- **Local collection config** (`oplpctools.ini`) — stores the OPL version and VMC encodings per collection\r\n- Official **Linux AppImage** build\r\n\r\n## Games & Installation\r\n\r\n- ZSO support:\r\n  - ZSO files are shown in the game list\r\n  - Install games from ZSO sources or convert existing games to ZSO\r\n- New game format converter, plus ISO restoration from ZSO\r\n- OPL 1.0 config fields are now supported: title, description, genre, developer, release date\r\n- New option to skip game validation on startup (workaround for English-patched ISOs) #39\r\n- Download cover art for all games at once #30\r\n- New `oplpctools.ini` local config for the collection (OPL version, VMC encodings). Can be disabled in the program settings.\r\n\r\n## VMC\r\n\r\n- Write to VMC\r\n- Improved export of individual folders and files from VMC\r\n- Configurable file name encoding for VMC\r\n\r\n## Linux\r\n\r\n- Official AppImage build\r\n- Patched Qt to fix the window icon in KDE Plasma 6 (KWin) on Wayland\r\n- Fixed the `.desktop` file for paths containing spaces #37\r\n\r\n## Breaking changes\r\n\r\n- **Windows XP support has been discontinued.** Maintaining compatibility with C++11, Qt 5.6.3, and the old MinGW toolchain has become increasingly difficult, so XP builds are no longer sustainable.\r\n- **Portuguese localization removed** because I lost contact with the translator."
+    }
+  },
+  {
+    "repo": "Luden02/psx-ps2-opl-art-database",
+    "release": null
+  },
+  {
+    "repo": "xlenore/ps2-covers",
+    "release": null
+  },
+  {
+    "repo": "HiroTex/OSD-XMB-ARTDB",
+    "release": null
+  },
+  {
+    "repo": "Snaggly/PS2_Pnacher",
+    "release": {
+      "tag": "1.1",
+      "published": "2022-10-25T16:59:48Z",
+      "url": "https://github.com/Snaggly/PS2_Pnacher/releases/tag/1.1",
+      "body": "- Updated to GTK4\r\n- Added \"Create Backup\" checkbox\r\n- Fixed Elf file sometimes not being parsed"
+    }
+  },
+  {
+    "repo": "ps2homebrew/PS1VModeNeg",
+    "release": {
+      "tag": "latest",
+      "published": "2024-07-28T17:44:30Z",
+      "url": "https://github.com/ps2homebrew/PS1VModeNeg/releases/tag/latest",
+      "body": "## Commits\n- 6e61acc: Fix error when compiling with latest PS2 SDK (CosmicScale) [#4](https://github.com/ps2homebrew/PS1VModeNeg/pull/4)\n- 5a46e07: Update compilation.yml (AKuHAK) [#4](https://github.com/ps2homebrew/PS1VModeNeg/pull/4)\n- 604192b: Replaced linkfile and updated Makefile to pack elf (CosmicScale) [#4](https://github.com/ps2homebrew/PS1VModeNeg/pull/4)\n- 86553ab: Delete raw elf after packing (CosmicScale) [#4](https://github.com/ps2homebrew/PS1VModeNeg/pull/4)"
+    }
+  },
+  {
+    "repo": "GDX-X/PS2-OPL-CFG-Compatibility-Database",
+    "release": {
+      "tag": "Latest",
+      "published": "2024-07-16T23:06:53Z",
+      "url": "https://github.com/GDX-X/PS2-OPL-CFG-Compatibility-Database/releases/tag/Latest",
+      "body": ""
+    }
+  },
+  {
+    "repo": "GSTDiandre/ps2-discord-rpc",
+    "release": {
+      "tag": "v.0.4.5",
+      "published": "2024-10-02T05:23:12Z",
+      "url": "https://github.com/GSTDiandre/ps2-discord-rpc/releases/tag/v.0.4.5",
+      "body": ""
+    }
+  },
+  {
+    "repo": "ps2homebrew/pfsshell",
+    "release": {
+      "tag": "latest",
+      "published": "2026-04-10T08:32:32Z",
+      "url": "https://github.com/ps2homebrew/pfsshell/releases/tag/latest",
+      "body": "## Commits\n- 59432bd: Update submodule (Julian Uy)\n- 8c92467: Fix build failure: add helpful error messages for missing git submodules and update docs (copilot-swe-agent[bot]) [#56](https://github.com/ps2homebrew/pfsshell/pull/56)"
+    }
+  },
+  {
+    "repo": "PixeliGer/OPL-Theme-Pixel-Prime",
+    "release": {
+      "tag": "v1.3",
+      "published": "2025-06-20T21:25:06Z",
+      "url": "https://github.com/PixeliGer/OPL-Theme-Pixel-Prime/releases/tag/v1.3",
+      "body": "Pixel Prime Update 1.3\r\n\r\n- Enhancements in assets\r\n- Added new tags for `vmode`\r\n- Updated tags for `players`\r\n- Added new Icons for `Favs` and `MMCE` sections\r\n- Fixed `APPS` section for better display\r\n- Improvements in layout for list and info screen\r\n- Fixes and improvements in `config` files\r\n\r\n**Full Changelog**: https://github.com/PixeliGer/OPL-Theme-Pixel-Prime/compare/v1.2.1...v1.3"
+    }
+  },
+  {
+    "repo": "pcm720/OSDMenu",
+    "release": {
+      "tag": "v1.3.0",
+      "published": "2026-06-30T20:18:04Z",
+      "url": "https://github.com/pcm720/OSDMenu/releases/tag/v1.3.0",
+      "body": "## Changelog\r\n\r\n- New skip disc patch that works with the SCE/Towers opening\r\n- Support for decrypted HDD-OSD\r\n- Support for loading ROM v2.20 OSDSYS from an external file (see [this](https://github.com/pcm720/OSDMenu#osdmenu-on-psx-desr--osdmenu-with-external-osdsys))\r\n- Full PSX (DESR) support in both OSDMenu MBR and OSDMenu\r\n- Improved boot times for OSDMenu\r\n- Support for `rom1`, `rom2`, and `xfrom` paths in the OSDMenu Launcher\r\n- Support for all gamepad launch keys except L3 and R3 in OSDMenu MBR\r\n- Bug fixes\r\n- FMCB `OSDSYS_Skip_Logo` and `OSDSYS_Inner_Browser` are replaced with the new `OSDSYS_boot` option, which allows booting into the SCE/Towers opening, the main menu (clock), or Browser\r\n- OSDMenu release archive no longer contains a copy of the configurator\r\n\r\n**Note:**\r\n- OSDMenu Configurator has been dropped in favor of [R3CONFIGURATOR](https://github.com/saildot4k/R3CONFIGURATOR/releases/tag/v1.3.0)\r\n- Make sure to [update](https://github.com/pcm720/OSDMenu/tree/main/patcher#osdsys-behavior-modifiers) your config file to use the new `OSDSYS_boot` option instead of the old `OSDSYS_Skip_Logo` and `OSDSYS_Inner_Browser` options."
+    }
+  },
+  {
+    "repo": "HowlingWolfHWC/OSDSYS-Launcher",
+    "release": {
+      "tag": "latest",
+      "published": "2024-10-29T16:48:34Z",
+      "url": "https://github.com/HowlingWolfHWC/OSDSYS-Launcher/releases/tag/latest",
+      "body": "## Commits\n- ac77990: Now supports MC1 (parrado) [#3](https://github.com/HowlingWolfHWC/OSDSYS-Launcher/pull/3)\n- e85fcf1: Europe regions is still prioritary (parrado) [#3](https://github.com/HowlingWolfHWC/OSDSYS-Launcher/pull/3)\n- 5c764b4: Add Opentuna support (ahmedmoselhi) [#3](https://github.com/HowlingWolfHWC/OSDSYS-Launcher/pull/3)\n- c1da025: Updated CI (Howling Wolf & Chelsea)\n- 01edd9d: Delete CI.yml (Howling Wolf & Chelsea)\n- a5741dc: Updated CI... properly (Howling Wolf & Chelsea)"
+    }
+  },
+  {
+    "repo": "NathanNeurotic/POPSLoader",
+    "release": {
+      "tag": "1.3.1",
+      "published": "2026-10-19T07:25:27Z",
+      "url": "https://github.com/NathanNeurotic/POPSLoader/releases/tag/1.3.1",
+      "body": "# POPSLoader 1.3.1\r\n\r\nThis maintenance release includes the controller-free boot fix and larger disc artwork, with the existing Ember Beta-2 option and complete installation kit.\r\n\r\n## Changes\r\n\r\n- **Boot without a controller in port 1 (#603):** disconnected/error pads stop initialization immediately; transient readiness waits are bounded to one second. The port remains open for a controller connected later. The error-screen button poll also returns without waiting on unavailable input.\r\n- **Readable disc artwork (#568):** matching `<gamefilename>_ICO.png` art now draws at approximately 45% of the case height (112-pixel cap), inside the preview panel and clear of game titles. Loading stays asynchronous.\r\n- Includes the current black-fade launch/video transitions, Ember integration and complete installable ZIP / eight-file flat PSU package from the development channel.\r\n- **Issues #603 and #568 remain open for their reporters to verify and close.**\r\n\r\n## Downloads\r\n\r\n- `PS1_POPSLOADER.zip`: device-root installation kit with `APPS/PS1_POPSLOADER/`, pinned `POPS/` and `EMBER/` trees, and the flat PSU.\r\n- `PS1_POPSLOADER.psu`: the same eight app files directly under the `PS1_POPSLOADER` save header; POPS and EMBER support folders are installed separately from the ZIP.\r\n- `POPSLOADER.ELF`: standalone executable.\r\n- `BUILD-MANIFEST.txt` and `SHA256SUMS.txt`: exact source/CI provenance and asset checksums.\r\n\r\n## Validation and limitations\r\n\r\nAutomated gates cover the real controller source, embedded Lua runtime, NTSC/PAL disc layout, PNG decoding, UDPFS configuration/integration and package contents. The official assets come from the exact passing master CI run.\r\n\r\n**Physical-console verification of #603 and #568 is pending.** Ember game launch, controller behavior after handoff, writable VMC saves and UDPFS/storage compatibility still require recorded PS2 tests. Ember and USB + UDPFS remain experimental options within this official launcher release. i.Link for Ember remains deferred.\r\n\r\nEmber is Gageformer's existing, unmodified **Beta-2**, not a new emulator release. Its upstream license ships with the kit. Supply your own BIOS, games and proprietary Sony POPS components as needed; none are provided. `ExampleGame.bin` is an empty placement example.\r\n\r\n[Installation guide](https://github.com/NathanNeurotic/POPSLoader/wiki/Installation-Guide) ? [Hardware QA matrix](https://github.com/NathanNeurotic/POPSLoader/blob/master/QA_REGRESSION_MATRIX.md) ? [Ember Beta-2](https://github.com/Gageformer/Ember/releases/tag/Beta-2)\r\n"
+    }
+  },
+  {
+    "repo": "pcm720/Open-PS2-Loader",
+    "release": {
+      "tag": "latest",
+      "published": "2025-02-21T20:50:50Z",
+      "url": "https://github.com/pcm720/Open-PS2-Loader/releases/tag/latest",
+      "body": "## Commits\n- 9916579: Limit max BDM UDMA mode to UDMA4 to avoid compatibility issues with various adapters (Ivan V)"
+    }
+  },
+  {
+    "repo": "Irfanlesnar/PS2-Launcher-Manager",
+    "release": null
+  },
+  {
+    "repo": "SvenGDK/PSX-XMB-Manager",
+    "release": {
+      "tag": "v4.0",
+      "published": "2025-07-11T09:05:14Z",
+      "url": "https://github.com/SvenGDK/PSX-XMB-Manager/releases/tag/v4.0",
+      "body": "<p align=\"center\">\r\n<img width=\"175\" height=\"175\" src=\"https://github.com/SvenGDK/PSX-XMB-Manager/assets/84620/280bea0b-cb5b-4cfe-bf5b-5df17081f3a3\">\r\n</p>\r\n\r\n## Changes in PSX XMB Manager v4.0\r\n\r\n### New utilities\r\n- HDD Utilities\r\n  - Create & Restore full raw HDD backups\r\n  - Install POPStarter on the connected PSX HDD\r\n- Converters\r\n  - Convert CUE backups to POPS (VCD) format\r\n  - Convert BIN/CUE backups to ISO format (PS1 & PS2)\r\n- Extractors\r\n  - Extract STAR files using stargazer\r\n  - Extract PAK files using PAKerUtility\r\n- Decryptors\r\n  - Decrypt KELF files using kelftool\r\n  - Decrypt REL files\r\n- Decompressors/Unpackers\r\n  - Decompress a decrypted xosdmain file\r\n  - Unpack a PS2/PSX BIOS file\r\n  \r\n- The HDD Partition manager can now mount/unmount a selected partition using the right-click context menu\r\n  - A free drive letter will be automatically chosen\r\n  - The partition name will be used as volume name\r\n\r\n### Fixes\r\n- Fixed possible crashes when setting game covers\r\n- Fixed UI freeze when installing homebrew projects\r\n\r\n### Other updates\r\n- Updated NuGet packages\r\n  - AvalonEdit 6.3.0.90 -> 6.3.1.120\r\n  - Extended.Wpf.Toolkit 4.6.1 -> 4.7.25104.5739"
+    }
+  },
+  {
+    "repo": "Xferno2/PS2RPC",
+    "release": {
+      "tag": "0.2",
+      "published": "2020-12-24T15:32:03Z",
+      "url": "https://github.com/Xferno2/PS2RPC/releases/tag/0.2",
+      "body": ""
+    }
+  },
+  {
+    "repo": "johnson-cooper/PS2SP",
+    "release": null
+  },
+  {
+    "repo": "CosmicScale/Open-PS2-Loader-Retro-GEM",
+    "release": {
+      "tag": "v1.0",
+      "published": "2024-06-21T19:01:27Z",
+      "url": "https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM/releases/tag/v1.0",
+      "body": "Initial release. opl.elf is an uncompressed elf. OPNPS2LD.ELF is a compressed elf."
+    }
+  },
+  {
+    "repo": "israpps/PlayStation2-Basic-BootLoader",
+    "release": {
+      "tag": "opentuna",
+      "published": "2026-02-11T15:59:25Z",
+      "url": "https://github.com/israpps/PlayStation2-Basic-BootLoader/releases/tag/opentuna",
+      "body": "## Commits\n- d2e81fa: Allow disc stop at startup (#40) (Matías Israelson) [#40](https://github.com/israpps/PlayStation2-Basic-BootLoader/pull/40)"
+    }
+  },
+  {
+    "repo": "mlafeldt/ps2rd",
+    "release": null
+  },
+  {
+    "repo": "edisnord/PyOPLM",
+    "release": {
+      "tag": "v0.73",
+      "published": "2026-09-29T15:22:21Z",
+      "url": "https://github.com/edisnord/PyOPLM/releases/tag/v0.73",
+      "body": null
+    }
+  },
+  {
+    "repo": "CosmicScale/Retro-GEM-POPStarter-Starter",
+    "release": {
+      "tag": "v1.0",
+      "published": "2024-07-09T20:37:33Z",
+      "url": "https://github.com/CosmicScale/Retro-GEM-POPStarter-Starter/releases/tag/v1.0",
+      "body": "Initial release.  `POPStarter-Starter.kelf` is a signed executable, ready for use."
+    }
+  },
+  {
+    "repo": "TheRealNextria/PS2RD-CHT-Manager",
+    "release": {
+      "tag": "Update",
+      "published": "2026-08-24T02:27:53Z",
+      "url": "https://github.com/TheRealNextria/PS2RD-CHT-Manager/releases/tag/Update",
+      "body": "Added:\r\n- ESR patching for PlayStation 2 ISO images\r\n- Detect whether an ISO is already ESR-patched before patching\r\n- Patch compatible DVD-based PS2 ISO images for use with ESR"
+    }
+  },
+  {
+    "repo": "CosmicScale/Retro-GEM-PS2-Disc-Launcher",
+    "release": {
+      "tag": "v1.0.0",
+      "published": "2024-08-16T16:51:40Z",
+      "url": "https://github.com/CosmicScale/Retro-GEM-PS2-Disc-Launcher/releases/tag/v1.0.0",
+      "body": "Initial release."
+    }
+  },
+  {
+    "repo": "CosmicScale/PSBBN-Definitive-Project",
+    "release": {
+      "tag": "latest",
+      "published": "2026-09-24T16:04:36Z",
+      "url": "https://github.com/CosmicScale/PSBBN-Definitive-Project/releases/tag/latest",
+      "body": "**NOTE: The PSBBN Definitive Project is a rolling release. To get automatic updates and the latest bug fixes, you must follow the installation instructions outlined in the readme [here](https://github.com/CosmicScale/PSBBN-Definitive-Project#installation-guide).**\r\n\r\n**September 17, 2026 - Compressed Games, Widescreen Hacks, Improved Homebrew installer**\r\n<p></p>\r\n\r\n[![PSBBN Update: Game Compression, Widescreen Hacks, Improved Homebrew installer & more!](https://github.com/user-attachments/assets/4dfe26c8-7349-4f14-97d1-e88e616ea599)](https://youtu.be/ImmUr69x57Y)\r\n\r\n**New Features:**\r\n\r\n**[Game and App Installer](https://github.com/CosmicScale/PSBBN-Definitive-Project#install-games-and-apps):**\r\n- Added an option to compress PS2 `ISO` files when installing games. Enable this option to save space and fit more games on your drive.\r\n- Added an option to install widescreen hacks for PS2 games, enabling true 16:9 widescreen support with a wider field of view in compatible games.\r\n- Improved the installer for homebrew apps. The application database has been expanded to contain details of over 500 applications, including their title, developer, title ID, and category.\r\n- The [Game Selector](https://github.com/CosmicScale/PSBBN-Definitive-Project#game-selector) now splits homebrew apps into the following categories: Emulators, Games, Demoscene, Applications, PS1 Applications, System Applications, Diagnostic Tools, Debug Applications, and Runtime Environments. You can freely rearrange the categories to suit your preferences.\r\n- Over 500 Browser icons for applications have been added to the [HDD-OSD Icon Database](https://github.com/CosmicScale/HDD-OSD-Icon-Database). The installer now downloads these icons for display in the [HOSDMenu's Browser](https://github.com/CosmicScale/PSBBN-Definitive-Project#hosdmenu).\r\n- Applications in the [Browser](https://github.com/CosmicScale/PSBBN-Definitive-Project#hosdmenu) now display the category to which they belong.\r\n- [R3CONFIGURATOR](https://github.com/CosmicScale/PSBBN-Definitive-Project#r3configurator) is now assigned to a [boot key](https://github.com/CosmicScale/PSBBN-Definitive-Project#boot-options) and can be launched at boot by holding the *SELECT* button.\r\n\r\n**[Optional Extras](https://github.com/CosmicScale/PSBBN-Definitive-Project#optional-extras):**\r\n- HOSDMenu-only users can now use the [Reassign Cross and Circle Buttons](https://github.com/CosmicScale/PSBBN-Definitive-Project#reassign-cross-and-circle-buttons) option in the [Optional Extras menu](https://github.com/CosmicScale/PSBBN-Definitive-Project#optional-extras). This swaps the functions of the × and ○ buttons in [OPL](https://github.com/CosmicScale/PSBBN-Definitive-Project#open-ps2-loader-opl), [wLaunchELF-R3Z](https://github.com/CosmicScale/PSBBN-Definitive-Project#wlaunchelf-r3z), and [R3CONFIGURATOR](https://github.com/CosmicScale/PSBBN-Definitive-Project#r3configurator).\r\n\r\n**Enhancements and Bug Fixes:**\r\n- Improved auto-generated titles for `ELF` applications when no match is found in the database.\r\n- Applications with missing or malformed `title.cfg` files are now correctly installed\r\n- Added natural sorting for applications with accents in their titles using `list-sorter.py`.\r\n- Improved Roman numeral detection in `list-sorter.py`\r\n- Removed category labels and list applications alphabetically in the [OSDSYS menu](https://github.com/CosmicScale/PSBBN-Definitive-Project#hosdmenu).\r\n- Moved the creation of application assets to after the game selector runs, preventing unnecessary asset creation.\r\n- Fixed error detection for [game selector](https://github.com/CosmicScale/PSBBN-Definitive-Project#game-selector) failures.\r\n- Fixed button swapping for [R3CONFIGURATOR](https://github.com/CosmicScale/PSBBN-Definitive-Project#r3configurator).\r\n- Improved checks for [wLaunchELF-R3Z](https://github.com/CosmicScale/PSBBN-Definitive-Project#wlaunchelf-r3z) and [R3CONFIGURATOR](https://github.com/CosmicScale/PSBBN-Definitive-Project#r3configurator) before creating shortcuts to them.\r\n- Only remove existing apps assigned to the *START* boot key if [wLaunchELF-R3Z](https://github.com/CosmicScale/PSBBN-Definitive-Project#wlaunchelf-r3z) is installed.\r\n- Removed unnecessary kernel copy step when switching languages.\r\n- Only mount `__linux.9` when the language is changed to Japanese.\r\n- Added Russian to the language selection in preparation for the upcoming Russian localisation.\r\n- The installer now sends a list of all installed `ELF` files and their parent folders to the log.\r\n- Corrected the language variable sent to the log.\r\n- Fixed the \"Processing ELF files\" UI message.\r\n- Removed the redundant `txt_to_icon_sys.py` and `icon_sys_to_txt.py` scripts and their associated checks."
+    }
+  },
+  {
+    "repo": "sd2psXtd/Open-PS2-Loader",
+    "release": null
+  },
+  {
+    "repo": "saildot4k/wLaunchELF_R3Z",
+    "release": {
+      "tag": "4.80",
+      "published": "2026-10-18T01:18:03Z",
+      "url": "https://github.com/saildot4k/wLaunchELF_R3Z/releases/tag/4.80",
+      "body": "**DS34 info**: are for users that plug their Dualshock 3/4 into PS2 USB ports. Due to driver conflict expect issues especially with MC0/1. This cannot/will not be fixed. If you use Blueretro, Brook Wingman, Methylene you DO NOT NEED the DS3/4 version as your controller is seen as native to PS2!\r\n\r\n- Neutrino .iso launching\r\n- MMCE VMC switching for Neutrino\r\n- Retrogem Game ID for Neutrino\r\n- Ember .bin/.cue launching\r\n- Enable/Disable Neutrino, Ember, POPStarter support\r\n- Device names instead of blank date/timestamps to help new users out\r\n- L1 Sort options forward and reverse\r\n- Put a space between title 1 and title 2 from icon.sys when displaying game title info\r\n- Merge 'R1 Set *Tuna Timestamp' into 'Edit Timestamps'\r\n\r\n----------------------------\r\n**No Thanks to TnA-Plasitc:**\r\nThis message will remain until TnA is no longer a mod/admin/server of ANYTHING PS2 related. He has already been kicked as mod and user from multiple places for harassement and his disgusting behavior. Other PS2 related Discord servers have already taken steps and removed his discord server as a \"Recommended Server\".\r\n\r\nReddit: r/PS2 - kicked as a moderator\r\n\r\nDiscord: Perma-Bans\r\n\r\nPSX-Place (yet still allowed to be a mod at website!?)\r\nPS2 Homebrew\r\nPS2 Space\r\nConsolemods.org\r\nAthena PS2 System\r\nBitfunx"
+    }
+  },
+  {
+    "repo": "sd2psXtd/firmware",
+    "release": {
+      "tag": "nightly",
+      "published": "2026-10-09T09:41:15Z",
+      "url": "https://github.com/sd2psXtd/firmware/releases/tag/nightly",
+      "body": "## Commits\n- Fix #115 ([BBsan](https://github.com/sd2psXtd/firmware/commit/b3c9a546028ccc52b9a3647349129d7161250d33))"
+    }
+  },
+  {
+    "repo": "ps2homebrew/wLaunchELF",
+    "release": {
+      "tag": "latest",
+      "published": "2026-10-13T04:09:38Z",
+      "url": "https://github.com/ps2homebrew/wLaunchELF/releases/tag/latest",
+      "body": "## Documentation\n- README formatting ([Julian Uy](https://github.com/ps2homebrew/wLaunchELF/commit/c49936fae69d0cba35eb25efb6be208f83aa2ef8))\n- Add note about different proejcts ([Julian Uy](https://github.com/ps2homebrew/wLaunchELF/commit/4f33af415edf3f7d537880c8c8dc6f48c7b4824a))\n- add contributing guidelines ([Julian Uy](https://github.com/ps2homebrew/wLaunchELF/commit/57c20494395a6b9c83930fc678e4419b63189c05))"
+    }
+  },
+  {
+    "repo": "oMrRexD/wLaunchELF_R3Z_FTP",
+    "release": {
+      "tag": "r14",
+      "published": "2026-09-28T19:30:44Z",
+      "url": "https://github.com/oMrRexD/wLaunchELF_R3Z_FTP/releases/tag/r14",
+      "body": "wLaunchELF R3Z v4.78 with the FTP server on. See the [README](https://github.com/oMrRexD/wLaunchELF_R3Z_FTP#readme) for what changes and how to use it.\n\n- `wLaunchELF_R3Z_FTP-R14.zip`: the `APPS/wLaunchELF-FTP/` folder, ready to copy to a memory card, SD2PSX card or USB drive. Edit `IPCONFIG.DAT` with the IP of your PS2 (`IP netmask gateway`).\n- `WLE-FTP.ELF`: the ELF alone.\n\nChanges from R13:\n- The version now shows the fork: `wLaunchELF v4.78_R3Z_FTP` in the title bar, the About screen and the build info.\n- A refused command from the PC (invalid or unknown) shows its message right away; before, it only appeared on the next key press.\n\nTested on my console (SD2PSX + internal HDD with exFAT, LaunchELF set to English): the version name, a refused command, and the whole receive flow (switch to udpfs, server found, game already on the HDD, back to FTP) with its messages.\n\nBuilt with `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11`:\n`make rebuild ETH=1 UDPFS=1 EXFAT=1 MMCE=1 MX4SIO=1 LCDVD=LATEST DVRP=1 XFROM=1 DS34=0`\n\nSHA-256 of `WLE-FTP.ELF`: `499e69f02ce18cc0f90bcd2b74a3dd654b5dc772aefc5421c56f9e242410b2e2`\n\n---\n\n**Português**\n\nwLaunchELF R3Z v4.78 com o servidor FTP ligado. O que muda e como usar está no [README em português](https://github.com/oMrRexD/wLaunchELF_R3Z_FTP/blob/ftp/.github/README.pt-BR.md).\n\n- `wLaunchELF_R3Z_FTP-R14.zip`: a pasta `APPS/wLaunchELF-FTP/`, pronta pra copiar pro memory card, pro cartão do SD2PSX ou pro pendrive. Edite o `IPCONFIG.DAT` com o IP do seu PS2 (`IP máscara gateway`).\n- `WLE-FTP.ELF`: só o ELF.\n\nMudanças desde a R13:\n- A versão agora mostra o fork: `wLaunchELF v4.78_R3Z_FTP` na barra de cima, na tela About e nas informações do build.\n- Um comando do PC recusado (inválido ou desconhecido) mostra a mensagem na hora; antes, ela só aparecia quando se apertava um botão.\n\nTestada no meu console (SD2PSX + HD interno com exFAT, LaunchELF em inglês): o nome da versão, um comando recusado e o fluxo inteiro do receber (troca pro udpfs, servidor encontrado, jogo que já estava no HD, volta pro FTP) com as mensagens.\n"
+    }
+  },
+  {
+    "repo": "israpps/romman",
+    "release": {
+      "tag": "develop-49",
+      "published": "2025-11-22T21:21:10Z",
+      "url": "https://github.com/israpps/romman/releases/tag/develop-49",
+      "body": "Development release triggered by push to develop branch."
+    }
+  },
+  {
+    "repo": "Kyllemn/PS2TVCRT",
+    "release": {
+      "tag": "FullAnFinalRelease",
+      "published": "2026-10-21T14:56:47Z",
+      "url": "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease",
+      "body": "======================================================================\r\n RETRO VOLT SUITE PARA PLAYSTATION 2 - GUIA COMPLETO (LEIA-ME)\r\n FastLoader V2.1.1 - Retro Arcade V1.1.0 - Retro Volt - Suite (Windows)\r\n CRIADO POR RETROVOLT - LEONARDO TORRES - 21/10/2026\r\n======================================================================\r\n\r\nEste guia explica, passo a passo, como montar e usar a suite. Leia na\r\nordem na primeira vez. Depois use como consulta.\r\n\r\nManual completo com imagens (PT, EN, ES):\r\nhttps://claude.ai/artifact/TbHwMBFJQS6zcHkxzZPuug\r\n\r\n\r\n----------------------------------------------------------------------\r\n 1. O QUE E A SUITE\r\n----------------------------------------------------------------------\r\n\r\n  FASTLOADER       O menu principal do PS2. Lista e inicia:\r\n                   - jogos de PS2 (ISO) do HD, pendrive, MX4SIO, MMCE e\r\n                     do PC pela rede (pelo Neutrino);\r\n                   - jogos de PS1 (pelo Ember);\r\n                   - o disco que estiver no leitor (aba CDVD);\r\n                   - programas .elf (pelo FILES).\r\n                   Tem gerenciador de arquivos (FILES), favoritos, capas,\r\n                   memory card virtual e idioma PT-BR / ENG.\r\n\r\n  RETRO ARCADE     Menu de arcade e consoles, aberto pelo FastLoader\r\n                   (START > Extras > Retro Arcade):\r\n                   CPS1, CPS2, Neo-Geo (MVS), PC Engine e Neo Geo CD.\r\n\r\n  NUCLEOS          Os emuladores de cada sistema. Ficam protegidos\r\n                   (cifrados) junto com o Retro Arcade, como arquivos .SYS.\r\n\r\n  RETRO VOLT -     Programa de Windows (RetroVoltSuite.exe): cria as\r\n  SUITE            pastas, baixa capas, cria memory cards virtuais,\r\n                   protege os nucleos e serve jogos pela rede.\r\n\r\n  O UNICO programa visivel no aparelho e o FASTLOADER.ELF. Todo o resto\r\n  e aberto por ele.\r\n\r\n\r\n----------------------------------------------------------------------\r\n 2. O QUE VOCE PRECISA\r\n----------------------------------------------------------------------\r\n\r\n  [ ] Um PS2 que abre programas caseiros (.elf): FreeMcBoot (FMCB),\r\n      PS2BBL ou outro launcher no memory card.\r\n  [ ] Um memory card no slot 1 (guarda idioma, favoritos e ajustes).\r\n  [ ] Onde guardar os jogos (um ou mais):\r\n        - HD interno formatado em exFAT (o melhor);\r\n        - pendrive em exFAT ou FAT32 (FAT32 nao aceita arquivo de 4 GB\r\n          ou mais: DVD grande precisa de exFAT);\r\n        - cartao SD no adaptador MX4SIO;\r\n        - MMCE (MemCard PRO 2 / SD2PSX).\r\n  [ ] O pacote da suite: Vxx_retrovolt_full.zip (o numero maior e o mais\r\n      novo).\r\n  [ ] NEUTRINO (obrigatorio para PS2): o pacote completo, versao mais\r\n      nova (v1.8.0 ou mais nova se for usar a rede).\r\n  [ ] EMBER (obrigatorio para PS1): Beta 2 ou mais novo, e a BIOS do seu\r\n      proprio console (bios.bin).\r\n  [ ] Windows, para o Retro Volt - Suite (opcional, mas recomendado).\r\n\r\n\r\n----------------------------------------------------------------------\r\n 3. COMO FICA A RAIZ DO HD OU PENDRIVE\r\n----------------------------------------------------------------------\r\n\r\n  Copie exatamente assim. Maiusculas e minusculas nao importam no HD e\r\n  no pendrive.\r\n\r\n  HD ou PENDRIVE:\\\r\n  |\r\n  +-- RETROVOLT\\                         <- TUDO da suite fica aqui\r\n  |   |\r\n  |   +-- FASTLOADER\\\r\n  |   |   +-- FASTLOADER.ELF             <- o programa que voce abre\r\n  |   |   +-- neutrino.elf               <- do pacote do Neutrino\r\n  |   |   +-- config\\                    <- do pacote do Neutrino\r\n  |   |   +-- modules\\                   <- do pacote do Neutrino\r\n  |   |   +-- nomes.txt                  <- opcional (nomes da aba CDVD)\r\n  |   |   +-- CAPAS\\\r\n  |   |   |   +-- PS2\\                   <- capas, logos e discos de PS2\r\n  |   |   |   +-- PS1\\                   <- capas, logos e discos de PS1\r\n  |   |   |   +-- SERIAIS\\               <- discos pelo serial (aba CDVD)\r\n  |   |   +-- MEMORY CARD\\               <- memory cards virtuais (.mcv)\r\n  |   |\r\n  |   +-- EXTRAS\\                        <- Retro Arcade\r\n  |       +-- A7F3C1\\                    <- menu e nucleos protegidos\r\n  |       |   +-- 9B14.SYS  \r\n  |       |   +-- 8D2A.SYS  \r\n  |       |   +-- C47E.SYS  \r\n  |       |   +-- 1F90.SYS  \r\n  |       |   +-- B6D3.SYS  \r\n  |       |   +-- 5E08.SYS  \r\n  |       +-- CPS1\\   rominfo.cps1  zipname.cps1  ROMS\\  CAPAS\\  NVRAM\\\r\n  |       +-- CPS2\\   rominfo.cps2  zipname.cps2  ROMS\\  CACHE\\  CAPAS\\  NVRAM\\\r\n  |       +-- MVS\\    rominfo.mvs   zipname.mvs   ROMS\\  CACHE\\  CAPAS\\  NVRAM\\  MEMCARD\\\r\n  |       +-- PCE\\    ROMS\\\r\n  |       +-- NEOGEO-CD\\\r\n  |\r\n  +-- EMBER\\                             <- PS1: fica na RAIZ, fora do RETROVOLT\r\n  |   +-- ember.elf\r\n  |   +-- bios.bin                       <- BIOS do seu console\r\n  |   +-- games\\\r\n  |       +-- Alundra\\                   <- uma pasta por jogo\r\n  |       |   +-- Alundra.cue\r\n  |       |   +-- Alundra.bin\r\n  |       +-- Final Fantasy VII\\         <- varios discos: todos na mesma pasta\r\n  |           +-- Final Fantasy VII (Disc 1).cue + .bin\r\n  |           +-- Final Fantasy VII (Disc 2).cue + .bin\r\n  |           +-- Final Fantasy VII (Disc 3).cue + .bin\r\n  |\r\n  +-- (ISOs de PS2)                      <- em qualquer pasta, ate 4 niveis\r\n      +-- DVD\\Jogo.iso                      abaixo da raiz. Ex.: DVD\\, CD\\,\r\n      +-- JOGOS\\Jogo.iso                    JOGOS\\, JOGOS\\PS2\\Luta\\ ...\r\n      +-- Jogo.iso\r\n\r\n  NO MEMORY CARD DO SLOT 1 (o loader cria sozinho):\r\n    mc0:RETROVOLT\\FASTLOADER\\HDUI-*.CFG\r\n      HDUI-LANG.CFG    idioma (PT ou EN)\r\n      HDUI-FAVS.CFG    favoritos\r\n      HDUI-RENAME.CFG  nomes trocados\r\n      HDUI-MODES.CFG   modos de compatibilidade\r\n      HDUI-MCV.CFG     jogos com memory card virtual\r\n      HDUI-LAST.CFG    ultimo jogo (voltar onde parou)\r\n      HDUI-NET.CFG     IP do PS2 na rede\r\n      HDUI-BG.CFG      ordem do fundo\r\n\r\n\r\n----------------------------------------------------------------------\r\n 4. INSTALACAO, PASSO A PASSO\r\n----------------------------------------------------------------------\r\n\r\n PASSO 1 - A SUITE\r\n   1. Ligue o HD (ou pendrive) no PC.\r\n   2. Descompacte o Vxx_retrovolt_full.zip na RAIZ dele.\r\n      Fica G:\\RETROVOLT\\... (G: = a letra do seu HD/pendrive).\r\n   3. Ja tem uma pasta RETROVOLT? Descompacte POR CIMA. O pacote so\r\n      troca os programas; seus jogos, capas, saves e memory cards\r\n      virtuais continuam la.\r\n\r\n PASSO 2 - O NEUTRINO (jogos de PS2)\r\n   1. Baixe o pacote mais novo do Neutrino (projeto oficial no GitHub).\r\n   2. Copie para G:\\RETROVOLT\\FASTLOADER\\ os TRES itens juntos:\r\n        neutrino.elf   +   pasta config\\   +   pasta modules\\\r\n   3. Nunca misture versoes (neutrino.elf de uma, config/modules de\r\n      outra): da tela preta. Ao atualizar, troque os tres de uma vez.\r\n   4. Onde o loader procura o Neutrino, nesta ordem:\r\n        1) pendrive: RETROVOLT\\FASTLOADER\\neutrino.elf\r\n        2) pendrive, na raiz: neutrino.elf\r\n        3) HD: RETROVOLT\\FASTLOADER\\neutrino.elf\r\n        4) memory card: mc0:RETROVOLT\\FASTLOADER\\neutrino.elf\r\n      Use UMA copia so. Com duas, vale a primeira da lista (e as\r\n      configuracoes da outra sao ignoradas).\r\n\r\n PASSO 3 - O EMBER (jogos de PS1)\r\n   1. Crie a pasta EMBER na RAIZ do HD ou do pendrive (fora do RETROVOLT).\r\n   2. Coloque nela o ember.elf (Beta 2 ou mais novo) e a bios.bin do\r\n      seu proprio console.\r\n   3. Dentro dela, crie a pasta games\\ e uma pasta para cada jogo, com o\r\n      .cue e o .bin dentro. Jogo de varios discos: todos os .cue/.bin na\r\n      mesma pasta.\r\n   4. O PS1 so funciona pelo HD ou pelo pendrive (ainda nao pelo MX4SIO\r\n      nem pelo MMCE).\r\n\r\n PASSO 4 - OS JOGOS DE PS2\r\n   1. Copie as ISOs para o HD/pendrive, em qualquer pasta ate 4 niveis\r\n      abaixo da raiz (ex.: DVD\\, CD\\, JOGOS\\).\r\n   2. Nao coloque ISOs dentro de RETROVOLT, EMBER ou APPS: essas pastas\r\n      nao sao lidas na busca.\r\n   3. Pendrive em FAT32: ISO de 4 GB ou mais nao cabe. Use exFAT.\r\n\r\n PASSO 5 - OS JOGOS DO RETRO ARCADE\r\n   CPS1 / CPS2 / MVS:\r\n     - ROMs (.zip do MAME) em EXTRAS\\CPS1\\ROMS, CPS2\\ROMS e MVS\\ROMS.\r\n     - O rominfo e o zipname de cada sistema ficam na pasta do sistema\r\n       (EXTRAS\\CPS1\\rominfo.cps1, zipname.cps1 ...). Sem eles a aba nao\r\n       aparece.\r\n     - CPS2: cada jogo precisa do CACHE, gerado no PC a partir do .zip\r\n       (romcnv_cps2.exe / gerar_caches.bat), em EXTRAS\\CPS2\\CACHE.\r\n     - MVS: a BIOS neogeo.zip vai em EXTRAS\\MVS\\ROMS. Jogos grandes\r\n       tambem usam cache em EXTRAS\\MVS\\CACHE.\r\n     - CPS2 e Neo-Geo pesados: use o HD interno (exFAT). No pendrive e\r\n       no MX4SIO podem engasgar.\r\n   PC ENGINE:\r\n     - HuCard (.pce) ou ISO (.cue + .bin) em EXTRAS\\PCE\\ROMS, ou o CD\r\n       original no leitor.\r\n   NEO GEO CD:\r\n     - Coloque o CD (original ou gravado) no leitor do PS2. A BIOS ja\r\n       vem dentro do nucleo. A pasta EXTRAS\\NEOGEO-CD precisa existir.\r\n\r\n PASSO 6 - O PROGRAMA DE WINDOWS (opcional)\r\n   Abra o RetroVoltSuite.exe (nao precisa instalar).\r\n   - Idioma: na 1a vez ele pergunta \"Portugues (PT-BR) / English (ENG)\".\r\n     Trocar depois: caixa de idioma no canto de cima, a direita (o\r\n     programa reabre no idioma novo). Fica gravado no RetroVoltSuite.ini.\r\n   - Parou o mouse em cima de um botao ou opcao: aparece um balao\r\n     explicando o que ele faz.\r\n   - Aba \"Capas e MCV\":\r\n       1. \"Escolher unidade dos jogos...\": escolha a unidade (HD/pendrive)\r\n          onde estao os jogos. O programa varre TUDO sozinho (raiz, CD,\r\n          DVD, EMBER\\games...). Nessa unidade ele tambem cria a estrutura\r\n          RETROVOLT que faltar e, se as pastas da suite estiverem em\r\n          minusculo (retrovolt, fastloader, capas...), passa para\r\n          MAIUSCULO. Nunca cria CD nem DVD.\r\n       2. Capa, logo e disco que voce copiou a mao para\r\n          RETROVOLT\\FASTLOADER\\CAPAS\\PS2 (ou PS1) com o nome do jogo\r\n          (JOGO.PNG, JOGO_LOGO.PNG, JOGO_ICO.PNG) contam como \"Ja existe no\r\n          dispositivo\" na proxima leitura - o jogo deixa de ficar vermelho.\r\n       3. \"Escolher unidade de destino...\": o HD/pendrive do PS2. O destino\r\n          comeca SEMPRE vazio: voce decide. O programa cria o que faltar\r\n          em RETROVOLT (e so em RETROVOLT; nunca no disco do Windows).\r\n       4. \"Baixar e gerar capas\": baixa capa, logo e disco de cada jogo.\r\n          O que ja existe so e trocado com \"Sobrescrever capas que ja\r\n          existem\" ligado.\r\n       5. Coluna MCV + \"Criar MCV dos jogos marcados\": cria memory cards\r\n          virtuais de 8 MB, ja formatados.\r\n   - Aba \"Retroarcade\": capas dos jogos de CPS1, CPS2, MVS e PC Engine.\r\n   - Aba \"Rede\": servidor para jogar ISOs do PC pelo cabo de rede.\r\n   - Protecao dos nucleos: se o programa achar .ELF soltos da suite\r\n     (RETROARCADE.ELF, CPS1.ELF, PCE.ELF...), pergunta se pode troca-los\r\n     pelos .SYS protegidos. Se o .SYS ja existe, mostra os tamanhos e so\r\n     troca se voce confirmar (o padrao e NAO).\r\n\r\n PASSO 7 - O LAUNCHER DO PS2\r\n   No FreeMcBoot / PS2BBL, crie uma entrada apontando para o arquivo:\r\n       RETROVOLT/FASTLOADER/FASTLOADER.ELF\r\n   Ex. no pendrive: mass:/RETROVOLT/FASTLOADER/FASTLOADER.ELF\r\n   Para o HD, use o caminho que o seu launcher usa para o HD exFAT.\r\n   Ou abra pelo wLaunchELF/uLaunchELF navegando ate o arquivo.\r\n\r\n PASSO 8 - PRIMEIRA VEZ NO PS2\r\n   1. Abra o FASTLOADER.ELF.\r\n   2. Aparece o popup \"PT-BR / ENG\" (precisa de memory card no slot 1).\r\n      Esquerda/direita escolhem, X grava. Nao pergunta mais.\r\n   3. Pronto: tela principal com as abas.\r\n\r\n\r\n----------------------------------------------------------------------\r\n 5. USANDO NO DIA A DIA\r\n----------------------------------------------------------------------\r\n\r\n ABAS (L1 / R1 trocam):\r\n   HD, USB, MX4SIO, MMCE   jogos de PS2 de cada aparelho\r\n   PS1                     jogos de PS1 (pergunta HD ou USB)\r\n   CDVD                    o disco que esta no leitor\r\n   REDE (NETW em ingles)   jogos de PS2 do PC pelo cabo\r\n   FILES                   gerenciador de arquivos\r\n\r\n IMPORTANTE: nenhuma aba le sozinha. Entre na aba e aperte X para\r\n carregar. SELECT le de novo (depois de copiar jogos novos).\r\n\r\n BOTOES NAS LISTAS:\r\n   X               carrega a lista / inicia o jogo (pergunta antes)\r\n   Triangulo       renomear (so o nome mostrado)\r\n   Quadrado        modos de compatibilidade do Neutrino\r\n   Circulo         sair para o menu do PS2\r\n   Esquerda        adiciona aos favoritos (ate 10)\r\n   L2 / R2         pagina anterior / proxima\r\n   SELECT          atualizar a lista\r\n   START           Extras\r\n   START + SELECT  favoritos\r\n   R3              troca MX4SIO <-> MMCE (so nas abas deles)\r\n\r\n EXTRAS (START):\r\n   Desligar console / Reset / Creditos / Retro Arcade / Idioma\r\n\r\n INICIAR UM JOGO DE PS2:\r\n   1. Escolha o jogo e aperte X.\r\n   2. No popup, a linha MEMORY CARD: esquerda/direita escolhem\r\n        FISICO (REAL)  = o cartao de verdade do slot 1\r\n        VIRTUAL        = o arquivo .mcv daquele jogo\r\n        CRIAR VIRTUAL  = cria o .mcv na hora e ja inicia\r\n   3. X inicia.\r\n\r\n RETRO ARCADE:\r\n   1. START > Extras > Retro Arcade.\r\n   2. L1/R1 trocam o sistema (CPS1, CPS2, MVS, PC Engine, Neo Geo CD).\r\n   3. X carrega a lista; X no jogo pergunta e inicia.\r\n   4. Popup de iniciar: esquerda/direita escolhem 240p / 480i / 480p.\r\n   5. Ao sair do jogo, volta sozinho ao Retro Arcade (\"Voltando ao\r\n      Retro Arcade\"), no mesmo jogo.\r\n   6. Voltar ao FastLoader: START no Retro Arcade > Voltar ao FastLoader.\r\n\r\n TROCAR O IDIOMA:\r\n   START > Extras > Idioma. Vale para o FastLoader e o Retro Arcade.\r\n   Para ver o popup da primeira vez de novo: apague\r\n   mc0:RETROVOLT\\FASTLOADER\\HDUI-LANG.CFG.\r\n\r\n\r\n----------------------------------------------------------------------\r\n 6. MEMORY CARD VIRTUAL (MCV)\r\n----------------------------------------------------------------------\r\n\r\n  - Um arquivo de 8 MB que o jogo enxerga como o memory card do slot 1.\r\n  - Fica em RETROVOLT\\FASTLOADER\\MEMORY CARD\\ do MESMO aparelho do jogo.\r\n  - Vale para HD, pendrive e MX4SIO. Nao vale para MMCE, rede, PS1 e\r\n    disco no leitor.\r\n  - Nome: o que vem antes do \" - \" no nome da ISO (ou os 30 primeiros\r\n    caracteres). Ex.: \"Phantom Brave - USA.iso\" -> \"Phantom Brave.mcv\".\r\n  - No pendrive, salvar demora (minutos). Nao desligue durante o save.\r\n  - \"MEMORY CARD: FISICO (NOME LONGO)\": o caminho do jogo e comprido\r\n    demais para o limite do console. Encurte o nome da ISO ou tire o\r\n    jogo de subpastas.\r\n\r\n\r\n----------------------------------------------------------------------\r\n 7. JOGAR PELA REDE (OPCIONAL)\r\n----------------------------------------------------------------------\r\n\r\n  1. PS2 e PC no mesmo roteador (o PS2 por cabo). PS2 fat precisa do\r\n     adaptador de rede.\r\n  2. No PC: RetroVoltSuite.exe > aba Rede > escolha a pasta dos jogos >\r\n     \"Liberar no Firewall do Windows...\" (so na 1a vez) > \"Iniciar\r\n     servidor\".\r\n  3. No PS2: aba REDE > X > acerte o IP do PS2 (os 3 primeiros numeros\r\n     iguais aos do PC, o ultimo diferente) > X conecta.\r\n  4. Nao feche o programa nem tire o cabo com o jogo rodando.\r\n  5. Jogo da rede salva no memory card de verdade (sem MCV).\r\n\r\n\r\n----------------------------------------------------------------------\r\n 8. ATUALIZAR A SUITE\r\n----------------------------------------------------------------------\r\n\r\n  1. Baixe o Vxx_retrovolt_full.zip mais novo.\r\n  2. Descompacte na raiz do HD/pendrive, POR CIMA da pasta RETROVOLT.\r\n  3. So isso. Jogos, capas, saves e memory cards virtuais ficam.\r\n  Pode apagar, se ainda existirem:\r\n    - a pasta antiga RETROVOLT\\RETROARCADE\\;\r\n    - qualquer .ELF dentro de RETROVOLT\\EXTRAS (CPS1.ELF, PCE.ELF,\r\n      NEOGEOCD.ELF, RETROARCADE.ELF, _MVS.ELF...);\r\n    - copias antigas do FastLoader (v2.0.8.ELF, v2.0.9.ELF...).\r\n  NAO apague nem renomeie os .SYS de RETROVOLT\\EXTRAS\\A7F3C1.\r\n\r\n\r\n----------------------------------------------------------------------\r\n 9. PROBLEMAS COMUNS\r\n----------------------------------------------------------------------\r\n\r\n  Lista vazia\r\n    -> Aperte X na aba (nenhuma aba le sozinha). \"Nenhum ... detectado\"\r\n       = o aparelho nao respondeu (confira exFAT/FAT32). \"Nenhuma ISO\r\n       encontrada\" = nao ha ISO nas pastas lidas.\r\n\r\n  \"NEUTRINO NAO ENCONTRADO\"\r\n    -> Falta a pasta do Neutrino em RETROVOLT\\FASTLOADER\\ (pendrive, HD\r\n       ou memory card). Copie neutrino.elf + config + modules.\r\n\r\n  Jogo de PS2 trava / tela preta\r\n    -> Teste os modos (Quadrado). Confira se o Neutrino esta completo e\r\n       todo da mesma versao.\r\n\r\n  \"RETRO ARCADE NAO ENCONTRADO\"\r\n    -> Falta RETROVOLT\\EXTRAS\\A7F3C1\\9B14.SYS. Copie o pacote de novo.\r\n\r\n  \"RETRO ARCADE DANIFICADO\" ou nucleo \"danificado\"\r\n    -> Um .SYS foi alterado ou copiado pela metade. Copie a pasta\r\n       RETROVOLT\\EXTRAS\\A7F3C1 de novo, do pacote.\r\n\r\n  Retro Arcade: \"Pasta ... nao encontrada\" ou lista vazia\r\n    -> CPS1/CPS2/MVS: falta a pasta do sistema ou o rominfo dentro dela.\r\n       PC Engine / Neo Geo CD: falta a pasta (PCE / NEOGEO-CD) ou o .SYS.\r\n\r\n  CPS2: \"Jogo sem cache\"\r\n    -> Gere o cache do jogo no PC e copie para EXTRAS\\CPS2\\CACHE.\r\n\r\n  MVS: \"Falta a BIOS\"\r\n    -> Coloque o neogeo.zip em EXTRAS\\MVS\\ROMS.\r\n\r\n  PS1: \"EMBER.ELF NAO ENCONTRADO\"\r\n    -> Falta EMBER\\ember.elf na raiz do aparelho escolhido.\r\n\r\n  MX4SIO ou MMCE nao aparece\r\n    -> Os dois nao funcionam juntos. Na aba do outro, aperte R3.\r\n\r\n  Sem capa\r\n    -> A capa tem que estar em RETROVOLT\\FASTLOADER\\CAPAS\\PS2 (ou PS1)\r\n       no MESMO aparelho do jogo. Use o RetroVoltSuite.exe.\r\n\r\n  Qual versao eu tenho?\r\n    -> START > Creditos: \"Retro Volt Suite - FastLoader V2.1.1 - data\".\r\n\r\n\r\n----------------------------------------------------------------------\r\n Retro Volt Suite - CRIADO POR RETROVOLT - LEONARDO TORRES\r\n======================================================================\r\n"
+    }
+  },
+  {
+    "repo": "israpps/wLaunchELF_ISR",
+    "release": {
+      "tag": "latest",
+      "published": "2026-01-14T03:21:46Z",
+      "url": "https://github.com/israpps/wLaunchELF_ISR/releases/tag/latest",
+      "body": "## Commits\n- 74550d8: Add Italian translation (#105) (Matteo) [#105](https://github.com/israpps/wLaunchELF_ISR/pull/105)"
+    }
+  }
+]

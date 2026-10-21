@@ -1,0 +1,2212 @@
+[
+  {
+    "repo": "NathanNeurotic/Open-PS2-Loader",
+    "refs": [
+      "9ef8d643a739d88a4f4b5fd055a209d0b27299c4",
+      "2eb0d37629215491bfc31ea57cdce5630d4f1450",
+      "dc6206f60bf8175d88946c175e839d59ada9d9ab",
+      "7452341a076d3e7a5e14e613429c7eca594f4888",
+      "0f2b5e6966715b711a91f3d5d8a5ea5d333361a4",
+      "abf14079e66ae5a5f3f943011dbe3356e2e1152b"
+    ],
+    "links": [
+      "https://github.com/NathanNeurotic/Open-PS2-Loader",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/9ef8d643a739d88a4f4b5fd055a209d0b27299c4",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/2eb0d37629215491bfc31ea57cdce5630d4f1450",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/955",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/PARENTAL-LOCK.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/issues/972",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/.github/scripts/test_ra_chunk_integrity.py",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/elfldr_noreset.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/retrogem.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/ps2cnf.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/texcache.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dc6206f60bf8175d88946c175e839d59ada9d9ab",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/923",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/RETROACHIEVEMENTS.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/916",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/881",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/favsupport.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/945",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/IGR.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/9ef8d643a739d88a4f4b5fd055a209d0b27299c4/docs/NEUTRINO.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/923",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/898",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/tree/7452341a076d3e7a5e14e613429c7eca594f4888",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/tree/7452341a076d3e7a5e14e613429c7eca594f4888",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/7452341a076d3e7a5e14e613429c7eca594f4888/docs/RETROACHIEVEMENTS.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/955",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/PC-CARD-CF.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/LANGUAGES.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/tree/rebuild/main",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/955",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/issues/972",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pulls",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/0f2b5e6966715b711a91f3d5d8a5ea5d333361a4",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/9ef8d643a739d88a4f4b5fd055a209d0b27299c4",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/846",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/842",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/840",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/841",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/843",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader"
+    ],
+    "branch": "rebuild/main",
+    "head": "2808a4cd579e4294c520e35149bbfc87d79cce45",
+    "date": "2026-10-21T07:08:53Z",
+    "message": "Merge pull request #1015 from NathanNeurotic/fix/986-vmc-rebuild",
+    "checked": "2026-10-21T15:34:55.391Z"
+  },
+  {
+    "repo": "dnunezx/LUNA",
+    "refs": [
+      "475f7b2513e739cf63af9cd4ed8c84280e93a762",
+      "9c5be408df787000a7e650f66f0a43411060e1d7",
+      "4614b0c53e0f904a57afb18572b15090a6afd657",
+      "23112ecce73823b13d11d57fda0abd5968808d7c"
+    ],
+    "links": [
+      "https://github.com/dnunezx/LUNA/compare/475f7b2513e739cf63af9cd4ed8c84280e93a762...9c5be408df787000a7e650f66f0a43411060e1d7",
+      "https://github.com/dnunezx/LUNA/compare/9c5be408df787000a7e650f66f0a43411060e1d7...4614b0c53e0f904a57afb18572b15090a6afd657",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA/commit/475f7b2513e739cf63af9cd4ed8c84280e93a762",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/tools/build-luna-psxcore.sh",
+      "https://github.com/dnunezx/LUNA/commit/9c5be408df787000a7e650f66f0a43411060e1d7",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/LUNA/commit/4614b0c53e0f904a57afb18572b15090a6afd657",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA/commit/475f7b2513e739cf63af9cd4ed8c84280e93a762",
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/LUNA/commit/23112ecce73823b13d11d57fda0abd5968808d7c",
+      "https://github.com/dnunezx/LUNA"
+    ],
+    "branch": "default",
+    "head": "f3c765e23eee9fb9ff0829d4e63a22a542cd2199",
+    "date": "2026-10-21T05:59:31Z",
+    "message": "Update PSXCore to 0d4348e after build validation",
+    "checked": "2026-10-21T15:34:55.393Z"
+  },
+  {
+    "repo": "dnunezx/PSXCore",
+    "refs": [
+      "360a788ff7bb7c6853702a8edec6860cae49c0a2",
+      "66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9"
+    ],
+    "links": [
+      "https://github.com/dnunezx/PSXCore",
+      "https://github.com/dnunezx/PSXCore/blob/main/README.md",
+      "https://github.com/dnunezx/PSXCore",
+      "https://github.com/dnunezx/PSXCore/blob/360a788ff7bb7c6853702a8edec6860cae49c0a2/runtime/igrloader/main.c",
+      "https://github.com/dnunezx/PSXCore/tree/360a788ff7bb7c6853702a8edec6860cae49c0a2",
+      "https://github.com/dnunezx/PSXCore/tree/360a788ff7bb7c6853702a8edec6860cae49c0a2",
+      "https://github.com/dnunezx/PSXCore/commit/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/tree/360a788ff7bb7c6853702a8edec6860cae49c0a2",
+      "https://github.com/dnunezx/PSXCore/commit/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9",
+      "https://github.com/dnunezx/PSXCore",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/compat.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/runtime_corrections.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/INTEGRATION.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/runtime/Makefile",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/runtime_corrections.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/runtime/Makefile",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/patch.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/INTEGRATION.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/discset.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/DISC-MAPPING.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/compat_profiles.generated.h",
+      "https://github.com/dnunezx/PSXCore"
+    ],
+    "branch": "default",
+    "head": "0d4348ea5fff50a16c303c5c1910038e65bf7915",
+    "date": "2026-10-21T01:34:57Z",
+    "message": "Enable smaller GP0 submission saves by default",
+    "checked": "2026-10-21T15:34:55.696Z"
+  },
+  {
+    "repo": "MiguelQueiroz010/OPL-DS4RTBT",
+    "refs": [
+      "e016d934e117a645e476564eddfd7f14f0188e01"
+    ],
+    "links": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/commit/e016d934e117a645e476564eddfd7f14f0188e01",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/tree/rtl-fw-loader",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT"
+    ],
+    "branch": "default",
+    "head": "e016d934e117a645e476564eddfd7f14f0188e01",
+    "date": "2026-10-18T15:12:22Z",
+    "message": "Merge tag '1.1' into rtl-fw-loader",
+    "checked": "2026-10-21T15:34:55.617Z"
+  },
+  {
+    "repo": "Gionnio/ps2manager",
+    "refs": [],
+    "links": [
+      "https://github.com/Gionnio/ps2manager",
+      "https://github.com/Gionnio/ps2manager",
+      "https://github.com/Gionnio/ps2manager",
+      "https://github.com/Gionnio/ps2manager"
+    ],
+    "branch": "default",
+    "head": "edc6b26236a1858e47df5c6583c9b9d4d0b447e6",
+    "date": "2026-10-08T18:07:36Z",
+    "message": "PS2 Manager 2.1.0: language picker",
+    "checked": "2026-10-21T15:34:55.441Z"
+  },
+  {
+    "repo": "coffeedevsolutions/OPLattice",
+    "refs": [
+      "c411879898c9dfb7fb7705534d08080677361f1c",
+      "32f3fd7bcefc96d9130fc27b364e2e8d41de9540"
+    ],
+    "links": [
+      "https://github.com/coffeedevsolutions/OPLattice/compare/c411879898c9dfb7fb7705534d08080677361f1c...32f3fd7bcefc96d9130fc27b364e2e8d41de9540",
+      "https://github.com/coffeedevsolutions/OPLattice",
+      "https://github.com/coffeedevsolutions/OPLattice",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/07-texture-safety.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/08-play-stats.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/palettize-art.py",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/check-art.py",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/import-igs.py",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/opl-theme-previewer.html",
+      "https://github.com/coffeedevsolutions/OPLattice/tree/main/tools",
+      "https://github.com/coffeedevsolutions/OPLattice",
+      "https://github.com/coffeedevsolutions/OPLattice/commit/32f3fd7bcefc96d9130fc27b364e2e8d41de9540",
+      "https://github.com/coffeedevsolutions/OPLattice"
+    ],
+    "branch": "default",
+    "head": "32f3fd7bcefc96d9130fc27b364e2e8d41de9540",
+    "date": "2026-09-07T00:03:07Z",
+    "message": "docs: the empty Library is ours, and upstream cannot reach it",
+    "checked": "2026-10-21T15:34:55.407Z"
+  },
+  {
+    "repo": "coffeedevsolutions/OPHTML",
+    "refs": [
+      "03a5d56f724055f4d46e0eaf44806e95f0202cb1",
+      "60810bd2ec0e2656d7425603e760ac010883f53a"
+    ],
+    "links": [
+      "https://github.com/coffeedevsolutions/OPHTML",
+      "https://github.com/coffeedevsolutions/OPHTML",
+      "https://github.com/coffeedevsolutions/OPHTML",
+      "https://github.com/coffeedevsolutions/OPHTML/commit/03a5d56f724055f4d46e0eaf44806e95f0202cb1",
+      "https://github.com/coffeedevsolutions/OPHTML/tree/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/fontgen.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.h",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/lint.js",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/docs/findings.md",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/serve.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/serve_page.html",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/vram.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/tools/check-vram-model.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/.github/workflows/hw.yml",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/tests/play_input.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/tests/fuzz_load.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/caps.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/limits.js",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/ophtml_console.h",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/examples/console-min/Makefile",
+      "https://github.com/coffeedevsolutions/OPHTML",
+      "https://github.com/coffeedevsolutions/OPHTML/commit/03a5d56f724055f4d46e0eaf44806e95f0202cb1",
+      "https://github.com/coffeedevsolutions/OPHTML",
+      "https://github.com/coffeedevsolutions/OPHTML/commit/60810bd2ec0e2656d7425603e760ac010883f53a",
+      "https://github.com/coffeedevsolutions/OPHTML"
+    ],
+    "branch": "default",
+    "head": "03a5d56f724055f4d46e0eaf44806e95f0202cb1",
+    "date": "2026-10-05T14:51:42Z",
+    "message": "Backlog: land F55–F61 roadmap rows (F55/F56/F57 done) (#188)",
+    "checked": "2026-10-21T15:34:55.643Z"
+  },
+  {
+    "repo": "danielnuld/ps2-launcher",
+    "refs": [
+      "d015baf7e4c004fa5db6964dc6bedd16484ea45d",
+      "28a23666fbc8b11b5edabcfff0f780b2b2161219"
+    ],
+    "links": [
+      "https://github.com/danielnuld/ps2-launcher/compare/d015baf7e4c004fa5db6964dc6bedd16484ea45d...28a23666fbc8b11b5edabcfff0f780b2b2161219",
+      "https://github.com/danielnuld/ps2-launcher",
+      "https://github.com/danielnuld/ps2-launcher",
+      "https://github.com/danielnuld/ps2-launcher/commit/d015baf7e4c004fa5db6964dc6bedd16484ea45d",
+      "https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/third_party/neutrino-igr/ra.c",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/achievements.c",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase16b-results.md",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/tools/orbit_catalog.py",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md",
+      "https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase13-results.md",
+      "https://github.com/danielnuld/ps2-launcher",
+      "https://github.com/danielnuld/ps2-launcher/commit/28a23666fbc8b11b5edabcfff0f780b2b2161219",
+      "https://github.com/danielnuld/ps2-launcher"
+    ],
+    "branch": "default",
+    "head": "28a23666fbc8b11b5edabcfff0f780b2b2161219",
+    "date": "2026-10-06T06:00:08Z",
+    "message": "Merge pull request #14 from danielnuld/v1.0.2",
+    "checked": "2026-10-21T15:34:55.713Z"
+  },
+  {
+    "repo": "akilluminati47/RIPPS2",
+    "refs": [
+      "e8f317b2196f625ae1947f3d1aeae547d232ee62",
+      "a26a9843312e45ed272f3437148bd7a3df431f78"
+    ],
+    "links": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/CHANGELOG.md",
+      "https://github.com/akilluminati47/RIPPS2",
+      "https://github.com/akilluminati47/RIPPS2",
+      "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0098-ripps2-build98-memory-files.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/main/README.md",
+      "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0086-ripps2-build86-card-manager-neutrino-logo-first.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0087-ripps2-build87-in-game-menu.patch",
+      "https://github.com/akilluminati47/RIPPS2/tree/main/tools/audio-studio",
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/CHANGELOG.md",
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/elf/lang/ripps2lang.py",
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/docs/plans/builds-104-on.md",
+      "https://github.com/akilluminati47/RIPPS2/commit/e8f317b2196f625ae1947f3d1aeae547d232ee62",
+      "https://github.com/akilluminati47/RIPPS2/releases/tag/v1.0.2-beta",
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/docs/plans/builds-104-on.md",
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/docs/plans/builds-104-on.md",
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/docs/plans/builds-104-on.md",
+      "https://github.com/akilluminati47/RIPPS2/blob/e8f317b2196f625ae1947f3d1aeae547d232ee62/docs/plans/builds-104-on.md",
+      "https://github.com/akilluminati47/RIPPS2",
+      "https://github.com/akilluminati47/RIPPS2/commit/a26a9843312e45ed272f3437148bd7a3df431f78",
+      "https://github.com/akilluminati47/RIPPS2"
+    ],
+    "branch": "default",
+    "head": "e6b3fc9a5ad0bce0c08e30df84b697519aa9c803",
+    "date": "2026-10-21T13:48:17Z",
+    "message": "README and v1.1.0-beta notes: the reel is v1.1.0",
+    "checked": "2026-10-21T15:34:56.290Z"
+  },
+  {
+    "repo": "hacan359/xerabora",
+    "refs": [
+      "0e5d35a3e9c64594973aff995f5d1a2db62310d4",
+      "d36ee3a54c8769825c99756f908367b2cc2622f3"
+    ],
+    "links": [
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.18",
+      "https://github.com/hacan359/xerabora/blob/0e5d35a3e9c64594973aff995f5d1a2db62310d4/README.md",
+      "https://github.com/hacan359/xerabora",
+      "https://github.com/hacan359/xerabora/commit/d36ee3a54c8769825c99756f908367b2cc2622f3",
+      "https://github.com/hacan359/xerabora"
+    ],
+    "branch": "default",
+    "head": "28c6531ceb9f247cd88f37a2bfbac23b93265a27",
+    "date": "2026-10-19T17:21:10Z",
+    "message": "Bring client/ui up to the shipped page",
+    "checked": "2026-10-21T15:34:56.236Z"
+  },
+  {
+    "repo": "dnunezx/OrbitPS2-Manager-LUNA-edition",
+    "refs": [],
+    "links": [
+      "https://github.com/dnunezx/OrbitPS2-Manager-LUNA-edition",
+      "https://github.com/dnunezx/OrbitPS2-Manager-LUNA-edition"
+    ],
+    "branch": "default",
+    "head": "acaca38fd2f797fd0a6ce028dbaf72bd648beba7",
+    "date": "2026-10-13T21:56:13Z",
+    "message": "Prepare stable v0.1.1 packages [skip ci]",
+    "checked": "2026-10-21T15:34:56.290Z"
+  },
+  {
+    "repo": "dnunezx/Open-PS2-Loader",
+    "refs": [
+      "56470efdcce8edfecd2cc32ccf86f43e14b7a9a4"
+    ],
+    "links": [
+      "https://github.com/dnunezx/Open-PS2-Loader/tree/opl-luna",
+      "https://github.com/dnunezx/Open-PS2-Loader/tree/56470efdcce8edfecd2cc32ccf86f43e14b7a9a4",
+      "https://github.com/dnunezx/Open-PS2-Loader/tree/opl-luna"
+    ],
+    "branch": "opl-luna",
+    "head": "56470efdcce8edfecd2cc32ccf86f43e14b7a9a4",
+    "date": "2026-10-08T16:17:57Z",
+    "message": "Support mapped virtual memory card I/O",
+    "checked": "2026-10-21T15:34:56.468Z"
+  },
+  {
+    "repo": "juanklimonplay/EonPS2",
+    "refs": [],
+    "links": [
+      "https://github.com/juanklimonplay/EonPS2"
+    ],
+    "branch": "default",
+    "head": "4427a4eb7e18786bc36483755fd7a64d83e4398e",
+    "date": "2026-10-17T23:54:46Z",
+    "message": "Merge pull request #2 from juanklimonplay/eonps2/espanol",
+    "checked": "2026-10-21T15:34:56.276Z"
+  },
+  {
+    "repo": "cristianCanek/SMB4PS2",
+    "refs": [],
+    "links": [
+      "https://github.com/cristianCanek/SMB4PS2"
+    ],
+    "branch": "default",
+    "head": "568c97d3a76b1c4651007ca2c19e5664802f67cf",
+    "date": "2026-10-09T03:03:57Z",
+    "message": "Initial commit",
+    "checked": "2026-10-21T15:34:56.382Z"
+  },
+  {
+    "repo": "Rian6/caduceus",
+    "refs": [
+      "311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc"
+    ],
+    "links": [
+      "https://github.com/Rian6/caduceus",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/main.ts#L95-L170",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/src/GettingStarted.tsx#L10-L17",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/cover-art.ts#L5-L30",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/main.ts#L42-L63",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/opl-activity.ts#L4-L35",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/catalog-backup.ts#L6-L20",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/src/GettingStarted.tsx#L5-L20",
+      "https://github.com/Rian6/caduceus/tree/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc",
+      "https://github.com/Rian6/caduceus",
+      "https://github.com/Rian6/caduceus/tree/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/README.md",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/discord-presence.ts",
+      "https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/vendor/xerabora/README.md",
+      "https://github.com/Rian6/caduceus"
+    ],
+    "branch": "default",
+    "head": "311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc",
+    "date": "2026-10-06T18:33:39Z",
+    "message": "Update README to remove distribution section",
+    "checked": "2026-10-21T15:34:56.585Z"
+  },
+  {
+    "repo": "Rian6/caduceus-opl",
+    "refs": [
+      "2a98a9d7361f8e33f421244bc88c318eab3bdf2f",
+      "cc1713a893a976c9b26ae1dd9975c200a461edfe"
+    ],
+    "links": [
+      "https://github.com/Rian6/caduceus-opl",
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1088-L1242",
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1367-L1505",
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1589-L1683",
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/ee_core/src/ra_overlay.c#L185-L360",
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/supportbase.c#L950-L968",
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/ethsupport.c#L426-L458",
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/opl.c#L272-L298",
+      "https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f",
+      "https://github.com/Rian6/caduceus-opl",
+      "https://github.com/Rian6/caduceus-opl/tree/cc1713a893a976c9b26ae1dd9975c200a461edfe",
+      "https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f",
+      "https://github.com/Rian6/caduceus-opl/blob/cc1713a893a976c9b26ae1dd9975c200a461edfe/docs/protocol/PROTOCOL.md",
+      "https://github.com/Rian6/caduceus-opl/blob/cc1713a893a976c9b26ae1dd9975c200a461edfe/README.md",
+      "https://github.com/Rian6/caduceus-opl/blob/cc1713a893a976c9b26ae1dd9975c200a461edfe/docs/OPL-XMB.md",
+      "https://github.com/Rian6/caduceus-opl"
+    ],
+    "branch": "default",
+    "head": "cc1713a893a976c9b26ae1dd9975c200a461edfe",
+    "date": "2026-10-06T18:32:36Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:34:56.296Z"
+  },
+  {
+    "repo": "mihhru/PS2CF",
+    "refs": [
+      "9b6ed3702b59a87512426952e003125a5b4f0e3c"
+    ],
+    "links": [
+      "https://github.com/mihhru/PS2CF",
+      "https://github.com/mihhru/PS2CF",
+      "https://github.com/mihhru/PS2CF/blob/main/VALIDATION.md",
+      "https://github.com/mihhru/PS2CF/blob/9b6ed3702b59a87512426952e003125a5b4f0e3c/src/opl/modules/pccf/pccf_hw.c",
+      "https://github.com/mihhru/PS2CF/blob/9b6ed3702b59a87512426952e003125a5b4f0e3c/src/opl/modules/pccf/main.c",
+      "https://github.com/mihhru/PS2CF/blob/main/README.md",
+      "https://github.com/mihhru/PS2CF/blob/9b6ed3702b59a87512426952e003125a5b4f0e3c/src/opl/Makefile",
+      "https://github.com/mihhru/PS2CF/blob/main/CHANGES.md",
+      "https://github.com/mihhru/PS2CF/blob/main/src/wlaunchelf/iop/pccf/main.c",
+      "https://github.com/mihhru/PS2CF",
+      "https://github.com/mihhru/PS2CF/commit/9b6ed3702b59a87512426952e003125a5b4f0e3c",
+      "https://github.com/mihhru/PS2CF"
+    ],
+    "branch": "default",
+    "head": "9b6ed3702b59a87512426952e003125a5b4f0e3c",
+    "date": "2026-10-14T20:54:06Z",
+    "message": "Release PS2CF 1.0: CF support for early PlayStation 2",
+    "checked": "2026-10-21T15:34:57.065Z"
+  },
+  {
+    "repo": "rodrigoGalvanDev/OPL-DualSense-BT",
+    "refs": [
+      "971ae6e505a2822e2affb3a819e076b5b1a288d2"
+    ],
+    "links": [
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/ds34bt/iop/ds34bt.c",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/pademu/ds34bt.c",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/include/btkeys.h",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/src/dialogs.c",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/commit/971ae6e505a2822e2affb3a819e076b5b1a288d2",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT"
+    ],
+    "branch": "dualsense-bt",
+    "head": "971ae6e505a2822e2affb3a819e076b5b1a288d2",
+    "date": "2026-10-12T19:57:06Z",
+    "message": "PADEMU: stop Bluetooth page scan while all enabled pads are connected",
+    "checked": "2026-10-21T15:34:57.254Z"
+  },
+  {
+    "repo": "exalandru/Enhanced-PS2-Disc-Launcher",
+    "refs": [
+      "1bc315fa8872f955aadcf2d127ae733c8cea7b09"
+    ],
+    "links": [
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/src/main.c",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/src/main.c",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/disc-launcher.cnf",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/commit/1bc315fa8872f955aadcf2d127ae733c8cea7b09",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher"
+    ],
+    "branch": "default",
+    "head": "1bc315fa8872f955aadcf2d127ae733c8cea7b09",
+    "date": "2026-10-01T06:02:20Z",
+    "message": "added DKWDRV support",
+    "checked": "2026-10-21T15:34:57.078Z"
+  },
+  {
+    "repo": "brunlx/OPL-Future---BETA",
+    "refs": [
+      "0ca08d10a792687566dae524e0e17de5db2301e9"
+    ],
+    "links": [
+      "https://github.com/brunlx/OPL-Future---BETA",
+      "https://github.com/brunlx/OPL-Future---BETA",
+      "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_UI.md",
+      "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_QA_REPORT.md",
+      "https://github.com/brunlx/OPL-Future---BETA",
+      "https://github.com/brunlx/OPL-Future---BETA/commit/0ca08d10a792687566dae524e0e17de5db2301e9",
+      "https://github.com/brunlx/OPL-Future---BETA"
+    ],
+    "branch": "default",
+    "head": "0ca08d10a792687566dae524e0e17de5db2301e9",
+    "date": "2026-09-07T01:51:04Z",
+    "message": "docs: registrar limpeza do histórico, build validado e preparação das releases",
+    "checked": "2026-10-21T15:34:57.104Z"
+  },
+  {
+    "repo": "Luden02/OrbitPS2-Manager",
+    "refs": [
+      "cb915ca62d650a298fd951ec781ea3d39cf1f8cf"
+    ],
+    "links": [
+      "https://github.com/Luden02/OrbitPS2-Manager",
+      "https://github.com/Luden02/OrbitPS2-Manager",
+      "https://github.com/Luden02/OrbitPS2-Manager/blob/cb915ca62d650a298fd951ec781ea3d39cf1f8cf/src/services/rename.service.ts",
+      "https://github.com/Luden02/OrbitPS2-Manager/blob/cb915ca62d650a298fd951ec781ea3d39cf1f8cf/src/services/ps1-import.service.ts",
+      "https://github.com/Luden02/OrbitPS2-Manager/blob/cb915ca62d650a298fd951ec781ea3d39cf1f8cf/src/services/zso.service.ts",
+      "https://github.com/Luden02/OrbitPS2-Manager",
+      "https://github.com/Luden02/OrbitPS2-Manager/commit/cb915ca62d650a298fd951ec781ea3d39cf1f8cf",
+      "https://github.com/Luden02/OrbitPS2-Manager"
+    ],
+    "branch": "default",
+    "head": "cb915ca62d650a298fd951ec781ea3d39cf1f8cf",
+    "date": "2026-10-09T08:13:22Z",
+    "message": "RiptOPL Hardening (#50)",
+    "checked": "2026-10-21T15:34:57.130Z"
+  },
+  {
+    "repo": "forbenaj/ps2smb",
+    "refs": [
+      "4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8"
+    ],
+    "links": [
+      "https://github.com/forbenaj/ps2smb",
+      "https://github.com/forbenaj/ps2smb",
+      "https://github.com/forbenaj/ps2smb/blob/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8/ps2smb/smb/server.py",
+      "https://github.com/forbenaj/ps2smb/blob/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8/ps2smb/remote.py",
+      "https://github.com/forbenaj/ps2smb/blob/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8/ps2smb/cache.py",
+      "https://github.com/forbenaj/ps2smb",
+      "https://github.com/forbenaj/ps2smb/commit/4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8",
+      "https://github.com/forbenaj/ps2smb"
+    ],
+    "branch": "default",
+    "head": "4ddd3fd96c77a4a20adaad84f7f070b0eddd28a8",
+    "date": "2026-08-26T18:18:04Z",
+    "message": "fix(ps2smb): avoid duplicate virtual CD/DVD entries",
+    "checked": "2026-10-21T15:34:57.307Z"
+  },
+  {
+    "repo": "danielnuld/Open-PS2-Loader",
+    "refs": [
+      "fca8fcb03e8ca366a49123cd85e7ec43d39697f9"
+    ],
+    "links": [
+      "https://github.com/danielnuld/Open-PS2-Loader",
+      "https://github.com/danielnuld/Open-PS2-Loader/tree/master/themes/PS5",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/rmblur.c",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/themes.c",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/themes.c",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/themes/PS5/conf_theme.cfg",
+      "https://github.com/danielnuld/Open-PS2-Loader",
+      "https://github.com/danielnuld/Open-PS2-Loader/commit/fca8fcb03e8ca366a49123cd85e7ec43d39697f9",
+      "https://github.com/danielnuld/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "fca8fcb03e8ca366a49123cd85e7ec43d39697f9",
+    "date": "2026-08-01T19:42:34Z",
+    "message": "PS5-style UI: backdrop blur, time-based animation, and new theme elements (#1)",
+    "checked": "2026-10-21T15:34:57.228Z"
+  },
+  {
+    "repo": "ps2homebrew/wOPL",
+    "refs": [
+      "4ae7414877ba566177ef1130de29ce850a5e15b3"
+    ],
+    "links": [
+      "https://github.com/ps2homebrew/wOPL",
+      "https://github.com/ps2homebrew/wOPL",
+      "https://github.com/ps2homebrew/wOPL/pull/370",
+      "https://github.com/ps2homebrew/wOPL/pull/378",
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c",
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/textures.c",
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c",
+      "https://github.com/ps2homebrew/wOPL/pull/308",
+      "https://github.com/ps2homebrew/wOPL",
+      "https://github.com/ps2homebrew/wOPL/commit/4ae7414877ba566177ef1130de29ce850a5e15b3",
+      "https://github.com/ps2homebrew/wOPL"
+    ],
+    "branch": "wOPL-base",
+    "head": "4ae7414877ba566177ef1130de29ce850a5e15b3",
+    "date": "2026-09-13T10:16:36Z",
+    "message": "Merge pull request #435 from DarthMotzkus/fix/remember-last-played-first-entry",
+    "checked": "2026-10-21T15:34:57.356Z"
+  },
+  {
+    "repo": "ps2homebrew/Open-PS2-Loader",
+    "refs": [
+      "4cc74baabb73be9ca43f817474b321cd70fbcc2d"
+    ],
+    "links": [
+      "https://github.com/ps2homebrew/Open-PS2-Loader/pulls",
+      "https://github.com/ps2homebrew/Open-PS2-Loader/pulls",
+      "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1779",
+      "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1736",
+      "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1675",
+      "https://github.com/ps2homebrew/Open-PS2-Loader",
+      "https://github.com/ps2homebrew/Open-PS2-Loader",
+      "https://github.com/ps2homebrew/Open-PS2-Loader/commit/4cc74baabb73be9ca43f817474b321cd70fbcc2d",
+      "https://github.com/ps2homebrew/Open-PS2-Loader",
+      "https://github.com/ps2homebrew/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+    "date": "2026-10-13T04:04:53Z",
+    "message": "docs: Add note about different proejcts",
+    "checked": "2026-10-21T15:34:57.964Z"
+  },
+  {
+    "repo": "Irfanlesnar/PS2-Launcher",
+    "refs": [
+      "46bad5a4a469c51e45eb1ed879fe43c100b8cb7b"
+    ],
+    "links": [
+      "https://github.com/Irfanlesnar/PS2-Launcher",
+      "https://github.com/Irfanlesnar/PS2-Launcher",
+      "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0",
+      "https://github.com/Irfanlesnar/PS2-Launcher/tree/main/modules/xboxusb",
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c",
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c",
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/ee_core/src/padhook.c",
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c",
+      "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0",
+      "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0",
+      "https://github.com/Irfanlesnar/PS2-Launcher",
+      "https://github.com/Irfanlesnar/PS2-Launcher/commit/46bad5a4a469c51e45eb1ed879fe43c100b8cb7b",
+      "https://github.com/Irfanlesnar/PS2-Launcher"
+    ],
+    "branch": "default",
+    "head": "46bad5a4a469c51e45eb1ed879fe43c100b8cb7b",
+    "date": "2026-10-07T11:11:58Z",
+    "message": "Add Flydigi Apex Wireless controller to README",
+    "checked": "2026-10-21T15:34:58.049Z"
+  },
+  {
+    "repo": "sobecapaklebs-dev/project-titan-magenta-edition",
+    "refs": [
+      "2a69c259c80e351da118cb416de1e6f0129e2816"
+    ],
+    "links": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/VERSION",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_GAME_PATCHES.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition#product-components",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_PACKAGE_FORMAT.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/reference/TITAN_STANDALONE_SDK.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_SMART_IGR.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_user_profile.h",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_profile_storage.c",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_notifications.h",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_shell_catalog.c",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/apps/internet-browser/README.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/SYSTEM_UPDATE_PUP.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/THEME_AUTHORING.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_MODERN_CONTROLLER_MATRIX.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_STORE_ARCHITECTURE.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_DOWNLOAD_SERVICE.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition"
+    ],
+    "branch": "default",
+    "head": "2a69c259c80e351da118cb416de1e6f0129e2816",
+    "date": "2026-08-31T16:05:34Z",
+    "message": "chore: restore organized docs/history layout",
+    "checked": "2026-10-21T15:34:57.969Z"
+  },
+  {
+    "repo": "officialjuicedesigns/OPL-Evolution",
+    "refs": [
+      "47119b7128f347eb046c52a48dee36a9559b2d1b"
+    ],
+    "links": [
+      "https://github.com/officialjuicedesigns/OPL-Evolution",
+      "https://github.com/officialjuicedesigns/OPL-Evolution",
+      "https://github.com/officialjuicedesigns/OPL-Evolution/blob/evo-development/src/evo_ui.c",
+      "https://github.com/officialjuicedesigns/OPL-Evolution",
+      "https://github.com/officialjuicedesigns/OPL-Evolution/commit/47119b7128f347eb046c52a48dee36a9559b2d1b",
+      "https://github.com/officialjuicedesigns/OPL-Evolution"
+    ],
+    "branch": "evo-development",
+    "head": "47119b7128f347eb046c52a48dee36a9559b2d1b",
+    "date": "2026-07-26T03:08:36Z",
+    "message": "Link public alpha release",
+    "checked": "2026-10-21T15:34:57.845Z"
+  },
+  {
+    "repo": "Spaghetticode-Boon-Tobias/RETROLauncher",
+    "refs": [
+      "e6f95081d71c43d58f2c3790ac9528828554c683"
+    ],
+    "links": [
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher",
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher",
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher#readme",
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher",
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher/commit/e6f95081d71c43d58f2c3790ac9528828554c683",
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher"
+    ],
+    "branch": "default",
+    "head": "e6f95081d71c43d58f2c3790ac9528828554c683",
+    "date": "2026-07-30T19:12:16Z",
+    "message": "RETROLauncher v1.0 - rev 2 (Support for the Ember emulator)",
+    "checked": "2026-10-21T15:34:57.953Z"
+  },
+  {
+    "repo": "AdityaKumar7209/Modulo-R1-Beta-Preview---PS2",
+    "refs": [
+      "13bdb68ce85dd18effd1acb9ac4e4f2ffb4038bd"
+    ],
+    "links": [
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2",
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2",
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2#readme",
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2",
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2/commit/13bdb68ce85dd18effd1acb9ac4e4f2ffb4038bd",
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2"
+    ],
+    "branch": "default",
+    "head": "13bdb68ce85dd18effd1acb9ac4e4f2ffb4038bd",
+    "date": "2026-07-15T03:17:49Z",
+    "message": "Revise README for accuracy and formatting",
+    "checked": "2026-10-21T15:34:58.004Z"
+  },
+  {
+    "repo": "pcm720/nhddl",
+    "refs": [
+      "81905e1f68f50ded828fe59a04f6313a9c4f21de",
+      "821b6c9b4a19678d33a4166fd2abdd0034dcaba2"
+    ],
+    "links": [
+      "https://github.com/pcm720/nhddl",
+      "https://github.com/pcm720/nhddl",
+      "https://github.com/pcm720/nhddl/tree/v1.2.2",
+      "https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#forward-boot-mode",
+      "https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#udpfs",
+      "https://github.com/pcm720/nhddl/commit/81905e1f68f50ded828fe59a04f6313a9c4f21de",
+      "https://github.com/pcm720/nhddl",
+      "https://github.com/pcm720/nhddl/commit/821b6c9b4a19678d33a4166fd2abdd0034dcaba2",
+      "https://github.com/pcm720/nhddl"
+    ],
+    "branch": "main",
+    "head": "821b6c9b4a19678d33a4166fd2abdd0034dcaba2",
+    "date": "2025-11-22T12:33:45Z",
+    "message": "main: fix title-specific options not being loaded in forwarder mode",
+    "checked": "2026-10-21T15:34:57.873Z"
+  },
+  {
+    "repo": "L10N37/Open-PS2-Loader-Extended-APA",
+    "refs": [
+      "5cb8058907204501f425b5c170316063ef18f69a"
+    ],
+    "links": [
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA",
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA",
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA/blob/main/EXTENDED_APA.md",
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA",
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA/commit/5cb8058907204501f425b5c170316063ef18f69a",
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA"
+    ],
+    "branch": "default",
+    "head": "5cb8058907204501f425b5c170316063ef18f69a",
+    "date": "2026-09-06T17:10:20Z",
+    "message": "Automate pinned Extended APA release",
+    "checked": "2026-10-21T15:34:58.078Z"
+  },
+  {
+    "repo": "belek666/Open-PS2-Loader",
+    "refs": [
+      "66b935422bc83619fc30187418cbf189c375002a",
+      "41f7cf0b782628ef237527598225a2f628a376dd"
+    ],
+    "links": [
+      "https://github.com/belek666/Open-PS2-Loader/tree/modularPademu",
+      "https://github.com/belek666/Open-PS2-Loader/tree/modularPademu",
+      "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/xbox360usb/xbox360usb.c",
+      "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/hidusb/hidusb.c",
+      "https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a",
+      "https://github.com/belek666/Open-PS2-Loader",
+      "https://github.com/belek666/Open-PS2-Loader/commit/41f7cf0b782628ef237527598225a2f628a376dd",
+      "https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a",
+      "https://github.com/belek666/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "41f7cf0b782628ef237527598225a2f628a376dd",
+    "date": "2020-08-20T14:07:08Z",
+    "message": "Fix formatting for last merge",
+    "checked": "2026-10-21T15:34:59.620Z"
+  },
+  {
+    "repo": "slimpuggamer/uOPL",
+    "refs": [
+      "0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64"
+    ],
+    "links": [
+      "https://github.com/slimpuggamer/uOPL/tree/uOPL-1",
+      "https://github.com/slimpuggamer/uOPL/tree/uOPL-1",
+      "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/include/ioman.h",
+      "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/src/ioman.c",
+      "https://github.com/slimpuggamer/uOPL",
+      "https://github.com/slimpuggamer/uOPL/commit/0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64",
+      "https://github.com/slimpuggamer/uOPL/commit/0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64",
+      "https://github.com/slimpuggamer/uOPL"
+    ],
+    "branch": "uOPL-1",
+    "head": "0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64",
+    "date": "2025-03-01T01:17:25Z",
+    "message": "Add files via upload",
+    "checked": "2026-10-21T15:34:58.592Z"
+  },
+  {
+    "repo": "exaconn/Open-PS2-Loader",
+    "refs": [
+      "3ab34d2028e3da9592b99b4681a7cdb324e3a070",
+      "e70e6cbddf39a68497c28b302d19695ee2ce753a",
+      "73a4921dee722837c18150d0c0f1a7f3675e8349",
+      "f9717f7676a6d7db588a1c042c3eaff36ec414b0"
+    ],
+    "links": [
+      "https://github.com/exaconn/Open-PS2-Loader",
+      "https://github.com/exaconn/Open-PS2-Loader",
+      "https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition",
+      "https://github.com/exaconn/Open-PS2-Loader/commit/3ab34d2028e3da9592b99b4681a7cdb324e3a070",
+      "https://github.com/exaconn/Open-PS2-Loader/commit/e70e6cbddf39a68497c28b302d19695ee2ce753a",
+      "https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition",
+      "https://github.com/exaconn/Open-PS2-Loader",
+      "https://github.com/exaconn/Open-PS2-Loader/commit/73a4921dee722837c18150d0c0f1a7f3675e8349",
+      "https://github.com/exaconn/Open-PS2-Loader/commit/73a4921dee722837c18150d0c0f1a7f3675e8349",
+      "https://github.com/exaconn/Open-PS2-Loader/commit/f9717f7676a6d7db588a1c042c3eaff36ec414b0",
+      "https://github.com/exaconn/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "73a4921dee722837c18150d0c0f1a7f3675e8349",
+    "date": "2026-03-20T05:45:17Z",
+    "message": "Rename DSF macro to DF in ds34usb.h",
+    "checked": "2026-10-21T15:34:58.608Z"
+  },
+  {
+    "repo": "mystyq/Stable-Open-PS2-Loader",
+    "refs": [
+      "3495d55b96ce72497b6a922ab540ac76a58ca74a",
+      "770d5323928ff20990d07d70a5ce266a95e0f6c4"
+    ],
+    "links": [
+      "https://github.com/mystyq/Stable-Open-PS2-Loader",
+      "https://github.com/mystyq/Stable-Open-PS2-Loader",
+      "https://github.com/mystyq/Stable-Open-PS2-Loader/commit/3495d55b96ce72497b6a922ab540ac76a58ca74a",
+      "https://github.com/mystyq/Stable-Open-PS2-Loader/blob/master/modules/iopcore/cdvdman/atad.c",
+      "https://github.com/mystyq/Stable-Open-PS2-Loader",
+      "https://github.com/mystyq/Stable-Open-PS2-Loader/commit/770d5323928ff20990d07d70a5ce266a95e0f6c4",
+      "https://github.com/mystyq/Stable-Open-PS2-Loader/commit/770d5323928ff20990d07d70a5ce266a95e0f6c4",
+      "https://github.com/mystyq/Stable-Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "770d5323928ff20990d07d70a5ce266a95e0f6c4",
+    "date": "2026-04-28T08:17:49Z",
+    "message": "Fix exports",
+    "checked": "2026-10-21T15:34:58.714Z"
+  },
+  {
+    "repo": "ffgriever-pl/Memory-Card-Annihilator",
+    "refs": [
+      "769d581db10b02134591b9e3de1747007bce59e2"
+    ],
+    "links": [
+      "https://github.com/ffgriever-pl/Memory-Card-Annihilator",
+      "https://github.com/ffgriever-pl/Memory-Card-Annihilator",
+      "https://github.com/ffgriever-pl/Memory-Card-Annihilator/commit/769d581db10b02134591b9e3de1747007bce59e2",
+      "https://github.com/ffgriever-pl/Memory-Card-Annihilator"
+    ],
+    "branch": "default",
+    "head": "769d581db10b02134591b9e3de1747007bce59e2",
+    "date": "2026-09-30T10:13:08Z",
+    "message": "Merge pull request #55 from ffgriever-pl/ci-fix-js",
+    "checked": "2026-10-21T15:34:58.591Z"
+  },
+  {
+    "repo": "dnunezx/nhddl-luna",
+    "refs": [
+      "e9554ce6affa133fd776a7e1265580608832821e",
+      "127d012b07322dc0805ce62f877e5ba5e8cd6dbc"
+    ],
+    "links": [
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_orbit.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_classic.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/options.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/devices/iso.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_3d.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/include/ui/navigation.h",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_scroll.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/gui.c",
+      "https://github.com/dnunezx/nhddl-luna/tree/127d012b07322dc0805ce62f877e5ba5e8cd6dbc",
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_discset.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_vmc.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/ui/file_manager.c",
+      "https://github.com/dnunezx/nhddl-luna/tree/127d012b07322dc0805ce62f877e5ba5e8cd6dbc",
+      "https://github.com/dnunezx/nhddl-luna"
+    ],
+    "branch": "default",
+    "head": "4e8f4e6be79dd2b79027a92e32574da747f5a845",
+    "date": "2026-10-04T06:21:45Z",
+    "message": "Keep tests and diagnostic tools local",
+    "checked": "2026-10-21T15:34:58.690Z"
+  },
+  {
+    "repo": "dnunezx/neutrino-luna",
+    "refs": [
+      "02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15"
+    ],
+    "links": [
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/padhook.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/luna_igr_rpc.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/pfs_vmc.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/main.c",
+      "https://github.com/dnunezx/neutrino-luna"
+    ],
+    "branch": "default",
+    "head": "02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15",
+    "date": "2026-10-07T02:11:06Z",
+    "message": "Accept selected cheat payloads and guard engine limits",
+    "checked": "2026-10-21T15:34:58.719Z"
+  },
+  {
+    "repo": "NathanNeurotic/neutrino",
+    "refs": [
+      "a7b673648254942e11315c9006c4c7bb776e58a1"
+    ],
+    "links": [
+      "https://github.com/NathanNeurotic/neutrino/blob/master/iop/cdvdfsv/src/cdvdfsv.c",
+      "https://github.com/NathanNeurotic/neutrino",
+      "https://github.com/NathanNeurotic/neutrino/commit/a7b673648254942e11315c9006c4c7bb776e58a1",
+      "https://github.com/NathanNeurotic/neutrino"
+    ],
+    "branch": "default",
+    "head": "a7b673648254942e11315c9006c4c7bb776e58a1",
+    "date": "2026-09-22T17:36:20Z",
+    "message": "Merge UDPFS stale-ACK fix into master",
+    "checked": "2026-10-21T15:34:58.825Z"
+  },
+  {
+    "repo": "NathanNeurotic/Launchstation",
+    "refs": [],
+    "links": [
+      "https://github.com/NathanNeurotic/Launchstation",
+      "https://github.com/NathanNeurotic/Launchstation/pull/156",
+      "https://github.com/NathanNeurotic/Launchstation/pull/156",
+      "https://github.com/NathanNeurotic/Launchstation/pull/156",
+      "https://github.com/NathanNeurotic/Launchstation"
+    ],
+    "branch": "default",
+    "head": "593f16dc808f203d3d10638c16462eb1eb0c40e8",
+    "date": "2026-10-20T13:47:17Z",
+    "message": "Merge pull request #188: address Zack's file, clock and storage reports",
+    "checked": "2026-10-21T15:35:08.095Z"
+  },
+  {
+    "repo": "NathanNeurotic/uOPL",
+    "refs": [
+      "4ae7414877ba566177ef1130de29ce850a5e15b3"
+    ],
+    "links": [
+      "https://github.com/NathanNeurotic/uOPL",
+      "https://github.com/NathanNeurotic/uOPL",
+      "https://github.com/NathanNeurotic/uOPL/commit/4ae7414877ba566177ef1130de29ce850a5e15b3",
+      "https://github.com/NathanNeurotic/uOPL"
+    ],
+    "canonical": "ps2homebrew/wOPL",
+    "head": "4ae7414877ba566177ef1130de29ce850a5e15b3",
+    "date": "2026-09-13T10:16:36Z",
+    "message": "Merge pull request #435 from DarthMotzkus/fix/remember-last-played-first-entry"
+  },
+  {
+    "repo": "NathanNeurotic/PS2-Servers",
+    "refs": [
+      "c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5",
+      "c04106c16f563e5f808474ee40bfaac7728249c6"
+    ],
+    "links": [
+      "https://github.com/NathanNeurotic/PS2-Servers/tree/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5",
+      "https://github.com/NathanNeurotic/PS2-Servers",
+      "https://github.com/NathanNeurotic/PS2-Servers/tree/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5",
+      "https://github.com/NathanNeurotic/PS2-Servers/blob/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5/README.md",
+      "https://github.com/NathanNeurotic/PS2-Servers/blob/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5/docs/EDITIONS.md",
+      "https://github.com/NathanNeurotic/PS2-Servers",
+      "https://github.com/NathanNeurotic/PS2-Servers/blob/main/launcher/game_library.py",
+      "https://github.com/NathanNeurotic/PS2-Servers/blob/main/docs/EDITIONS.md",
+      "https://github.com/NathanNeurotic/PS2-Servers",
+      "https://github.com/NathanNeurotic/PS2-Servers/commit/c04106c16f563e5f808474ee40bfaac7728249c6",
+      "https://github.com/NathanNeurotic/PS2-Servers"
+    ],
+    "branch": "default",
+    "head": "42c0613bed67a603a06d59fd95375c7cc6a0fae3",
+    "date": "2026-10-20T18:40:08Z",
+    "message": "fix(ra): preserve unread unlocks across routine telemetry (#253)",
+    "checked": "2026-10-21T15:35:08.342Z"
+  },
+  {
+    "repo": "elmariolo/OPL-Server",
+    "refs": [],
+    "links": [
+      "https://github.com/elmariolo/OPL-Server",
+      "https://github.com/elmariolo/OPL-Server",
+      "https://github.com/elmariolo/OPL-Server"
+    ],
+    "branch": "default",
+    "head": "021e4589b90ea84fe33ae95b8ff758db6848876e",
+    "date": "2022-08-24T22:39:46Z",
+    "message": "deleted unnecessary files",
+    "checked": "2026-10-21T15:35:08.241Z"
+  },
+  {
+    "repo": "MegaBitmap/PS2-SNL",
+    "refs": [
+      "10f41f12d731666aa4591d8941d1ab626ca2a0f2"
+    ],
+    "links": [
+      "https://github.com/MegaBitmap/PS2-SNL",
+      "https://github.com/MegaBitmap/PS2-SNL",
+      "https://github.com/MegaBitmap/PS2-SNL/commit/10f41f12d731666aa4591d8941d1ab626ca2a0f2",
+      "https://github.com/MegaBitmap/PS2-SNL"
+    ],
+    "branch": "default",
+    "head": "10f41f12d731666aa4591d8941d1ab626ca2a0f2",
+    "date": "2026-07-09T15:50:37Z",
+    "message": "improve sinewave animation",
+    "checked": "2026-10-21T15:35:08.208Z"
+  },
+  {
+    "repo": "saildot4k/PlayStation2-Basic-BootLoader-Extended",
+    "refs": [],
+    "links": [
+      "https://github.com/saildot4k/PlayStation2-Basic-BootLoader-Extended",
+      "https://github.com/saildot4k/PlayStation2-Basic-BootLoader-Extended"
+    ],
+    "branch": "default",
+    "head": "f64102518e19e09e37df90032ffc47e0236a3a60",
+    "date": "2026-06-14T04:37:35Z",
+    "message": "Mcman padman 1400 (#25)",
+    "checked": "2026-10-21T15:35:08.259Z"
+  },
+  {
+    "repo": "GeekRhapsody/OdysseyLauncher",
+    "refs": [],
+    "links": [
+      "https://github.com/GeekRhapsody/OdysseyLauncher",
+      "https://github.com/GeekRhapsody/OdysseyLauncher"
+    ],
+    "branch": "default",
+    "head": "f935f07f31d58f6767a03e31d3e27598654cbd91",
+    "date": "2026-10-20T13:42:30Z",
+    "message": "App icon",
+    "checked": "2026-10-21T15:35:08.150Z"
+  },
+  {
+    "repo": "cha0ticd4rksid3/PS2-Webcore-Launcher",
+    "refs": [],
+    "links": [
+      "https://github.com/cha0ticd4rksid3/PS2-Webcore-Launcher",
+      "https://github.com/cha0ticd4rksid3/PS2-Webcore-Launcher"
+    ],
+    "branch": "default",
+    "head": "2526ef64920d86af662ebc1daaf2008970c15f27",
+    "date": "2026-10-20T21:51:50Z",
+    "message": "Add files via upload",
+    "checked": "2026-10-21T15:35:08.085Z"
+  },
+  {
+    "repo": "pcm720/udpfsd",
+    "refs": [
+      "58d7c8f11ac196d4a5ca7b65b78743fbeedfdd80"
+    ],
+    "links": [
+      "https://github.com/pcm720/udpfsd",
+      "https://github.com/pcm720/udpfsd",
+      "https://github.com/pcm720/udpfsd/commit/58d7c8f11ac196d4a5ca7b65b78743fbeedfdd80",
+      "https://github.com/pcm720/udpfsd"
+    ],
+    "branch": "default",
+    "head": "58d7c8f11ac196d4a5ca7b65b78743fbeedfdd80",
+    "date": "2026-08-06T16:05:41Z",
+    "message": "internal/fs/compression: fix panic when handling empty compressed ISOs",
+    "checked": "2026-10-21T15:35:08.208Z"
+  },
+  {
+    "repo": "YouKnow-sys/udpfs-server",
+    "refs": [
+      "19718a39d16cf2f62d5a3ad4bf29d52988809797"
+    ],
+    "links": [
+      "https://github.com/YouKnow-sys/udpfs-server",
+      "https://github.com/YouKnow-sys/udpfs-server",
+      "https://github.com/YouKnow-sys/udpfs-server/commit/19718a39d16cf2f62d5a3ad4bf29d52988809797",
+      "https://github.com/YouKnow-sys/udpfs-server"
+    ],
+    "branch": "default",
+    "head": "19718a39d16cf2f62d5a3ad4bf29d52988809797",
+    "date": "2026-09-12T22:12:12Z",
+    "message": "cleanup the Bridge and fixed a warning",
+    "checked": "2026-10-21T15:35:08.297Z"
+  },
+  {
+    "repo": "GorGylka/Server2PS2",
+    "refs": [
+      "58c6f97b28dbd6b8c0ca7c308d53b7f530a85486"
+    ],
+    "links": [
+      "https://github.com/GorGylka/Server2PS2",
+      "https://github.com/GorGylka/Server2PS2",
+      "https://github.com/GorGylka/Server2PS2/commit/58c6f97b28dbd6b8c0ca7c308d53b7f530a85486",
+      "https://github.com/GorGylka/Server2PS2"
+    ],
+    "branch": "default",
+    "head": "58c6f97b28dbd6b8c0ca7c308d53b7f530a85486",
+    "date": "2026-09-22T06:28:32Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:09.053Z"
+  },
+  {
+    "repo": "ps2-mmce/Open-PS2-Loader",
+    "refs": [
+      "e2090114e8e70d8966438b96dfa87a452ff54153"
+    ],
+    "links": [
+      "https://github.com/ps2-mmce/Open-PS2-Loader",
+      "https://github.com/ps2-mmce/Open-PS2-Loader",
+      "https://github.com/ps2-mmce/Open-PS2-Loader/commit/e2090114e8e70d8966438b96dfa87a452ff54153",
+      "https://github.com/ps2-mmce/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "e2090114e8e70d8966438b96dfa87a452ff54153",
+    "date": "2025-01-22T14:32:51Z",
+    "message": "Merge pull request #1 from israpps/patch-28",
+    "checked": "2026-10-21T15:35:08.875Z"
+  },
+  {
+    "repo": "Docmine17/Open-PS2-Loader-HTTP",
+    "refs": [
+      "6ee5bef262f0e7ea8dff1ae464d7e25aad8174f8"
+    ],
+    "links": [
+      "https://github.com/Docmine17/Open-PS2-Loader-HTTP",
+      "https://github.com/Docmine17/Open-PS2-Loader-HTTP",
+      "https://github.com/Docmine17/Open-PS2-Loader-HTTP/commit/6ee5bef262f0e7ea8dff1ae464d7e25aad8174f8",
+      "https://github.com/Docmine17/Open-PS2-Loader-HTTP"
+    ],
+    "branch": "default",
+    "head": "6ee5bef262f0e7ea8dff1ae464d7e25aad8174f8",
+    "date": "2026-09-05T21:08:01Z",
+    "message": "Add example reference for games.csv in README",
+    "checked": "2026-10-21T15:35:08.916Z"
+  },
+  {
+    "repo": "NathanNeurotic/xerabora",
+    "refs": [
+      "ebd18ed68a28c901f437d0ec381e52fc26d5698a"
+    ],
+    "links": [
+      "https://github.com/NathanNeurotic/xerabora",
+      "https://github.com/NathanNeurotic/xerabora",
+      "https://github.com/NathanNeurotic/xerabora/commit/ebd18ed68a28c901f437d0ec381e52fc26d5698a",
+      "https://github.com/NathanNeurotic/xerabora"
+    ],
+    "branch": "default",
+    "head": "ebd18ed68a28c901f437d0ec381e52fc26d5698a",
+    "date": "2026-09-13T15:50:59Z",
+    "message": "Bump opl to 0c5f61a3: pointer chains resolved on the console",
+    "checked": "2026-10-21T15:35:09.020Z"
+  },
+  {
+    "repo": "SvenGDK/Open-PS2-Loader",
+    "refs": [
+      "b7e6498143c6f8a7aff544cd13c57564d7cb1255"
+    ],
+    "links": [
+      "https://github.com/SvenGDK/Open-PS2-Loader",
+      "https://github.com/SvenGDK/Open-PS2-Loader",
+      "https://github.com/SvenGDK/Open-PS2-Loader/commit/b7e6498143c6f8a7aff544cd13c57564d7cb1255",
+      "https://github.com/SvenGDK/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "b7e6498143c6f8a7aff544cd13c57564d7cb1255",
+    "date": "2024-05-16T13:44:38Z",
+    "message": "README update",
+    "checked": "2026-10-21T15:35:08.867Z"
+  },
+  {
+    "repo": "rodrigo1593-dev/oplfork",
+    "refs": [
+      "0dbb0d354b6587b8aee65b1b75fe5609abaaff38"
+    ],
+    "links": [
+      "https://github.com/rodrigo1593-dev/oplfork",
+      "https://github.com/rodrigo1593-dev/oplfork",
+      "https://github.com/rodrigo1593-dev/oplfork/commit/0dbb0d354b6587b8aee65b1b75fe5609abaaff38",
+      "https://github.com/rodrigo1593-dev/oplfork"
+    ],
+    "branch": "default",
+    "head": "0dbb0d354b6587b8aee65b1b75fe5609abaaff38",
+    "date": "2026-03-23T05:12:32Z",
+    "message": "Update iopmgr.c",
+    "checked": "2026-10-21T15:35:09.203Z"
+  },
+  {
+    "repo": "PS2-Widescreen/OPL-Widescreen-Cheats",
+    "refs": [
+      "f5b67cd6586eedf0ee30cba7b754e4209bc14180"
+    ],
+    "links": [
+      "https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats",
+      "https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats",
+      "https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats/commit/f5b67cd6586eedf0ee30cba7b754e4209bc14180",
+      "https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats"
+    ],
+    "branch": "default",
+    "head": "837624eb0e34b0ed370fdc7d9aa95c3685c4d062",
+    "date": "2026-10-14T16:56:41Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:08.916Z"
+  },
+  {
+    "repo": "ps2homebrew/Open-PS2-Loader-lang",
+    "refs": [
+      "b23b743d9f8c65e7a305db945f442e5755019221"
+    ],
+    "links": [
+      "https://github.com/ps2homebrew/Open-PS2-Loader-lang",
+      "https://github.com/ps2homebrew/Open-PS2-Loader-lang",
+      "https://github.com/ps2homebrew/Open-PS2-Loader-lang/commit/b23b743d9f8c65e7a305db945f442e5755019221",
+      "https://github.com/ps2homebrew/Open-PS2-Loader-lang"
+    ],
+    "branch": "default",
+    "head": "b23b743d9f8c65e7a305db945f442e5755019221",
+    "date": "2026-05-18T05:55:45Z",
+    "message": "Merge pull request #31 from vlatko019/translation/add-serbian",
+    "checked": "2026-10-21T15:35:09.037Z"
+  },
+  {
+    "repo": "ps2homebrew/HDLGameInstaller",
+    "refs": [
+      "ec37c81f8edb6fc45e2be51c86a322780641275a"
+    ],
+    "links": [
+      "https://github.com/ps2homebrew/HDLGameInstaller",
+      "https://github.com/ps2homebrew/HDLGameInstaller",
+      "https://github.com/ps2homebrew/HDLGameInstaller/commit/ec37c81f8edb6fc45e2be51c86a322780641275a",
+      "https://github.com/ps2homebrew/HDLGameInstaller"
+    ],
+    "branch": "default",
+    "head": "ec37c81f8edb6fc45e2be51c86a322780641275a",
+    "date": "2024-09-04T23:25:51Z",
+    "message": "fix: use winres instead of afxres in resource file",
+    "checked": "2026-10-21T15:35:08.840Z"
+  },
+  {
+    "repo": "Jay-Jay-OPL/OPL-Daily-Builds",
+    "refs": [
+      "aa531a858c583104bfd577c4715339c8ce68d534"
+    ],
+    "links": [
+      "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds",
+      "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds",
+      "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/commit/aa531a858c583104bfd577c4715339c8ce68d534",
+      "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/commit/aa531a858c583104bfd577c4715339c8ce68d534",
+      "https://github.com/Jay-Jay-OPL/OPL-Daily-Builds"
+    ],
+    "branch": "default",
+    "head": "aa531a858c583104bfd577c4715339c8ce68d534",
+    "date": "2022-01-02T22:36:52Z",
+    "message": "update lang files",
+    "checked": "2026-10-21T15:35:08.840Z"
+  },
+  {
+    "repo": "grimdoomer/Open-PS2-Loader",
+    "refs": [
+      "24340b5ec9303d209a73efcdd68e741f48641aec",
+      "d1f51be4452074c2352931e0b9c474da9242e481"
+    ],
+    "links": [
+      "https://github.com/grimdoomer/Open-PS2-Loader",
+      "https://github.com/grimdoomer/Open-PS2-Loader",
+      "https://github.com/grimdoomer/Open-PS2-Loader/commit/24340b5ec9303d209a73efcdd68e741f48641aec",
+      "https://github.com/grimdoomer/Open-PS2-Loader/commit/d1f51be4452074c2352931e0b9c474da9242e481",
+      "https://github.com/grimdoomer/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "24340b5ec9303d209a73efcdd68e741f48641aec",
+    "date": "2023-04-14T08:09:14Z",
+    "message": "Merge pull request #919 from ps2homebrew/revert-904-lwnbd",
+    "checked": "2026-10-21T15:35:09.726Z"
+  },
+  {
+    "repo": "koraxial/Xbox-2-PlayStation-Emulator-AlFa",
+    "refs": [
+      "160c3e18c508432323946fca9bb5cb989705f28e"
+    ],
+    "links": [
+      "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa",
+      "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa",
+      "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/commit/160c3e18c508432323946fca9bb5cb989705f28e",
+      "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/commit/160c3e18c508432323946fca9bb5cb989705f28e",
+      "https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa"
+    ],
+    "branch": "default",
+    "head": "160c3e18c508432323946fca9bb5cb989705f28e",
+    "date": "2024-07-05T11:40:14Z",
+    "message": "Update compatibility of X2P with SDK as of July 5, 2024",
+    "checked": "2026-10-21T15:35:09.782Z"
+  },
+  {
+    "repo": "Gageformer/Ember",
+    "refs": [],
+    "links": [
+      "https://github.com/Gageformer/Ember/blob/main/README.md",
+      "https://github.com/Gageformer/Ember"
+    ],
+    "branch": "default",
+    "head": "29455172d5a0eb3715f76c0d9cfb0f62f1616269",
+    "date": "2026-09-28T21:25:30Z",
+    "message": "Updated README for Beta 2",
+    "checked": "2026-10-21T15:35:09.730Z"
+  },
+  {
+    "repo": "hacan359/Open-PS2-Loader",
+    "refs": [
+      "f4d559a38f510bf644ac0f3f23431f15f6c9dc3a"
+    ],
+    "links": [
+      "https://github.com/hacan359/Open-PS2-Loader",
+      "https://github.com/hacan359/Open-PS2-Loader/commit/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a",
+      "https://github.com/hacan359/Open-PS2-Loader"
+    ],
+    "branch": "ra",
+    "head": "a9f973974a5fd61707d069961ec0031be19399f7",
+    "date": "2026-10-19T17:00:06Z",
+    "message": "Smaller RA mark on the cover, without the frame",
+    "checked": "2026-10-21T15:35:09.756Z"
+  },
+  {
+    "repo": "HiroTex/OSD-XMB",
+    "refs": [],
+    "links": [
+      "https://github.com/HiroTex/OSD-XMB",
+      "https://github.com/HiroTex/OSD-XMB"
+    ],
+    "branch": "default",
+    "head": "a47bfbf23c1d5c8443dbdab4ebf04e2a379d6b43",
+    "date": "2025-12-25T16:34:27Z",
+    "message": "Retroarch PLG path format from object to array",
+    "checked": "2026-10-21T15:35:09.722Z"
+  },
+  {
+    "repo": "sync-on-luma/xebplus-neutrino-loader-plugin",
+    "refs": [],
+    "links": [
+      "https://github.com/sync-on-luma/xebplus-neutrino-loader-plugin",
+      "https://github.com/sync-on-luma/xebplus-neutrino-loader-plugin"
+    ],
+    "branch": "default",
+    "head": "b36efed8bc6b52ec810fc3b086b8d61a176d23c0",
+    "date": "2025-11-02T20:43:38Z",
+    "message": "Merge pull request #52 from MegaBitmap/test-25-11-1",
+    "checked": "2026-10-21T15:35:09.826Z"
+  },
+  {
+    "repo": "ps2-mmce/mmceman",
+    "refs": [],
+    "links": [
+      "https://github.com/ps2-mmce/mmceman",
+      "https://github.com/ps2-mmce/mmceman"
+    ],
+    "branch": "default",
+    "head": "de28936fdf45fe445554cfa0b8f058b05fa8212f",
+    "date": "2026-08-01T07:00:34Z",
+    "message": "Merge pull request #9 from uyjulian/mc1_unblock",
+    "checked": "2026-10-21T15:35:09.887Z"
+  },
+  {
+    "repo": "GorGylka/UDPBD-A5-V11",
+    "refs": [],
+    "links": [
+      "https://github.com/GorGylka/UDPBD-A5-V11",
+      "https://github.com/GorGylka/UDPBD-A5-V11"
+    ],
+    "branch": "default",
+    "head": "d72fc8ce4a7c98524a9413d55b638165caeab215",
+    "date": "2026-06-16T11:27:16Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:10.124Z"
+  },
+  {
+    "repo": "retronas/retronas",
+    "refs": [],
+    "links": [
+      "https://github.com/retronas/retronas",
+      "https://github.com/retronas/retronas"
+    ],
+    "branch": "default",
+    "head": "3748bb37c8df4b56f54ff2b19ff8a042c2b855c6",
+    "date": "2026-10-04T04:34:37Z",
+    "message": "fix mistyped ports for #508",
+    "checked": "2026-10-21T15:35:09.849Z"
+  },
+  {
+    "repo": "bucanero/apollo-ps2",
+    "refs": [],
+    "links": [
+      "https://github.com/bucanero/apollo-ps2",
+      "https://github.com/bucanero/apollo-ps2"
+    ],
+    "branch": "default",
+    "head": "3814054117606057065a115541a7d6e11e6c5151",
+    "date": "2026-02-02T15:17:53Z",
+    "message": "Update apollo-lib clone to specific branch v1.4.0 (#36)",
+    "checked": "2026-10-21T15:35:09.792Z"
+  },
+  {
+    "repo": "israpps/HDL-Batch-installer",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/HDL-Batch-installer",
+      "https://github.com/israpps/HDL-Batch-installer"
+    ],
+    "branch": "default",
+    "head": "a724a26d1fdcf1fb91d412f6d51d33c41d40b327",
+    "date": "2026-03-25T20:23:35Z",
+    "message": "Update Russian lang by stanlapru (#109)",
+    "checked": "2026-10-21T15:35:10.780Z"
+  },
+  {
+    "repo": "israpps/BDMAssault",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/BDMAssault"
+    ],
+    "branch": "default",
+    "head": "cfa8c590fc2ac2c55adc7d4cc3f2dd71f2c2545e",
+    "date": "2024-08-19T17:19:13Z",
+    "message": "[docs]: add fhdb paths and sms incompatible",
+    "checked": "2026-10-21T15:35:10.672Z"
+  },
+  {
+    "repo": "Okeanos86/BDMAssault",
+    "refs": [],
+    "links": [
+      "https://github.com/Okeanos86/BDMAssault"
+    ],
+    "branch": "default",
+    "head": "68731fca6fee75478a0939a64b79be8144b1ca96",
+    "date": "2026-10-04T09:41:37Z",
+    "message": "fix: move defs.h include before usbdpriv.h",
+    "checked": "2026-10-21T15:35:10.807Z"
+  },
+  {
+    "repo": "root670/CheatDevicePS2",
+    "refs": [],
+    "links": [
+      "https://github.com/root670/CheatDevicePS2"
+    ],
+    "branch": "default",
+    "head": "7d9c525a3a8377ff0b8fe782ea692ed0f245b92c",
+    "date": "2020-07-07T04:25:56Z",
+    "message": "Fix GT3 Enable Code.",
+    "checked": "2026-10-21T15:35:10.737Z"
+  },
+  {
+    "repo": "DKWDRV/DKWDRV",
+    "refs": [],
+    "links": [
+      "https://github.com/DKWDRV/DKWDRV"
+    ],
+    "branch": "default",
+    "head": "7f41569e9d62981d2b0b35b9d2bd4ab1dbcd5746",
+    "date": "2026-10-11T22:56:07Z",
+    "message": "Update README.md add 1.7.6s",
+    "checked": "2026-10-21T15:35:10.710Z"
+  },
+  {
+    "repo": "athegreat90/olp-server",
+    "refs": [],
+    "links": [
+      "https://github.com/athegreat90/olp-server"
+    ],
+    "branch": "default",
+    "head": "a4bf1fbfadbacdde70ac5bf27d56c4984acba4fe",
+    "date": "2026-10-02T08:52:51Z",
+    "message": "Build multi-arch images (amd64 + arm64)",
+    "checked": "2026-10-21T15:35:10.723Z"
+  },
+  {
+    "repo": "Veritas83/PS2_FORTUNA_Launcher",
+    "refs": [],
+    "links": [
+      "https://github.com/Veritas83/PS2_FORTUNA_Launcher"
+    ],
+    "canonical": "VTSTech/PS2_FORTUNA_Launcher",
+    "head": "a31d374d74d6f7dd68e83aada6db9bf8743b2b7f",
+    "date": "2019-12-29T17:27:06Z",
+    "message": "v0.46"
+  },
+  {
+    "repo": "israpps/FreeMcBoot-Installer",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/FreeMcBoot-Installer"
+    ],
+    "branch": "default",
+    "head": "ac53a47a5c6eae675cc2611c7bebe62f56c7845c",
+    "date": "2025-03-28T17:51:27Z",
+    "message": "debug colors",
+    "checked": "2026-10-21T15:35:10.771Z"
+  },
+  {
+    "repo": "CTurt/FreeDVDBoot",
+    "refs": [],
+    "links": [
+      "https://github.com/CTurt/FreeDVDBoot"
+    ],
+    "branch": "default",
+    "head": "ba7fa5bbda2ccd19c0a1c37ab99115183a2a1b27",
+    "date": "2020-09-06T18:10:55Z",
+    "message": "2.13 still not working :/",
+    "checked": "2026-10-21T15:35:10.709Z"
+  },
+  {
+    "repo": "TnA-Plastic/FreeMcBoot",
+    "refs": [],
+    "links": [
+      "https://github.com/TnA-Plastic/FreeMcBoot"
+    ],
+    "branch": "default",
+    "head": "2e4eef9a1ec5612cde1121d185996fd08fecb930",
+    "date": "2021-07-10T22:21:32Z",
+    "message": "Merge pull request #5 from HowlingWolfHWC/master",
+    "checked": "2026-10-21T15:35:10.775Z"
+  },
+  {
+    "repo": "ps2homebrew/hdl-dump",
+    "refs": [],
+    "links": [
+      "https://github.com/ps2homebrew/hdl-dump"
+    ],
+    "branch": "default",
+    "head": "32c296c69cf9c263fcbe035004aa28c345b3b279",
+    "date": "2024-06-06T06:06:42Z",
+    "message": "make progress display include a gauge (#81)",
+    "checked": "2026-10-21T15:35:11.501Z"
+  },
+  {
+    "repo": "Veritas83/VTSPS2-HBDL",
+    "refs": [],
+    "links": [
+      "https://github.com/Veritas83/VTSPS2-HBDL"
+    ],
+    "canonical": "VTSTech/VTSPS2-HBDL",
+    "head": "b80611413ae9e05a49d5af3356c737a5143d7ceb",
+    "date": "2022-06-18T01:06:00Z",
+    "message": "v0.35"
+  },
+  {
+    "repo": "Based-Skid/iLaunchELF",
+    "refs": [],
+    "links": [
+      "https://github.com/Based-Skid/iLaunchELF"
+    ],
+    "branch": "default",
+    "head": "9385b00da843b843965bb8350249687812a7c8fa",
+    "date": "2019-01-22T05:20:19Z",
+    "message": "Add files via upload",
+    "checked": "2026-10-21T15:35:11.488Z"
+  },
+  {
+    "repo": "israpps/Open-PS2-Loader",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "5a3ef8a83beb9d5fa0939e9aa79fed351a3fc918",
+    "date": "2024-10-31T19:44:40Z",
+    "message": "Merge pull request #1359 from Wolf3s/gfx-deprecated-functions",
+    "checked": "2026-10-21T15:35:11.526Z"
+  },
+  {
+    "repo": "NathanNeurotic/launcHER",
+    "refs": [],
+    "links": [
+      "https://github.com/NathanNeurotic/launcHER"
+    ],
+    "branch": "default",
+    "head": "94809b18aaf621dd16f03707eb7b0ce362cf742c",
+    "date": "2026-10-17T05:47:52Z",
+    "message": "Merge pull request #27 from NathanNeurotic/codex/black-fade-transitions-20261016",
+    "checked": "2026-10-21T15:35:11.375Z"
+  },
+  {
+    "repo": "MechaResearch/MechaPwn",
+    "refs": [],
+    "links": [
+      "https://github.com/MechaResearch/MechaPwn"
+    ],
+    "branch": "default",
+    "head": "2dc01450e37cdfbdb17f1cb66ca9cc2795677f4b",
+    "date": "2026-05-17T19:52:56Z",
+    "message": "Merge pull request #303 from MechaResearch/copilot/check-bad-code-vulnerabilities",
+    "checked": "2026-10-21T15:35:11.405Z"
+  },
+  {
+    "repo": "thestr4ng3r/mymcplus",
+    "refs": [],
+    "links": [
+      "https://github.com/thestr4ng3r/mymcplus"
+    ],
+    "branch": "default",
+    "head": "9147671e78e8757b2f6e4f2900df5d92c2ae1b2a",
+    "date": "2021-01-11T10:05:00Z",
+    "message": "Add Sourcehut Note",
+    "checked": "2026-10-21T15:35:11.357Z"
+  },
+  {
+    "repo": "ps2max32/neutrino",
+    "refs": [],
+    "links": [
+      "https://github.com/ps2max32/neutrino"
+    ],
+    "branch": "default",
+    "head": "7be8de2798c99af433c91993e021746a54d6800d",
+    "date": "2026-08-31T10:38:04Z",
+    "message": "Merge pull request #222 from NathanNeurotic/master",
+    "checked": "2026-10-21T15:35:11.353Z"
+  },
+  {
+    "repo": "israpps/neutrino",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/neutrino"
+    ],
+    "branch": "default",
+    "head": "6998a2c0d2268448fea3e1b72174a48cc47a6db3",
+    "date": "2024-06-04T17:09:09Z",
+    "message": "Merge pull request #26 from israpps/patch-2",
+    "checked": "2026-10-21T15:35:11.809Z"
+  },
+  {
+    "repo": "rickgaiser/neutrino",
+    "refs": [],
+    "links": [
+      "https://github.com/rickgaiser/neutrino"
+    ],
+    "canonical": "ps2max32/neutrino",
+    "head": "7be8de2798c99af433c91993e021746a54d6800d",
+    "date": "2026-08-31T10:38:04Z",
+    "message": "Merge pull request #222 from NathanNeurotic/master"
+  },
+  {
+    "repo": "Tom-Bruise/PS2-OPL-CFG-Database",
+    "refs": [],
+    "links": [
+      "https://github.com/Tom-Bruise/PS2-OPL-CFG-Database"
+    ],
+    "branch": "default",
+    "head": "7dc9204ac8f78f5ec5304fcc9759080598b487a4",
+    "date": "2021-11-23T04:40:11Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:12.535Z"
+  },
+  {
+    "repo": "ps2homebrew/Open-PS2-Loader-Compatibility-list",
+    "refs": [],
+    "links": [
+      "https://github.com/ps2homebrew/Open-PS2-Loader-Compatibility-list"
+    ],
+    "branch": "default",
+    "head": "3fbbfafba02f1d7e9b80b539ade6c3ddb6a2ba65",
+    "date": "2022-12-16T09:53:14Z",
+    "message": "merge report #211 (#212)",
+    "checked": "2026-10-21T15:35:12.488Z"
+  },
+  {
+    "repo": "Luden02/psx-ps2-opl-art-database",
+    "refs": [],
+    "links": [
+      "https://github.com/Luden02/psx-ps2-opl-art-database"
+    ],
+    "branch": "default",
+    "head": "e14b9abce3cc42a06bb4ad2e4056e289c8872a07",
+    "date": "2025-08-14T15:09:10Z",
+    "message": "PS1 DUMP part 2",
+    "checked": "2026-10-21T15:35:12.299Z"
+  },
+  {
+    "repo": "brainstream/OPL-PC-Tools",
+    "refs": [],
+    "links": [
+      "https://github.com/brainstream/OPL-PC-Tools"
+    ],
+    "branch": "default",
+    "head": "2291b5a95c4343dbbafbc4be71fc2efc05ef581d",
+    "date": "2026-08-30T20:28:27Z",
+    "message": "Release 4.0",
+    "checked": "2026-10-21T15:35:12.326Z"
+  },
+  {
+    "repo": "shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI",
+    "refs": [],
+    "links": [
+      "https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI"
+    ],
+    "branch": "default",
+    "head": "b25d20b312bc61224ec43101d9e07a081b1d0e89",
+    "date": "2026-08-19T18:27:29Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:12.453Z"
+  },
+  {
+    "repo": "IcySon55/OPL-Theme-Editor",
+    "refs": [],
+    "links": [
+      "https://github.com/IcySon55/OPL-Theme-Editor"
+    ],
+    "branch": "default",
+    "head": "7b5f8cd720319f3d7ce958ef7e90fc26ef7d2a78",
+    "date": "2017-01-04T16:28:58Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:12.291Z"
+  },
+  {
+    "repo": "HiroTex/OSD-XMB-ARTDB",
+    "refs": [],
+    "links": [
+      "https://github.com/HiroTex/OSD-XMB-ARTDB"
+    ],
+    "branch": "default",
+    "head": "fb34781abbe45d6e8ba7406ef39d55cf827ede32",
+    "date": "2025-10-19T18:34:03Z",
+    "message": "Update game manifest",
+    "checked": "2026-10-21T15:35:12.414Z"
+  },
+  {
+    "repo": "pcm720/OSDMenu",
+    "refs": [],
+    "links": [
+      "https://github.com/pcm720/OSDMenu"
+    ],
+    "branch": "default",
+    "head": "a2b847a2d1b319483fe1fa84d4dc14493b7bbc6f",
+    "date": "2026-07-31T22:08:53Z",
+    "message": "utils/loader: fix headerless payloads not loading",
+    "checked": "2026-10-21T15:35:12.581Z"
+  },
+  {
+    "repo": "HowlingWolfHWC/OSDSYS-Launcher",
+    "refs": [],
+    "links": [
+      "https://github.com/HowlingWolfHWC/OSDSYS-Launcher"
+    ],
+    "branch": "default",
+    "head": "a5741dc8f4713c9bb61a96d502127c94e360d827",
+    "date": "2024-10-29T16:48:12Z",
+    "message": "Updated CI... properly",
+    "checked": "2026-10-21T15:35:12.395Z"
+  },
+  {
+    "repo": "pcm720/Open-PS2-Loader",
+    "refs": [],
+    "links": [
+      "https://github.com/pcm720/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "991657949d9c31bbbeda86e89d005505ac304027",
+    "date": "2025-02-21T20:48:15Z",
+    "message": "Limit max BDM UDMA mode to UDMA4 to avoid compatibility issues with various adapters",
+    "checked": "2026-10-21T15:35:12.484Z"
+  },
+  {
+    "repo": "ps2homebrew/pfsshell",
+    "refs": [],
+    "links": [
+      "https://github.com/ps2homebrew/pfsshell"
+    ],
+    "branch": "default",
+    "head": "8c92467b3d715c3698f1f8ce63a8a07e214d6c73",
+    "date": "2026-04-10T08:29:41Z",
+    "message": "Fix build failure: add helpful error messages for missing git submodules and update docs",
+    "checked": "2026-10-21T15:35:13.095Z"
+  },
+  {
+    "repo": "PixeliGer/OPL-Theme-Pixel-Prime",
+    "refs": [],
+    "links": [
+      "https://github.com/PixeliGer/OPL-Theme-Pixel-Prime"
+    ],
+    "branch": "default",
+    "head": "00c8c6112c0b51e5ee211eaf6ac2f6dfbda8db0e",
+    "date": "2026-06-27T15:23:09Z",
+    "message": "Update Pixel-Prime theme to version 1.4.0",
+    "checked": "2026-10-21T15:35:13.568Z"
+  },
+  {
+    "repo": "NathanNeurotic/POPSLoader",
+    "refs": [],
+    "links": [
+      "https://github.com/NathanNeurotic/POPSLoader"
+    ],
+    "branch": "default",
+    "head": "d0b391a90faa442909fc2660eba0f86503eadbde",
+    "date": "2026-10-19T07:23:47Z",
+    "message": "release: cut POPSLoader 1.3.1 across official and development channels",
+    "checked": "2026-10-21T15:35:13.389Z"
+  },
+  {
+    "repo": "ps2homebrew/PS1VModeNeg",
+    "refs": [],
+    "links": [
+      "https://github.com/ps2homebrew/PS1VModeNeg"
+    ],
+    "branch": "default",
+    "head": "aa470fca5f705b7a51bf12983b8820f95d7b2821",
+    "date": "2024-07-28T17:43:57Z",
+    "message": "Merge pull request #4 from CosmicScale/main",
+    "checked": "2026-10-21T15:35:13.085Z"
+  },
+  {
+    "repo": "GSTDiandre/ps2-discord-rpc",
+    "refs": [],
+    "links": [
+      "https://github.com/GSTDiandre/ps2-discord-rpc"
+    ],
+    "branch": "default",
+    "head": "bd382c1cc3ddc67a72c4b4ec4365a95cc0a9e41c",
+    "date": "2026-05-02T02:36:03Z",
+    "message": "restored .env",
+    "checked": "2026-10-21T15:35:13.272Z"
+  },
+  {
+    "repo": "GDX-X/PS2-OPL-CFG-Compatibility-Database",
+    "refs": [],
+    "links": [
+      "https://github.com/GDX-X/PS2-OPL-CFG-Compatibility-Database"
+    ],
+    "branch": "default",
+    "head": "45c7e5b515e58e2c3bfffb09fbee9c9a7d48404a",
+    "date": "2024-07-16T23:06:40Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:13.312Z"
+  },
+  {
+    "repo": "Snaggly/PS2_Pnacher",
+    "refs": [],
+    "links": [
+      "https://github.com/Snaggly/PS2_Pnacher"
+    ],
+    "branch": "default",
+    "head": "5a5fe7bf50d2692c353558e0c066105a7fa355fc",
+    "date": "2022-10-25T16:50:43Z",
+    "message": "Better state handling",
+    "checked": "2026-10-21T15:35:13.187Z"
+  },
+  {
+    "repo": "xlenore/ps2-covers",
+    "refs": [],
+    "links": [
+      "https://github.com/xlenore/ps2-covers"
+    ],
+    "branch": "default",
+    "head": "08a8734ee31aca74a7471425f73384f16e29ecbc",
+    "date": "2026-09-27T19:17:14Z",
+    "message": "Remove entry for 'Ratchet & Clank - Tool Warrior Jackpot'",
+    "checked": "2026-10-21T15:35:13.134Z"
+  },
+  {
+    "repo": "Irfanlesnar/PS2-Launcher-Manager",
+    "refs": [],
+    "links": [
+      "https://github.com/Irfanlesnar/PS2-Launcher-Manager"
+    ],
+    "branch": "default",
+    "head": "4fe7dcc1803467c0dda773cb0e1680117b1951d5",
+    "date": "2026-08-12T11:30:04Z",
+    "message": "Add documentation link to README title",
+    "checked": "2026-10-21T15:35:13.194Z"
+  },
+  {
+    "repo": "israpps/PlayStation2-Basic-BootLoader",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/PlayStation2-Basic-BootLoader"
+    ],
+    "branch": "default",
+    "head": "d2e81fa17d61c3339d56321368052f3e3cd9fabb",
+    "date": "2026-02-11T15:58:05Z",
+    "message": "Allow disc stop at startup (#40)",
+    "checked": "2026-10-21T15:35:13.214Z"
+  },
+  {
+    "repo": "mlafeldt/ps2rd",
+    "refs": [],
+    "links": [
+      "https://github.com/mlafeldt/ps2rd"
+    ],
+    "branch": "default",
+    "head": "b433fa34bed0edb2665d5d6bd4f45585606aed74",
+    "date": "2017-09-01T22:16:15Z",
+    "message": "Remove version suffix from libconfig and libcheats",
+    "checked": "2026-10-21T15:35:14.349Z"
+  },
+  {
+    "repo": "TheRealNextria/PS2RD-CHT-Manager",
+    "refs": [],
+    "links": [
+      "https://github.com/TheRealNextria/PS2RD-CHT-Manager"
+    ],
+    "branch": "default",
+    "head": "68fe154fd2ce9c1b6567b92830d829d0ee7c10f6",
+    "date": "2026-08-24T02:24:03Z",
+    "message": "Updated Added ESR Patching",
+    "checked": "2026-10-21T15:35:14.249Z"
+  },
+  {
+    "repo": "Xferno2/PS2RPC",
+    "refs": [],
+    "links": [
+      "https://github.com/Xferno2/PS2RPC"
+    ],
+    "branch": "default",
+    "head": "4483b7d42438dacc30890e4f886dca4440949e3b",
+    "date": "2021-01-05T20:43:54Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:14.175Z"
+  },
+  {
+    "repo": "johnson-cooper/PS2SP",
+    "refs": [],
+    "links": [
+      "https://github.com/johnson-cooper/PS2SP"
+    ],
+    "branch": "default",
+    "head": "b9e4c0c3254409ee4cddfa104bef35c905f64ed9",
+    "date": "2026-10-21T15:17:18Z",
+    "message": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+    "checked": "2026-10-21T15:35:14.188Z"
+  },
+  {
+    "repo": "CosmicScale/PSBBN-Definitive-Project",
+    "refs": [],
+    "links": [
+      "https://github.com/CosmicScale/PSBBN-Definitive-Project"
+    ],
+    "branch": "default",
+    "head": "59992562f2bf3fb90314104ae548201e23835230",
+    "date": "2026-10-20T09:44:18Z",
+    "message": "Update app database",
+    "checked": "2026-10-21T15:35:14.188Z"
+  },
+  {
+    "repo": "SvenGDK/PSX-XMB-Manager",
+    "refs": [],
+    "links": [
+      "https://github.com/SvenGDK/PSX-XMB-Manager"
+    ],
+    "branch": "default",
+    "head": "72713da7a5ce5478b235e30dab61a395fdabc368",
+    "date": "2025-07-11T10:24:37Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:14.230Z"
+  },
+  {
+    "repo": "edisnord/PyOPLM",
+    "refs": [],
+    "links": [
+      "https://github.com/edisnord/PyOPLM"
+    ],
+    "branch": "default",
+    "head": "a8e3ceb1e03fa11255769a3812bd32dbe4bd974a",
+    "date": "2026-09-29T15:21:47Z",
+    "message": "Bump version to 0.73",
+    "checked": "2026-10-21T15:35:14.296Z"
+  },
+  {
+    "repo": "CosmicScale/Retro-GEM-PS2-Disc-Launcher",
+    "refs": [],
+    "links": [
+      "https://github.com/CosmicScale/Retro-GEM-PS2-Disc-Launcher"
+    ],
+    "branch": "default",
+    "head": "bb754a99deb5656df3b256ed0e354c32bc1217c2",
+    "date": "2024-11-01T21:35:18Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:14.494Z"
+  },
+  {
+    "repo": "CosmicScale/Open-PS2-Loader-Retro-GEM",
+    "refs": [],
+    "links": [
+      "https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM"
+    ],
+    "branch": "default",
+    "head": "5db4eca931a2d6cb81599f8b57a281b3c5b9b6c2",
+    "date": "2024-06-21T18:31:44Z",
+    "message": "Retro GEM Game ID Support",
+    "checked": "2026-10-21T15:35:14.105Z"
+  },
+  {
+    "repo": "CosmicScale/Retro-GEM-POPStarter-Starter",
+    "refs": [],
+    "links": [
+      "https://github.com/CosmicScale/Retro-GEM-POPStarter-Starter"
+    ],
+    "branch": "default",
+    "head": "10e72f1687ecfbc2b52dd68f4ad3efc3107fb1b1",
+    "date": "2024-07-09T17:19:35Z",
+    "message": "Update README.md",
+    "checked": "2026-10-21T15:35:14.157Z"
+  },
+  {
+    "repo": "israpps/romman",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/romman"
+    ],
+    "branch": "default",
+    "head": "7856e5771b0ffdcb3e4cbd6f5622fc0d76acb363",
+    "date": "2025-11-22T21:20:05Z",
+    "message": "Add 0xff chunks as empty chunks",
+    "checked": "2026-10-21T15:35:15.084Z"
+  },
+  {
+    "repo": "sd2psXtd/firmware",
+    "refs": [],
+    "links": [
+      "https://github.com/sd2psXtd/firmware"
+    ],
+    "branch": "default",
+    "head": "8a20bd991b43ac731882f5f85030b19e94c23a3b",
+    "date": "2026-07-08T12:07:31Z",
+    "message": "Merge branch 'develop'",
+    "checked": "2026-10-21T15:35:15.125Z"
+  },
+  {
+    "repo": "sd2psXtd/Open-PS2-Loader",
+    "refs": [],
+    "links": [
+      "https://github.com/sd2psXtd/Open-PS2-Loader"
+    ],
+    "branch": "default",
+    "head": "d0d9f26859e8279d945bbe5ac17a29bea70050ba",
+    "date": "2024-07-17T06:25:55Z",
+    "message": "Merge pull request #1276 from ps2homebrew/fixExit",
+    "checked": "2026-10-21T15:35:15.144Z"
+  },
+  {
+    "repo": "ps2homebrew/wLaunchELF",
+    "refs": [],
+    "links": [
+      "https://github.com/ps2homebrew/wLaunchELF"
+    ],
+    "branch": "default",
+    "head": "57c20494395a6b9c83930fc678e4419b63189c05",
+    "date": "2026-10-13T04:08:50Z",
+    "message": "docs: add contributing guidelines",
+    "checked": "2026-10-21T15:35:15.069Z"
+  },
+  {
+    "repo": "israpps/wLaunchELF_ISR",
+    "refs": [],
+    "links": [
+      "https://github.com/israpps/wLaunchELF_ISR"
+    ],
+    "branch": "default",
+    "head": "74550d86c08b44ee00470ea9e39c0b7f17a12bef",
+    "date": "2026-01-14T03:20:37Z",
+    "message": "Add Italian translation (#105)",
+    "checked": "2026-10-21T15:35:15.247Z"
+  },
+  {
+    "repo": "saildot4k/wLaunchELF_R3Z",
+    "refs": [],
+    "links": [
+      "https://github.com/saildot4k/wLaunchELF_R3Z"
+    ],
+    "branch": "default",
+    "head": "06b06d000072d358c93d98104d64d2f081e47ba7",
+    "date": "2026-10-18T01:57:30Z",
+    "message": "Add support for launching disc images",
+    "checked": "2026-10-21T15:35:15.160Z"
+  },
+  {
+    "repo": "oMrRexD/wLaunchELF_R3Z_FTP",
+    "refs": [],
+    "links": [
+      "https://github.com/oMrRexD/wLaunchELF_R3Z_FTP"
+    ],
+    "branch": "default",
+    "head": "80738d78f0cddef96830644a5642f22b2a5a1585",
+    "date": "2026-09-28T19:16:25Z",
+    "message": "Show the fork in the version: v4.78_R3Z_FTP",
+    "checked": "2026-10-21T15:35:15.390Z"
+  },
+  {
+    "repo": "Kyllemn/PS2TVCRT",
+    "refs": [],
+    "links": [
+      "https://github.com/Kyllemn/PS2TVCRT"
+    ],
+    "branch": "default",
+    "head": "42c33b5be94cfa990f4a6f1281d0596922d20a46",
+    "date": "2026-10-20T15:23:52Z",
+    "message": "Update folder structure in README",
+    "checked": "2026-10-21T15:35:15.070Z"
+  }
+]
