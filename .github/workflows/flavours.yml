@@ -343,6 +343,10 @@ jobs:
         run: python3 .github/scripts/test_ember_fatfs_images.py
       - name: Check Ember games list on MMCE through the real mmceman directory calls
         run: python3 .github/scripts/test_ember_mmce_dread.py
+      - name: Check the per-game logo-art toggle persists and gates the LGO cache
+        run: python3 .github/scripts/test_logo_art_toggle.py
+      - name: Check the HTTP stream client and games.csv catalog parser against the reference
+        run: sh pc/http/tests/run.sh
 
   udpfs-host-tests:
     runs-on: ubuntu-24.04
