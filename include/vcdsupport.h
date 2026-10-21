@@ -161,6 +161,9 @@ enum {
 //   device's POPS/ folder. BDMA pairs are loose release/device files and are never embedded in the ELF.
 // On -4, if diag != NULL it is filled with a human-readable summary (needed files + which source
 // devices were actually mounted) so the failure can be shown on screen / screenshotted to diagnose.
+// This is the Settings page's manual equip: it installs the first pair it finds, whatever its size.
+// A launch equip installs only the pair this release ships, and returns -5 (copying nothing) when
+// the seek path holds only another release's pair.
 int vcdEquipBdma(int source, int mode, char *diag, int diagSize);
 // Read the equipped variant from mc?:/POPSTARTER/bdma_config.txt (VCD_BDMA_FAT32 if absent).
 int vcdReadBdmaMode(void);
@@ -224,7 +227,8 @@ typedef struct
 // exists-flags 0, ipDhcp 1), not an error. Invalid file contents set ipInvalid/smbInvalid and
 // remain user-editable. Returns 0, or -3 on a genuine mid-read IO error.
 int vcdReadPopstarterNet(vcd_popsnet_t *out);
-// Explicit readable POPS folder (including a temporarily mounted APA __common).
+// Explicit readable POPS folder (including a temporarily mounted APA __common). A launch equip:
+// only the pair this release ships is installed (-5 when that folder holds another release's).
 int vcdEquipBdmaFromPops(const char *popsDir, int mode, char *diag, int diagSize);
 
 // Interim BDM-UDPFS Assault configuration: the IRXs may come from any POPS source,
