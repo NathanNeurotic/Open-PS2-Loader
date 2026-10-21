@@ -1933,3 +1933,6 @@ gui_strings:
 
 - label: VMC_REBUILD_STUCK
   string: "The VMC was copied but could not be swapped in. The old card (.bak) and the copy (.new) are both kept in the VMC folder -- rename one of them back to .bin on a PC."
+
+- label: VMC_REBUILD_UNSYNCED
+  string: "The VMC was rebuilt, but the HDD could not confirm the change was saved. The old card is kept as a .bak file -- check the card before deleting anything."

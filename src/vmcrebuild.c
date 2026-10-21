@@ -83,20 +83,22 @@ static int vmcRebuildExists(const char *path)
     return result < 0 ? -1 : 0;
 }
 
-// pfs0: is write-back: a rename is only in PFS's RAM cache until it is synced.
-static void vmcRebuildSync(void)
+// pfs0: is write-back: a rename is only in PFS's RAM cache until it is synced. 0 = committed (or not
+// PFS), < 0 = PFS could not commit it.
+static int vmcRebuildSync(void)
 {
     char device[16];
     const char *colon = strchr(gVMCRebuild.card, ':');
     int result;
 
     if (strncmp(gVMCRebuild.card, "pfs", 3) || colon == NULL || (size_t)(colon - gVMCRebuild.card) + 1 >= sizeof(device))
-        return;
+        return 0;
     memcpy(device, gVMCRebuild.card, colon - gVMCRebuild.card + 1);
     device[colon - gVMCRebuild.card + 1] = '\0';
     result = fileXioSync(device, 0);
     if (result < 0)
         LOG("VMC rebuild: sync of %s failed: %d\n", device, result);
+    return result < 0 ? result : 0;
 }
 
 // The copy is this rebuild's own file (genvmc made it exclusively); remove it only while the card is
@@ -180,10 +182,8 @@ int vmcRebuildFinish(int jobError)
         // The card's name is free once the first rename went through. Taken now, it is the copy:
         // the rename happened after all.
         present = vmcRebuildExists(gVMCRebuild.card);
-        if (present == 1) {
-            vmcRebuildSync();
-            return VMC_REBUILD_DONE;
-        }
+        if (present == 1)
+            return vmcRebuildSync() < 0 ? VMC_REBUILD_UNSYNCED : VMC_REBUILD_DONE;
         if (present != 0 || rename(gVMCRebuild.backup, gVMCRebuild.card) != 0) {
             vmcRebuildSync();
             return VMC_REBUILD_STUCK;
@@ -191,7 +191,9 @@ int vmcRebuildFinish(int jobError)
         vmcRebuildSync();
         return vmcRebuildDropCopy(VMC_REBUILD_FAILED);
     }
-    vmcRebuildSync();
+    // "Rebuilt" only once the swap is on the disk; otherwise say the change was not confirmed.
+    if (vmcRebuildSync() < 0)
+        return VMC_REBUILD_UNSYNCED;
     LOG("VMC rebuild done: %s, old card kept as %s\n", gVMCRebuild.card, gVMCRebuild.backup);
     return VMC_REBUILD_DONE;
 }

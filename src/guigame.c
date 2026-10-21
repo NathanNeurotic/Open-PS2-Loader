@@ -278,6 +278,8 @@ static int guiGameVMCRebuildMessage(int outcome)
             return _STR_VMC_REBUILD_LEFTOVER;
         case VMC_REBUILD_STUCK:
             return _STR_VMC_REBUILD_STUCK;
+        case VMC_REBUILD_UNSYNCED:
+            return _STR_VMC_REBUILD_UNSYNCED;
         default:
             return _STR_VMC_REBUILD_FAILED;
     }

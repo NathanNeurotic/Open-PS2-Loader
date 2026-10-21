@@ -88,7 +88,7 @@ static struct { int file, pos, used; } fds[16];
 static int pfs;                                   /* PFS rename replaces its target; FatFs refuses */
 static int readsOfCard, readFailAt, writes, shortWriteAt, abortAtWrite, abortAtVerifyRead, corruptCopy;
 static int capsResult, reserveResult, verifyResult, piocallocResult, closeFailCopy, unreservedFragments;
-static int renames, renameFail[4], renameLie[4], dirFail, dirOpens, syncs, mapOverride, cardRemoved, workerRuns;
+static int renames, renameFail[4], renameLie[4], dirFail, dirOpens, syncs, syncResult, mapOverride, cardRemoved, workerRuns;
 static unsigned char original[CARD];
 
 static vfile *lookup(const char *name)
@@ -315,7 +315,7 @@ static int fileXioDread(int dir, iox_dirent_t *entry)
     return 0;
 }
 static int fileXioDclose(int dir) { assert(dir == 3); return 0; }
-static int fileXioSync(const char *device, int flag) { assert(!strcmp(device, "pfs0:") && flag == 0); syncs++; return 0; }
+static int fileXioSync(const char *device, int flag) { assert(!strcmp(device, "pfs0:") && flag == 0); syncs++; return syncResult; }
 static int fileXioDevctl(const char *name, int cmd, void *in, unsigned int insize, void *out, unsigned int outsize)
 {
     assert(!strcmp(name, "genvmc:"));
@@ -346,7 +346,7 @@ static void reset(const char *name, int onPfs)
     pfs = onPfs;
     readsOfCard = readFailAt = writes = shortWriteAt = abortAtWrite = abortAtVerifyRead = corruptCopy = 0;
     capsResult = reserveResult = verifyResult = VMC_ALLOC_V1;
-    piocallocResult = closeFailCopy = renames = dirFail = dirOpens = syncs = mapOverride = cardRemoved = workerRuns = 0;
+    piocallocResult = closeFailCopy = renames = dirFail = dirOpens = syncs = syncResult = mapOverride = cardRemoved = workerRuns = 0;
     unreservedFragments = 7; /* written without a reservation, a file lands in pieces */
     semCount = 0;
     pending = NULL;
@@ -529,6 +529,16 @@ int main(void)
         CHECK(run(8) == VMC_REBUILD_FAILED && workerRuns == 0, "absence that cannot be proven stops the rebuild");
         unchanged();
     }
+
+    reset("pfs_swap_not_committed", 1);
+    syncResult = -EIO;
+    CHECK(run(8) == VMC_REBUILD_UNSYNCED, "a swap PFS could not commit is not reported as rebuilt");
+    CHECK(same(card) && same(backupName) && lookup(copyName) == NULL && cardRemoved == 0, "and both copies are still there");
+    reset("pfs_late_rename_not_committed", 1);
+    renameLie[1] = 1;
+    syncResult = -EIO;
+    CHECK(run(8) == VMC_REBUILD_UNSYNCED, "nor is a rename that reported failure but happened");
+    CHECK(same(card) && same(backupName) && cardRemoved == 0, "and both copies are still there");
 
     reset("driver_without_safe_allocation", 0);
     capsResult = 0;

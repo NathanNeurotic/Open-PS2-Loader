@@ -11,6 +11,7 @@ enum vmc_rebuild_result {
     VMC_REBUILD_ABORTED = -3,  // cancelled; nothing changed
     VMC_REBUILD_LEFTOVER = -4, // "<name>.bak" or "<name>.new" is already there; never overwritten
     VMC_REBUILD_STUCK = -5,    // a rename failed half way: "<name>.bak" and "<name>.new" are both kept
+    VMC_REBUILD_UNSYNCED = -6, // swapped, but PFS could not commit it: the old card is still "<name>.bak"
 };
 
 // The card at path (<prefix>VMC/<name>.bin, sizeMb MB) for the native core: 1 it maps, 0 it does not
