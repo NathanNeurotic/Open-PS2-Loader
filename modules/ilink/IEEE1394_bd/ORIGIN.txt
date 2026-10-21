@@ -16,7 +16,8 @@ which the menu loads to list i.LINK games and ee_core loads again after every in
 neutrino/modules/IEEE1394_bd_mini.irx in the bundled Neutrino with this build, because Neutrino's
 in-game environment loads its own copy after its IOP reboot (config/bsd-ilink.toml).
 POPSTARTER's i.LINK pair (modules/bdmassault/ilink_bd_assault, shipped as usbhdfsd.irx.ilink) is a
-separate build of the same SDK code and does NOT have these changes yet.
+separate build of an older copy of the same SDK code and carries the same three changes (#1024,
+tested by .github/scripts/test_ilink_bd_assault_reset.py). A change to one belongs in both.
 
 WHY VENDORED (#1018): with i.LINK storage every game listed, Ember booted, and native OPL (PS2 logo,
 then nothing), Neutrino and POPSTARTER did not. Ember is the only core that never resets the IOP.

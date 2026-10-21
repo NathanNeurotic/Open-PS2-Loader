@@ -174,8 +174,8 @@ paths are no longer limited to 31 characters.
 > again, so every core that resets the IOP lost the drive: native OPL got as far as the PS2 logo,
 > Neutrino and POPSTARTER did not start, and only Ember (which keeps the IOP) booted. RiptOPL's own
 > build keeps asking for up to 5 s, waits for the drive to become ready, and only offers it once it
-> is. It is used by the native core and shipped in the bundled Neutrino. POPSTARTER's i.LINK driver
-> pair does not have this change yet. Not yet confirmed on hardware.
+> is. It is used by the native core and shipped in the bundled Neutrino, and POPSTARTER's i.LINK
+> driver pair has the same change (see [PS1/VCD](VCD.md)). Not yet confirmed on hardware.
 
 Unsupported cases fall back to the `<OPL>` core automatically with an on-screen warning.
 
