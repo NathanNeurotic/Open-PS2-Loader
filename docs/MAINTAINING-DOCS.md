@@ -15,6 +15,7 @@ host-test and hardware distinctions on experimental feature pages.
 | Website RetroAchievements body | `docs/RETROACHIEVEMENTS.md`, rendered by `site_sync.py` |
 | Website search | Page content, then regenerate `data/search-index.json`; curated entry titles/categories are preserved |
 | Wiki maps, homepage, aliases and conversion | `.github/scripts/wiki_sync.py`; generated pages are published to the separate wiki repository |
+| Language install and translation coverage | `docs/LANGUAGES.md`, `tools/audit_translations.py`; copy the user instructions to `gh-pages/languages.html` and regenerate the wiki |
 
 Keep existing URLs and section anchors when consolidating material. A short forwarding section
 is preferable to silently breaking a bookmark. Preserve attribution and verbatim third-party
@@ -34,6 +35,7 @@ python .github/scripts/site_sync.py --site ../site --ra-md docs/RETROACHIEVEMENT
 python .github/scripts/check_docs.py --site ../site --report /tmp/docs-links.json
 python .github/scripts/test_site_sync.py
 python .github/scripts/test_wiki_sync.py
+python tools/audit_translations.py --strict
 git diff --check
 git -C ../site diff --check
 ```
@@ -65,3 +67,19 @@ Overlapping reference pages become small source-section indexes, preserving old 
 anchors; unique references remain full pages. Review and commit the wiki, then push normally.
 Reconcile concurrent wiki edits before retrying a rejected push. No automatic wiki publication
 or new credential is configured by these tools.
+
+## Language-guide publication order
+
+Maintain the technical pipeline and audit commands in `docs/LANGUAGES.md`.
+Update the public installation steps in the `gh-pages` branch's `languages.html`
+before regenerating the wiki: `wiki_sync.py` imports the website Languages
+page into the wiki's `Languages` entry and preserves the separate
+`Language-Maintenance` technical page from the repository. A source-only
+change does **not** update the published wiki. Review and push the wiki
+checkout separately; the source connector and documentation workflow cannot
+write GitHub wiki pages through the repository contents API.
+
+The `docs-sync.yml` job regenerates the website search index from the
+published HTML, but it does not translate strings or update `languages.html`
+from `docs/LANGUAGES.md`. Run the coverage audit after new UI labels are
+appended and before claiming any language is fully translated.

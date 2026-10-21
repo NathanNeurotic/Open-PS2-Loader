@@ -19,9 +19,16 @@ ELF update. See [Fresh-start defaults](DEFAULTS.md).
 ## PSBBN Flow
 
 Select **`<PSBBN Flow>`** under **Settings → Interface → Theme**, then apply and save.
-This adapts dnunezx's LUNA Collection display from [PR #733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733):
-a large focal cover on the right, a diminishing tail on the left, and an outgoing cover that
-enlarges as it exits. Its cubic glide retains the original 25-frame timing.
+It recreates the Game Collection of CosmicScale's
+[PSBBN Definitive Project](https://github.com/CosmicScale/PSBBN-Definitive-Project): black header
+and button-hint bands with thin rules, a blue star-field nebula between them, the page list where
+PSBBN lists Collection and Disc, and a rounded square focal cover with a soft white rim. The game
+title sits above that cover and the count (`3/12`) under its lower right corner. A tail of covers,
+turned away into the distance, recedes on the left. When you browse, the outgoing cover swells
+toward the viewer and fades while the next one turns to face you; the title and count return once
+the covers settle. The layout was measured from the project's published videos; no PSBBN code or
+artwork is used. The glide keeps the 25-frame cubic timing of dnunezx's LUNA Collection display
+([PR #733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)), which this theme started from.
 
 PSBBN Flow uses the same native device pages, current selection, artwork cache, palette settings,
 and launch/game-settings actions as Cover Flow. Left/Right browse the covers and Up/Down change
@@ -29,16 +36,17 @@ device pages. R3 remains **toggle favorite**; there is no separate screen or R3 
 The chosen theme persists by name and remains selected when disk themes are added or removed.
 
 The built-in theme uses ordinary `ART/<startup>_COV` artwork through each source's existing image
-loader, including its archive and fallback handling. Square covers work, and portrait covers keep
-their proportions inside the square display slots. Unlike the old PR's separate screen, this
+loader, including its archive and fallback handling. Like PSBBN, every cover shows as a square
+tile: square art (such as the PSBBN art database's) fills it, and portrait or landscape art is
+cropped to its centre square rather than stretched. Unlike the old PR's separate screen, this
 adaptation does not require an `ART/PSBBN` directory. Missing covers use the native placeholder;
 folder rows remain browsable, and APPS, PS1 and Favorites use the native family/cache resolution.
 
 Custom themes can select the same renderer with `type=PSBBNFlow`, alongside an `ItemsList` for
 the native title/navigation row. `pattern`, `default`, `count` and overlays use the native image
-loader. `x` / `y` anchor the focal slot at its top-right corner (default `x=-37`, `y=75`),
-and `width` can only shrink it below its screen-derived maximum. Height and alignment do not
-set the slot shape or anchor. See the property table below and
+loader. `x` / `y` place the centre of the focal cover (default `x=-186`, `y=POS_MID`, which is
+454, 240 on the 640×480 canvas), and `width` sets its side (default 204, up to 60% of the screen
+height). Height and alignment do not set the cover shape or anchor. See the property table below and
 [the built-in configuration](../misc/theme_psbbn_flow.cfg).
 The existing Cover Flow count/scale settings belong to `Coverflow`; PSBBN Flow retains Collection's
 fixed perspective layout.
@@ -46,22 +54,27 @@ fixed perspective layout.
 ### PSBBNFlow element properties
 
 Use `type=PSBBNFlow` for the perspective fan. Keep a native `ItemsList` in the same
-family for the title row and navigation. Device, app, PS1 and Favorites families inherit
+family for the title row and navigation: one row (`height=24`) placed just above the focal cover
+gives PSBBN's title, and it hides while the covers move. Device, app, PS1 and Favorites families inherit
 and override slots using the usual contiguous-numbering rules. Adding either flow type
 rotates Left/Right and Up/Down on every main browse page in that theme, including pages
 with a plain list; info and settings controls keep their normal layout.
 
 | Property | PSBBNFlow behavior |
 | --- | --- |
-| `x` | Right edge of the focal square slot; default is screen width minus 37. Negative values anchor to the right edge. |
-| `y` | Top of the focal slot; default 75. Negative values anchor relative to the bottom edge. |
-| `width` | Focal slot size, capped to the renderer's viewport-dependent limit. Defaults to that limit. The renderer preserves portrait/square cover proportions inside the slot. |
+| `x` | Centre of the focal cover; default is screen width minus 186 (454). Negative values anchor to the right edge. |
+| `y` | Centre of the focal cover; default is mid-screen (240). Negative values anchor relative to the bottom edge. |
+| `width` | Side of the square focal cover; default 204, accepted up to 60% of the screen height. Art is cropped to its centre square. |
 | `pattern`, `default`, `count` | Native artwork suffix (default `COV`), missing-art asset and cache capacity. `count` controls cache slots, not the visible tail length. |
-| `overlay`, `overlay2`, overlay corners | Native frame layers, scaled with each cover. Author corners against the element's `width` / `height`. |
-| `font` | Font for the selected-row/total counter. |
+| `overlay`, `overlay2`, overlay corners | Native frame layers, scaled with each cover. Author corners against the element's `width` / `height`. Framed covers are drawn flat, without the turn or rounded corners. |
+| `font` | Font for the page list and the selected-row/total counter. |
 
-The fan draws up to six neighboring covers and an outgoing foreground cover. Its blue wash,
-frame/footer, cubic 25-frame animation and distance shading belong to this renderer.
+The fan draws up to six neighboring covers, a seventh fading in or out at the far end, and the
+outgoing cover. The header and hint bands with their rules, the star field, the stacked
+Collection outline, the page list, the rim, the count, the cubic 25-frame animation and the
+distance shading belong to this renderer. The nebula is the theme's own `Background`
+(`default=psbbn_bg` in the built-in). The page list and count use the text colour, and the title
+uses the selected-text colour, from **Settings → Interface → Colors**.
 `coverflow_count`, `coverflow_scale`, `coverflow_anim`, `coverflow_dim` and
 `coverflow_cover_offset` affect `Coverflow` only. `PSBBNFlow` fixes centered alignment and
 aspect correction, supplies no mirrored reflection, and uses `width` for the square slot;
@@ -72,7 +85,10 @@ A minimal custom theme, with normal app and PS1 fallbacks:
 ```ini
 main0:
     type=Background
-    pattern=BG
+    default=psbbn_bg
+    aligned=0
+    width=DIM_INF
+    height=DIM_INF
 main1:
     type=PSBBNFlow
     default=cover
@@ -84,13 +100,14 @@ vcdMain1:
     default=cover
 main2:
     type=ItemsList
-    x=54
-    y=-77
-    width=450
+    x=340
+    y=114
+    width=260
     height=24
 ```
 
-The built-in configuration adds device text, hints, a loading icon and an info-page layout.
+The built-in configuration adds the nebula background, a header label, the one-row title above
+the cover, hints, a loading icon and an info-page layout.
 See [`misc/theme_psbbn_flow.cfg`](../misc/theme_psbbn_flow.cfg) for the full example.
 
 > Quick mental model: a theme is a flat list of **elements**, each positioned on a virtual
@@ -545,7 +562,7 @@ You can point `default=`/`overlay=` at any of OPL's embedded textures (no file n
 - **Buttons:** `cross`, `circle`, `triangle`, `square`, `left`, `right`, `select`, `start`, `L3`, `R3`, `fav_mark`
 - **Loading frames:** `load0` … `load7`
 - **Boot logo:** `logo`, `logo0` … `logo6`
-- **Backgrounds:** `background` (built-in theme's main page), `background_info` (its info page)
+- **Backgrounds:** `background` (built-in theme's main page), `background_info` (its info page), `psbbn_bg` (`<PSBBN Flow>` nebula, 8-bit 160×120, filtered up)
 - **Format icons:** `ELF`, `HDL`, `ISO`, `ZSO`, `UL`, `VCD`
 - **Media icons:** `APP`, `CD`, `DVD`
 - **Players:** `Players_1` … `Players_4`

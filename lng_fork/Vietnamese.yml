@@ -315,3 +315,377 @@ translations:
   VIEW_APPS: Đang hiển thị ứng dụng
   EMBER_DISPLAY: Chế độ hiển thị của Ember
   HINT_EMBER_DISPLAY: Chế độ xuất hình mà Ember dùng cho trò chơi PS1. 240p hoặc 480p sẽ được ghi vào settings.txt trong thư mục EMBER của thiết bị được khởi chạy. Mặc định sẽ xóa lại cài đặt đó, và xóa luôn tập tin nếu nó không còn nội dung nào khác.
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  NETCONFIG: Cài đặt mạng
+  SETTINGS_SAVED: Đã lưu cài đặt vào %s
+  OK: OK
+  REMOVE_ALL_SETTINGS: Xóa cài đặt
+  BDMMODE: Chế độ khởi động BDM
+  CAT_SMB_SERVER: '- Máy chủ SMB -'
+  MASK: Mặt nạ
+  GATEWAY: Cổng mạng
+  DNS_SERVER: Máy chủ DNS
+  SHARE: Thư mục chia sẻ
+  TEST: Thử thay đổi
+  HINT_MODE3: Gỡ móc Syscall
+  ERR_VMC_CONTINUE: Lỗi truy cập VMC %s. Tiếp tục với thẻ nhớ ở khe %d?
+  DEVS: Lập trình viên
+  RESETCOLOR: Đặt lại màu
+  ENTER: Enter
+  GAME_ID: ID trò chơi
+  VSYNC: Đồng bộ dọc
+  ETH_OPMODE: Chế độ liên kết Ethernet
+  ETH_100MFDX: 100Mbit song công
+  ETH_100MHDX: 100Mbit bán song công
+  ETH_10MFDX: 10Mbit song công
+  ETH_10MHDX: 10Mbit bán song công
+  XOFFSET: VỊ TRÍ NGANG
+  YOFFSET: VỊ TRÍ DỌC
+  NET_UPDATE: Cập nhật qua mạng
+  NET_UPDATE_ALL: Ghi đè bản ghi có sẵn
+  HINT_PS2LOGO: Hiện khi biểu tượng đĩa hợp lệ khớp với vùng của máy.
+  DS34BT_MODE: DualShock3/4 BT
+  MANUFACTURER: 'ID nhà sản xuất:'
+  MTAP_ENABLE: Giả lập Multitap
+  HINT_PADEMU_WORKAROUND: Một số DS3 giả cần cách xử lý riêng; tùy chọn này bật nó.
+  CFG_NOTIFICATION: Đã nạp cấu hình từ %s
+  THM_NOTIFICATION: Đã nạp chủ đề từ %s
+  LNG_NOTIFICATION: Đã nạp ngôn ngữ từ %s
+  PARTITION_NOTIFICATION: Đã gắn phân vùng %s.
+  GAME_SETTINGS_SAVED: Đã lưu cài đặt trò chơi.
+  GAME_SETTINGS_REMOVED: Đã xóa cài đặt của %s.
+  NET_UPDATE_HINT: Khi bật, ghi đè các cài đặt tương thích trò chơi có sẵn.
+  SETTINGS_SOURCE: Chế độ cài đặt
+  PERGAME_SETTINGS: Theo trò chơi
+  ALL_SETTINGS: Tất cả
+  GAME_SETTINGS_PROMPT: Chọn cài đặt cần xóa.
+  FORUM_DETAILS: 'Diễn đàn hỗ trợ:'
+  INFO_TITLE: Tiêu đề
+  INFO_DEVELOPER: Nhà phát triển
+  HINT_NEUTRINO_AUTO_ELF: Truyền ELF khởi động của trò chơi cho Neutrino để tìm cấu hình riêng cho từng trò chơi. Mặc định bật; tùy chọn Boot ELF đặt thủ công được ưu tiên.
+  HINT_POPSTARTER_PATH: Vị trí của POPSTARTER.ELF. Để trống thì RIPPS2 điền tệp nó tìm thấy trên ổ; ghi đè để dùng tệp khác, ví dụ usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Tham số Neutrino dài hơn mức có thể lưu. Hãy rút ngắn một ô trước khi lưu.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Tham số chạy Neutrino vượt giới hạn an toàn. Hãy rút ngắn tham số chung hoặc tham số trò chơi.
+  NEUTRINO_AUTO_ELF: Boot ELF tự động (-elf)
+  HINT_NEUTRINO_PATH: 'neutrino.elf nằm ở đâu? <chưa đặt> = Thiết bị của trò chơi -> mc0/mc1. Đường dẫn đầy đủ tự đặt được thử trước. Ví dụ: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Hiển thị trò chơi PS2/PS1
+  HINT_GAME_VIEW_MODE: Tất cả liệt kê trò chơi PS2 và PS1 cùng nhau và L3 chuyển giữa Tất cả, PS1, PS2. PS2 hoặc PS1 chỉ hiện loại đó và tắt L3. APPS và Trò chơi gắn sao dùng quy tắc hiển thị riêng.
+  VIEW_MIXED: Đang hiện trò chơi PS2 + PS1
+  VIEW_PS1_ELF: Đang hiện ứng dụng ELF PS1
+  APPS_DISPLAY: Hiển thị ứng dụng
+  HINT_APPS_DISPLAY: Tất cả hiện mọi ELF trong một danh sách APPS và tắt L3. Ứng dụng / PS1ELF tách các mục có [PS1] sang trang L3 thứ hai; cách chạy không đổi.
+  VIEW: Xem
+  VIEW_PS2: Đang hiện trò chơi PS2 gắn sao
+  VIEW_PS1: Đang hiện trò chơi PS1 gắn sao
+  VIEW_ELF: Đang hiện ELF gắn sao
+  VIEW_ALL: Đang hiện tất cả trò chơi gắn sao
+  VMC_FRAGMENTED_ON_CREATE: Đã tạo VMC, nhưng nó bị phân mảnh. Giả lập thẻ nhớ cần một tệp liền mạch, nên VMC này sẽ bị bỏ qua khi chạy và thẻ thật được dùng thay. Hãy giải phóng dung lượng rồi tạo lại, hoặc chép một tệp từ thiết bị khác.
+  KEYB_MOVE_CURSOR: Di chuyển con trỏ
+  TITLECOLOR: Màu tiêu đề trò chơi
+  RA_CHECK_GAME: Kiểm tra hỗ trợ RetroAchievements
+  RA_TEST_LINK: Thử kết nối PC RetroAchievements
+  RA_CHECKING_IMAGE: Đang kiểm tra ảnh đĩa, mất vài giây...
+  RA_CHECK_RUNNING: Đã có một lần kiểm tra ảnh đĩa đang chạy
+  RA_LOOKING_FOR_PC: Đang tìm ứng dụng PC...
+  RA_UL_UNSUPPORTED: Chưa kiểm tra được trò chơi UL/USBExtreme
+  RA_UL_UNSUPPORTED2: Chỉ hỗ trợ ảnh .iso thường trong DVD/ hoặc CD/
+  RA_UNKNOWN_IMAGE: RetroAchievements không biết ảnh đĩa này
+  RA_STILL_IDENTIFYING: PC vẫn đang nhận dạng ảnh đĩa
+  RA_TRY_AGAIN: Thử lại sau vài giây
+  RA_NO_SOCKET: Máy không mở được socket mạng
+  RA_NO_SOCKET2: Khởi động lại máy, hoặc kiểm tra thiết bị ETH trong cài đặt
+  RA_TEST_NO_SOCKET2: Kiểm tra cáp và ETH trong cài đặt; nếu mạng vẫn chạy, hãy khởi động lại máy
+  RA_PC_NO_ANSWER: Ứng dụng PC không trả lời
+  RA_PC_NO_ANSWER2: Kiểm tra xeRAbora có đang chạy không, hoặc thử kiểm tra kết nối PC
+  RA_SUPPORTED: Được RetroAchievements hỗ trợ
+  RA_START_TO_TRACK: Chạy trò chơi để theo dõi thành tích
+  RA_ACHIEVEMENTS: '%d thành tích'
+  RA_ACHIEVEMENTS_FULL: '%d thành tích -- %d đã mở, %d không hỗ trợ'
+  RA_HASH_FAILED: Không tính được mã băm của ảnh đĩa
+  RA_HASH_FAILED2: Xem RA/hashes.txt cạnh các trò chơi để biết lý do
+  RA_NET_BUSY: Mạng đang được dùng cho truyền UDP
+  RA_NET_BUSY2: RA cần ngăn xếp SMB -- hãy đổi giao thức, hoặc tạo tệp .wl trên PC
+  RA_NET_BUSY_HASH: Mã băm nằm trong RA/hashes.txt -- xeRAbora có thể tạo .wl từ đó
+  RA_NO_IP: Máy không có địa chỉ IP
+  RA_NO_IP2: Kiểm tra DHCP hoặc địa chỉ tĩnh trong cài đặt Mạng
+  RA_TEST_NO_ANSWER: Không có ứng dụng PC nào trả lời trong 3 giây
+  RA_TEST_NO_ANSWER2: Máy%s. Kiểm tra xeRAbora đang chạy và UDP 18194 đang mở
+  RA_TEST_FOUND: Đã tìm thấy ứng dụng PC%s%s %s
+  RA_TEST_FOUND2: Trả lời sau %u ms, máy%s
+  RA_NA_NEUTRINO: Theo dõi RA cần lõi <OPL> -- chạy qua Neutrino không bao giờ nạp ee_core
+  RA_NA_UDPFS: Theo dõi RA không có trên UDPFS -- trò chơi chạy qua Neutrino
+  RA_NA_PS1: Theo dõi RA không có cho trò chơi PS1
+  RA_NA_HDD: Không có thông tin trò chơi APA hoặc thư mục cài đặt HDD
+  RA_NA_HDD2: Hãy đặt thư mục cài đặt HDD hợp lệ và làm mới trước khi kiểm tra hỗ trợ
+  RA_TELEMETRY: Đo đạc RetroAchievements
+  RA_BADGES: Huy hiệu RetroAchievements
+  HTTP_GAMES: Trò chơi HTTP
+  HTTP_SERVER: Máy chủ HTTP
+  HTTP_PORT: Cổng HTTP
+  HTTP_BASE_PATH: Đường dẫn gốc HTTP
+  HTTP_TEST: Thử máy chủ HTTP
+  HTTP_TEST_OK: Máy chủ ổn -- đã liệt kê trò chơi
+  HTTP_TEST_EMPTY: Danh mục trống -- hợp lệ, nhưng không chứng minh được gì về dải byte
+  HTTP_TEST_NO_ISO: Danh mục không có ảnh đĩa được hỗ trợ để thử dải byte
+  HTTP_ERR_CONNECT: Không kết nối được máy chủ HTTP
+  HTTP_ERR_CATALOG: games.csv bị thiếu, không đọc được hoặc quá lớn
+  HTTP_ERR_RANGE: Máy chủ không trả về đúng những byte được yêu cầu
+  HTTP_LAUNCH_UNAVAILABLE: Chạy qua HTTP chưa được làm -- danh mục chỉ để duyệt
+  HTTP_ERR_COMPRESSED: Ảnh nén (.zso) chưa được hỗ trợ qua HTTP
+  HTTP_NO_VMC: Thẻ nhớ ảo không có qua HTTP -- hãy dùng thẻ thật
+  HTTP_TAB_HINT: HTTP đọc games.csv từ máy chủ của bạn. Hãy đặt địa chỉ, cổng và đường dẫn gốc trong cài đặt Mạng, rồi dùng Thử.
+  RA_DISC_CHECK: 'RA: kiểm tra hỗ trợ đĩa'
+  RA_DISC_LAUNCH: 'RA: chạy đĩa'
+  RA_DISC_CHECKING: Đang kiểm tra đĩa cho RetroAchievements
+  RA_DISC_HASH_FAILED: Không tính được mã băm của đĩa -- hãy xem RA/hashes.txt trong thư mục cài đặt
+  RA_DISC_HOME_ERROR: Không dùng được đường dẫn cài đặt cho danh sách theo dõi đĩa
+  RA_DISC_ENABLE: Hãy bật đo đạc RetroAchievements trong cài đặt Mạng trước
+  RA_DISC_CHECK_FIRST: 'Đĩa này chưa có danh sách theo dõi -- hãy dùng RA: kiểm tra hỗ trợ đĩa trước'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: Đã tìm thấy HDD, nhưng không đọc được bảng phân vùng APA của nó. Đừng định dạng -- các trò chơi có thể vẫn cứu được.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: Một ổ không được gắn vì cung từ của nó không phải 512 byte (ví dụ ổ cung từ 4K). OPL chỉ đọc được cung từ 512 byte.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Trò chơi này là một phân vùng APA riêng, và OPL không bao giờ sửa bảng phân vùng. Hãy đổi tên trên PC.
+  POPS_SETTINGS_UNREADABLE: Không đọc được cài đặt của POPSTARTER -- thẻ nhớ đang bận hoặc không đọc được. Hãy thử lại khi nạp xong.
+  GLOBAL_PS_EMULATION_SETTINGS: Cài đặt giả lập PS chung
+  RA_NO_LINK_UNTRACKED: Không có mạng -- lần này chạy không có RetroAchievements.
+  IGR_USB_DRIVERS_PROMPT: Đường dẫn IGR nằm trên USB, nhưng %s thiếu USBD.IRX và USBHDFSD.IRX, thứ máy cần để vào USB sau In-Game Reset. Không có chúng, IGR sẽ rơi về trình duyệt PS2. Chép trình điều khiển của RiptOPL vào đó ngay? FMCB, OpenTuna và các exploit khác cũng nạp các tệp này và có thể chạy khác đi. Tệp có sẵn không bao giờ bị thay. Chỉ USB FAT32.
+  IGR_USB_DRIVERS_FAILED: Không chép được trình điều khiển USB vào %s (thẻ đầy hoặc không ghi được). IGR sẽ rơi về trình duyệt PS2.
+  OFFICIAL_CFG_NOTIFICATION: Đã nạp cài đặt OPL chính thức từ %s
+  CFM_VMODE_HOLD_KEEP: Giữ để giữ lại
+  BDM_PS2_FOLDERS_UNREADABLE: Không mở được thư mục CD hoặc DVD trong %s (lỗi %d), nên thiết bị đó không liệt kê trò chơi PS2. Nhấn SELECT trên trang của nó để thử lại.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Hệ thống tệp Neutrino đang đặt là bd, nhưng thiết bị này chưa bao giờ báo số thiết bị, nên không trỏ Neutrino vào nó được. Hãy đặt hệ thống tệp Neutrino của trò chơi này thành Auto hoặc exfat.
+  CFM_VMODE_REVERT_IN: Trả lại sau %d giây
+  EMBER_DITHER: Dithering của Ember
+  HINT_EMBER_DITHER: Dithering của Ember (Bật hoặc Tắt), ghi vào EMBER/settings.txt trên thiết bị được chạy. Giá trị riêng của trò chơi được ưu tiên.
+  EMBER_SHADING: Tô bóng của Ember
+  HINT_EMBER_SHADING: 'Độ sâu màu của Ember: 15-bit, hoặc 24-bit (thử nghiệm). Ghi vào EMBER/settings.txt trên thiết bị được chạy. Giá trị riêng của trò chơi được ưu tiên.'
+  EMBER_CONTROLLER: Tay cầm Ember
+  HINT_EMBER_CONTROLLER: 'Chế độ tay cầm của Ember: Tự động, Analog hoặc D2A. Thường tốt nhất là đặt theo trò chơi (Tam giác > Cài đặt trò chơi Ember), cách đó được ưu tiên.'
+  EMBER_480P_CONFIRM: Ember ở 480p không có hình qua composite. Dùng 480p?
+  EMBER_SHADING_24: 24-bit (thử nghiệm)
+  EMBER_GAME_SETTINGS: Cài đặt trò chơi Ember
+  HINT_EMBER_GAME_SETTING: Chỉ trò chơi này. Nhấn OK để ghi EMBER/games/<tên>/settings.txt trước khi chạy. Mặc định chưa đụng tới sẽ giữ giá trị có sẵn trong tệp; đổi một giá trị về Mặc định sẽ bỏ phần ghi đè của nó.
+  EMBER_TIMING: Định thời Ember
+  HINT_EMBER_TIMING: 'Định thời video của Ember: Tự động theo vùng của đĩa, NTSC ép 60 Hz, PAL ép 50 Hz. Ghi vào EMBER/settings.txt trên thiết bị được chạy.'
+  EMBER_GLOBAL_WARNING: Các cài đặt Ember này áp dụng cho mọi trò chơi PS1, và một số trò chơi bị treo vì chúng. Để chỉ đổi một trò chơi, hãy dùng Tam giác > Cài đặt trò chơi Ember trên trò chơi đó.
+  HINT_COVERFLOW_COUNT: RIPFLOW hiện bao nhiêu ảnh bìa ở mỗi bên ảnh bìa đang chọn.
+  HINT_COVERFLOW_SCALE: RIPFLOW vẽ ảnh bìa đang chọn to cỡ nào so với các ảnh khác.
+  HINT_COVERFLOW_ANIM: Ảnh bìa trượt nhanh cỡ nào khi bạn di chuyển dọc dòng chảy.
+  HINT_NARGS_QB: 'Quick Boot: bỏ qua màn hình khởi động riêng của Neutrino. Bật ở đây thì nó được gửi cho mọi trò chơi; tắt thì RIPPS2 vẫn tự gửi cho trò chơi USB, iLink và mạng, nơi nó cần thiết.'
+  HINT_NARGS_DBC: 'Màu gỡ lỗi: Neutrino tô màn hình một màu ở mỗi bước nạp, nên một tấm ảnh chụp cho biết trò chơi dừng ở đâu.'
+  HINT_NARGS_LOGO: Hiện logo PS2 trước trò chơi (một lần khởi động lại IOP thứ hai, một số ổ iLink cần). Tắt ở đây thì RIPPS2 theo Chạy trò chơi > Logo PS2, và không bao giờ gửi nó cho trò chơi MMCE hay mạng.
+  HINT_NARGS_CWD: 'Thư mục mà trò chơi coi là của nó. Để trống: mặc định của Neutrino.'
+  HINT_NARGS_CFG: 'Tệp cấu hình Neutrino của riêng bạn (-cfg). Để trống: của Neutrino.'
+  HINT_NARGS_ELF: 'Chạy ELF này thay cho tệp khởi động mà đĩa chỉ định. Để trống: của chính trò chơi.'
+  HINT_NARGS_ATA0: Ảnh HDD mà Neutrino gắn làm HDD trong của máy, cho trò chơi dùng HDD (-ata0).
+  HINT_NARGS_ATA0ID: Tệp ID đi kèm ảnh HDD đó (-ata0id).
+  HINT_NARGS_ATA1: Ảnh HDD thứ hai (-ata1).
+  PS1_SAVE_GUIDANCE: Bản lưu PS1 phụ thuộc vào Ember hoặc POPSTARTER; cài đặt VMC của PS2 không áp dụng.
+  NEUTRINO_SHOW_ARGS: Hiện tham số chạy
+  HINT_NEUTRINO_SHOW_ARGS: Trước mỗi lần chạy qua Neutrino, hiện mọi tham số Neutrino sẽ nhận và hỏi có tiếp tục không. Quay lại sẽ về menu mà không chạy.
+  NEUTRINO_ARGS_CONFIRM: Neutrino sẽ chạy với các tham số này. Chạy?
+  HINT_NARGS_EXTRA: Các cờ Neutrino khác, cách nhau bằng dấu cách, gửi sau mọi thứ ở trên. RIPPS2 luôn thêm -bsd và -dvd cho ổ và ISO của trò chơi, -mc0 và -mc1 cho VMC, -gsm cho chế độ video, và các chế độ tương thích riêng của trò chơi. Cờ có dòng riêng ở trên (như -logo) sẽ chuyển vào dòng đó khi lưu, và vẫn được gửi.
+  GAME_TYPE_LABELS: Hiện nhãn [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: Không lưu được danh sách mã gian lận vào thư mục Neutrino, nên Neutrino không dùng được. Chạy không có mã gian lận?
+  AUTO_CREATE_VMC: Tạo VMC ở lần chạy đầu
+  HINT_AUTO_CREATE_VMC: Chạy một trò chơi PS2 chưa có VMC ở khe 1 sẽ tạo thẻ 8 MB trên thiết bị của trò chơi, đặt tên theo gợi ý của màn hình VMC (mọi đĩa của trò chơi dùng chung), rồi gán nó. Không áp dụng cho HDD trong khi dùng Neutrino.
+  AUTO_VMC_CREATING: Đang tạo VMC của trò chơi này...
+  AUTO_VMC_FAILED: Không tạo được VMC của trò chơi này. Trò chơi chạy mà không có VMC.
+  SAVE_ICONS: Biểu tượng bản lưu 3D
+  HINT_SAVE_ICONS: Hiện biểu tượng bản lưu của trò chơi đang chọn, xoay tròn, ở chỗ chủ đề dành cho nó. Đọc VMC riêng của trò chơi trước, rồi tới thẻ nhớ.
+  NETBOOT_RESTART_NOW: Giao thức mạng sẽ đổi sau khi khởi động lại. Lưu cài đặt và khởi động lại OPL ngay?
+  HINT_NET_PROTOCOL: 'Dịch vụ mạng mà RiptOPL dùng: thư mục chia sẻ SMB, UDPFS, UDPBD hoặc HTTP. Cùng cài đặt với ở Nguồn trò chơi. Đổi khỏi dịch vụ đang chạy cần khởi động lại.'
+  HINT_UDPFS_ACCESS: Chỉ UDPFS. Tệp đọc từng ISO rời từ thư mục trò chơi của máy chủ; IMG đọc một ảnh đĩa như một ổ. SMB và HTTP luôn dùng Tệp, UDPBD luôn dùng IMG.
+  HINT_SMB_VERSION: Phiên bản SMB dùng để nói chuyện với thư mục chia sẻ trên PC.
+  HINT_NET_ADVANCED: Mở khóa Chế độ liên kết Ethernet và Cổng SMB để sửa.
+  HINT_ETH_LINK_MODE: Ép tốc độ và chế độ song công của liên kết mạng. Hãy để Tự động trừ khi liên kết hay rớt.
+  HINT_IP_ADDR_TYPE: Tĩnh dùng địa chỉ bên dưới; DHCP hỏi bộ định tuyến của bạn. UDPFS và UDPBD luôn dùng Tĩnh.
+  HINT_PS2_IP: Địa chỉ IP riêng của PS2. Hãy chọn một địa chỉ không thiết bị nào khác dùng, cùng dải với PC của bạn.
+  HINT_NETMASK: Mặt nạ mạng con, thường là 255.255.255.0.
+  HINT_GATEWAY: Địa chỉ bộ định tuyến của bạn, thường cùng ba số đầu và kết thúc bằng .1.
+  HINT_DNS: Địa chỉ máy chủ DNS. Thường giống cổng mạng.
+  HINT_SMB_ADDR_TYPE: Kết nối PC qua địa chỉ IP hay qua tên NetBIOS (tên máy tính).
+  HINT_SMB_ADDRESS: 'PC chia sẻ trò chơi của bạn: địa chỉ IP của nó, hoặc tên máy tính khi Kiểu địa chỉ là NetBIOS.'
+  HINT_SMB_PORT: 'Cổng SMB. Phải khớp với PC: PS2 Servers dùng 1111, thư mục chia sẻ Windows và Samba dùng 445.'
+  HINT_SMB_USER: Tên người dùng SMB. guest dùng được cho hầu hết thư mục chia sẻ.
+  HINT_HTTP_SERVER: Địa chỉ IP của máy chủ trò chơi HTTP.
+  HINT_HTTP_PORT: Cổng mà máy chủ trò chơi HTTP lắng nghe.
+  HINT_HTTP_BASE: Thư mục trên máy chủ HTTP chứa games.csv. / là gốc của máy chủ.
+  HINT_HTTP_TEST: Thử máy chủ HTTP với các giá trị ở trên và báo kết quả.
+  HINT_RA_TELEMETRY: Công tắc chính của RetroAchievements. Tắt thì trò chơi chạy không có ngăn xếp mạng hay ảnh chụp trạng thái, giống bản dựng thường.
+  HINT_RA_BADGES: Đánh dấu các trò chơi có thành tích trong danh sách. Vẫn tối khi đo đạc đang tắt.
+  HINT_POPS_NET_BUTTON: Sửa các tệp mạng riêng của POPSTARTER (IPCONFIG.DAT, SMBCONFIG.DAT), thứ trò chơi PS1 qua SMB cần.
+  HINT_POPS_IP_TYPE: 'Cách PS2 lấy địa chỉ khi trò chơi PS1 chạy qua SMB: Tĩnh hoặc DHCP.'
+  HINT_POPS_IP: Địa chỉ IP của PS2 khi trò chơi PS1 chạy qua SMB.
+  HINT_POPS_SMB_IP: Địa chỉ IP của PC chia sẻ trò chơi PS1 của bạn.
+  HINT_POPS_SMB_SHARE: Tên thư mục chia sẻ trên PC đó chứa thư mục POPS.
+  HINT_LASTPLAYED: Bắt đầu ở trò chơi bạn chạy lần trước.
+  HINT_LANGUAGE: Ngôn ngữ menu. Thêm ngôn ngữ bằng cách đặt tệp lang_*.lng vào thư mục LNG.
+  HINT_GSM_DEFAULTS_BUTTON: Các bản sửa chế độ video mọi trò chơi đều nhận, trừ khi nó có cài đặt GSM riêng.
+  HINT_DEFDEVICE: Trang RiptOPL mở khi khởi động.
+  HINT_MMCE_MODE: Trò chơi trên SD2PSX hoặc MemCard PRO2. Tự động khởi động khi bật máy, Thủ công khi bạn mở trang, Tắt thì ẩn nó.
+  HINT_MMCE_SETTINGS_BUTTON: Khe, IGR bootcard, GameID và tùy chọn định thời cho MMCE.
+  HINT_ENABLE_USB: Nạp trình điều khiển lưu trữ USB.
+  HINT_ENABLE_MX4SIO: Nạp trình điều khiển bộ chuyển thẻ SD MX4SIO.
+  HINT_ENABLE_ILINK: Nạp trình điều khiển lưu trữ iLink (FireWire).
+  HINT_NETSTART: 'Khởi động mạng: Tự động khi bật máy, Thủ công khi bạn mở trang của nó. Tắt thì không động đến bộ chuyển mạng.'
+  HINT_APPMODE: Trang Ứng dụng. Tự động khởi động khi bật máy, Thủ công khi bạn mở nó, Tắt thì ẩn nó.
+  HINT_FAVMODE: Trang Trò chơi gắn sao. Tự động khởi động khi bật máy, Thủ công khi bạn mở nó, Tắt thì ẩn nó.
+  HINT_BDMA_BUTTON: Trình điều khiển exFAT mà POPSTARTER dùng cho trò chơi PS1 trên USB, MX4SIO, MMCE, HDD hoặc iLink.
+  HINT_VCD_LIST_BUTTON: 'Cách liệt kê trò chơi PS1: ẩn ID trò chơi, chỉ hiện đĩa 1, hiện phân vùng PP của HDD.'
+  HINT_MMCE_SLOT: Thiết bị MMCE cắm ở khe thẻ nhớ nào. Tự động sẽ tìm nó.
+  HINT_MMCE_GAMEID: Báo cho thiết bị MMCE trò chơi nào đang chạy, để nó chuyển sang thẻ nhớ của trò chơi đó.
+  HINT_MMCE_COMM_BUTTON: Tùy chọn định thời cho liên kết MMCE. Chỉ đổi khi trò chơi bị treo hoặc nạp chậm.
+  HINT_MMCE_PATH_BUTTON: Vị trí các thư mục trò chơi trên thẻ MMCE.
+  HINT_MMCE_PREFIX: Thư mục con trên thẻ MMCE chứa CD, DVD và các thư mục OPL khác. Để trống thì dùng gốc của thẻ.
+  HINT_GAME_TYPE_LABELS: Thêm [PS1] hoặc [PS2] trước mỗi tên trò chơi. Chỉ ảnh hưởng hiển thị.
+  HINT_MENU_VMODE: Đầu ra video của menu. Trò chơi dùng GSM thay thế. Giữ Xác nhận để giữ chế độ mới.
+  HINT_THEME: Diện mạo của menu. Chủ đề được đọc từ thư mục THM trên mỗi thiết bị.
+  HINT_COVERFLOW_BUTTON: Số ảnh bìa, kích thước, hoạt ảnh và làm tối cho chủ đề Coverflow.
+  HINT_ARTWORK_BUTTON: 'Những ảnh được nạp: ảnh bìa, ảnh đĩa, ảnh nền và biểu tượng bản lưu.'
+  HINT_COLORS_BUTTON: Màu chữ, tô sáng, hộp thoại và nền.
+  HINT_NOTIFICATIONS: Thông báo ngắn khi nạp tệp cấu hình, chủ đề hoặc ngôn ngữ.
+  HINT_AUTOSORT: Sắp xếp danh sách trò chơi từ A đến Z. Tắt thì giữ thứ tự lúc tìm thấy.
+  HINT_AUTOREFRESH: Thêm trò chơi từ thiết bị mới nối mà không cần làm mới thủ công.
+  HINT_COVERART: Nạp ảnh bìa từ thư mục ART.
+  HINT_DISCART: Hiện ảnh đĩa (<ID>_ICO). Tắt thì ẩn đĩa nhưng giữ ảnh bìa và ảnh nền.
+  HINT_BGART: Hiện ảnh nền của trò chơi (<ID>_BG) khi chủ đề dùng nó.
+  HINT_ART_TAR: Cũng đọc ảnh đóng gói trong ART/art.tar.
+  HINT_ART_DELAY: Con trỏ dừng trên trò chơi bao lâu thì ảnh của nó mới nạp. Càng cao càng bỏ qua ảnh khi bạn cuộn nhanh.
+  HINT_TXTCOLOR: Màu chữ menu thường.
+  HINT_SELCOLOR: Màu của mục được tô sáng.
+  HINT_UICOLOR: Sắc nền của hộp thoại.
+  HINT_TITLECOLOR: Màu tiêu đề trò chơi trong danh sách.
+  HINT_BGCOLOR: Màu nền menu.
+  HINT_PLASCOLOR: Màu pha vào nền chuyển động.
+  HINT_RESETCOLOR: Trả về màu có sẵn của RiptOPL, không phải màu của chủ đề.
+  HINT_WIDESCREEN: Vẽ menu cho TV 16:9.
+  HINT_XOFF: Dời menu sang trái hoặc phải trên màn hình.
+  HINT_YOFF: Dời menu lên hoặc xuống trên màn hình.
+  HINT_MENU_OVERSCAN: Thu menu vào trong nếu TV cắt mất mép.
+  HINT_APPLYGAMEID: Hiện mã vạch khi trò chơi bắt đầu, để thiết bị Pixel FX, RetroGEM và PS2Digital đổi hồ sơ.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Đường dẫn, chế độ video và tham số của Neutrino cho mọi trò chơi.
+  HINT_OSD_DEFAULTS_BUTTON: Ngôn ngữ máy, kích thước màn hình và chế độ video truyền cho trò chơi.
+  HINT_ENWRITEOP: Cho phép đổi tên và xóa trò chơi, và tạo VMC. Không bao giờ động đến bảng phân vùng HDD.
+  HINT_DEBUG: 'Hỗ trợ nhà phát triển: màn hình màu khi trò chơi khởi động, và bộ đếm nạp ảnh trong menu.'
+  HINT_BDMPREFIX: Thư mục con trên ổ USB, MX4SIO, iLink và exFAT chứa các thư mục trò chơi. Để trống thì dùng gốc của ổ.
+  HINT_ETHPREFIX: Thư mục con trên thư mục chia sẻ SMB chứa các thư mục trò chơi. Để trống thì dùng gốc của thư mục chia sẻ.
+  HINT_HDDGAMELISTCACHE: Nhớ danh sách trò chơi của HDD APA để các lần quét sau nhanh hơn.
+  HINT_BDMCACHE: Bộ đệm đọc trước cho USB và các ổ BDM khác khi đang chơi. Lớn hơn có thể giúp truyền mượt hơn nhưng tốn bộ nhớ hơn.
+  HINT_HDDCACHE: Bộ đệm đọc trước cho HDD trong khi đang chơi.
+  HINT_SMBCACHE: Bộ đệm đọc trước cho SMB khi đang chơi.
+  HINT_CORE_LOADER: Lõi cho trò chơi này khi cả hai đều được hỗ trợ. UDPFS/UDPBD chỉ dùng Neutrino; SMB/HTTP chỉ dùng <OPL>. Mặc định theo Chạy trò chơi.
+  HINT_DMA_MODE: Chế độ truyền của HDD trong cho trò chơi này. Hạ xuống nếu trò chơi giật hoặc treo.
+  HINT_DNAS_GAMEID: ID đĩa cho trò chơi trực tuyến DNAS. Nạp từ đĩa sẽ đọc nó từ đĩa gốc.
+  HINT_LOAD_FROM_DISC: Đọc ID DNAS từ đĩa gốc trong ổ.
+  HINT_ALTSTARTUP: Khởi động ELF này từ ảnh đĩa thay cho tệp mà SYSTEM.CNF chỉ định.
+  HINT_VMC_DEFINE: Chọn, tạo hoặc đổi kích thước thẻ nhớ ảo của khe này.
+  HINT_VMC_ACTION: Dùng chung cho khe này một thẻ dùng chung; Đặt lại xóa lựa chọn.
+  HINT_VMC_NAME: Tên tệp thẻ, giữ trong thư mục VMC.
+  HINT_VMC_CREATE: Tạo thẻ, hoặc áp kích thước mới cho nó.
+  HINT_VMC_DELETE: Xóa tệp thẻ này.
+  HINT_SETTINGS_SOURCE: Chung dùng cài đặt dùng chung; Theo trò chơi giữ các cài đặt này chỉ cho trò chơi này.
+  HINT_PADMACRO_TOGGLE: Khi giữ nút chỉ làm chậm cần trong lúc bạn giữ nút; Bật tắt bằng nút thì bật và tắt nó.
+  HINT_SFX: Hiệu ứng âm thanh của menu.
+  HINT_BOOT_SND: Phát một âm thanh khi RiptOPL khởi động.
+  HINT_BGM: Phát nhạc của chủ đề, hoặc tệp Nhạc chủ đề mặc định của bạn.
+  HINT_SFX_VOLUME: Âm lượng hiệu ứng âm thanh của menu.
+  HINT_BOOT_SND_VOLUME: Âm lượng âm thanh khởi động.
+  HINT_BGM_VOLUME: Âm lượng nhạc nền.
+  HINT_SCROLL: Danh sách cuộn nhanh cỡ nào khi bạn giữ một hướng.
+  HINT_SELECTBUTTON: 'Nút nào để xác nhận: Chéo hay Tròn.'
+  HINT_XSENSITIVITY: Cần trái di con trỏ sang trái phải dễ cỡ nào. Tắt thì bỏ qua nó.
+  HINT_YSENSITIVITY: Cần trái di con trỏ lên xuống dễ cỡ nào. Tắt thì bỏ qua nó.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 qua USB hoặc Bluetooth, và multitap, cho mọi trò chơi.
+  HINT_PADMACRO_GLOBAL: Làm chậm cần, đảo trục và bắn liên thanh cho mọi trò chơi.
+  HINT_COVERFLOW_DIM: Làm tối các ảnh bìa hai bên.
+  HINT_OSD_ENABLE: Truyền các cài đặt bên dưới cho trò chơi. Tắt thì dùng cài đặt riêng của máy.
+  HINT_OSD_TVASPECT: Dạng TV truyền cho trò chơi.
+  HINT_OSD_VMODE: Chế độ video truyền cho trò chơi.
+  DNAS_ID: ID DNAS
+  NEUTRINO_PADEMU_WARN: Không dùng được giả lập tay cầm với Neutrino. Hãy dùng tay cầm PS2 hoặc nguồn hỗ trợ lõi <OPL>.
+  RA_MODE: Chế độ RA
+  RA_HOST_IP: IP ứng dụng đồng hành RA (0.0.0.0 = tự động)
+  HINT_RA_HOST_IP: IPv4 tùy chọn của PC riêng cho RetroAchievements. Dùng 0.0.0.0 cho kiểu dự phòng SMB/HTTP cũ hoặc tự tìm Xerabora. Không đổi cài đặt máy chủ trò chơi.
+  HINT_RA_MODE: Chọn ứng dụng PC. Mặc định là Xerabora; Caduceus kiểm tra phiên đăng nhập của nó trước.
+  RA_CADUCEUS_OFFLINE: Phiên RA của Caduceus đang ngoại tuyến.
+  RA_CADUCEUS_SIGN_IN: Hãy đăng nhập RetroAchievements trong Caduceus, rồi thử lại.
+  FAV_SAVING: Đang lưu vào Trò chơi gắn sao...
+  FAV_SAVED: Đã lưu vào Trò chơi gắn sao
+  FAV_SAVE_FAILED: Không lưu được vào Trò chơi gắn sao
+  CAD_ACHIEVEMENTS: Thành tích Caduceus
+  CAD_VIEW_ACHIEVEMENTS: Xem thành tích
+  CAD_USE_LIBRARY: Hãy duyệt trò chơi này qua Thành tích Caduceus ở menu chính.
+  CAD_HASH_UNSUPPORTED: Định dạng này không tính được mã băm. Hãy duyệt thư viện tài khoản thay thế.
+  CAD_HEADING: THÀNH TÍCH
+  CAD_LIBRARY: Thư viện tài khoản RetroAchievements
+  CAD_FILTER_ALL: Tất cả
+  CAD_EARNED: Đã đạt
+  CAD_LOCKED: Đang khóa
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: Đã đạt %d / %d  |  %s
+  CAD_ONE_GAME: '%d trò chơi trong tài khoản'
+  CAD_GAMES: '%d trò chơi trong tài khoản'
+  CAD_GAME_PROGRESS: '%d / %d thành tích  |  %d hardcore'
+  CAD_POINTS: '%d điểm  |  %s'
+  CAD_EMPTY_LIBRARY: Tài khoản này không có trò chơi nào có tiến độ.
+  CAD_EMPTY_FILTER: Không có thành tích nào khớp bộ lọc này.
+  CAD_LOADING: Đang nạp thành tích...
+  CAD_PAIR: Hãy đăng nhập Caduceus và ghép cặp ART/CADUCEUS.KEY trên thư mục chia sẻ SMB của bạn.
+  CAD_UNKNOWN_GAME: Trò chơi này không có trong danh mục của Caduceus. Hãy làm mới danh mục trên PC.
+  CAD_CONNECTION_ERROR: Không truy vấn được Caduceus. Hãy kiểm tra kết nối, rồi nhấn Select để thử lại.
+  CAD_BACK_REFRESH: Quay lại để về OPL. Select làm mới trang này.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: trang   Xác nhận: mở   Select: làm mới'
+  CAD_GAME_CONTROLS: 'L1/R1: trang   Vuông: lọc   Select: làm mới'
+  CAD_BACK: Quay lại
+  CAD_UNTRACKED: Caduceus chưa sẵn sàng. Lần này chạy không có thành tích.
+  PS1_RA_USB_REQUIRED: Thành tích PS1 cần VCD trên USB chạy qua POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Không gỡ được mô-đun thành tích PS1 trước đó
+  PS1_RA_PREPARE_FAILED: Không chuẩn bị được thành tích PS1. Hãy giữ hoặc dời POPS/MODULE_9.IRX và kiểm tra quyền ghi của thiết bị.
+  PS1_RA_CLEAN_DELETE: 'Mô-đun RA của RiptOPL không dùng tới: POPS/MODULE_9.IRX. Xóa để chạy sạch?'
+  PS1_RA_CLEAN_FAILED: Không xóa được mô-đun RA không dùng tới.
+  PS1_RA_CLEAN_CONTINUE: Vẫn tiếp tục? Mô-đun RA còn sót có thể chạy đo đạc cũ. Không sẽ hủy việc chạy.
+  FAV_REMOVED: Đã gỡ khỏi Trò chơi gắn sao
+  FAV_REMOVE_FAILED: Không gỡ được khỏi Trò chơi gắn sao
+  POPS_UDPFS_SETTINGS: Cài đặt mạng POPS UDPFS
+  POPS_UDPFS_DISCOVERY: Lưu vào mọi thư mục POPS trên USB. Máy chủ 0.0.0.0 dùng tự tìm.
+  POPS_UDPFS_NOT_READY: POPS UDPFS cần IPCONFIG.DAT và UDPFSCONFIG.DAT hợp lệ, khớp nhau trong mọi thư mục POPS trên USB. Hãy đặt chúng trong Cài đặt mạng POPS.
+  HINT_POPS_UDPFS_IP: IP tĩnh của PS2 mà trình điều khiển POPS UDPFS dùng sau khi đặt lại IOP.
+  POPS_UDPFS_ALL_USB_FOLDERS: Mọi thư mục POPS trên USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (không hợp lệ)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (chưa đủ)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS cần cặp trình điều khiển .udpfs được cài trên thẻ nhớ. Hãy cài thủ công hoặc bật BDMA Áp dụng khi chạy.
+  VMC_REPLACE_REQUIRES_DELETE: Đổi kích thước VMC sẽ xóa các bản lưu trong đó. Hãy sao lưu VMC có sẵn và dùng Xóa trước khi tạo kích thước mới.
+  VMC_CREATE_FAILED: Không tạo được VMC. Hãy kiểm tra thiết bị, kết nối và quyền ghi. Bản lưu có sẵn không bị thay.
+  RA_EXPERIMENTAL_CARDS: Thẻ thử nghiệm Caduceus
+  HINT_RA_EXPERIMENTAL_CARDS: Thẻ thành tích thử nghiệm bên trong trò chơi PS2. Có thể nhấp nháy hoặc làm treo trò chơi. Chỉ Caduceus; Tắt thì dùng nhịp vàng. Có hiệu lực từ lần chạy trò chơi tiếp theo.
+  RA_NEUTRINO_UNTRACKED: Lần chạy này không dùng được Neutrino RA. Hãy kiểm tra phần chạy RA, IP đồng hành và danh sách theo dõi đã lưu. Chạy không có thành tích.
+  UDPFS_IP_CONFLICT: Một thiết bị khác trong mạng đang dùng địa chỉ IP của PS2 này, nên phản hồi của máy chủ UDPFS đi tới nó. Hãy đặt IP khác cho PS2 trong Cài đặt mạng.
+  XERA_ACHIEVEMENTS: Thư viện RetroAchievements (xeRAbora)
+  XERA_USE_LIBRARY: Hãy duyệt trò chơi này qua thư viện RetroAchievements ở menu chính.
+  XERA_OPEN_NETWORK: Không kết nối được xeRAbora. Hãy bật OPEN TO THE NETWORK trong cài đặt của nó, kiểm tra IP đồng hành RA và tường lửa PC.
+  XERA_UNKNOWN_GAME: xeRAbora không biết ảnh đĩa này. Hãy chạy kiểm tra hỗ trợ trò chơi RA trước.
+  XERA_NOT_PLAYED: Chưa có trong thư viện RetroAchievements của bạn. Hãy chơi một lần có thành tích, rồi nhấn Select.
+  XERA_CONNECTION_ERROR: Không đọc được danh sách từ xeRAbora. Nhấn Select để thử lại.
+  CAD_PAIR_UDPFS: Không kết nối được Caduceus. Hãy ghép cặp ART/CADUCEUS.KEY trong thư mục PS2-Servers chia sẻ, và đặt IP đồng hành RA.
+  RA_WL_NOT_SAVED: Không lưu được danh sách theo dõi. Hãy chắc thiết bị hoặc thư mục chia sẻ của trò chơi ghi được, rồi kiểm tra lại.
+  RA_UDPFS_LOAD_FIRST: Hãy mở trang UDPFS một lần để nạp mô-đun mạng của nó, rồi thử lại.
+  CAD_UDPFS_IMG: 'Trình duyệt Caduceus cần SMB hoặc UDPFS Tệp: UDPFS IMG không có thư mục chia sẻ để chứa khóa của nó.'
+  XERA_SET_CLOCK: Chưa có trong thư viện RetroAchievements của bạn. Hãy đặt đồng hồ máy trong cài đặt hệ thống để xem đủ danh sách, hoặc chơi một lần có thành tích.
+  CFG_TITLES: Hiện tiêu đề CFG trong danh sách trò chơi
+  HINT_CFG_TITLES: Hiện Tiêu đề trong CFG của mỗi trò chơi thay cho tên tệp, và sắp xếp theo nó. Đọc mọi CFG khi làm mới danh sách, nên danh sách nạp chậm hơn. Chỉ ảnh hưởng hiển thị.
+  AUTO_VMC_INVALID: Tệp VMC của trò chơi này có tồn tại nhưng không phải thẻ nhớ hợp lệ, nên không được dùng hay thay. Trò chơi chạy không có VMC; hãy kiểm tra nó trong menu VMC.
+  AUTO_VMC_STILL_RUNNING: VMC của trò chơi này vẫn đang được tạo. Hãy chạy lại trò chơi sau giây lát.
+  NEUTRINO_DVR_QUICKBOOT: Chạy DVR cần chuyển sang chế độ PSX. Hãy bỏ -qb khỏi tham số Neutrino chung và theo trò chơi.
+  NEUTRINO_DVR_FILE_MISSING: 'Bản cài Neutrino cho DVR chưa đủ. Thiếu tệp cần thiết:'
+  LOGOART: Ảnh logo
+  HINT_LOGOART: Hiện logo của trò chơi (<ID>_LGO) khi chủ đề dùng nó. Tắt cũng ẩn hình mặc định của nó, nhưng giữ ảnh bìa, ảnh đĩa và ảnh nền.
+  PARENLOCK_GAME: Khóa phụ huynh
+  PARENLOCK_GAME_HINT: Yêu cầu mật khẩu khóa phụ huynh để chạy trò chơi này.
+  PARENLOCK_GAME_NO_PASSWORD: Hãy đặt mật khẩu khóa phụ huynh, nếu không trò chơi này sẽ không bị khóa.
+  HINT_ENABLE_PCCF: CompactFlash qua PC CARD của PS2 Nhật đời đầu. Chỉ trò chơi PS2 gốc; CF cần độc quyền truy cập PC CARD. Khởi động lại để nhả nó.
+  PCCF_GAMES: Trò chơi PC CARD CF
+  PCCF_UNAVAILABLE: 'Không dùng được CF: cần PS2 Nhật đời đầu có PC CARD, thẻ tương thích, và không có trình điều khiển DEV9/HDD/mạng nào đang chạy.'
+  PCCF_UNSUPPORTED_GAME: Hiện CF chỉ hỗ trợ trò chơi PS2 gốc. VMC trên CF, nạp PS1 và thành tích qua mạng không dùng được.
+  HINT_ENABLE_DVR: Tìm ISO DESR DVR thử nghiệm. Cần bật nguồn HDD; chạy trò chơi cần Neutrino bên ngoài có hỗ trợ DVR.

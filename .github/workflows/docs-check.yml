@@ -5,6 +5,10 @@ on:
     branches: [rebuild/main]
     paths:
       - '**/*.md'
+      - 'lng_fork/*.yml'
+      - 'lng_tmpl/_base.yml'
+      - 'tools/audit_translations.py'
+      - 'Makefile'
       - '.github/scripts/*docs*'
       - '.github/scripts/*site_sync*'
       - '.github/scripts/*wiki_sync*'
@@ -14,6 +18,10 @@ on:
     branches: [rebuild/main]
     paths:
       - '**/*.md'
+      - 'lng_fork/*.yml'
+      - 'lng_tmpl/_base.yml'
+      - 'tools/audit_translations.py'
+      - 'Makefile'
       - '.github/scripts/*docs*'
       - '.github/scripts/*site_sync*'
       - '.github/scripts/*wiki_sync*'
@@ -35,6 +43,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r .github/requirements-docs.txt
+      - run: python tools/audit_translations.py --strict
       - run: python .github/scripts/check_docs.py
       - run: python .github/scripts/test_site_sync.py
       - run: python .github/scripts/test_wiki_sync.py

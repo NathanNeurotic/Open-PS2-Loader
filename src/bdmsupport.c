@@ -2375,7 +2375,7 @@ fail:
 // Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
 static int bdmMcemuSlots[2] = {-2, -2};
 
-static int bdmCheckNativeVmcLayout(int iop_fd, int size_mb, u64 *start_lba, int *fragments)
+int bdmCheckNativeVmcLayout(int iop_fd, int size_mb, u64 *start_lba, int *fragments)
 {
     *start_lba = (u64)-1;
     *fragments = -1;

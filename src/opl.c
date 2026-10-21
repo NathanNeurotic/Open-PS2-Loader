@@ -3317,7 +3317,10 @@ static void _loadConfig()
 {
     int value, themeID = -1, langID = -1;
     const char *temp;
-    resolveBootDirToMass(); // usb0:/ata0:/mx4sio0:/APPS -> mass0:/APPS (boot-device massN:) before the first read
+    // Resolve boot aliases (usb0:/, ata0:/, mx4sio0:/) to massN: before reading settings.
+    resolveBootDirToMass();
+    // Discover the resolved CWD before restoring the saved language.
+    lngRefreshBootLanguages(-1);
     int result = configReadMulti(lscstatus);
 
     if (lscstatus & CONFIG_OPL) {

@@ -130,6 +130,7 @@ enum INTERNAL_TEXTURE {
     PLAYERS_2,
     PLAYERS_3,
     PLAYERS_4,
+    PSBBN_BACKGROUND, // <PSBBN Flow> nebula stage (theme override "psbbn_bg")
 #ifdef RETROACHIEVEMENTS
     // RA mark over a tracked game's cover (theme override "ra_mark"). Appended last:
     // texId is positional.

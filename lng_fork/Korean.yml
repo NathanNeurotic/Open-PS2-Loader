@@ -317,3 +317,330 @@ translations:
   HINT_EMBER_DISPLAY: Ember가 PS1 게임에 사용하는 출력 모드입니다. 240p 또는 480p는 실행한 장치의 EMBER 폴더에 있는 settings.txt에 기록됩니다. 기본값은 그 설정을 다시 제거하며, 다른 내용이 없으면 파일도 함께 삭제합니다.
   LOGOART: "게임 로고"
   HINT_LOGOART: "테마에서 사용하는 게임 로고 (<ID>_LGO)를 표시합니다. 끄면 기본 이미지도 숨겨지며 커버, 디스크 아트, 배경에는 영향을 주지 않습니다."
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  IP_ADDRESS_TYPE_STATIC: 고정
+  HINT_NEUTRINO_AUTO_ELF: 게임의 부트 ELF를 Neutrino에 넘겨 타이틀별 설정을 찾게 합니다. 기본으로 켜져 있으며, 직접 설정한 Boot ELF 옵션이 우선합니다.
+  HINT_POPSTARTER_PATH: 'POPSTARTER.ELF가 있는 곳. 비워 두면 RIPPS2가 드라이브에서 찾은 것을 채웁니다. 다른 것을 쓰려면 덮어쓰세요 (예: usb:/POPS/POPSTARTER.ELF)'
+  NEUTRINO_ARGS_TOO_LONG: Neutrino 인수가 저장할 수 있는 길이를 넘습니다. 저장하기 전에 칸 하나를 줄이세요.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Neutrino 실행 인수가 안전한 한도를 넘습니다. 전역 인수나 게임 인수를 줄이세요.
+  NEUTRINO_AUTO_ELF: Boot ELF 자동 (-elf)
+  HINT_NEUTRINO_PATH: 'neutrino.elf는 어디에 있나요? <설정 안 됨> = 게임 장치 -> mc0/mc1. 직접 지정한 전체 경로를 먼저 시도합니다. 예: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: PS2/PS1 게임 표시
+  HINT_GAME_VIEW_MODE: 전체는 PS2와 PS1 게임을 함께 나열하고 L3로 전체, PS1, PS2를 전환합니다. PS2나 PS1은 그 종류만 보여 주고 L3를 끕니다. APPS와 즐겨찾기 게임은 자체 표시 규칙을 씁니다.
+  VIEW_MIXED: PS2 + PS1 게임 표시 중
+  VIEW_PS1_ELF: PS1 ELF 앱 표시 중
+  APPS_DISPLAY: 응용 프로그램 표시
+  HINT_APPS_DISPLAY: 전체는 모든 ELF를 하나의 APPS 목록에 보여 주고 L3를 끕니다. 앱 / PS1ELF는 [PS1]이 들어간 타이틀을 L3의 두 번째 페이지로 나눕니다. 실행 방식은 바뀌지 않습니다.
+  VIEW: 보기
+  VIEW_PS2: 즐겨찾기 PS2 게임 표시 중
+  VIEW_PS1: 즐겨찾기 PS1 게임 표시 중
+  VIEW_ELF: 즐겨찾기 ELF 표시 중
+  VIEW_ALL: 모든 즐겨찾기 게임 표시 중
+  VMC_FRAGMENTED_ON_CREATE: VMC를 만들었지만 조각나 있습니다. 메모리 카드 에뮬레이션에는 끊김 없는 파일 하나가 필요하므로, 실행할 때 이 VMC는 건너뛰고 실제 카드를 씁니다. 공간을 비운 뒤 다시 만들거나 다른 장치에서 복사해 오세요.
+  KEYB_MOVE_CURSOR: 커서 이동
+  TITLECOLOR: 게임 제목 색
+  RA_CHECK_GAME: RetroAchievements 지원 확인
+  RA_TEST_LINK: RetroAchievements PC 연결 테스트
+  RA_CHECKING_IMAGE: 이미지를 확인하는 중입니다. 몇 초 걸립니다...
+  RA_CHECK_RUNNING: 이미지 확인이 이미 실행 중입니다
+  RA_LOOKING_FOR_PC: PC 클라이언트를 찾는 중...
+  RA_UL_UNSUPPORTED: UL/USBExtreme 게임은 아직 확인할 수 없습니다
+  RA_UL_UNSUPPORTED2: DVD/ 또는 CD/에 있는 일반 .iso 이미지만 지원합니다
+  RA_UNKNOWN_IMAGE: RetroAchievements가 이 이미지를 모릅니다
+  RA_STILL_IDENTIFYING: PC가 아직 이미지를 식별하는 중입니다
+  RA_TRY_AGAIN: 몇 초 뒤에 다시 시도하세요
+  RA_NO_SOCKET: 본체가 네트워크 소켓을 열 수 없었습니다
+  RA_NO_SOCKET2: 본체를 재시작하거나 설정에서 ETH 장치를 확인하세요
+  RA_TEST_NO_SOCKET2: 케이블과 설정의 ETH를 확인하세요. 네트워크가 작동한다면 본체를 재부팅하세요
+  RA_PC_NO_ANSWER: PC 클라이언트가 응답하지 않았습니다
+  RA_PC_NO_ANSWER2: xeRAbora가 실행 중인지 확인하거나 PC 연결 테스트를 해 보세요
+  RA_SUPPORTED: RetroAchievements 지원
+  RA_START_TO_TRACK: 업적을 추적하려면 게임을 시작하세요
+  RA_ACHIEVEMENTS: 업적 %d개
+  RA_ACHIEVEMENTS_FULL: 업적 %d개 -- 해제 %d개, 미지원 %d개
+  RA_HASH_FAILED: 이미지의 해시를 계산할 수 없었습니다
+  RA_HASH_FAILED2: 이유는 게임 옆의 RA/hashes.txt를 보세요
+  RA_NET_BUSY: 네트워크가 UDP 전송에 사용되고 있습니다
+  RA_NET_BUSY2: RA에는 SMB 스택이 필요합니다 -- 프로토콜을 바꾸거나 PC에서 .wl을 만드세요
+  RA_NET_BUSY_HASH: 해시는 RA/hashes.txt에 있습니다 -- xeRAbora가 이것으로 .wl을 만들 수 있습니다
+  RA_NO_IP: 본체에 IP 주소가 없습니다
+  RA_NO_IP2: 네트워크 설정에서 DHCP나 고정 주소를 확인하세요
+  RA_TEST_NO_ANSWER: 3초 안에 응답한 PC 클라이언트가 없습니다
+  RA_TEST_NO_ANSWER2: 본체%s. xeRAbora가 실행 중이고 UDP 18194가 열려 있는지 확인하세요
+  RA_TEST_FOUND: PC 클라이언트를 찾았습니다%s%s %s
+  RA_TEST_FOUND2: '%u ms 안에 응답, 본체%s'
+  RA_NA_NEUTRINO: RA 추적에는 <OPL> 코어가 필요합니다 -- Neutrino로 실행하면 ee_core를 불러오지 않습니다
+  RA_NA_UDPFS: UDPFS에서는 RA 추적을 쓸 수 없습니다 -- 게임이 Neutrino로 실행됩니다
+  RA_NA_PS1: PS1 게임에서는 RA 추적을 쓸 수 없습니다
+  RA_NA_HDD: APA 게임 정보나 HDD 설정 위치를 쓸 수 없습니다
+  RA_NA_HDD2: 올바른 HDD 설정 위치를 정하고 새로 고친 뒤 지원을 확인하세요
+  RA_TELEMETRY: RetroAchievements 텔레메트리
+  RA_BADGES: RetroAchievements 배지
+  HTTP_GAMES: HTTP 게임
+  HTTP_SERVER: HTTP 서버
+  HTTP_PORT: HTTP 포트
+  HTTP_BASE_PATH: HTTP 기본 경로
+  HTTP_TEST: HTTP 서버 테스트
+  HTTP_TEST_OK: 서버 정상 -- 게임 목록을 가져왔습니다
+  HTTP_TEST_EMPTY: 카탈로그가 비어 있습니다 -- 유효하지만 바이트 범위에 대해서는 아무것도 확인하지 못합니다
+  HTTP_TEST_NO_ISO: 카탈로그에 바이트 범위를 테스트할 지원 이미지가 없습니다
+  HTTP_ERR_CONNECT: HTTP 서버에 연결할 수 없습니다
+  HTTP_ERR_CATALOG: games.csv가 없거나, 읽을 수 없거나, 너무 큽니다
+  HTTP_ERR_RANGE: 서버가 요청한 바이트를 정확히 돌려주지 않았습니다
+  HTTP_LAUNCH_UNAVAILABLE: HTTP 실행은 아직 구현되지 않았습니다 -- 카탈로그는 둘러보기만 할 수 있습니다
+  HTTP_ERR_COMPRESSED: 압축 이미지(.zso)는 아직 HTTP에서 지원하지 않습니다
+  HTTP_NO_VMC: HTTP에서는 가상 메모리 카드를 쓸 수 없습니다 -- 실제 카드를 쓰세요
+  HTTP_TAB_HINT: HTTP는 서버에서 games.csv를 읽습니다. 네트워크 설정에서 주소, 포트, 기본 경로를 정한 뒤 테스트를 쓰세요.
+  RA_DISC_CHECK: 'RA: 디스크 지원 확인'
+  RA_DISC_LAUNCH: 'RA: 디스크 실행'
+  RA_DISC_CHECKING: RetroAchievements용으로 디스크를 확인하는 중
+  RA_DISC_HASH_FAILED: 디스크의 해시를 계산할 수 없었습니다 -- 설정 폴더의 RA/hashes.txt를 확인하세요
+  RA_DISC_HOME_ERROR: 이 설정 경로는 디스크 추적 목록에 쓸 수 없습니다
+  RA_DISC_ENABLE: 먼저 네트워크 설정에서 RetroAchievements 텔레메트리를 켜세요
+  RA_DISC_CHECK_FIRST: '이 디스크의 추적 목록이 없습니다 -- 먼저 RA: 디스크 지원 확인을 쓰세요'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: HDD를 찾았지만 APA 파티션 테이블을 읽을 수 없습니다. 포맷하지 마세요 -- 게임을 되살릴 수 있을지도 모릅니다.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: 섹터가 512바이트가 아닌 드라이브(예: 4K 섹터 드라이브)는 마운트하지 않았습니다. OPL은 512바이트 섹터만 읽을 수 있습니다.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: 이 타이틀은 그 자체가 APA 파티션이고, OPL은 파티션 테이블을 편집하지 않습니다. PC에서 이름을 바꾸세요.
+  POPS_SETTINGS_UNREADABLE: POPSTARTER의 설정을 읽을 수 없었습니다 -- 메모리 카드가 사용 중이거나 읽을 수 없습니다. 불러오기가 끝나면 다시 시도하세요.
+  GLOBAL_PS_EMULATION_SETTINGS: 전역 PS 에뮬레이션 설정
+  RA_NO_LINK_UNTRACKED: 네트워크를 쓸 수 없습니다 -- 이번에는 RetroAchievements 없이 실행합니다.
+  IGR_USB_DRIVERS_PROMPT: IGR 경로가 USB에 있지만 %s에 USBD.IRX와 USBHDFSD.IRX가 없습니다. 본체는 게임 내 리셋 뒤에 USB에 접근하려면 이것들이 필요합니다. 없으면 IGR이 PS2 브라우저로 떨어집니다. 지금 RiptOPL의 드라이버를 그곳에 복사할까요? FMCB, OpenTuna 같은 익스플로잇도 이 파일을 불러오며 동작이 달라질 수 있습니다. 기존 파일은 절대 교체하지 않습니다. FAT32 USB만 해당됩니다.
+  IGR_USB_DRIVERS_FAILED: USB 드라이버를 %s에 복사할 수 없었습니다 (카드가 가득 찼거나 쓸 수 없음). IGR은 PS2 브라우저로 떨어집니다.
+  OFFICIAL_CFG_NOTIFICATION: '%s에서 공식 OPL 설정을 불러왔습니다'
+  CFM_VMODE_HOLD_KEEP: 누르고 있으면 유지
+  BDM_PS2_FOLDERS_UNREADABLE: '%s의 CD 또는 DVD 폴더를 열 수 없어서(오류 %d) 그 장치에는 PS2 게임이 나열되지 않습니다. 그 페이지에서 SELECT를 눌러 다시 시도하세요.'
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Neutrino 파일 시스템이 bd로 설정되어 있지만 이 장치가 장치 번호를 알리지 않아 Neutrino가 가리킬 수 없습니다. 이 게임의 Neutrino 파일 시스템을 Auto나 exfat로 바꾸세요.
+  CFM_VMODE_REVERT_IN: '%d초 후 되돌림'
+  EMBER_DITHER: Ember 디더링
+  HINT_EMBER_DITHER: Ember 디더링(켜기 또는 끄기). 실행하는 장치의 EMBER/settings.txt에 씁니다. 게임별 값이 이것보다 우선합니다.
+  EMBER_SHADING: Ember 셰이딩
+  HINT_EMBER_SHADING: 'Ember 색 깊이: 15비트 또는 24비트(실험적). 실행하는 장치의 EMBER/settings.txt에 씁니다. 게임별 값이 이것보다 우선합니다.'
+  EMBER_CONTROLLER: Ember 컨트롤러
+  HINT_EMBER_CONTROLLER: 'Ember 컨트롤러 모드: 자동, 아날로그, D2A. 보통은 게임별로 정하는 것이 가장 좋으며(세모 > Ember 게임 설정) 그쪽이 우선합니다.'
+  EMBER_480P_CONFIRM: Ember의 480p는 컴포지트로는 화면이 나오지 않습니다. 480p를 쓸까요?
+  EMBER_SHADING_24: 24비트 (실험적)
+  EMBER_GAME_SETTINGS: Ember 게임 설정
+  HINT_EMBER_GAME_SETTING: 이 게임만. OK를 누르면 실행 전에 EMBER/games/<이름>/settings.txt에 씁니다. 건드리지 않은 기본값은 파일의 기존 값을 유지하고, 값을 기본값으로 되돌리면 그 덮어쓰기를 없앱니다.
+  EMBER_TIMING: Ember 타이밍
+  HINT_EMBER_TIMING: 'Ember 영상 타이밍: 자동은 디스크 지역을 따르고, NTSC는 60 Hz, PAL은 50 Hz로 고정합니다. 실행하는 장치의 EMBER/settings.txt에 씁니다.'
+  EMBER_GLOBAL_WARNING: 이 Ember 설정은 모든 PS1 게임에 적용되며, 일부 게임은 이 설정에서 멈춥니다. 한 게임만 바꾸려면 그 게임에서 세모 > Ember 게임 설정을 쓰세요.
+  HINT_COVERFLOW_COUNT: RIPFLOW가 고른 표지 양쪽에 각각 몇 개의 표지를 보여 줄지.
+  HINT_COVERFLOW_SCALE: RIPFLOW가 고른 표지를 다른 표지보다 얼마나 크게 그릴지.
+  HINT_COVERFLOW_ANIM: 흐름을 따라 움직일 때 표지가 미끄러지는 속도.
+  HINT_NARGS_QB: 'Quick Boot: Neutrino 자체의 시작 화면을 건너뜁니다. 여기서 켜면 모든 게임에 보냅니다. 꺼도 RIPPS2는 필요한 USB, iLink, 네트워크 게임에는 알아서 보냅니다.'
+  HINT_NARGS_DBC: '디버그 색: Neutrino가 불러오기 단계마다 화면을 한 색으로 채우므로, 사진을 찍으면 게임이 어디서 멈추는지 알 수 있습니다.'
+  HINT_NARGS_LOGO: 게임 전에 PS2 로고를 보여 줍니다 (두 번째 IOP 재부팅으로, 일부 iLink 드라이브에 필요). 여기서 끄면 RIPPS2는 게임 실행 > PS2 로고를 따르며, MMCE나 네트워크 게임에는 보내지 않습니다.
+  HINT_NARGS_CWD: 게임이 자기 것으로 여기는 폴더. 비워 두면 Neutrino의 기본값.
+  HINT_NARGS_CFG: 내 Neutrino 설정 파일 (-cfg). 비워 두면 Neutrino의 것.
+  HINT_NARGS_ELF: 디스크가 지정한 부트 파일 대신 이 ELF를 시작합니다. 비워 두면 게임 자체의 것.
+  HINT_NARGS_ATA0: Neutrino가 본체의 내장 HDD로 마운트하는 HDD 이미지. HDD를 쓰는 게임용 (-ata0).
+  HINT_NARGS_ATA0ID: 그 HDD 이미지와 짝을 이루는 ID 파일 (-ata0id).
+  HINT_NARGS_ATA1: 두 번째 HDD 이미지 (-ata1).
+  PS1_SAVE_GUIDANCE: PS1 세이브는 Ember나 POPSTARTER에 따라 다릅니다. PS2 VMC 설정은 적용되지 않습니다.
+  NEUTRINO_SHOW_ARGS: 실행 인수 표시
+  HINT_NEUTRINO_SHOW_ARGS: Neutrino로 실행할 때마다 Neutrino가 받을 모든 인수를 보여 주고 계속할지 묻습니다. 뒤로를 누르면 실행하지 않고 메뉴로 돌아갑니다.
+  NEUTRINO_ARGS_CONFIRM: Neutrino가 이 인수로 시작합니다. 실행할까요?
+  HINT_NARGS_EXTRA: 그 밖의 Neutrino 플래그를 공백으로 구분해 적으며, 위의 모든 것 다음에 보냅니다. RIPPS2는 항상 게임의 드라이브와 ISO에 -bsd와 -dvd, VMC에 -mc0과 -mc1, 영상 모드에 -gsm, 그리고 게임 자체의 호환 모드를 붙입니다. 위에 전용 줄이 있는 플래그(-logo 등)는 저장할 때 그 줄로 옮겨지며, 보내는 것은 그대로입니다.
+  GAME_TYPE_LABELS: '[PS1]/[PS2] 라벨 표시'
+  NEUTRINO_CHEATS_WRITE_FAILED: 치트 목록을 Neutrino 폴더에 저장할 수 없어서 Neutrino가 쓸 수 없습니다. 치트 없이 실행할까요?
+  AUTO_CREATE_VMC: 처음 실행할 때 VMC 만들기
+  HINT_AUTO_CREATE_VMC: 슬롯 1에 VMC가 없는 PS2 게임을 실행하면 게임의 장치에 8 MB 카드를 만들고, VMC 화면이 제안하는 이름(그 게임의 모든 디스크가 공유)을 붙여 할당합니다. Neutrino에서의 내장 HDD에는 해당되지 않습니다.
+  AUTO_VMC_CREATING: 이 게임의 VMC를 만드는 중...
+  AUTO_VMC_FAILED: 이 게임의 VMC를 만들 수 없었습니다. 게임은 VMC 없이 시작합니다.
+  SAVE_ICONS: 3D 세이브 아이콘
+  HINT_SAVE_ICONS: 테마에 자리가 있으면 고른 게임의 세이브 아이콘을 회전시켜 보여 줍니다. 먼저 게임 자체의 VMC를, 다음에 메모리 카드를 읽습니다.
+  NETBOOT_RESTART_NOW: 네트워크 프로토콜은 재시작 후에 바뀝니다. 지금 설정을 저장하고 OPL을 재시작할까요?
+  HINT_NET_PROTOCOL: 'RiptOPL이 쓰는 네트워크 서비스: SMB 공유, UDPFS, UDPBD, HTTP. 게임 소스의 설정과 같습니다. 이미 실행 중인 것에서 바꾸려면 재시작해야 합니다.'
+  HINT_UDPFS_ACCESS: UDPFS 전용. 파일은 서버의 게임 폴더에서 낱개 ISO를 읽고, IMG는 디스크 이미지를 드라이브로 읽습니다. SMB와 HTTP는 항상 파일, UDPBD는 항상 IMG를 씁니다.
+  HINT_SMB_VERSION: PC 공유와 통신할 SMB 버전.
+  HINT_NET_ADVANCED: 이더넷 연결 모드와 SMB 포트를 편집할 수 있게 합니다.
+  HINT_ETH_LINK_MODE: 네트워크 연결 속도와 이중 모드를 고정합니다. 연결이 계속 끊기는 게 아니라면 자동으로 두세요.
+  HINT_IP_ADDR_TYPE: 고정은 아래 주소를 쓰고, DHCP는 공유기에 묻습니다. UDPFS와 UDPBD는 항상 고정을 씁니다.
+  HINT_PS2_IP: PS2 자체의 IP 주소. PC와 같은 범위에서 다른 기기가 쓰지 않는 주소를 고르세요.
+  HINT_NETMASK: 서브넷 마스크, 보통 255.255.255.0.
+  HINT_GATEWAY: 공유기의 주소, 보통 앞의 세 숫자가 같고 .1로 끝납니다.
+  HINT_DNS: DNS 서버 주소. 보통 게이트웨이와 같습니다.
+  HINT_SMB_ADDR_TYPE: PC에 IP 주소로 연결할지, NetBIOS(컴퓨터) 이름으로 연결할지.
+  HINT_SMB_ADDRESS: '게임을 공유하는 PC: 그 IP 주소, 또는 주소 유형이 NetBIOS일 때는 컴퓨터 이름.'
+  HINT_SMB_PORT: 'SMB 포트. PC와 같아야 합니다: PS2 Servers는 1111, Windows와 Samba 공유는 445를 씁니다.'
+  HINT_SMB_USER: SMB 사용자 이름. 대부분의 공유는 guest로 됩니다.
+  HINT_HTTP_SERVER: HTTP 게임 서버의 IP 주소.
+  HINT_HTTP_PORT: HTTP 게임 서버가 듣는 포트.
+  HINT_HTTP_BASE: HTTP 서버에서 games.csv가 있는 폴더. /는 서버의 루트입니다.
+  HINT_HTTP_TEST: 위의 값으로 HTTP 서버를 시험하고 결과를 알려 줍니다.
+  HINT_RA_TELEMETRY: RetroAchievements의 주 스위치. 끄면 네트워크 스택이나 스냅샷 없이 게임을 실행해 일반 빌드와 같습니다.
+  HINT_RA_BADGES: 목록에서 업적이 있는 게임을 표시합니다. 텔레메트리가 꺼져 있는 동안에는 어둡게 남습니다.
+  HINT_POPS_NET_BUTTON: SMB로 PS1 게임을 할 때 필요한 POPSTARTER 자체의 네트워크 파일(IPCONFIG.DAT, SMBCONFIG.DAT)을 편집합니다.
+  HINT_POPS_IP_TYPE: 'PS1 게임을 SMB로 실행하는 동안 PS2가 주소를 얻는 방법: 고정 또는 DHCP.'
+  HINT_POPS_IP: PS1 게임을 SMB로 실행하는 동안의 PS2 IP 주소.
+  HINT_POPS_SMB_IP: PS1 게임을 공유하는 PC의 IP 주소.
+  HINT_POPS_SMB_SHARE: 그 PC에서 POPS 폴더가 있는 공유 이름.
+  HINT_LASTPLAYED: 지난번에 실행한 게임에서 시작합니다.
+  HINT_LANGUAGE: 메뉴 언어. lang_*.lng 파일을 LNG 폴더에 넣으면 더 추가할 수 있습니다.
+  HINT_GSM_DEFAULTS_BUTTON: 자체 GSM 설정이 없는 한 모든 게임에 적용되는 영상 모드 수정.
+  HINT_DEFDEVICE: 부팅할 때 RiptOPL이 여는 페이지.
+  HINT_MMCE_MODE: SD2PSX나 MemCard PRO2의 게임. 자동은 부팅할 때, 수동은 페이지를 열 때 시작하고, 끄기는 숨깁니다.
+  HINT_MMCE_SETTINGS_BUTTON: MMCE의 슬롯, IGR bootcard, GameID, 타이밍 옵션.
+  HINT_ENABLE_USB: USB 저장 장치 드라이버를 불러옵니다.
+  HINT_ENABLE_MX4SIO: MX4SIO SD 카드 어댑터 드라이버를 불러옵니다.
+  HINT_ENABLE_ILINK: iLink(FireWire) 저장 장치 드라이버를 불러옵니다.
+  HINT_NETSTART: '네트워크를 시작합니다: 자동은 부팅할 때, 수동은 그 페이지를 열 때. 끄기는 네트워크 어댑터를 건드리지 않습니다.'
+  HINT_APPMODE: 앱 페이지. 자동은 부팅할 때, 수동은 열 때 시작하고, 끄기는 숨깁니다.
+  HINT_FAVMODE: 즐겨찾기 게임 페이지. 자동은 부팅할 때, 수동은 열 때 시작하고, 끄기는 숨깁니다.
+  HINT_BDMA_BUTTON: USB, MX4SIO, MMCE, HDD, iLink의 PS1 게임에 POPSTARTER가 쓰는 exFAT 드라이버.
+  HINT_VCD_LIST_BUTTON: 'PS1 게임을 나열하는 방식: 게임 ID 숨기기, 디스크 1만 표시, HDD PP 파티션 표시.'
+  HINT_MMCE_SLOT: MMCE 장치가 꽂힌 메모리 카드 슬롯. 자동으로 찾습니다.
+  HINT_MMCE_GAMEID: 어떤 게임이 시작되는지 MMCE 장치에 알려, 그 게임의 메모리 카드로 바꿀 수 있게 합니다.
+  HINT_MMCE_COMM_BUTTON: MMCE 연결의 타이밍 옵션. 게임이 멈추거나 느리게 불러올 때만 바꾸세요.
+  HINT_MMCE_PATH_BUTTON: MMCE 카드에서 게임 폴더가 있는 곳.
+  HINT_MMCE_PREFIX: MMCE 카드에서 CD, DVD 및 다른 OPL 폴더가 있는 하위 폴더. 비워 두면 카드의 루트를 씁니다.
+  HINT_GAME_TYPE_LABELS: 각 게임 이름 앞에 [PS1] 또는 [PS2]를 붙입니다. 표시만 바뀝니다.
+  HINT_MENU_VMODE: 메뉴의 영상 출력. 게임은 대신 GSM을 씁니다. 새 모드를 유지하려면 확인을 누르고 있으세요.
+  HINT_THEME: 메뉴의 모양. 테마는 각 장치의 THM 폴더에서 읽습니다.
+  HINT_COVERFLOW_BUTTON: Coverflow 테마의 표지 수, 크기, 애니메이션, 어둡게 하기.
+  HINT_ARTWORK_BUTTON: '불러올 아트: 표지, 디스크 아트, 배경, 세이브 아이콘.'
+  HINT_COLORS_BUTTON: 글자, 강조, 대화 상자, 배경의 색.
+  HINT_NOTIFICATIONS: 설정, 테마, 언어 파일을 불러올 때 나오는 짧은 알림.
+  HINT_AUTOSORT: 게임 목록을 가나다/A~Z 순으로 정렬합니다. 끄면 찾은 순서를 유지합니다.
+  HINT_AUTOREFRESH: 직접 새로 고치지 않아도 새로 연결한 장치의 게임을 추가합니다.
+  HINT_COVERART: ART 폴더에서 표지를 불러옵니다.
+  HINT_DISCART: 디스크 아트(<ID>_ICO)를 보여 줍니다. 끄면 디스크는 숨기고 표지와 배경은 남깁니다.
+  HINT_BGART: 테마가 배경을 쓸 때 게임의 배경(<ID>_BG)을 보여 줍니다.
+  HINT_ART_TAR: ART/art.tar에 묶인 아트도 읽습니다.
+  HINT_ART_DELAY: 커서가 게임에 머문 뒤 아트를 불러오기까지의 시간. 길수록 빠르게 스크롤할 때 아트를 건너뜁니다.
+  HINT_TXTCOLOR: 일반 메뉴 글자의 색.
+  HINT_SELCOLOR: 강조된 항목의 색.
+  HINT_UICOLOR: 대화 상자의 배경 색조.
+  HINT_TITLECOLOR: 목록의 게임 제목 색.
+  HINT_BGCOLOR: 메뉴 배경색.
+  HINT_PLASCOLOR: 움직이는 배경에 섞는 색.
+  HINT_RESETCOLOR: 테마의 색이 아닌 RiptOPL의 내장 색으로 되돌립니다.
+  HINT_WIDESCREEN: 16:9 TV에 맞게 메뉴를 그립니다.
+  HINT_XOFF: 화면에서 메뉴를 왼쪽이나 오른쪽으로 옮깁니다.
+  HINT_YOFF: 화면에서 메뉴를 위나 아래로 옮깁니다.
+  HINT_MENU_OVERSCAN: TV가 가장자리를 자르면 메뉴를 안쪽으로 줄입니다.
+  HINT_APPLYGAMEID: 게임이 시작될 때 바코드를 보여 주어 Pixel FX, RetroGEM, PS2Digital 기기가 프로필을 바꾸게 합니다.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: 모든 게임에 쓰는 Neutrino의 경로, 영상 모드, 인수.
+  HINT_OSD_DEFAULTS_BUTTON: 게임에 넘기는 본체 언어, 화면 크기, 영상 모드.
+  HINT_ENWRITEOP: 게임 이름 바꾸기와 삭제, VMC 만들기를 허용합니다. HDD 파티션 테이블은 절대 건드리지 않습니다.
+  HINT_DEBUG: '개발자 도구: 게임이 부팅하는 동안 색 화면을 보여 주고, 메뉴에 아트 불러오기 카운터를 표시합니다.'
+  HINT_BDMPREFIX: USB, MX4SIO, iLink, exFAT 드라이브에서 게임 폴더가 있는 하위 폴더. 비워 두면 드라이브의 루트를 씁니다.
+  HINT_ETHPREFIX: SMB 공유에서 게임 폴더가 있는 하위 폴더. 비워 두면 공유의 루트를 씁니다.
+  HINT_HDDGAMELISTCACHE: APA HDD 게임 목록을 기억해 이후 검색을 빠르게 합니다.
+  HINT_BDMCACHE: 게임 중 USB 및 다른 BDM 드라이브의 미리 읽기 캐시. 클수록 스트리밍이 부드러워질 수 있지만 메모리를 더 씁니다.
+  HINT_HDDCACHE: 게임 중 내장 HDD의 미리 읽기 캐시.
+  HINT_SMBCACHE: 게임 중 SMB의 미리 읽기 캐시.
+  HINT_CORE_LOADER: 둘 다 지원할 때 이 게임에 쓸 코어. UDPFS/UDPBD는 Neutrino 전용, SMB/HTTP는 <OPL> 전용입니다. 기본값은 게임 실행 설정을 따릅니다.
+  HINT_DMA_MODE: 이 게임의 내장 HDD 전송 모드. 게임이 끊기거나 멈추면 낮추세요.
+  HINT_DNAS_GAMEID: DNAS 온라인 게임의 디스크 ID. 디스크에서 불러오기는 원본 디스크에서 읽습니다.
+  HINT_LOAD_FROM_DISC: 드라이브에 있는 원본 디스크에서 DNAS ID를 읽습니다.
+  HINT_ALTSTARTUP: SYSTEM.CNF가 지정한 것 대신 디스크 이미지에서 이 ELF를 부팅합니다.
+  HINT_VMC_DEFINE: 이 슬롯의 가상 메모리 카드를 고르거나, 만들거나, 크기를 바꿉니다.
+  HINT_VMC_ACTION: 공용 사용은 이 슬롯에 공유 카드를 주고, 초기화는 선택을 지웁니다.
+  HINT_VMC_NAME: VMC 폴더에 두는 카드 파일의 이름.
+  HINT_VMC_CREATE: 카드를 만들거나 새 크기를 적용합니다.
+  HINT_VMC_DELETE: 이 카드 파일을 삭제합니다.
+  HINT_SETTINGS_SOURCE: 전역은 공용 설정을 쓰고, 게임별은 이 게임만의 설정으로 둡니다.
+  HINT_PADMACRO_TOGGLE: 버튼을 누르는 동안은 버튼을 누르고 있을 때만 스틱을 느리게 하고, 버튼으로 전환은 버튼으로 켜고 끕니다.
+  HINT_SFX: 메뉴 효과음.
+  HINT_BOOT_SND: RiptOPL이 시작될 때 소리를 냅니다.
+  HINT_BGM: 테마의 음악, 또는 기본 테마 음악 파일을 재생합니다.
+  HINT_SFX_VOLUME: 메뉴 효과음의 음량.
+  HINT_BOOT_SND_VOLUME: 시작음의 음량.
+  HINT_BGM_VOLUME: 배경 음악의 음량.
+  HINT_SCROLL: 방향을 누르고 있을 때 목록이 스크롤되는 속도.
+  HINT_SELECTBUTTON: '확인 버튼: 가위표 또는 동그라미.'
+  HINT_XSENSITIVITY: 왼쪽 스틱으로 커서가 좌우로 움직이는 감도. 끄면 무시합니다.
+  HINT_YSENSITIVITY: 왼쪽 스틱으로 커서가 위아래로 움직이는 감도. 끄면 무시합니다.
+  HINT_PADEMU_GLOBAL: 모든 게임에서 USB 또는 블루투스 DualShock 3/4와 멀티탭을 씁니다.
+  HINT_PADMACRO_GLOBAL: 모든 게임에서 스틱 감속, 축 반전, 연사를 씁니다.
+  HINT_COVERFLOW_DIM: 양옆의 표지를 어둡게 합니다.
+  HINT_OSD_ENABLE: 아래 설정을 게임에 넘깁니다. 끄면 본체 자체의 설정을 씁니다.
+  HINT_OSD_TVASPECT: 게임에 넘기는 TV 모양.
+  HINT_OSD_VMODE: 게임에 넘기는 영상 모드.
+  DNAS_ID: DNAS ID
+  NEUTRINO_PADEMU_WARN: Neutrino에서는 패드 에뮬레이션을 쓸 수 없습니다. PS2 컨트롤러나 <OPL> 코어를 지원하는 소스를 쓰세요.
+  RA_MODE: RA 모드
+  RA_HOST_IP: RA 컴패니언 IP (0.0.0.0 = 자동)
+  HINT_RA_HOST_IP: 선택 사항인 RetroAchievements 전용 PC의 IPv4. 기존 SMB/HTTP 대체 방식이나 Xerabora 자동 검색에는 0.0.0.0을 쓰세요. 게임 서버 설정은 바뀌지 않습니다.
+  HINT_RA_MODE: PC 클라이언트를 고릅니다. 기본값은 Xerabora이며, Caduceus는 먼저 로그인된 세션을 확인합니다.
+  RA_CADUCEUS_OFFLINE: Caduceus RA 세션이 오프라인입니다.
+  RA_CADUCEUS_SIGN_IN: Caduceus에서 RetroAchievements에 로그인한 뒤 다시 시도하세요.
+  FAV_SAVING: 즐겨찾기 게임에 저장하는 중...
+  FAV_SAVED: 즐겨찾기 게임에 저장함
+  FAV_SAVE_FAILED: 즐겨찾기 게임에 저장할 수 없음
+  CAD_ACHIEVEMENTS: Caduceus 업적
+  CAD_VIEW_ACHIEVEMENTS: 업적 보기
+  CAD_USE_LIBRARY: 이 게임은 메인 메뉴의 Caduceus 업적에서 둘러보세요.
+  CAD_HASH_UNSUPPORTED: 이 형식은 해시를 계산할 수 없습니다. 대신 계정 라이브러리를 둘러보세요.
+  CAD_HEADING: 업적
+  CAD_LIBRARY: RetroAchievements 계정 라이브러리
+  CAD_FILTER_ALL: 전체
+  CAD_EARNED: 획득
+  CAD_LOCKED: 잠김
+  CAD_HARDCORE: 하드코어
+  CAD_PROGRESS: '%d / %d 획득  |  %s'
+  CAD_ONE_GAME: 계정의 게임 %d개
+  CAD_GAMES: 계정의 게임 %d개
+  CAD_GAME_PROGRESS: 업적 %d / %d  |  하드코어 %d
+  CAD_POINTS: '%d점  |  %s'
+  CAD_EMPTY_LIBRARY: 이 계정에는 진행한 게임이 없습니다.
+  CAD_EMPTY_FILTER: 이 필터에 맞는 업적이 없습니다.
+  CAD_LOADING: 업적을 불러오는 중...
+  CAD_PAIR: Caduceus에 로그인하고 SMB 공유에서 ART/CADUCEUS.KEY를 페어링하세요.
+  CAD_UNKNOWN_GAME: 이 게임은 Caduceus 카탈로그에 없습니다. PC에서 카탈로그를 새로 고치세요.
+  CAD_CONNECTION_ERROR: Caduceus에 조회할 수 없습니다. 연결을 확인한 뒤 Select를 눌러 다시 시도하세요.
+  CAD_BACK_REFRESH: 뒤로는 OPL로 돌아갑니다. Select는 이 페이지를 새로 고칩니다.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: 페이지   확인: 열기   Select: 새로 고침'
+  CAD_GAME_CONTROLS: 'L1/R1: 페이지   네모: 필터   Select: 새로 고침'
+  CAD_BACK: 뒤로
+  CAD_UNTRACKED: Caduceus가 준비되지 않았습니다. 이번에는 업적 없이 실행합니다.
+  PS1_RA_USB_REQUIRED: PS1 업적에는 POPStarter를 통한 USB VCD가 필요합니다
+  PS1_RA_REMOVE_PREVIOUS: 이전 PS1 업적 모듈을 제거할 수 없습니다
+  PS1_RA_PREPARE_FAILED: PS1 업적을 준비할 수 없습니다. POPS/MODULE_9.IRX를 보존하거나 옮기고, 장치의 쓰기 권한을 확인하세요.
+  PS1_RA_CLEAN_DELETE: '사용하지 않는 RiptOPL RA 모듈: POPS/MODULE_9.IRX. 깨끗하게 실행하기 위해 삭제할까요?'
+  PS1_RA_CLEAN_FAILED: 사용하지 않는 RA 모듈을 삭제할 수 없습니다.
+  PS1_RA_CLEAN_CONTINUE: 그래도 계속할까요? 남은 RA 모듈이 오래된 텔레메트리를 실행할 수 있습니다. 아니요를 고르면 실행을 취소합니다.
+  FAV_REMOVED: 즐겨찾기 게임에서 뺐습니다
+  FAV_REMOVE_FAILED: 즐겨찾기 게임에서 뺄 수 없음
+  POPS_UDPFS_SETTINGS: POPS UDPFS 네트워크 설정
+  POPS_UDPFS_DISCOVERY: 모든 USB의 POPS 폴더에 저장합니다. 서버 0.0.0.0은 자동 검색을 씁니다.
+  POPS_UDPFS_NOT_READY: POPS UDPFS에는 모든 USB의 POPS 폴더에 서로 맞는 올바른 IPCONFIG.DAT와 UDPFSCONFIG.DAT가 필요합니다. POPS 네트워크 설정에서 설정하세요.
+  HINT_POPS_UDPFS_IP: POPS UDPFS 드라이버가 IOP 리셋 뒤에 쓰는 PS2 고정 IP.
+  POPS_UDPFS_ALL_USB_FOLDERS: 모든 USB의 POPS 폴더
+  POPS_UDPFS_INVALID_SUFFIX: ' (잘못됨)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (불완전)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS에는 메모리 카드에 .udpfs 드라이버 쌍이 설치되어 있어야 합니다. 직접 넣거나 BDMA 실행 시 적용을 켜세요.
+  VMC_REPLACE_REQUIRES_DELETE: VMC 크기를 바꾸면 안의 세이브가 지워집니다. 새 크기로 만들기 전에 기존 VMC를 백업하고 삭제를 쓰세요.
+  VMC_CREATE_FAILED: VMC를 만들 수 없었습니다. 장치, 연결, 쓰기 권한을 확인하세요. 기존 세이브는 교체하지 않았습니다.
+  RA_EXPERIMENTAL_CARDS: Caduceus 실험적 카드
+  HINT_RA_EXPERIMENTAL_CARDS: PS2 게임 안에 나오는 실험적 업적 카드. 깜빡이거나 게임이 멈출 수 있습니다. Caduceus 전용이며, 끄면 금색 펄스를 씁니다. 다음 게임 실행부터 적용됩니다.
+  RA_NEUTRINO_UNTRACKED: 이번 실행에서는 Neutrino RA를 쓸 수 없습니다. RA 런타임, 컴패니언 IP, 저장된 추적 목록을 확인하세요. 업적 없이 실행합니다.
+  UDPFS_IP_CONFLICT: 네트워크의 다른 기기가 이 PS2의 IP 주소를 쓰고 있어서 UDPFS 서버의 응답이 그쪽으로 갑니다. 네트워크 설정에서 PS2에 다른 IP를 정하세요.
+  XERA_ACHIEVEMENTS: RetroAchievements 라이브러리 (xeRAbora)
+  XERA_USE_LIBRARY: 이 게임은 메인 메뉴의 RetroAchievements 라이브러리에서 둘러보세요.
+  XERA_OPEN_NETWORK: xeRAbora에 연결할 수 없습니다. 그 설정에서 OPEN TO THE NETWORK를 켜고, RA 컴패니언 IP와 PC 방화벽을 확인하세요.
+  XERA_UNKNOWN_GAME: xeRAbora가 이 이미지를 모릅니다. 먼저 RA 게임 지원 확인을 실행하세요.
+  XERA_NOT_PLAYED: 아직 RetroAchievements 라이브러리에 없습니다. 업적과 함께 한 번 플레이한 뒤 Select를 누르세요.
+  XERA_CONNECTION_ERROR: xeRAbora에서 목록을 읽을 수 없습니다. Select를 눌러 다시 시도하세요.
+  CAD_PAIR_UDPFS: Caduceus에 연결할 수 없습니다. PS2-Servers가 공유하는 폴더에서 ART/CADUCEUS.KEY를 페어링하고 RA 컴패니언 IP를 정하세요.
+  RA_WL_NOT_SAVED: 추적 목록을 저장할 수 없었습니다. 게임의 장치나 공유에 쓸 수 있는지 확인한 뒤 다시 확인하세요.
+  RA_UDPFS_LOAD_FIRST: 네트워크 모듈을 불러오도록 UDPFS 페이지를 한 번 연 뒤 다시 시도하세요.
+  CAD_UDPFS_IMG: 'Caduceus 브라우저에는 SMB나 UDPFS 파일이 필요합니다: UDPFS IMG에는 키를 둘 공유 폴더가 없습니다.'
+  XERA_SET_CLOCK: 아직 RetroAchievements 라이브러리에 없습니다. 전체 목록을 보려면 시스템 설정에서 본체 시계를 맞추거나, 업적과 함께 한 번 플레이하세요.
+  CFG_TITLES: 게임 목록에 CFG 제목 표시
+  HINT_CFG_TITLES: 파일 이름 대신 각 게임 CFG의 제목을 보여 주고 그것으로 정렬합니다. 목록을 새로 고칠 때 모든 CFG를 읽으므로 목록을 불러오는 속도가 느려집니다. 표시만 바뀝니다.
+  AUTO_VMC_INVALID: 이 게임의 VMC 파일은 있지만 올바른 메모리 카드가 아니어서 쓰지도 교체하지도 않았습니다. 게임은 VMC 없이 시작합니다. VMC 메뉴에서 확인하세요.
+  AUTO_VMC_STILL_RUNNING: 이 게임의 VMC를 아직 만드는 중입니다. 잠시 후 게임을 다시 실행하세요.
+  NEUTRINO_DVR_QUICKBOOT: DVR 실행에는 PSX 모드 전환이 필요합니다. 전역과 게임별 Neutrino 인수에서 -qb를 빼세요.
+  NEUTRINO_DVR_FILE_MISSING: 'DVR용 Neutrino 설치가 불완전합니다. 필요한 파일이 없습니다:'
+  PARENLOCK_GAME: 보호자 잠금
+  PARENLOCK_GAME_HINT: 이 게임을 시작할 때 보호자 잠금 비밀번호를 요구합니다.
+  PARENLOCK_GAME_NO_PASSWORD: 보호자 잠금 비밀번호를 정하세요. 정하지 않으면 이 게임은 잠기지 않습니다.
+  HINT_ENABLE_PCCF: 초기 일본판 PS2의 PC CARD CompactFlash. PS2 전용 게임만 되며, CF는 PC CARD를 혼자 써야 합니다. 해제하려면 재시작하세요.
+  PCCF_GAMES: PC CARD CF 게임
+  PCCF_UNAVAILABLE: 'CF를 쓸 수 없음: PC CARD가 있는 초기 일본판 PS2, 호환되는 카드, 그리고 활성화된 DEV9/HDD/네트워크 드라이버가 없어야 합니다.'
+  PCCF_UNSUPPORTED_GAME: CF는 지금은 PS2 전용 게임만 지원합니다. CF VMC, PS1 불러오기, 네트워크 업적은 쓸 수 없습니다.
+  HINT_ENABLE_DVR: 실험적인 DESR DVR ISO 검색. HDD 소스를 켜야 하며, 게임을 실행하려면 외부의 DVR 지원 Neutrino가 필요합니다.

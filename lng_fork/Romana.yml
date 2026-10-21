@@ -315,3 +315,387 @@ translations:
   VIEW_APPS: Se afișează aplicațiile
   EMBER_DISPLAY: Mod de afișare Ember
   HINT_EMBER_DISPLAY: Modul de ieșire folosit de Ember pentru jocurile PS1. 240p sau 480p se scrie în settings.txt din folderul EMBER al dispozitivului lansat. Implicit elimină din nou setarea, împreună cu fișierul dacă nu mai conținea altceva.
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  SETTINGS_SAVED: Setări salvate în %s
+  REMOVE_ALL_SETTINGS: Elimină setările
+  MEDIUM: Mediu
+  BDMMODE: Mod de pornire BDM
+  MANUAL: Manual
+  STARTFAILNBD: Serverul NBD nu a putut porni.
+  TEST: Testează modificările
+  START: Pornește
+  RESETCOLOR: Resetează culorile
+  VSYNC: Sincronizare verticală
+  NET_UPDATE_ALL: Suprascrie înregistrările existente
+  PS2LOGO: Sigla PS2
+  PADEMUCONFIG: Emulare controler
+  PADEMU_SETTINGS: Setări emulator de controler
+  HINT_PADEMU_MODE: Alege modul emulatorului de controler.
+  HINT_PAD_PORT: Alege portul emulatorului de controler pentru setări.
+  HINT_PADEMU_PORT: Pornește sau oprește emulatorul de controler pentru portul ales.
+  HINT_PADEMU_VIB: Pornește sau oprește vibrația pentru portul ales al emulatorului de controler.
+  PAIR: Asociază
+  HCIVER: 'Versiune HCI:'
+  LMPVER: 'Versiune LMP:'
+  MANUFACTURER: 'ID producător:'
+  BT_SUPPORTED: Adaptorul Bluetooth ar trebui să fie complet compatibil cu controlerele DS3/DS4.
+  BT_NOTSUPPORTED: Este posibil ca adaptorul Bluetooth să nu funcționeze corect cu controlerele DS3/DS4.
+  HINT_MTAP_ENABLE: Pornește sau oprește emularea Multitap pentru jocul ales.
+  HINT_MTAP_PORT: Alege portul pentru emularea Multitap.
+  HINT_PADEMU_WORKAROUND: Unele DS3 contrafăcute au nevoie de o soluție ocolitoare; această opțiune o activează.
+  HINT_GSM_FIELD_FIX: Remediere pentru jocurile care au probleme în modurile video progresive.
+  PARENLOCKCONFIG: Setări control parental
+  PARENLOCK_PASSWORD: Parolă control parental
+  PARENLOCK_PASSWORD_HINT: Lasă gol ca să dezactivezi controlul parental.
+  PARENLOCK_ENTER_PASSWORD_TITLE: Introdu parola de control parental
+  PARENLOCK_PASSWORD_INCORRECT: Parola de control parental este greșită.
+  PARENLOCK_DISABLE_WARNING: Controlul parental a fost dezactivat.
+  BUILD_DETAILS: 'Opțiuni de compilare:'
+  PARENLOCK_INVALID_PASSWORD: Eroare - această parolă nu poate fi folosită.
+  ERR_VMC_FRAGMENTED_CONTINUE: Fișierul VMC %s este fragmentat. Continui cu cardul de memorie din slotul %d?
+  AUDIO_SETTINGS: Setări audio
+  SFX_VOLUME: Volum efecte sonore
+  BOOT_SND_VOLUME: Volum sunet de pornire
+  CFM_VMODE_CHG: Confirmi schimbarea modului video?
+  CACHE_HDD_GAME_LIST: Memorează lista de jocuri (HDD APA)
+  CFG_NOTIFICATION: Configurație încărcată din %s
+  THM_NOTIFICATION: Temă încărcată din %s
+  LNG_NOTIFICATION: Limbă încărcată din %s
+  PARTITION_NOTIFICATION: Partiția %s a fost montată.
+  GAME_SETTINGS_SAVED: Setările jocului au fost salvate.
+  GAME_SETTINGS_REMOVED: Setările pentru %s au fost eliminate.
+  NET_UPDATE_HINT: Când e activat, suprascrie setările existente de compatibilitate ale jocurilor.
+  SETTINGS_SOURCE: Mod setări
+  PERGAME_SETTINGS: Per joc
+  ALL_SETTINGS: Toate
+  GAME_SETTINGS_PROMPT: Alege setările de eliminat.
+  FORUM_DETAILS: 'Forumuri de suport:'
+  INFO_TITLE: Titlu
+  INFO_DEVELOPER: Dezvoltator
+  HINT_NEUTRINO_AUTO_ELF: Trimite ELF-ul de pornire al jocului către Neutrino pentru căutarea configurației per titlu. Pornit implicit; opțiunea Boot ELF setată manual are prioritate.
+  HINT_POPSTARTER_PATH: Unde este POPSTARTER.ELF. Lăsat gol, RIPPS2 completează unul găsit pe o unitate; scrie peste el ca să folosești altul, de exemplu usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: Argumentele Neutrino depășesc lungimea care poate fi salvată. Scurtează un câmp înainte de salvare.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: Argumentele de lansare Neutrino depășesc limita sigură. Scurtează argumentele globale sau ale jocului.
+  NEUTRINO_AUTO_ELF: Boot ELF automat (-elf)
+  HINT_NEUTRINO_PATH: 'Unde se află neutrino.elf? <nesetat> = dispozitivul jocului -> mc0/mc1. O cale completă personalizată este încercată prima. Exemple: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Afișare jocuri PS2/PS1
+  HINT_GAME_VIEW_MODE: Toate listează împreună jocurile PS2 și PS1, iar L3 comută între Toate, PS1, PS2. PS2 sau PS1 arată doar acel tip și dezactivează L3. APPS și Jocuri favorite folosesc propriile reguli de afișare.
+  VIEW_MIXED: Se afișează jocuri PS2 + PS1
+  VIEW_PS1_ELF: Se afișează aplicații PS1 ELF
+  APPS_DISPLAY: Afișare aplicații
+  HINT_APPS_DISPLAY: Toate arată fiecare ELF într-o singură listă APPS, cu L3 dezactivat. Aplicații / PS1ELF mută titlurile care conțin [PS1] pe a doua pagină L3; modul de lansare nu se schimbă.
+  VIEW: Vizualizare
+  VIEW_PS2: Se afișează jocurile PS2 favorite
+  VIEW_PS1: Se afișează jocurile PS1 favorite
+  VIEW_ELF: Se afișează ELF-urile favorite
+  VIEW_ALL: Se afișează toate jocurile favorite
+  VMC_FRAGMENTED_ON_CREATE: VMC creat, dar este fragmentat. Emularea cardului de memorie are nevoie de un singur fișier continuu, așa că acest VMC va fi sărit la lansare și se va folosi cardul real. Eliberează spațiu și creează-l din nou sau copiază unul de pe alt dispozitiv.
+  KEYB_MOVE_CURSOR: Mută cursorul
+  TITLECOLOR: Culoarea titlurilor jocurilor
+  RA_CHECK_GAME: Verifică suportul RetroAchievements
+  RA_TEST_LINK: Testează legătura RetroAchievements cu PC-ul
+  RA_CHECKING_IMAGE: Se verifică imaginea, durează câteva secunde...
+  RA_CHECK_RUNNING: O verificare de imagine rulează deja
+  RA_LOOKING_FOR_PC: Se caută clientul de PC...
+  RA_UL_UNSUPPORTED: Jocurile UL/USBExtreme nu pot fi încă verificate
+  RA_UL_UNSUPPORTED2: Sunt acceptate doar imagini .iso simple din DVD/ sau CD/
+  RA_UNKNOWN_IMAGE: RetroAchievements nu cunoaște această imagine
+  RA_STILL_IDENTIFYING: PC-ul încă identifică imaginea
+  RA_TRY_AGAIN: Încearcă din nou peste câteva secunde
+  RA_NO_SOCKET: Consola nu a putut deschide un socket de rețea
+  RA_NO_SOCKET2: Repornește consola sau verifică dispozitivul ETH în setări
+  RA_TEST_NO_SOCKET2: Verifică cablul și ETH în setări; dacă rețeaua funcționează, repornește consola
+  RA_PC_NO_ANSWER: Clientul de PC nu a răspuns
+  RA_PC_NO_ANSWER2: Verifică dacă rulează xeRAbora sau încearcă testul legăturii cu PC-ul
+  RA_SUPPORTED: Acceptat de RetroAchievements
+  RA_START_TO_TRACK: Pornește jocul ca să urmărești realizările
+  RA_ACHIEVEMENTS: '%d realizări'
+  RA_ACHIEVEMENTS_FULL: '%d realizări -- %d deblocate, %d neacceptate'
+  RA_HASH_FAILED: Hash-ul imaginii nu a putut fi calculat
+  RA_HASH_FAILED2: Vezi RA/hashes.txt de lângă jocuri pentru motiv
+  RA_NET_BUSY: Rețeaua este folosită de un transport UDP
+  RA_NET_BUSY2: RA are nevoie de stiva SMB -- schimbă protocolul sau creează .wl pe PC
+  RA_NET_BUSY_HASH: Hash-ul este în RA/hashes.txt -- xeRAbora poate crea .wl din el
+  RA_NO_IP: Consola nu are adresă IP
+  RA_NO_IP2: Verifică DHCP sau adresa statică în setările de rețea
+  RA_TEST_NO_ANSWER: Niciun client de PC nu a răspuns în 3 secunde
+  RA_TEST_NO_ANSWER2: Consolă%s. Verifică dacă rulează xeRAbora și dacă UDP 18194 este deschis
+  RA_TEST_FOUND: Client de PC găsit%s%s %s
+  RA_TEST_FOUND2: Răspuns în %u ms, consolă%s
+  RA_NA_NEUTRINO: Urmărirea RA are nevoie de nucleul <OPL> -- lansările prin Neutrino nu încarcă niciodată ee_core
+  RA_NA_UDPFS: Urmărirea RA nu este disponibilă pe UDPFS -- jocurile se lansează prin Neutrino
+  RA_NA_PS1: Urmărirea RA nu este disponibilă pentru jocurile PS1
+  RA_NA_HDD: Informațiile de joc APA sau folderul de setări al HDD-ului nu sunt disponibile
+  RA_NA_HDD2: Setează un folder de setări HDD valid și reîmprospătează înainte de a verifica suportul
+  RA_TELEMETRY: Telemetrie RetroAchievements
+  RA_BADGES: Insigne RetroAchievements
+  HTTP_GAMES: Jocuri HTTP
+  HTTP_SERVER: Server HTTP
+  HTTP_PORT: Port HTTP
+  HTTP_BASE_PATH: Cale de bază HTTP
+  HTTP_TEST: Testează serverul HTTP
+  HTTP_TEST_OK: Server OK -- jocuri listate
+  HTTP_TEST_EMPTY: Catalogul este gol -- valid, dar nu dovedește nimic despre intervalele de octeți
+  HTTP_TEST_NO_ISO: Catalogul nu are nicio imagine acceptată pe care să se testeze un interval de octeți
+  HTTP_ERR_CONNECT: Serverul HTTP nu poate fi accesat
+  HTTP_ERR_CATALOG: games.csv lipsește, nu poate fi citit sau este prea mare
+  HTTP_ERR_RANGE: Serverul nu a returnat exact octeții ceruți
+  HTTP_LAUNCH_UNAVAILABLE: Lansarea prin HTTP nu este încă implementată -- catalogul poate fi doar răsfoit
+  HTTP_ERR_COMPRESSED: Imaginile comprimate (.zso) nu sunt încă acceptate prin HTTP
+  HTTP_NO_VMC: Cardurile de memorie virtuale nu sunt disponibile prin HTTP -- folosește un card fizic
+  HTTP_TAB_HINT: HTTP citește games.csv de pe serverul tău. Setează adresa, portul și calea de bază în setările de rețea, apoi folosește Test.
+  RA_DISC_CHECK: 'RA: verifică suportul discului'
+  RA_DISC_LAUNCH: 'RA: lansează discul'
+  RA_DISC_CHECKING: Se verifică discul pentru RetroAchievements
+  RA_DISC_HASH_FAILED: Hash-ul discului nu a putut fi calculat -- verifică RA/hashes.txt în folderul de setări
+  RA_DISC_HOME_ERROR: Calea setărilor nu poate fi folosită pentru listele de urmărire ale discurilor
+  RA_DISC_ENABLE: Pornește întâi telemetria RetroAchievements în setările de rețea
+  RA_DISC_CHECK_FIRST: 'Nu există listă de urmărire pentru acest disc -- folosește întâi RA: verifică suportul discului'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: HDD găsit, dar tabelul lui de partiții APA nu poate fi citit. Nu îl formata -- jocurile tale pot fi încă recuperabile.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: O unitate nu a fost montată pentru că sectoarele ei nu au 512 octeți (de ex. o unitate cu sectoare de 4K). OPL poate citi doar sectoare de 512 octeți.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Acest titlu este propria lui partiție APA, iar OPL nu editează niciodată tabelul de partiții. Redenumește-l pe un PC.
+  POPS_SETTINGS_UNREADABLE: Nu s-au putut citi setările POPSTARTER -- cardul de memorie este ocupat sau ilizibil. Încearcă din nou după ce se termină încărcarea.
+  GLOBAL_PS_EMULATION_SETTINGS: Setări globale de emulare PS
+  RA_NO_LINK_UNTRACKED: Rețea indisponibilă -- de data aceasta se lansează fără RetroAchievements.
+  IGR_USB_DRIVERS_PROMPT: Calea IGR este pe USB, dar în %s lipsesc USBD.IRX și USBHDFSD.IRX, de care consola are nevoie ca să ajungă la USB după un In-Game Reset. Fără ele, IGR cade în browserul PS2. Copiezi acum driverele RiptOPL acolo? FMCB, OpenTuna și alte exploituri încarcă și ele aceste fișiere și se pot comporta diferit cu ele. Fișierele existente nu sunt înlocuite niciodată. Doar USB FAT32.
+  IGR_USB_DRIVERS_FAILED: Driverele USB nu au putut fi copiate în %s (card plin sau fără scriere). IGR va cădea în browserul PS2.
+  OFFICIAL_CFG_NOTIFICATION: Setări OPL oficiale încărcate din %s
+  CFM_VMODE_HOLD_KEEP: Ține apăsat ca să păstrezi
+  BDM_PS2_FOLDERS_UNREADABLE: Nu s-a putut deschide folderul CD sau DVD din %s (eroare %d), deci acel dispozitiv nu listează jocuri PS2. Apasă SELECT pe pagina lui ca să încerci din nou.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Sistemul de fișiere Neutrino este setat pe bd, dar acest dispozitiv nu și-a raportat niciodată numărul, deci Neutrino nu poate fi îndreptat spre el. Setează sistemul de fișiere Neutrino al acestui joc pe Auto sau exfat.
+  CFM_VMODE_REVERT_IN: Revenire în %d s
+  EMBER_DITHER: Dithering Ember
+  HINT_EMBER_DITHER: Dithering Ember (Pornit sau Oprit), scris în EMBER/settings.txt pe dispozitivul lansat. O valoare per joc are prioritate.
+  EMBER_SHADING: Umbrire Ember
+  HINT_EMBER_SHADING: 'Adâncimea de culoare Ember: 15 biți sau 24 biți (experimental). Scrisă în EMBER/settings.txt pe dispozitivul lansat. O valoare per joc are prioritate.'
+  EMBER_CONTROLLER: Controler Ember
+  HINT_EMBER_CONTROLLER: 'Modul de controler Ember: Auto, Analog sau D2A. De obicei e cel mai bine setat per joc (Triunghi > Setări joc Ember), care are prioritate.'
+  EMBER_480P_CONFIRM: Ember în 480p nu dă imagine prin compozit. Folosești 480p?
+  EMBER_SHADING_24: 24 biți (experimental)
+  EMBER_GAME_SETTINGS: Setări joc Ember
+  HINT_EMBER_GAME_SETTING: Doar acest joc. Apasă OK ca să scrii EMBER/games/<nume>/settings.txt înainte de lansare. Un Implicit neatins păstrează o valoare existentă din fișier; readucerea unei valori la Implicit îi elimină suprascrierea.
+  EMBER_TIMING: Sincronizare Ember
+  HINT_EMBER_TIMING: 'Sincronizarea video Ember: Auto urmează regiunea discului, NTSC forțează 60 Hz, PAL forțează 50 Hz. Scrisă în EMBER/settings.txt pe dispozitivul lansat.'
+  EMBER_GLOBAL_WARNING: Aceste setări Ember se aplică fiecărui joc PS1, iar unele jocuri se blochează din cauza lor. Ca să schimbi un singur joc, folosește Triunghi > Setări joc Ember pe acel joc.
+  HINT_COVERFLOW_COUNT: Câte coperți arată RIPFLOW de fiecare parte a celei alese.
+  HINT_COVERFLOW_SCALE: Cât de mare desenează RIPFLOW coperta aleasă față de celelalte.
+  HINT_COVERFLOW_ANIM: Cât de repede alunecă coperțile când te miști prin flux.
+  HINT_NARGS_QB: 'Quick Boot: sare peste ecranul de pornire al Neutrino. Pornit aici, este trimis pentru fiecare joc; oprit, RIPPS2 îl trimite oricum singur pentru jocurile de pe USB, iLink și din rețea, unde e nevoie de el.'
+  HINT_NARGS_DBC: 'Culori de depanare: Neutrino umple ecranul cu o culoare la fiecare pas de încărcare, așa că o fotografie arată unde se oprește un joc.'
+  HINT_NARGS_LOGO: Arată sigla PS2 înaintea jocului (o a doua repornire IOP, de care au nevoie unele unități iLink). Oprit aici, RIPPS2 urmează Lansare jocuri > Sigla PS2 și nu îl trimite niciodată pentru jocuri MMCE sau din rețea.
+  HINT_NARGS_CWD: 'Folderul pe care jocul îl consideră al lui. Gol: valoarea implicită Neutrino.'
+  HINT_NARGS_CFG: 'Un fișier de configurație Neutrino propriu (-cfg). Gol: cel al Neutrino.'
+  HINT_NARGS_ELF: 'Pornește acest ELF în locul fișierului de pornire numit de disc. Gol: cel al jocului.'
+  HINT_NARGS_ATA0: O imagine HDD pe care Neutrino o montează ca HDD intern al consolei, pentru jocurile care folosesc HDD-ul (-ata0).
+  HINT_NARGS_ATA0ID: Fișierul ID care merge cu acea imagine HDD (-ata0id).
+  HINT_NARGS_ATA1: O a doua imagine HDD (-ata1).
+  PS1_SAVE_GUIDANCE: Salvările PS1 depind de Ember sau POPSTARTER; setările VMC pentru PS2 nu se aplică.
+  NEUTRINO_SHOW_ARGS: Arată argumentele de lansare
+  HINT_NEUTRINO_SHOW_ARGS: Înainte de fiecare lansare prin Neutrino, arată fiecare argument pe care îl va primi Neutrino și întreabă dacă continui. Înapoi revine la meniu fără lansare.
+  NEUTRINO_ARGS_CONFIRM: Neutrino va porni cu aceste argumente. Lansezi?
+  HINT_NARGS_EXTRA: Alte opțiuni Neutrino, separate prin spații, trimise după tot ce e mai sus. RIPPS2 adaugă mereu -bsd și -dvd pentru unitatea și ISO-ul jocului, -mc0 și -mc1 pentru VMC-urile lui, -gsm pentru modul video și modurile proprii de compatibilitate ale jocului. O opțiune cu propriul rând mai sus (cum ar fi -logo) se mută în acel rând la salvare și este trimisă în continuare.
+  GAME_TYPE_LABELS: Arată etichetele [PS1]/[PS2]
+  NEUTRINO_CHEATS_WRITE_FAILED: Lista de coduri nu a putut fi salvată în folderul Neutrino, deci Neutrino nu o poate folosi. Lansezi fără coduri?
+  AUTO_CREATE_VMC: Creează VMC la prima lansare
+  HINT_AUTO_CREATE_VMC: Lansarea unui joc PS2 fără VMC în slotul 1 creează un card de 8 MB pe dispozitivul jocului, numit așa cum sugerează ecranul VMC (comun tuturor discurilor jocului), și îl atribuie. Nu pentru HDD-ul intern sub Neutrino.
+  AUTO_VMC_CREATING: Se creează VMC-ul acestui joc...
+  AUTO_VMC_FAILED: VMC-ul acestui joc nu a putut fi creat. Jocul pornește fără el.
+  SAVE_ICONS: Pictograme de salvare 3D
+  HINT_SAVE_ICONS: Arată pictograma de salvare a jocului ales, rotindu-se, acolo unde tema are loc pentru ea. Citește întâi VMC-ul jocului, apoi cardurile de memorie.
+  NETBOOT_RESTART_NOW: Protocolul de rețea se schimbă după repornire. Salvezi setările și repornești OPL acum?
+  HINT_NET_PROTOCOL: 'Ce serviciu de rețea folosește RiptOPL: o partajare SMB, UDPFS, UDPBD sau HTTP. Aceeași setare ca în Surse de jocuri. Trecerea de la unul care rulează deja cere repornire.'
+  HINT_UDPFS_ACCESS: Doar UDPFS. Fișiere citește ISO-uri separate din folderul de jocuri al serverului; IMG citește o imagine de disc ca unitate. SMB și HTTP folosesc mereu Fișiere, UDPBD mereu IMG.
+  HINT_SMB_VERSION: Ce versiune SMB să folosească pentru partajarea de pe PC.
+  HINT_NET_ADVANCED: Deblochează editarea modului de legătură Ethernet și a portului SMB.
+  HINT_ETH_LINK_MODE: Forțează viteza și duplexul legăturii de rețea. Las-o pe Auto, dacă legătura nu cade mereu.
+  HINT_IP_ADDR_TYPE: Static folosește adresa de mai jos; DHCP o cere routerului tău. UDPFS și UDPBD folosesc mereu Static.
+  HINT_PS2_IP: Adresa IP proprie a PS2. Alege una pe care nu o folosește alt dispozitiv, în același interval ca PC-ul tău.
+  HINT_NETMASK: Mască de subrețea, de obicei 255.255.255.0.
+  HINT_GATEWAY: Adresa routerului tău, de obicei cu aceleași prime trei numere și terminată în .1.
+  HINT_DNS: Adresa serverului DNS. De obicei aceeași cu gateway-ul.
+  HINT_SMB_ADDR_TYPE: Accesează PC-ul după adresa IP sau după numele NetBIOS (al computerului).
+  HINT_SMB_ADDRESS: 'PC-ul care îți partajează jocurile: adresa lui IP sau numele computerului când Tipul adresei este NetBIOS.'
+  HINT_SMB_PORT: 'Portul SMB. Trebuie să se potrivească cu PC-ul: PS2 Servers folosește 1111, partajările Windows și Samba folosesc 445.'
+  HINT_SMB_USER: Numele de utilizator SMB. guest merge pentru majoritatea partajărilor.
+  HINT_HTTP_SERVER: Adresa IP a serverului de jocuri HTTP.
+  HINT_HTTP_PORT: Portul pe care ascultă serverul de jocuri HTTP.
+  HINT_HTTP_BASE: Folderul de pe serverul HTTP care conține games.csv. / este rădăcina serverului.
+  HINT_HTTP_TEST: Încearcă serverul HTTP cu valorile de mai sus și raportează ce a găsit.
+  HINT_RA_TELEMETRY: Comutatorul principal pentru RetroAchievements. Oprit lansează jocurile fără stivă de rețea sau instantanee, la fel ca o versiune normală.
+  HINT_RA_BADGES: Marchează în listă jocurile care au realizări. Rămâne întunecat cât timp telemetria este oprită.
+  HINT_POPS_NET_BUTTON: Editează fișierele de rețea proprii ale POPSTARTER (IPCONFIG.DAT, SMBCONFIG.DAT), de care au nevoie jocurile PS1 prin SMB.
+  HINT_POPS_IP_TYPE: 'Cum își ia PS2 adresa cât timp un joc PS1 rulează prin SMB: Static sau DHCP.'
+  HINT_POPS_IP: Adresa IP a PS2 cât timp un joc PS1 rulează prin SMB.
+  HINT_POPS_SMB_IP: Adresa IP a PC-ului care îți partajează jocurile PS1.
+  HINT_POPS_SMB_SHARE: Numele partajării de pe acel PC care conține folderul POPS.
+  HINT_LASTPLAYED: Pornește de la jocul lansat data trecută.
+  HINT_LANGUAGE: Limba meniului. Adaugă altele punând fișiere lang_*.lng într-un folder LNG.
+  HINT_GSM_DEFAULTS_BUTTON: Remedieri de mod video pe care le primește fiecare joc, dacă nu are propriile setări GSM.
+  HINT_DEFDEVICE: Pagina pe care se deschide RiptOPL la pornire.
+  HINT_MMCE_MODE: Jocuri de pe un SD2PSX sau MemCard PRO2. Auto pornește la pornire, Manual când deschizi pagina, Oprit o ascunde.
+  HINT_MMCE_SETTINGS_BUTTON: Slot, IGR bootcard, GameID și opțiuni de sincronizare pentru MMCE.
+  HINT_ENABLE_USB: Încarcă driverul de stocare USB.
+  HINT_ENABLE_MX4SIO: Încarcă driverul adaptorului de card SD MX4SIO.
+  HINT_ENABLE_ILINK: Încarcă driverul de stocare iLink (FireWire).
+  HINT_NETSTART: 'Pornește rețeaua: Auto la pornire, Manual când îi deschizi pagina. Oprit lasă adaptorul de rețea în pace.'
+  HINT_APPMODE: Pagina Aplicații. Auto pornește la pornire, Manual când o deschizi, Oprit o ascunde.
+  HINT_FAVMODE: Pagina Jocuri favorite. Auto pornește la pornire, Manual când o deschizi, Oprit o ascunde.
+  HINT_BDMA_BUTTON: Ce driver exFAT folosește POPSTARTER pentru jocurile PS1 de pe USB, MX4SIO, MMCE, HDD sau iLink.
+  HINT_VCD_LIST_BUTTON: 'Cum sunt listate jocurile PS1: ascunde ID-urile jocurilor, arată doar discul 1, arată partițiile PP de pe HDD.'
+  HINT_MMCE_SLOT: În ce slot de card de memorie este dispozitivul MMCE. Auto îl găsește.
+  HINT_MMCE_GAMEID: Spune dispozitivului MMCE ce joc pornește, ca să poată trece la cardul de memorie al acelui joc.
+  HINT_MMCE_COMM_BUTTON: Opțiuni de sincronizare pentru legătura MMCE. Schimbă-le doar dacă jocurile se blochează sau se încarcă greu.
+  HINT_MMCE_PATH_BUTTON: Unde se află folderele jocurilor pe cardul MMCE.
+  HINT_MMCE_PREFIX: Subfolderul de pe cardul MMCE care conține CD, DVD și celelalte foldere OPL. Gol folosește rădăcina cardului.
+  HINT_GAME_TYPE_LABELS: Începe numele fiecărui joc cu [PS1] sau [PS2]. Doar afișare.
+  HINT_MENU_VMODE: Ieșirea video a meniului. Jocurile folosesc în schimb GSM. Ține apăsat Confirmă ca să păstrezi un mod nou.
+  HINT_THEME: Aspectul meniului. Temele sunt citite din folderul THM de pe fiecare dispozitiv.
+  HINT_COVERFLOW_BUTTON: Numărul de coperți, mărimea, animația și întunecarea pentru tema Coverflow.
+  HINT_ARTWORK_BUTTON: 'Ce imagini se încarcă: coperți, imagini de disc, fundaluri și pictograme de salvare.'
+  HINT_COLORS_BUTTON: Culorile textului, evidențierii, dialogurilor și fundalului.
+  HINT_NOTIFICATIONS: Notificări scurte când se încarcă un fișier de configurație, temă sau limbă.
+  HINT_AUTOSORT: Sortează listele de jocuri de la A la Z. Oprit păstrează ordinea în care au fost găsite.
+  HINT_AUTOREFRESH: Adaugă jocurile de pe dispozitivele nou conectate fără reîmprospătare manuală.
+  HINT_COVERART: Încarcă coperțile din folderul ART.
+  HINT_DISCART: Arată imaginea discului (<ID>_ICO). Oprit ascunde discul, dar păstrează coperțile și fundalurile.
+  HINT_BGART: Arată fundalul unui joc (<ID>_BG) când tema folosește unul.
+  HINT_ART_TAR: Citește și imaginile împachetate în ART/art.tar.
+  HINT_ART_DELAY: Cât stă cursorul pe un joc înainte să i se încarce imaginile. O valoare mai mare sare peste imagini când derulezi repede.
+  HINT_TXTCOLOR: Culoarea textului obișnuit din meniu.
+  HINT_SELCOLOR: Culoarea elementului evidențiat.
+  HINT_UICOLOR: Nuanța de fundal a casetelor de dialog.
+  HINT_TITLECOLOR: Culoarea titlurilor jocurilor din listă.
+  HINT_BGCOLOR: Culoarea de fundal a meniului.
+  HINT_PLASCOLOR: Culoarea amestecată în fundalul animat.
+  HINT_RESETCOLOR: Readuce culorile integrate ale RiptOPL, nu pe cele ale temei.
+  HINT_WIDESCREEN: Desenează meniul pentru un televizor 16:9.
+  HINT_XOFF: Mută meniul la stânga sau la dreapta pe ecran.
+  HINT_YOFF: Mută meniul în sus sau în jos pe ecran.
+  HINT_MENU_OVERSCAN: Micșorează meniul spre interior dacă televizorul îi taie marginile.
+  HINT_APPLYGAMEID: Arată un cod de bare când pornește un joc, ca dispozitivele Pixel FX, RetroGEM și PS2Digital să schimbe profilul.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Calea, modul video și argumentele Neutrino pentru fiecare joc.
+  HINT_OSD_DEFAULTS_BUTTON: Limba consolei, mărimea ecranului și modul video date jocurilor.
+  HINT_ENWRITEOP: Permite redenumirea și ștergerea jocurilor și crearea de VMC-uri. Nu atinge niciodată tabelul de partiții al HDD-ului.
+  HINT_DEBUG: 'Ajutor pentru dezvoltatori: ecrane colorate cât timp pornește un joc și contoare de încărcare a imaginilor în meniu.'
+  HINT_BDMPREFIX: Subfolderul de pe unitățile USB, MX4SIO, iLink și exFAT care conține folderele jocurilor. Gol folosește rădăcina unității.
+  HINT_ETHPREFIX: Subfolderul de pe partajarea SMB care conține folderele jocurilor. Gol folosește rădăcina partajării.
+  HINT_HDDGAMELISTCACHE: Ține minte lista de jocuri de pe HDD-ul APA ca să grăbească scanările ulterioare.
+  HINT_BDMCACHE: Cache de citire anticipată pentru USB și alte unități BDM în joc. Mai mare poate netezi redarea în flux, dar folosește mai multă memorie.
+  HINT_HDDCACHE: Cache de citire anticipată pentru HDD-ul intern în joc.
+  HINT_SMBCACHE: Cache de citire anticipată pentru SMB în joc.
+  HINT_CORE_LOADER: Nucleul pentru acest joc acolo unde ambele sunt acceptate. UDPFS/UDPBD doar Neutrino; SMB/HTTP doar <OPL>. Implicit urmează Lansare jocuri.
+  HINT_DMA_MODE: Modul de transfer al HDD-ului intern pentru acest joc. Coboară-l dacă jocul se sacadează sau se blochează.
+  HINT_DNAS_GAMEID: ID-ul discului pentru jocurile online DNAS. Încarcă de pe disc îl citește de pe discul original.
+  HINT_LOAD_FROM_DISC: Citește ID-ul DNAS de pe discul original din unitate.
+  HINT_ALTSTARTUP: Pornește acest ELF din imaginea discului în locul celui numit de SYSTEM.CNF.
+  HINT_VMC_DEFINE: Alege, creează sau redimensionează cardul de memorie virtual al acestui slot.
+  HINT_VMC_ACTION: Folosește general dă acestui slot un card comun; Resetează șterge alegerea.
+  HINT_VMC_NAME: Numele fișierului cardului, păstrat în folderul VMC.
+  HINT_VMC_CREATE: Creează cardul sau îi aplică o mărime nouă.
+  HINT_VMC_DELETE: Șterge acest fișier de card.
+  HINT_SETTINGS_SOURCE: Global folosește setările comune; Per joc le păstrează doar pentru acest joc.
+  HINT_PADMACRO_TOGGLE: Cât timp e apăsat butonul încetinește stickul doar cât ții butonul; Comutat cu butonul îl pornește și îl oprește.
+  HINT_SFX: Efectele sonore ale meniului.
+  HINT_BOOT_SND: Redă un sunet când pornește RiptOPL.
+  HINT_BGM: Redă muzica temei sau fișierul tău Muzică implicită a temei.
+  HINT_SFX_VOLUME: Volumul efectelor sonore ale meniului.
+  HINT_BOOT_SND_VOLUME: Volumul sunetului de pornire.
+  HINT_BGM_VOLUME: Volumul muzicii de fundal.
+  HINT_SCROLL: Cât de repede derulează listele cât ții apăsată o direcție.
+  HINT_SELECTBUTTON: 'Ce buton confirmă: X sau Cerc.'
+  HINT_XSENSITIVITY: Cât de ușor mută stickul stâng cursorul la stânga și la dreapta. Oprit îl ignoră.
+  HINT_YSENSITIVITY: Cât de ușor mută stickul stâng cursorul în sus și în jos. Oprit îl ignoră.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 prin USB sau Bluetooth, și multitap, pentru fiecare joc.
+  HINT_PADMACRO_GLOBAL: Încetinirea stickului, inversarea axelor și turbo pentru fiecare joc.
+  HINT_COVERFLOW_DIM: Întunecă coperțile laterale.
+  HINT_OSD_ENABLE: Dă jocului setările de mai jos. Oprit folosește setările proprii ale consolei.
+  HINT_OSD_TVASPECT: Forma televizorului dată jocului.
+  HINT_OSD_VMODE: Modul video dat jocului.
+  DNAS_ID: ID DNAS
+  NEUTRINO_PADEMU_WARN: Emularea controlerului nu este disponibilă cu Neutrino. Folosește un controler PS2 sau o sursă care acceptă nucleul <OPL>.
+  RA_MODE: Mod RA
+  RA_HOST_IP: IP însoțitor RA (0.0.0.0 = automat)
+  HINT_RA_HOST_IP: IPv4 opțional al unui PC dedicat RetroAchievements. Folosește 0.0.0.0 pentru vechea rezervă SMB/HTTP sau pentru descoperirea Xerabora. Nu schimbă setările serverului de jocuri.
+  HINT_RA_MODE: Alege clientul de PC. Xerabora este implicit; Caduceus își verifică întâi sesiunea autentificată.
+  RA_CADUCEUS_OFFLINE: Sesiunea RA din Caduceus este offline.
+  RA_CADUCEUS_SIGN_IN: Autentifică-te în RetroAchievements în Caduceus, apoi încearcă din nou.
+  FAV_SAVING: Se salvează în Jocuri favorite...
+  FAV_SAVED: Salvat în Jocuri favorite
+  FAV_SAVE_FAILED: Nu s-a putut salva în Jocuri favorite
+  CAD_ACHIEVEMENTS: Realizări Caduceus
+  CAD_VIEW_ACHIEVEMENTS: Vezi realizările
+  CAD_USE_LIBRARY: Răsfoiește acest joc prin Realizări Caduceus din meniul principal.
+  CAD_HASH_UNSUPPORTED: Pentru acest format nu se poate calcula hash-ul. Răsfoiește în schimb biblioteca contului.
+  CAD_HEADING: REALIZĂRI
+  CAD_LIBRARY: Biblioteca contului RetroAchievements
+  CAD_FILTER_ALL: Toate
+  CAD_EARNED: Obținute
+  CAD_LOCKED: Blocate
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: '%d / %d obținute  |  %s'
+  CAD_ONE_GAME: '%d joc în cont'
+  CAD_GAMES: '%d jocuri în cont'
+  CAD_GAME_PROGRESS: '%d / %d realizări  |  %d hardcore'
+  CAD_POINTS: '%d puncte  |  %s'
+  CAD_EMPTY_LIBRARY: Niciun joc cu progres în acest cont.
+  CAD_EMPTY_FILTER: Nicio realizare nu se potrivește cu acest filtru.
+  CAD_LOADING: Se încarcă realizările...
+  CAD_PAIR: Autentifică-te în Caduceus și asociază ART/CADUCEUS.KEY pe partajarea ta SMB.
+  CAD_UNKNOWN_GAME: Acest joc nu este în catalogul Caduceus. Reîmprospătează catalogul pe PC.
+  CAD_CONNECTION_ERROR: Caduceus nu poate fi interogat. Verifică conexiunea, apoi apasă Select ca să încerci din nou.
+  CAD_BACK_REFRESH: Înapoi revine la OPL. Select reîmprospătează această pagină.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: pagină   Confirmă: deschide   Select: reîmprospătează'
+  CAD_GAME_CONTROLS: 'L1/R1: pagină   Pătrat: filtru   Select: reîmprospătează'
+  CAD_BACK: Înapoi
+  CAD_UNTRACKED: Caduceus nu este gata. De data aceasta se lansează fără realizări.
+  PS1_RA_USB_REQUIRED: Realizările PS1 necesită un VCD pe USB prin POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Modulul anterior de realizări PS1 nu poate fi eliminat
+  PS1_RA_PREPARE_FAILED: Realizările PS1 nu pot fi pregătite. Păstrează sau mută POPS/MODULE_9.IRX și verifică dreptul de scriere al dispozitivului.
+  PS1_RA_CLEAN_DELETE: 'Modul RA RiptOPL nefolosit: POPS/MODULE_9.IRX. Îl ștergi pentru o lansare curată?'
+  PS1_RA_CLEAN_FAILED: Modulul RA nefolosit nu poate fi șters.
+  PS1_RA_CLEAN_CONTINUE: Continui oricum? Un modul RA rămas poate rula telemetrie învechită. Nu anulează lansarea.
+  FAV_REMOVED: Eliminat din Jocuri favorite
+  FAV_REMOVE_FAILED: Nu s-a putut elimina din Jocuri favorite
+  POPS_UDPFS_SETTINGS: Setări de rețea POPS UDPFS
+  POPS_UDPFS_DISCOVERY: Salvează în fiecare folder POPS de pe USB. Serverul 0.0.0.0 folosește descoperirea.
+  POPS_UDPFS_NOT_READY: POPS UDPFS are nevoie de IPCONFIG.DAT și UDPFSCONFIG.DAT valide și potrivite în fiecare folder POPS de pe USB. Configurează-le în Setări de rețea POPS.
+  HINT_POPS_UDPFS_IP: IP-ul static al PS2 folosit de driverul POPS UDPFS după resetarea IOP.
+  POPS_UDPFS_ALL_USB_FOLDERS: Toate folderele POPS de pe USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (invalid)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (incomplet)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS are nevoie de perechea de drivere .udpfs instalată pe cardul de memorie. Instaleaz-o manual sau pornește BDMA Aplică la lansare.
+  VMC_REPLACE_REQUIRES_DELETE: Schimbarea mărimii VMC i-ar șterge jocurile salvate. Fă o copie de rezervă a VMC-ului existent și folosește Șterge înainte să creezi o mărime nouă.
+  VMC_CREATE_FAILED: VMC-ul nu a putut fi creat. Verifică dispozitivul, conexiunea și dreptul de scriere. Salvările existente nu au fost înlocuite.
+  RA_EXPERIMENTAL_CARDS: Carduri experimentale Caduceus
+  HINT_RA_EXPERIMENTAL_CARDS: Carduri de realizări experimentale în jocurile PS2. Pot pâlpâi sau bloca jocurile. Doar Caduceus; Oprit folosește pulsul auriu. Intră în vigoare la următoarea lansare a unui joc.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA nu este disponibil pentru această lansare. Verifică mediul de rulare RA, IP-ul însoțitorului și lista de urmărire salvată. Se lansează fără realizări.
+  UDPFS_IP_CONFLICT: Alt dispozitiv din rețeaua ta folosește adresa IP a acestui PS2, așa că răspunsurile serverului UDPFS ajung la el. Setează alt IP pentru PS2 în Setări de rețea.
+  XERA_ACHIEVEMENTS: Bibliotecă RetroAchievements (xeRAbora)
+  XERA_USE_LIBRARY: Răsfoiește acest joc prin biblioteca RetroAchievements din meniul principal.
+  XERA_OPEN_NETWORK: xeRAbora nu poate fi accesat. Pornește OPEN TO THE NETWORK în setările lui, verifică IP-ul însoțitorului RA și firewallul PC-ului.
+  XERA_UNKNOWN_GAME: xeRAbora nu cunoaște această imagine. Rulează întâi verificarea suportului de joc RA.
+  XERA_NOT_PLAYED: Încă nu este în biblioteca ta RetroAchievements. Joacă-l o dată cu realizări, apoi apasă Select.
+  XERA_CONNECTION_ERROR: Lista nu poate fi citită de la xeRAbora. Apasă Select ca să încerci din nou.
+  CAD_PAIR_UDPFS: Caduceus nu poate fi accesat. Asociază ART/CADUCEUS.KEY în folderul pe care îl partajează PS2-Servers și setează IP-ul însoțitorului RA.
+  RA_WL_NOT_SAVED: Lista de urmărire nu a putut fi salvată. Asigură-te că dispozitivul sau partajarea jocului permite scrierea, apoi verifică din nou.
+  RA_UDPFS_LOAD_FIRST: Deschide o dată pagina UDPFS ca să i se încarce modulul de rețea, apoi încearcă din nou.
+  CAD_UDPFS_IMG: 'Browserul Caduceus are nevoie de SMB sau UDPFS Fișiere: UDPFS IMG nu are un folder partajat pentru cheia lui.'
+  XERA_SET_CLOCK: Încă nu este în biblioteca ta RetroAchievements. Setează ceasul consolei în setările sistemului ca să îi vezi lista completă sau joacă-l o dată cu realizări.
+  CFG_TITLES: Arată titlurile CFG în listele de jocuri
+  HINT_CFG_TITLES: Arată Titlul din CFG-ul fiecărui joc în locul numelui fișierului și sortează după el. Citește fiecare CFG când se reîmprospătează o listă, așa că listele se încarcă mai încet. Doar afișare.
+  AUTO_VMC_INVALID: Fișierul VMC al acestui joc există, dar nu este un card de memorie valid, așa că nu a fost folosit sau înlocuit. Jocul pornește fără el; verifică-l în meniul VMC.
+  AUTO_VMC_STILL_RUNNING: VMC-ul acestui joc încă se creează. Lansează jocul din nou peste o clipă.
+  NEUTRINO_DVR_QUICKBOOT: Lansarea DVR necesită trecerea în modul PSX. Elimină -qb din argumentele Neutrino globale și per joc.
+  NEUTRINO_DVR_FILE_MISSING: 'Instalarea Neutrino pentru DVR este incompletă. Lipsește fișierul necesar:'
+  LOGOART: Imagini siglă
+  HINT_LOGOART: Arată sigla unui joc (<ID>_LGO) când tema o folosește. Oprit ascunde și imaginea ei implicită, dar păstrează coperțile, imaginile de disc și fundalurile.
+  PARENLOCK_GAME: Control parental
+  PARENLOCK_GAME_HINT: Cere parola de control parental ca să pornești acest joc.
+  PARENLOCK_GAME_NO_PASSWORD: Setează o parolă de control parental, altfel acest joc nu va fi blocat.
+  HINT_ENABLE_PCCF: CompactFlash pe PC CARD pentru primele PS2 japoneze. Doar jocuri PS2 native; CF are nevoie de acces exclusiv la PC CARD. Repornește ca să îl eliberezi.
+  PCCF_GAMES: Jocuri PC CARD CF
+  PCCF_UNAVAILABLE: 'CF indisponibil: necesită un PS2 japonez timpuriu cu PC CARD, un card compatibil și niciun driver DEV9/HDD/rețea activ.'
+  PCCF_UNSUPPORTED_GAME: CF acceptă deocamdată doar jocuri PS2 native. VMC pe CF, încărcarea PS1 și realizările prin rețea nu sunt disponibile.
+  HINT_ENABLE_DVR: Descoperire experimentală a ISO-urilor DESR DVR. Necesită sursa HDD pornită; lansarea jocurilor necesită un Neutrino extern cu suport DVR.

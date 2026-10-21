@@ -317,3 +317,394 @@ translations:
   HINT_EMBER_DISPLAY: Uitvoermodus die Ember voor PS1-spellen gebruikt. 240p of 480p wordt naar settings.txt in de EMBER-map van het gestarte apparaat geschreven. Standaard verwijdert die instelling weer, en ook het bestand als er verder niets in stond.
   LOGOART: "Spellogo's"
   HINT_LOGOART: "Toont het spellogo (<ID>_LGO) als het thema dit gebruikt. Uitschakelen verbergt ook de standaardafbeelding; hoezen, schijfafbeeldingen en achtergronden blijven zichtbaar."
+
+# Supplemental labels adapted from RIPPS2 (Akilluminati47):
+# https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang
+  SETTINGS_SAVED: Instellingen opgeslagen in %s
+  OK: OK
+  REMOVE_ALL_SETTINGS: Instellingen verwijderen
+  BDMMODE: Startmodus BDM
+  AUTO: Automatisch
+  STARTNBD: NBD-server starten
+  CAT_SMB_SERVER: '- SMB-server -'
+  MASK: Masker
+  GATEWAY: Gateway
+  DNS_SERVER: DNS-server
+  TEST: Wijzigingen testen
+  START: Starten
+  RESET: Resetten
+  VMC_STATUS: Status
+  DEVS: Programmeurs
+  RESETCOLOR: Kleuren resetten
+  INFO: Info
+  BACKSPACE: Backspace
+  SPACE: Spatie
+  ENTER: Enter
+  VMC_SLOT1: VMC-sleuf 1
+  VMC_SLOT2: VMC-sleuf 2
+  VSYNC: V-sync
+  XOFFSET: H-POS
+  YOFFSET: V-POS
+  NET_UPDATE_ALL: Bestaande records overschrijven
+  DS34BT_MODE: DualShock3/4 BT
+  HCIVER: 'HCI-versie:'
+  LMPVER: 'LMP-versie:'
+  MANUFACTURER: 'Fabrikant-ID:'
+  BT_SUPPORTED: De bluetooth-adapter zou volledig compatibel moeten zijn met DS3/DS4-controllers.
+  BT_NOTSUPPORTED: De bluetooth-adapter werkt mogelijk niet goed met DS3/DS4-controllers.
+  MTAP_ENABLE: Multitap-emulatie
+  HINT_MTAP_ENABLE: Zet multitap-emulatie aan of uit voor de gekozen game.
+  HINT_MTAP_PORT: Kies de poort voor multitap-emulatie.
+  HINT_PADEMU_WORKAROUND: Sommige namaak-DS3's hebben een omweg nodig; deze optie zet die aan.
+  HINT_GSM_FIELD_FIX: Oplossing voor games die haperen in progressieve videomodi.
+  PARENLOCKCONFIG: Instellingen ouderlijk slot
+  PARENLOCK_PASSWORD: Wachtwoord ouderlijk slot
+  PARENLOCK_PASSWORD_HINT: Laat leeg om het ouderlijk slot uit te zetten.
+  PARENLOCK_ENTER_PASSWORD_TITLE: Wachtwoord ouderlijk slot invoeren
+  PARENLOCK_PASSWORD_INCORRECT: Wachtwoord ouderlijk slot onjuist.
+  PARENLOCK_DISABLE_WARNING: Ouderlijk slot uitgeschakeld.
+  BUILD_DETAILS: 'Buildopties:'
+  PARENLOCK_INVALID_PASSWORD: 'Fout: dit wachtwoord kan niet worden gebruikt.'
+  ERR_VMC_FRAGMENTED_CONTINUE: VMC-bestand %s is gefragmenteerd. Doorgaan met de geheugenkaart in sleuf %d?
+  AUDIO_SETTINGS: Audio-instellingen
+  SFX_VOLUME: Volume geluidseffecten
+  BOOT_SND_VOLUME: Volume opstartgeluid
+  CFM_VMODE_CHG: Wijziging van de videomodus bevestigen?
+  CACHE_HDD_GAME_LIST: Gamelijst cachen (HDD APA)
+  CFG_NOTIFICATION: Configuratie geladen van %s
+  THM_NOTIFICATION: Thema geladen van %s
+  LNG_NOTIFICATION: Taal geladen van %s
+  PARTITION_NOTIFICATION: Partitie %s gekoppeld.
+  GAME_SETTINGS_SAVED: Game-instellingen opgeslagen.
+  GAME_SETTINGS_REMOVED: Instellingen van %s verwijderd.
+  NET_UPDATE_HINT: Overschrijft bestaande compatibiliteitsinstellingen van games als dit aan staat.
+  SETTINGS_SOURCE: Instellingenmodus
+  PERGAME_SETTINGS: Per game
+  ALL_SETTINGS: Alles
+  GAME_SETTINGS_PROMPT: Kies de instellingen om te verwijderen.
+  FORUM_DETAILS: 'Ondersteuningsfora:'
+  INFO_TITLE: Titel
+  INFO_DEVELOPER: Ontwikkelaar
+  HINT_NEUTRINO_AUTO_ELF: Geeft het opstart-ELF van de game door aan Neutrino om een configuratie per titel op te zoeken. Standaard aan; een handmatig ingestelde Boot ELF-optie gaat voor.
+  HINT_POPSTARTER_PATH: Waar POPSTARTER.ELF staat. Leeg gelaten vult RIPPS2 er een in die het op een schijf vindt; overschrijf het om een andere te gebruiken, zoals usb:/POPS/POPSTARTER.ELF
+  NEUTRINO_ARGS_TOO_LONG: De Neutrino-argumenten zijn langer dan opgeslagen kan worden. Maak een veld korter voordat je opslaat.
+  NEUTRINO_LAUNCH_ARGS_OVERFLOW: De startargumenten van Neutrino overschrijden de veilige grens. Maak de algemene of game-argumenten korter.
+  NEUTRINO_AUTO_ELF: Automatisch Boot ELF (-elf)
+  HINT_NEUTRINO_PATH: 'Waar staat neutrino.elf? <niet ingesteld> = apparaat van de game -> mc0/mc1. Een eigen volledig pad wordt eerst geprobeerd. Voorbeelden: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf'
+  GAME_VIEW_MODE: Weergave PS2/PS1-games
+  HINT_GAME_VIEW_MODE: Alles toont PS2- en PS1-games samen en L3 wisselt tussen Alles, PS1, PS2. PS2 of PS1 toont alleen dat type en zet L3 uit. APPS en Favoriete games gebruiken hun eigen weergaveregels.
+  VIEW_MIXED: PS2- + PS1-games worden getoond
+  VIEW_PS1_ELF: PS1-ELF-apps worden getoond
+  APPS_DISPLAY: Weergave applicaties
+  HINT_APPS_DISPLAY: Alles toont elk ELF in één APPS-lijst met L3 uit. Apps / PS1ELF zet titels met [PS1] op een tweede L3-pagina; het starten blijft hetzelfde.
+  VIEW: Weergave
+  VIEW_PS2: Favoriete PS2-games worden getoond
+  VIEW_PS1: Favoriete PS1-games worden getoond
+  VIEW_ELF: Favoriete ELF's worden getoond
+  VIEW_ALL: Alle favoriete games worden getoond
+  VMC_FRAGMENTED_ON_CREATE: VMC gemaakt, maar hij is gefragmenteerd. Geheugenkaartemulatie heeft één ononderbroken bestand nodig, dus deze VMC wordt bij het starten overgeslagen en de echte kaart wordt gebruikt. Maak ruimte vrij en maak hem opnieuw, of kopieer er een van een ander apparaat.
+  KEYB_MOVE_CURSOR: Cursor verplaatsen
+  TITLECOLOR: Kleur gametitels
+  RA_CHECK_GAME: RetroAchievements-ondersteuning controleren
+  RA_TEST_LINK: RetroAchievements-pc-verbinding testen
+  RA_CHECKING_IMAGE: De image controleren, dit duurt een paar seconden...
+  RA_CHECK_RUNNING: Er loopt al een imagecontrole
+  RA_LOOKING_FOR_PC: Zoeken naar de pc-client...
+  RA_UL_UNSUPPORTED: UL/USBExtreme-games kunnen nog niet worden gecontroleerd
+  RA_UL_UNSUPPORTED2: Alleen gewone .iso-images in DVD/ of CD/ worden ondersteund
+  RA_UNKNOWN_IMAGE: RetroAchievements kent deze image niet
+  RA_STILL_IDENTIFYING: De pc is de image nog aan het herkennen
+  RA_TRY_AGAIN: Probeer het over een paar seconden opnieuw
+  RA_NO_SOCKET: De console kon geen netwerksocket openen
+  RA_NO_SOCKET2: Start de console opnieuw, of controleer het ETH-apparaat in de instellingen
+  RA_TEST_NO_SOCKET2: Controleer de kabel en ETH in de instellingen; als het netwerk werkt, start de console dan opnieuw op
+  RA_PC_NO_ANSWER: De pc-client antwoordde niet
+  RA_PC_NO_ANSWER2: Controleer of xeRAbora draait, of probeer de pc-verbindingstest
+  RA_SUPPORTED: Ondersteund door RetroAchievements
+  RA_START_TO_TRACK: Start de game om prestaties te volgen
+  RA_ACHIEVEMENTS: '%d prestaties'
+  RA_ACHIEVEMENTS_FULL: '%d prestaties -- %d ontgrendeld, %d niet ondersteund'
+  RA_HASH_FAILED: De hash van de image kon niet worden berekend
+  RA_HASH_FAILED2: Zie RA/hashes.txt naast de games voor de reden
+  RA_NET_BUSY: Het netwerk wordt gebruikt door een UDP-transport
+  RA_NET_BUSY2: RA heeft de SMB-stack nodig -- wissel van protocol, of maak de .wl op de pc
+  RA_NET_BUSY_HASH: De hash staat in RA/hashes.txt -- xeRAbora kan er de .wl mee maken
+  RA_NO_IP: De console heeft geen IP-adres
+  RA_NO_IP2: Controleer DHCP of het vaste adres in de netwerkinstellingen
+  RA_TEST_NO_ANSWER: Geen pc-client antwoordde binnen 3 seconden
+  RA_TEST_NO_ANSWER2: Console%s. Controleer of xeRAbora draait en UDP 18194 open is
+  RA_TEST_FOUND: Pc-client gevonden%s%s %s
+  RA_TEST_FOUND2: Antwoord in %u ms, console%s
+  RA_NA_NEUTRINO: RA-tracking heeft de <OPL>-kern nodig -- starten via Neutrino laadt ee_core nooit
+  RA_NA_UDPFS: RA-tracking is niet beschikbaar op UDPFS -- games starten via Neutrino
+  RA_NA_PS1: RA-tracking is niet beschikbaar voor PS1-games
+  RA_NA_HDD: APA-game-informatie of de HDD-instellingenmap is niet beschikbaar
+  RA_NA_HDD2: Stel een geldige HDD-instellingenmap in en vernieuw voordat je de ondersteuning controleert
+  RA_TELEMETRY: RetroAchievements-telemetrie
+  RA_BADGES: RetroAchievements-badges
+  HTTP_GAMES: HTTP-games
+  HTTP_SERVER: HTTP-server
+  HTTP_PORT: HTTP-poort
+  HTTP_BASE_PATH: HTTP-basispad
+  HTTP_TEST: HTTP-server testen
+  HTTP_TEST_OK: Server OK -- games weergegeven
+  HTTP_TEST_EMPTY: Catalogus is leeg -- geldig, maar het bewijst niets over byte-bereiken
+  HTTP_TEST_NO_ISO: De catalogus heeft geen ondersteunde image om een byte-bereik mee te testen
+  HTTP_ERR_CONNECT: Kan de HTTP-server niet bereiken
+  HTTP_ERR_CATALOG: games.csv ontbreekt, is onleesbaar of te groot
+  HTTP_ERR_RANGE: De server gaf niet precies de gevraagde bytes terug
+  HTTP_LAUNCH_UNAVAILABLE: Starten via HTTP is nog niet geïmplementeerd -- de catalogus kan alleen worden doorbladerd
+  HTTP_ERR_COMPRESSED: Gecomprimeerde images (.zso) worden nog niet ondersteund via HTTP
+  HTTP_NO_VMC: Virtuele geheugenkaarten zijn niet beschikbaar via HTTP -- gebruik een fysieke kaart
+  HTTP_TAB_HINT: HTTP leest games.csv van je server. Stel het adres, de poort en het basispad in bij de netwerkinstellingen en gebruik dan Testen.
+  RA_DISC_CHECK: 'RA: schijfondersteuning controleren'
+  RA_DISC_LAUNCH: 'RA: schijf starten'
+  RA_DISC_CHECKING: De schijf controleren voor RetroAchievements
+  RA_DISC_HASH_FAILED: De hash van de schijf kon niet worden berekend -- controleer RA/hashes.txt in de instellingenmap
+  RA_DISC_HOME_ERROR: Het instellingenpad kan niet worden gebruikt voor volglijsten van schijven
+  RA_DISC_ENABLE: Zet eerst RetroAchievements-telemetrie aan in de netwerkinstellingen
+  RA_DISC_CHECK_FIRST: 'Geen volglijst voor deze schijf -- gebruik eerst RA: schijfondersteuning controleren'
+  HDD_APA_TABLE_UNREADABLE_ERROR: '%d: HDD gevonden, maar de APA-partitietabel kan niet worden gelezen. Niet formatteren -- je games zijn misschien te herstellen.'
+  BDM_UNSUPPORTED_SECTOR_SIZE_ERROR: '%d: Een schijf is niet gekoppeld omdat de sectoren niet 512 bytes zijn (bijv. een schijf met 4K-sectoren). OPL kan alleen sectoren van 512 bytes lezen.'
+  HDD_PARTITION_RENAME_UNSUPPORTED: Deze titel is een eigen APA-partitie en OPL bewerkt de partitietabel nooit. Wijzig de naam op een pc.
+  POPS_SETTINGS_UNREADABLE: Kon de instellingen van POPSTARTER niet lezen -- de geheugenkaart is bezet of onleesbaar. Probeer het opnieuw als het laden klaar is.
+  GLOBAL_PS_EMULATION_SETTINGS: Algemene PS-emulatie-instellingen
+  RA_NO_LINK_UNTRACKED: Netwerk niet beschikbaar -- deze keer starten zonder RetroAchievements.
+  IGR_USB_DRIVERS_PROMPT: Het IGR-pad staat op USB, maar in %s ontbreken USBD.IRX en USBHDFSD.IRX, die de console nodig heeft om na een In-Game Reset bij USB te komen. Zonder die bestanden valt de IGR terug naar de PS2-browser. Nu de drivers van RiptOPL daarheen kopiëren? FMCB, OpenTuna en andere exploits laden deze bestanden ook en kunnen zich ermee anders gedragen. Bestaande bestanden worden nooit vervangen. Alleen FAT32-USB.
+  IGR_USB_DRIVERS_FAILED: Kon de USB-drivers niet naar %s kopiëren (kaart vol of niet beschrijfbaar). De IGR valt terug naar de PS2-browser.
+  OFFICIAL_CFG_NOTIFICATION: Officiële OPL-instellingen geladen van %s
+  CFM_VMODE_HOLD_KEEP: Ingedrukt houden om te behouden
+  BDM_PS2_FOLDERS_UNREADABLE: Kon de CD- of DVD-map in %s niet openen (fout %d), dus dat apparaat toont geen PS2-games. Druk op SELECT op de pagina ervan om het opnieuw te proberen.
+  NEUTRINO_BD_NO_DEVICE_NUMBER: Het Neutrino-bestandssysteem staat op bd, maar dit apparaat heeft zijn apparaatnummer nooit gemeld, dus Neutrino kan er niet naar wijzen. Zet het Neutrino-bestandssysteem van deze game op Auto of exfat.
+  CFM_VMODE_REVERT_IN: Terugzetten over %d s
+  EMBER_DITHER: Ember-dithering
+  HINT_EMBER_DITHER: Ember-dithering (Aan of Uit), geschreven naar EMBER/settings.txt op het startapparaat. Een waarde per game gaat voor.
+  EMBER_SHADING: Ember-shading
+  HINT_EMBER_SHADING: 'Ember-kleurdiepte: 15-bits, of 24-bits (experimenteel). Geschreven naar EMBER/settings.txt op het startapparaat. Een waarde per game gaat voor.'
+  EMBER_CONTROLLER: Ember-controller
+  HINT_EMBER_CONTROLLER: 'Ember-controllermodus: Auto, Analoog of D2A. Meestal het best per game ingesteld (Driehoek > Ember-game-instellingen), wat voorgaat.'
+  EMBER_480P_CONFIRM: Ember in 480p geeft geen beeld via composiet. 480p gebruiken?
+  EMBER_SHADING_24: 24-bits (experimenteel)
+  EMBER_GAME_SETTINGS: Ember-game-instellingen
+  HINT_EMBER_GAME_SETTING: Alleen deze game. Druk op OK om vóór het starten EMBER/games/<naam>/settings.txt te schrijven. Een onaangeroerde Standaard behoudt een bestaande waarde in het bestand; een waarde terugzetten naar Standaard haalt de overschrijving weg.
+  EMBER_TIMING: Ember-timing
+  HINT_EMBER_TIMING: 'Ember-videotiming: Auto volgt de regio van de schijf, NTSC dwingt 60 Hz af, PAL dwingt 50 Hz af. Geschreven naar EMBER/settings.txt op het startapparaat.'
+  EMBER_GLOBAL_WARNING: Deze Ember-instellingen gelden voor elke PS1-game, en sommige games crashen ermee. Om maar één game te wijzigen, gebruik je Driehoek > Ember-game-instellingen op die game.
+  HINT_COVERFLOW_COUNT: Hoeveel hoezen RIPFLOW aan elke kant van de gekozen hoes toont.
+  HINT_COVERFLOW_SCALE: Hoe groot RIPFLOW de gekozen hoes tekent ten opzichte van de andere.
+  HINT_COVERFLOW_ANIM: Hoe snel de hoezen glijden als je door de flow beweegt.
+  HINT_NARGS_QB: 'Quick Boot: slaat het eigen startscherm van Neutrino over. Hier aan wordt het voor elke game verzonden; uit verzendt RIPPS2 het nog steeds zelf voor USB-, iLink- en netwerkgames, waar het nodig is.'
+  HINT_NARGS_DBC: 'Debugkleuren: Neutrino vult het scherm met een kleur bij elke laadstap, zodat een foto laat zien waar een game stopt.'
+  HINT_NARGS_LOGO: Toont het PS2-logo vóór de game (een tweede IOP-herstart, die sommige iLink-schijven nodig hebben). Hier uit volgt RIPPS2 Games starten > PS2-logo, en verzendt het nooit voor MMCE- of netwerkgames.
+  HINT_NARGS_CWD: 'De map die de game als zijn eigen map ziet. Leeg: de standaard van Neutrino.'
+  HINT_NARGS_CFG: 'Een eigen Neutrino-configuratiebestand (-cfg). Leeg: dat van Neutrino.'
+  HINT_NARGS_ELF: 'Start dit ELF in plaats van het opstartbestand dat de schijf noemt. Leeg: dat van de game zelf.'
+  HINT_NARGS_ATA0: Een HDD-image die Neutrino koppelt als de interne HDD van de console, voor games die de HDD gebruiken (-ata0).
+  HINT_NARGS_ATA0ID: Het ID-bestand dat bij die HDD-image hoort (-ata0id).
+  HINT_NARGS_ATA1: Een tweede HDD-image (-ata1).
+  PS1_SAVE_GUIDANCE: PS1-saves hangen af van Ember of POPSTARTER; PS2-VMC-instellingen gelden niet.
+  NEUTRINO_SHOW_ARGS: Startargumenten tonen
+  HINT_NEUTRINO_SHOW_ARGS: Toont vóór elke start via Neutrino elk argument dat Neutrino krijgt en vraagt of je wilt doorgaan. Terug keert terug naar het menu zonder te starten.
+  NEUTRINO_ARGS_CONFIRM: Neutrino start met deze argumenten. Starten?
+  HINT_NARGS_EXTRA: Andere Neutrino-vlaggen, gescheiden door spaties, verzonden na alles hierboven. RIPPS2 voegt altijd -bsd en -dvd toe voor de schijf en ISO van de game, -mc0 en -mc1 voor de VMC's, -gsm voor de videomodus en de eigen compatibiliteitsmodi van de game. Een vlag met een eigen regel hierboven (zoals -logo) gaat bij opslaan naar die regel en wordt nog steeds verzonden.
+  GAME_TYPE_LABELS: Labels [PS1]/[PS2] tonen
+  NEUTRINO_CHEATS_WRITE_FAILED: De cheatlijst kon niet in de Neutrino-map worden opgeslagen, dus Neutrino kan hem niet gebruiken. Zonder cheats starten?
+  AUTO_CREATE_VMC: VMC maken bij eerste start
+  HINT_AUTO_CREATE_VMC: Een PS2-game starten zonder VMC in sleuf 1 maakt een kaart van 8 MB op het apparaat van de game, genoemd zoals het VMC-scherm voorstelt (gedeeld door elke schijf van de game), en wijst die toe. Niet voor de interne HDD onder Neutrino.
+  AUTO_VMC_CREATING: De VMC van deze game maken...
+  AUTO_VMC_FAILED: Kon de VMC van deze game niet maken. De game start zonder.
+  SAVE_ICONS: 3D-savepictogrammen
+  HINT_SAVE_ICONS: Toont het savepictogram van de gekozen game, draaiend, waar het thema er een plek voor heeft. Leest eerst de eigen VMC van de game, daarna de geheugenkaarten.
+  NETBOOT_RESTART_NOW: Het netwerkprotocol verandert na een herstart. Instellingen opslaan en OPL nu opnieuw starten?
+  HINT_NET_PROTOCOL: 'Welke netwerkdienst RiptOPL gebruikt: een SMB-share, UDPFS, UDPBD of HTTP. Dezelfde instelling als bij Gamebronnen. Overstappen van een dienst die al draait, vraagt een herstart.'
+  HINT_UDPFS_ACCESS: Alleen UDPFS. Bestanden leest losse ISO's uit de gamemap van de server; IMG leest een schijfimage als schijf. SMB en HTTP gebruiken altijd Bestanden, UDPBD altijd IMG.
+  HINT_SMB_VERSION: Welke SMB-versie gebruikt wordt met de share op de pc.
+  HINT_NET_ADVANCED: Ontgrendelt Ethernet-verbindingsmodus en de SMB-poort voor bewerken.
+  HINT_ETH_LINK_MODE: Dwingt de snelheid en duplex van de netwerkverbinding af. Laat op Auto staan, tenzij de verbinding steeds wegvalt.
+  HINT_IP_ADDR_TYPE: Vast gebruikt het adres hieronder; DHCP vraagt het aan je router. UDPFS en UDPBD gebruiken altijd Vast.
+  HINT_PS2_IP: Het eigen IP-adres van de PS2. Kies er een dat geen ander apparaat gebruikt, in hetzelfde bereik als je pc.
+  HINT_NETMASK: Subnetmasker, meestal 255.255.255.0.
+  HINT_GATEWAY: Het adres van je router, meestal met dezelfde eerste drie getallen en eindigend op .1.
+  HINT_DNS: Adres van de DNS-server. Meestal hetzelfde als de gateway.
+  HINT_SMB_ADDR_TYPE: De pc bereiken via zijn IP-adres of via zijn NetBIOS-naam (computernaam).
+  HINT_SMB_ADDRESS: 'De pc die je games deelt: zijn IP-adres, of zijn computernaam als Adrestype NetBIOS is.'
+  HINT_SMB_PORT: 'SMB-poort. Moet overeenkomen met de pc: PS2 Servers gebruikt 1111, Windows- en Samba-shares gebruiken 445.'
+  HINT_SMB_USER: SMB-gebruikersnaam. guest werkt voor de meeste shares.
+  HINT_HTTP_SERVER: IP-adres van de HTTP-gameserver.
+  HINT_HTTP_PORT: Poort waarop de HTTP-gameserver luistert.
+  HINT_HTTP_BASE: Map op de HTTP-server waarin games.csv staat. / is de hoofdmap van de server.
+  HINT_HTTP_TEST: Probeert de HTTP-server met de waarden hierboven en meldt wat het vond.
+  HINT_RA_TELEMETRY: Hoofdschakelaar voor RetroAchievements. Uit start games zonder netwerkstack of snapshots, net als een normale build.
+  HINT_RA_BADGES: Markeert in de lijst games die prestaties hebben. Blijft donker zolang telemetrie uit staat.
+  HINT_POPS_NET_BUTTON: Bewerkt de eigen netwerkbestanden van POPSTARTER (IPCONFIG.DAT, SMBCONFIG.DAT), die PS1-games via SMB nodig hebben.
+  HINT_POPS_IP_TYPE: 'Hoe de PS2 zijn adres krijgt terwijl een PS1-game via SMB draait: Vast of DHCP.'
+  HINT_POPS_IP: Het IP-adres van de PS2 terwijl een PS1-game via SMB draait.
+  HINT_POPS_SMB_IP: IP-adres van de pc die je PS1-games deelt.
+  HINT_POPS_SMB_SHARE: Naam van de share op die pc waarin de POPS-map staat.
+  HINT_LASTPLAYED: Begint bij de game die je de vorige keer startte.
+  HINT_LANGUAGE: Menutaal. Voeg er meer toe door lang_*.lng-bestanden in een LNG-map te zetten.
+  HINT_GSM_DEFAULTS_BUTTON: Videomodusoplossingen die elke game krijgt, tenzij hij eigen GSM-instellingen heeft.
+  HINT_DEFDEVICE: De pagina waarop RiptOPL bij opstarten opent.
+  HINT_MMCE_MODE: Games op een SD2PSX of MemCard PRO2. Automatisch start bij opstarten, Handmatig als je de pagina opent, Uit verbergt hem.
+  HINT_MMCE_SETTINGS_BUTTON: Sleuf, IGR-bootcard, GameID en timingopties voor MMCE.
+  HINT_ENABLE_USB: Laadt de USB-opslagdriver.
+  HINT_ENABLE_MX4SIO: Laadt de driver voor de MX4SIO-SD-kaartadapter.
+  HINT_ENABLE_ILINK: Laadt de iLink-opslagdriver (FireWire).
+  HINT_NETSTART: 'Start het netwerk: Automatisch bij opstarten, Handmatig als je de pagina opent. Uit laat de netwerkadapter met rust.'
+  HINT_APPMODE: De pagina Apps. Automatisch start bij opstarten, Handmatig als je hem opent, Uit verbergt hem.
+  HINT_FAVMODE: De pagina Favoriete games. Automatisch start bij opstarten, Handmatig als je hem opent, Uit verbergt hem.
+  HINT_BDMA_BUTTON: Welke exFAT-driver POPSTARTER gebruikt voor PS1-games op USB, MX4SIO, MMCE, HDD of iLink.
+  HINT_VCD_LIST_BUTTON: 'Hoe PS1-games worden getoond: game-ID''s verbergen, alleen schijf 1 tonen, PP-partities van de HDD tonen.'
+  HINT_MMCE_SLOT: In welke geheugenkaartsleuf het MMCE-apparaat zit. Automatisch vindt hem.
+  HINT_MMCE_GAMEID: Vertelt het MMCE-apparaat welke game start, zodat het kan overschakelen naar de geheugenkaart van die game.
+  HINT_MMCE_COMM_BUTTON: Timingopties voor de MMCE-verbinding. Wijzig ze alleen als games vastlopen of traag laden.
+  HINT_MMCE_PATH_BUTTON: Waar op de MMCE-kaart de gamemappen staan.
+  HINT_MMCE_PREFIX: Submap op de MMCE-kaart met CD, DVD en de andere OPL-mappen. Leeg gebruikt de hoofdmap van de kaart.
+  HINT_GAME_TYPE_LABELS: Begint elke gamenaam met [PS1] of [PS2]. Alleen weergave.
+  HINT_MENU_VMODE: Video-uitvoer van het menu. Games gebruiken in plaats daarvan GSM. Houd Bevestigen ingedrukt om een nieuwe modus te behouden.
+  HINT_THEME: Het uiterlijk van het menu. Thema's worden gelezen uit de THM-map op elk apparaat.
+  HINT_COVERFLOW_BUTTON: Aantal hoezen, grootte, animatie en verduistering voor het Coverflow-thema.
+  HINT_ARTWORK_BUTTON: 'Welke afbeeldingen laden: hoezen, schijfafbeeldingen, achtergronden en savepictogrammen.'
+  HINT_COLORS_BUTTON: Kleuren van tekst, markering, dialoogvensters en achtergrond.
+  HINT_NOTIFICATIONS: Korte meldingen als een configuratie-, thema- of taalbestand laadt.
+  HINT_AUTOSORT: Sorteert gamelijsten van A tot Z. Uit houdt de volgorde aan waarin ze werden gevonden.
+  HINT_AUTOREFRESH: Voegt games van nieuw aangesloten apparaten toe zonder handmatig te vernieuwen.
+  HINT_COVERART: Laadt hoesafbeeldingen uit de ART-map.
+  HINT_DISCART: Toont schijfafbeeldingen (<ID>_ICO). Uit verbergt de schijf, maar houdt hoezen en achtergronden.
+  HINT_BGART: Toont de achtergrond van een game (<ID>_BG) als het thema er een gebruikt.
+  HINT_ART_TAR: Leest ook afbeeldingen die in ART/art.tar zijn ingepakt.
+  HINT_ART_DELAY: Hoe lang de cursor op een game rust voordat de afbeeldingen laden. Hoger slaat afbeeldingen over als je snel scrolt.
+  HINT_TXTCOLOR: Kleur van gewone menutekst.
+  HINT_SELCOLOR: Kleur van het gemarkeerde item.
+  HINT_UICOLOR: Achtergrondtint van dialoogvensters.
+  HINT_TITLECOLOR: Kleur van gametitels in de lijst.
+  HINT_BGCOLOR: Achtergrondkleur van het menu.
+  HINT_PLASCOLOR: Kleur die in de bewegende achtergrond wordt gemengd.
+  HINT_RESETCOLOR: Zet de ingebouwde kleuren van RiptOPL terug, niet die van het thema.
+  HINT_WIDESCREEN: Tekent het menu voor een 16:9-tv.
+  HINT_XOFF: Verschuift het menu naar links of rechts op het scherm.
+  HINT_YOFF: Verschuift het menu omhoog of omlaag op het scherm.
+  HINT_MENU_OVERSCAN: Krimpt het menu naar binnen als de tv de randen afsnijdt.
+  HINT_APPLYGAMEID: Toont een barcode als een game start, zodat Pixel FX-, RetroGEM- en PS2Digital-apparaten van profiel wisselen.
+  HINT_NEUTRINO_DEFAULTS_BUTTON: Pad, videomodus en argumenten van Neutrino voor elke game.
+  HINT_OSD_DEFAULTS_BUTTON: Consoletaal, schermgrootte en videomodus die aan games worden doorgegeven.
+  HINT_ENWRITEOP: Staat toe games te hernoemen en te verwijderen en VMC's te maken. Raakt de partitietabel van de HDD nooit aan.
+  HINT_DEBUG: 'Hulp voor ontwikkelaars: gekleurde schermen terwijl een game opstart, en tellers voor het laden van afbeeldingen in het menu.'
+  HINT_BDMPREFIX: Submap op USB-, MX4SIO-, iLink- en exFAT-schijven met de gamemappen. Leeg gebruikt de hoofdmap van de schijf.
+  HINT_ETHPREFIX: Submap op de SMB-share met de gamemappen. Leeg gebruikt de hoofdmap van de share.
+  HINT_HDDGAMELISTCACHE: Onthoudt de gamelijst van de APA-HDD om latere scans te versnellen.
+  HINT_BDMCACHE: Vooruitleescache voor USB en andere BDM-schijven in de game. Groter kan streaming soepeler maken, maar gebruikt meer geheugen.
+  HINT_HDDCACHE: Vooruitleescache voor de interne HDD in de game.
+  HINT_SMBCACHE: Vooruitleescache voor SMB in de game.
+  HINT_CORE_LOADER: Kern voor deze game waar beide worden ondersteund. UDPFS/UDPBD zijn alleen Neutrino; SMB/HTTP zijn alleen <OPL>. Standaard volgt Games starten.
+  HINT_DMA_MODE: Overdrachtsmodus van de interne HDD voor deze game. Verlaag hem als de game hapert of vastloopt.
+  HINT_DNAS_GAMEID: Schijf-ID voor DNAS-onlinegames. Laden van schijf leest het van de originele schijf.
+  HINT_LOAD_FROM_DISC: Leest het DNAS-ID van de originele schijf in de lade.
+  HINT_ALTSTARTUP: Start dit ELF vanaf de schijfimage in plaats van het ELF dat SYSTEM.CNF noemt.
+  HINT_VMC_DEFINE: Kies, maak of verander de grootte van de virtuele geheugenkaart van deze sleuf.
+  HINT_VMC_ACTION: Algemene gebruiken geeft deze sleuf een gedeelde kaart; Resetten wist de keuze.
+  HINT_VMC_NAME: Naam van het kaartbestand, bewaard in de map VMC.
+  HINT_VMC_CREATE: Maakt de kaart, of past een nieuwe grootte erop toe.
+  HINT_VMC_DELETE: Verwijdert dit kaartbestand.
+  HINT_SETTINGS_SOURCE: Algemeen gebruikt de gedeelde instellingen; Per game bewaart deze alleen voor deze game.
+  HINT_PADMACRO_TOGGLE: Terwijl knop ingedrukt vertraagt de stick alleen zolang je de knop vasthoudt; Wisselen met knop zet het aan en uit.
+  HINT_SFX: Geluidseffecten van het menu.
+  HINT_BOOT_SND: Speelt een geluid af als RiptOPL start.
+  HINT_BGM: Speelt de muziek van het thema af, of je bestand Standaard themamuziek.
+  HINT_SFX_VOLUME: Volume van de geluidseffecten van het menu.
+  HINT_BOOT_SND_VOLUME: Volume van het opstartgeluid.
+  HINT_BGM_VOLUME: Volume van de achtergrondmuziek.
+  HINT_SCROLL: Hoe snel lijsten scrollen terwijl je een richting vasthoudt.
+  HINT_SELECTBUTTON: 'Welke knop bevestigt: Kruis of Cirkel.'
+  HINT_XSENSITIVITY: Hoe makkelijk de linkerstick de cursor naar links en rechts beweegt. Uit negeert hem.
+  HINT_YSENSITIVITY: Hoe makkelijk de linkerstick de cursor omhoog en omlaag beweegt. Uit negeert hem.
+  HINT_PADEMU_GLOBAL: DualShock 3/4 via USB of bluetooth, en multitap, voor elke game.
+  HINT_PADMACRO_GLOBAL: Stickvertraging, as omkeren en turbo voor elke game.
+  HINT_COVERFLOW_DIM: Maakt de zijhoezen donkerder.
+  HINT_OSD_ENABLE: Geeft de instellingen hieronder door aan de game. Uit gebruikt die van de console.
+  HINT_OSD_TVASPECT: Tv-vorm die aan de game wordt doorgegeven.
+  HINT_OSD_VMODE: Videomodus die aan de game wordt doorgegeven.
+  DNAS_ID: DNAS-ID
+  NEUTRINO_PADEMU_WARN: Pademulatie is niet beschikbaar met Neutrino. Gebruik een PS2-controller of een bron die de <OPL>-kern ondersteunt.
+  RA_MODE: RA-modus
+  RA_HOST_IP: IP van RA-hulp (0.0.0.0 = automatisch)
+  HINT_RA_HOST_IP: Optioneel IPv4-adres van een aparte pc voor RetroAchievements. Gebruik 0.0.0.0 voor de oude SMB/HTTP-terugval of Xerabora-detectie. Wijzigt de gameserverinstellingen niet.
+  HINT_RA_MODE: Kies de pc-client. Xerabora is standaard; Caduceus controleert eerst zijn aangemelde sessie.
+  RA_CADUCEUS_OFFLINE: De RA-sessie van Caduceus is offline.
+  RA_CADUCEUS_SIGN_IN: Meld je in Caduceus aan bij RetroAchievements en probeer het opnieuw.
+  FAV_SAVING: Opslaan in Favoriete games...
+  FAV_SAVED: Opgeslagen in Favoriete games
+  FAV_SAVE_FAILED: Kon niet opslaan in Favoriete games
+  CAD_ACHIEVEMENTS: Caduceus-prestaties
+  CAD_VIEW_ACHIEVEMENTS: Prestaties bekijken
+  CAD_USE_LIBRARY: Blader door deze game via Caduceus-prestaties in het hoofdmenu.
+  CAD_HASH_UNSUPPORTED: Van dit formaat kan geen hash worden berekend. Blader in plaats daarvan door de accountbibliotheek.
+  CAD_HEADING: PRESTATIES
+  CAD_LIBRARY: RetroAchievements-accountbibliotheek
+  CAD_FILTER_ALL: Alle
+  CAD_EARNED: Behaald
+  CAD_LOCKED: Vergrendeld
+  CAD_HARDCORE: Hardcore
+  CAD_PROGRESS: '%d / %d behaald  |  %s'
+  CAD_ONE_GAME: '%d game in account'
+  CAD_GAMES: '%d games in account'
+  CAD_GAME_PROGRESS: '%d / %d prestaties  |  %d hardcore'
+  CAD_POINTS: '%d ptn  |  %s'
+  CAD_EMPTY_LIBRARY: Geen games met voortgang in dit account.
+  CAD_EMPTY_FILTER: Geen prestaties die bij dit filter passen.
+  CAD_LOADING: Prestaties laden...
+  CAD_PAIR: Meld je aan bij Caduceus en koppel ART/CADUCEUS.KEY op je SMB-share.
+  CAD_UNKNOWN_GAME: Deze game staat niet in de Caduceus-catalogus. Vernieuw de catalogus op de pc.
+  CAD_CONNECTION_ERROR: Kan Caduceus niet bevragen. Controleer de verbinding en druk dan op Select om het opnieuw te proberen.
+  CAD_BACK_REFRESH: Terug keert terug naar OPL. Select vernieuwt deze pagina.
+  CAD_LIBRARY_CONTROLS: 'L1/R1: pagina   Bevestigen: openen   Select: vernieuwen'
+  CAD_GAME_CONTROLS: 'L1/R1: pagina   Vierkant: filter   Select: vernieuwen'
+  CAD_BACK: Terug
+  CAD_UNTRACKED: Caduceus is niet klaar. Deze keer starten zonder prestaties.
+  PS1_RA_USB_REQUIRED: PS1-prestaties vereisen een USB-VCD via POPStarter
+  PS1_RA_REMOVE_PREVIOUS: Kan de vorige PS1-prestatiemodule niet verwijderen
+  PS1_RA_PREPARE_FAILED: Kan PS1-prestaties niet voorbereiden. Bewaar of verplaats POPS/MODULE_9.IRX en controleer de schrijftoegang van het apparaat.
+  PS1_RA_CLEAN_DELETE: 'Ongebruikte RA-module van RiptOPL: POPS/MODULE_9.IRX. Verwijderen voor een schone start?'
+  PS1_RA_CLEAN_FAILED: Kan de ongebruikte RA-module niet verwijderen.
+  PS1_RA_CLEAN_CONTINUE: Toch doorgaan? Een achtergebleven RA-module kan verouderde telemetrie uitvoeren. Nee annuleert het starten.
+  FAV_REMOVED: Verwijderd uit Favoriete games
+  FAV_REMOVE_FAILED: Kon niet verwijderen uit Favoriete games
+  POPS_UDPFS_SETTINGS: POPS UDPFS-netwerkinstellingen
+  POPS_UDPFS_DISCOVERY: Slaat op in elke POPS-map op USB. Server 0.0.0.0 gebruikt detectie.
+  POPS_UDPFS_NOT_READY: POPS UDPFS heeft overeenkomende geldige IPCONFIG.DAT en UDPFSCONFIG.DAT nodig in elke POPS-map op USB. Stel ze in bij POPS-netwerkinstellingen.
+  HINT_POPS_UDPFS_IP: Vast PS2-IP dat de POPS UDPFS-driver gebruikt na zijn IOP-reset.
+  POPS_UDPFS_ALL_USB_FOLDERS: Alle POPS-mappen op USB
+  POPS_UDPFS_INVALID_SUFFIX: ' (ongeldig)'
+  POPS_UDPFS_INCOMPLETE_SUFFIX: ' (onvolledig)'
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS heeft het driverpaar .udpfs nodig, geïnstalleerd op de geheugenkaart. Zet het er handmatig op of zet BDMA Toepassen bij starten aan.
+  VMC_REPLACE_REQUIRES_DELETE: De VMC-grootte wijzigen zou de opgeslagen games wissen. Maak een back-up van de bestaande VMC en gebruik Verwijderen voordat je een nieuwe grootte maakt.
+  VMC_CREATE_FAILED: Kon de VMC niet maken. Controleer het apparaat, de verbinding en de schrijftoegang. Bestaande saves zijn niet vervangen.
+  RA_EXPERIMENTAL_CARDS: Experimentele Caduceus-kaarten
+  HINT_RA_EXPERIMENTAL_CARDS: Experimentele prestatiekaarten in PS2-games. Kunnen flikkeren of games laten vastlopen. Alleen Caduceus; Uit gebruikt de gouden puls. Werkt vanaf de volgende gamestart.
+  RA_NEUTRINO_UNTRACKED: Neutrino RA is niet beschikbaar voor deze start. Controleer de RA-runtime, het hulp-IP en de opgeslagen volglijst. Starten zonder prestaties.
+  UDPFS_IP_CONFLICT: Een ander apparaat in je netwerk gebruikt het IP-adres van deze PS2, dus de antwoorden van de UDPFS-server gaan daarheen. Stel een ander PS2-IP in bij Netwerkinstellingen.
+  XERA_ACHIEVEMENTS: RetroAchievements-bibliotheek (xeRAbora)
+  XERA_USE_LIBRARY: Blader door deze game via de RetroAchievements-bibliotheek in het hoofdmenu.
+  XERA_OPEN_NETWORK: Kan xeRAbora niet bereiken. Zet OPEN TO THE NETWORK aan in de instellingen ervan, controleer het IP van de RA-hulp en de firewall van de pc.
+  XERA_UNKNOWN_GAME: xeRAbora kent deze image niet. Voer eerst de RA-controle van gameondersteuning uit.
+  XERA_NOT_PLAYED: Nog niet in je RetroAchievements-bibliotheek. Speel het één keer met prestaties en druk dan op Select.
+  XERA_CONNECTION_ERROR: Kan de lijst niet lezen van xeRAbora. Druk op Select om het opnieuw te proberen.
+  CAD_PAIR_UDPFS: Kan Caduceus niet bereiken. Koppel ART/CADUCEUS.KEY in de map die PS2-Servers deelt, en stel het IP van de RA-hulp in.
+  RA_WL_NOT_SAVED: Kon de volglijst niet opslaan. Zorg dat het apparaat of de share van de game beschrijfbaar is en controleer opnieuw.
+  RA_UDPFS_LOAD_FIRST: Open de UDPFS-pagina één keer zodat de netwerkmodule laadt, en probeer het opnieuw.
+  CAD_UDPFS_IMG: 'De Caduceus-browser heeft SMB of UDPFS Bestanden nodig: UDPFS IMG heeft geen gedeelde map voor zijn sleutel.'
+  XERA_SET_CLOCK: Nog niet in je RetroAchievements-bibliotheek. Stel de klok van de console in bij de systeeminstellingen om de volledige lijst te zien, of speel het één keer met prestaties.
+  CFG_TITLES: CFG-titels in gamelijsten tonen
+  HINT_CFG_TITLES: Toont de titel uit de CFG van elke game in plaats van de bestandsnaam, en sorteert erop. Leest elke CFG als een lijst vernieuwt, dus lijsten laden langzamer. Alleen weergave.
+  AUTO_VMC_INVALID: Het VMC-bestand van deze game bestaat, maar is geen geldige geheugenkaart, dus het is niet gebruikt of vervangen. De game start zonder; controleer het in het VMC-menu.
+  AUTO_VMC_STILL_RUNNING: De VMC van deze game wordt nog gemaakt. Start de game zo opnieuw.
+  NEUTRINO_DVR_QUICKBOOT: Starten van DVR vereist de overgang naar PSX-modus. Haal -qb weg uit de algemene en per-game Neutrino-argumenten.
+  NEUTRINO_DVR_FILE_MISSING: 'De Neutrino-installatie voor DVR is onvolledig. Vereist bestand ontbreekt:'
+  PARENLOCK_GAME: Ouderlijk slot
+  PARENLOCK_GAME_HINT: Vraag het wachtwoord van het ouderlijk slot om deze game te starten.
+  PARENLOCK_GAME_NO_PASSWORD: Stel een wachtwoord voor het ouderlijk slot in, anders wordt deze game niet vergrendeld.
+  HINT_ENABLE_PCCF: PC CARD CompactFlash van vroege Japanse PS2's. Alleen echte PS2-games; CF heeft exclusieve toegang tot de PC CARD nodig. Start opnieuw om die vrij te geven.
+  PCCF_GAMES: PC CARD CF-games
+  PCCF_UNAVAILABLE: 'CF niet beschikbaar: vereist een vroege Japanse PS2 met PC CARD, een compatibele kaart en geen actieve DEV9-, HDD- of netwerkdriver.'
+  PCCF_UNSUPPORTED_GAME: CF ondersteunt nu alleen echte PS2-games. CF-VMC, PS1 laden en netwerkprestaties zijn niet beschikbaar.
+  HINT_ENABLE_DVR: Experimentele detectie van DESR DVR-ISO's. Vereist dat de HDD-bron aan staat; games starten vereist een externe Neutrino met DVR-ondersteuning.
