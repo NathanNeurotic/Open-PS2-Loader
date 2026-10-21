@@ -513,6 +513,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/httpclient clean
 	echo " -bdm"
 	$(MAKE) -C modules/bdm clean
+	echo " -IEEE1394_bd"
+	$(MAKE) -C modules/ilink/IEEE1394_bd clean
 	echo " -atad (ata_bd)"
 	$(MAKE) -C modules/hdd/atad clean
 	echo " -xhdd"
@@ -864,12 +866,25 @@ $(EE_ASM_DIR)bdmfs_fatfs.c: $(PS2SDK)/iop/irx/bdmfs_fatfs.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)iLinkman.c: $(PS2SDK)/iop/irx/iLinkman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
+# FORK-VENDORED IEEE1394_bd (modules/ilink/IEEE1394_bd, see its ORIGIN.txt): ps2sdk's i.LINK block
+# device driver with a login window that outlasts the drive's post-reset hold, a bounded TEST UNIT
+# READY and no device published before it is ready (#1018). Menu and game load the same binary.
+# Always enter the sub-make so an edited source rebuilds the IRX.
+.PHONY: ilink-bd-submake
+ilink-bd-submake:
+
+modules/ilink/IEEE1394_bd/IEEE1394_bd.irx: ilink-bd-submake
+	$(MAKE) -C modules/ilink/IEEE1394_bd
+
+modules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx: ilink-bd-submake
+	$(MAKE) -C modules/ilink/IEEE1394_bd MINI=1
+
 ifeq ($(DEBUG),1)
 # block device drivers with printf's
 $(EE_ASM_DIR)usbmass_bd.c: $(PS2SDK)/iop/irx/usbmass_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)IEEE1394_bd.c: $(PS2SDK)/iop/irx/IEEE1394_bd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)IEEE1394_bd.c: modules/ilink/IEEE1394_bd/IEEE1394_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)mx4sio_bd.c: $(PS2SDK)/iop/irx/mx4sio_bd.irx | $(EE_ASM_DIR)
@@ -879,7 +894,7 @@ else
 $(EE_ASM_DIR)usbmass_bd.c: $(PS2SDK)/iop/irx/usbmass_bd_mini.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)IEEE1394_bd.c: $(PS2SDK)/iop/irx/IEEE1394_bd_mini.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)IEEE1394_bd.c: modules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)mx4sio_bd.c: $(PS2SDK)/iop/irx/mx4sio_bd_mini.irx | $(EE_ASM_DIR)

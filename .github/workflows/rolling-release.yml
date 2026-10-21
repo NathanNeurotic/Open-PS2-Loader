@@ -284,6 +284,24 @@ jobs:
           echo "Staged ps2dev-latest rolling assets:"
           ls -la rolling
 
+      - name: Stage the patched i.LINK driver for the Neutrino bundle (#1018)
+        # The same IEEE1394_bd_mini.irx the ELF embeds, built from modules/ilink/IEEE1394_bd. Kept out of
+        # rolling/ (everything there is published as a release asset) and staged before the DS5 build's
+        # make clean removes it. publish-rolling puts it in neutrino/modules/.
+        run: |
+          set -eu
+          mkdir -p neutrino-ilink
+          cp -f modules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx neutrino-ilink/IEEE1394_bd_mini.irx
+          ls -la neutrino-ilink
+
+      - name: Upload the patched i.LINK driver
+        uses: actions/upload-artifact@v6
+        with:
+          name: neutrino-ilink-driver
+          path: neutrino-ilink
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Build + stage DualSense (DS5) loader (PS2DEVROLLING)
         # Named DUALSENSE=1 loader on the ps2dev:latest toolchain. Like the plain PS2DEVROLLING
         # build this rides the moving SDK tag (may not boot -- issue #102); DS5 owners who want a
@@ -534,6 +552,14 @@ jobs:
         with:
           name: rolling-assets-ps2dev-latest
           path: rolling
+
+      - name: Download the patched i.LINK driver for the Neutrino bundle
+        # Required, like the ps2dev-latest build that produces it: the bundle must not silently fall
+        # back to upstream's driver, which loses its login after an IOP reset (#1018).
+        uses: actions/download-artifact@v8
+        with:
+          name: neutrino-ilink-driver
+          path: neutrino-ilink
 
       - name: Download pinned rolling assets
         # Optional: the pinned fallback build may have failed; publish what we have.
@@ -833,7 +859,9 @@ jobs:
           # EXTRACTED into a plain folder so the user just drag-and-drops it onto the card (no
           # zip-in-zip). Both installable ZIPs require it; a failed fetch fails packaging. The archive
           # root holds neutrino.elf + config/ + modules/, so the neutrino/ folder copies straight to
-          # mc?:/neutrino/. RiptOPL adds ONLY config/bsd-udpfsbd.toml (UDPFS); else the official build.
+          # mc?:/neutrino/. RiptOPL adds config/bsd-udpfsbd.toml (UDPFS) and replaces ONE module,
+          # modules/IEEE1394_bd_mini.irx, with its own build of the same ps2sdk driver (#1018: upstream's
+          # loses its i.LINK login after an IOP reset); everything else is the official build.
           # This file is fork-private -- upstream Neutrino will not supply it -- so fail loudly if a
           # refactor ever drops the source payload instead of publishing an IMG-mode-broken package.
           if [ ! -s neutrino/bsd-udpfsbd.toml ]; then
@@ -871,6 +899,20 @@ jobs:
                 echo "ERROR: fork-private bsd-udpfsbd.toml did not reach the staged Neutrino config unchanged." >&2
                 exit 1
               fi
+              # i.LINK (#1018): replace upstream's driver with RiptOPL's build, which keeps asking for a
+              # login until the drive releases the one held across the IOP reset. Upstream must still
+              # ship the file under this name (bsd-ilink.toml loads it); refuse to package otherwise.
+              ILINK_DST="$PKG/neutrino/modules/IEEE1394_bd_mini.irx"
+              if [ ! -s "$ILINK_DST" ] || [ ! -s neutrino-ilink/IEEE1394_bd_mini.irx ]; then
+                echo "ERROR: cannot replace neutrino/modules/IEEE1394_bd_mini.irx (upstream file or RiptOPL build missing)." >&2
+                exit 1
+              fi
+              cp -f neutrino-ilink/IEEE1394_bd_mini.irx "$ILINK_DST"
+              if ! cmp -s neutrino-ilink/IEEE1394_bd_mini.irx "$ILINK_DST"; then
+                echo "ERROR: RiptOPL's IEEE1394_bd_mini.irx did not reach the staged Neutrino modules unchanged." >&2
+                exit 1
+              fi
+              echo "Replaced neutrino/modules/IEEE1394_bd_mini.irx with RiptOPL's build ($(wc -c < "$ILINK_DST") bytes)."
               rm -f "$NEUT_ABS"
               echo "Extracted Neutrino into $PKG/neutrino (added config/bsd-udpfsbd.toml for UDPFS)."
               # UDPFS Files mode launches with stock -bsd=udpfs, which needs Neutrino's own
