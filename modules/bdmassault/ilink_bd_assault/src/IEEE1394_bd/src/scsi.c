@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sysclib.h>
+#include <thbase.h>
 #include <thsemap.h>
 
 #include "include/scsi.h"
@@ -11,6 +12,13 @@
 
 #define getBI32(__buf)   ((((u8 *)(__buf))[3] << 0) | (((u8 *)(__buf))[2] << 8) | (((u8 *)(__buf))[1] << 16) | (((u8 *)(__buf))[0] << 24))
 #define SCSI_MAX_RETRIES 16
+
+/* RiptOPL: TEST UNIT READY is asked at most SCSI_READY_TRIES times, SCSI_READY_RETRY_US apart (#1018).
+   The SDK asked in a tight loop with no limit, so a drive that never became ready held the bus-reset
+   thread forever. 30 s covers a cold 3.5" drive spinning up in its enclosure; past that the device
+   is not offered (scsi_connect), and the next bus reset tries again. */
+#define SCSI_READY_TRIES    300
+#define SCSI_READY_RETRY_US (100 * 1000)
 
 typedef struct _inquiry_data
 {
@@ -144,8 +152,14 @@ static int scsi_warmup(struct block_device *bd)
     M_PRINTF("Product: %.16s\n", id.product);
     M_PRINTF("Revision: %.4s\n", id.revision);
 
+    int tries = 0;
     while ((stat = scsi_cmd_test_unit_ready(bd)) != 0) {
         M_PRINTF("ERROR: scsi_cmd_test_unit_ready %d\n", stat);
+        if (++tries >= SCSI_READY_TRIES) {
+            M_PRINTF("ERROR: device not ready after %d tries\n", tries);
+            return -1;
+        }
+        DelayThread(SCSI_READY_RETRY_US);
 
         stat = scsi_cmd_request_sense(bd, &sd, sizeof(sense_data));
         if (stat != 0) {
@@ -173,6 +187,13 @@ static int scsi_warmup(struct block_device *bd)
     bd->sectorSize = getBI32(&rcd.block_length);
     bd->sectorOffset = 0;
     bd->sectorCount = getBI32(&rcd.last_lba);
+
+    // RiptOPL: a zero block length would divide by zero below and in every consumer (#1018).
+    if (bd->sectorSize == 0) {
+        M_PRINTF("ERROR: device reports a block length of 0\n");
+        return -1;
+    }
+
     M_PRINTF("%u %u-byte logical blocks: (%uMB / %uMiB)\n", bd->sectorCount, bd->sectorSize, bd->sectorCount / ((1000 * 1000) / bd->sectorSize), bd->sectorCount / ((1024 * 1024) / bd->sectorSize));
 
     return 0;
@@ -272,7 +293,15 @@ void scsi_connect(struct scsi_interface *scsi)
 
             bd->priv = scsi;
             bd->name = scsi->name;
-            scsi_warmup(bd);
+            // RiptOPL: publish the device only once it answered, is ready and has a geometry. The
+            // SDK ignored scsi_warmup's result and connected a drive whose inquiry, readiness or
+            // capacity had failed, so BDM and POPSTARTER read through a device with no sector size
+            // (#1018). A failed drive frees its slot; the next bus reset tries it again.
+            if (scsi_warmup(bd) != 0) {
+                M_PRINTF("ERROR: device not offered to BDM\n");
+                bd->priv = NULL;
+                break;
+            }
             bdm_connect_bd(bd);
             break;
         }
