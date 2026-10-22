@@ -336,7 +336,14 @@ static int cdvdman_findfile(cd_file_t *pcdfile, const char *name, int layer)
         pcdfile->lsn = lsn;
         pcdfile->size = tocEntryPointer->fileSize;
 
-        strcpy(pcdfile->name, strrchr(name, '\\') + 1);
+        {
+            // name[] is 16 bytes; a longer ISO9660/Joliet basename used to overrun date[] and beyond.
+            // Truncate instead: the name is informational, the lsn/size above are what open() uses.
+            const char *base = strrchr(name, '\\');
+            base = (base != NULL) ? base + 1 : name;
+            strncpy(pcdfile->name, base, sizeof(pcdfile->name) - 1);
+            pcdfile->name[sizeof(pcdfile->name) - 1] = '\0';
+        }
     } else {
         return 0;
     }

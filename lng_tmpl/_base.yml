@@ -1938,3 +1938,15 @@ gui_strings:
 
 - label: VMC_REBUILD_UNSYNCED
   string: "The VMC was rebuilt, but the HDD could not confirm the change was saved. The old card is kept as a .bak file -- check the card before deleting anything."
+
+- label: EMBER_SELECT_DISC
+  string: "Select starting disc"
+
+- label: EMBER_DISC_ENTRY
+  string: "Disc %d: %s"
+
+- label: EMBER_DISCS_INVALID
+  string: "Could not read discs.txt. Use one CUE filename per line (up to 16), with all discs in the game folder."
+
+- label: EMBER_DISC_ARGS_TOO_LONG
+  string: "The selected disc's launch argument is too long. Shorten the game folder or CUE filename."

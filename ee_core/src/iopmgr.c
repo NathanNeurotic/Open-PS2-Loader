@@ -107,7 +107,7 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
     CopyToIop(IOPRP_img, length_rounded, pIOP_buffer);
 
     if (imgdrv_offset_ioprpimg == 0 || imgdrv_offset_ioprpsiz == 0) {
-        for (i = 0; i < size_imgdrv_irx; i += 4) {
+        for (i = 0; i + 4 <= size_imgdrv_irx; i += 4) {
             if (*(u32 *)((&((unsigned char *)imgdrv_irx)[i])) == 0xDEC1DEC1) {
                 imgdrv_offset_ioprpimg = i;
             }
@@ -115,6 +115,13 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
                 imgdrv_offset_ioprpsiz = i;
             }
         }
+    }
+
+    if (imgdrv_offset_ioprpimg == 0 || imgdrv_offset_ioprpsiz == 0) {
+        // A missing magic word would otherwise overwrite the IRX header and load a corrupt imgdrv.
+        DPRINTF("ResetIopSpecial: imgdrv patch points not found\n");
+        SifFreeIopHeap(pIOP_buffer);
+        return 0;
     }
 
     *(void **)(UNCACHED_SEG(&((unsigned char *)imgdrv_irx)[imgdrv_offset_ioprpimg])) = pIOP_buffer;

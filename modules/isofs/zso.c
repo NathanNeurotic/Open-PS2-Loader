@@ -46,6 +46,10 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 
     u32 cur_block = lsn;
 
+    if (ziso_idx_cache == NULL) {
+        return 0; // ziso_init could not allocate the index cache
+    }
+
     if (lsn >= ziso_total_block) {
         return 0; // can't seek beyond file
     }

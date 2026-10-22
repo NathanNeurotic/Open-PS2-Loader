@@ -307,7 +307,9 @@ int nbnsFindName(const char *name, unsigned char *ip_address)
     printf("nbnsFindName: %s\n", name);
 
     if ((record = AllocNameRecord()) != NULL) {
-        strcpy(record->name, name);
+        // Bounded here too: the 16-char limit otherwise only lives in the EE client.
+        strncpy(record->name, name, sizeof(record->name) - 1);
+        record->name[sizeof(record->name) - 1] = '\0';
         CpuSuspendIntr(&OldState);
         record->status |= NBNS_NAME_RECORD_INIT;
         CpuResumeIntr(OldState);

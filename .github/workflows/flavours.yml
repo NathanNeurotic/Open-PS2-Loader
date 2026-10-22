@@ -341,12 +341,20 @@ jobs:
         run: python3 .github/scripts/test_ember_settings.py
       - name: Check UDPFS discovers languages after late server and directory availability
         run: python3 .github/scripts/test_udpfs_languages.py
+      - name: Check Ember disc selection changes only the launch argument and Back preserves the menu
+        run: python3 .github/scripts/test_ember_disc_selection.py
+      - name: Check launch errors do not render the active library behind their opaque background
+        run: python3 .github/scripts/test_error_dialog_render.py
       - name: Check a missing Ember core still lists its games and never fails the PS1 scan
         run: python3 .github/scripts/test_ember_scan_missing_core.py
       - name: Check loose files cannot hide Ember games on FAT32 or exFAT
         run: python3 .github/scripts/test_ember_fatfs_images.py
       - name: Check Ember games list on MMCE through the real mmceman directory calls
         run: python3 .github/scripts/test_ember_mmce_dread.py
+      - name: Check the per-game logo-art toggle persists and gates the LGO cache
+        run: python3 .github/scripts/test_logo_art_toggle.py
+      - name: Check the HTTP stream client and games.csv catalog parser against the reference
+        run: sh pc/http/tests/run.sh
 
   udpfs-host-tests:
     runs-on: ubuntu-24.04
