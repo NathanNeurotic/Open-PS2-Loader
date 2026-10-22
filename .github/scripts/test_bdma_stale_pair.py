@@ -254,10 +254,10 @@ static int cardHdfsd(void)
 int main(void)
 {
     const int u = vcdBdmaPairSig[VCD_BDMA_ILINK].usbdSize, h = vcdBdmaPairSig[VCD_BDMA_ILINK].hdfsdSize;
-    const int old = h - 368; /* #1024: 21977 now, 21609 before */
+    const int old = h > 22025 ? 22025 : 21609; /* Beta 4221, or the pre-#1024 pair. */
     char diag[160];
 
-    /* The #1024 upgrade: card and iLink drive both still hold the old pair. Nothing is copied, and the
+    /* Card and iLink drive both still hold an actual previous release's pair. Nothing is copied, and the
        toast names the old drivers instead of a card write error. */
     reset();
     devType[1] = BDM_TYPE_ILINK;

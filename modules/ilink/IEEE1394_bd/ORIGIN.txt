@@ -53,5 +53,17 @@ real code against simulated drives and a simulated clock, and fails on the SDK o
 
 NOT HARDWARE-VERIFIED when added (2026-10-20/21). Worth offering upstream to ps2sdk once confirmed.
 
+5. October 22 geometry audit: READ CAPACITY's last LBA becomes a 64-bit count
+   including that sector. RC16 still handles the RC10 sentinel and refuses a
+   count that would overflow. The transfer-sector limit is derived from the
+   logical block size, and queue_cmd refuses bytes/CDBs exceeding its buffers.
+   test_ilink_scsi_geometry.py and test_ilink_command_orb.py cover both copies.
+   POPStarter additionally needed the corrected ORB data direction that this
+   newer SDK copy already had. See docs/ILINK_CODE_AUDIT_2026-10-22.md.
+
+The manager is now vendored alongside this module under ../iLinkman and applied
+to native OPL and the standard Neutrino kit. Its ORIGIN.txt records the same pin
+and three manager recovery corrections. No physical-console acceptance yet.
+
 RE-VENDOR: fetch the files above from the new pin, clang-format 12, then re-apply LOCAL CHANGES and
 update the pin. Keep test_ilink_bd_reset.py passing.

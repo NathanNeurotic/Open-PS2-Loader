@@ -456,7 +456,8 @@ jobs:
           cp modules/bdmassault/ilink_bd_assault/ilink_bd_assault.irx build/ilink-recovery/usbhdfsd.irx.ilink
           cp POPS/usbd.irx.ilink build/ilink-recovery/
           {
-            echo "Source: $GITHUB_SHA"
+            echo "Source head: ${{ github.event.pull_request.head.sha || github.sha }}"
+            echo "Checkout: $GITHUB_SHA"
             echo "Toolchain: PS2DEVPINNED (2026-08-13)"
             mipsel-none-elf-gcc --version | head -1
             sha256sum build/ilink-recovery/*.irx build/ilink-recovery/*.ilink
