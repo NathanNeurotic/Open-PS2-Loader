@@ -10,6 +10,7 @@
 #include "include/ranet.h"
 #endif
 #include "include/gui.h"
+#include "include/cuesupport.h"
 #include "include/diag.h" // gLastDeferredTimedOut -- a bounded wait that expired means the handler never ran
 #include "include/renderman.h"
 #include "include/menusys.h"
@@ -1682,6 +1683,79 @@ static int guiBdmaUpdater(int modified)
 int guiShowVcdUsbMode(void)
 {
     return diaExecuteDialog(diaVcdUsbMode, -1, 1, NULL);
+}
+
+static int guiShowEmberDiscList(const char *folder, const cue_disc_list_t *list)
+{
+    struct UIItem *dialog = calloc(list->count * 2 + 5, sizeof(*dialog));
+    char(*labels)[CUE_NAME_MAX + 32] = calloc(list->count, sizeof(*labels));
+    int index = 0, result;
+
+    if (dialog == NULL || labels == NULL) {
+        free(dialog);
+        free(labels);
+        return -1;
+    }
+    dialog[index++] = (struct UIItem) {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_EMBER_SELECT_DISC}}};
+    dialog[index++] = (struct UIItem) {UI_SPLITTER};
+    dialog[index++] = (struct UIItem) {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {folder, -1}}};
+    dialog[index++] = (struct UIItem) {UI_BREAK};
+    for (int i = 0; i < list->count; i++) {
+        snprintf(labels[i], sizeof(*labels), _l(_STR_EMBER_DISC_ENTRY), i + 1, list->names[i]);
+        dialog[index++] = (struct UIItem) {UI_BUTTON, i + 1, 1, 1, -1, 0, 0, {.label = {labels[i], -1}}};
+        dialog[index++] = (struct UIItem) {UI_BREAK};
+    }
+    dialog[index] = (struct UIItem) {UI_TERMINATOR};
+    result = diaExecuteDialog(dialog, 1, 1, NULL);
+    free(labels);
+    free(dialog);
+    return (result >= 1 && result <= list->count) ? result - 1 : -1;
+}
+
+int guiPrepareEmberLaunch(const char *devPrefix, const char *folder, const char *emberElf, char *argument, int argumentSize)
+{
+    cue_disc_list_t *list = NULL;
+    char path[640];
+    int count, selected = 0, fd, length;
+
+    if (argument == NULL || argumentSize <= 0 || folder == NULL || emberElf == NULL)
+        return 0;
+    length = snprintf(argument, argumentSize, "%s", folder);
+    if (length < 0 || length >= argumentSize)
+        return 0;
+    count = cueReadDiscList(devPrefix, folder, &list);
+    if (count == 0)
+        return 1; // No manifest: preserve the existing folder launch, without other changes.
+    if (count < 0) {
+        guiMsgBoxMissing(_l(_STR_EMBER_DISCS_INVALID), folder);
+        return 0;
+    }
+    if (count > 1)
+        selected = guiShowEmberDiscList(folder, list);
+    if (selected < 0) {
+        free(list);
+        return 0;
+    }
+    if (!cueBuildDiscArgument(folder, list->names[selected], argument, argumentSize) ||
+        !cueBuildDiscPath(devPrefix, folder, list->names[selected], path, sizeof(path))) {
+        free(list);
+        guiMsgBox(_l(_STR_EMBER_DISC_ARGS_TOO_LONG), 0, NULL);
+        return 0;
+    }
+    free(list);
+    // The keep-IOP child also receives the ELF path as its own argv[0]. Check the
+    // complete 256-byte string pool while the GUI and device mounts are still live.
+    if (2 * strlen(emberElf) + strlen(argument) + 3 > 256) {
+        guiMsgBox(_l(_STR_EMBER_DISC_ARGS_TOO_LONG), 0, NULL);
+        return 0;
+    }
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        guiMsgBoxMissing(_l(_STR_ERR_FILE_INVALID), path);
+        return 0;
+    }
+    close(fd);
+    return 1;
 }
 
 static void guiSetBdmaSettings(struct UIItem *ui)
@@ -4795,13 +4869,10 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
 
         if (ui)
             diaRenderUI(ui, screenHandler->inMenu, NULL, 0);
-        else
-            guiShow();
 
         // With a `ui` the CALLER chose what sits behind this box, so keep that context visible.
-        // With ui == NULL the backdrop is just whichever menu happened to be on screen -- it carries
-        // no information and, at gColDarker's ~75%, left the menu legible straight through the
-        // message. Errors get their own background in that case.
+        // A context-free error paints its own opaque background. Do not render the active menu
+        // behind it: that can queue cover IO while launch preflight temporarily remounts pfs0:.
         rmDrawRect(0, 0, screenWidth, screenHeight, ui ? gColDarker : gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);

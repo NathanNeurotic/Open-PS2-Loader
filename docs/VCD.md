@@ -8,6 +8,35 @@ no per-page emulator switch.
 > This document concentrates on POPSTARTER and its VCD/BDMA handoff. Ember uses the same PS1
 > page but does not use POPSTARTER, BDMA, or the memory-card driver preparation described below.
 
+## Selecting an Ember starting disc
+
+For an Ember game with several CUE files in the same game folder, add `discs.txt`
+beside them. For example, put these contents in
+`EMBER/games/Final Fantasy VII/discs.txt`, in disc order:
+
+```text
+Final Fantasy VII (Disc 1).cue
+Final Fantasy VII (Disc 2).cue
+Final Fantasy VII (Disc 3).cue
+```
+
+When you launch the title, RiptOPL reads this file and offers a starting-disc picker.
+Choosing the second entry passes `Final Fantasy VII/Final Fantasy VII (Disc 2).cue`
+as Ember's game argument. Back cancels the launch. One listed disc launches directly.
+Without `discs.txt`, the existing folder launch is unchanged.
+
+Use up to 16 plain filenames: no quotes, comments, device paths or subdirectories.
+Spaces in filenames are preserved. LF/CRLF, a UTF-8 BOM and empty lines are accepted;
+entries keep their file order. An unreadable, empty or malformed list, missing selected
+CUE, or overlong argument is reported before handoff. The file is read only at launch,
+with no additional scan-time metadata or cache. Settings, saves, artwork and Favorites
+continue to use the original game folder.
+
+This uses Ember Beta 2's documented `folder/disc-file` argument. RiptOPL only selects
+the starting file; Ember's build determines its in-game swapping behavior. The public
+README documents explicit file selection but does not currently specify `discs.txt`'s
+in-game mapping. Use the matching Ember build when testing that behavior.
+
 ## 1. PS2 and PS1 libraries on each device
 
 Every game device has a PS2 library and a PS1 library:

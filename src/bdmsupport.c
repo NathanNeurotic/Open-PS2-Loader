@@ -1962,6 +1962,8 @@ static void bdmLaunchCue(item_list_t *itemList, const char *cueName, config_set_
         guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
+    if (!guiPrepareEmberLaunch(ps1Prefix, cueName, emberElf, launchName, sizeof(launchName)))
+        return;
     // The scan lists folders without reading inside them -- that would be a directory read per row
     // on every refresh. Pay for it once, HERE, while a dialog can still be drawn: an empty or
     // mis-filled folder otherwise drops the user into the PS1 BIOS shell with no explanation.
@@ -1982,13 +1984,10 @@ static void bdmLaunchCue(item_list_t *itemList, const char *cueName, config_set_
         }
     }
 
-    // itemCleanUp frees the active BDM PS1 array during deinit, so preserve the folder-name argv
-    // before teardown. This is especially load-bearing for the newly reachable UDPBD Ember path.
-    snprintf(launchName, sizeof(launchName), "%s", cueName);
-
+    // guiPrepareEmberLaunch already copied the argument; cleanup frees the source PS1 array.
     // GameID is launch metadata, not Ember identity: resolve it from the actual .cue/.bin/.exe
     // while the source device and GUI are still alive. A miss is best-effort and never blocks.
-    cuePrepareRetroGemBarcode(ps1Prefix, launchName);
+    cuePrepareRetroGemBarcode(ps1Prefix, cueName);
 
     // UNMOUNT_EXCEPTION is load-bearing here, not defensive: Ember never resets the IOP, so the
     // device it reads its game from must still be mounted when it starts.
