@@ -66,6 +66,12 @@ int part_connect_gpt(struct block_device *bd)
 
     // Calculate how many partition entries there are per sector.
     entriesPerSector = bd->sectorSize / sizeof(gpt_partition_table_entry);
+    if (entriesPerSector <= 0) {
+        // A sector smaller than one entry (or a 0 sectorSize) would divide by zero below.
+        M_DEBUG("GPT: unusable sector size %u\n", (unsigned int)bd->sectorSize);
+        FreeSysMemory(buffer);
+        return -1;
+    }
 
     // RiptOPL: an unused entry (all-zero type GUID) marks only itself. The UEFI entry array can have gaps, so
     // the scan continues past one instead of treating it as the end of the table (#653). That walks the whole
