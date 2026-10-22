@@ -62,6 +62,7 @@ SITE_GROUPS = {
         ("nbd", "NBD-Server", "NBD server"),
     ],
     "Games and features": [
+        ("game-formats", "Game-Formats", "Game image formats: ISO, ZSO, CHD and CSO"),
         ("neutrino", "Neutrino", "Neutrino core"),
         ("ps1-vcd", "PS1-Games", "PS1: POPStarter and Ember"),
         ("per-game-settings", "Per-Game-Settings", "Per-game settings"),
@@ -92,6 +93,7 @@ SITE_GROUPS = {
     ],
 }
 DOCS = {
+    "docs/GAME-FORMATS.md": ("Game-Formats-Reference", "Game image formats reference"),
     "docs/README.md": ("Documentation-Index", "Documentation index"),
     "docs/TEST-BUILDS.md": ("Test-Builds", "Test builds and diagnostics"),
     "docs/VMC.md": ("VMC-Recovery", "VMC creation and recovery"),
@@ -122,6 +124,7 @@ DOCS = {
     "pc/apa-recovery/README.md": ("APA-Recovery-Tool", "APA recovery tool"),
 }
 PAIRS = {
+    "Game-Formats": "docs/GAME-FORMATS.md",
     "Virtual-Memory-Cards": "docs/VMC.md", "PC-CARD-CompactFlash": "docs/PC-CARD-CF.md",
     "PSX-DVR": "docs/DESR-DVR.md",
     "Controls": "docs/CONTROLS.md", "GSM": "docs/GSM.md", "HTTP": "docs/HTTP.md",
