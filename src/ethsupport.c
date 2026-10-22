@@ -728,6 +728,7 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
 static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_t *configSet)
 {
     char emberElf[256], biosPath[288];
+    char launchName[CUE_NAME_MAX];
 
     if (!gPCShareName[0] || cueName == NULL || cueName[0] == '\0')
         return;
@@ -745,6 +746,8 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
         guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
+    if (!guiPrepareEmberLaunch(ethPrefix, cueName, emberElf, launchName, sizeof(launchName)))
+        return;
     cueApplySettings(ethPrefix, cueName, configSet); // best-effort marker, never a launch gate
     if (!cueGameHasImage(ethPrefix, cueName)) {
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);
@@ -762,7 +765,7 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
     // UNMOUNT_EXCEPTION is load-bearing: Ember reads its game through the SMB mount that is live
     // right now, so that mount must survive the teardown.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
-    sysLaunchEmber(emberElf, cueName);
+    sysLaunchEmber(emberElf, launchName);
 }
 
 // Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.

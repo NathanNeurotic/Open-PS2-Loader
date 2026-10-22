@@ -64,11 +64,9 @@
      UNMOUNT_EXCEPTION. It is also why Ember can reach any device OPL can mount, unlike POPSTARTER,
      which resets and re-discovers from the memory card.
 
-  2. Ember's game argument is a BARE FOLDER NAME. Its argv scan hard-refuses '/', ':' and '\\'
-     anywhere in the argument and refuses a leading "..", then resolves "games/<name>" followed by
-     "<name>", both relative to a working directory ps2sdk derives from argv[0]. A path can never
-     be passed. That is why the games live under the ember.elf's own directory, and why there is
-     deliberately no POPSTARTER-style "Ember device" picker -- such a control could not work.
+  2. Folder identities stay bare names. Ember Beta 2 also accepts <folder>/<disc file> as a launch
+     argument, relative to its own games/ directory. discs.txt selection changes only that argument;
+     the existing folder remains the identity for settings, artwork, saves and Favorites.
 
   POSIX directory IO only (opendir/readdir/closedir), like vcdsupport.c: the newlib port rejects
   direct fileXio use from these paths.
@@ -87,6 +85,20 @@
 #define CUE_NAME_MAX        192
 #define CUE_NAME_LAUNCH_MAX 180 // 192 less "games/" and the NUL, with headroom
 #define CUE_MAX_ITEMS       2048
+#define CUE_MAX_DISCS       16
+
+typedef struct
+{
+    int count;
+    char names[CUE_MAX_DISCS][CUE_NAME_MAX];
+} cue_disc_list_t;
+
+// Launch-time only: 0 = no discs.txt (existing folder launch), >0 = ordered CUE entries,
+// -1 = unreadable/malformed manifest. Only a successful result allocates *outList; caller frees it.
+int cueReadDiscList(const char *devPrefix, const char *folder, cue_disc_list_t **outList);
+// Build the selected relative launch argument and device path without changing the folder identity.
+int cueBuildDiscArgument(const char *folder, const char *disc, char *out, int outSize);
+int cueBuildDiscPath(const char *devPrefix, const char *folder, const char *disc, char *out, int outSize);
 
 // Per-device folder holding ember.elf + bios.bin + games/, the peer of POPS_FOLDER. The NAME is the
 // only knob Ember's argument contract leaves us (the library must be the ember.elf's own
@@ -122,9 +134,8 @@ int cueResolveEmberBios(const char *devPrefix, char *out, int outSize);
 // Build "<devPrefix><EmberFolder><sep>games" into out (no trailing separator, ready for opendir).
 void cueBuildGamesDir(const char *devPrefix, char *out, int outSize);
 
-// 1 when `name` is legal as Ember's game argument. Mirrors Ember's own checks exactly rather than a
-// tidied version of them: any '/', ':' or '\\' refuses (its char scan at main+0x3d48), and so does
-// a name STARTING with ".." (main+0x4210 -- not only the exact string ".."). Pure string work.
+// 1 when `name` is a legal bare game-folder identity. Selected CUE arguments are composed
+// separately; do not permit paths in library names, settings keys, rename or Favorites identities.
 int cueNameLaunchable(const char *name);
 
 // Scan "<devPrefix><EmberFolder>/games/" for game SUBDIRECTORIES -- and a subdirectory only counts

@@ -97,9 +97,8 @@ int cueNameLaunchable(const char *name)
     if (!strcmp(name, "."))
         return 0;
 
-    // Ember's char scan refuses '/', ':' and '\\' ANYWHERE in the argument. On FAT/exFAT these
-    // cannot appear in a directory entry, so in practice this fires only on a hand-typed argument
-    // -- but it is the difference between a clear message and Ember dropping to the PS1 BIOS shell.
+    // Folder identities stay bare components. The launch-only <folder>/<disc> argument is
+    // composed separately, without relaxing rename/settings/library-name validation.
     if (strpbrk(name, "/:\\") != NULL)
         return 0;
 
@@ -115,6 +114,158 @@ int cueNameLaunchable(const char *name)
 // folder holding just a .bin is still a valid game. Case-insensitive, as io_find_disc's own
 // strcasecmp is.
 static const char *const cueDiscExts[] = {".cue", ".exe", ".bin"};
+
+int cueBuildDiscArgument(const char *folder, const char *disc, char *out, int outSize)
+{
+    int length;
+
+    if (out == NULL || outSize <= 0)
+        return 0;
+    out[0] = '\0';
+    if (!cueNameLaunchable(folder) || !cueNameLaunchable(disc))
+        return 0;
+    length = (int)strlen(disc);
+    if (length <= 4 || strcasecmp(disc + length - 4, ".cue") != 0)
+        return 0;
+    length = snprintf(out, outSize, "%s/%s", folder, disc);
+    if (length < 0 || length >= outSize || length > CUE_NAME_LAUNCH_MAX) {
+        out[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+int cueBuildDiscPath(const char *devPrefix, const char *folder, const char *disc, char *out, int outSize)
+{
+    char games[288], argument[CUE_NAME_MAX];
+    int length;
+
+    if (out == NULL || outSize <= 0)
+        return 0;
+    out[0] = '\0';
+    if (devPrefix == NULL || !cueBuildDiscArgument(folder, disc, argument, sizeof(argument)))
+        return 0;
+    cueBuildGamesDir(devPrefix, games, sizeof(games));
+    length = snprintf(out, outSize, "%s%c%s%c%s", games, cueSep(devPrefix), folder, cueSep(devPrefix), disc);
+    if (length < 0 || length >= outSize) {
+        out[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+static int cueAppendDiscLine(cue_disc_list_t *list, char *line, int first, const char *folder)
+{
+    char argument[CUE_NAME_MAX];
+    int length = (int)strlen(line);
+    unsigned char *bytes = (unsigned char *)line;
+
+    if (first && length >= 3 && bytes[0] == 0xef && bytes[1] == 0xbb && bytes[2] == 0xbf) {
+        line += 3;
+        length -= 3;
+    }
+    if (length > 0 && line[length - 1] == '\r')
+        line[--length] = '\0';
+    if (length == 0)
+        return 1;
+    for (int i = 0; i < length; i++) {
+        if ((unsigned char)line[i] < 32 || (unsigned char)line[i] == 127)
+            return 0;
+    }
+    if (list->count >= CUE_MAX_DISCS || !cueBuildDiscArgument(folder, line, argument, sizeof(argument)))
+        return 0;
+    memcpy(list->names[list->count++], line, length + 1);
+    return 1;
+}
+
+static int cueConfirmDiscListAbsent(const char *manifest)
+{
+    char parent[640];
+    DIR *dir;
+    struct dirent *entry;
+    int length = (int)strlen(manifest) - 9; // strip the known "discs.txt" suffix
+    int error;
+
+    if (length <= 0 || length >= sizeof(parent))
+        return -1;
+    memcpy(parent, manifest, length);
+    parent[length] = '\0';
+    dir = opendir(parent);
+    if (dir == NULL)
+        return -1;
+    // MMCE returns a generic -1 for missing files too. A complete directory read
+    // can prove absence without treating an unreadable manifest as "not present".
+    for (;;) {
+        errno = 0;
+        entry = readdir(dir);
+        if (entry == NULL) {
+            error = errno;
+            closedir(dir);
+            return error == 0 ? 0 : -1;
+        }
+        if (strcasecmp(entry->d_name, "discs.txt") == 0) {
+            closedir(dir);
+            return -1;
+        }
+    }
+}
+
+int cueReadDiscList(const char *devPrefix, const char *folder, cue_disc_list_t **outList)
+{
+    char games[288], path[640], line[CUE_NAME_MAX + 3];
+    cue_disc_list_t *list;
+    FILE *file;
+    int c, length = 0, first = 1, bytes = 0, result;
+
+    if (outList == NULL)
+        return -1;
+    *outList = NULL;
+    if (devPrefix == NULL || !cueNameLaunchable(folder))
+        return -1;
+    cueBuildGamesDir(devPrefix, games, sizeof(games));
+    result = snprintf(path, sizeof(path), "%s%c%s%cdiscs.txt", games, cueSep(devPrefix), folder, cueSep(devPrefix));
+    if (result < 0 || result >= sizeof(path))
+        return -1;
+    file = fopen(path, "rb");
+    if (file == NULL) {
+        if (errno == ENOENT || errno == ENOTDIR)
+            return 0;
+        return cueConfirmDiscListAbsent(path);
+    }
+    list = calloc(1, sizeof(*list));
+    if (list == NULL) {
+        fclose(file);
+        return -1;
+    }
+    // Bound both entries and total input, including blank lines. Never publish a partial list.
+    while ((c = fgetc(file)) != EOF) {
+        if (++bytes > 8192 || c == '\0')
+            goto invalid;
+        if (c == '\n') {
+            line[length] = '\0';
+            if (!cueAppendDiscLine(list, line, first, folder))
+                goto invalid;
+            length = 0;
+            first = 0;
+        } else {
+            if (length >= sizeof(line) - 1)
+                goto invalid;
+            line[length++] = c;
+        }
+    }
+    line[length] = '\0';
+    if (ferror(file) || !cueAppendDiscLine(list, line, first, folder) || list->count == 0)
+        goto invalid;
+    fclose(file);
+    *outList = list;
+    return list->count;
+
+invalid:
+    LOG("[CUE] invalid or unreadable disc list: %s\n", path);
+    fclose(file);
+    free(list);
+    return -1;
+}
 
 // 1 when d_name (length len) carries one of Ember's launchable image extensions.
 static int cueNameIsDiscImage(const char *name, int len)
