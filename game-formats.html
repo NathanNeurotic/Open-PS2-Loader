@@ -1,0 +1,207 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZSO Format · RiptOPL Docs</title>
+<meta name="description" content="ISO, ZSO, CSO and CHD: native playback, PS2-Servers decoding, and protocol limits.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="game-formats.html"><span class="icon icon-zso"></span>Game Image Formats</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html" class="active"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1 id="game-image-formats">Game image formats</h1>
+<p>Choose a format for the <strong>device, network protocol and loader core</strong> you will use.
+A format that PS2-Servers can read on your PC is not necessarily a format that
+OPL or Neutrino can decode on the PS2. Seeing a title in a list does not prove
+that its selected launch path supports the image.</p>
+<h2 id="ps2-formats-at-a-glance">PS2 formats at a glance</h2>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Direct use in RiptOPL</th>
+<th>With PS2-Servers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ISO (<code>.iso</code>)</td>
+<td>Standard PS2 disc image; use the supported device/core combination.</td>
+<td>Served as ISO; simplest baseline when diagnosing a launch failure.</td>
+</tr>
+<tr>
+<td>ZSO (<code>.zso</code>)</td>
+<td>LZ4-compressed ISO, decoded by the built-in OPL core on backends with ZSO support. Neutrino does not decode ZSO.</td>
+<td>UDPFS can decode it on the PC and expose a virtual <code>.iso</code>. HTTP passes the compressed file through, which RiptOPL's HTTP client refuses.</td>
+</tr>
+<tr>
+<td>CSO (<code>.cso</code>)</td>
+<td>No native CSO playback.</td>
+<td>Desktop/Core UDPFS and HTTP can decode supported CSO images into ISO data on the PC. Edge supports CSO over UDPFS.</td>
+</tr>
+<tr>
+<td>CHD (<code>.chd</code>)</td>
+<td>No native CHD playback. Copying CHD to USB, MMCE or an SMB share does not add a decoder.</td>
+<td>Desktop/Core UDPFS and HTTP can decode supported CHD images with native <code>libchdr</code>. Edge does not support CHD.</td>
+</tr>
+<tr>
+<td>USBExtreme / UL (<code>ul.cfg</code> and split game parts)</td>
+<td>Legacy split installation supported by relevant OPL paths; this is an installation layout, not compression. Neutrino does not load UL directly.</td>
+<td>Do not assume compressed-image virtualization converts UL installations.</td>
+</tr>
+<tr>
+<td>HDL / APA installed games</td>
+<td>Games installed into internal-HDD partitions; not ordinary files in <code>DVD/</code>. Core and installation constraints still apply.</td>
+<td>A raw disk/UDPBD export is a block-device path, not automatic CHD/CSO decoding.</td>
+</tr>
+</tbody>
+</table>
+<p>These entries describe format handling, not a guarantee that every game, image
+variant or console setup works. The source image must be a supported PS2 disc
+image; a PS1 CHD does not become a PS2 game because the container is readable.</p>
+<h2 id="direct-zso-playback">Direct ZSO playback</h2>
+<p>Use the built-in OPL core for direct ZSO playback on supported USB, MX4SIO,
+iLink, MMCE, SMB and internal-HDD paths. Ordinary file-based installations use
+the same <code>CD/</code> or <code>DVD/</code> placement and naming rules as ISO. APA installations
+require an appropriate installer rather than copying a file into a folder.</p>
+<p>When Neutrino is selected for a direct ZSO image, RiptOPL falls back to OPL on
+paths with a built-in core. UDPFS/UDPBD have no such fallback, so a compressed
+image reaching Neutrino directly is refused. A <strong>server-decoded virtual ISO</strong>
+over UDPFS avoids this restriction: Neutrino receives ISO data, not ZSO bytes.</p>
+<p>See the <a href="https://nathanneurotic.github.io/Open-PS2-Loader/zso.html">ZSO guide</a>
+for conversion commands, and the <a href="neutrino.html">Neutrino reference</a> for core limits.
+Keep the original image until the converted file has been verified.</p>
+<h2 id="chd-cso-and-zso-over-udpfs">CHD, CSO and ZSO over UDPFS</h2>
+<p>PS2-Servers Desktop/Core can expose supported compressed images as virtual
+<code>.iso</code> files. The PC decompresses requested data while the PS2 reads an ISO
+through UDPFS. This does not install a CHD or CSO decoder on the console and
+does not require a permanently extracted ISO beside the compressed image.</p>
+<ol>
+<li>Use a current complete <a href="https://github.com/NathanNeurotic/PS2-Servers/releases">PS2-Servers release</a>.</li>
+<li>Add the supported images to the server's configured game folders, using its
+CD/DVD library layout.</li>
+<li>Check the launcher's <strong>Compression support</strong> panel. Desktop/Core CSO uses
+Python's standard library; UDPFS ZSO needs <code>lz4</code>; CHD needs native <code>libchdr</code>.
+Packaged releases bundle the optional dependencies. Source installations
+must provide them separately.</li>
+<li>Start UDPFS, configure RiptOPL's UDPFS source, refresh the game list and select
+the virtual ISO. UDPFS game launches use Neutrino; install its required files.</li>
+</ol>
+<p>If the required decoder is unavailable, Desktop/Core UDPFS leaves that format
+unadvertised. Check the server edition, Compression support panel and server
+log before changing console compatibility modes. Edge has its own CSO/ZSO
+decoder and no CHD support.</p>
+<p>The PC must remain running and reachable throughout play. Decompression costs
+PC CPU time, and storage speed, network latency and game access patterns affect
+results. Compression reduces stored size; it does not guarantee faster loading.</p>
+<h2 id="http-smb-and-udpbd-differences">HTTP, SMB and UDPBD differences</h2>
+<p><strong>HTTP:</strong> PS2-Servers decodes supported CHD/CSO images on the server. RiptOPL
+can consume the resulting ISO representation when the server supplies a valid
+catalog entry and the required byte-range responses. Missing <code>libchdr</code> causes
+HTTP to skip CHD. ZSO is passed through unchanged by PS2-Servers; RiptOPL lists
+but refuses direct ZSO HTTP entries. Use ISO or UDPFS server decoding for ZSO.
+See the <a href="http.html">HTTP reference</a> for catalog, range and launch constraints.</p>
+<p><strong>SMB:</strong> do not assume the UDPFS/HTTP conversion applies to an ordinary SMB
+share. Use ISO or native OPL ZSO as appropriate for the selected core. Sharing
+the folder alone does not make CHD or CSO playable.</p>
+<p><strong>UDPBD:</strong> exports block-device contents. Select a supported disk/filesystem
+layout for Neutrino; it is not the same service as UDPFS virtual ISO streaming.</p>
+<h2 id="ps1-images-use-separate-cores">PS1 images use separate cores</h2>
+<p>POPSTARTER uses <code>.VCD</code> images. Ember uses game folders and CUE-based disc
+selection, with optional <code>discs.txt</code> for multiple discs. PS2 image compression
+support does not change those requirements. Follow the <a href="ps1-vcd.html">PS1 guide</a>
+for preparation, device restrictions and core-specific setup.</p>
+<h2 id="troubleshooting-and-evidence">Troubleshooting and evidence</h2>
+<ul>
+<li><strong>CHD/CSO is missing:</strong> confirm you are using a supported PS2-Servers service
+and edition, the image is in the configured library and the decoder is available.</li>
+<li><strong>ZSO lists but will not launch:</strong> check the core and protocol. Direct Neutrino
+and RiptOPL HTTP do not decode ZSO; UDPFS virtual ISO decoding is a separate path.</li>
+<li><strong>A virtual ISO starts but stalls:</strong> retain the server log and compare the same
+game as a plain ISO on the same transport before blaming compression.</li>
+<li><strong>A renamed file fails:</strong> changing <code>.chd</code> or <code>.cso</code> to <code>.iso</code> does not convert
+its contents. Let the server decode it or perform a real conversion on the PC.</li>
+</ul>
+<p>This guide documents the current reader and transport contracts. It does not
+establish new physical-console acceptance for a game or compressed-image variant.
+For server-specific dependencies and edition differences, see PS2-Servers'
+<a href="https://github.com/NathanNeurotic/PS2-Servers/blob/main/docs/optional-compression-dependencies.md">compression documentation</a>
+and <a href="https://github.com/NathanNeurotic/PS2-Servers/blob/main/docs/EDITIONS.md">edition guide</a>.</p>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

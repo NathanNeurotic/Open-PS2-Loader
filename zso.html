@@ -43,6 +43,7 @@
     <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
     <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
+    <a href="game-formats.html"><span class="icon icon-zso"></span>Game Image Formats</a>
     <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
@@ -72,6 +73,7 @@
   </nav>
   <main class="content">
 <h1>ZSO Format</h1>
+<p>For ISO, CHD, CSO and server-decoded ZSO, see <a href="game-formats.html">Game image formats</a>.</p>
 <p class="lead">ZSO is a compressed variant of the standard ISO disc image. OPL decompresses each sector
 on the fly using LZ4, so the PS2 sees a normal disc — but your storage device holds a smaller file.
 Support was added in OPL 1.2.0 and works on native OPL backends that implement ZSO; HTTP is ISO-only.</p>
@@ -82,8 +84,7 @@ If a game is configured to launch via the <a href="neutrino.html">Neutrino core<
 SMB, and the internal HDD) it then falls back to its own built-in core and the game still launches —
 just via the OPL core instead of Neutrino. <b>Exception:</b> for games sourced from <a href="network-boot.html">UDPBD or UDPFS</a>
 the launch is aborted entirely rather than falling back, because those network transports have no
-built-in OPL core — Neutrino is their only launch path. To use Neutrino for a game on any backend you
-must first decompress the image back to <code>.iso</code> (see below).
+built-in OPL core — Neutrino is their only launch path. To use Neutrino, supply ISO data: decompress locally or use PS2-Servers UDPFS virtual ISO decoding (see <a href="game-formats.html">Game image formats</a>).
 </div>
 
 <h2 id="requirements">Requirements</h2>
@@ -120,8 +121,7 @@ uncompressed inside the ZSO file automatically — no manual tuning needed.</p>
 </table>
 
 <h2 id="decompress">Decompressing a ZSO back to ISO</h2>
-<p>Pass <code>-c 0</code> to decompress. This is the only way to use the image with Neutrino or any
-other tool that does not understand the ZSO container.</p>
+<p>Pass <code>-c 0</code> to decompress. This produces a local ISO for Neutrino or another tool that does not understand ZSO. PS2-Servers UDPFS can also expose a server-decoded virtual ISO without permanently extracting the image.</p>
 
 <pre>python ziso.py -c 0 "input.zso" "output.iso"</pre>
 
