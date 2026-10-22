@@ -187,6 +187,8 @@ int guiNetProtocolNeedsRestart(void);
 // One-shot POPSTARTER USB driver pick (FAT32 vs exFAT), shown on EVERY USB VCD launch
 // (maintainer directive 2026-08-01: the user picks per launch, never a sticky default).
 int guiShowVcdUsbMode(void);
+// Before teardown: absent discs.txt preserves the folder argument; Back/error returns 0.
+int guiPrepareEmberLaunch(const char *devPrefix, const char *folder, const char *emberElf, char *argument, int argumentSize);
 void guiShowBdmaConfig(void);    // BDMA (exFAT driver stack) source/mode equip page
 void guiShowVcdListConfig(void); // VCD list options (hide game-id prefix, first-disc-only)
 void guiShowPopsNetConfig(void); // POPSTARTER's OWN IPCONFIG.DAT/SMBCONFIG.DAT editor

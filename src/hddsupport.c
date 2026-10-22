@@ -2196,6 +2196,7 @@ static void hddShowEmberMissing(int msgId, const char *mountSrc, const char *pfs
 static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char *part, config_set_t *configSet)
 {
     char emberElf[256], biosPath[288], mountSrc[APA_IDMAX + 6];
+    char launchName[CUE_NAME_MAX];
 
     if (name == NULL || name[0] == '\0' || part == NULL || part[0] == '\0')
         return;
@@ -2242,6 +2243,11 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
         hddShowEmberMissing(_STR_EMBER_BIOS_MISSING, mountSrc, biosPath);
         return;
     }
+    if (!guiPrepareEmberLaunch("pfs0:/", name, emberElf, launchName, sizeof(launchName))) {
+        hddRestoreDataHome();
+        ioBlockOps(0);
+        return;
+    }
     if (!cueGameHasImage("pfs0:/", name)) {
         hddRestoreDataHome();
         ioBlockOps(0);
@@ -2253,7 +2259,7 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
 
     // Past this point pfs0: stays where it is and IO stays blocked; deinit re-blocks anyway.
     deinit(UNMOUNT_EXCEPTION | KEEPIOP_EXCEPTION, itemList->mode);
-    sysLaunchEmber(emberElf, name);
+    sysLaunchEmber(emberElf, launchName);
 }
 
 // Shared POPSTARTER handoff for an HDD VCD. argv[0] differs by partition shape: PP.<name> / __.<name>

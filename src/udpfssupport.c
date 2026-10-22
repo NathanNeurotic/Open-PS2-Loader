@@ -709,6 +709,8 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
         guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
+    if (!guiPrepareEmberLaunch(udpfsPrefix, cueName, emberElf, launchName, sizeof(launchName)))
+        return;
 
     cueApplySettings(udpfsPrefix, cueName, configSet); // best-effort marker, never a launch gate
     if (!cueGameHasImage(udpfsPrefix, cueName)) {
@@ -716,12 +718,8 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
         return;
     }
 
-    // The in-view caller normally passes a pointer into udpfsPs1Games, which cleanup frees during
-    // deinit. Preserve Ember's argv on the stack before that teardown; Favorites already supplies a
-    // separately owned string, but following one lifetime rule keeps both launch paths safe.
-    snprintf(launchName, sizeof(launchName), "%s", cueName);
-
-    cuePrepareRetroGemBarcode(udpfsPrefix, launchName);
+    // The prepared argument is owned on our stack; cleanup frees udpfsPs1Games during deinit.
+    cuePrepareRetroGemBarcode(udpfsPrefix, cueName);
 
     // UNMOUNT_EXCEPTION is load-bearing: Ember inherits this live mount. udpfsCleanUp keeps the
     // socket/module chain resident for the whole boot, so no network reinitialization is attempted.

@@ -839,6 +839,7 @@ static void mmceRenameGame(item_list_t *itemList, int id, char *newName)
 static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set_t *configSet)
 {
     char emberElf[256], biosPath[288];
+    char launchName[CUE_NAME_MAX];
     char ps1Root[sizeof(mmcePrefix)];
 
     if (cueName == NULL || cueName[0] == '\0')
@@ -867,6 +868,8 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
         guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
+    if (!guiPrepareEmberLaunch(ps1Root, cueName, emberElf, launchName, sizeof(launchName)))
+        return;
     // The scan lists folders without reading inside them -- that would be a directory read per row
     // on every refresh. Pay for it once, HERE, while a dialog can still be drawn: an empty or
     // mis-filled folder otherwise drops the user into the PS1 BIOS shell with no explanation.
@@ -883,7 +886,7 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
 
     // UNMOUNT_EXCEPTION is load-bearing: Ember cannot remount the card it reads the game from.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
-    sysLaunchEmber(emberElf, cueName);
+    sysLaunchEmber(emberElf, launchName);
 }
 
 // Launch a PS1/.VCD entry BY NAME via POPSTARTER (view-independent entry point: the in-view menu
