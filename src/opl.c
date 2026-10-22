@@ -16,6 +16,7 @@
 #include "include/lang.h"
 #include "include/themes.h"
 #include "include/textures.h"
+#include "include/fntsys.h"
 #include "include/artindex.h"
 #include "include/pad.h"
 #include "include/texcache.h"
@@ -25,7 +26,6 @@
 #include "include/system.h"
 #include "include/debug.h"
 #ifdef __OPLDIAG
-#include "include/fntsys.h"
 #include <delaythread.h>
 #endif
 #include "include/config.h"

@@ -351,7 +351,7 @@ extern int gEnableDiscArt; // ItemIcon/ICO disc artwork; independent of cover ar
 extern int gEnableLogoArt; // Per-game LGO logo artwork; independent of cover/disc/background
 extern int gWideScreen;
 extern int gFontSize; // FONT_SIZE_* (fntsys.h)
-extern int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
+extern int gVMode;    // 0 - Auto, 1 - PAL, 2 - NTSC
 extern int gXOff;
 extern int gYOff;
 extern int gOverscan;

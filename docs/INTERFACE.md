@@ -23,6 +23,19 @@ See [Controls](CONTROLS.md), [Fresh-start defaults](DEFAULTS.md), and the
 
 ---
 
+## Menu font size
+
+**Settings → Interface → Font Size.** Choose **Small**, **Default** or **Large**.
+
+The size change applies immediately and is saved with your settings. It scales the menu's
+built-in font and any theme/language fonts loaded by the same renderer, so the rest of the
+UI keeps matching line heights and spacing. On CRTs, **Large** is usually the easiest to read.
+
+For Unicode/Japanese title setups that use `font_CJK.ttf`, the same size setting applies there too.
+See [Unicode Game Titles](UNICODE-GAME-TITLES.md) for font file placement.
+
+---
+
 ## Folder browsing
 
 **Settings → General & System → Browse Folders in Game List.** Off by default.
