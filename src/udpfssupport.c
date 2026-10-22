@@ -67,6 +67,7 @@ static int udpfsArtCaseChecked = 0;
 
 // forward declaration
 static item_list_t udpfsGameList;
+static void udpfsDiscoverArtFolder(void /* forward */);
 
 // Load the UDPFS ioman IRX chain ONCE per boot. Mirrors bdmsupport's udpfs_bd chain load
 // (bdmLoadBlockDeviceModules), but loads udpfs_ioman (the FILESYSTEM variant) instead of udpfs_bd (the
