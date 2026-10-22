@@ -13,6 +13,7 @@
 #include "include/themes.h"
 #include "include/textures.h"
 #include "include/texcache.h"
+#include "include/artindex.h" // artIndexInvalidate -- re-arm art verdicts when ART resolution completes
 #include "include/ioman.h"
 #include "include/system.h"
 #include "include/extern_irx.h"
@@ -209,11 +210,13 @@ void udpfsShowPendingNotice(void)
 static void udpfsSetWaitingForServer(int waiting)
 {
     udpfsWaitingForServer = waiting;
-    // Keep the lightweight background poll alive until THM and LNG become readable.
+    // Keep the lightweight background poll alive until THM, LNG and ART resolution complete.
     // The server root/game folders can become usable before those asset folders; without this,
     // a failed first attempt drops back to the normal cadence and, with Automatic Refresh off,
-    // is never retried for the rest of the session.
-    udpfsGameList.updateDelay = (waiting || !udpfsThemesScanned || !udpfsLanguagesScanned) ? MENU_UPD_DELAY_GENREFRESH : UDPFS_MODE_UPDATE_DELAY;
+    // is never retried for the rest of the session. ART belongs here for the same reason (#1036):
+    // a game list published by a scan that started before the server answered never ran art
+    // discovery, and nothing else re-arms it once this cadence lapses.
+    udpfsGameList.updateDelay = (waiting || !udpfsThemesScanned || !udpfsLanguagesScanned || !udpfsArtCaseChecked) ? MENU_UPD_DELAY_GENREFRESH : UDPFS_MODE_UPDATE_DELAY;
 }
 
 void udpfsInit(item_list_t *itemList)
@@ -390,9 +393,11 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
     int result = 0;
 
     // Keep this before every view-specific early return so a remembered PS1/Ember page cannot
-    // suppress theme or language discovery.
+    // suppress theme, language or ART discovery. ART resolution used to run only inside
+    // udpfsUpdateGameList, so it had no retry independent of a full list rebuild (#1036).
     udpfsDiscoverThemes();
     udpfsDiscoverLanguages();
+    udpfsDiscoverArtFolder();
 
     // PS1/Ember view: force a rescan once on toggle, then refresh on toggle only (skip disc heuristics).
     if (libViewConsumeDirty(itemList->mode))
@@ -556,12 +561,23 @@ static void udpfsDiscoverArtFolder(void)
     }
 
     udpfsArtCaseChecked = 1;
-    if (chosen != udpfsArtCaseIndex) {
-        udpfsArtCaseIndex = chosen;
-        // A cover requested before discovery might be parked as missing under ART.
-        // Re-arm that absent verdict once; healthy/default ART requires no invalidation.
-        cacheInvalidateFailMemo();
-    }
+    udpfsArtCaseIndex = chosen;
+    // Re-arm every art verdict taken before this moment, once per session (#1036). Covers are
+    // probed as soon as rows are drawn, and on first connect rows can be published by a scan
+    // that started before the server answered (see udpfsUpdateGameList), i.e. before this
+    // discovery ever ran: the udpfs_ioman ops fail fast (-EIO) until the session is up, an
+    // early probe can leave a dead art-index slot that is never rebuilt on its own, and a
+    // verdict classified ERR_BAD_FILE parks the row as absent with no UDPFS-side invalidation
+    // to ever re-open it (the routine invalidations are the BDM generation change and a
+    // settings apply -- neither fires for a UDPFS connect). Discovery completing is the first
+    // moment the ART directory is known reachable, so it is the correct single place to re-arm
+    // both. In the common path no cover has been probed yet and this costs one fail-epoch bump
+    // plus one index rebuild; it also covers the older case-change-only invalidation.
+    cacheInvalidateFailMemo();
+    artIndexInvalidate();
+    // If server-waiting is already clear, retire the temporary general-refresh cadence now that
+    // ART resolution really completed (mirrors udpfsDiscoverThemes/Languages).
+    udpfsSetWaitingForServer(udpfsWaitingForServer);
 }
 
 static int udpfsFoldersCreated = 0;

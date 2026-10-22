@@ -54,6 +54,12 @@ def run_harness(label, code):
 get_image = function(UDPFS, "static int udpfsGetImage(")
 init = function(UDPFS, "void udpfsInit(")
 update = function(UDPFS, "static int udpfsUpdateGameList(")
+needs_update = function(UDPFS, "static int udpfsNeedsUpdate(")
+if "udpfsDiscoverArtFolder();" not in needs_update:
+    failures.append("udpfsNeedsUpdate must retry ART discovery like THM/LNG (#1036)")
+waiter_fn = function(UDPFS, "static void udpfsSetWaitingForServer(")
+if "!udpfsArtCaseChecked" not in waiter_fn:
+    failures.append("Unresolved ART resolution must keep the general-refresh retry cadence alive (#1036)")
 discover = function(UDPFS, "static void udpfsDiscoverArtFolder(void)")
 folder_files = function(UDPFS, "static int udpfsArtFolderHasFiles(")
 table = re.search(
@@ -87,6 +93,7 @@ typedef struct { int dummy; } GSTEXTURE;
 static char udpfsPrefix[40] = "udpfs:/";
 static int udpfsIomanModLoaded = 1, serverOnline = 1;
 static int invalidations, rootOpens, folderOpens, imageCalls;
+static int indexInvalidations, udpfsWaitingForServer;
 static char imagePath[256];
 static const char *rootNames[12];
 static const char *folderNames[8][4];
@@ -100,6 +107,8 @@ static int udpfsArtCaseChecked;
 
 static int udpfsServerAnswers(void) { return serverOnline; }
 static void cacheInvalidateFailMemo(void) { invalidations++; }
+static void artIndexInvalidate(void) { indexInvalidations++; }
+static void udpfsSetWaitingForServer(int waiting) { (void)waiting; }
 static DIR *opendir(const char *path)
 {
     if (strcmp(path, "udpfs:/") == 0) {
@@ -161,6 +170,7 @@ static void reset(void)
     memset(folderOpenError, 0, sizeof(folderOpenError));
     udpfsArtCaseIndex = 0;
     udpfsArtCaseChecked = invalidations = rootOpens = folderOpens = imageCalls = 0;
+    indexInvalidations = udpfsWaitingForServer = 0;
     rootReadError = successfulReadErrno = 0;
     memset(folderReadError, 0, sizeof(folderReadError));
     serverOnline = 1;
@@ -179,7 +189,7 @@ int main(void)
     rootNames[0] = "ART";
     udpfsDiscoverArtFolder();
     check("canonical case", udpfsArtCaseChecked && udpfsArtCaseIndex == 0 &&
-          invalidations == 0 && folderOpens == 0 && rootOpens == 1);
+          invalidations == 1 && indexInvalidations == 1 && folderOpens == 0 && rootOpens == 1);
 
     reset();
     rootNames[0] = "art";
@@ -204,7 +214,7 @@ int main(void)
     folderNames[7][0] = "SLUS_123.45_COV.png";
     udpfsDiscoverArtFolder();
     check("populated canonical spelling wins", udpfsArtCaseIndex == 0 &&
-          invalidations == 0 && folderOpens == 1);
+          invalidations == 1 && folderOpens == 1);
 
     reset();
     rootNames[0] = "ART"; rootNames[1] = "Art"; rootNames[2] = "art";
