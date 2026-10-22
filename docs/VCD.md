@@ -1,6 +1,14 @@
 # PS1 Games via POPSTARTER and Ember
 
-### Selecting an Ember starting disc
+RiptOPL lists **PlayStation 1** games beside the PS2 library on the same device. One PS1
+view can contain two row types: `*.VCD` images launch through **POPSTARTER**, while game
+folders under `EMBER/games/` launch through **Ember**. The row decides the core; there is
+no per-page emulator switch.
+
+> This document concentrates on POPSTARTER and its VCD/BDMA handoff. Ember uses the same PS1
+> page but does not use POPSTARTER, BDMA, or the memory-card driver preparation described below.
+
+## Selecting an Ember starting disc
 
 For an Ember game with several CUE files in the same game folder, add `discs.txt`
 beside them. For example, put these contents in
@@ -28,14 +36,6 @@ This uses Ember Beta 2's documented `folder/disc-file` argument. RiptOPL only se
 the starting file; Ember's build determines its in-game swapping behavior. The public
 README documents explicit file selection but does not currently specify `discs.txt`'s
 in-game mapping. Use the matching Ember build when testing that behavior.
-
-RiptOPL lists **PlayStation 1** games beside the PS2 library on the same device. One PS1
-view can contain two row types: `*.VCD` images launch through **POPSTARTER**, while game
-folders under `EMBER/games/` launch through **Ember**. The row decides the core; there is
-no per-page emulator switch.
-
-> This document concentrates on POPSTARTER and its VCD/BDMA handoff. Ember uses the same PS1
-> page but does not use POPSTARTER, BDMA, or the memory-card driver preparation described below.
 
 ## 1. PS2 and PS1 libraries on each device
 

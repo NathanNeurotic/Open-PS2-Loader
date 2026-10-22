@@ -4869,13 +4869,10 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
 
         if (ui)
             diaRenderUI(ui, screenHandler->inMenu, NULL, 0);
-        else
-            guiShow();
 
         // With a `ui` the CALLER chose what sits behind this box, so keep that context visible.
-        // With ui == NULL the backdrop is just whichever menu happened to be on screen -- it carries
-        // no information and, at gColDarker's ~75%, left the menu legible straight through the
-        // message. Errors get their own background in that case.
+        // A context-free error paints its own opaque background. Do not render the active menu
+        // behind it: that can queue cover IO while launch preflight temporarily remounts pfs0:.
         rmDrawRect(0, 0, screenWidth, screenHeight, ui ? gColDarker : gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
