@@ -88,7 +88,7 @@ Review the LICENSE file for further details.<br><br>
 [Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [PADEMU](docs/PADEMU.md) ·
 [Interface](docs/INTERFACE.md) · [Japanese/Unicode game titles](docs/UNICODE-GAME-TITLES.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
 [SMB](#smb) · [HDD](#hdd) · [Cheats](#cheats) · [NBD](#nbd-server) ·
-[ZSO](#zso-format) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
+[ZSO / CSO / CHD](docs/COMPRESSED-IMAGES.md) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
 [Companion tools](#external-tools--services) · [Credits](#acknowledgements)
 
 ## Releases
@@ -160,6 +160,8 @@ SMB, UDPFS, UDPBD and HTTP over Ethernet. Capabilities depend on both the source
 
 Neutrino does not read local ZSO or UL split images. A compatible UDPFS server can instead
 decompress an image on the PC and expose it to the console as an ISO; that is server-side support.
+See [ZSO / CSO / CHD setup](docs/COMPRESSED-IMAGES.md) for the source/core table
+and the UDPFS Files steps using PS2-Servers.
 ELF apps and PS1 games have their own launch paths, described below.
 
 >[!NOTE]
