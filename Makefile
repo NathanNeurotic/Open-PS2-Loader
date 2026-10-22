@@ -405,7 +405,7 @@ ifeq ($(RETROACHIEVEMENTS),1)
   RATLS_ROOTS = gtsr1 gtsr2 gtsr3 gtsr4 isrgrootx1 isrgrootx2
   EE_OBJS += $(MBEDTLS_OBJS) $(RATLS_ROOTS:%=$(EE_OBJS_DIR)ratls_root_%.o)
 endif
-EE_DEPS = $($(filter %.o,$(EE_OBJS)):%.o=%.d)
+EE_DEPS = $(patsubst %.o,%.d,$(filter %.o,$(EE_OBJS)))
 
 # To help linking getting rid off unused functions and data
 EE_CFLAGS += -fdata-sections -ffunction-sections
@@ -560,8 +560,9 @@ realclean: clean
 
 rebuild: clean all
 
+PS2HOST ?= 192.168.1.10
 run: $(EE_BIN_PACKED)
-	ps2client -h 192.168.1.10 execee host:$<
+	ps2client -h $(PS2HOST) execee host:$<
 
 sim: $(EE_BIN_PACKED)
 	PCSX2 --elf=$(PWD)/$< --nodisc --nogui
