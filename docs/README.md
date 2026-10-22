@@ -21,6 +21,7 @@ Use the references below for implementation details, exact limits and contributo
 
 | Topic | Reference |
 | --- | --- |
+| Game image formats | [ISO, ZSO, CHD, CSO and server decoding](GAME-FORMATS.md) |
 | USB, MX4SIO and iLink | [Device setup](https://nathanneurotic.github.io/Open-PS2-Loader/usb.html) · [MX4SIO launch notes](MX4SIO.md) |
 | MMCE | [MMCE setup](https://nathanneurotic.github.io/Open-PS2-Loader/mmce.html) |
 | Internal HDD | [APA/exFAT guide](https://nathanneurotic.github.io/Open-PS2-Loader/hdd.html) · [exFAT and APA-Jail](EXFAT.md) |
