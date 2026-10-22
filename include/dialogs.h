@@ -221,6 +221,9 @@ enum UI_ITEMS {
     NETCFG_RA_TELEMETRY,
     NETCFG_RA_BADGES,
     NETCFG_RA_EXPERIMENTAL_CARDS,
+    // Appended last in the RA block: the RA ids are never indexed by NETCFG_x_0 + i
+    // (only RA_HOST_IP_0 is), so adding here cannot shift a consecutive run.
+    NETCFG_RA_BADGE_SUFFIX,
 #endif
 
     CHTCFG_CHEATSOURCE,

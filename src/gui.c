@@ -1105,6 +1105,19 @@ static void guiRefreshCfgTitles(void)
         ioPutRequest(IO_MENU_UPDATE_DEFFERED, &http->mode);
 }
 
+/* RA badge placement (gRABadgeSuffix) is baked into each row's shown text at list-build
+   time (opl.c, from raBadgeText), so a flip must rebuild every game list, exactly like a
+   CFG Titles flip above: mark the pages dirty and queue the rebuilds, HTTP included. */
+static void guiRefreshRABadgePlacement(void)
+{
+    item_list_t *http = httpGetObject(0);
+
+    libViewMarkAllDirty();
+    guiRefreshGameViews();
+    if (http != NULL && http->enabled)
+        ioPutRequest(IO_MENU_UPDATE_DEFFERED, &http->mode);
+}
+
 static void guiRefreshAppsView(void)
 {
     item_list_t *apps = appGetObject(0);
@@ -1478,6 +1491,9 @@ int guiShowNetConfig(void)
     diaSetInt(diaNetConfig, NETCFG_RA_TELEMETRY, gRATelemetry);
     diaSetInt(diaNetConfig, NETCFG_RA_BADGES, gRABadges);
     diaSetInt(diaNetConfig, NETCFG_RA_EXPERIMENTAL_CARDS, gRAExperimentalCards);
+    const char *raBadgePos[] = {_l(_STR_RA_BADGE_PREFIX), _l(_STR_RA_BADGE_SUFFIX), NULL};
+    diaSetEnum(diaNetConfig, NETCFG_RA_BADGE_SUFFIX, raBadgePos);
+    diaSetInt(diaNetConfig, NETCFG_RA_BADGE_SUFFIX, gRABadgeSuffix);
 #endif
 
     // Protocol rows, seeded from the authoritative gNetworkProtocol.
@@ -1565,12 +1581,15 @@ reshow_network:
         diaGetInt(diaNetConfig, NETCFG_ETHOPMODE, &gETHOpMode);
 #ifdef RETROACHIEVEMENTS
         int previousRAMode = gRAMode;
+        int previousRABadgeSuffix = gRABadgeSuffix;
         diaGetInt(diaNetConfig, NETCFG_RA_MODE, &gRAMode);
         for (i = 0; i < 4; ++i)
             diaGetInt(diaNetConfig, NETCFG_RA_HOST_IP_0 + i, &gRAHostIp[i]);
         diaGetInt(diaNetConfig, NETCFG_RA_TELEMETRY, &gRATelemetry);
         diaGetInt(diaNetConfig, NETCFG_RA_BADGES, &gRABadges);
         diaGetInt(diaNetConfig, NETCFG_RA_EXPERIMENTAL_CARDS, &gRAExperimentalCards);
+        diaGetInt(diaNetConfig, NETCFG_RA_BADGE_SUFFIX, &gRABadgeSuffix);
+        gRABadgeSuffix = (gRABadgeSuffix == 1); // the enum yields 0/1; normalise anyway
 #endif
 
         diaGetInt(diaNetConfig, NETCFG_SHARE_PORT, &gPCPort);
@@ -1610,6 +1629,8 @@ reshow_network:
 #ifdef RETROACHIEVEMENTS
         if (gRAMode != previousRAMode)
             menuReinitMainMenu();
+        if (gRABadgeSuffix != previousRABadgeSuffix)
+            guiRefreshRABadgePlacement();
 #endif
 
         // OK is an Apply action for the live SMB stack, not merely a RAM/config edit -- and after a

@@ -20,6 +20,12 @@
   HDD, APP, MMCE, FAV, UDPFS). With four slots the badge cache silently
   mis-attributes lists across devices.
 
+  The mark's placement is selectable (gRABadgeSuffix, fork-gap H11, after
+  hacan359 759b12a2): "RA " before the name, or " [RA]" after it. The
+  upstream port also carried a "PS1 " display mark; this fork never had one
+  (PS1 rows resolve a watch key in badgeVcdKey but show no PS1 text), so
+  only the RA mark moves here.
+
   This file compiles to nothing unless RETROACHIEVEMENTS=1.
 */
 
@@ -40,6 +46,9 @@
 
 #define RA_BADGE      "RA " /* prefix before the name; ASCII only, the stock \
                                theme font has no other glyphs */
+#define RA_SUFFIX     " [RA]" /* the same mark after the name (gRABadgeSuffix) */
+/* Room for the longer of the two marks: "RA " is 3 chars, " [RA]" is 5, both
+   under the +8 already here, so the slot size does not change. */
 #define RA_BADGE_TEXT (ISO_GAME_NAME_MAX + 8)
 
 struct ra_badge_slot
@@ -185,10 +194,21 @@ void raBadgeRefresh(item_list_t *support, int count)
         /* The PS1 POPS reader loads the watch list only from its game
            device. Do not probe SMB for every untracked USB VCD: that is
            both slow and can show a badge for a list POPStarter cannot use. */
-        if (watchListExists(rowPrefix, serial, ps1 > 0))
-            snprintf(dst, RA_BADGE_TEXT, "%s%s", RA_BADGE,
-                     support->itemGetName(support, i));
-        else
+        if (watchListExists(rowPrefix, serial, ps1 > 0)) {
+            /* The mark's side is the user's choice (gRABadgeSuffix). Suffix is
+               the sorting-safe form: submenuSortCompare orders by this shown
+               text, so a prefix pulls every tracked game to the top under
+               "R", while a suffix leaves the clean name to compare first and
+               only breaks ties between identical names. There is no separate
+               PS1 display mark in this fork (see badgeVcdKey), so unlike the
+               upstream port there is no second affix to place. */
+            if (gRABadgeSuffix)
+                snprintf(dst, RA_BADGE_TEXT, "%s%s",
+                         support->itemGetName(support, i), RA_SUFFIX);
+            else
+                snprintf(dst, RA_BADGE_TEXT, "%s%s", RA_BADGE,
+                         support->itemGetName(support, i));
+        } else
             dst[0] = '\0'; /* empty means show the plain name */
     }
 }

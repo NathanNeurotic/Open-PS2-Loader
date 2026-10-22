@@ -140,11 +140,14 @@ static int isFolderRow(item_list_t *support, int id)
     return game != NULL && game->format == GAME_FORMAT_FOLDER;
 }
 
-/* The title as the row should show it: in RA builds a tracked game's badge prefix stays in front. */
+/* The title as the row should show it: in RA builds a tracked game's badge mark stays on
+   whichever side of the name it was placed (gRABadgeSuffix): the prefix form in front,
+   the suffix form behind. The badge text is the plain name with exactly one affix, so
+   the affix is whichever end of it is not the name itself. */
 static char *keepTitle(item_list_t *support, int id, const char *clean)
 {
-    const char *prefix = "";
-    size_t prefixLen = 0, len;
+    const char *prefix = "", *suffix = "";
+    size_t prefixLen = 0, suffixLen = 0, len;
     char *kept;
 
 #ifdef RETROACHIEVEMENTS
@@ -153,9 +156,12 @@ static char *keepTitle(item_list_t *support, int id, const char *clean)
         const char *name = support->itemGetName != NULL ? support->itemGetName(support, id) : NULL;
         if (badge != NULL && name != NULL) {
             size_t badgeLen = strlen(badge), nameLen = strlen(name);
-            if (badgeLen > nameLen && !strcmp(badge + badgeLen - nameLen, name)) {
+            if (badgeLen > nameLen && nameLen > 0 && !strcmp(badge + badgeLen - nameLen, name)) {
                 prefix = badge;
                 prefixLen = badgeLen - nameLen;
+            } else if (badgeLen > nameLen && nameLen > 0 && !strncmp(badge, name, nameLen)) {
+                suffix = badge + nameLen;
+                suffixLen = badgeLen - nameLen;
             }
         }
     }
@@ -164,11 +170,12 @@ static char *keepTitle(item_list_t *support, int id, const char *clean)
     (void)id;
 #endif
     len = strlen(clean);
-    kept = malloc(prefixLen + len + 1);
+    kept = malloc(prefixLen + len + suffixLen + 1);
     if (kept == NULL)
         return NULL;
     memcpy(kept, prefix, prefixLen);
-    memcpy(kept + prefixLen, clean, len + 1);
+    memcpy(kept + prefixLen, clean, len);
+    memcpy(kept + prefixLen + len, suffix, suffixLen + 1);
     return kept;
 }
 
