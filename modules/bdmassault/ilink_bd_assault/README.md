@@ -26,6 +26,22 @@ With i.LINK storage every core listed games but only Ember, the one PS1 core tha
 
 `.github/scripts/test_ilink_bd_assault_reset.py` compiles the real `scsi.c` and `initConfigureSBP2Device` against simulated drives and a simulated clock; it fails on the sources before these changes. Not yet confirmed on hardware.
 
+## SBP-2 completion ordering (2026-10-21, #1018)
+
+Fetch-agent initialization also inherited a separate race: LOGIN's response remained in the shared
+status FIFO, so the dummy ORB's wait could consume that old response and free its buffer before the
+target completed it. Clear the FIFO before publishing the dummy request (never after, since a fast
+bridge can reply inside the pointer write), and propagate the dummy completion's error. Command
+publication errors retain the existing wait: a timeout may follow an accepted request, so an early
+return could release its stack ORB or data before the target stops accessing them.
+
+`.github/scripts/test_ilink_sbp2_completion.py` exercises these real functions in both driver copies
+with immediate and delayed target replies, stale LOGIN status, failed dummy status and failed
+publication, including accepted requests with lost acknowledgments and failed resets, plus missing
+dummy completions. The new binary is 22,025 bytes; its hash is recorded in `../PROVENANCE.md`. This is a
+source/host-tested correction, not a confirmed repair of FifthFox's enclosure. No read-delay or
+transfer-speed setting is added by it.
+
 ## Building
 The checked-in binaries are built in the PS2DEVPINNED container, which reproduces both the pre-#1018 build (21609 bytes) and the current one byte for byte:
 ```bash

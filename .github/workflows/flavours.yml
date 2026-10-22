@@ -295,6 +295,8 @@ jobs:
         run: python3 .github/scripts/test_bdm_cache.py
       - name: Check the i.LINK driver logs back in after an IOP reset and only offers a ready drive (#1018)
         run: python3 .github/scripts/test_ilink_bd_reset.py
+      - name: Check both i.LINK drivers wait for their own SBP-2 completion
+        run: python3 .github/scripts/test_ilink_sbp2_completion.py
       - name: Check CF transfer safety, bus ownership and native handoff
         run: python3 .github/scripts/test_pccf.py
       - name: Check per-game parental lock and test/autolaunch paths
