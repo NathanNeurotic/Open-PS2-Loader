@@ -491,7 +491,7 @@ struct item_list {
     char *(*itemGetPrefix)(item_list_t *);
     void *(*itemGet)(item_list_t *, int);
 };
-static int gRATelemetry=1, gRABadges=1, view=1, favkind=1, favmode=0;
+static int gRATelemetry=1, gRABadges=1, gRABadgeSuffix=0, view=1, favkind=1, favmode=0;
 static char name[32]="First", startup[32]="First", full[256];
 static base_game_info_t game={".VCD"};
 static char *getname(item_list_t *x,int i){(void)x;(void)i;return name;}
@@ -523,6 +523,13 @@ int main(void) {
     item_list_t favorite={FAV_MODE,getname,getstartup,NULL,NULL};
     raBadgeRefresh(&favorite,1);
     assert(raBadgeText(&favorite,0) && !strcmp(raBadgeText(&favorite,0),"RA First"));
+
+    gRABadgeSuffix=1;
+    raBadgeRefresh(&usb,1);
+    assert(raBadgeText(&usb,0) && !strcmp(raBadgeText(&usb,0),"First [RA]"));
+    raBadgeRefresh(&favorite,1);
+    assert(raBadgeText(&favorite,0) && !strcmp(raBadgeText(&favorite,0),"First [RA]"));
+    gRABadgeSuffix=0;
 
     favkind=2; /* Ember CUE cannot be tracked by the POPStarter bridge. */
     raBadgeRefresh(&favorite,1);

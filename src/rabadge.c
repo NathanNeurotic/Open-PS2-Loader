@@ -44,8 +44,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define RA_BADGE      "RA " /* prefix before the name; ASCII only, the stock \
-                               theme font has no other glyphs */
+#define RA_BADGE      "RA "   /* prefix before the name; ASCII only, the stock \
+                                 theme font has no other glyphs */
 #define RA_SUFFIX     " [RA]" /* the same mark after the name (gRABadgeSuffix) */
 /* Room for the longer of the two marks: "RA " is 3 chars, " [RA]" is 5, both
    under the +8 already here, so the slot size does not change. */

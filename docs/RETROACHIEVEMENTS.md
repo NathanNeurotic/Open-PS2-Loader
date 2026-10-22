@@ -137,7 +137,8 @@ The telemetry and notification settings are on the **Network** settings page:
 | Setting | Default | Effect |
 | --- | --- | --- |
 | RetroAchievements telemetry | **Off** | The master switch. While it is off an RA build launches a game for exactly what the standard build costs — no in-game network stack, no `raudp`, no snapshots. |
-| RetroAchievements badges | On | The `RA ` prefix in the game list and the mark over the cover. Cosmetic, and it follows the master switch: badges stay dark while telemetry is off. |
+| RetroAchievements badges | On | Shows the RA mark in the game list and over the cover. Cosmetic, and it follows the master switch: badges stay dark while telemetry is off. |
+| RA mark in game list | Prefix | Chooses where the list mark is placed: **Prefix** (`RA Name`) or **Suffix** (`Name [RA]`). Suffix keeps alphabetical sorting by the clean game title. |
 | Caduceus experimental cards | **Off** | Optional title/points cards for tracked Caduceus PS2 OPL launches. May flicker or freeze games; unavailable with Xerabora or telemetry Off. |
 
 Two actions on a game's own menu:

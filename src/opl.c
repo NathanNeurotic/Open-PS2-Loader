@@ -5010,8 +5010,8 @@ static void setDefaults(void)
 #ifdef RETROACHIEVEMENTS
     gRAMode = RA_MODE_XERABORA;
     memset(gRAHostIp, 0, sizeof(gRAHostIp));
-    gRATelemetry = 0; // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
-    gRABadges = 1;    // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
+    gRATelemetry = 0;   // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
+    gRABadges = 1;      // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
     gRABadgeSuffix = 0; // prefix, the shipped form; Suffix is the opt-in that keeps the list alphabetical
     gRAExperimentalCards = 0;
 #endif
