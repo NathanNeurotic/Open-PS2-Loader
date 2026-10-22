@@ -5,6 +5,7 @@
 #include <thsemap.h>
 
 #include "scsi.h"
+#include "sbp2_disk.h"
 #include <bdm.h>
 
 // #define DEBUG  //comment out this line when not debugging
@@ -229,13 +230,14 @@ static int scsi_warmup(struct block_device *bd)
         return -1;
     }
 
-    bd->sectorCount = getBI32(&rc10d.last_lba) & 0xffffffff;
+    // READ CAPACITY returns the last valid LBA, not a count.
+    bd->sectorCount = (u64)(u32)getBI32(&rc10d.last_lba) + 1;
     bd->sectorSize = getBI32(&rc10d.block_length);
     bd->sectorOffset = 0;
 
     // RiptOPL: a zero block length would divide by zero below and in every consumer (#1018).
-    if (bd->sectorSize == 0) {
-        M_PRINTF("ERROR: device reports a block length of 0\n");
+    if (bd->sectorSize == 0 || bd->sectorSize > XFER_BLOCK_SIZE) {
+        M_PRINTF("ERROR: unsupported block length %u\n", bd->sectorSize);
         return -1;
     }
 
@@ -244,12 +246,16 @@ static int scsi_warmup(struct block_device *bd)
     M_PRINTF("rc10 = 0x%08x%08x %u-byte logical blocks: (%lu MB / %lu MiB)\n", sectorCount_u32[1], sectorCount_u32[0], bd->sectorSize,
              (u32)(bd->sectorCount / ((1000 * 1000) / bd->sectorSize)), (u32)(bd->sectorCount / ((1024 * 1024) / bd->sectorSize)));
 
-    if (bd->sectorCount == 0xffffffffull) {
+    if (bd->sectorCount == 0x100000000ull) {
         memset(&rc16d, 0, sizeof(read_capacity16_data));
         if (scsi_cmd_read_capacity16(bd, &rc16d, sizeof(read_capacity16_data)) == 0 && getBI32(&rc16d.block_length) != 0) {
             bd->sectorCount = ((u64)getBI32(&rc16d.last_lba_msb) << 32) | (getBI32(&rc16d.last_lba_lsb) & 0xffffffff);
             bd->sectorSize = getBI32(&rc16d.block_length);
             bd->sectorOffset = 0;
+
+            if (bd->sectorCount == (u64)-1 || bd->sectorSize > XFER_BLOCK_SIZE)
+                return -1;
+            bd->sectorCount++;
 
             sectorCount = bd->sectorCount;
             U64_2XU32(sectorCount);
@@ -258,6 +264,8 @@ static int scsi_warmup(struct block_device *bd)
         }
     }
 
+    // The ORB length field and the shared write buffer are bounded in bytes.
+    scsi->max_sectors = XFER_BLOCK_SIZE / bd->sectorSize;
     return 0;
 }
 

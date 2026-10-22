@@ -509,6 +509,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/bdm clean
 	echo " -IEEE1394_bd"
 	$(MAKE) -C modules/ilink/IEEE1394_bd clean
+	$(MAKE) -C modules/ilink/iLinkman clean
 	echo " -atad (ata_bd)"
 	$(MAKE) -C modules/hdd/atad clean
 	echo " -xhdd"
@@ -858,7 +859,13 @@ $(EE_ASM_DIR)bdm.c: modules/bdm/bdm.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)bdmfs_fatfs.c: $(PS2SDK)/iop/irx/bdmfs_fatfs.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)iLinkman.c: $(PS2SDK)/iop/irx/iLinkman.irx | $(EE_ASM_DIR)
+ilinkman-submake:
+.PHONY: ilinkman-submake
+
+modules/ilink/iLinkman/iLinkman.irx: ilinkman-submake
+	$(MAKE) -C modules/ilink/iLinkman
+
+$(EE_ASM_DIR)iLinkman.c: modules/ilink/iLinkman/iLinkman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 # FORK-VENDORED IEEE1394_bd (modules/ilink/IEEE1394_bd, see its ORIGIN.txt): ps2sdk's i.LINK block

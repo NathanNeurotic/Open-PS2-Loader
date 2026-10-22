@@ -1,0 +1,17 @@
+Source: ps2dev/ps2sdk, iop/iLink/iLinkman
+Commit: 329e2bb43287e16af16c4dde1c614e2662c24468
+License: Academic Free License 2.0; LICENSE and upstream notices retained.
+
+Source/header/import/export files and README are copied from that revision.
+Makefile uses the SDK sample-module rules so all OPL SDK flavours build it.
+
+RiptOPL recovery changes, also applied to POPStarter's embedded manager:
+- iLink_TxRx.c: release UBUFTxSema on generation mismatch before packet commit.
+- iLink_TxRx.c: cancel split-response alarm after every wait, including early IRQ
+  errors, so a pending old alarm cannot poison a later transaction.
+- iLink_intr.c: consume unhandled receive FIFO quadlets even with TTY disabled.
+
+test_ilink_manager_recovery.py compiles the real functions with fault injection
+and checks both copies with TTY on/off. The original source fails those cases.
+These source/host findings do not establish the reporter's hardware cause.
+No timeout was added to an outstanding SBP-2 ORB and no DMA buffer is freed early.

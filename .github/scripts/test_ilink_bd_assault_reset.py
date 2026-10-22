@@ -77,6 +77,7 @@ login_parts = [part for part in (define(sbp2, 'SBP2_LOGIN_RETRY_US'), define(sbp
                                  extract_function(sbp2, 'static u32 sbp2ElapsedUs('), login) if part]
 
 STUBS = {
+    'tamtypes.h': '#include <stdint.h>\ntypedef uint8_t u8; typedef uint16_t u16; typedef uint32_t u32; typedef uint64_t u64;\n',
     'sysclib.h': '#include <string.h>\n',
     'thsemap.h': '',
     'thbase.h': 'int DelayThread(int usec);\n',

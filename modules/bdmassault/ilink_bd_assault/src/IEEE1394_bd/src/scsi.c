@@ -5,6 +5,7 @@
 #include <thsemap.h>
 
 #include "include/scsi.h"
+#include "include/sbp2_disk.h"
 #include <bdm.h>
 
 // #define DEBUG  //comment out this line when not debugging
@@ -186,16 +187,19 @@ static int scsi_warmup(struct block_device *bd)
 
     bd->sectorSize = getBI32(&rcd.block_length);
     bd->sectorOffset = 0;
-    bd->sectorCount = getBI32(&rcd.last_lba);
+    // READ CAPACITY returns the last valid LBA, not a count.
+    bd->sectorCount = (u64)(u32)getBI32(&rcd.last_lba) + 1;
 
     // RiptOPL: a zero block length would divide by zero below and in every consumer (#1018).
-    if (bd->sectorSize == 0) {
-        M_PRINTF("ERROR: device reports a block length of 0\n");
+    if (bd->sectorSize == 0 || bd->sectorSize > XFER_BLOCK_SIZE) {
+        M_PRINTF("ERROR: unsupported block length %u\n", bd->sectorSize);
         return -1;
     }
 
     M_PRINTF("%u %u-byte logical blocks: (%uMB / %uMiB)\n", bd->sectorCount, bd->sectorSize, bd->sectorCount / ((1000 * 1000) / bd->sectorSize), bd->sectorCount / ((1024 * 1024) / bd->sectorSize));
 
+    // The ORB length field and the shared write buffer are bounded in bytes.
+    scsi->max_sectors = XFER_BLOCK_SIZE / bd->sectorSize;
     return 0;
 }
 

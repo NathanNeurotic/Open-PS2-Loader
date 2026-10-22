@@ -40,9 +40,10 @@ static void NoResponseHandler(unsigned int header, volatile unsigned int *buffer
     DEBUG_PRINTF("NULL response handler called.\n");
 
     for (i = 0; i < nQuads; i++) { /* Flush the buffer. */
-#ifdef DEBUG_TTY_FEEDBACK
         unsigned int data;
         data = *buffer;
+        (void)data;
+#ifdef DEBUG_TTY_FEEDBACK
         DEBUG_PRINTF("Unhandled data: 0x%08x.\n", data);
 #endif
     }

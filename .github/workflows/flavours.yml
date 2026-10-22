@@ -297,6 +297,12 @@ jobs:
         run: python3 .github/scripts/test_ilink_bd_reset.py
       - name: Check both i.LINK drivers wait for their own SBP-2 completion
         run: python3 .github/scripts/test_ilink_sbp2_completion.py
+      - name: Check iLink manager generation cancellation, alarm cleanup and receive FIFO draining
+        run: python3 .github/scripts/test_ilink_manager_recovery.py
+      - name: Check iLink command direction, byte limits and SCSI capacity
+        run: |
+          python3 .github/scripts/test_ilink_command_orb.py
+          python3 .github/scripts/test_ilink_scsi_geometry.py
       - name: Check CF transfer safety, bus ownership and native handoff
         run: python3 .github/scripts/test_pccf.py
       - name: Check per-game parental lock and test/autolaunch paths
@@ -440,6 +446,21 @@ jobs:
           make -C modules/bdmassault/ilink_bd_assault clean
           make -C modules/bdmassault/ilink_bd_assault
           mipsel-none-elf-gcc --version | head -1
+      - name: Build and stage the matching iLink recovery modules
+        run: |
+          make -C modules/ilink/iLinkman
+          make -C modules/ilink/IEEE1394_bd MINI=1
+          mkdir -p build/ilink-recovery
+          cp modules/ilink/iLinkman/iLinkman.irx build/ilink-recovery/
+          cp modules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx build/ilink-recovery/
+          cp modules/bdmassault/ilink_bd_assault/ilink_bd_assault.irx build/ilink-recovery/usbhdfsd.irx.ilink
+          cp POPS/usbd.irx.ilink build/ilink-recovery/
+          {
+            echo "Source: $GITHUB_SHA"
+            echo "Toolchain: PS2DEVPINNED (2026-08-13)"
+            mipsel-none-elf-gcc --version | head -1
+            sha256sum build/ilink-recovery/*.irx build/ilink-recovery/*.ilink
+          } > build/ilink-recovery/BUILD-MANIFEST.txt
       - name: Require the checked-in usbhdfsd.irx.ilink copies to be this build
         run: |
           built=modules/bdmassault/ilink_bd_assault/ilink_bd_assault.irx
@@ -466,6 +487,13 @@ jobs:
         with:
           name: popstarter-usbhdfsd-irx-ilink
           path: modules/bdmassault/ilink_bd_assault/ilink_bd_assault.irx
+          if-no-files-found: ignore
+      - name: Upload the matching recovery modules for console testing
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilink-recovery-modules-PS2DEVPINNED
+          path: build/ilink-recovery/
           if-no-files-found: ignore
 
   build-flavour:

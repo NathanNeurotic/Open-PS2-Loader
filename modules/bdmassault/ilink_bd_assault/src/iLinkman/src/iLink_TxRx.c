@@ -42,7 +42,7 @@ static int iLinkSendData(struct TransactionContextData *trContext, unsigned int 
     /* Transmit the header... */
     for (i = 0; i < HeaderLength; i++) {
         if ((trContext != NULL) && (trContext->GenerationNumber != GenerationNumber))
-            return (-1021);
+            goto generation_changed;
 
         ILINKRegisterBase->ubufTransmitNext = *data;
         data++;
@@ -53,7 +53,7 @@ static int iLinkSendData(struct TransactionContextData *trContext, unsigned int 
         data = payload;
         for (i = 0; i < PayloadLength; i++) {
             if ((trContext != NULL) && (trContext->GenerationNumber != GenerationNumber))
-                return (-1021);
+                goto generation_changed;
             ILINKRegisterBase->ubufTransmitNext = *data;
             data++;
         }
@@ -71,6 +71,12 @@ static int iLinkSendData(struct TransactionContextData *trContext, unsigned int 
     SignalSema(UBUFTxSema);
 
     return ((FlagBits & iLinkEventError) ? (unsigned int)(-1) : PayloadLength);
+
+generation_changed:
+    // No packet was committed with ubufTransmitLast. Let the next sender clear
+    // the partial FIFO and use its fresh transaction context.
+    SignalSema(UBUFTxSema);
+    return -1021;
 }
 
 void SendResponse(unsigned short int NodeID, unsigned short RcvdBusID, unsigned char rCode, unsigned char tLabel, unsigned char tCode, unsigned char speed, unsigned int *buffer, unsigned int nQuads)
@@ -112,9 +118,10 @@ static int iLinkSync(unsigned int PayloadLength)
     SetAlarm(&Timeout, &TimeoutCallbackFunction, NULL);
     WaitEventFlag(IntrEventFlag, iLinkEventDataReceived | iLinkEventError, WEF_OR, &FlagBits);
 
-    if (!(FlagBits & iLinkEventError)) {
-        CancelAlarm(&TimeoutCallbackFunction, NULL);
-    } else {
+    // An IRQ error can beat the alarm; retire it before another transaction
+    // reuses the event flag. A callback that already fired needs no cancellation.
+    CancelAlarm(&TimeoutCallbackFunction, NULL);
+    if (FlagBits & iLinkEventError) {
         DEBUG_PRINTF("iLinkman: Split timeout.\n");
         LocalCachedIntr0Register |= iLink_INTR0_STO;
     }

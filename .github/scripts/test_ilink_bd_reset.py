@@ -70,6 +70,7 @@ if any(part is None for part in login_parts):
     failures.append('sbp2_driver.c: login budget, sbp2ElapsedUs or initConfigureSBP2Device not found')
 
 STUBS = {
+    'tamtypes.h': '#include <stdint.h>\ntypedef uint8_t u8; typedef uint16_t u16; typedef uint32_t u32; typedef uint64_t u64;\n',
     'sysclib.h': '#include <string.h>\n',
     'thsemap.h': '',
     'thbase.h': 'int DelayThread(int usec);\n',
