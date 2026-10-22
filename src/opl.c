@@ -245,6 +245,7 @@ int gEnableArt;
 int gEnableDiscArt;
 int gEnableLogoArt;
 int gWideScreen;
+int gFontSize;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
 int gYOff;
@@ -3352,6 +3353,9 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_LOGOART, &gEnableLogoArt);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
+            configGetInt(configOPL, CONFIG_OPL_FONT_SIZE, &gFontSize);
+            if (gFontSize < FONT_SIZE_SMALL || gFontSize >= FONT_SIZE_COUNT)
+                gFontSize = FONT_SIZE_DEFAULT;
 
             if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
@@ -4020,6 +4024,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, gEnableDiscArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_LOGOART, gEnableLogoArt);
         configSetInt(configOPL, CONFIG_OPL_WIDESCREEN, gWideScreen);
+        configSetInt(configOPL, CONFIG_OPL_FONT_SIZE, gFontSize);
         configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
         configSetInt(configOPL, CONFIG_OPL_YOFF, gYOff);
@@ -5014,6 +5019,7 @@ static void setDefaults(void)
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
     gEnableLogoArt = 1; // preserve existing LGO artwork unless the user disables it
     gWideScreen = 0;    // Fresh configurations use 4:3; a saved widescreen choice overrides this.
+    gFontSize = FONT_SIZE_DEFAULT;
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;

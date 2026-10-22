@@ -531,6 +531,24 @@ static fnt_glyph_cache_entry_t *fntCacheGlyph(font_t *font, uint32_t gid)
     return glyph;
 }
 
+int fntScaleFontSize(int baseSize)
+{
+    int scaled;
+
+    if (gFontSize == FONT_SIZE_SMALL)
+        scaled = baseSize * 85 / 100;
+    else if (gFontSize == FONT_SIZE_LARGE)
+        scaled = baseSize * 125 / 100;
+    else
+        return baseSize;
+
+    if (scaled < 10)
+        scaled = 10;
+    if (scaled > 32)
+        scaled = 32;
+    return scaled;
+}
+
 void fntUpdateAspectRatio()
 {
     fntLock();
@@ -563,7 +581,8 @@ static void fntUpdateAspectRatioLocked(void)
         if (fonts[i].isValid) {
             fntCacheFlush(&fonts[i]);
             // TODO: this seems correct, but the rest of the OPL UI (i.e. spacers) doesn't seem to be correctly scaled.
-            FT_Set_Char_Size(fonts[i].face, fonts[i].fontSize * 64, fonts[i].fontSize * 64, fDPI * ws, fDPI * hs);
+            int size = fntScaleFontSize(fonts[i].fontSize);
+            FT_Set_Char_Size(fonts[i].face, size * 64, size * 64, fDPI * ws, fDPI * hs);
         }
     }
 }
@@ -620,10 +639,11 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
         }
     }
 
+    int fontSize = fntScaleFontSize(fonts[id].fontSize);
     if (aligned & ALIGN_VCENTER) {
-        y += rmScaleY(fonts[id].fontSize - 4) >> 1;
+        y += rmScaleY(fontSize - 4) >> 1;
     } else {
-        y += rmScaleY(fonts[id].fontSize - 2);
+        y += rmScaleY(fontSize - 2);
     }
 
     quad.color = colour;
@@ -747,10 +767,11 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
         }
     }
 
+    int fontSize = fntScaleFontSize(fonts[id].fontSize);
     if (aligned & ALIGN_VCENTER) {
-        y += rmScaleY(fonts[id].fontSize - 4) >> 1;
+        y += rmScaleY(fontSize - 4) >> 1;
     } else {
-        y += rmScaleY(fonts[id].fontSize - 2);
+        y += rmScaleY(fontSize - 2);
     }
 
     quad.color = colour;
