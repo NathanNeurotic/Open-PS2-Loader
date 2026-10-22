@@ -396,6 +396,11 @@ static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev)
 
     ieee1394_ResetFetchAgent(dev);
 
+    // LOGIN left its completion in this shared FIFO. Clear it before publishing the dummy ORB:
+    // otherwise Sync can accept LOGIN's status and free the ORB before the target has fetched it.
+    // Do not clear after iLinkTrWrite: the dummy's real completion may arrive inside that call.
+    memset((void *)&statusFIFO, 0, sizeof(statusFIFO));
+
     /* Write the address of the dummy ORB to the fetch agent's ORB_POINTER register. */
     address.low = (u32)dummy_ORB;
     address.NodeID = dev->InitiatorNodeID;
@@ -422,7 +427,7 @@ static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev)
 
     M_DEBUG("done!\n");
 
-    return 1;
+    return result < 0 ? result : 1;
 }
 
 static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
@@ -582,6 +587,8 @@ static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd,
             ((unsigned int *)writeBuffer)[i] = BSWAP32(((unsigned int *)data)[i]);
     }
 
+    // A transport error can follow an accepted pointer write. Keep this stack ORB and
+    // its data alive until completion; returning requires proven target quiescence.
     ieee1394_SendCommandBlockORB(dev, &cdb);
     ret = ieee1394_Sync();
 
