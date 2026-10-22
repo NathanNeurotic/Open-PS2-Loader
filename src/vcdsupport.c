@@ -1615,7 +1615,7 @@ static const bdma_pair_sig_t vcdBdmaPairSig[VCD_BDMA_MODE_COUNT] = {
     {48500, 14993}, // mx4sio
     {11841, 19733}, // mmce
     {42749, 21837}, // ata
-    {48500, 22041}, // iLink (21977 before the SBP-2 completion fix, so older card pairs re-equip)
+    {48500, 22025}, // iLink (21977 before the SBP-2 completion fix, so older card pairs re-equip)
     {76365, 34508}  // UDPFS Alpha
 };
 

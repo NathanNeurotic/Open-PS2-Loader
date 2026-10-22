@@ -2,7 +2,7 @@
 
 A successful LOGIN leaves statusFIFO populated. The following dummy ORB must
 not consume that stale completion or free its buffer before the target replies.
-Also check failed dummy completions and failed command-pointer publication.
+Also check failed dummy completions and ambiguous command-pointer publication.
 The simulated target sends its own status after a configurable delay; a host
 guard escapes nonterminating waits without adding a timeout to production code.
 """
@@ -45,6 +45,7 @@ static unsigned char *writeBuffer = writeStorage;
 static unsigned long long now_us, due_us, reply_delay_us;
 static unsigned int reply_status;
 static int submitted, notified, freed_early, submit_failure, polls, failures;
+static int accepted_before_error, reset_failure, suppress_reply;
 static jmp_buf guard;
 static void *live_orb;
 
@@ -68,7 +69,7 @@ static void DelayThread(unsigned int usec)
 {
     now_us += usec;
     polls++;
-    if (submitted && !notified && now_us >= due_us) {
+    if (submitted && !notified && !suppress_reply && now_us >= due_us) {
         statusFIFO.status.status = reply_status;
         notified = 1;
     }
@@ -80,8 +81,13 @@ static int iLinkTrWrite(int context, unsigned long high, unsigned long low,
 {
     (void)context; (void)high; (void)low; (void)buffer;
     if (count == 8) {
-        if (submit_failure)
-            return -7;
+        if (submit_failure) {
+            if (accepted_before_error && !submitted) {
+                submitted = 1;
+                due_us = now_us + reply_delay_us;
+            }
+            return -1024; /* split timeout does not prove that the pointer was rejected */
+        }
         submitted = 1;
         due_us = now_us + reply_delay_us;
         if (reply_delay_us == 0) {
@@ -89,9 +95,8 @@ static int iLinkTrWrite(int context, unsigned long high, unsigned long low,
             notified = 1;
         }
     }
-    return 0;
+    return count == 4 && reset_failure ? -1024 : 0;
 }
-static void ieee1394_ResetFetchAgent(struct SBP2Device *dev) { (void)dev; }
 static int ieee1394_GetFetchAgentState(struct SBP2Device *dev) { (void)dev; return 0; }
 @FUNCTIONS@
 #undef malloc
@@ -113,6 +118,7 @@ static void reset_case(unsigned int stale, unsigned int reply, unsigned int dela
     reply_delay_us = delay;
     reply_status = reply;
     submitted = notified = freed_early = submit_failure = polls = 0;
+    accepted_before_error = reset_failure = suppress_reply = 0;
 }
 
 int main(void)
@@ -150,16 +156,34 @@ int main(void)
     result = ieee1394_InitializeFetchAgent(&dev);
     CHECK(result < 0, "propagate a failed dummy completion even with initially empty status");
 
-    /* A command that cannot be submitted must not wait for an impossible response. */
+    /* Preserve the old wait until transport failure recovery can prove quiescence. */
     reset_case(good, good, 500);
     submit_failure = 1;
     unsigned char command[12] = {0x28};
     if (setjmp(guard) == 0) {
         result = sbp2_queue_cmd(&dev.scsi, command, sizeof(command), NULL, 0, 0);
-        CHECK(result < 0, "return command-pointer publication failure");
-        CHECK(now_us <= 1000000, "do not enter status wait after all publication retries fail");
+        CHECK(0, "publication failure alone cannot authorize releasing command storage");
     } else {
-        CHECK(0, "failed command publication waits forever for a completion");
+        CHECK(!submitted, "the host guard observes the known no-completion wait");
+    }
+
+    /* The bridge accepted the pointer, but every acknowledgment and reset fails. */
+    reset_case(0, good, 1200000);
+    submit_failure = accepted_before_error = reset_failure = 1;
+    result = sbp2_queue_cmd(&dev.scsi, command, sizeof(command), NULL, 0, 0);
+    CHECK(notified && now_us >= 1200000,
+          "do not release a live command after an ambiguous publication error");
+    CHECK(result == 0, "a lost pointer acknowledgment does not discard its later completion");
+
+    /* A missing dummy completion must retain its request, even after the host guard. */
+    reset_case(good, dummy_done, 500);
+    suppress_reply = 1;
+    if (setjmp(guard) == 0) {
+        result = ieee1394_InitializeFetchAgent(&dev);
+        CHECK(0, "stale LOGIN cannot authorize release when the dummy completion is missing");
+    } else {
+        CHECK(live_orb != NULL && !freed_early,
+              "keep an accepted dummy request alive while its completion is missing");
     }
 
     reset_case(good, good, 1000);
@@ -180,6 +204,7 @@ int main(void)
 def run(driver):
     source = (driver / 'sbp2_driver.c').read_text(encoding='utf-8')
     signatures = (
+        'static void ieee1394_ResetFetchAgent(struct SBP2Device *dev)',
         'static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev)',
         'int ieee1394_SendCommandBlockORB(struct SBP2Device *dev, struct CommandDescriptorBlock *firstCDB)',
         'static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd, unsigned int cmd_len, unsigned char *data, unsigned int data_len, unsigned int data_wr)',

@@ -587,9 +587,9 @@ static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd,
             ((unsigned int *)writeBuffer)[i] = BSWAP32(((unsigned int *)data)[i]);
     }
 
-    ret = ieee1394_SendCommandBlockORB(dev, &cdb);
-    if (ret < 0)
-        return ret; // Submission retries failed; do not wait indefinitely for a status.
+    // A transport error can follow an accepted pointer write. Keep this stack ORB and
+    // its data alive until completion; returning requires proven target quiescence.
+    ieee1394_SendCommandBlockORB(dev, &cdb);
     ret = ieee1394_Sync();
 
     if (ret != 0) {

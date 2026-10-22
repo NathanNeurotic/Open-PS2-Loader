@@ -32,11 +32,13 @@ Fetch-agent initialization also inherited a separate race: LOGIN's response rema
 status FIFO, so the dummy ORB's wait could consume that old response and free its buffer before the
 target completed it. Clear the FIFO before publishing the dummy request (never after, since a fast
 bridge can reply inside the pointer write), and propagate the dummy completion's error. Command
-submission errors now return to SCSI instead of waiting indefinitely for a status.
+publication errors retain the existing wait: a timeout may follow an accepted request, so an early
+return could release its stack ORB or data before the target stops accessing them.
 
 `.github/scripts/test_ilink_sbp2_completion.py` exercises these real functions in both driver copies
 with immediate and delayed target replies, stale LOGIN status, failed dummy status and failed
-submission. The new binary is 22,041 bytes; its hash is recorded in `../PROVENANCE.md`. This is a
+publication, including accepted requests with lost acknowledgments and failed resets, plus missing
+dummy completions. The new binary is 22,025 bytes; its hash is recorded in `../PROVENANCE.md`. This is a
 source/host-tested correction, not a confirmed repair of FifthFox's enclosure. No read-delay or
 transfer-speed setting is added by it.
 
