@@ -45,6 +45,7 @@ static int udpfsIomanModLoaded = 0;
 static int udpfsNicClaimed = 0;       // SMAP resident, even if later modules fail; requires IOP reset
 static int udpfsWaitingForServer = 0; // the last scan got no answer from the server; see udpfsSetWaitingForServer
 static int udpfsThemesScanned = 0;    // THM is registered once per active UDPFS session, after THM opens
+static int udpfsLanguagesScanned = 0; // LNG uses the shared registry once its directory becomes readable
 static int udpfsPs1Scanned = 0;       // a PS1-view scan has reached the server this session; see udpfsNeedsUpdate
 
 // Another device answering for this PS2's IP (udpfs_ioman devctl, value shared with udpfs_ioman.c).
@@ -208,11 +209,11 @@ void udpfsShowPendingNotice(void)
 static void udpfsSetWaitingForServer(int waiting)
 {
     udpfsWaitingForServer = waiting;
-    // Keep the lightweight background poll alive until THM itself has been opened successfully.
-    // The server root/game folders can become usable slightly before udpfs:/THM does; without this,
-    // a failed first THM attempt drops back to the normal cadence and, with Automatic Refresh off,
+    // Keep the lightweight background poll alive until THM and LNG become readable.
+    // The server root/game folders can become usable before those asset folders; without this,
+    // a failed first attempt drops back to the normal cadence and, with Automatic Refresh off,
     // is never retried for the rest of the session.
-    udpfsGameList.updateDelay = (waiting || !udpfsThemesScanned) ? MENU_UPD_DELAY_GENREFRESH : UDPFS_MODE_UPDATE_DELAY;
+    udpfsGameList.updateDelay = (waiting || !udpfsThemesScanned || !udpfsLanguagesScanned) ? MENU_UPD_DELAY_GENREFRESH : UDPFS_MODE_UPDATE_DELAY;
 }
 
 void udpfsInit(item_list_t *itemList)
@@ -227,6 +228,7 @@ void udpfsInit(item_list_t *itemList)
 
     udpfsBase = "udpfs:";
     udpfsThemesScanned = 0;
+    udpfsLanguagesScanned = 0;
     udpfsPs1Scanned = 0;
     udpfsArtCaseIndex = 0;
     udpfsArtCaseChecked = 0;
@@ -342,13 +344,55 @@ static void udpfsDiscoverThemes(void)
     udpfsSetWaitingForServer(udpfsWaitingForServer);
 }
 
+// Match the shared LNG registration used by SMB/BDM/MMCE/HDD. Scan every case
+// variant so an empty auto-created LNG cannot hide an existing populated lng.
+// Failed root enumeration or an inaccessible matching directory keeps retrying.
+static void udpfsDiscoverLanguages(void)
+{
+    char path[128];
+    DIR *root, *dir;
+    struct dirent *entry;
+    int found = 0, failed = 0, error;
+
+    if (udpfsLanguagesScanned || !udpfsIomanModLoaded || !udpfsServerAnswers())
+        return;
+    root = opendir(udpfsPrefix);
+    if (root == NULL)
+        return;
+    for (;;) {
+        errno = 0;
+        entry = readdir(root);
+        if (entry == NULL) {
+            error = errno;
+            break;
+        }
+        if (strcasecmp(entry->d_name, "LNG") != 0)
+            continue;
+        snprintf(path, sizeof(path), "%s%s", udpfsPrefix, entry->d_name);
+        dir = opendir(path);
+        if (dir == NULL) {
+            failed = 1;
+            continue;
+        }
+        closedir(dir);
+        lngAddLanguages(path, "/", udpfsGameList.mode);
+        found = 1;
+    }
+    closedir(root);
+    if (!found || failed || error)
+        return;
+    udpfsLanguagesScanned = 1;
+    udpfsSetWaitingForServer(udpfsWaitingForServer);
+}
+
 static int udpfsNeedsUpdate(item_list_t *itemList)
 {
     int result = 0;
 
     // Keep this before every view-specific early return so a remembered PS1/Ember page cannot
-    // suppress theme discovery.
+    // suppress theme or language discovery.
     udpfsDiscoverThemes();
+    udpfsDiscoverLanguages();
 
     // PS1/Ember view: force a rescan once on toggle, then refresh on toggle only (skip disc heuristics).
     if (libViewConsumeDirty(itemList->mode))
@@ -552,6 +596,8 @@ static int udpfsUpdateGameList(item_list_t *itemList)
     // directory open and leaves the background retry cadence armed.
     if (answeredBefore)
         udpfsDiscoverThemes();
+    if (answeredBefore)
+        udpfsDiscoverLanguages();
 
     if (view == LIB_VIEW_PS1 || view == LIB_VIEW_MIXED) {
         // POPSTARTER uses the UDPFS BDMA pair after reset; Ember inherits this mount.

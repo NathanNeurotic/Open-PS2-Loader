@@ -193,3 +193,13 @@ Select **Settings → Interface → Language** (also under General & System
 where available), confirm, and **Save Settings**. English is always built
 in; missing newer translations fall back to English. Games and OSDSYS keep
 their own independent language settings.
+
+For **UDPFS Files**, language files on the PC belong directly in the served
+root's `LNG/` folder, for example `LNG/lang_Portuguese.lng`, with its matching
+font beside it if the pack includes one. RiptOPL registers that folder after
+the server becomes available, including when a remembered PS1 page is active.
+The folder name is case-insensitive for discovery on case-sensitive servers.
+Copy the actual files out of the release pack's language subfolder, rather
+than placing the entire versioned pack directory under `LNG/`. Reopen Settings
+after the source connects; restart RiptOPL after adding files to an already
+scanned folder. This does not apply to UDPFS IMG or UDPBD disk-image roots.
