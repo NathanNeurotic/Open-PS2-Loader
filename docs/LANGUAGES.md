@@ -189,10 +189,15 @@ after the storage drivers mount. Language registration grows dynamically rather
 than stopping at 15 files. Restart RiptOPL after copying files into folders
 already scanned during the current session.
 
-Select **Settings → Interface → Language** (also under General & System
-where available), confirm, and **Save Settings**. English is always built
-in; missing newer translations fall back to English. Games and OSDSYS keep
-their own independent language settings.
+Select **Settings → Language → Language**, confirm, and choose **Save Changes**
+on the Settings index. The Language page is the single location for the menu
+language picker. English is always built in; missing newer translations fall
+back to English.
+
+**OSD Defaults** on the same page opens the separate editor for the console
+language, screen size and video mode passed to games by the OPL core. It does
+not change RiptOPL's menu language or the console's saved OSDSYS settings.
+Individual games can override these defaults in their per-game settings.
 
 For **UDPFS Files**, language files on the PC belong directly in the served
 root's `LNG/` folder, for example `LNG/lang_Portuguese.lng`, with its matching
