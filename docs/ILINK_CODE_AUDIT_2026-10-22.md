@@ -166,6 +166,20 @@ budget. This reduces wakeups for stalled/spinning-up drives while bounding the
 added completion-detection latency. Throughput and interrupt latency still need
 measurement on the PS2; host tests do not establish their real cost.
 
+Pinned GCC 15.2.0 module measurements, compared with the preceding `5ddab45e`
+candidate from the same PS2DEVPINNED container:
+
+| Runtime modules | Previous allocated sections | Current allocated sections | Increase | Of that, additional static state |
+| --- | ---: | ---: | ---: | ---: |
+| Native / standard Neutrino manager + mini block driver | 16,079 B | 20,955 B | 4,876 B | 572 B |
+| POPStarter combined driver | 18,389 B | 22,773 B | 4,384 B | 576 B |
+
+These section totals include executable code and BSS; existing stacks and kernel
+semaphore bookkeeping are outside the measurement. The one-pass transfer
+simplification itself adds 16 bytes of code and no static state per block-driver
+build relative to `54517ca7`. It removes the separate full-buffer pass on normal
+aligned I/O. Physical throughput and interrupt latency remain console checks.
+
 ## Remaining limits
 
 - A request whose completion never arrives deliberately retains its resident
@@ -216,7 +230,7 @@ proves a launch bug: the existing binding and argv checks cover those paths.
   [pinned CI run 39899569001](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/39899569001),
   source head `d77554b63c4bdcc262c44a1ab80e2ed454e7ded8`.
   All three shipped `usbhdfsd.irx.ilink` copies are 27,145 bytes, SHA-256
-  `5b7de8d1ff749e8ca2ad8ef0c705ce76f5799d1c2dcedf5393dbf4cd7a58e6c8`.
+  `1a9c1baaf1dd020e35b75082b630f325b90e884819c743ddd5e1f27f106efcb6`.
   The downloaded artifact ZIP's SHA-256 is
   `e3e7e2d6263e9fcdc457fdd78c2b7f08cc35d9823e8ce526482001d5d40524c8`.
 
