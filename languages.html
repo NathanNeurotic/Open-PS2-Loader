@@ -153,9 +153,7 @@ fonts. Serbian's is the Croatian font, because the built-in font has no <code>č
 
 <h2 id="unicode-titles">Japanese game titles with English menus</h2><p>RiptOPL supports <a href="unicode-titles.html">Unicode/CJK glyph fallback</a> while leaving the interface language in English. Put <code>font_CJK.ttf</code> next to the active <code>settings_riptopl.cfg</code> and restart — <em>not merely in LNG/</em>. No toggle is needed. See the <a href="unicode-titles.html">activation guide</a>.</p>
 <h2 id="selecting">Choosing a language</h2>
-<p><em>Settings → Interface → Language</em> (also accessible from
-<em>General &amp; System</em> in supported layouts). The list contains English and
-the discovered <code>lang_*.lng</code> files. Confirm the choice, then save settings.</p>
+<p><b>Settings → Language</b> contains the single menu-language picker and the <b>OSD Defaults</b> action. Select a language, then choose <b>Save Changes</b> on the Settings index. Earlier builds exposed the same menu-language picker under Interface and General &amp; System.</p>
 
 <div class="callout info"><div class="h">Discovery happens as devices become available</div>
 If a device was not mounted at startup, wait for its source to initialize and
@@ -169,8 +167,8 @@ requires restarting RiptOPL.</div>
 <table>
 <thead><tr><th>Setting</th><th>What it changes</th></tr></thead>
 <tbody>
-<tr><td><b>Language</b> (<em>Settings → Interface</em>)</td><td>The language of <b>RiptOPL's own menus</b>. This page.</td></tr>
-<tr><td><b>OSD Settings</b> (Triangle on a game, or Game Launching → OSD Defaults)</td><td>The language, TV aspect and video mode <b>written into EEPROM as a game boots</b> — it changes what the <em>game</em> sees, not what RiptOPL shows. OPL core only; not available under Neutrino. See <a href="per-game-settings.html">Per-game Settings</a>.</td></tr>
+<tr><td><b>Language</b> (<em>Settings → Language</em>)</td><td>The language of <b>RiptOPL's own menus</b>. This page.</td></tr>
+<tr><td><b>OSD Settings</b> (Triangle on a game, or Settings → Language → OSD Defaults)</td><td>The language, TV aspect and video mode <b>handed to the game at launch</b> — it changes what the <em>game</em> sees, not what RiptOPL shows. It does not change the menu language or the console's saved OSDSYS settings. OPL core only; not available under Neutrino. See <a href="per-game-settings.html">Per-game Settings</a>.</td></tr>
 </tbody>
 </table>
 

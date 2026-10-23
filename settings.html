@@ -93,16 +93,17 @@ selected while it is still visible; RiptOPL falls back to the first visible page
 page was disabled or removed.</div>
 
 <h2 id="settings-index">The Settings screen</h2>
-<p><b>Settings</b> on the Start menu opens a screen titled <b>Settings</b> that lists eight pages, then
+<p><b>Settings</b> on the Start menu opens a screen titled <b>Settings</b> that lists nine pages, then
 <b>Save Changes</b>.</p>
 <table>
 <thead><tr><th>Page</th><th>What is on it</th></tr></thead>
 <tbody>
 <tr><td><a href="#game-sources">Game Sources</a></td><td>Which devices are enabled and how each one starts; MMCE Settings</td></tr>
 <tr><td><a href="#general-settings">General &amp; System</a></td><td>Last-played, folders, IGR path, settings home, Write Operations, the parental lock, prefix paths, caches</td></tr>
+<tr><td><a href="#language-settings">Language</a></td><td>Menu language and the separate OSD defaults handed to games</td></tr>
 <tr><td><a href="#network-settings">Network</a></td><td>Protocol, the PS2's address, the SMB and HTTP servers, POPSTARTER's network files</td></tr>
-<tr><td><a href="#display-settings">Interface</a></td><td>Game display, theme, Coverflow, artwork, colours, language, screen position</td></tr>
-<tr><td><a href="#game-launching">Game Launching</a></td><td>PS2 logo, default core, OSD and GSM defaults, Neutrino defaults</td></tr>
+<tr><td><a href="#display-settings">Interface</a></td><td>Game display, theme, font size, Coverflow, artwork, colours, screen position</td></tr>
+<tr><td><a href="#game-launching">Game Launching</a></td><td>PS2 logo, default core, GSM defaults, Neutrino defaults</td></tr>
 <tr><td><a href="#vcd-settings">PS Emulation Settings</a></td><td>POPSTARTER and Ember, the PS1 list, BDMA driver equip</td></tr>
 <tr><td><a href="#controller-settings">Controller Settings</a></td><td>Scrolling, confirm button, stick sensitivity, menu vibration, pad emulation</td></tr>
 <tr><td><a href="#audio-settings">Audio Settings</a></td><td>Sound effects, boot sound, background music</td></tr>
@@ -167,7 +168,6 @@ cache sizes.</p>
 <tr><td>Remember Last Played Game</td><td>Off / On</td><td>Pre-selects the last launched game on the next boot. Off by default.</td></tr>
 <tr><td>Auto Start</td><td>0&ndash;9 (seconds)</td><td>Launches the last played game after this many seconds. Shown only when <em>Remember Last Played Game</em> is on; 0 disables the countdown.</td></tr>
 <tr><td>Browse Folders in Game List</td><td>Off / On</td><td>Shows subfolders of <code>CD/</code> and <code>DVD/</code> as browsable entries. Off by default, and <b>not supported on every device</b>; see <a href="#folder-browsing">Folder browsing</a>.</td></tr>
-<tr><td>Language</td><td><em>installed languages</em></td><td>UI language. The same setting as on <a href="#display-settings">Interface</a>.</td></tr>
 <tr><td>IGR Path</td><td>text (path)</td><td>An ELF to boot after an in-game reset, instead of exiting to the PS2 browser; give it RiptOPL's own ELF to come back to RiptOPL. Keep it on the memory card (<code>mc0:</code>/<code>mc1:</code>) or a FAT32 USB drive (<code>mass:/…</code>): the post-reset loader cannot reach MMCE, so for MMCE chain through a memory-card loader such as PS2BBL. A USB path needs <code>USBD.IRX</code> and <code>USBHDFSD.IRX</code> in the card's <code>SYS-CONF</code> folder; if they are missing, RiptOPL offers to copy them the first time you launch a game on the OPL core from the menu (Auto Loading launches can't ask), and without them the reset drops to the PS2 browser. See <a href="igr.html#where-reset-goes">In-Game Reset</a>.</td></tr>
 <tr><td>Custom Settings Path</td><td>text (path)</td><td>Saves settings to a folder you choose, for example <code>mass0:/OPL</code>. Blank uses the folder RiptOPL booted from. The device is loaded on demand, so it need not be mounted when you type the path.</td></tr>
 <tr><td>GSM Defaults (All Games)</td><td>[sub-screen]</td><td>The global GSM video settings every game inherits unless it sets its own. Also on Interface and Game Launching. See <a href="gsm.html">GSM Video Modes</a>.</td></tr>
@@ -231,6 +231,32 @@ Entering the master override at the prompt does not grant one-time access — it
 and writes the config immediately, showing <em>"Parental lock disabled."</em> After that there is no lock at
 all until you set a new one. The master password also cannot be chosen as your own: trying to set it is
 rejected with <em>"Error - this password cannot be used."</em></div>
+
+<h2 id="language-settings">Language</h2>
+<p>One page for RiptOPL's menu language and the separate game-facing OSD defaults. Back and L1/R1 keep edits active; choose <b>Save Changes</b> on the Settings index to retain them after restarting.</p>
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Language</td><td><em>installed languages</em></td><td>Changes RiptOPL's menus. English is built in; install extra <code>lang_*.lng</code> files and any matching fonts as described in <a href="languages.html">Languages</a>.</td></tr>
+<tr><td>OSD Defaults</td><td>[sub-screen]</td><td>Console language, screen size and video output handed to games by the OPL core. Per-game overrides remain in each game's settings.</td></tr>
+</tbody>
+</table>
+<h3 id="osd-settings">OSD Settings</h3>
+<p>The PS2 system configuration a game sees as it boots: its language, screen size and video mode. Open it
+globally from <b>Settings → Language → OSD Defaults</b>, or for one game from <b>OSD Settings</b> in the Triangle menu.
+It does not change RiptOPL's menu language or the console's saved OSDSYS settings. This is an OPL core feature. See <a href="per-game-settings.html#osd-language">Per-game Settings</a>.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Settings Mode</td><td>Global / Per Game</td><td>Whether this game uses the global OSD settings or its own. Fixed to global when opened from OSD Defaults.</td></tr>
+<tr><td>Enable</td><td>Off / On</td><td>Applies the overrides below. When off, the console's own settings are used.</td></tr>
+<tr><td>OSD Language</td><td>Japanese / English / French / Spanish / German / Italian / Dutch / Portuguese / System Default</td><td>The language written into the system configuration handed to the game.</td></tr>
+<tr><td>Screen Size</td><td>4:3 / Full Screen / 16:9 / System Default</td><td>The TV aspect ratio handed to the game.</td></tr>
+<tr><td>Video Mode</td><td>RGB / Y Cb/Pb Cr/Pr / System Default</td><td>The video output mode handed to the game.</td></tr>
+</tbody>
+</table>
+
 
 <h2 id="network-settings">Network</h2>
 <p>What the network stack connects to. Whether it starts at all is <b>Network Connectivity</b> on
@@ -297,7 +323,7 @@ already shows a failed connection, <b>Select / Refresh</b> retries it there, wit
 settings or saving the whole configuration.</div>
 
 <h2 id="display-settings">Interface</h2>
-<p>How the menu looks: game display, theme, artwork, colours, language, and screen position.</p>
+<p>How the menu looks: game display, theme, font size, artwork, colours, and screen position.</p>
 
 <table data-sortable>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
@@ -308,11 +334,11 @@ settings or saving the whole configuration.</div>
 <tr><td>Show CFG Titles in Game Lists</td><td>Off / On</td><td>Shows the <code>Title=</code> line from each game's CFG instead of its file name, and sorts by it. Off by default: every list refresh then reads every game's CFG, so large SMB, MMCE and MX4SIO libraries load slower. Display only: renames, favourites, art and launching keep the file name. See <a href="unicode-titles.html#cfg-titles">Unicode game titles</a>.</td></tr>
 <tr><td>Video Mode</td><td>Auto / PAL / NTSC / &hellip;</td><td>Output mode for the <b>menu</b>. <em>Auto</em> follows the console. The two <em>FLICKER-FREE</em> entries at the end of the list send the same 480i/576i signal but read both fields from the same lines, so thin lines and font edges stop strobing on a CRT &mdash; at the cost of half the vertical detail. After a change, <b>hold</b> Accept to keep the new mode; a tap does nothing, and Back or 10 seconds restores the old one (see <a href="controls.html#keep-video-mode">Keeping a new video mode</a>). Games use GSM instead; see <a href="gsm.html">GSM Video Modes</a>.</td></tr>
 <tr><td>Theme</td><td><em>built-in and installed themes</em></td><td>A fresh configuration starts with <code>&lt;OPL&gt;</code>. Select the optional <code>&lt;Coverflow&gt;</code> carousel or <code>&lt;PSBBN Flow&gt;</code> perspective fan here, then apply and save. Both use Left/Right to browse covers and keep R3 as Favorite. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>. Saved theme choices override the default. External themes are read from <code>THM/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
+<tr><td>Font Size</td><td>Small / Default / Large</td><td>Standard menu text at 15 / 17 / 19 pixels, with matching list and dialog spacing. Theme fonts with other point sizes keep their own size.</td></tr>
 <tr><td>Coverflow Settings</td><td>[sub-screen]</td><td>See <a href="#coverflow-settings">Coverflow Settings</a>.</td></tr>
 <tr><td>Artwork Settings</td><td>[sub-screen]</td><td>See <a href="#artwork-settings">Artwork Settings</a>.</td></tr>
 <tr><td>Colors</td><td>[sub-screen]</td><td>See <a href="#colors-settings">Colors</a>.</td></tr>
 <tr><td>VCD Games List Settings</td><td>[sub-screen]</td><td>How the PS1 list is shown. See <a href="#vcd-list-settings">VCD Games List Settings</a>.</td></tr>
-<tr><td>Language</td><td><em>installed languages</em></td><td>UI language. English is built in. The other 33 ship as <code>lang_*.lng</code> files in <code>RIPTOPL-LANGS-*.zip</code>; each one placed in an <code>LNG/</code> folder is added to the list. See <a href="languages.html">Languages</a>.</td></tr>
 <tr><td>Notifications</td><td>Off / On</td><td>Brief on-screen notices when a config, theme or language file loads, or a partition mounts. On by default.</td></tr>
 <tr><td>Sort Games Alphabetically</td><td>Off / On</td><td>Sorts game lists by title. Off lists games in the order they are found. On by default.</td></tr>
 <tr><td>Automatic Refresh</td><td>Off / On</td><td>Re-scans for newly connected devices and adds their games without a manual refresh. Off by default.</td></tr>
@@ -385,7 +411,6 @@ the display pickers above no longer allow is discarded, not forced.</div>
 <tr><td>Create VMC on First Launch</td><td>Off / On</td><td>Launching a PS2 game with nothing in VMC slot 1 creates an 8 MB card on the game's own device, named as the VMC screen suggests (every disc of a multi-disc game shares one), assigns it and saves it before the game starts. An existing card of that name is reused; Back during creation cancels the launch. Skips PS1 and app rows, HTTP, and the internal APA HDD under Neutrino. Off by default, because it moves those games' saves off the physical card. See <a href="vmc.html#assigning">Virtual Memory Cards</a>.</td></tr>
 <tr><td>Default Loader Core</td><td>&lt;OPL&gt; / Neutrino</td><td>Global default only for sources that support both cores. <em>&lt;OPL&gt;</em> (the default) is the native core; <em>Neutrino</em> chains the external <code>neutrino.elf</code>. UDPFS / UDPBD always use Neutrino; SMB / HTTP always use &lt;OPL&gt;. A per-game choice overrides the global default only where that source supports both. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 <tr><td>Neutrino Defaults</td><td>[sub-screen]</td><td>The global Neutrino settings. See <a href="#neutrino-defaults">Neutrino Defaults</a>.</td></tr>
-<tr><td>OSD Defaults</td><td>[sub-screen]</td><td>The global <a href="#osd-settings">OSD Settings</a>: the console language, screen size and video mode handed to games that do not set their own.</td></tr>
 <tr><td>GSM Defaults (All Games)</td><td>[sub-screen]</td><td>The global GSM settings. See <a href="gsm.html">GSM Video Modes</a>.</td></tr>
 </tbody>
 </table>
@@ -412,22 +437,6 @@ every mounted device of that family; <code>mass0:/</code> means exactly that slo
 <em>Memory Card</em> or <em>HDD (APA)</em> picker choice becomes the matching path when you upgrade.
 The full rules are in <a href="neutrino.html#neutrino-device">Neutrino Core</a>.</p>
 </details>
-
-<h3 id="osd-settings">OSD Settings</h3>
-<p>The PS2 system configuration a game sees as it boots: its language, screen size and video mode. Open it
-globally from <b>OSD Defaults</b> above, or for one game from <b>OSD Settings</b> in the Triangle menu.
-This is an OPL core feature. See <a href="per-game-settings.html#osd-language">Per-game Settings</a>.</p>
-
-<table data-sortable>
-<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
-<tbody>
-<tr><td>Settings Mode</td><td>Global / Per Game</td><td>Whether this game uses the global OSD settings or its own. Fixed to global when opened from OSD Defaults.</td></tr>
-<tr><td>Enable</td><td>Off / On</td><td>Applies the overrides below. When off, the console's own settings are used.</td></tr>
-<tr><td>OSD Language</td><td>Japanese / English / French / Spanish / German / Italian / Dutch / Portuguese / Russian / Korean / Traditional Chinese / Simplified Chinese</td><td>The language written into the system configuration handed to the game.</td></tr>
-<tr><td>Screen Size</td><td>Full Screen / &hellip;</td><td>The TV aspect ratio handed to the game.</td></tr>
-<tr><td>Video Mode</td><td>System Default / &hellip;</td><td>The video output mode handed to the game.</td></tr>
-</tbody>
-</table>
 
 <h2 id="vcd-settings">PS Emulation Settings</h2>
 <p>PS1 games: both cores (POPSTARTER and Ember), the PS1 list, and the BDMA driver equip. See
