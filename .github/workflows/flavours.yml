@@ -137,6 +137,8 @@ jobs:
         run: python3 .github/scripts/test_confirm_button.py
       - name: Check language changes refresh menus when returning to English
         run: python3 .github/scripts/test_language_switch.py
+      - name: Check the Language page keeps edits, separates OSD defaults and owns its name list
+        run: python3 .github/scripts/test_language_page.py
       - name: Check CWD language precedence, file filtering and dynamic language count
         run: python3 .github/scripts/test_language_discovery.py
       - name: Check translations that would misread their printf arguments fall back to English

@@ -394,11 +394,6 @@ struct UIItem diaConfig[] = {
     {UI_BOOL, CFG_FOLDERNAV, 1, 1, _STR_HINT_FOLDER_NAV, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LANGUAGE}}},
-    {UI_SPACER},
-    {UI_ENUM, UICFG_LANG, 1, 1, _STR_HINT_LANGUAGE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EXITTO}}},
     {UI_SPACER},
     {UI_STRING, CFG_EXITTO, 1, 1, _STR_HINT_EXITPATH, 0, 0, {.stringvalue = {"", "", &guiExitPathHandler}}},
@@ -800,8 +795,27 @@ struct UIItem diaMmcePathConfig[] = {
     // end of dialog
     {UI_TERMINATOR}};
 
+// Menu language has one home. Game-facing OSD defaults use their existing separate editor.
+struct UIItem diaLanguageConfig[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_LANGUAGE}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LANGUAGE}}},
+    {UI_SPACER},
+    {UI_ENUM, UICFG_LANG, 1, 1, _STR_HINT_LANGUAGE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_OSD_DEFAULTS}}},
+    {UI_SPACER},
+    {UI_BUTTON, LAUNCH_OSD_DEFAULTS_BUTTON, 1, 1, _STR_HINT_OSD_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BREAK},
+
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
+    {UI_BREAK},
+    {UI_TERMINATOR}};
+
 // Interface page (settings-layout restructure, was Display Settings): high-level view/video choice,
-// then theme/language/list behavior. Artwork, Coverflow and Colors are chained sub-dialogs; the
+// then theme/list behavior. Artwork, Coverflow and Colors are chained sub-dialogs; the
 // remaining geometry/GameID-barcode rows live in diaDisplayConfig. Ids unchanged.
 struct UIItem diaUIConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_INTERFACE_SETTINGS}}},
@@ -853,11 +867,6 @@ struct UIItem diaUIConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"VCD Games List Settings", -1}}},
     {UI_SPACER},
     {UI_BUTTON, UICFG_GAME_LIST_BUTTON, 1, 1, _STR_HINT_VCD_LIST_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LANGUAGE}}},
-    {UI_SPACER},
-    {UI_ENUM, UICFG_LANG, 1, 1, _STR_HINT_LANGUAGE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_NOTIFICATIONS}}},
@@ -1026,8 +1035,8 @@ struct UIItem diaDisplayConfig[] = {
     // end of dialog
     {UI_TERMINATOR}};
 
-// Game Launching page (settings-layout restructure): launch-time behavior + the global Neutrino and
-// OSD defaults as chained sub-dialogs. Rows moved out of the old General Settings (diaConfig).
+// Game Launching page: launch-time behavior and global Neutrino/GSM defaults.
+// Game-facing OSD defaults are reached from the Language page.
 struct UIItem diaLaunchConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_GAME_LAUNCHING}}},
     {UI_SPLITTER},
@@ -1047,15 +1056,9 @@ struct UIItem diaLaunchConfig[] = {
     {UI_ENUM, CFG_DEFAULT_CORE, 1, 1, _STR_HINT_DEFAULT_CORE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    // Modify actions. Neutrino's actual default fields are composed below; OSD defaults retain the
-    // existing structured editor, but the page exposes it as one native action row.
+    // Neutrino's fields are composed below; the Settings shell skips this legacy button.
     {UI_BUTTON, LAUNCH_NEUTRINO_DEFAULTS_BUTTON, 1, 1, _STR_HINT_NEUTRINO_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_NEUTRINO_DEFAULTS}}},
     {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_OSD_DEFAULTS}}},
-    {UI_SPACER},
-    {UI_BUTTON, LAUNCH_OSD_DEFAULTS_BUTTON, 1, 1, _STR_HINT_OSD_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
-    {UI_BREAK},
-
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GSM_DEFAULTS}}},
     {UI_SPACER},
     {UI_BUTTON, LAUNCH_GSM_DEFAULTS_BUTTON, 1, 1, _STR_HINT_GSM_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},

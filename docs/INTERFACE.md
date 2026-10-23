@@ -1,9 +1,23 @@
 # Interface behaviours
 
 Menu behaviours that are configured from *Settings* but need more than a one-line description:
-theme selection, folder browsing, the parental lock, and the audio system.
+language and theme selection, folder browsing, the parental lock, and the audio system.
 
 For the button map, see [CONTROLS.md](CONTROLS.md). For UTF-8 Japanese and other Unicode game names with English menus, see [Unicode Game Titles](UNICODE-GAME-TITLES.md): place an optional `font_CJK.ttf` alongside `settings_riptopl.cfg` and restart; there is no UI toggle.
+
+---
+
+## Language
+
+**Settings → Language** contains the single menu-language picker and the
+**OSD Defaults** action. The picker changes RiptOPL's interface. OSD Defaults
+opens the existing editor for the console language, screen size and video mode
+passed to games by the OPL core; it does not change the menu language or write
+the console's OSDSYS settings. Per-game overrides remain in each game's settings.
+
+Back and L1/R1 keep edits active for the current session. Choose **Save Changes**
+on the Settings index to keep them after restarting. See [Languages](LANGUAGES.md)
+for installing translation files and fonts.
 
 ---
 
