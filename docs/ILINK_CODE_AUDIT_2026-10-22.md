@@ -118,7 +118,9 @@ FifthFox's enclosure encountered.
     command. `scsi_connect` returns failure to device configuration; failed setup
     releases its transaction context. Sense buffers are initialized before
     REQUEST SENSE, and status sense keys use byte 1 rather than shifting an
-    8-bit byte by 16. A completed DEAD status marks the command agent for reset
+    8-bit byte by 16. Valid extended SCSI GOOD status is accepted; an extended
+    block is not automatically an error. Its first status quadlet must arrive
+    before it can complete the command. A completed DEAD status marks the command agent for reset
     before SCSI retries; otherwise the stopped agent would never fetch the retry.
     Agent-reset data is initialized rather than sending stack garbage.
 

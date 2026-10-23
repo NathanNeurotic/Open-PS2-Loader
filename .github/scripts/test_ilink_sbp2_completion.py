@@ -38,7 +38,8 @@ static const void *target_orb;
 static unsigned long long now_us, due_us, delay_us;
 static unsigned int result_status, foreign_status, captured;
 static int suppress_reply, pointer_error, reset_error, submitted, notified, generation;
-static int failures, held, reset_calls, reset_value;
+static int failures, held, reset_calls, reset_value,polls,partial_status;
+static unsigned int sam_status,sense_key;
 #define CHECK(c,msg) do { if(!(c)) { printf("FAIL: %s\n",msg);failures++; } } while(0)
 static void GetSystemTime(iop_sys_clock_t *c) { c->lo=now_us; c->hi=now_us>>32; }
 static void SysClock2USec(iop_sys_clock_t *c,u32 *s,u32 *u) {
@@ -57,12 +58,20 @@ static void deliver(void) {
         u32 word=0x11223344;
         memcpy(writeBuffer,&word,4);
     }
+    if(((result_status>>24)&7)>1) {
+        target->statusFIFO.data[0]=sam_status;
+        target->statusFIFO.data[1]=sense_key;
+    }
     target->statusFIFO.ORB_low=(u32)target_orb;
     target->statusFIFO.status=result_status;
     notified=1;
 }
 static int DelayThread(unsigned int usec) {
-    now_us+=usec;
+    now_us+=usec;polls++;
+    if(partial_status && now_us==50) {
+        target->statusFIFO.ORB_low=(u32)target_orb;
+        target->statusFIFO.status=result_status;
+    }
     if(foreign_status && now_us==50) {
         target->statusFIFO.status=foreign_status;
         target->statusFIFO.ORB_low=0xdeadbeef;
@@ -97,6 +106,7 @@ static void reset_case(void) {
     memset(&command,0,sizeof(command));memset(storage,0xa5,sizeof(storage));memset(caller,0xcc,sizeof(caller));
     now_us=due_us=0;delay_us=500;result_status=(1u<<30)|(1u<<24);foreign_status=0;
     suppress_reply=pointer_error=reset_error=submitted=notified=reset_calls=held=0;generation=1;
+    polls=partial_status=sam_status=sense_key=0;
     target=NULL;target_orb=NULL;device.IsConnected=1;device.generation=1;device.ORB_size=8;
     device.scsi.priv=&device;device.scsi.timeout_us=2000;device.ManagementAgent_low=0xf0004000;
     other.scsi.priv=&other;other.IsConnected=1;other.generation=1;other.scsi.timeout_us=2000;
@@ -130,8 +140,16 @@ int main(void) {
     reset_case();result_status=(1u<<30)|(2u<<24)|(2u<<16);device.statusFIFO.data[1]=5;
     CHECK(queue(4,0)==-1 && !command.pending,"failed matching completion retires storage and reports error");
     device.statusFIFO.data[1]=5;
-    CHECK(ProcessStatus(&device)==-5,"SCSI sense key comes from byte one rather than an impossible u8 shift");
+    CHECK(ProcessStatus(&device,&command.cdb)==-5,"SCSI sense key comes from byte one rather than an impossible u8 shift");
 
+    reset_case();result_status=(1u<<30)|(2u<<24);partial_status=1;
+    CHECK(queue(4,0)==0 && notified && now_us>=500,
+          "extended SCSI GOOD status succeeds after its status data arrives");
+    reset_case();result_status=(1u<<30)|(2u<<24);sam_status=2;sense_key=2;
+    CHECK(queue(4,0)==-2 && !command.pending && caller[0]==0xcc,
+          "extended CHECK CONDITION reports sense without copying invalid read data");
+    reset_case();result_status=(1u<<30)|(2u<<24);sam_status=0x80;
+    CHECK(queue(4,0)<0 && !command.pending,"reserved extended status format is refused");
     reset_case();result_status|=1u<<27;
     CHECK(queue(4,0)<0 && device.fetchAgentNeedsReset && !command.pending,
           "DEAD status retires completed request and remembers agent recovery");
@@ -174,6 +192,7 @@ int main(void) {
     reset_case();suppress_reply=1;
     CHECK(ieee1394_InitializeFetchAgent(&device)<0 && command.pending && now_us==SBP2_COMMAND_BUDGET_US,
           "missing dummy status is bounded without freeing its resident ORB");
+    CHECK(polls<40000,"slow-tail backoff avoids hundreds of thousands of timeout wakeups");
 
     reset_case();pointer_error=1;
     CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && notified && submitted==1,
@@ -199,7 +218,7 @@ def run(driver):
     signatures=(
         'static u32 sbp2ElapsedUs(const iop_sys_clock_t *start)',
         'static int sbp2StatusReady(struct SBP2Device *dev, const void *orb)',
-        'static int ProcessStatus(struct SBP2Device *dev)',
+        'static int ProcessStatus(struct SBP2Device *dev, const void *orb)',
         'static int sbp2WaitStatus(struct SBP2Device *dev, const void *orb, u32 budget_us)',
         'static int sbp2CommandAvailable(void)',
         'static int sbp2PublishCommand(struct SBP2Device *dev, u32 budget_us)',

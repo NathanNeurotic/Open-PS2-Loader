@@ -163,19 +163,27 @@ static int sbp2StatusReady(struct SBP2Device *dev, const void *orb)
 {
     u32 status = dev->statusFIFO.status;
     return RESP_SRC(status) <= 1 && RESP_LEN(status) >= 1 &&
-           (status & 0xffff) == 0 && dev->statusFIFO.ORB_low == (u32)orb;
+           (status & 0xffff) == 0 && dev->statusFIFO.ORB_low == (u32)orb &&
+           (orb != &command.cdb || RESP_LEN(status) == 1 || dev->statusFIFO.data[0] != 0xff);
 }
 
-static int ProcessStatus(struct SBP2Device *dev)
+static int ProcessStatus(struct SBP2Device *dev, const void *orb)
 {
     u32 status = dev->statusFIFO.status;
     int sense = dev->statusFIFO.data[1] & 0xf;
     if (sense == 0)
         sense = 1;
-    return ((RESP_SBP_STATUS(status) == 0 || RESP_SBP_STATUS(status) == 0x0b) &&
-            RESP_RESP(status) == 0 && !RESP_DEAD(status) && RESP_LEN(status) == 1) ?
-               0 :
-               -sense;
+    if ((RESP_SBP_STATUS(status) == 0 || RESP_SBP_STATUS(status) == 0x0b) &&
+        RESP_RESP(status) == 0 && !RESP_DEAD(status)) {
+        if (RESP_LEN(status) == 1)
+            return 0;
+        /* A command may include a valid SCSI GOOD status block. Extended
+         * status is not inherently an error; format 0/1 carries SAM status. */
+        if (orb == &command.cdb && (dev->statusFIFO.data[0] >> 6) <= 1 &&
+            (dev->statusFIFO.data[0] & 0x3f) == 0)
+            return 0;
+    }
+    return -sense;
 }
 
 static int sbp2WaitStatus(struct SBP2Device *dev, const void *orb, u32 budget_us)
@@ -185,7 +193,7 @@ static int sbp2WaitStatus(struct SBP2Device *dev, const void *orb, u32 budget_us
     GetSystemTime(&start);
     while (dev->generation == iLinkGetGenerationNumber()) {
         if (sbp2StatusReady(dev, orb))
-            return ProcessStatus(dev);
+            return ProcessStatus(dev, orb);
         elapsed = sbp2ElapsedUs(&start);
         if (elapsed >= budget_us)
             break;
@@ -212,6 +220,8 @@ static int sbp2PublishCommand(struct SBP2Device *dev, u32 budget_us)
 {
     int result;
     memset((void *)&dev->statusFIFO, 0, sizeof(dev->statusFIFO));
+    // Wait for the first extended-status quadlet as well as its header.
+    dev->statusFIFO.data[0] = 0xff;
     command.pointer.low = (u32)command.orb;
     command.pointer.high = 0;
     command.pointer.NodeID = dev->InitiatorNodeID;
