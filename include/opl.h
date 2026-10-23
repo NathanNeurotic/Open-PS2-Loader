@@ -345,6 +345,9 @@ extern int gRAHostIp[4];
 // List badges and the cover mark. Cosmetic, and subordinate to gRATelemetry: badges advertise a
 // feature, so they stay dark while the feature is switched off.
 extern int gRABadges;
+/* RA mark placement: 0 = "RA " before the name, 1 = " [RA]" after it.
+   Both are display-only and use the clean title for alphabetical sorting. */
+extern int gRABadgeSuffix;
 extern int gRAExperimentalCards;
 #endif
 extern int gEnableArt;

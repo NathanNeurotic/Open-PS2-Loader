@@ -58,6 +58,10 @@ typedef struct submenu_item
     int *cache_uid;
     int favourited;
     int isFolder;
+#ifdef RETROACHIEVEMENTS
+    int raBadged;
+    char *raText;
+#endif
 } submenu_item_t;
 
 typedef struct submenu_list
@@ -90,7 +94,7 @@ static const char *vcdDisplayNameForRow(item_list_t *itemList, int id, const cha
     return strlen(text) > 12 && text[4] == '_' && text[8] == '.' && text[11] == '.' ? text + 12 : text;
 }
 /* Optional CFG Titles (#918) are off here: the display name is the PS1-aware name above. */
-static const char *cfgTitleDisplayName(item_list_t *itemList, int id, const char *text)
+static const char *cfgTitleSortName(item_list_t *itemList, int id, const char *text)
 {
     return vcdDisplayNameForRow(itemList, id, text);
 }
@@ -224,6 +228,23 @@ int main(void)
     static int tags[4096];
     int failures = 0;
 
+#ifdef RETROACHIEVEMENTS
+    /* Cosmetic marks never change ordering, even when the clean name is a prefix
+       of another name. A suffix would put "A [RA]" after "A!" without a clean key. */
+    submenu_list_t ra = {0}, plain = {0};
+    ra.item.text = "A"; ra.item.text_id = -1;
+    plain.item.text = "A!"; plain.item.text_id = -1;
+    for (int suffix = 0; suffix < 2; suffix++) {
+        ra.item.raText = suffix ? "A [RA]" : "RA A";
+        ra.item.raBadged = 1;
+        plain.next = &ra; plain.prev = NULL; ra.prev = &plain; ra.next = NULL;
+        submenu_list_t *head = &plain;
+        submenuSort(&head, 0);
+        if (head != &ra || strcmp(ra.item.text, "A") ||
+            strcmp(submenuItemGetText(&ra.item), ra.item.raText))
+            return 1;
+    }
+#endif
     for (int k = 0; k < 4096; k++)
         tags[k] = k;
 
@@ -290,17 +311,17 @@ if not failures:
         c_file = Path(tmp) / 'menu_sort.c'
         exe = Path(tmp) / ('menu_sort.exe' if sys.platform == 'win32' else 'menu_sort')
         c_file.write_text(HARNESS.replace('@FUNCTIONS@', functions), encoding='utf-8')
-        build = subprocess.run(['cc', '-std=gnu99', '-O1', '-Wall', '-Wextra', '-Werror',
-                                '-Wno-unused-function', '-Wno-unused-parameter', str(c_file), '-o', str(exe)],
-                               capture_output=True, text=True)
-        if build.returncode != 0:
-            failures.append('harness did not compile:\n' + build.stderr)
-        else:
-            run = subprocess.run([str(exe)], capture_output=True, text=True)
-            sys.stdout.write(run.stdout)
-            if run.returncode != 0:
-                failures.append('harness reported failures (see above)')
-
+        for flags in ([], ['-DRETROACHIEVEMENTS']):
+            build = subprocess.run(['cc', *flags, '-std=gnu99', '-O1', '-Wall', '-Wextra', '-Werror',
+                                    '-Wno-unused-function', '-Wno-unused-parameter', str(c_file), '-o', str(exe)],
+                                   capture_output=True, text=True)
+            if build.returncode != 0:
+                failures.append('harness did not compile:\n' + build.stderr)
+            else:
+                run = subprocess.run([str(exe)], capture_output=True, text=True)
+                sys.stdout.write(run.stdout)
+                if run.returncode != 0:
+                    failures.append('harness reported failures (see above)')
 if failures:
     for failure in failures:
         print('FAIL:', failure)

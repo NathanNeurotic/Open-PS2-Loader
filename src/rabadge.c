@@ -20,6 +20,12 @@
   HDD, APP, MMCE, FAV, UDPFS). With four slots the badge cache silently
   mis-attributes lists across devices.
 
+  The mark's placement is selectable (gRABadgeSuffix, fork-gap H11, after
+  hacan359 759b12a2): "RA " before the name, or " [RA]" after it. The
+  upstream port also carried a "PS1 " display mark; this fork never had one
+  (PS1 rows resolve a watch key in badgeVcdKey but show no PS1 text), so
+  only the RA mark moves here.
+
   This file compiles to nothing unless RETROACHIEVEMENTS=1.
 */
 
@@ -33,13 +39,17 @@
 #include "include/bdmsupport.h"
 #include "include/favsupport.h"
 #include "include/libview.h"
+#include "include/vcdsupport.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 
-#define RA_BADGE      "RA " /* prefix before the name; ASCII only, the stock \
-                               theme font has no other glyphs */
+#define RA_BADGE      "RA "   /* prefix before the name; ASCII only, the stock \
+                                 theme font has no other glyphs */
+#define RA_SUFFIX     " [RA]" /* the same mark after the name (gRABadgeSuffix) */
+/* Room for the longer of the two marks: "RA " is 3 chars, " [RA]" is 5, both
+   under the +8 already here, so the slot size does not change. */
 #define RA_BADGE_TEXT (ISO_GAME_NAME_MAX + 8)
 
 struct ra_badge_slot
@@ -185,10 +195,16 @@ void raBadgeRefresh(item_list_t *support, int count)
         /* The PS1 POPS reader loads the watch list only from its game
            device. Do not probe SMB for every untracked USB VCD: that is
            both slow and can show a badge for a list POPStarter cannot use. */
-        if (watchListExists(rowPrefix, serial, ps1 > 0))
-            snprintf(dst, RA_BADGE_TEXT, "%s%s", RA_BADGE,
-                     support->itemGetName(support, i));
-        else
+        if (watchListExists(rowPrefix, serial, ps1 > 0)) {
+            /* Placement changes only the display snapshot; row identity and sorting stay clean. */
+            const char *displayName = vcdDisplayNameForRow(support, i, support->itemGetName(support, i));
+            if (gRABadgeSuffix)
+                snprintf(dst, RA_BADGE_TEXT, "%s%s",
+                         displayName, RA_SUFFIX);
+            else
+                snprintf(dst, RA_BADGE_TEXT, "%s%s", RA_BADGE,
+                         displayName);
+        } else
             dst[0] = '\0'; /* empty means show the plain name */
     }
 }

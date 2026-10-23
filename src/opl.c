@@ -239,6 +239,7 @@ int gRATelemetry;
 int gRAMode;
 int gRAHostIp[4];
 int gRABadges;
+int gRABadgeSuffix;
 int gRAExperimentalCards;
 #endif
 int gEnableArt;
@@ -1382,9 +1383,10 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
                 gup->submenu.id = i;
 #ifdef RETROACHIEVEMENTS
                 {
-                    // The RA badge prefix, when this game has a watch list. NULL means plain name.
+                    // Keep the source name for identity; snapshot the badge before its cache is rebuilt.
                     const char *badge = raBadgeText(mdl->support, i);
-                    gup->submenu.text = (char *)(badge != NULL ? badge : mdl->support->itemGetName(mdl->support, i));
+                    gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
+                    gup->submenu.raText = badge != NULL ? strdup(badge) : NULL;
                     /* Resolve the cover mark HERE, on the I/O thread that owns the badge cache,
                        and carry the answer to the renderer as a plain int. */
                     gup->submenu.raBadged = (badge != NULL);
@@ -3350,6 +3352,8 @@ static void _loadConfig()
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configGetInt(configOPL, CONFIG_OPL_RA_BADGE_SUFFIX, &gRABadgeSuffix);
+            gRABadgeSuffix = (gRABadgeSuffix == 1); // normalise: any stored value but 1 is Prefix
             configReadRAExperimentalCards(configOPL);
             configReadRAHost(configOPL);
             gRAMode = RA_MODE_XERABORA;
@@ -4021,6 +4025,7 @@ static void _saveConfig()
 #ifdef RETROACHIEVEMENTS
         configSetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, gRATelemetry);
         configSetInt(configOPL, CONFIG_OPL_RA_BADGES, gRABadges);
+        configSetInt(configOPL, CONFIG_OPL_RA_BADGE_SUFFIX, gRABadgeSuffix);
         configSetInt(configOPL, CONFIG_OPL_RA_EXPERIMENTAL_CARDS, gRAExperimentalCards);
         configSetInt(configOPL, CONFIG_OPL_RA_MODE, gRAMode);
         snprintf(temp, sizeof(temp), "%d.%d.%d.%d", gRAHostIp[0], gRAHostIp[1], gRAHostIp[2], gRAHostIp[3]);
@@ -5017,8 +5022,9 @@ static void setDefaults(void)
 #ifdef RETROACHIEVEMENTS
     gRAMode = RA_MODE_XERABORA;
     memset(gRAHostIp, 0, sizeof(gRAHostIp));
-    gRATelemetry = 0; // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
-    gRABadges = 1;    // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
+    gRATelemetry = 0;   // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
+    gRABadges = 1;      // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
+    gRABadgeSuffix = 0; // preserve the shipped prefix; placement does not affect sorting
     gRAExperimentalCards = 0;
 #endif
     gEnableArt = 1;
@@ -5364,6 +5370,8 @@ static void miniInit(int mode)
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configGetInt(configOPL, CONFIG_OPL_RA_BADGE_SUFFIX, &gRABadgeSuffix);
+            gRABadgeSuffix = (gRABadgeSuffix == 1); // normalise: any stored value but 1 is Prefix
             configReadRAExperimentalCards(configOPL);
             configReadRAHost(configOPL);
             gRAMode = RA_MODE_XERABORA;
