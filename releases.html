@@ -180,11 +180,10 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 </tbody>
 </table>
 
-<p><code>&lt;version&gt;</code> in a download's name is the build version without its commit, e.g.
-<code>v1.2.0-Beta-2915</code> — one authoritative version, taken from the required
-<code>ps2dev:latest</code> build and applied to all four flavours. The full version, commit included
-(for example <code>v1.2.0-Beta-2915-da28622</code>), is in the release notes header and on the
-loader's About screen.</p>
+<h2 id="build-version">Finding the exact build</h2>
+<p>The release notes header shows the build version and source commit <b>before download</b>. The ZIP filename omits the source hash and SDK suffix because it contains several SDK builds. For example, <code>v1.2.0-Beta-4224</code> is the short form of <code>v1.2.0-Beta-4224-308bc6a-OFFICIALROLLING</code>. The full running identifier is visible on both the <b>Settings index</b> and <b>About</b>.</p>
+<p>The Beta number is calculated from the full Git commit count plus two. The source hash can precede the release checkout when newer commits touch only excluded paths; the final suffix identifies the SDK. Korium and RA add their edition labels. <b>Current Fan Favorite Build</b> is a preserved older snapshot with its own revision.</p>
+<p>The standard Beta 4224 kit's <code>PS2DEVPINNED</code> comparison loader incorrectly reports <code>Beta-3</code> because its build job used a one-commit checkout. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1044">PR #1044</a> fixes history fetching for subsequent builds. A new package is required to replace that executable; renaming an old ZIP does not change it.</p>
 
 <div class="callout info"><div class="h">Separate standard and RA downloads</div>Standard releases retain <code>RIPTOPL.ELF</code>, their app-only PSU and install archives. The dedicated RA release retains one ELF update and PSU per theme, both full kits, its source snapshot, provenance and checksums. DualSense comparison loaders remain in the standard VARIANTS archive.</div>
 
@@ -230,7 +229,7 @@ before memory-card fallbacks. See <a href="neutrino.html">Neutrino Core</a> for 
 
 <h2 id="how-to-pull">How to pull the rolling release</h2>
 
-<p>Because filenames embed the version and short SHA, they change on every push. Pull by the
+<p>Versioned archive filenames change when the build revision changes. Pull by the
 <code>rolling</code> <em>tag</em> rather than a fixed filename so you always get what is currently
 published:</p>
 
