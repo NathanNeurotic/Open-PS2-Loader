@@ -33,6 +33,7 @@ static struct dirent entry;
 static const char *udpfsPrefix="udpfs:/";
 static struct {int mode, updateDelay;} udpfsGameList={7,0};
 static int udpfsLanguagesScanned, udpfsThemesScanned=1, udpfsWaitingForServer;
+static int udpfsArtCaseChecked=1; // ART already resolved in this harness, as THM is
 static int udpfsIomanModLoaded=1, online=1, root_ready=1, child_ready=1;
 static int position, fault_at=-1, opens, adds;
 static const char *names[8];
