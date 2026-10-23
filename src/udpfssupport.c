@@ -13,7 +13,7 @@
 #include "include/themes.h"
 #include "include/textures.h"
 #include "include/texcache.h"
-#include "include/artindex.h" // artIndexInvalidate -- re-arm art verdicts when ART resolution completes
+#include "include/artindex.h"
 #include "include/ioman.h"
 #include "include/system.h"
 #include "include/extern_irx.h"
@@ -67,7 +67,7 @@ static int udpfsArtCaseChecked = 0;
 
 // forward declaration
 static item_list_t udpfsGameList;
-static void udpfsDiscoverArtFolder(void /* forward */);
+static void udpfsDiscoverArtFolder(void);
 
 // Load the UDPFS ioman IRX chain ONCE per boot. Mirrors bdmsupport's udpfs_bd chain load
 // (bdmLoadBlockDeviceModules), but loads udpfs_ioman (the FILESYSTEM variant) instead of udpfs_bd (the
@@ -563,17 +563,8 @@ static void udpfsDiscoverArtFolder(void)
 
     udpfsArtCaseChecked = 1;
     udpfsArtCaseIndex = chosen;
-    // Re-arm every art verdict taken before this moment, once per session (#1036). Covers are
-    // probed as soon as rows are drawn, and on first connect rows can be published by a scan
-    // that started before the server answered (see udpfsUpdateGameList), i.e. before this
-    // discovery ever ran: the udpfs_ioman ops fail fast (-EIO) until the session is up, an
-    // early probe can leave a dead art-index slot that is never rebuilt on its own, and a
-    // verdict classified ERR_BAD_FILE parks the row as absent with no UDPFS-side invalidation
-    // to ever re-open it (the routine invalidations are the BDM generation change and a
-    // settings apply -- neither fires for a UDPFS connect). Discovery completing is the first
-    // moment the ART directory is known reachable, so it is the correct single place to re-arm
-    // both. In the common path no cover has been probed yet and this costs one fail-epoch bump
-    // plus one index rebuild; it also covers the older case-change-only invalidation.
+    // First-connect probes can memoize missing covers or an unavailable directory before
+    // discovery runs. Re-arm both once, even when the selected spelling stays uppercase ART.
     cacheInvalidateFailMemo();
     artIndexInvalidate();
     // If server-waiting is already clear, retire the temporary general-refresh cadence now that

@@ -16,9 +16,10 @@ failures = []
 
 
 def function(source, signature):
-    pos = source.find(signature)
-    if pos < 0:
+    match = re.search(r"^" + re.escape(signature) + r"[^;{]*\{", source, re.M)
+    if match is None:
         raise AssertionError(f"Missing function: {signature}")
+    pos = match.start()
     start = source.find("{", pos)
     depth = 0
     for i in range(start, len(source)):
@@ -85,15 +86,23 @@ if table:
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
+#include <sys/stat.h>
+#define MENU_UPD_DELAY_GENREFRESH 0
+#define UDPFS_MODE_UPDATE_DELAY 300
+#define LIB_VIEW_PS1 1
 typedef struct { int kind; int pos; } DIR;
 struct dirent { char d_name[128]; };
-typedef struct { int dummy; } item_list_t;
+typedef struct { int mode; } item_list_t;
 typedef struct { int dummy; } GSTEXTURE;
 
 static char udpfsPrefix[40] = "udpfs:/";
 static int udpfsIomanModLoaded = 1, serverOnline = 1;
 static int invalidations, rootOpens, folderOpens, imageCalls;
 static int indexInvalidations, udpfsWaitingForServer;
+static int udpfsThemesScanned = 1, udpfsLanguagesScanned = 1;
+static int udpfsPs1Scanned = 1, udpfsIsoScanned = 1;
+static time_t udpfsModifiedCDPrev, udpfsModifiedDVDPrev;
+static struct { int updateDelay; } udpfsGameList;
 static char imagePath[256];
 static const char *rootNames[12];
 static const char *folderNames[8][4];
@@ -108,7 +117,14 @@ static int udpfsArtCaseChecked;
 static int udpfsServerAnswers(void) { return serverOnline; }
 static void cacheInvalidateFailMemo(void) { invalidations++; }
 static void artIndexInvalidate(void) { indexInvalidations++; }
-static void udpfsSetWaitingForServer(int waiting) { (void)waiting; }
+static void udpfsDiscoverThemes(void) {}
+static void udpfsDiscoverLanguages(void) {}
+static int libViewConsumeDirty(int mode) { return 0; }
+static int folderConsumeDirty(int mode) { return 0; }
+static int libListViewActive(item_list_t *list) { return LIB_VIEW_PS1; }
+static int stub_stat(const char *path, struct stat *st) { memset(st, 0, sizeof(*st)); return 0; }
+#define stat(path, st) stub_stat(path, st)
+@WAITER@
 static DIR *opendir(const char *path)
 {
     if (strcmp(path, "udpfs:/") == 0) {
@@ -160,6 +176,7 @@ static int texDiscoverLoad(GSTEXTURE *tex, const char *path, int id)
 }
 @FOLDER@
 @DISCOVER@
+@NEEDS_UPDATE@
 @IMAGE@
 
 static int fails;
@@ -185,6 +202,7 @@ static void check(const char *label, int ok)
 int main(void)
 {
     GSTEXTURE texture = {0};
+    item_list_t list = {0};
     reset();
     rootNames[0] = "ART";
     udpfsDiscoverArtFolder();
@@ -294,6 +312,21 @@ int main(void)
     udpfsDiscoverArtFolder();
     check("fresh share retains ART default", udpfsArtCaseChecked && udpfsArtCaseIndex == 0);
 
+    reset();
+    serverOnline = 0;
+    udpfsSetWaitingForServer(0);
+    check("unresolved ART keeps polling after theme/language discovery",
+          udpfsGameList.updateDelay == MENU_UPD_DELAY_GENREFRESH);
+    check("offline PS1 page polls without rebuilding", udpfsNeedsUpdate(&list) == 0 && rootOpens == 0);
+    serverOnline = 1;
+    rootNames[0] = "art";
+    check("PS1 early return still discovers ART", udpfsNeedsUpdate(&list) == 0 &&
+          udpfsArtCaseChecked && udpfsArtCaseIndex == 7 && invalidations == 1 && indexInvalidations == 1);
+    check("completed ART retires temporary cadence", udpfsGameList.updateDelay == UDPFS_MODE_UPDATE_DELAY);
+    udpfsNeedsUpdate(&list);
+    check("completed discovery neither rescans nor invalidates again",
+          rootOpens == 1 && invalidations == 1 && indexInvalidations == 1);
+
     if (!fails)
         puts("UDPFS ART: canonical, lowercase, duplicate casing, incomplete scan and zero per-image I/O pass");
     return fails ? 1 : 0;
@@ -302,8 +335,10 @@ int main(void)
     run_harness(
         "UDPFS ART resolver",
         casing_harness.replace("@TABLE@", table.group(0))
+        .replace("@WAITER@", waiter_fn)
         .replace("@FOLDER@", folder_files)
         .replace("@DISCOVER@", discover)
+        .replace("@NEEDS_UPDATE@", needs_update)
         .replace("@IMAGE@", get_image),
     )
 
@@ -382,6 +417,110 @@ int main(void)
 }
 """
 run_harness("ART negative index", index_harness.replace("@INDEX@", index_fn))
+
+# Exercise the complete production cache lookup, including the ID fast path. A
+# request retains the fail generation it was issued in when it completes late.
+cache_source = (ROOT / "src/texcache.c").read_text(encoding="utf-8")
+cache_header = (ROOT / "include/texcache.h").read_text(encoding="utf-8")
+cache_types = cache_header[cache_header.index("typedef struct"):cache_header.index("} image_cache_t;") + len("} image_cache_t;")]
+request_type = cache_source[cache_source.index("typedef struct load_image_request"):cache_source.index("} load_image_request_t;") + len("} load_image_request_t;")]
+cache_harness = r"""
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+typedef struct { void *Mem, *Clut; int Vram, VramClut, ClutStorageMode; } GSTEXTURE;
+typedef struct { int delay; } item_list_t;
+@CACHE_TYPES@
+@REQUEST_TYPE@
+#define ART_MIN_SETTLE_FRAMES 8
+#define GS_CLUT_STORAGE_CSM1 0
+static unsigned int gArtFailEpoch = 1, gArtFocusEpoch = 1, gArtEpoch = 1;
+static unsigned int gArtKeyTooLong;
+static int guiFrameId = 10, guiInactiveFrames = 100;
+static int gArtNavActive, gArtRunning = 1, gEnableArtTar;
+static int enqueued;
+static load_image_request_t *pending;
+static void artUpdateFocus(item_list_t *list, const char *value) {}
+static void artPromote(load_image_request_t *request) {}
+static void cacheAbortOtherBackgrounds(image_cache_t *cache, const char *value) {}
+static int cacheRequestIsSIO2(item_list_t *list, const char *value) { return 0; }
+static int cacheResolveArtArchive(item_list_t *list, const char *value, char *path, size_t size) { return 0; }
+static void rmUnloadTexture(GSTEXTURE *texture) {}
+static void artPush(load_image_request_t *request) { pending = request; enqueued++; }
+static void artPushFront(load_image_request_t *request) { artPush(request); }
+static void cacheWakeArtWorker(void) {}
+@CLEAR@
+@INVALIDATE@
+@GET_TEXTURE@
+static void finish_missing(void)
+{
+    assert(pending != NULL);
+    pending->entry->lastUsed = 0;
+    pending->entry->failEpoch = pending->failEpoch;
+    pending->entry->qr = NULL;
+    pending->cache->activeRequests--;
+    free(pending);
+    pending = NULL;
+}
+int main(void)
+{
+    cache_entry_t entry = { .lastUsed = -1 };
+    image_cache_t cache = { .count = 1, .suffix = "COV", .nextUID = 1, .content = &entry };
+    item_list_t list = {0};
+    int id = -1, uid = 0;
+    char value[] = "SLUS_123.45";
+
+    /* A row still holding its cache ID when the old request finishes must retry. */
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 0) == NULL);
+    assert(enqueued == 1 && pending && pending->failEpoch == gArtFailEpoch);
+    cacheInvalidateFailMemo();
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 0) == NULL);
+    assert(enqueued == 1); /* Keep the active request alive; do not duplicate it. */
+    finish_missing();
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 0) == NULL);
+    assert(enqueued == 2 && pending && pending->failEpoch == gArtFailEpoch);
+
+    /* A current-generation miss parks normally and does not retry every frame. */
+    finish_missing();
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 0) == NULL);
+    assert(id == -2 && (unsigned int)uid == gArtFailEpoch);
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 0) == NULL);
+    assert(enqueued == 2 && pending == NULL);
+
+    /* A miss already parked on the row before discovery is also re-armed. */
+    cacheInvalidateFailMemo();
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 1) == NULL);
+    assert(enqueued == 3 && pending && id == 0);
+    finish_missing();
+
+    /* A rebuilt row finds the same stale miss by value and re-probes once. */
+    id = -1;
+    uid = 0;
+    cacheInvalidateFailMemo();
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 0) == NULL);
+    assert(enqueued == 4 && pending);
+    finish_missing();
+
+    /* Ready images survive invalidation and remain resident. */
+    entry.lastUsed = guiFrameId;
+    entry.texture.Mem = &entry;
+    cacheInvalidateFailMemo();
+    assert(cacheGetTextureEx(&cache, &list, &id, &uid, value, 1) == &entry.texture);
+    assert(enqueued == 4 && pending == NULL && cache.activeRequests == 0);
+    puts("ART cache: late failure, parked row, rebuilt row and resident texture generations pass");
+    return 0;
+}
+"""
+for placeholder, replacement in {
+    "@CACHE_TYPES@": cache_types,
+    "@REQUEST_TYPE@": request_type,
+    "@CLEAR@": function(cache_source, "static void cacheClearItem("),
+    "@INVALIDATE@": function(cache_source, "void cacheInvalidateFailMemo("),
+    "@GET_TEXTURE@": function(cache_source, "GSTEXTURE *cacheGetTextureEx("),
+}.items():
+    cache_harness = cache_harness.replace(placeholder, replacement)
+run_harness("ART cache fail generations", cache_harness)
 
 if failures:
     print("UDPFS ART checks FAILED:")

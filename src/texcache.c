@@ -1405,9 +1405,13 @@ GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cache
                     }
                     return NULL;
                 } else if (entry->lastUsed == 0) {
-                    *cacheId = -2;
-                    *UID = (int)gArtFailEpoch;
-                    return NULL;
+                    // A request started before ART discovery may finish afterwards. Preserve
+                    // its original fail generation so discovery can re-arm this row as well.
+                    if (entry->failEpoch == gArtFailEpoch) {
+                        *cacheId = -2;
+                        *UID = (int)gArtFailEpoch;
+                        return NULL;
+                    }
                 } else {
                     entry->lastUsed = guiFrameId;
                     return &entry->texture;
