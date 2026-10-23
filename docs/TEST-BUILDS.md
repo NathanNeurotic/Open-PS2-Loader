@@ -20,6 +20,11 @@ Replacing only RIPTOPL.ELF does not update companion cores or modules. Use the f
 
 A useful result names PS2 model, exact OPL version/commit and flavour, loader/device, filesystem, selected core, changed settings, VMC state, PADEMU state, exact error/stage and reproduction steps. Compare the same setup against a known-good build. Compilation and host tests are not a console pass.
 
+The Settings index and About both show the full running build identifier. For a published
+release, its notes show the build version before download; the ZIP filename omits the source
+hash and SDK suffix. See [Reading the build version](../ROLLING_RELEASE.md#reading-the-build-version)
+for the fields and the known Beta-3 identifier error in the standard Beta 4224 pinned build.
+
 See [the release guide](https://nathanneurotic.github.io/Open-PS2-Loader/releases.html) and [troubleshooting](https://nathanneurotic.github.io/Open-PS2-Loader/troubleshooting.html).
 
 ## In-game freeze report (FREEZEDIAG)

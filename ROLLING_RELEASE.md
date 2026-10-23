@@ -71,8 +71,31 @@ Alpha driver's runtime configs and other non-VCD files remain on USB. This new V
 handoff awaits console validation. UDPBD and UDPFS IMG remain Ember-only. Confirming Network Settings now applies
 the current values and reconnects immediately; Select / Refresh retries a failed network page.
 
-`<version>` is the `ps2dev:latest` build's `git describe` (e.g. `v1.2.0-Beta-2562-c553567`); each
-flavour carries the same version with its flavour suffix (`-PS2DEVPINNED`, `-OFFICIALPINNED`, `-PS2DEVROLLING`, `-OFFICIALROLLING`).
+## Reading the build version
+
+You can identify a published build before downloading it: the release notes header gives the
+build version and source commit. The normal ZIP filename uses the shorter version, for example
+`RIPTOPL-v1.2.0-Beta-4224.zip`. About and the Settings index show the full identifier, such as
+`v1.2.0-Beta-4224-308bc6a-OFFICIALROLLING`:
+
+| Part | Meaning |
+|---|---|
+| `v1.2.0-Beta` | Development version series |
+| `4224` | Build revision, calculated from the full Git commit count plus two |
+| `308bc6a` | Last source commit outside the Makefile's explicit exclusions; it can precede the release's checkout commit |
+| `OFFICIALROLLING` | SDK flavour used to build this executable |
+
+The ZIP omits the source hash and SDK suffix because it contains several SDK builds. Each of
+those executables must carry the same build revision and source hash for that edition, followed
+by its own flavour. Korium adds a channel label and has its own theme source hash; RA identifies
+its theme and RA build. The preserved **Current Fan Favorite Build** is an older snapshot with its
+own revision, rather than the newest Rolling build.
+
+All release build jobs fetch complete Git history before calculating the version. A shallow
+one-commit checkout produces the incorrect revision `Beta-3`; changing the archive name does
+not correct the identifier embedded in that executable. This affected the standard
+`PS2DEVPINNED` folder in the published Beta 4224 kit. Corrected workflow code takes effect only
+after a new release is built and published; it does not repair an already downloaded ELF.
 
 ## Auto Loading global settings (#545; pending hardware validation)
 
