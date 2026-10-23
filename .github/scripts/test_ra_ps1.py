@@ -492,6 +492,7 @@ struct item_list {
     void *(*itemGet)(item_list_t *, int);
 };
 static int gRATelemetry=1, gRABadges=1, gRABadgeSuffix=0, view=1, favkind=1, favmode=0;
+static int gVcdHideGameId;
 static char name[32]="First", startup[32]="First", full[256];
 static base_game_info_t game={".VCD"};
 static char *getname(item_list_t *x,int i){(void)x;(void)i;return name;}
@@ -499,6 +500,10 @@ static char *getstartup(item_list_t *x,int i){(void)x;(void)i;return startup;}
 static char *getprefix(item_list_t *x){(void)x;return "mass0:/games/";}
 static void *getgame(item_list_t *x,int i){(void)x;(void)i;return &game;}
 static int libListRowView(item_list_t *x,int i){(void)x;(void)i;return view;}
+static const char *vcdDisplayNameForRow(item_list_t *x,int i,const char *text) {
+    (void)x;(void)i;
+    return gVcdHideGameId && view==LIB_VIEW_PS1 && !strncmp(text,"SLUS_012.15.",12) ? text+12 : text;
+}
 static int favGetItemKind(int i){(void)i;return favkind;}
 static int favGetItemSourceMode(int i){(void)i;return favmode;}
 static char *favGetItemPrefix(int i){(void)i;return "mass0:/games/";}
@@ -530,6 +535,21 @@ int main(void) {
     raBadgeRefresh(&favorite,1);
     assert(raBadgeText(&favorite,0) && !strcmp(raBadgeText(&favorite,0),"First [RA]"));
     gRABadgeSuffix=0;
+
+    strcpy(name,"SLUS_012.15.First");
+    gVcdHideGameId=1;
+    raBadgeRefresh(&usb,1);
+    assert(!strcmp(raBadgeText(&usb,0),"RA First"));
+    assert(!strcmp(full,"mass0:/POPS/SLUS_012.15.First.VCD"));
+    raBadgeRefresh(&favorite,1);
+    assert(!strcmp(raBadgeText(&favorite,0),"RA First"));
+    gRABadgeSuffix=1;
+    raBadgeRefresh(&usb,1);
+    assert(!strcmp(raBadgeText(&usb,0),"First [RA]"));
+    gVcdHideGameId=0; gRABadgeSuffix=0;
+    raBadgeRefresh(&usb,1);
+    assert(!strcmp(raBadgeText(&usb,0),"RA SLUS_012.15.First"));
+    strcpy(name,"First");
 
     favkind=2; /* Ember CUE cannot be tracked by the POPStarter bridge. */
     raBadgeRefresh(&favorite,1);

@@ -39,6 +39,7 @@
 #include "include/bdmsupport.h"
 #include "include/favsupport.h"
 #include "include/libview.h"
+#include "include/vcdsupport.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -196,12 +197,13 @@ void raBadgeRefresh(item_list_t *support, int count)
            both slow and can show a badge for a list POPStarter cannot use. */
         if (watchListExists(rowPrefix, serial, ps1 > 0)) {
             /* Placement changes only the display snapshot; row identity and sorting stay clean. */
+            const char *displayName = vcdDisplayNameForRow(support, i, support->itemGetName(support, i));
             if (gRABadgeSuffix)
                 snprintf(dst, RA_BADGE_TEXT, "%s%s",
-                         support->itemGetName(support, i), RA_SUFFIX);
+                         displayName, RA_SUFFIX);
             else
                 snprintf(dst, RA_BADGE_TEXT, "%s%s", RA_BADGE,
-                         support->itemGetName(support, i));
+                         displayName);
         } else
             dst[0] = '\0'; /* empty means show the plain name */
     }

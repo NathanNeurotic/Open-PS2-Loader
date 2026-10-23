@@ -153,6 +153,7 @@ static char *keepTitle(item_list_t *support, int id, const char *clean)
         const char *badge = raBadgeText(support, id);
         const char *name = support->itemGetName != NULL ? support->itemGetName(support, id) : NULL;
         if (badge != NULL && name != NULL) {
+            name = vcdDisplayNameForRow(support, id, name);
             size_t badgeLen = strlen(badge), nameLen = strlen(name);
             if (badgeLen == nameLen + 3 && !strncmp(badge, "RA ", 3) && !strcmp(badge + 3, name)) {
                 prefix = badge;
