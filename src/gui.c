@@ -1160,6 +1160,9 @@ reshow_ui:
     guiSetAppsViewPicker(diaUIConfig);
     diaSetEnum(diaUIConfig, UICFG_VMODE, vmodeNames);
     diaSetInt(diaUIConfig, UICFG_VMODE, gVMode);
+    const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
+    diaSetEnum(diaUIConfig, UICFG_FONT_SIZE, fontSizeNames);
+    diaSetInt(diaUIConfig, UICFG_FONT_SIZE, gFontSize);
 
     int ret = diaExecuteDialog(diaUIConfig, -1, 1, NULL);
 
@@ -1202,6 +1205,7 @@ reshow_ui:
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
+        diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
 
         if (previousTheme != themeID && isBgmPlaying())
             bgmStop();
@@ -3069,6 +3073,11 @@ static int guiSettingsDisplayUpdater(int modified)
         rmSetAspectRatio((gWideScreen == 0) ? RM_ARATIO_4_3 : RM_ARATIO_16_9);
         guiUpdateScreenScale();
     }
+    diaGetInt(guiSettingsActiveDialog, UICFG_FONT_SIZE, &temp);
+    if (temp != gFontSize) {
+        gFontSize = temp;
+        guiUpdateScreenScale();
+    }
     return 0;
 }
 
@@ -3122,6 +3131,9 @@ static int guiSettingsShowInterface(void)
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
     diaSetInt(ui, UICFG_VMODE, gVMode);
     diaSetInt(ui, UICFG_WIDESCREEN, gWideScreen);
+    const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
+    diaSetEnum(ui, UICFG_FONT_SIZE, fontSizeNames);
+    diaSetInt(ui, UICFG_FONT_SIZE, gFontSize);
     diaSetInt(ui, UICFG_XOFF, gXOff);
     diaSetInt(ui, UICFG_YOFF, gYOff);
     diaSetInt(ui, UICFG_OVERSCAN, gOverscan);
@@ -3171,6 +3183,7 @@ reshow_interface:
         appsViewChanged = guiReadAppsViewPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);
+        diaGetInt(ui, UICFG_FONT_SIZE, &gFontSize);
         diaGetInt(ui, UICFG_XOFF, &gXOff);
         diaGetInt(ui, UICFG_YOFF, &gYOff);
         diaGetInt(ui, UICFG_OVERSCAN, &gOverscan);
@@ -4770,6 +4783,7 @@ void guiUpdateScrollSpeed(void)
 void guiUpdateScreenScale(void)
 {
     fntUpdateAspectRatio();
+    thmRefreshFontSize();
 }
 
 // Greedily word-wrap `text` to innerW, writing '\n'-separated lines into out. Returns the line count.

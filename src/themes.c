@@ -72,6 +72,7 @@ static int gLoadPsbbnFlowBuiltin = 0;
 static int screenWidth;
 static int screenHeight;
 static int guiThemeID = 0;
+static int loadedFontSize = FONT_SIZE_DEFAULT;
 
 static int nThemes = 0;
 static theme_file_t themes[THM_MAX_FILES];
@@ -2477,6 +2478,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
     if (item) {
         items_list_t *itemsList = (items_list_t *)elem->extended;
         item_list_t *list = menu->item->userdata;
+        const int rowHeight = MENU_ITEM_HEIGHT;
 
         int posX = elem->posX, posY = elem->posY;
         if (elem->aligned) {
@@ -2552,7 +2554,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         // A fixed leading column keeps stars and titles aligned on ordinary lists. Centered
         // lists (notably Coverflow's one-line title) must retain their theme-defined anchor:
         // turning Favorites on must never turn ALIGN_HCENTER into a left-aligned title.
-        const int favRoom = gFAVStartMode ? MENU_ITEM_HEIGHT + 4 : 0;
+        const int favRoom = gFAVStartMode ? rowHeight + 4 : 0;
         const int hasDecorator = itemsList->decoratorImage &&
                                  !isHiddenArtworkCache(itemsList->decoratorImage->cache);
         int rowX = elem->posX + (hasDecorator ? DECORATOR_SIZE : 0);
@@ -2640,11 +2642,11 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                             labelWidth = textRoom;
                         starX = textX - labelWidth / 2 - favRoom;
                     }
-                    rmDrawPixmap(favTex, starX, posY, textAlign & ALIGN_VCENTER, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
+                    rmDrawPixmap(favTex, starX, posY, textAlign & ALIGN_VCENTER, rowHeight, rowHeight, elem->scaled, gDefaultCol, 0);
                 }
             }
 
-            posY += MENU_ITEM_HEIGHT;
+            posY += rowHeight;
             ps = ps->next;
         }
     }
@@ -2663,6 +2665,8 @@ static void initItemsList(const char *themePath, config_set_t *themeConfig, them
         elem->height = theme->usedHeight - (MENU_POS_V + HINT_HEIGHT);
 
     itemsList->displayedItems = elem->height / MENU_ITEM_HEIGHT;
+    if (itemsList->displayedItems < 1)
+        itemsList->displayedItems = 1;
     LOG("THEMES ItemsList %s: displaying %d elems, item height: %d\n", name, itemsList->displayedItems, elem->height);
 
     itemsList->decorator = NULL;
@@ -4174,6 +4178,7 @@ static int thmLoad(const char *themePath)
     if (curT == NULL)
         cacheCancelPendingImageLoads(); // first load: pre-cacheInit, nothing queued -- plain no-op drain
     gTheme = newT;
+    loadedFontSize = gFontSize;
     cfIsAnimating = 0;
     psbbnFlowStartOffset = 0;
     thmFree(curT);
@@ -4313,6 +4318,36 @@ void thmReloadScreenExtents(void)
 const char *thmGetValue(void)
 {
     return guiThemesNames[guiThemeID];
+}
+
+void thmRefreshFontSize(void)
+{
+    if (gTheme == NULL || loadedFontSize == gFontSize)
+        return;
+
+    // Font changes only alter geometry. Keep artwork and disk-theme resources in place.
+    guiLock();
+    theme_elems_t *families[] = {
+        &gTheme->mainElems, &gTheme->infoElems, &gTheme->appsMainElems, &gTheme->appsInfoElems,
+        &gTheme->favsMainElems, &gTheme->favsInfoElems, &gTheme->vcdMainElems, &gTheme->vcdInfoElems,
+        &gTheme->favsVcdMainElems, &gTheme->favsVcdInfoElems, &gTheme->favsAppsMainElems, &gTheme->favsAppsInfoElems};
+    int i;
+    for (i = 0; i < (int)(sizeof(families) / sizeof(families[0])); i++) {
+        theme_element_t *elem;
+        for (elem = families[i]->first; elem != NULL; elem = elem->next) {
+            if (elem->type == ELEM_TYPE_ITEMS_LIST && elem->extended != NULL) {
+                items_list_t *list = elem->extended;
+                list->displayedItems = elem->height / MENU_ITEM_HEIGHT;
+                if (list->displayedItems < 1)
+                    list->displayedItems = 1;
+            }
+        }
+        thmComputeTextRooms(families[i]);
+    }
+    // A shorter page must still show the selection when returning from Settings.
+    menuResetPageStarts();
+    loadedFontSize = gFontSize;
+    guiUnlock();
 }
 
 int thmSetGuiValue(int themeID, int reload)

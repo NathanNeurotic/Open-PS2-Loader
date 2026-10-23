@@ -837,6 +837,11 @@ struct UIItem diaUIConfig[] = {
     {UI_ENUM, UICFG_THEME, 1, 1, _STR_HINT_THEME, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_FONT_SIZE}}},
+    {UI_SPACER},
+    {UI_ENUM, UICFG_FONT_SIZE, 1, 1, _STR_HINT_FONT_SIZE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     // Theme-specific presentation controls stay together.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_SETTINGS}}},
     {UI_SPACER},

@@ -228,6 +228,7 @@ int thmCoverflowIsAnimating(void);
 void thmInit(void);
 void thmReinit(const char *path);
 void thmReloadScreenExtents(void);
+void thmRefreshFontSize(void);
 int thmAddElements(char *path, const char *separator, int forceRefresh);
 const char *thmGetValue(void);
 GSTEXTURE *thmGetTexture(unsigned int id);

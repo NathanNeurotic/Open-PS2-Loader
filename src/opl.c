@@ -16,6 +16,7 @@
 #include "include/lang.h"
 #include "include/themes.h"
 #include "include/textures.h"
+#include "include/fntsys.h"
 #include "include/artindex.h"
 #include "include/pad.h"
 #include "include/texcache.h"
@@ -25,7 +26,6 @@
 #include "include/system.h"
 #include "include/debug.h"
 #ifdef __OPLDIAG
-#include "include/fntsys.h"
 #include <delaythread.h>
 #endif
 #include "include/config.h"
@@ -245,6 +245,7 @@ int gEnableArt;
 int gEnableDiscArt;
 int gEnableLogoArt;
 int gWideScreen;
+int gFontSize;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
 int gYOff;
@@ -2855,6 +2856,14 @@ static int tryAlternateDevice(int types)
 // namespace. The resolver keys the case-variant probe off the gNeutrinoDevice marker, not this text.
 #define NEUTRINO_MIGRATED_APA_PATH "hdd:/neutrino/neutrino.elf"
 
+static void configReadFontSize(config_set_t *configOPL)
+{
+    gFontSize = FONT_SIZE_DEFAULT;
+    configGetInt(configOPL, CONFIG_OPL_FONT_SIZE, &gFontSize);
+    if (gFontSize < FONT_SIZE_SMALL || gFontSize >= FONT_SIZE_COUNT)
+        gFontSize = FONT_SIZE_DEFAULT;
+}
+
 // Shared reader for the Neutrino-launch globals (args / custom path / -elf switch / global default
 // core / device TYPE incl. the legacy device-INDEX migration). Factored out so the interactive
 // _loadConfig and the autolaunch miniInit can never drift: the argv/autolaunch path previously read
@@ -3352,6 +3361,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_LOGOART, &gEnableLogoArt);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
+            configReadFontSize(configOPL);
 
             if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
@@ -4020,6 +4030,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, gEnableDiscArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_LOGOART, gEnableLogoArt);
         configSetInt(configOPL, CONFIG_OPL_WIDESCREEN, gWideScreen);
+        configSetInt(configOPL, CONFIG_OPL_FONT_SIZE, gFontSize);
         configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
         configSetInt(configOPL, CONFIG_OPL_YOFF, gYOff);
@@ -5014,6 +5025,7 @@ static void setDefaults(void)
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
     gEnableLogoArt = 1; // preserve existing LGO artwork unless the user disables it
     gWideScreen = 0;    // Fresh configurations use 4:3; a saved widescreen choice overrides this.
+    gFontSize = FONT_SIZE_DEFAULT;
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;
@@ -5354,6 +5366,7 @@ static void miniInit(int mode)
         if (ret & CONFIG_OPL) {
             config_set_t *configOPL = configGetByType(CONFIG_OPL);
 
+            configReadFontSize(configOPL);
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);
