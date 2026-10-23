@@ -45,7 +45,11 @@ static void configFree(config_set_t *c) { (void)c; configFrees++; }
 static void guiLock(void) { locks++; }
 static void guiUnlock(void) { unlocks++; }
 static int folderModeSupported(int mode) { return mode == BDM_MODE; }
-static const char *vcdDisplayNameForRow(item_list_t *l, int id, const char *text) { (void)l; (void)id; return text; }
+static int hideVcdPrefix;
+static const char *vcdDisplayNameForRow(item_list_t *l, int id, const char *text) {
+    (void)l; (void)id;
+    return hideVcdPrefix && !strncmp(text, "SLUS_012.15.", 12) ? text + 12 : text;
+}
 static int favSource[8];
 static int favGetItemSourceMode(int id) { return favSource[id]; }
 #ifdef RETROACHIEVEMENTS
@@ -145,6 +149,27 @@ int main(void)
     cfgTitleRefresh(&bdm, 2);
     assert(!strcmp(cfgTitleForRow(&bdm, 0), "RA ドラゴンクエストVIII"));
     assert(!strcmp(cfgTitleForRow(&bdm, 1), "Kingdom Hearts")); /* badge does not end with the name */
+    assert(!strcmp(cfgTitleSortName(&bdm, 0, names[0]), "ドラゴンクエストVIII"));
+    badges[0] = "Dragon Quest VIII [RA]";
+    badges[1] = "SLPM_655.55 [RA]";
+    cfgTitleRefresh(&bdm, 2);
+    assert(!strcmp(cfgTitleForRow(&bdm, 0), "ドラゴンクエストVIII [RA]"));
+    assert(!strcmp(cfgTitleForRow(&bdm, 1), "Kingdom Hearts [RA]"));
+    assert(!strcmp(cfgTitleSortName(&bdm, 1, names[1]), "Kingdom Hearts"));
+    names[0] = "[RA]";
+    badges[0] = "[RA] [RA]";
+    cfgTitleRefresh(&bdm, 1);
+    assert(!strcmp(cfgTitleForRow(&bdm, 0), "ドラゴンクエストVIII [RA]"));
+    names[0] = "SLUS_012.15.Dragon Quest VIII";
+    hideVcdPrefix = 1;
+    badges[0] = "RA Dragon Quest VIII";
+    cfgTitleRefresh(&bdm, 1);
+    assert(!strncmp(cfgTitleForRow(&bdm, 0), "RA ", 3));
+    badges[0] = "Dragon Quest VIII [RA]";
+    cfgTitleRefresh(&bdm, 1);
+    assert(strstr(cfgTitleForRow(&bdm, 0), " [RA]") != NULL);
+    hideVcdPrefix = 0;
+    names[0] = "Dragon Quest VIII";
     gCfgTitlesInLists = 0;
     cfgTitleRefresh(&bdm, 2);
 #endif
@@ -183,10 +208,10 @@ assert "gup->submenu.text = mdl->support->itemGetName(mdl->support, i);" in upda
 menusys = (ROOT / "src/menusys.c").read_text(encoding="utf-8")
 sort = menusys[menusys.index("static int submenuSortCompare("):]
 sort = sort[:sort.index("\n}\n")]
-assert "cfgTitleDisplayName(support, a->item.id, txt1)" in sort and "vcdDisplayNameForRow" not in sort
+assert "cfgTitleSortName(support, a->item.id, txt1)" in sort and "vcdDisplayNameForRow" not in sort
 themes = (ROOT / "src/themes.c").read_text(encoding="utf-8")
 assert "cfgTitleDisplayName(list, ps->item.id, submenuItemGetText(&ps->item))" in themes
-assert menusys.count("cfgTitleDisplayName(") >= 3  # sort + both game-menu headers
+assert menusys.count("cfgTitleDisplayName(") >= 2  # both game-menu headers
 assert "gCfgTitlesInLists = 0;" in opl
 assert "CONFIG_OPL_CFG_TITLES, &gCfgTitlesInLists" in opl and "CONFIG_OPL_CFG_TITLES, gCfgTitlesInLists" in opl
 dialogs = (ROOT / "src/dialogs.c").read_text(encoding="utf-8")
