@@ -101,6 +101,8 @@ def run(driver):
     source = (driver / 'sbp2_driver.c').read_text(encoding='utf-8')
     start = source.rindex(SIGNATURE)
     function = source[start:source.index('\n}', start) + 2]
+    helper = source.index('static void sbp2CopySwapped(')
+    function = source[helper:source.index('\n}', helper) + 2] + '\n' + function
     with tempfile.TemporaryDirectory() as directory:
         folder = Path(directory)
         (folder / 'tamtypes.h').write_text(

@@ -152,12 +152,13 @@ the dummy no longer needs a separate heap allocation or worst-case-sized BSS
 array. Resident metadata holds request identity and the small per-device LOGIN
 structures. Kernel semaphores serialize resources that were already global.
 
-IOP builds use `-fno-builtin`. CDB bytes and caller data are copied in bulk, then
-converted with direct aligned word loops. There are no per-word `memcpy` calls
-in those loops or the response copy, and reads do not clear an entire transfer
-buffer before the target overwrites it. A successful read has one additional
-bulk copy from resident staging to its caller. That cost makes it safe to return
-a timeout without leaving the target able to DMA into reused caller memory.
+IOP builds use `-fno-builtin`. Aligned CDBs and sector transfers combine byte
+conversion and copying in one direct word loop. A successful aligned read writes
+converted words from resident staging straight into its caller after completion,
+without a separate swap-then-copy pass. Unaligned buffers retain a bulk-copy
+fallback and partial tails use their exact byte count. No per-word library calls
+or whole-buffer clearing is added to the normal path. Caller memory is still
+never advertised as the target's DMA destination.
 
 Completion polling retains the previous 50-us fast interval for the first 2 ms,
 then uses 250 us until 20 ms and 1 ms for a slow tail, capped by the remaining

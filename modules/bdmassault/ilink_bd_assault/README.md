@@ -52,7 +52,8 @@ response alarm after an early error, and drains unhandled receive data with TTY
 logging disabled. Chunk limits use the discovered logical sector size, oversized
 requests are refused before copying/publishing, and capacity includes the last LBA.
 
-The current binary is 22,185 bytes. Its pinned CI provenance is in `../PROVENANCE.md`.
+The first-pass binary was 22,185 bytes. The current byte count and pinned CI
+provenance are recorded in `../PROVENANCE.md`.
 The production-function regressions and remaining hardware/recovery limits are
 documented in `../../../docs/ILINK_CODE_AUDIT_2026-10-22.md`. These are code and
 host-test findings; FifthFox's console result remains the acceptance gate.

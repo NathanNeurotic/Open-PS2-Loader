@@ -521,11 +521,22 @@ static int sbp2_get_max_lun(struct scsi_interface *scsi)
     return 0;
 }
 
+/* All internal destinations are quadlet aligned. Use one pass for the
+ * common aligned sector/CDB path; callers handle unaligned or partial tails. */
+static void sbp2CopySwapped(void *destination, const void *source, unsigned int nQuads)
+{
+    u32 *out = (u32 *)destination;
+    const u32 *in = (const u32 *)source;
+    unsigned int i;
+    for (i = 0; i < nQuads; i++)
+        out[i] = BSWAP32(in[i]);
+}
+
 static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd, unsigned int cmd_len, unsigned char *data, unsigned int data_len, unsigned int data_wr)
 {
     struct SBP2Device *dev = (struct SBP2Device *)scsi->priv;
     struct CommandDescriptorBlock *cdb = &command.cdb;
-    unsigned int i;
+    unsigned int nQuads;
     int result = -1;
     u32 *words;
 
@@ -553,28 +564,40 @@ static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd,
     cdb->DataDescriptor.low = (u32)writeBuffer;
     cdb->DataDescriptor.NodeID = dev->InitiatorNodeID;
     cdb->NextOrb.reserved = NULL_POINTER;
-    /* The resident ORB union and sysmem transfer allocation are quadlet
-     * aligned. Copy possibly unaligned caller bytes once, then swap words
-     * directly; IOP builds use -fno-builtin, so memcpy per word is expensive. */
-    memcpy(cdb->CDBs, cmd, cmd_len);
-    words = (u32 *)cdb->CDBs;
-    for (i = 0; i < cmd_len / 4; i++)
-        words[i] = BSWAP32(words[i]);
+    // Resident CDB/staging storage is aligned; caller buffers need not be.
+    if (((u32)cmd & 3) == 0)
+        sbp2CopySwapped(cdb->CDBs, cmd, cmd_len / 4);
+    else {
+        memcpy(cdb->CDBs, cmd, cmd_len);
+        sbp2CopySwapped(cdb->CDBs, cdb->CDBs, cmd_len / 4);
+    }
 
     words = (u32 *)writeBuffer;
+    nQuads = data_len / 4;
     if (data_len & 3)
-        words[data_len / 4] = 0; /* padding only; do not clear a whole read buffer */
+        words[nQuads] = 0; /* padding only; do not clear a whole read buffer */
     if (data_wr && data_len > 0) {
-        memcpy(writeBuffer, data, data_len);
-        for (i = 0; i < (data_len + 3) / 4; i++)
-            words[i] = BSWAP32(words[i]);
+        if ((((u32)data | data_len) & 3) == 0)
+            sbp2CopySwapped(writeBuffer, data, nQuads);
+        else {
+            memcpy(writeBuffer, data, data_len);
+            sbp2CopySwapped(writeBuffer, writeBuffer, (data_len + 3) / 4);
+        }
     }
     command.orb = cdb;
     result = sbp2PublishCommand(dev, scsi->timeout_us ? scsi->timeout_us : SBP2_COMMAND_BUDGET_US);
     if (result == 0 && !data_wr && data_len > 0) {
-        for (i = 0; i < (data_len + 3) / 4; i++)
-            words[i] = BSWAP32(words[i]);
-        memcpy(data, writeBuffer, data_len);
+        if (((u32)data & 3) == 0) {
+            // Convert into the caller only after completion, in one pass.
+            sbp2CopySwapped(data, writeBuffer, nQuads);
+            if (data_len & 3) {
+                u32 tail = BSWAP32(words[nQuads]);
+                memcpy(data + nQuads * 4, &tail, data_len & 3);
+            }
+        } else {
+            sbp2CopySwapped(writeBuffer, writeBuffer, (data_len + 3) / 4);
+            memcpy(data, writeBuffer, data_len);
+        }
     }
 out:
     SignalSema(sbp2_io_sema);

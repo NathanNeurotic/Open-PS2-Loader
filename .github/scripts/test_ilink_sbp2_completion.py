@@ -40,6 +40,7 @@ static unsigned int result_status, foreign_status, captured;
 static int suppress_reply, pointer_error, reset_error, submitted, notified, generation;
 static int failures, held, reset_calls, reset_value,polls,partial_status;
 static unsigned int sam_status,sense_key;
+static unsigned char published_data[8];
 #define CHECK(c,msg) do { if(!(c)) { printf("FAIL: %s\n",msg);failures++; } } while(0)
 static void GetSystemTime(iop_sys_clock_t *c) { c->lo=now_us; c->hi=now_us>>32; }
 static void SysClock2USec(iop_sys_clock_t *c,u32 *s,u32 *u) {
@@ -53,10 +54,10 @@ static void deliver(void) {
         target->loginResponse.command_block_agent.high=0xffff;
         target->loginResponse.command_block_agent.low=0xf0010000;
         target->loginResponse.login_ID=7;
-    } else if(target_orb==&command.cdb) {
+    } else if(target_orb==&command.cdb && (command.cdb.misc&(1u<<27)) && (command.cdb.misc&0xffff)) {
         /* Model target writes to the advertised resident data buffer. */
         u32 word=0x11223344;
-        memcpy(writeBuffer,&word,4);
+        memcpy(writeBuffer,&word,4);memcpy(writeBuffer+4,&word,4);
     }
     if(((result_status>>24)&7)>1) {
         target->statusFIFO.data[0]=sam_status;
@@ -94,6 +95,7 @@ static int iLinkTrWrite(int ctx,unsigned long high,unsigned long low,void *buffe
     CHECK(((struct sbp2_pointer *)buffer)->low==(u32)target_orb,"publish the resident ORB address");
     CHECK(buffer==(target_orb==&target->managementORB ? (void *)&target->managementPointer : (void *)&command.pointer),
           "published pointer storage is resident too");
+    if(target_orb==&command.cdb) memcpy(published_data,writeBuffer,sizeof(published_data));
     submitted++;
     due_us=now_us+delay_us;
     captured=command.cdb.misc;
@@ -106,7 +108,7 @@ static void reset_case(void) {
     memset(&command,0,sizeof(command));memset(storage,0xa5,sizeof(storage));memset(caller,0xcc,sizeof(caller));
     now_us=due_us=0;delay_us=500;result_status=(1u<<30)|(1u<<24);foreign_status=0;
     suppress_reply=pointer_error=reset_error=submitted=notified=reset_calls=held=0;generation=1;
-    polls=partial_status=sam_status=sense_key=0;
+    polls=partial_status=sam_status=sense_key=0;memset(published_data,0,sizeof(published_data));
     target=NULL;target_orb=NULL;device.IsConnected=1;device.generation=1;device.ORB_size=8;
     device.scsi.priv=&device;device.scsi.timeout_us=2000;device.ManagementAgent_low=0xf0004000;
     other.scsi.priv=&other;other.IsConnected=1;other.generation=1;other.scsi.timeout_us=2000;
@@ -118,6 +120,29 @@ static int queue(unsigned int bytes,unsigned int write) {
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     static const unsigned int delays[]={0,50,500,1500};
+    for(unsigned int offset=0;offset<4;offset++) {
+        for(unsigned int length=1;length<=8;length++) {
+            reset_case();
+            unsigned char cmd[16]={0};cmd[1]=0x28;
+            CHECK(sbp2_queue_cmd(&device.scsi,cmd+1,12,caller+offset,length,0)==0,
+                  "unaligned CDB and caller buffers remain supported");
+            CHECK(caller[offset]==0x11,"read converts the first requested byte");
+            CHECK(caller[offset+length]==0xcc && (!offset || caller[offset-1]==0xcc),
+                  "partial read preserves both caller boundary canaries");
+        }
+    }
+    for(unsigned int offset=0;offset<4;offset++) {
+        reset_case();
+        unsigned char cmd[16]={0};cmd[1]=0x2a;
+        const unsigned char input[8]={0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88};
+        const unsigned char wire[8]={0x44,0x33,0x22,0x11,0x88,0x77,0x66,0x55};
+        memcpy(caller+offset,input,sizeof(input));
+        CHECK(sbp2_queue_cmd(&device.scsi,cmd+1,12,caller+offset,8,1)==0,
+              "aligned and unaligned write sources remain supported");
+        CHECK(!memcmp(published_data,wire,sizeof(wire)),"write publishes the exact endian-converted words");
+        CHECK(!memcmp(caller+offset,input,sizeof(input)) && caller[offset+8]==0xcc,
+              "write conversion leaves caller data and boundary untouched");
+    }
     for(unsigned int i=0;i<4;i++) {
         reset_case();delay_us=delays[i];
         device.statusFIFO.status=result_status;device.statusFIFO.ORB_low=(u32)&device.managementORB;
@@ -218,6 +243,7 @@ def run(driver):
     state=source[re.search(r'static struct\s*\{',source).start():source.index('\n\n',source.index('#define SBP2_COMMAND_BUDGET_US'))]
     signatures=(
         'static u32 sbp2ElapsedUs(const iop_sys_clock_t *start)',
+        'static void sbp2CopySwapped(void *destination, const void *source, unsigned int nQuads)',
         'static int sbp2StatusReady(struct SBP2Device *dev, const void *orb)',
         'static int ProcessStatus(struct SBP2Device *dev, const void *orb)',
         'static int sbp2WaitStatus(struct SBP2Device *dev, const void *orb, u32 budget_us)',
