@@ -1951,6 +1951,11 @@ gui_strings:
 - label: EMBER_DISC_ARGS_TOO_LONG
   string: "The selected disc's launch argument is too long. Shorten the game folder or CUE filename."
 
+- label: FONT_SIZE
+  string: "Font Size"
+- label: HINT_FONT_SIZE
+  string: "Size of standard menu text. Theme fonts with other point sizes keep their original size."
+
 - label: RA_BADGE_POS
   string: RA mark in game list
 

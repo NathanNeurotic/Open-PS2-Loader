@@ -158,6 +158,9 @@ void menuHandleInputAppMenu();
 // Sets the selected item if it is found in the menu list
 void menuSetSelectedItem(menu_item_t *item);
 
+/** Keep each selected row visible after list geometry changes. Caller holds guiLock. */
+void menuResetPageStarts(void);
+
 /** Serialize menu_item_t::hints against the renderer.
  *
  * ⚠ EVERY toucher of a hint list must bracket itself with these -- readers included. The list is
