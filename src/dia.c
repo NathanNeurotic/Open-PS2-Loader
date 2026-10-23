@@ -1191,6 +1191,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int settingsShell = (ui == diaSettingsShellUI && diaSettingsIndicator != NULL);
     int settingsContext = settingsShell || diaSettingsContext;
     int spacingH = settingsContext ? UI_SETTINGS_SPACING_H : UI_SPACING_H;
+    spacingH += fntScaleFontSize(FNTSYS_DEFAULT_SIZE) - FNTSYS_DEFAULT_SIZE;
     // Rows keep their height (spacingH); only the gap between them tightens, and only on a Settings page.
     int gapH = settingsContext ? diaSettingsFitGap(ui, spacingH, y0, gTheme->usedHeight - 40) : spacingH;
 

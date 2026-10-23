@@ -8,6 +8,17 @@
 
 #define FNTSYS_DEFAULT_SIZE 17
 
+// Font size for text using FNTSYS_DEFAULT_SIZE, including translated/fallback fonts.
+enum {
+    FONT_SIZE_SMALL = 0,
+    FONT_SIZE_DEFAULT,
+    FONT_SIZE_LARGE,
+    FONT_SIZE_COUNT
+};
+
+/** Menu fonts use 15/17/19 px. Other theme-requested point sizes stay unchanged. */
+int fntScaleFontSize(int baseSize);
+
 /** Initializes the font subsystem */
 void fntInit();
 

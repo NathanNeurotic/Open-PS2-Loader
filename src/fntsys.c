@@ -531,6 +531,18 @@ static fnt_glyph_cache_entry_t *fntCacheGlyph(font_t *font, uint32_t gid)
     return glyph;
 }
 
+int fntScaleFontSize(int baseSize)
+{
+    // Themes can deliberately use larger titles or smaller labels. Preserve those sizes.
+    if (baseSize == FNTSYS_DEFAULT_SIZE) {
+        if (gFontSize == FONT_SIZE_SMALL)
+            return 15;
+        if (gFontSize == FONT_SIZE_LARGE)
+            return 19;
+    }
+    return baseSize;
+}
+
 void fntUpdateAspectRatio()
 {
     fntLock();
@@ -563,7 +575,8 @@ static void fntUpdateAspectRatioLocked(void)
         if (fonts[i].isValid) {
             fntCacheFlush(&fonts[i]);
             // TODO: this seems correct, but the rest of the OPL UI (i.e. spacers) doesn't seem to be correctly scaled.
-            FT_Set_Char_Size(fonts[i].face, fonts[i].fontSize * 64, fonts[i].fontSize * 64, fDPI * ws, fDPI * hs);
+            int size = fntScaleFontSize(fonts[i].fontSize);
+            FT_Set_Char_Size(fonts[i].face, size * 64, size * 64, fDPI * ws, fDPI * hs);
         }
     }
 }
@@ -620,10 +633,11 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
         }
     }
 
+    int fontSize = fntScaleFontSize(fonts[id].fontSize);
     if (aligned & ALIGN_VCENTER) {
-        y += rmScaleY(fonts[id].fontSize - 4) >> 1;
+        y += rmScaleY(fontSize - 4) >> 1;
     } else {
-        y += rmScaleY(fonts[id].fontSize - 2);
+        y += rmScaleY(fontSize - 2);
     }
 
     quad.color = colour;
@@ -747,10 +761,11 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
         }
     }
 
+    int fontSize = fntScaleFontSize(fonts[id].fontSize);
     if (aligned & ALIGN_VCENTER) {
-        y += rmScaleY(fonts[id].fontSize - 4) >> 1;
+        y += rmScaleY(fontSize - 4) >> 1;
     } else {
-        y += rmScaleY(fonts[id].fontSize - 2);
+        y += rmScaleY(fontSize - 2);
     }
 
     quad.color = colour;
