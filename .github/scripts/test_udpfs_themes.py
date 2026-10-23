@@ -51,7 +51,7 @@ if "static int udpfsThemesScanned = 0;" not in src:
 waiter = function_body(src, "static void udpfsSetWaitingForServer(int waiting)")
 if waiter:
     cadence = re.compile(
-        r"\(\s*waiting\s*\|\|\s*!udpfsThemesScanned\s*\|\|\s*!udpfsLanguagesScanned\s*\)\s*\?\s*"
+        r"\(\s*waiting\s*\|\|\s*!udpfsThemesScanned\s*\|\|\s*!udpfsLanguagesScanned\s*\|\|\s*!udpfsArtCaseChecked\s*\)\s*\?\s*"
         r"MENU_UPD_DELAY_GENREFRESH\s*:\s*UDPFS_MODE_UPDATE_DELAY"
     )
     if not cadence.search(waiter):
