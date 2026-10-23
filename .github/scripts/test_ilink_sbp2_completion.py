@@ -126,7 +126,8 @@ int main(void) {
             unsigned char cmd[16]={0};cmd[1]=0x28;
             CHECK(sbp2_queue_cmd(&device.scsi,cmd+1,12,caller+offset,length,0)==0,
                   "unaligned CDB and caller buffers remain supported");
-            CHECK(caller[offset]==0x11,"read converts the first requested byte");
+            const unsigned char expected[8]={0x11,0x22,0x33,0x44,0x11,0x22,0x33,0x44};
+            CHECK(!memcmp(caller+offset,expected,length),"read converts every requested byte in order");
             CHECK(caller[offset+length]==0xcc && (!offset || caller[offset-1]==0xcc),
                   "partial read preserves both caller boundary canaries");
         }
