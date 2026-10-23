@@ -73,6 +73,8 @@ static inline unsigned int GetBIOSVersion(void)
 #endif
 extern int BD_iLink_start(int argc, char *argv[]);
 
+int _exit(int argc, char *argv[]);
+
 int _start(int argc, char *argv[])
 {
     int i, result;
@@ -151,10 +153,14 @@ int _start(int argc, char *argv[])
 
     DEBUG_PRINTF("Initialization complete.\n");
 
-    if (RegisterLibraryEntries(&_exp_iLinkman) != 0)
+    if (RegisterLibraryEntries(&_exp_iLinkman) != 0) {
+        _exit(argc, argv);
         return MODULE_NO_RESIDENT_END;
-
-    return BD_iLink_start(argc, argv);
+    }
+    result = BD_iLink_start(argc, argv);
+    if (result != MODULE_RESIDENT_END)
+        _exit(argc, argv); /* no IRQ/thread/export may outlive a refused module */
+    return result;
 }
 
 int _exit(int argc, char *argv[])

@@ -72,6 +72,8 @@ static inline unsigned int GetBIOSVersion(void)
 }
 #endif
 
+int _exit(int argc, char *argv[]);
+
 int _start(int argc, char *argv[])
 {
     int i, result;
@@ -150,7 +152,11 @@ int _start(int argc, char *argv[])
 
     DEBUG_PRINTF("Initialization complete.\n");
 
-    return ((RegisterLibraryEntries(&_exp_iLinkman) != 0) ? MODULE_NO_RESIDENT_END : MODULE_RESIDENT_END);
+    if (RegisterLibraryEntries(&_exp_iLinkman) != 0) {
+        _exit(argc, argv);
+        return MODULE_NO_RESIDENT_END;
+    }
+    return MODULE_RESIDENT_END;
 }
 
 int _exit(int argc, char *argv[])

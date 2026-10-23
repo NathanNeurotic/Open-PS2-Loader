@@ -128,7 +128,13 @@ FifthFox's enclosure encountered.
     drain rejected payloads plus their trailer. Reads validate the entire RAM or
     CROM span. Rejected or truncated requests cannot invoke a success callback.
 
-14. **Vendored API/CROM defects were also confirmed.** The EUI-64 import uses
+14. **Refused startup could leave active module resources.** Kernel-object
+    creation failures release created resources. If export registration or the
+    combined POPStarter block-driver start fails, the manager removes its IRQ,
+    thread, semaphores and export before returning nonresident. Fault injection
+    checks that a refused module leaves no callback executing unloaded code.
+
+15. **Vendored API/CROM defects were also confirmed.** The EUI-64 import uses
     export 25 rather than transaction-allocation export 12. CROM deletion checks
     the index and occupancy and updates its count before rebuilding. Allocation
     failure preserves the installed ROM's actual size. Relative leaf offsets

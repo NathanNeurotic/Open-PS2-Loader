@@ -300,6 +300,63 @@ int main(void) {
 }
 """
 
+
+STARTUP=r"""
+#define MODULE_RESIDENT_END 0
+#define MODULE_NO_RESIDENT_END 1
+#define IOP_MUTEX_UNLOCKED 1
+#define IOP_IRQ_ILINK 37
+#define TH_C 0
+struct event { int unused; };typedef struct { int attr,option;void (*thread)(void *);int stacksize,priority; } iop_thread_t;
+static struct event EventFlagData;
+static int _exp_iLinkman,IntrEventFlag,UBUFTxSema,RequestSema,UBUFThreadID;
+static unsigned int rom[32],*ConfigurationROM;
+static u64 ConsoleGUID;static char ConsoleModelName[32];
+static struct TransactionContextData TransactionContexts[MAX_CONCURRENT_TRANSACTIONS];
+static void (*CallBackFunction)(int,unsigned int,unsigned int);
+static int fail_case,events,mutexes,mutex_calls,threads,running,irq,library,rom_live,hardware;
+void iLinkDisableIntr(void) {}
+int iLinkResetHW(void) { return 0; }
+void iLinkHWInitialize(void) { hardware=1; }
+void iLinkShutdownHW(void) { hardware=0; }
+int GetConsoleIDs(u64 *guid,char *name) { *guid=0;name[0]=0;return 0; }
+void InitializeConfigurationROM(void) { ConfigurationROM=rom;rom_live=1; }
+static unsigned int GetBIOSVersion(void) { return 0x160; }
+void UBUFThread(void *arg) { (void)arg; }
+int iLinkIntrHandler(void *arg) { (void)arg;return 0; }
+static int CreateEventFlag(void *p) { (void)p;if(fail_case==1) return -1;events++;return 10; }
+static int DeleteEventFlag(int id) { CHECK(id==10 && events==1,"release created event");events--;return 0; }
+static int CreateMutex(int locked) {
+    (void)locked;if(++mutex_calls==2 && fail_case==2) return -1;mutexes++;return 10+mutex_calls;
+}
+static int DeleteSema(int id) { CHECK(id>=11 && id<=12 && mutexes>0,"release created mutex");mutexes--;return 0; }
+static int CreateThread(iop_thread_t *data) { (void)data;threads++;return 20; }
+static int StartThread(int id,void *arg) { (void)id;(void)arg;if(fail_case==3) return -1;running++;return 0; }
+static int TerminateThread(int id) { CHECK(id==20 && running==1,"terminate active receive thread");running--;return 0; }
+static int DeleteThread(int id) { CHECK(id==20 && threads==1,"delete receive thread");threads--;return 0; }
+static int RegisterIntrHandler(int id,int mode,void *fn,void *arg) { (void)id;(void)mode;(void)fn;(void)arg;irq=1;return 0; }
+static int EnableIntr(int id) { (void)id;return 0; }
+static int DisableIntr(int id,int *state) { (void)id;*state=0;return 0; }
+static int ReleaseIntrHandler(int id) { (void)id;irq=0;return 0; }
+static int RegisterLibraryEntries(void *table) { (void)table;if(fail_case==4) return -1;library=1;return 0; }
+static int ReleaseLibraryEntries(void *table) { (void)table;library=0;return 0; }
+static int FreeSysMemory(void *p) { CHECK(p==rom && rom_live,"ROM allocation is released once");rom_live=0;return 0; }
+int BD_iLink_start(int argc,char **argv) { (void)argc;(void)argv;return fail_case==5 ? 1 : 0; }
+int _exit(int argc,char *argv[]);
+@FUNCTIONS@
+int main(void) {
+    for(fail_case=0;fail_case<=4+POPS_STARTUP;fail_case++) {
+        events=mutexes=mutex_calls=threads=running=irq=library=rom_live=hardware=0;
+        int result=_start(0,NULL);
+        if(!fail_case) { CHECK(result==0,"normal startup remains resident");_exit(0,NULL); }
+        else CHECK(result==1,"failed startup refuses module residency");
+        CHECK(!events && !mutexes && !threads && !running && !irq && !library && !rom_live && !hardware,
+              "a refused module cannot leave its IRQ, thread, export or allocation alive");
+    }
+    return failures ? 1 : 0;
+}
+"""
+
 def run(manager):
     intr=(manager/'iLink_intr.c').read_text(encoding='utf-8')
     crom=(manager/'iLink_crom.c').read_text(encoding='utf-8')
@@ -317,12 +374,16 @@ def run(manager):
     response_state=intr[intr.index('static unsigned int ResponseLength;'):intr.index('\nvoid iLinkPrepareResponse(')]
     programs={'packet':PACKET.replace('@FUNCTIONS@',packets),'crom':CROM.replace('@FUNCTIONS@',crom_functions),
               'client':CLIENT.replace('@FUNCTIONS@',client_functions),
-              'response':RESPONSE.replace('@FUNCTIONS@',response_functions).replace('@STATE@',response_state)}
+              'response':RESPONSE.replace('@FUNCTIONS@',response_functions).replace('@STATE@',response_state),
+              'startup':STARTUP.replace('@FUNCTIONS@','\n'.join(function(client,x) for x in ('int _start(', 'int _exit(')))}
     with tempfile.TemporaryDirectory() as directory:
         folder=Path(directory)
         for name,body in programs.items():
+            if name=='startup':
+                body=re.sub(r'\b_start\b','manager_start',body)
+                body=re.sub(r'\b_exit\b','manager_exit',body)
             cfile=folder/(name+'.c');exe=folder/(name+('.exe' if sys.platform=='win32' else ''))
-            cfile.write_text(('#define POPS_CROM\n' if 'bdmassault' in str(manager) else '')+PREAMBLE+body,encoding='utf-8')
+            cfile.write_text(('#define POPS_CROM\n#define POPS_STARTUP 1\n' if 'bdmassault' in str(manager) else '#define POPS_STARTUP 0\n')+PREAMBLE+body,encoding='utf-8')
             subprocess.run(['gcc','-std=gnu99','-O2','-Wall','-Wextra','-Werror','-Wno-pointer-to-int-cast','-Wno-int-to-pointer-cast',
                             '-Wno-builtin-declaration-mismatch','-Wno-overflow','-pthread','-I',str(manager/'include'),str(cfile),'-o',str(exe)],check=True,timeout=60)
             result=subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)
@@ -330,7 +391,7 @@ def run(manager):
         public=(manager.parent/'include/iLinkman.h').read_text(encoding='utf-8')
         if not re.search(r'#define\s+I_iLinkGetLocalNodeEUI64\s+DECLARE_IMPORT\(25,\s*iLinkGetLocalNodeEUI64\)',public):
             print('FAIL: EUI64 import must use export 25');return False
-    print(str(manager)+': PASS: packet boundaries, CROM publication, response retirement and concurrent clients')
+    print(str(manager)+': PASS: packet/CROM bounds, response ownership, concurrent clients and startup rollback')
     return True
 
 if __name__=='__main__':
