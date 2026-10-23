@@ -32,7 +32,13 @@ HARNESS = r'''
 #include <setjmp.h>
 typedef unsigned int u32;
 typedef struct { unsigned int lo,hi; } iop_sys_clock_t;
-struct TransactionContextData { int GenerationNumber; };
+struct TransactionContextData { int GenerationNumber; unsigned short NodeID; unsigned char speed; };
+struct ieee1394_TrPacketHdr { unsigned int header,offset_high,offset_low,misc; };
+static unsigned char NextRequestLabel;
+enum { IEEE1394_TCODE_READQ=4, IEEE1394_TCODE_READQ_RESPONSE=6, IEEE1394_TCODE_WRITEQ=0, IEEE1394_TCODE_WRITE_RESPONSE=2 };
+static void iLinkPrepareResponse(struct TransactionContextData *ctx,unsigned char label,unsigned char code,void *buffer,unsigned int length) {
+    (void)ctx;(void)label;(void)code;(void)buffer;(void)length;
+}
 struct Registers { unsigned int ubufTransmitClear,ubufTransmitNext,ubufTransmitLast; };
 static struct Registers regs;
 static struct Registers *ILINKRegisterBase=&regs;
@@ -47,7 +53,7 @@ enum { iLinkEventDataSent=1,iLinkEventDataReceived=2,iLinkEventError=4,iLinkEven
 #define DEBUG_PRINTF(...) ((void)0)
 #endif
 static int available,waits,signals,blocks,alarms,cancels,earlyError,rxReads,failures;
-static int changeOnClear;
+static int changeOnClear,changeOnResponse;
 static jmp_buf blocked;
 static int WaitSema(int id) {
     (void)id;waits++;
@@ -62,7 +68,8 @@ static int ClearEventFlag(int id,unsigned int bits) {
 }
 static int WaitEventFlag(int id,int bits,int mode,u32 *out) {
     (void)id;(void)bits;(void)mode;
-    *out=earlyError ? (bits&iLinkEventRequestError ? iLinkEventRequestError : iLinkEventError) : iLinkEventDataSent|iLinkEventDataReceived;
+    if(changeOnResponse && (bits&iLinkEventRequestError)) GenerationNumber++;
+    *out=(earlyError && (earlyError==1 || (bits&iLinkEventRequestError))) ? (bits&iLinkEventRequestError ? iLinkEventRequestError : iLinkEventError) : iLinkEventDataSent|iLinkEventDataReceived;
     return 0;
 }
 static int iSetEventFlag(int id,int bits) { (void)id;(void)bits;return 0; }
@@ -76,19 +83,19 @@ static unsigned int read_rx(volatile unsigned int *buffer) { rxReads++;return *b
 @FUNCTIONS@
 #define CHECK(c,msg) do { if(!(c)) { printf("FAIL: %s\n",msg);failures++; } } while(0)
 static void reset(void) {
-    available=1;waits=signals=blocks=alarms=cancels=earlyError=rxReads=changeOnClear=0;
+    available=1;waits=signals=blocks=alarms=cancels=earlyError=rxReads=changeOnClear=changeOnResponse=0;
     GenerationNumber=1;LocalCachedIntr0Register=0;memset(&regs,0,sizeof(regs));
 }
 static void stale(int headerLength,int payloadLength,int atClear) {
     unsigned int header[]={1,2,3},payload[]={4,5};
     reset();changeOnClear=atClear;
-    struct TransactionContextData old={atClear ? 1 : 0};
+    struct TransactionContextData old={.GenerationNumber=atClear ? 1 : 0};
     CHECK(iLinkSendData(&old,header,headerLength,payload,payloadLength)==-1021,
           "stale transaction reports the generation error");
     CHECK(available && waits==signals,"generation error releases the TX semaphore");
     CHECK(regs.ubufTransmitLast==0,"generation error does not commit a partial packet");
     changeOnClear=0;
-    struct TransactionContextData fresh={GenerationNumber};
+    struct TransactionContextData fresh={.GenerationNumber=GenerationNumber};
     if(setjmp(blocked)==0) {
         CHECK(iLinkSendData(&fresh,header,3,payload,2)==2,"new generation can transmit");
     } else {
@@ -96,10 +103,11 @@ static void stale(int headerLength,int payloadLength,int atClear) {
     }
 }
 int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     (void)read_rx;
     stale(3,2,0);stale(0,2,0);stale(3,2,1);
     reset();unsigned int data[]={1,2,3};
-    struct TransactionContextData ctx={1};
+    struct TransactionContextData ctx={.GenerationNumber=1};
     CHECK(iLinkSendData(&ctx,data,3,NULL,0)==0 && available,"successful TX unlocks");
     reset();earlyError=1;
     CHECK(iLinkSendData(NULL,data,3,NULL,0)<0 && available,"response TX error unlocks");
@@ -107,6 +115,18 @@ int main(void) {
     CHECK(iLinkSync(12)<0,"early response error is reported");
     CHECK(alarms==0 && cancels==1,"early error cancels its alarm before a retry");
     reset();CHECK(iLinkSync(12)==12 && alarms==0,"successful response cancels alarm");
+    for(int write=0;write<2;write++) {
+        reset();earlyError=2;changeOnResponse=1;
+        CHECK((write ? iLinkWriteReq(&ctx,0,0,data,4) : iLinkReadReq(&ctx,0,0,data,4))==-1021,
+              "UBUF response wait reports a generation change as reset, not split timeout");
+        CHECK(available && alarms==0,"bus reset releases transmit and alarm resources");
+        reset();earlyError=2;
+        CHECK((write ? iLinkWriteReq(&ctx,0,0,data,4) : iLinkReadReq(&ctx,0,0,data,4))==-1024,
+              "unchanged generation preserves a real split timeout");
+        reset();
+        CHECK((write ? iLinkWriteReq(&ctx,0,0,data,4) : iLinkReadReq(&ctx,0,0,data,4))==12,
+              "successful quadlet request retains its transfer result");
+    }
     reset();NoResponseHandler(0,data,3);
     CHECK(rxReads==3,"unhandled packet is drained with current TTY configuration");
     return failures ? 1 : 0;
@@ -118,7 +138,8 @@ for manager in managers:
     tx = (manager / 'iLink_TxRx.c').read_text(encoding='utf-8')
     intr = (manager / 'iLink_intr.c').read_text(encoding='utf-8')
     functions = '\n'.join(function(tx, s) for s in (
-        'static int iLinkSendData(', 'static unsigned int TimeoutCallbackFunction(', 'static int iLinkSync('))
+        'static int iLinkSendData(', 'static unsigned int TimeoutCallbackFunction(', 'static int iLinkSync(',
+        'int iLinkReadReq(', 'int iLinkWriteReq('))
     functions = 'static iop_sys_clock_t Timeout={0,0};\n' + functions
     functions += '\n' + function(intr, 'static void NoResponseHandler(').replace('data = *buffer;', 'data = read_rx(buffer);')
     with tempfile.TemporaryDirectory() as directory:

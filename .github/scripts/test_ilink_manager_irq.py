@@ -78,6 +78,7 @@ static void transfer(unsigned int intr0,int expected) {
     } else CHECK(0,"PHT waiter did not wake for its interrupt");
 }
 int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     transfer(iLink_INTR0_STO,-1024);
     transfer(iLink_INTR0_RetEx,-1026);
     transfer(iLink_INTR0_InvAck,-1023);
@@ -114,7 +115,12 @@ def run(manager):
         subprocess.run(['gcc','-std=gnu99','-Wall','-Wextra','-Werror','-Wno-pointer-to-int-cast',
                         '-Wno-builtin-declaration-mismatch','-I',str(manager/'include'),str(cfile),'-o',str(exe)],check=True,timeout=60)
         result=subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)
-        print(str(manager)+':\n'+(result.stdout.strip() or 'PASS: IRQ errors, reset wake-up and DMA retirement'))
+        print(str(manager)+':')
+        if result.returncode == 0:
+            print(result.stdout.strip() or 'PASS: IRQ errors, reset wake-up and DMA retirement')
+        else:
+            print(result.stdout.strip() or 'FAIL: harness exited %d' % result.returncode)
+            if result.stderr: print(result.stderr.strip())
         return result.returncode==0
 
 

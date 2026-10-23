@@ -176,6 +176,8 @@ int iLinkReadReq(struct TransactionContextData *trContext, unsigned short int of
 
     if ((result = iLinkSendData(trContext, (unsigned int *)&TxHeader, nBytesToTransfer >> 2, NULL, 0)) >= 0) {
         result = iLinkSync(nBytesToTransfer);
+        if (result < 0 && trContext->GenerationNumber != GenerationNumber)
+            result = -1021;
     }
 
     return result;
@@ -202,6 +204,8 @@ int iLinkWriteReq(struct TransactionContextData *trContext, unsigned short int o
 
     if ((result = iLinkSendData(trContext, (unsigned int *)&TxHeader, nBytesToTransfer >> 2, buffer, nBytes >> 2)) >= 0) {
         result = iLinkSync(nBytesToTransfer);
+        if (result < 0 && trContext->GenerationNumber != GenerationNumber)
+            result = -1021;
     }
 
     return result;

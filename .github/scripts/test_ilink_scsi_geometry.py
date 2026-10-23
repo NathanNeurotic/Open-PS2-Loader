@@ -107,6 +107,7 @@ static void transfer(unsigned int size,unsigned int count,unsigned int chunks) {
     disconnect();
 }
 int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     scsi_init();
     transfer(512,128,2);transfer(2048,33,2);transfer(4096,32,3);transfer(65024,2,2);
     block_size=512;last10=0;scsi_connect(&iface);
@@ -147,7 +148,11 @@ def run(driver, native):
                         str(driver / 'scsi.c'), str(cfile), '-o', str(exe)], check=True, timeout=60)
         result = subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
         print(str(driver) + ':')
-        print(result.stdout.strip() or 'PASS: geometry, capacity and byte-bounded I/O')
+        if result.returncode == 0:
+            print(result.stdout.strip() or 'PASS: geometry, capacity and byte-bounded I/O')
+        else:
+            print(result.stdout.strip() or 'FAIL: harness exited %d' % result.returncode)
+            if result.stderr: print(result.stderr.strip())
         return result.returncode == 0
 
 

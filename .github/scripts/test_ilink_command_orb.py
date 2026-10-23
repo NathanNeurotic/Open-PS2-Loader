@@ -56,6 +56,7 @@ static void *worker(void *arg) {
     t->rc=sbp2_queue_cmd(&t->dev.scsi,cmd,12,(void *)&t->output,4,0);return NULL;
 }
 int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     struct SBP2Device dev={0};dev.scsi.priv=&dev;dev.IsConnected=1;
     unsigned char cmd[sizeof(((struct CommandDescriptorBlock *)0)->CDBs)]={0};
     unsigned int i;
@@ -113,7 +114,11 @@ def run(driver):
                         str(cfile), '-o', str(exe)], check=True, timeout=60)
         result = subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
         print(str(driver) + ':')
-        print(result.stdout.strip() or 'PASS: read/write direction, command byte limits and concurrent staging')
+        if result.returncode == 0:
+            print(result.stdout.strip() or 'PASS: read/write direction, command byte limits and concurrent staging')
+        else:
+            print(result.stdout.strip() or 'FAIL: harness exited %d' % result.returncode)
+            if result.stderr: print(result.stderr.strip())
         return result.returncode == 0
 
 

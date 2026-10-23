@@ -79,7 +79,8 @@ static void run(int scenario) {
                       "still-live LOGIN retains its original slot across discovery and reset");
     CHECK(!held,"all paths release the transport mutex");
 }
-int main(void) { run(0);run(1);run(2);return failures ? 1 : 0; }
+int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0); run(0);run(1);run(2);return failures ? 1 : 0; }
 """
 
 def run(driver):
@@ -93,7 +94,12 @@ def run(driver):
         subprocess.run(['gcc','-std=gnu99','-O2','-Wall','-Wextra','-Werror','-Wno-clobbered','-I',str(folder),
                         '-I',str(driver/'include'),str(cfile),'-o',str(exe)],check=True,timeout=60)
         result=subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)
-        print(str(driver)+':\n'+(result.stdout.strip() or 'PASS: reset ownership, failed contexts and pending-slot retention'))
+        print(str(driver)+':')
+        if result.returncode == 0:
+            print(result.stdout.strip() or 'PASS: reset ownership, failed contexts and pending-slot retention')
+        else:
+            print(result.stdout.strip() or 'FAIL: harness exited %d' % result.returncode)
+            if result.stderr: print(result.stderr.strip())
         return result.returncode==0
 if __name__=='__main__':
     results=[run(p) for p in DRIVERS]

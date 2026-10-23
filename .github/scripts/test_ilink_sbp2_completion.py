@@ -116,6 +116,7 @@ static int queue(unsigned int bytes,unsigned int write) {
     return sbp2_queue_cmd(&device.scsi,cmd,12,caller,bytes,write);
 }
 int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     static const unsigned int delays[]={0,50,500,1500};
     for(unsigned int i=0;i<4;i++) {
         reset_case();delay_us=delays[i];
@@ -237,8 +238,12 @@ def run(driver):
         subprocess.run(['gcc','-std=gnu99','-O2','-Wall','-Wextra','-Werror','-Wno-pointer-to-int-cast',
                         '-I',str(folder),'-I',str(driver/'include'),str(cfile),'-o',str(exe)],check=True,timeout=60)
         result=subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)
-        print(str(driver)+':\n'+(result.stdout.strip() or 'PASS: matched status, bounded waits, persistent requests and late-DMA isolation'))
-        if result.returncode and result.stderr: print(result.stderr)
+        print(str(driver)+':')
+        if result.returncode == 0:
+            print(result.stdout.strip() or 'PASS: matched status, bounded waits, persistent requests and late-DMA isolation')
+        else:
+            print(result.stdout.strip() or 'FAIL: harness exited %d' % result.returncode)
+            if result.stderr: print(result.stderr.strip())
         return result.returncode==0
 
 if __name__=='__main__':
