@@ -83,6 +83,6 @@ u64 iLinkGetLocalNodeEUI64(void);
 #define I_iLinkSetNodeTrSpeed       DECLARE_IMPORT(22, iLinkSetNodeTrSpeed)
 #define I_iLinkFindUnit             DECLARE_IMPORT(23, iLinkFindUnit)
 #define I_iLinkReadCROM             DECLARE_IMPORT(24, iLinkReadCROM)
-#define I_iLinkGetLocalNodeEUI64    DECLARE_IMPORT(12, iLinkGetLocalNodeEUI64)
+#define I_iLinkGetLocalNodeEUI64    DECLARE_IMPORT(25, iLinkGetLocalNodeEUI64)
 
 #endif /* __ILINKMAN_H__ */

@@ -126,6 +126,7 @@
 #define iLinkEventDMATransEnd  0x00000020
 #define iLinkEventBusReset     0x00000040
 #define iLinkEventURx          0x00000080
+#define iLinkEventRequestError 0x00000100 /* Outgoing request error; response TX must not clear it. */
 #define iLinkEventError        0x80000000
 
 /* Structures. */
@@ -321,3 +322,6 @@ void iLinkInitPHT(void);
 void PHTSendResponse(unsigned short int NodeID, unsigned short RcvdBusID, unsigned char rcode, unsigned char tLabel, unsigned char tCode, unsigned char speed, unsigned int *buffer, unsigned int nQuads);
 int iLinkReadPHTReq(struct TransactionContextData *trContext, unsigned short int offset_high, unsigned int offset_low, void *buffer, unsigned int nBytes);
 int iLinkWritePHTReq(struct TransactionContextData *trContext, unsigned short int offset_high, unsigned int offset_low, void *buffer, unsigned int nBytes);
+
+extern void iLinkPrepareResponse(struct TransactionContextData *context, unsigned char label, unsigned char code, void *buffer, unsigned int length);
+extern void iLinkFinishRequest(void);

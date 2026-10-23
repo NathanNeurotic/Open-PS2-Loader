@@ -1,240 +1,230 @@
-"""Exercise the real SBP-2 completion paths in both shipped i.LINK drivers.
+"""Exercise production SBP-2 lifetime, status matching and delayed DMA paths.
 
-A successful LOGIN leaves statusFIFO populated. The following dummy ORB must
-not consume that stale completion or free its buffer before the target replies.
-Also check failed dummy completions and ambiguous command-pointer publication.
-The simulated target sends its own status after a configurable delay; a host
-guard escapes nonterminating waits without adding a timeout to production code.
+Both drivers are compiled against a target/clock simulator. Only the bus, clock
+and kernel mutex are substituted. Missing completions must return within their
+budget without exposing caller memory or reusing remotely accessible storage.
 """
 from pathlib import Path
 import argparse
+import re
 import subprocess
 import sys
 import tempfile
 
-
 ROOT = Path(__file__).resolve().parents[2]
-DRIVERS = (
-    Path('modules/ilink/IEEE1394_bd/src'),
-    Path('modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src'),
-)
-
+DRIVERS = (Path('modules/ilink/IEEE1394_bd/src'),
+           Path('modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src'))
 
 def function(source, signature):
     start = source.index(signature + '\n{')
     return source[start:source.index('\n}', start) + 2]
 
-
-HARNESS = r'''
-#include <assert.h>
-#include <setjmp.h>
-#include <stdint.h>
+TYPES = '#include <stdint.h>\ntypedef uint8_t u8; typedef uint16_t u16; typedef uint32_t u32; typedef uint64_t u64;\n'
+HARNESS = r"""
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "sbp2_disk.h"
 #define M_DEBUG(...) ((void)0)
 #define M_PRINTF(...) ((void)0)
 #define BSWAP32(v) __builtin_bswap32(v)
-static volatile union {
-    struct sbp2_status status;
-    unsigned char buffer[32];
-} statusFIFO;
-static unsigned char writeStorage[XFER_BLOCK_SIZE];
-static unsigned char *writeBuffer = writeStorage;
-static unsigned long long now_us, due_us, reply_delay_us;
-static unsigned int reply_status;
-static int submitted, notified, freed_early, submit_failure, polls, failures;
-static int accepted_before_error, reset_failure, suppress_reply;
-static jmp_buf guard;
-static void *live_orb;
-
-static void *tracked_alloc(size_t bytes)
-{
-    live_orb = calloc(1, bytes);
-    assert(live_orb);
-    return live_orb;
+typedef struct { u32 lo, hi; } iop_sys_clock_t;
+static unsigned char storage[XFER_BLOCK_SIZE+8], caller[XFER_BLOCK_SIZE+8];
+static unsigned char *writeBuffer=storage;
+@STATE@
+static struct SBP2Device device, other;
+static struct SBP2Device *target;
+static const void *target_orb;
+static unsigned long long now_us, due_us, delay_us;
+static unsigned int result_status, foreign_status, captured;
+static int suppress_reply, pointer_error, reset_error, submitted, notified, generation;
+static int failures, held, reset_calls, reset_value;
+#define CHECK(c,msg) do { if(!(c)) { printf("FAIL: %s\n",msg);failures++; } } while(0)
+static void GetSystemTime(iop_sys_clock_t *c) { c->lo=now_us; c->hi=now_us>>32; }
+static void SysClock2USec(iop_sys_clock_t *c,u32 *s,u32 *u) {
+    unsigned long long n=((u64)c->hi<<32)|c->lo; *s=n/1000000; *u=n%1000000;
 }
-static void tracked_free(void *buffer)
-{
-    if (submitted && !notified)
-        freed_early++;
-    assert(buffer == live_orb);
-    free(buffer);
-    live_orb = NULL;
-}
-#define malloc tracked_alloc
-#define free tracked_free
-static void DelayThread(unsigned int usec)
-{
-    now_us += usec;
-    polls++;
-    if (submitted && !notified && !suppress_reply && now_us >= due_us) {
-        statusFIFO.status.status = reply_status;
-        notified = 1;
+static int iLinkGetGenerationNumber(void) { return generation; }
+static int WaitSema(int id) { (void)id; CHECK(!held,"request mutex is not recursively acquired"); held=1; return 0; }
+static int SignalSema(int id) { (void)id;CHECK(held,"request releases its mutex");held=0;return 0; }
+static void deliver(void) {
+    if(target_orb==&target->managementORB) {
+        target->loginResponse.command_block_agent.high=0xffff;
+        target->loginResponse.command_block_agent.low=0xf0010000;
+        target->loginResponse.login_ID=7;
+    } else if(target_orb==&command.cdb) {
+        /* Model target writes to the advertised resident data buffer. */
+        u32 word=0x11223344;
+        memcpy(writeBuffer,&word,4);
     }
-    if (now_us > 2000000)
-        longjmp(guard, 1);
+    target->statusFIFO.ORB_low=(u32)target_orb;
+    target->statusFIFO.status=result_status;
+    notified=1;
 }
-static int iLinkTrWrite(int context, unsigned long high, unsigned long low,
-                        void *buffer, unsigned int count)
-{
-    (void)context; (void)high; (void)low; (void)buffer;
-    if (count == 8) {
-        if (submit_failure) {
-            if (accepted_before_error && !submitted) {
-                submitted = 1;
-                due_us = now_us + reply_delay_us;
-            }
-            return -1024; /* split timeout does not prove that the pointer was rejected */
-        }
-        submitted = 1;
-        due_us = now_us + reply_delay_us;
-        if (reply_delay_us == 0) {
-            statusFIFO.status.status = reply_status;
-            notified = 1;
-        }
+static int DelayThread(unsigned int usec) {
+    now_us+=usec;
+    if(foreign_status && now_us==50) {
+        target->statusFIFO.status=foreign_status;
+        target->statusFIFO.ORB_low=0xdeadbeef;
     }
-    return count == 4 && reset_failure ? -1024 : 0;
+    if(submitted && !notified && !suppress_reply && now_us>=due_us) deliver();
+    return 0;
 }
-static int ieee1394_GetFetchAgentState(struct SBP2Device *dev) { (void)dev; return 0; }
+static int iLinkTrWrite(int ctx,unsigned long high,unsigned long low,void *buffer,unsigned int bytes) {
+    (void)ctx;(void)high;
+    CHECK(held,"pointer/reset publication is serialized");
+    if(bytes==4) {
+        reset_calls++;
+        reset_value=*(u32 *)buffer;
+        return reset_error ? -1024 : 4;
+    }
+    CHECK(bytes==8,"ORB pointer uses exactly eight bytes");
+    target=low==device.ManagementAgent_low ? &device : command.owner;
+    if(target==NULL) target=&device;
+    target_orb=low==target->ManagementAgent_low ? (void *)&target->managementORB : (void *)command.orb;
+    CHECK(((struct sbp2_pointer *)buffer)->low==(u32)target_orb,"publish the resident ORB address");
+    CHECK(buffer==(target_orb==&target->managementORB ? (void *)&target->managementPointer : (void *)&command.pointer),
+          "published pointer storage is resident too");
+    submitted++;
+    due_us=now_us+delay_us;
+    captured=command.cdb.misc;
+    if(!delay_us && !suppress_reply) deliver();
+    return pointer_error ? -1024 : 8;
+}
 @FUNCTIONS@
-#undef malloc
-#undef free
-
-#define CHECK(condition, message) do { \
-    if (!(condition)) { printf("FAIL: %s\n", message); failures++; } \
-} while (0)
-
-static void reset_case(unsigned int stale, unsigned int reply, unsigned int delay)
-{
-    if (live_orb) {
-        free(live_orb);
-        live_orb = NULL;
-    }
-    memset((void *)&statusFIFO, 0, sizeof(statusFIFO));
-    statusFIFO.status.status = stale;
-    now_us = due_us = 0;
-    reply_delay_us = delay;
-    reply_status = reply;
-    submitted = notified = freed_early = submit_failure = polls = 0;
-    accepted_before_error = reset_failure = suppress_reply = 0;
+static void reset_case(void) {
+    memset(&device,0,sizeof(device));memset(&other,0,sizeof(other));
+    memset(&command,0,sizeof(command));memset(storage,0xa5,sizeof(storage));memset(caller,0xcc,sizeof(caller));
+    now_us=due_us=0;delay_us=500;result_status=(1u<<30)|(1u<<24);foreign_status=0;
+    suppress_reply=pointer_error=reset_error=submitted=notified=reset_calls=held=0;generation=1;
+    target=NULL;target_orb=NULL;device.IsConnected=1;device.generation=1;device.ORB_size=8;
+    device.scsi.priv=&device;device.scsi.timeout_us=2000;device.ManagementAgent_low=0xf0004000;
+    other.scsi.priv=&other;other.IsConnected=1;other.generation=1;other.scsi.timeout_us=2000;
 }
-
-int main(void)
-{
-    const unsigned int good = (1u << 30) | (1u << 24);
-    const unsigned int dummy_done = good | (0x0bu << 16);
-    const unsigned int bad = good | (2u << 16);
-    struct SBP2Device dev = {0};
-    dev.ORB_size = sizeof(struct management_ORB) / 4;
-    dev.scsi.priv = &dev;
-    int result;
-
-    /* LOGIN already succeeded; the dummy request has not completed yet. */
-    static const unsigned int delays[] = {50, 500, 20000, 250000};
-    for (unsigned int i = 0; i < sizeof(delays) / sizeof(delays[0]); i++) {
-        reset_case(good, dummy_done, delays[i]);
-        result = ieee1394_InitializeFetchAgent(&dev);
-        CHECK(result >= 0, "successful dummy ORB initializes the fetch agent");
-        CHECK(notified && now_us >= delays[i], "wait for dummy completion instead of consuming LOGIN status");
-        CHECK(!freed_early, "keep the dummy ORB alive until its target completion");
+static int queue(unsigned int bytes,unsigned int write) {
+    unsigned char cmd[12]={0x28};
+    return sbp2_queue_cmd(&device.scsi,cmd,12,caller,bytes,write);
+}
+int main(void) {
+    static const unsigned int delays[]={0,50,500,1500};
+    for(unsigned int i=0;i<4;i++) {
+        reset_case();delay_us=delays[i];
+        device.statusFIFO.status=result_status;device.statusFIFO.ORB_low=(u32)&device.managementORB;
+        CHECK(queue(4,0)==0 && notified && now_us>=delay_us,"command waits for its own immediate/delayed status");
+        CHECK(caller[0]==0x11 && caller[1]==0x22 && caller[2]==0x33 && caller[3]==0x44,
+              "read payload is endian-converted from resident staging");
+        CHECK(caller[4]==0xcc,"read preserves bytes beyond requested length");
     }
-
-    /* Real completions can arrive before the pointer write returns. */
-    reset_case(good, dummy_done, 0);
-    result = ieee1394_InitializeFetchAgent(&dev);
-    CHECK(result >= 0 && notified && !freed_early,
-          "preserve a dummy completion delivered inside the pointer write");
-
-    reset_case(good, bad, 750);
-    result = ieee1394_InitializeFetchAgent(&dev);
-    CHECK(result < 0, "a stale successful LOGIN cannot conceal dummy-ORB failure");
-    CHECK(notified && !freed_early, "wait for the failing dummy completion before freeing");
-
-    reset_case(0, bad, 500);
-    result = ieee1394_InitializeFetchAgent(&dev);
-    CHECK(result < 0, "propagate a failed dummy completion even with initially empty status");
-
-    /* Preserve the old wait until transport failure recovery can prove quiescence. */
-    reset_case(good, good, 500);
-    submit_failure = 1;
-    unsigned char command[12] = {0x28};
-    if (setjmp(guard) == 0) {
-        result = sbp2_queue_cmd(&dev.scsi, command, sizeof(command), NULL, 0, 0);
-        CHECK(0, "publication failure alone cannot authorize releasing command storage");
-    } else {
-        CHECK(!submitted, "the host guard observes the known no-completion wait");
+    reset_case();pointer_error=1;delay_us=1000;
+    CHECK(queue(4,0)==0 && notified && submitted==1,"lost pointer ACK waits for completion without duplicate execution");
+    reset_case();foreign_status=(1u<<30)|(1u<<24);delay_us=1000;
+    CHECK(queue(4,0)==0 && now_us>=1000,"foreign ORB status cannot release the live request");
+    reset_case();result_status=1u<<24;
+    CHECK(queue(4,0)==0 && notified,"source-zero ORB completion is accepted");
+    for(unsigned int source=2;source<=3;source++) {
+        reset_case();result_status=(source<<30)|(1u<<24);
+        CHECK(queue(4,0)<0 && command.pending && now_us>=2000,"unsolicited status cannot complete a command");
     }
+    reset_case();result_status=(1u<<30)|(1u<<24)|1;
+    CHECK(queue(4,0)<0 && command.pending,"nonzero ORB high address cannot match IOP request");
+    reset_case();result_status=(1u<<30)|(2u<<24)|(2u<<16);device.statusFIFO.data[1]=5;
+    CHECK(queue(4,0)==-1 && !command.pending,"failed matching completion retires storage and reports error");
+    device.statusFIFO.data[1]=5;
+    CHECK(ProcessStatus(&device)==-5,"SCSI sense key comes from byte one rather than an impossible u8 shift");
 
-    /* The bridge accepted the pointer, but every acknowledgment and reset fails. */
-    reset_case(0, good, 1200000);
-    submit_failure = accepted_before_error = reset_failure = 1;
-    result = sbp2_queue_cmd(&dev.scsi, command, sizeof(command), NULL, 0, 0);
-    CHECK(notified && now_us >= 1200000,
-          "do not release a live command after an ambiguous publication error");
-    CHECK(result == 0, "a lost pointer acknowledgment does not discard its later completion");
+    reset_case();result_status|=1u<<27;
+    CHECK(queue(4,0)<0 && device.fetchAgentNeedsReset && !command.pending,
+          "DEAD status retires completed request and remembers agent recovery");
+    result_status=(1u<<30)|(1u<<24);notified=0;
+    CHECK(queue(4,0)==0 && reset_calls==1 && reset_value==0 && !device.fetchAgentNeedsReset,
+          "reset a dead fetch agent before retrying SCSI");
 
-    /* A missing dummy completion must retain its request, even after the host guard. */
-    reset_case(good, dummy_done, 500);
-    suppress_reply = 1;
-    if (setjmp(guard) == 0) {
-        result = ieee1394_InitializeFetchAgent(&dev);
-        CHECK(0, "stale LOGIN cannot authorize release when the dummy completion is missing");
-    } else {
-        CHECK(live_orb != NULL && !freed_early,
-              "keep an accepted dummy request alive while its completion is missing");
+    reset_case();suppress_reply=1;
+    CHECK(queue(4,0)<0 && command.pending && now_us==2000,"missing status returns within budget with request retained");
+    CHECK(command.cdb.DataDescriptor.low==(u32)writeBuffer,"target writes to staging, never the returned caller buffer");
+    unsigned char orb_copy[sizeof(command.cdb)];memcpy(orb_copy,command.orb,sizeof(command.cdb));
+    unsigned char stage_copy[XFER_BLOCK_SIZE];memcpy(stage_copy,writeBuffer,sizeof(stage_copy));
+    CHECK(queue(8,1)<0 && submitted==1,"uncertain request is not republished or overwritten");
+    CHECK(!memcmp(orb_copy,command.orb,sizeof(command.cdb)) && !memcmp(stage_copy,writeBuffer,sizeof(stage_copy)),
+          "quarantined ORB and data remain unchanged");
+    unsigned char cmd[12]={0x28};
+    CHECK(sbp2_queue_cmd(&other.scsi,cmd,12,caller,4,0)<0 && submitted==1,
+          "another device cannot reuse the live shared staging buffer");
+    deliver(); /* A very late target write occurs after the caller has returned. */
+    CHECK(caller[0]==0xcc && caller[4]==0xcc,"late DMA cannot alter the returned caller buffer");
+    suppress_reply=0;notified=0;delay_us=50;
+    CHECK(queue(4,0)==0 && submitted==2,"late matching completion allows the next request to proceed");
+
+    reset_case();generation=2;
+    CHECK(queue(4,0)<0 && submitted==0,"old-generation device cannot publish a new request");
+    reset_case();suppress_reply=1;queue(4,0);generation=2;
+    CHECK(queue(4,0)<0 && command.pending && submitted==1,"bus reset alone does not authorize live storage reuse");
+
+    for(unsigned int i=0;i<4;i++) {
+        reset_case();delay_us=delays[i];result_status|=0x0bu<<16;
+        device.statusFIFO.status=(1u<<30)|(1u<<24);
+        CHECK(ieee1394_InitializeFetchAgent(&device)==0 && notified && now_us>=delay_us,
+              "dummy ORB waits for its own completion, preserving immediate replies");
+        CHECK(reset_calls==1 && reset_value==0,"fetch-agent reset transmits initialized data");
     }
+    reset_case();device.ORB_size=0;
+    CHECK(ieee1394_InitializeFetchAgent(&device)<0 && !submitted,"undersized dummy ORB is refused");
+    reset_case();reset_error=1;
+    CHECK(ieee1394_InitializeFetchAgent(&device)<0 && !submitted,"failed agent reset does not publish a dummy ORB");
+    reset_case();suppress_reply=1;
+    CHECK(ieee1394_InitializeFetchAgent(&device)<0 && command.pending && now_us==SBP2_COMMAND_BUDGET_US,
+          "missing dummy status is bounded without freeing its resident ORB");
 
-    reset_case(good, good, 1000);
-    result = sbp2_queue_cmd(&dev.scsi, command, sizeof(command), NULL, 0, 0);
-    CHECK(result == 0 && notified && now_us >= 1000,
-          "a normal command waits for its own delayed completion");
-
-    reset_case(good, bad, 250);
-    result = sbp2_queue_cmd(&dev.scsi, command, sizeof(command), NULL, 0, 0);
-    CHECK(result < 0 && notified, "propagate a command completion error");
-
-    reset_case(0, 0, 0);
+    reset_case();pointer_error=1;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && notified && submitted==1,
+          "LOGIN survives a lost pointer ACK and uses its actual reply");
+    CHECK(device.CommandBlockAgent_low==0xf0010000 && !device.managementPending,"successful matching LOGIN installs agent");
+    reset_case();suppress_reply=1;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)<0 && device.managementPending,
+          "timed-out LOGIN retains all remotely visible request storage");
+    struct management_ORB saved=device.managementORB;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)<0 && submitted==1 &&
+          !memcmp(&saved,&device.managementORB,sizeof(saved)),"pending LOGIN cannot be overwritten by retry");
+    deliver();
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && submitted==1,
+          "late matching LOGIN is collected without duplicate publication");
+    CHECK(!held,"every path releases the transport mutex");
     return failures ? 1 : 0;
 }
-'''
-
+"""
 
 def run(driver):
-    source = (driver / 'sbp2_driver.c').read_text(encoding='utf-8')
-    signatures = (
-        'static void ieee1394_ResetFetchAgent(struct SBP2Device *dev)',
+    source=(driver/'sbp2_driver.c').read_text(encoding='utf-8')
+    state=source[re.search(r'static struct\s*\{',source).start():source.index('\n\n',source.index('#define SBP2_COMMAND_BUDGET_US'))]
+    signatures=(
+        'static u32 sbp2ElapsedUs(const iop_sys_clock_t *start)',
+        'static int sbp2StatusReady(struct SBP2Device *dev, const void *orb)',
+        'static int ProcessStatus(struct SBP2Device *dev)',
+        'static int sbp2WaitStatus(struct SBP2Device *dev, const void *orb, u32 budget_us)',
+        'static int sbp2CommandAvailable(void)',
+        'static int sbp2PublishCommand(struct SBP2Device *dev, u32 budget_us)',
+        'static int ieee1394_ResetFetchAgent(struct SBP2Device *dev)',
         'static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev)',
-        'int ieee1394_SendCommandBlockORB(struct SBP2Device *dev, struct CommandDescriptorBlock *firstCDB)',
+        'static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)',
         'static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd, unsigned int cmd_len, unsigned char *data, unsigned int data_len, unsigned int data_wr)',
-        'static int ProcessStatus(void)',
-        'int ieee1394_Sync(void)',
     )
-    functions = '\n\n'.join(function(source, signature) for signature in signatures)
+    functions='\n\n'.join(function(source,s) for s in signatures)
     with tempfile.TemporaryDirectory() as directory:
-        folder = Path(directory)
-        (folder / 'tamtypes.h').write_text(
-            '#include <stdint.h>\ntypedef uint8_t u8; typedef uint16_t u16; '
-            'typedef uint32_t u32; typedef uint64_t u64;\n', encoding='utf-8')
-        cfile = folder / 'completion.c'
-        binary = folder / ('completion.exe' if sys.platform == 'win32' else 'completion')
-        cfile.write_text(HARNESS.replace('@FUNCTIONS@', functions), encoding='utf-8')
-        subprocess.run([
-            'gcc', '-std=gnu99', '-O2', '-Wall', '-Wextra', '-Werror',
-            '-Wno-pointer-to-int-cast', '-I', str(folder), '-I', str(driver / 'include'),
-            str(cfile), '-o', str(binary),
-        ], check=True, timeout=60)
-        completed = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
-        print(str(driver) + ':')
-        print(completed.stdout.strip() or 'PASS: stale, immediate, delayed and failed SBP-2 completions')
-        return completed.returncode == 0
+        folder=Path(directory);cfile=folder/'completion.c';exe=folder/('completion.exe' if sys.platform=='win32' else 'completion')
+        (folder/'tamtypes.h').write_text(TYPES,encoding='utf-8')
+        text=HARNESS.replace('@STATE@',state).replace('@FUNCTIONS@',functions)
+        text=text.replace('@LOGIN_BUDGET@','5000000')
+        cfile.write_text('#define SBP2_LOGIN_BUDGET_US 5000000\n'+text,encoding='utf-8')
+        subprocess.run(['gcc','-std=gnu99','-O2','-Wall','-Wextra','-Werror','-Wno-pointer-to-int-cast',
+                        '-I',str(folder),'-I',str(driver/'include'),str(cfile),'-o',str(exe)],check=True,timeout=60)
+        result=subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)
+        print(str(driver)+':\n'+(result.stdout.strip() or 'PASS: matched status, bounded waits, persistent requests and late-DMA isolation'))
+        if result.returncode and result.stderr: print(result.stderr)
+        return result.returncode==0
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source-root', type=Path, default=ROOT,
-                        help='Alternate checkout to test, e.g. the unpatched baseline')
-    args = parser.parse_args()
-    results = [run(args.source_root.resolve() / driver) for driver in DRIVERS]
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--source-root',type=Path,default=ROOT)
+    args=parser.parse_args()
+    results=[run(args.source_root/p) for p in DRIVERS]
     sys.exit(0 if all(results) else 1)

@@ -20,21 +20,43 @@ HARNESS = r'''
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <pthread.h>
+#include <unistd.h>
 #include "sbp2_disk.h"
 #define M_DEBUG(...) ((void)0)
 #define BSWAP32(v) __builtin_bswap32(v)
 static unsigned char storage[131072], data[131072];
 static unsigned char *writeBuffer=storage;
 static unsigned int captured, submitted;
-int ieee1394_SendCommandBlockORB(struct SBP2Device *dev, struct CommandDescriptorBlock *cdb) {
-    (void)dev;captured=cdb->misc;submitted++;return 1;
+static struct { struct CommandDescriptorBlock cdb;void *orb; } command;
+static int sbp2_io_sema;
+#define SBP2_COMMAND_BUDGET_US 30000000
+static pthread_mutex_t request_lock=PTHREAD_MUTEX_INITIALIZER;
+static int parallel_check;
+static int WaitSema(int s) { (void)s;return pthread_mutex_lock(&request_lock); }
+static int SignalSema(int s) { (void)s;return pthread_mutex_unlock(&request_lock); }
+static int iLinkGetGenerationNumber(void) { return 0; }
+static int sbp2CommandAvailable(void) { return 1; }
+static int ieee1394_ResetFetchAgent(struct SBP2Device *dev) { (void)dev;return 0; }
+static int sbp2PublishCommand(struct SBP2Device *dev,unsigned int budget) {
+    (void)budget;captured=command.cdb.misc;submitted++;
+    if(parallel_check) {
+        usleep(3000);
+        u32 result=BSWAP32(dev->InitiatorNodeID);
+        memcpy(writeBuffer,&result,4);
+    }
+    return 0;
 }
-int ieee1394_Sync(void) { return 0; }
 @FUNCTION@
 static int failures;
 #define CHECK(c,msg) do { if(!(c)) { printf("FAIL %s\n",msg);failures++; } } while(0)
+struct task { struct SBP2Device dev;u32 output;int rc; };
+static void *worker(void *arg) {
+    struct task *t=arg;unsigned char cmd[12]={0x28};
+    t->rc=sbp2_queue_cmd(&t->dev.scsi,cmd,12,(void *)&t->output,4,0);return NULL;
+}
 int main(void) {
-    struct SBP2Device dev={0};dev.scsi.priv=&dev;
+    struct SBP2Device dev={0};dev.scsi.priv=&dev;dev.IsConnected=1;
     unsigned char cmd[sizeof(((struct CommandDescriptorBlock *)0)->CDBs)]={0};
     unsigned int i;
     /* INQUIRY, READ CAPACITY, READ(10), READ(16) all transfer device -> host. */
@@ -58,6 +80,17 @@ int main(void) {
         CHECK(rc<0 && submitted==0,"reject 64 KiB before publishing a truncated ORB");
         CHECK(storage[XFER_BLOCK_SIZE]==0xa5,"oversized write cannot overrun staging buffer");
     }
+    parallel_check=1;
+    for(i=0;i<20;i++) {
+        struct task first={0},second={0};pthread_t a,b;
+        first.dev.IsConnected=second.dev.IsConnected=1;
+        first.dev.InitiatorNodeID=0x1111;second.dev.InitiatorNodeID=0x2222;
+        first.dev.scsi.priv=&first.dev;second.dev.scsi.priv=&second.dev;
+        pthread_create(&a,NULL,worker,&first);pthread_create(&b,NULL,worker,&second);
+        pthread_join(a,NULL);pthread_join(b,NULL);
+        CHECK(!first.rc && !second.rc && first.output==0x1111 && second.output==0x2222,
+              "concurrent devices cannot exchange the shared read staging data");
+    }
     return failures ? 1 : 0;
 }
 '''
@@ -76,11 +109,11 @@ def run(driver):
         exe = folder / ('orb.exe' if sys.platform == 'win32' else 'orb')
         cfile.write_text(HARNESS.replace('@FUNCTION@', function), encoding='utf-8')
         subprocess.run(['gcc', '-std=gnu99', '-O2', '-Wall', '-Wextra', '-Werror',
-                        '-Wno-pointer-to-int-cast', '-I', str(folder), '-I', str(driver / 'include'),
+                        '-Wno-pointer-to-int-cast', '-pthread', '-I', str(folder), '-I', str(driver / 'include'),
                         str(cfile), '-o', str(exe)], check=True, timeout=60)
         result = subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
         print(str(driver) + ':')
-        print(result.stdout.strip() or 'PASS: read/write direction and command byte limits')
+        print(result.stdout.strip() or 'PASS: read/write direction, command byte limits and concurrent staging')
         return result.returncode == 0
 
 

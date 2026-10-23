@@ -14,12 +14,36 @@
 #define getBI32(__buf)   ((((u8 *)(__buf))[3] << 0) | (((u8 *)(__buf))[2] << 8) | (((u8 *)(__buf))[1] << 16) | (((u8 *)(__buf))[0] << 24))
 #define SCSI_MAX_RETRIES 16
 
-/* RiptOPL: TEST UNIT READY is asked at most SCSI_READY_TRIES times, SCSI_READY_RETRY_US apart (#1018).
-   The SDK asked in a tight loop with no limit, so a drive that never became ready held the bus-reset
-   thread forever. 30 s covers a cold 3.5" drive spinning up in its enclosure; past that the device
-   is not offered (scsi_connect), and the next bus reset tries again. */
+/* Limit warm-up by elapsed time as well as the existing poll count. */
 #define SCSI_READY_TRIES    300
 #define SCSI_READY_RETRY_US (100 * 1000)
+
+
+#define SCSI_READY_BUDGET_US (30 * 1000 * 1000)
+/* Only the bus-reset thread performs warm-up. Include command time, not just
+ * the delays between TEST UNIT READY polls, in its elapsed-time budget. */
+static struct scsi_interface *warmup_interface;
+static iop_sys_clock_t warmup_start;
+
+static int scsiCommandBudget(struct scsi_interface *scsi)
+{
+    iop_sys_clock_t now, diff;
+    u64 ticks;
+    u32 sec, usec, elapsed;
+    scsi->timeout_us = 0;
+    if (scsi != warmup_interface)
+        return 1;
+    GetSystemTime(&now);
+    ticks = (((u64)now.hi << 32) | now.lo) - (((u64)warmup_start.hi << 32) | warmup_start.lo);
+    diff.hi = (u32)(ticks >> 32);
+    diff.lo = (u32)ticks;
+    SysClock2USec(&diff, &sec, &usec);
+    elapsed = sec * 1000000 + usec;
+    if (elapsed >= SCSI_READY_BUDGET_US)
+        return 0;
+    scsi->timeout_us = SCSI_READY_BUDGET_US - elapsed;
+    return 1;
+}
 
 typedef struct _inquiry_data
 {
@@ -81,6 +105,8 @@ static int scsi_cmd(struct block_device *bd, unsigned char cmd, void *buffer, in
     comData[0] = cmd;
     comData[4] = cmd_size;
 
+    if (!scsiCommandBudget(scsi))
+        return -1;
     return scsi->queue_cmd(scsi, comData, sizeof(comData), buffer, buf_size, 0);
 }
 
@@ -130,12 +156,15 @@ static inline int scsi_cmd_read_capacity16(struct block_device *bd, void *buffer
     comData[1] = 0x10;
     comData[13] = buf_size;
 
+    if (!scsiCommandBudget(scsi))
+        return -1;
     return scsi->queue_cmd(scsi, comData, sizeof(comData), buffer, buf_size, 0);
 }
 
 static int scsi_cmd_rw_sector(struct block_device *bd, u64 lba, const void *buffer, unsigned short int sectorCount, unsigned int write)
 {
     struct scsi_interface *scsi = (struct scsi_interface *)bd->priv;
+    scsi->timeout_us = 0;
 
     DEBUG_U64_2XU32(lba);
     M_DEBUG("scsi_cmd_rw_sector - 0x%08x%08x %p 0x%04x\n", lba_u32[1], lba_u32[0], buffer, sectorCount);
@@ -199,7 +228,7 @@ static int scsi_warmup(struct block_device *bd)
     int tries = 0;
     while ((stat = scsi_cmd_test_unit_ready(bd)) != 0) {
         M_PRINTF("ERROR: scsi_cmd_test_unit_ready %d\n", stat);
-        if (++tries >= SCSI_READY_TRIES) {
+        if (++tries >= SCSI_READY_TRIES || !scsiCommandBudget(scsi)) {
             M_PRINTF("ERROR: device not ready after %d tries\n", tries);
             return -1;
         }
@@ -353,7 +382,7 @@ static int scsi_stop(struct block_device *bd)
 //
 // Public functions
 //
-void scsi_connect(struct scsi_interface *scsi)
+int scsi_connect(struct scsi_interface *scsi)
 {
     int i;
 
@@ -371,15 +400,21 @@ void scsi_connect(struct scsi_interface *scsi)
             // SDK ignored scsi_warmup's result and connected a drive whose inquiry, readiness or
             // capacity had failed, so BDM and CDVDMAN read through a device with no sector size
             // (#1018). A failed drive frees its slot; the next bus reset tries it again.
-            if (scsi_warmup(bd) != 0) {
+            warmup_interface = scsi;
+            GetSystemTime(&warmup_start);
+            int result = scsi_warmup(bd);
+            warmup_interface = NULL;
+            scsi->timeout_us = 0;
+            if (result != 0) {
                 M_PRINTF("ERROR: device not offered to BDM\n");
                 bd->priv = NULL;
-                break;
+                return -1;
             }
             bdm_connect_bd(bd);
-            break;
+            return 0;
         }
     }
+    return -1;
 }
 
 void scsi_disconnect(struct scsi_interface *scsi)

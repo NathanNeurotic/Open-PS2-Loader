@@ -41,6 +41,10 @@ HARNESS = r'''
 #include <string.h>
 #include "bdm.h"
 #include "scsi.h"
+#include "thbase.h"
+void GetSystemTime(iop_sys_clock_t *c) { c->lo=c->hi=0; }
+void SysClock2USec(iop_sys_clock_t *c,uint32_t *s,uint32_t *u) { (void)c;*s=*u=0; }
+
 static struct block_device *connected;
 static unsigned int block_size=512,last10=999,block16=512;
 static u64 last16=0x100000002ull;
@@ -132,7 +136,7 @@ def run(driver, native):
     with tempfile.TemporaryDirectory() as directory:
         folder = Path(directory)
         for name, text in {'tamtypes.h': TYPES, 'bdm.h': BDM, 'sysclib.h': '#include <string.h>\n',
-                           'thbase.h': 'int DelayThread(int);\n', 'thsemap.h': ''}.items():
+                           'thbase.h': '#include <stdint.h>\ntypedef struct { uint32_t lo, hi; } iop_sys_clock_t;\nint DelayThread(int);\nvoid GetSystemTime(iop_sys_clock_t *);\nvoid SysClock2USec(iop_sys_clock_t *, uint32_t *, uint32_t *);\n', 'thsemap.h': ''}.items():
             (folder / name).write_text(text, encoding='utf-8')
         cfile = folder / 'geometry.c'
         cfile.write_text(HARNESS, encoding='utf-8')

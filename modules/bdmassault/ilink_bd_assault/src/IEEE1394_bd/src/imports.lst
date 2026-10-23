@@ -35,6 +35,7 @@ stdio_IMPORTS_end
 
 sysclib_IMPORTS_start
 I_memset
+I_memcpy
 sysclib_IMPORTS_end
 
 sysmem_IMPORTS_start
@@ -63,3 +64,10 @@ I_iSetEventFlag
 I_WaitEventFlag
 I_DeleteEventFlag
 thevent_IMPORTS_end
+
+thsemap_IMPORTS_start
+I_CreateSema
+I_WaitSema
+I_SignalSema
+I_DeleteSema
+thsemap_IMPORTS_end

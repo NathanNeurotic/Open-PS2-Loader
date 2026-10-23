@@ -63,7 +63,19 @@ NOT HARDWARE-VERIFIED when added (2026-10-20/21). Worth offering upstream to ps2
 
 The manager is now vendored alongside this module under ../iLinkman and applied
 to native OPL and the standard Neutrino kit. Its ORIGIN.txt records the same pin
-and three manager recovery corrections. No physical-console acceptance yet.
+and the manager recovery corrections. No physical-console acceptance yet.
+
+6. October 22 lifetime/ownership follow-up: use per-device resident LOGIN ORB,
+   reply, pointer and status FIFO; match status source/length/ORB address. Keep
+   one resident command/dummy ORB and reuse the existing 65024-byte allocation
+   for reads as well as writes. Serialize publication/status/reset ownership,
+   poll completion with a budget and retain storage after an uncertain timeout.
+   A late matching status permits reuse; otherwise a fresh driver start is
+   required. Do not infer target quiescence from a missing pointer ACK or reset.
+   Warm-up passes the remaining elapsed budget to commands; setup propagates
+   warm-up failure and frees failed contexts. Reset a completed DEAD command
+   agent before retrying, initialize reset data, and decode sense byte 1.
+   See docs/ILINK_CODE_AUDIT_2026-10-22.md for tests and hardware limits.
 
 RE-VENDOR: fetch the files above from the new pin, clang-format 12, then re-apply LOCAL CHANGES and
 update the pin. Keep test_ilink_bd_reset.py passing.

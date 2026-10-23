@@ -26,6 +26,8 @@ extern unsigned *TargetBuffer;
 extern unsigned int LocalCachedIntr0Register;
 extern int UBUFTxSema;
 
+static unsigned char NextRequestLabel;
+
 static int iLinkSendData(struct TransactionContextData *trContext, unsigned int *header, unsigned int HeaderLength, unsigned int *payload, unsigned int PayloadLength);
 
 static int iLinkSendData(struct TransactionContextData *trContext, unsigned int *header, unsigned int HeaderLength, unsigned int *payload, unsigned int PayloadLength)
@@ -34,7 +36,14 @@ static int iLinkSendData(struct TransactionContextData *trContext, unsigned int 
     u32 FlagBits;
 
     WaitSema(UBUFTxSema);
-    ClearEventFlag(IntrEventFlag, ~(iLinkEventDataSent | iLinkEventDataReceived | iLinkEventError));
+    if (trContext != NULL) {
+        LocalCachedIntr0Register = 0;
+        ClearEventFlag(IntrEventFlag, ~(iLinkEventDataSent | iLinkEventDataReceived | iLinkEventError | iLinkEventRequestError));
+    } else {
+        // A target request can require a response while an outgoing PHT request
+        // is pending. Do not consume that request's response/error events.
+        ClearEventFlag(IntrEventFlag, ~(iLinkEventDataSent | iLinkEventError));
+    }
 
     ILINKRegisterBase->ubufTransmitClear = 0;
     data                                 = header;
@@ -105,7 +114,8 @@ static unsigned int TimeoutCallbackFunction(void *argv)
 {
     (void)argv;
 
-    iSetEventFlag(IntrEventFlag, iLinkEventError);
+    LocalCachedIntr0Register |= iLink_INTR0_STO;
+    iSetEventFlag(IntrEventFlag, iLinkEventRequestError);
     return 0;
 }
 
@@ -116,14 +126,15 @@ static int iLinkSync(unsigned int PayloadLength)
     DEBUG_PRINTF("Payload transmitted. Now awaiting response...\n");
 
     SetAlarm(&Timeout, &TimeoutCallbackFunction, NULL);
-    WaitEventFlag(IntrEventFlag, iLinkEventDataReceived | iLinkEventError, WEF_OR, &FlagBits);
+    WaitEventFlag(IntrEventFlag, iLinkEventDataReceived | iLinkEventRequestError, WEF_OR, &FlagBits);
 
     // An IRQ error can beat the alarm; retire it before another transaction
     // reuses the event flag. A callback that already fired needs no cancellation.
     CancelAlarm(&TimeoutCallbackFunction, NULL);
-    if (FlagBits & iLinkEventError) {
+    if (FlagBits & iLinkEventRequestError) {
         DEBUG_PRINTF("iLinkman: Split timeout.\n");
-        LocalCachedIntr0Register |= iLink_INTR0_STO;
+        if (!(LocalCachedIntr0Register & (iLink_INTR0_InvAck | iLink_INTR0_STO | iLink_INTR0_AckMiss | iLink_INTR0_RetEx | iLink_INTR0_UResp)))
+            LocalCachedIntr0Register |= iLink_INTR0_STO;
     }
 
     DEBUG_PRINTF("Processing results...\n");
@@ -139,7 +150,7 @@ static int iLinkSync(unsigned int PayloadLength)
     /* if (!(LocalCachedIntr0Register & iLink_INTR0_AckRcvd))
         return (-1); */ /* Don't test for an acknowledge, as this somehow doesn't work right. :/ */
 
-    return PayloadLength;
+    return (FlagBits & iLinkEventRequestError) ? -1 : (int)PayloadLength;
 }
 
 int iLinkReadReq(struct TransactionContextData *trContext, unsigned short int offset_high, unsigned int offset_low, void *buffer, unsigned int nBytes)
@@ -151,10 +162,10 @@ int iLinkReadReq(struct TransactionContextData *trContext, unsigned short int of
 
     DEBUG_PRINTF("iLinkTrRead() 0x%08x %08x; nbytes: 0x%08x. Node: 0x%04x.\n", offset_high, offset_low, nBytes, trContext->NodeID);
 
-    TargetBuffer = buffer;
 
-    tlabel               = 1; /* Note: As the tlabel is the same, multiple simultaneous transactions will probably not be possible. */
-    tCode                = IEEE1394_TCODE_READQ;
+    tlabel = NextRequestLabel = (NextRequestLabel + 1) % 63; /* 63 belongs to PHT 00. */
+    tCode = IEEE1394_TCODE_READQ;
+    iLinkPrepareResponse(trContext, tlabel, IEEE1394_TCODE_READQ_RESPONSE, buffer, nBytes);
     TxHeader.header      = (((unsigned int)trContext->speed) << 16) | (((unsigned int)tlabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
     TxHeader.offset_high = (((unsigned int)trContext->NodeID) << 16) | offset_high;
     TxHeader.offset_low  = offset_low;
@@ -178,8 +189,9 @@ int iLinkWriteReq(struct TransactionContextData *trContext, unsigned short int o
 
     DEBUG_PRINTF("iLinkTrWrite() 0x%08x %08x; nbytes: 0x%08x. Node: 0x%04x.\n", offset_high, offset_low, nBytes, trContext->NodeID);
 
-    tlabel               = 1; /* Note: As the tlabel is the same, multiple simultaneous transactions will probably not be possible. */
-    tCode                = IEEE1394_TCODE_WRITEQ;
+    tlabel = NextRequestLabel = (NextRequestLabel + 1) % 63; /* 63 belongs to PHT 00. */
+    tCode = IEEE1394_TCODE_WRITEQ;
+    iLinkPrepareResponse(trContext, tlabel, IEEE1394_TCODE_WRITE_RESPONSE, NULL, 0);
     TxHeader.header      = (((unsigned int)trContext->speed) << 16) | (((unsigned int)tlabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
     TxHeader.offset_high = (((unsigned int)trContext->NodeID) << 16) | offset_high;
     TxHeader.offset_low  = offset_low;

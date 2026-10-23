@@ -1,4 +1,4 @@
-# iLink code audit: command direction and reset recovery
+# iLink code audit: command direction, completion ownership and reset recovery
 
 Audited against `rebuild/main` at
 `57c45b4fcc922ba00fed949c634caea0a2900c63`. The reporter used the **standard
@@ -53,7 +53,7 @@ intermittent. Earlier native OPL successes do not establish current acceptance.
 The manager previously came from the SDK rather than this repository.
 `modules/ilink/iLinkman` now vendors it from the same PS2SDK revision as the
 block driver (`329e2bb43287e16af16c4dde1c614e2662c24468`), retaining notices and
-license. Its three manager corrections also apply to POPStarter's embedded
+license. Its manager corrections also apply to POPStarter's embedded
 copy. Native OPL embeds this build. Standard Neutrino packaging replaces
 **both** `iLinkman.irx` and `IEEE1394_bd_mini.irx` and verifies the copies.
 The RetroAchievements ORBIT package remains a separate runtime and is not
@@ -64,35 +64,118 @@ then copied to all three tracked locations. Update the validator's size and
 the provenance hash together. The CI job enforces byte identity and provides
 an `ilink-recovery-modules-PS2DEVPINNED` artifact with a source/hash manifest.
 
-## Remaining gaps found during review
+## Deeper lifetime and interrupt audit
 
-These remain investigation items, not proven explanations for this console:
+The follow-up pass corrected these additional source-confirmed defects in both
+runtime copies. They are credible failure mechanisms, not proof of which one
+FifthFox's enclosure encountered.
 
-- **Completion ownership:** both block drivers use one global status FIFO.
-  `ieee1394_Sync` accepts nonzero source bits without matching the reported
-  ORB address. A delayed old completion or concurrent operation can therefore
-  be mistaken for the current one. Source bits also admit unsolicited status.
-  A complete repair needs request identity and serialization of submission,
-  status consumption and bus-reset handling.
-- **Unbounded waits:** the outer TEST UNIT READY retry count is bounded, but
-  a command can wait indefinitely inside `ieee1394_Sync`. Earlier notes that
-  called readiness a strict 30-second deadline were too strong. `iLinkPHTSendData`
-  and some hardware waits also rely on an interrupt without a software deadline.
-- **Management ORB lifetime:** LOGIN uses stack storage and can return on
-  a publication error or response timeout. A missing acknowledgment does not
-  prove that the target rejected its pointer. Safe retry requires proving
-  target quiescence or retaining storage until the target can no longer access
-  it. A new timeout followed by freeing a live ORB would make this worse.
-- **Failure propagation:** `scsi_connect` is void; the enclosing device setup
-  can report configured despite a refused warm-up. It does not mount an invalid
-  geometry now, but another attempt depends on a later bus reset. Failed
-  configuration paths also need a transaction-context ownership audit.
-- **Sense handling:** `ProcessStatus` shifts an 8-bit data element by 16,
-  losing sense information. The older POPStarter warm-up also examines its
-  sense buffer after a failed REQUEST SENSE without first clearing it.
-- **Receive parsing:** unhandled FIFO draining now obeys its function contract,
-  but the caller supplies the available FIFO level rather than a decoded
-  packet length. Packet boundary and bounds handling need a separate pass.
+7. **Interrupt errors could disappear or never wake their waiter.** The ISR
+   assigned its global cached interrupt register on every sample, including its
+   final zero sample. It now latches request errors until consumed. Split timeout
+   wakes the PHT waiter, and bus reset wakes transaction waiters with a generation
+   error. A dedicated request-error event prevents an outgoing response from
+   clearing a client's error. PHT retires outbound DMA before returning.
+
+8. **Client requests shared one PHT and reply pointer without ownership.** A
+   request mutex covers each complete public read/write transaction; the receive
+   thread retains its independent TX mutex for responses. Queued calls snapshot
+   their context before waiting, so slot reuse cannot silently change their node
+   or generation. Concurrent host clients verify that replies stay with their
+   callers. Invalid context indices and unrepresentable lengths are refused.
+
+9. **A late or oversized response could write through a retired caller pointer.**
+   The response handler now checks active ownership, node, transaction label,
+   generation, response type, response code and block length. Copy and retirement
+   are protected from an error IRQ returning the caller halfway through. Orphan
+   and foreign replies are drained without touching caller memory or completing
+   another request. UBUF labels advance between requests. A PHT block read waits
+   for the copied response rather than returning on packet-count IRQ alone.
+
+10. **SBP-2 status did not identify its request.** Completion now requires the
+    reported ORB address, zero high address, a populated status length and source
+    0 or 1. Source 2 and 3 are unsolicited and cannot complete a request. Each
+    device has its own resident status FIFO. This follows the protocol fields
+    independently used by the
+    [Linux SBP-2 completion path](https://code.googlesource.com/linux/torvalds/linux/+/669d089a7fe1eacf4e86160297f32c678ee71ec5/drivers/firewire/sbp2.c).
+
+11. **LOGIN, command and dummy request lifetimes were unsafe on failure.**
+    LOGIN ORBs, replies and pointer payloads now live in resident per-device
+    storage. One resident command ORB and the existing 65024-byte transfer
+    allocation serve both data directions. Reads no longer expose caller memory
+    to later target DMA. Publication occurs once: an acknowledgment failure can
+    follow acceptance, so it still waits for the matching completion. Missing
+    completions return an error within a 30-second polling budget while retaining
+    remotely accessible storage. New requests refuse to overwrite that storage
+    until its actual matching completion arrives. LOGIN retries likewise cannot
+    overwrite a pending request, and discovery skips its retained device slot.
+    This adds no second large transfer allocation. The mutex is released before
+    calling BDM/FS attach or detach to avoid a filesystem-lock inversion.
+
+12. **Readiness limits and setup success were misleading.** SCSI warm-up now
+    includes command time in its elapsed budget and passes each command the
+    remaining time. The older 300-poll limit alone did not bound an individual
+    command. `scsi_connect` returns failure to device configuration; failed setup
+    releases its transaction context. Sense buffers are initialized before
+    REQUEST SENSE, and status sense keys use byte 1 rather than shifting an
+    8-bit byte by 16. A completed DEAD status marks the command agent for reset
+    before SCSI retries; otherwise the stopped agent would never fetch the retry.
+    Agent-reset data is initialized rather than sending stack garbage.
+
+13. **Packet start bounds did not protect the end of a transfer.** Read and write
+    request parsing now checks available headers and complete payloads. Software
+    writes check the entire physical range, preserve partial final quadlets and
+    drain rejected payloads plus their trailer. Reads validate the entire RAM or
+    CROM span. Rejected or truncated requests cannot invoke a success callback.
+
+14. **Vendored API/CROM defects were also confirmed.** The EUI-64 import uses
+    export 25 rather than transaction-allocation export 12. CROM deletion checks
+    the index and occupancy and updates its count before rebuilding. Allocation
+    failure preserves the installed ROM's actual size. Relative leaf offsets
+    count quadlets rather than units; vendor, node-ID and model descriptors now
+    point to their actual records. These were verified as API and ROM defects;
+    no claim is made that a particular descriptor caused the console failure.
+
+## Hardware cost and simplicity
+
+The patch adds no worker thread and no second 65024-byte allocation. The existing
+transfer allocation serves reads, writes and dummy fetch-agent initialization;
+the dummy no longer needs a separate heap allocation or worst-case-sized BSS
+array. Resident metadata holds request identity and the small per-device LOGIN
+structures. Kernel semaphores serialize resources that were already global.
+
+IOP builds use `-fno-builtin`. CDB bytes and caller data are copied in bulk, then
+converted with direct aligned word loops. There are no per-word `memcpy` calls
+in those loops or the response copy, and reads do not clear an entire transfer
+buffer before the target overwrites it. A successful read has one additional
+bulk copy from resident staging to its caller. That cost makes it safe to return
+a timeout without leaving the target able to DMA into reused caller memory.
+
+Completion polling retains the previous 50-us fast interval for the first 2 ms,
+then uses 250 us until 20 ms and 1 ms for a slow tail, capped by the remaining
+budget. This reduces wakeups for stalled/spinning-up drives while bounding the
+added completion-detection latency. Throughput and interrupt latency still need
+measurement on the PS2; host tests do not establish their real cost.
+
+## Remaining limits
+
+- A request whose completion never arrives deliberately retains its resident
+  storage. A generation change alone is not treated as proof that the target
+  stopped accessing it. A late matching completion permits reuse; otherwise
+  this conservative refusal requires a fresh IOP/driver start. Automatic
+  abort/reconnect recovery remains a separate protocol change.
+- The 30-second command/warm-up budgets bound completion polling and account for
+  command waits. Acquiring the shared request mutex and the underlying hardware
+  transfer still depend on the kernel/controller making progress. PHT uses the
+  controller's split-timeout IRQ, which this patch now handles; it has no
+  independent software watchdog. Hardware reset/busy waits also retain their
+  existing controller assumptions. These are not unconditional wall-clock
+  guarantees if the controller or interrupt delivery itself fails.
+- PHT's fixed block-transaction label and controller byte order, interrupt
+  ordering, bridge firmware behavior and reset timing need physical-console
+  verification. Host simulation checks the software contracts, not the chip.
+- Native BDM still requires 512-byte logical sectors at its mount layer. The
+  transfer geometry repairs do not establish end-to-end native 4K-sector support.
 
 The old local C++ RiptOPL tree has the same reversed POPStarter direction and
 the manager defects above. A report of an older C++ build working therefore
@@ -109,7 +192,15 @@ proves a launch bug: the existing binding and argv checks cover those paths.
 - Both production SCSI implementations pass geometry/chunking tests for 512,
   2048, 4096 and 65024-byte blocks, exact capacity, RC16 behavior and invalid
   geometry refusal. The baseline fails the affected checks.
-- Existing reset/login and SBP-2 lifetime regressions must remain passing.
+- Production SBP-2 fault injection covers source-0 completion, foreign ORBs,
+  unsolicited status, immediate and delayed replies, lost acknowledgments,
+  missing completions, late DMA, retained storage, DEAD-agent recovery and
+  concurrent staging. SCSI fixtures cover slow commands and setup failure.
+- Manager IRQ and packet fixtures cover split timeout, error latching, bus reset,
+  response retirement, exact read/write spans, rejected/truncated packets, CROM
+  rebuild failure and concurrent public API calls.
+- Existing reset/login, readiness, shipped-pair and stale-pair regressions remain
+  required checks. All new fixtures run in the flavour workflow.
 - Local target compilation and pinned CI builds establish buildability and
   binary provenance. They do not establish gameplay or explain a white screen.
 

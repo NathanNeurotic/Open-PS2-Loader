@@ -63,13 +63,16 @@ static int iLinkPHTSendData(struct TransactionContextData *trContext, unsigned c
 {
     unsigned char tLabel;
     unsigned int PHT_ctrl_ST_R0_flags;
+    u32 FlagBits, completion;
 
     (void)ByteSwap;
 
     if (trContext->GenerationNumber != GenerationNumber)
         return (-1021);
 
-    ClearEventFlag(IntrEventFlag, ~(iLinkEventDMATransEnd | iLinkEventError));
+    LocalCachedIntr0Register = 0;
+    completion = tCode == IEEE1394_TCODE_READB ? iLinkEventDataReceived : iLinkEventDMATransEnd;
+    ClearEventFlag(IntrEventFlag, ~(completion | iLinkEventRequestError));
 
     PHT_ctrl_ST_R0_flags = (tCode == IEEE1394_TCODE_WRITEB) ? PHT_CTRL_ST_EPCNT | PHT_CTRL_ST_EWREQ : PHT_CTRL_ST_EPCNT | PHT_CTRL_ST_ERREQ; /* EWReq and EPCnt, OR ERReq and EPCnt. */
     tLabel = 0x3F;                                                                                                                           /* PHT 00 */
@@ -86,11 +89,17 @@ static int iLinkPHTSendData(struct TransactionContextData *trContext, unsigned c
     iLinkDMACRegs[0].chcr = DMAC_CHCR_TR | DMAC_CHCR_CO;
 
     DEBUG_PRINTF("Waiting for interrupt...\n");
-    WaitEventFlag(IntrEventFlag, iLinkEventDMATransEnd | iLinkEventError, WEF_OR, NULL);
+    WaitEventFlag(IntrEventFlag, completion | iLinkEventRequestError, WEF_OR, &FlagBits);
+
+    // The caller may retire its TX payload after return, including on errors.
+    iLinkDMACRegs[0].chcr = 0;
 
     ILINKRegisterBase->PHT_ctrl_ST_R0 &= (~PHT_ctrl_ST_R0_flags);
 
     DEBUG_PRINTF("Processing results...\n");
+
+    if (trContext->GenerationNumber != GenerationNumber)
+        return -1021;
 
     if (LocalCachedIntr0Register & iLink_INTR0_InvAck)
         return (-1023);
@@ -101,7 +110,7 @@ static int iLinkPHTSendData(struct TransactionContextData *trContext, unsigned c
     if (LocalCachedIntr0Register & iLink_INTR0_RetEx)
         return (-1026);
 
-    return nBytes;
+    return (FlagBits & iLinkEventRequestError) ? -1 : (int)nBytes;
 }
 
 /* !!! NOTE !!! This function only supports issuing BLOCK read requests! Quadlet read requests should be issued with the equilvalent function that uses the UBUF. */
@@ -109,7 +118,7 @@ int iLinkReadPHTReq(struct TransactionContextData *trContext, unsigned short int
 {
     DEBUG_PRINTF("iLinkReadPHTReq() 0x%08x 0x%08x; nbytes: 0x%08x. Node: 0x%04x.\n", offset_high, offset_low, nBytes, trContext->NodeID);
 
-    TargetBuffer = buffer;
+    iLinkPrepareResponse(trContext, 0x3f, IEEE1394_TCODE_READB_RESPONSE, buffer, nBytes);
 
     return (iLinkPHTSendData(trContext, IEEE1394_TCODE_READB, offset_high, offset_low, NULL, nBytes, 0));
 }

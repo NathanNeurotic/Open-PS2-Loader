@@ -295,10 +295,16 @@ jobs:
         run: python3 .github/scripts/test_bdm_cache.py
       - name: Check the i.LINK driver logs back in after an IOP reset and only offers a ready drive (#1018)
         run: python3 .github/scripts/test_ilink_bd_reset.py
-      - name: Check both i.LINK drivers wait for their own SBP-2 completion
-        run: python3 .github/scripts/test_ilink_sbp2_completion.py
+      - name: Check both i.LINK drivers retain requests and release failed discovery contexts
+        run: |
+          python3 .github/scripts/test_ilink_sbp2_completion.py
+          python3 .github/scripts/test_ilink_discovery.py
       - name: Check iLink manager generation cancellation, alarm cleanup and receive FIFO draining
         run: python3 .github/scripts/test_ilink_manager_recovery.py
+      - name: Check iLink interrupt error ownership and DMA retirement
+        run: python3 .github/scripts/test_ilink_manager_irq.py
+      - name: Check iLink packet bounds, late responses, CROM updates and concurrent clients
+        run: python3 .github/scripts/test_ilink_manager_safety.py
       - name: Check iLink command direction, byte limits and SCSI capacity
         run: |
           python3 .github/scripts/test_ilink_command_orb.py

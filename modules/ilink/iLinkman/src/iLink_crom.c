@@ -91,11 +91,14 @@ int iLinkAddCROMUnit(unsigned int *data, unsigned int nQuads)
 
 void iLinkDeleteCROMUnit(unsigned int id)
 {
+    if (id >= 16 || ExtraCROMUnits[id] == NULL)
+        return;
+
     free(ExtraCROMUnits[id]);
     ExtraCROMUnits[id] = NULL;
-    BuildConfigurationROM();
-
+    ExtraCROMUnitsSize[id] = 0;
     nExtraCROMUnits--;
+    BuildConfigurationROM();
 }
 
 int iLinkGetNodeCapabilities(unsigned short NodeID)
@@ -289,8 +292,6 @@ static void BuildConfigurationROM(void)
     CROMSize = CROMSize + sizeof(struct DirectoryHeader) + sizeof(struct ModelID_Textual_Descriptor);
     CROMSize = CROMSize + sizeof(struct DirectoryHeader) + sizeof(struct Node_Unique_Id);
 
-    ConfigurationROMSize = CROMSize;
-
     if ((CROM_Buffer = malloc(CROMSize)) == NULL)
         return;
 
@@ -311,7 +312,7 @@ static void BuildConfigurationROM(void)
                               + TotalRootDirectorySizeInQuads - 4 // offset of Node_Unique_ID_Offset+1
                               + sizeof(struct Module_Vendor_Id) / 4
                               + sizeof(struct Module_Vendor_ID_Texual_Descriptor) / 4);
-    RootDirectory->Module_Vendor_ID_Offset                   = (IEEE1394_CROM_MODULE_VENDOR_ID << 24) | (nExtraCROMUnits + 1);
+    RootDirectory->Module_Vendor_ID_Offset                   = (IEEE1394_CROM_MODULE_VENDOR_ID << 24) | (TotalExtraCROMUnitSize / 4 + 1);
 
     CurrentOffset = CurrentOffset + sizeof(struct DirectoryHeader) + sizeof(struct Root_Directory);
 
@@ -327,7 +328,7 @@ static void BuildConfigurationROM(void)
 
     /* Fill in the fields of the Module Vendor ID record. */
     ModuleVendorID                     = (struct Module_Vendor_Id *)&CROM_Buffer[CurrentOffset + sizeof(struct DirectoryHeader)];
-    ModuleVendorID->Textual_Descriptor = (IEEE1394_CROM_MODEL_ID << 24) | ((sizeof(struct DirectoryHeader) * 2 / 4 + sizeof(struct Module_Vendor_ID_Texual_Descriptor) + sizeof(struct Node_Unique_Id)) / 4);
+    ModuleVendorID->Textual_Descriptor = (IEEE1394_CROM_MODEL_ID << 24) | ((sizeof(struct Module_Vendor_Id) + sizeof(struct DirectoryHeader) * 2 + sizeof(struct Module_Vendor_ID_Texual_Descriptor) + sizeof(struct Node_Unique_Id)) / 4);
 
     DirectoryHeader                   = (struct DirectoryHeader *)&CROM_Buffer[CurrentOffset];
     DirectoryHeader->Directory_length = 1;
@@ -391,4 +392,5 @@ static void BuildConfigurationROM(void)
     if (ConfigurationROM != NULL)
         free(ConfigurationROM);
     ConfigurationROM = (unsigned int *)CROM_Buffer;
+    ConfigurationROMSize = CROMSize;
 }

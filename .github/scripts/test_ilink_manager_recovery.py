@@ -38,8 +38,8 @@ static struct Registers regs;
 static struct Registers *ILINKRegisterBase=&regs;
 static int GenerationNumber=1,IntrEventFlag=2,UBUFTxSema=3;
 static unsigned int LocalCachedIntr0Register;
-enum { iLinkEventDataSent=1,iLinkEventDataReceived=2,iLinkEventError=4,
-       iLink_INTR0_InvAck=8,iLink_INTR0_STO=16,iLink_INTR0_AckMiss=32,iLink_INTR0_RetEx=64,
+enum { iLinkEventDataSent=1,iLinkEventDataReceived=2,iLinkEventError=4,iLinkEventRequestError=128,
+       iLink_INTR0_InvAck=8,iLink_INTR0_STO=16,iLink_INTR0_AckMiss=32,iLink_INTR0_RetEx=64,iLink_INTR0_UResp=256,
        WEF_OR=1 };
 #ifdef DEBUG_TTY_FEEDBACK
 #define DEBUG_PRINTF(...) do { if (0) printf(__VA_ARGS__); } while(0)
@@ -62,7 +62,7 @@ static int ClearEventFlag(int id,unsigned int bits) {
 }
 static int WaitEventFlag(int id,int bits,int mode,u32 *out) {
     (void)id;(void)bits;(void)mode;
-    *out=earlyError ? iLinkEventError : iLinkEventDataSent|iLinkEventDataReceived;
+    *out=earlyError ? (bits&iLinkEventRequestError ? iLinkEventRequestError : iLinkEventError) : iLinkEventDataSent|iLinkEventDataReceived;
     return 0;
 }
 static int iSetEventFlag(int id,int bits) { (void)id;(void)bits;return 0; }
@@ -86,6 +86,7 @@ static void stale(int headerLength,int payloadLength,int atClear) {
     CHECK(iLinkSendData(&old,header,headerLength,payload,payloadLength)==-1021,
           "stale transaction reports the generation error");
     CHECK(available && waits==signals,"generation error releases the TX semaphore");
+    CHECK(regs.ubufTransmitLast==0,"generation error does not commit a partial packet");
     changeOnClear=0;
     struct TransactionContextData fresh={GenerationNumber};
     if(setjmp(blocked)==0) {

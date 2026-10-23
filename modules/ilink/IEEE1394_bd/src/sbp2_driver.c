@@ -5,6 +5,7 @@
 #include <sysmem.h>
 #include <thbase.h>
 #include <thevent.h>
+#include <thsemap.h>
 
 #include "iLinkman.h"
 #include "sbp2_disk.h"
@@ -17,6 +18,21 @@
 #define MAX_DEVICES 5
 static struct SBP2Device SBP2Devices[MAX_DEVICES];
 static u8 *writeBuffer = NULL;
+
+/* The target may still access an accepted ORB after a lost pointer ACK or a
+ * timeout. Keep all remotely visible request storage resident. One command
+ * owns the existing transfer buffer until its matching status arrives. */
+static struct
+{
+    struct CommandDescriptorBlock cdb;
+    struct sbp2_pointer pointer;
+    void *orb;
+    struct SBP2Device *owner;
+    int pending;
+} command;
+static int sbp2_io_sema;
+#define SBP2_COMMAND_BUDGET_US (30 * 1000 * 1000)
+
 
 /* Thread creation data. */
 static iop_thread_t threadData = {
@@ -34,45 +50,15 @@ static void ieee1394_callback(int reason, unsigned long int offset, unsigned lon
 static void iLinkIntrCBHandlingThread(void *arg);
 static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev);
 static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev);
-static inline int ieee1394_Sync_withTimeout(u32 n500mSecUnits);
 void free(void *buffer);
 void *malloc(int NumBytes);
-
-static volatile union
-{
-    struct sbp2_status status;
-    unsigned char buffer[32]; /* Maximum 32 bytes. */
-} statusFIFO;
 
 static void ieee1394_callback(int reason, unsigned long int offset, unsigned long int size)
 {
     (void)offset;
     (void)size;
-
-#if 0
-    iLinkBufferOffset = offset;
-    iLinkTransferSize = size;
-
-    if (reason == iLink_CB_WRITE_REQUEST) {
-        u32 statusFIFO_result;
-
-        // M_DEBUG("Write request: Offset: 0x%08lx; size: 0x%08lx.\n", iLinkBufferOffset, iLinkTransferSize);
-
-        if (iLinkBufferOffset == (u32)&statusFIFO) { /* Check to be sure that we don't signal ieee1394_Sync() too early; Some transactions are transactions involving multiple ORBs. */
-            statusFIFO_result = statusFIFO.status.status;
-            if (RESP_SRC(statusFIFO_result) != 0)
-                SetEventFlag(sbp2_event_flag, WRITE_REQ_INCOMING); /* Signal ieee1394_Sync() only after the last ORB was read. */
-        }
-    } else
-#endif
-    if (reason == iLink_CB_BUS_RESET) {
+    if (reason == iLink_CB_BUS_RESET)
         SetEventFlag(sbp2_event_flag, BUS_RESET_COMPLETE);
-    }
-#if 0
-    else {
-        // M_DEBUG("Read request: Offset: 0x%08lx; size: 0x%08lx;\n", iLinkBufferOffset, iLinkTransferSize);
-    }
-#endif
 }
 
 /* Event flag creation data. */
@@ -86,9 +72,10 @@ int iLinkIntrCBThreadID;
 static int sbp2_get_max_lun(struct scsi_interface *scsi);
 static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd, unsigned int cmd_len, unsigned char *data, unsigned int data_len, unsigned int data_wr);
 
-void init_ieee1394DiskDriver(void)
+int init_ieee1394DiskDriver(void)
 {
     int i;
+    iop_sema_t sema = {0, 0, 1, 1};
 
     for (i = 0; i < MAX_DEVICES; i++) {
         SBP2Devices[i].IsConnected = 0;
@@ -104,20 +91,39 @@ void init_ieee1394DiskDriver(void)
     }
 
     writeBuffer = malloc(XFER_BLOCK_SIZE);
-
+    if (writeBuffer == NULL)
+        return -1;
+    sbp2_io_sema = CreateSema(&sema);
+    if (sbp2_io_sema < 0) {
+        free(writeBuffer);
+        return -1;
+    }
     sbp2_event_flag = CreateEventFlag(&evfp);
+    if (sbp2_event_flag < 0) {
+        DeleteSema(sbp2_io_sema);
+        free(writeBuffer);
+        return -1;
+    }
 
     M_DEBUG("Starting threads..\n");
 
     threadData.thread = &iLinkIntrCBHandlingThread;
     iLinkIntrCBThreadID = CreateThread(&threadData);
-    StartThread(iLinkIntrCBThreadID, NULL);
+    if (iLinkIntrCBThreadID < 0 || StartThread(iLinkIntrCBThreadID, NULL) < 0) {
+        if (iLinkIntrCBThreadID >= 0)
+            DeleteThread(iLinkIntrCBThreadID);
+        DeleteEventFlag(sbp2_event_flag);
+        DeleteSema(sbp2_io_sema);
+        free(writeBuffer);
+        return -1;
+    }
 
     iLinkSetTrCallbackHandler(&ieee1394_callback);
 
     M_DEBUG("Threads created and started.\n");
 
     iLinkEnableSBus();
+    return 0;
 }
 
 /* RiptOPL: how long a fresh driver keeps asking the drive for a login (#1018).
@@ -149,6 +155,81 @@ static u32 sbp2ElapsedUs(const iop_sys_clock_t *start)
     return sec * 1000000 + usec;
 }
 
+
+/* source 0 and 1 describe an ORB; 2 and 3 are unsolicited status. The length
+ * distinguishes an empty FIFO from a source-0 completion. IOP addresses have
+ * zero high 16 bits. Never consume another ORB's status as this one's reply. */
+static int sbp2StatusReady(struct SBP2Device *dev, const void *orb)
+{
+    u32 status = dev->statusFIFO.status;
+    return RESP_SRC(status) <= 1 && RESP_LEN(status) >= 1 &&
+           (status & 0xffff) == 0 && dev->statusFIFO.ORB_low == (u32)orb;
+}
+
+static int ProcessStatus(struct SBP2Device *dev)
+{
+    u32 status = dev->statusFIFO.status;
+    int sense = dev->statusFIFO.data[1] & 0xf;
+    if (sense == 0)
+        sense = 1;
+    return ((RESP_SBP_STATUS(status) == 0 || RESP_SBP_STATUS(status) == 0x0b) &&
+            RESP_RESP(status) == 0 && !RESP_DEAD(status) && RESP_LEN(status) == 1) ?
+               0 :
+               -sense;
+}
+
+static int sbp2WaitStatus(struct SBP2Device *dev, const void *orb, u32 budget_us)
+{
+    iop_sys_clock_t start;
+    u32 elapsed, delay;
+    GetSystemTime(&start);
+    while (dev->generation == iLinkGetGenerationNumber()) {
+        if (sbp2StatusReady(dev, orb))
+            return ProcessStatus(dev);
+        elapsed = sbp2ElapsedUs(&start);
+        if (elapsed >= budget_us)
+            break;
+        delay = elapsed < 2000 ? 50 : (elapsed < 20000 ? 250 : 1000);
+        if (delay > budget_us - elapsed)
+            delay = budget_us - elapsed;
+        DelayThread(delay);
+    }
+    return -1;
+}
+
+/* Called with sbp2_io_sema held. A timeout does not prove that DMA stopped.
+ * A late matching status can retire the request; until then refuse reuse. */
+static int sbp2CommandAvailable(void)
+{
+    if (command.pending && sbp2StatusReady(command.owner, command.orb)) {
+        command.owner->fetchAgentNeedsReset = RESP_DEAD(command.owner->statusFIFO.status);
+        command.pending = 0;
+    }
+    return !command.pending;
+}
+
+static int sbp2PublishCommand(struct SBP2Device *dev, u32 budget_us)
+{
+    int result;
+    memset((void *)&dev->statusFIFO, 0, sizeof(dev->statusFIFO));
+    command.pointer.low = (u32)command.orb;
+    command.pointer.high = 0;
+    command.pointer.NodeID = dev->InitiatorNodeID;
+    command.owner = dev;
+    command.pending = 1;
+
+    /* Publish once. A transport error can follow target acceptance; resetting
+     * and republishing the same request risks executing a write twice. */
+    iLinkTrWrite(dev->trContext, dev->CommandBlockAgent_high,
+                 dev->CommandBlockAgent_low + 0x08, &command.pointer, 8);
+    result = sbp2WaitStatus(dev, command.orb, budget_us);
+    if (sbp2StatusReady(dev, command.orb)) {
+        dev->fetchAgentNeedsReset = RESP_DEAD(dev->statusFIFO.status);
+        command.pending = 0;
+    }
+    return result;
+}
+
 static int initConfigureSBP2Device(struct SBP2Device *dev)
 {
     iop_sys_clock_t start;
@@ -167,7 +248,8 @@ static int initConfigureSBP2Device(struct SBP2Device *dev)
         return -2;
     }
 
-    scsi_connect(&dev->scsi);
+    if (scsi_connect(&dev->scsi) < 0)
+        return -3;
 
     M_DEBUG("Completed device initialization.\n");
 
@@ -255,298 +337,173 @@ static inline int initSBP2Disk(struct SBP2Device *dev)
 /* Hardware event handling threads. */
 static void iLinkIntrCBHandlingThread(void *arg)
 {
-    int nNodes, i, targetDeviceID, nodeID, result;
-    static const unsigned char PayloadSizeLookupTable[] = {
-        7, /* S100; 2^(7+2)=512 */
-        8, /* S200; 2^(8+2)=1024 */
-        9, /* S400; 2^(9+2)=2048 */
-    };
-
+    int nNodes, i, j, nodeID, speed;
+    struct SBP2Device *dev;
+    static const unsigned char PayloadSizeLookupTable[] = {7, 8, 9};
     (void)arg;
-
     while (1) {
         WaitEventFlag(sbp2_event_flag, BUS_RESET_COMPLETE, WEF_AND | WEF_CLEAR, NULL);
-
-        /* Disconnect all currently connected nodes. */
+        WaitSema(sbp2_io_sema);
         for (i = 0; i < MAX_DEVICES; i++) {
-            if (SBP2Devices[i].trContext >= 0) {
-                scsi_disconnect(&SBP2Devices[i].scsi);
-
-                iLinkTrFree(SBP2Devices[i].trContext);
-                SBP2Devices[i].trContext = -1;
+            dev = &SBP2Devices[i];
+            dev->IsConnected = dev->configuring = 0;
+            if (dev->trContext >= 0) {
+                iLinkTrFree(dev->trContext);
+                dev->trContext = -1;
             }
+            if (dev->managementPending && sbp2StatusReady(dev, &dev->managementORB))
+                dev->managementPending = 0;
         }
+        sbp2CommandAvailable();
+        SignalSema(sbp2_io_sema);
+        /* BDM/FS unmount can take filesystem locks. Never hold the transport
+         * mutex while calling it: an in-flight FS read may need that mutex. */
+        for (i = 0; i < MAX_DEVICES; i++)
+            scsi_disconnect(&SBP2Devices[i].scsi);
 
-        if ((nNodes = iLinkGetNodeCount()) < 0) {
-            M_DEBUG("Critical error: Failure getting the number of nodes!\n"); /* Error. */
-        }
-
-        M_PRINTF("BUS RESET DETECTED. Nodes: %d\n", nNodes);
-        M_PRINTF("Local Node: 0x%08x.\n", iLinkGetLocalNodeID());
-
-        // DelayThread(500000); /* Give the devices on the bus some time to initialize themselves (The SBP-2 standard states that a maximum of 5 seconds may be given). */
-
-        targetDeviceID = 0;
-
+        nNodes = iLinkGetNodeCount();
         for (i = 0; i < nNodes; i++) {
-            if (targetDeviceID >= MAX_DEVICES) {
-                M_DEBUG("Warning! There are more devices that what can be connected to.\n");
+            if ((nodeID = iLinkFindUnit(i, 0x0609e, 0x010483)) < 0)
+                continue;
+            WaitSema(sbp2_io_sema);
+            sbp2CommandAvailable();
+            for (j = 0; j < MAX_DEVICES; j++) {
+                dev = &SBP2Devices[j];
+                if (!dev->IsConnected && !dev->managementPending &&
+                    !(command.pending && command.owner == dev))
+                    break;
+            }
+            if (j == MAX_DEVICES) {
+                SignalSema(sbp2_io_sema);
                 break;
             }
-
-            M_PRINTF("Attempting to initialize unit %d...\n", i);
-
-            /* 16-bit node ID = BUS NUMBER (Upper 10 bits) followed by the NODE ID (Lower 6 bits). */
-            if ((nodeID = iLinkFindUnit(i, 0x0609e, 0x010483)) < 0) {
-                M_DEBUG("Error: Unit %d is not a valid SBP-2 device. Code: %d.\n", i, nodeID);
+            dev->generation = iLinkGetGenerationNumber();
+            dev->nodeID = nodeID;
+            dev->InitiatorNodeID = iLinkGetLocalNodeID();
+            dev->ManagementAgent_high = dev->ManagementAgent_low = 0;
+            dev->mgt_ORB_timeout = dev->ORB_size = dev->LUN = 0;
+            speed = iLinkGetNodeMaxSpeed(nodeID);
+            if (speed < 0 || speed > 2 || initSBP2Disk(dev) < 0 || dev->ManagementAgent_low == 0) {
+                SignalSema(sbp2_io_sema);
                 continue;
             }
-
-            M_PRINTF("Detected SBP-2 device.\n");
-
-            SBP2Devices[targetDeviceID].InitiatorNodeID = iLinkGetLocalNodeID();
-
-            M_PRINTF("Local Node: 0x%08x.\n", SBP2Devices[targetDeviceID].InitiatorNodeID);
-
-#if 0
-            if (SBP2Devices[targetDeviceID].IsConnected) {          /* Already connected to the device. */
-                if (SBP2Devices[targetDeviceID].nodeID == nodeID) { /* Make sure that we're attempting to re-connect to the same device. */
-                    if (ieee1394_SendManagementORB(SBP2_RECONNECT_REQUEST, &SBP2Devices[i]) < 0) {
-                        M_DEBUG("Error reconnecting to the SBP-2 device %u.\n", nodeID);
-                    } else {
-                        M_DEBUG("Successfully reconnected to SBP-2 device %u.", nodeID);
-                        targetDeviceID++;
-                        continue;
-                    }
-                } else
-                    SBP2Devices[targetDeviceID].IsConnected = 0;
-            }
-#endif
-
-            SBP2Devices[targetDeviceID].IsConnected = 0;
-
-            /* Attempt a login into the device. */
-            SBP2Devices[targetDeviceID].nodeID = nodeID;
-            if ((result = initSBP2Disk(&SBP2Devices[targetDeviceID])) < 0) {
-                M_DEBUG("Error initializing the device. Code: %d.\n", result);
+            dev->trContext = iLinkTrAlloc(nodeID, speed);
+            if (dev->trContext < 0) {
+                SignalSema(sbp2_io_sema);
                 continue;
             }
-
-            SBP2Devices[targetDeviceID].trContext = iLinkTrAlloc(nodeID, iLinkGetNodeMaxSpeed(nodeID));
-
-            if (SBP2Devices[targetDeviceID].trContext >= 0) {
-                M_PRINTF("Connected device as node 0x%08x.\n", SBP2Devices[targetDeviceID].nodeID);
-                M_PRINTF("Generation number: %d.\n", iLinkGetGenerationNumber());
-
-                SBP2Devices[targetDeviceID].speed = iLinkGetNodeTrSpeed(SBP2Devices[targetDeviceID].trContext);
-                M_PRINTF("Current speed: %d.\n", SBP2Devices[targetDeviceID].speed);
-
-                SBP2Devices[targetDeviceID].max_payload = PayloadSizeLookupTable[SBP2Devices[targetDeviceID].speed];
-
-                if (initConfigureSBP2Device(&SBP2Devices[targetDeviceID]) >= 0) {
-                    SBP2Devices[targetDeviceID].IsConnected = 1;
-                    targetDeviceID++;
-                }
-            } else {
-                M_DEBUG("Error allocating a transaction.\n");
+            speed = iLinkGetNodeTrSpeed(dev->trContext);
+            if (speed < 0 || speed > 2) {
+                iLinkTrFree(dev->trContext);
+                dev->trContext = -1;
+                SignalSema(sbp2_io_sema);
+                continue;
             }
+            dev->speed = speed;
+            dev->max_payload = PayloadSizeLookupTable[speed];
+            dev->configuring = 1;
+            SignalSema(sbp2_io_sema);
+
+            /* Warm-up submits normal SCSI commands, which acquire the mutex. */
+            int result = initConfigureSBP2Device(dev);
+            WaitSema(sbp2_io_sema);
+            dev->configuring = 0;
+            dev->IsConnected = result >= 0 && dev->generation == iLinkGetGenerationNumber();
+            if (!dev->IsConnected) {
+                iLinkTrFree(dev->trContext);
+                dev->trContext = -1;
+            }
+            SignalSema(sbp2_io_sema);
+            if (!dev->IsConnected)
+                scsi_disconnect(&dev->scsi);
         }
-
-        for (; targetDeviceID < MAX_DEVICES; targetDeviceID++)
-            SBP2Devices[targetDeviceID].IsConnected = 0; /* Mark the unused device slots as being unused. */
     }
 }
 
-static void ieee1394_ResetFetchAgent(struct SBP2Device *dev)
+static int ieee1394_ResetFetchAgent(struct SBP2Device *dev)
 {
-    unsigned long int dummy;
-    int result;
-
-    /* Reset the Fetch Agent. */
-    if ((result = iLinkTrWrite(dev->trContext, dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x04, &dummy, 4)) < 0) {
-        M_DEBUG("Error writing to the Fetch Agent's AGENT_RESET register @ 0x%08lx %08lx. Code: %d.\n", dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x04, result);
-    }
+    u32 dummy = 0;
+    return iLinkTrWrite(dev->trContext, dev->CommandBlockAgent_high,
+                        dev->CommandBlockAgent_low + 0x04, &dummy, 4);
 }
 
-static int ieee1394_GetFetchAgentState(struct SBP2Device *dev)
-{
-    unsigned long int FetchAgentState;
-    int result;
 
-    if ((result = iLinkTrRead(dev->trContext, dev->CommandBlockAgent_high, dev->CommandBlockAgent_low, &FetchAgentState, 4)) < 0) {
-        M_DEBUG("Error reading the Fetch Agent's AGENT_STATE register @ 0x%08lx %08lx. Code: %d.\n", dev->CommandBlockAgent_high, dev->CommandBlockAgent_low, result);
-        return -1;
-    } else {
-        FetchAgentState = BSWAP32(FetchAgentState);
-        M_DEBUG("Fetch Agent state: %lu.\n", FetchAgentState);
-        return FetchAgentState;
-    }
-}
 
 static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev)
 {
-    int result, retries;
-    void *dummy_ORB;
-    struct sbp2_pointer address;
+    int result = -1;
+    WaitSema(sbp2_io_sema);
+    if (dev->generation != iLinkGetGenerationNumber() || !sbp2CommandAvailable() ||
+        dev->ORB_size < sizeof(struct management_ORB) / 4)
+        goto out;
+    if (ieee1394_ResetFetchAgent(dev) < 0)
+        goto out;
+    dev->fetchAgentNeedsReset = 0;
 
-    M_DEBUG("Initializing fetch agent...");
-
-    dummy_ORB = malloc(dev->ORB_size * 4);
-    memset(dummy_ORB, 0, dev->ORB_size * 4);
-
-    ieee1394_ResetFetchAgent(dev);
-
-    // LOGIN left its completion in this shared FIFO. Clear it before publishing the dummy ORB:
-    // otherwise Sync can accept LOGIN's status and free the ORB before the target has fetched it.
-    // Do not clear after iLinkTrWrite: the dummy's real completion may arrive inside that call.
-    memset((void *)&statusFIFO, 0, sizeof(statusFIFO));
-
-    /* Write the address of the dummy ORB to the fetch agent's ORB_POINTER register. */
-    address.low = (u32)dummy_ORB;
-    address.NodeID = dev->InitiatorNodeID;
-    address.high = 0;
-
-    ((struct sbp2_ORB_pointer *)dummy_ORB)->reserved = NULL_POINTER;
-    ((struct sbp2_ORB_pointer *)dummy_ORB)->high = ((struct sbp2_ORB_pointer *)dummy_ORB)->low = 0;
-    ((struct management_ORB *)dummy_ORB)->flags = (u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(3));
-
-    retries = 0;
-    while ((result = iLinkTrWrite(dev->trContext, dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x08, &address, 8)) < 0) {
-        M_DEBUG("Error writing to the Fetch Agent's ORB_POINTER register @ 0x%08lx %08lx. Code: %d.\n", dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x08, result);
-        ieee1394_ResetFetchAgent(dev);
-
-        retries++;
-        if (retries > 3)
-            return (-1);
-    }
-
-    result = ieee1394_Sync();
-    ieee1394_GetFetchAgentState(dev);
-
-    free(dummy_ORB);
-
-    M_DEBUG("done!\n");
-
-    return result < 0 ? result : 1;
+    // No command data is transferred for a dummy ORB. Use the existing
+    // staging allocation rather than reserving a worst-case 1020-byte dummy.
+    command.orb = writeBuffer;
+    memset(command.orb, 0, dev->ORB_size * 4);
+    ((struct sbp2_ORB_pointer *)command.orb)->reserved = NULL_POINTER;
+    ((struct management_ORB *)command.orb)->flags = ORB_NOTIFY | ORB_REQUEST_FORMAT(3);
+    result = sbp2PublishCommand(dev, SBP2_COMMAND_BUDGET_US);
+out:
+    SignalSema(sbp2_io_sema);
+    return result;
 }
 
 static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
 {
-    int result;
-    struct sbp2_pointer address;
+    int result = -1;
+    u32 budget;
+    struct management_ORB *orb = &dev->managementORB;
+    struct sbp2_login_response *response = &dev->loginResponse;
 
-    struct sbp2_login_response login_result;
-    struct management_ORB new_management_ORB;
-
-    memset((void *)&statusFIFO, 0, sizeof(statusFIFO));
-    memset(&login_result, 0, sizeof(struct sbp2_login_response));
-    memset(&new_management_ORB, 0, sizeof(struct management_ORB));
-
-    new_management_ORB.status_FIFO.low = (u32)&statusFIFO;
-    new_management_ORB.flags = (u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(0) | MANAGEMENT_ORB_FUNCTION(mode));
-
-    switch (mode) {
-        case SBP2_LOGIN_REQUEST: /* Login. */
-            /* The reconnect timeout is now set to 0, since the mechanism that determines whether the initiator was already logged into the target or not was not accurate. */
-            new_management_ORB.flags |= (u32)(MANAGEMENT_ORB_RECONNECT(0) | MANAGEMENT_ORB_EXCLUSIVE(1) | MANAGEMENT_ORB_LUN(dev->LUN));
-
-            new_management_ORB.login.response.low = (u32)&login_result;
-            new_management_ORB.length = (MANAGEMENT_ORB_RESPONSE_LENGTH(sizeof(struct sbp2_login_response)) | MANAGEMENT_ORB_PASSWORD_LENGTH(0));
-            break;
-#if 0
-        case SBP2_RECONNECT_REQUEST:                                                                               /* Reconnect. */
-            new_management_ORB.flags |= (u32)(MANAGEMENT_ORB_RECONNECT(4) | MANAGEMENT_ORB_LOGINID(dev->loginID)); /* loginID was stored as a big endian number, so it has to be converted into little endian first. :( */
-            break;
-#endif
-        default:
-            M_DEBUG("Warning! Unsupported management ORB type!\n");
+    WaitSema(sbp2_io_sema);
+    if (mode != SBP2_LOGIN_REQUEST || dev->generation != iLinkGetGenerationNumber())
+        goto out;
+    if (dev->managementPending) {
+        if (!sbp2StatusReady(dev, orb))
+            goto out;
+    } else {
+        memset((void *)&dev->statusFIFO, 0, sizeof(dev->statusFIFO));
+        memset(response, 0, sizeof(*response));
+        memset(orb, 0, sizeof(*orb));
+        orb->status_FIFO.low = (u32)&dev->statusFIFO;
+        orb->flags = ORB_NOTIFY | MANAGEMENT_ORB_FUNCTION(mode) |
+                     MANAGEMENT_ORB_RECONNECT(0) | MANAGEMENT_ORB_EXCLUSIVE(1) | MANAGEMENT_ORB_LUN(dev->LUN);
+        orb->login.response.low = (u32)response;
+        orb->length = MANAGEMENT_ORB_RESPONSE_LENGTH(sizeof(*response));
+        dev->managementPointer.NodeID = dev->InitiatorNodeID;
+        dev->managementPointer.high = 0;
+        dev->managementPointer.low = (u32)orb;
+        dev->managementPending = 1;
+        iLinkTrWrite(dev->trContext, dev->ManagementAgent_high, dev->ManagementAgent_low,
+                     &dev->managementPointer, 8);
     }
 
-    address.NodeID = dev->InitiatorNodeID;
-    address.high = 0;
-    address.low = (u32)&new_management_ORB;
-
-    M_DEBUG("Management ORB: %p. size=%d.\n", &new_management_ORB, sizeof(struct management_ORB));
-    M_DEBUG("Address pointer: %p\n", &address);
-
-    if ((result = iLinkTrWrite(dev->trContext, dev->ManagementAgent_high, dev->ManagementAgent_low, &address, 8)) < 0) { /* Write the Login ORB address to the target's Management Agent CSR. */
-        M_DEBUG("Error writing to the Management Agent CSR @ 0x%08lx %08lx. Code: %d.\n", dev->ManagementAgent_high, dev->ManagementAgent_low, result);
-        return (result);
+    budget = dev->mgt_ORB_timeout * 500000u;
+    if (budget == 0)
+        budget = 500000;
+    if (budget > SBP2_LOGIN_BUDGET_US)
+        budget = SBP2_LOGIN_BUDGET_US;
+    result = sbp2WaitStatus(dev, orb, budget);
+    if (sbp2StatusReady(dev, orb))
+        dev->managementPending = 0;
+    if (result == 0) {
+        dev->CommandBlockAgent_high = response->command_block_agent.high;
+        dev->CommandBlockAgent_low = response->command_block_agent.low;
+        dev->loginID = response->login_ID;
+        if (dev->CommandBlockAgent_low < 0xf0010000 ||
+            (dev->CommandBlockAgent_high & 0xffff) != 0xffff)
+            result = -1;
     }
-
-    M_DEBUG("Waiting for ILINK...\n");
-
-    result = ieee1394_Sync_withTimeout(dev->mgt_ORB_timeout);
-
-    M_DEBUG("statusFIFO= %p; [0]=%u.\n", &statusFIFO, statusFIFO.buffer[0]);
-    if (result >= 0) {
-        switch (mode) {
-            case SBP2_LOGIN_REQUEST: /* Login. */
-                M_DEBUG("Done. command_block_agent= 0x%08x %08lx.\n", login_result.command_block_agent.high, login_result.command_block_agent.low);
-
-                /* Store the address to the target's command block agent. */
-
-                dev->CommandBlockAgent_high = login_result.command_block_agent.high;
-                dev->CommandBlockAgent_low = login_result.command_block_agent.low;
-
-                dev->loginID = login_result.login_ID; /* Store the login ID. */
-
-                M_DEBUG("Login response size: %u.", login_result.length);
-                M_DEBUG("Signed into SBP-2 device node 0x%08x. Login ID: %u\n", dev->nodeID, dev->loginID);
-                break;
-#if 0
-            case SBP2_RECONNECT_REQUEST: /* Reconnect. */
-                                         /* Just return the result from ieee1394_Sync(). */
-                break;
-#endif
-            default:
-                M_DEBUG("Warning! Unsupported management ORB type!\n");
-        }
-
-        /* Validate the fetch agent's CSR address. */
-        if ((dev->CommandBlockAgent_low < 0xF0010000) || ((dev->CommandBlockAgent_high & 0xFFFF) != 0x0000FFFF))
-            result = (-1);
-    }
-
+out:
+    SignalSema(sbp2_io_sema);
     return result;
 }
 
-int ieee1394_SendCommandBlockORB(struct SBP2Device *dev, struct CommandDescriptorBlock *firstCDB)
-{
-    int result, retries;
-    struct sbp2_pointer address;
 
-    memset((void *)&statusFIFO, 0, sizeof(statusFIFO));
-
-    address.low = (u32)firstCDB;
-    address.NodeID = dev->InitiatorNodeID;
-    address.high = 0;
-
-    retries = 0;
-
-    /* Write the pointer to the first ORB in the fetch agent's NEXT_ORB register. */
-    while ((result = iLinkTrWrite(dev->trContext, dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x08, &address, 8)) < 0) {
-        M_DEBUG("Error writing to the Fetch Agent's ORB_POINTER register @ 0x%08lx %08lx. Code: %d.\n", dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x08, result);
-
-        DelayThread(200000);
-        ieee1394_ResetFetchAgent(dev);
-
-        retries++;
-        if (retries > 3)
-            return (-1);
-    }
-
-#if 0
-    /* Write a value to the fetch agent's DOORBELL register. */
-    result = 1;
-    if ((result = iLinkTrWrite(dev->trContext, dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x10, &result, 4)) < 0) {
-        M_DEBUG("Error writing to the Fetch Agent's DOORBELL register @ 0x%08lx %08lx. Code: %d.\n", dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x10, result);
-        return -2;
-    }
-#endif
-
-    return 1;
-}
 
 static int sbp2_get_max_lun(struct scsi_interface *scsi)
 {
@@ -558,129 +515,63 @@ static int sbp2_get_max_lun(struct scsi_interface *scsi)
 static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd, unsigned int cmd_len, unsigned char *data, unsigned int data_len, unsigned int data_wr)
 {
     struct SBP2Device *dev = (struct SBP2Device *)scsi->priv;
-    int i;
-    int ret;
-    struct CommandDescriptorBlock cdb;
-    // Refuse an unrepresentable request before touching the fixed write buffer.
-    if (data_len > XFER_BLOCK_SIZE || cmd_len > sizeof(cdb.CDBs))
+    struct CommandDescriptorBlock *cdb = &command.cdb;
+    unsigned int i;
+    int result = -1;
+    u32 *words;
+
+    if (data_len > XFER_BLOCK_SIZE || cmd_len == 0 || cmd_len > sizeof(cdb->CDBs) ||
+        (cmd_len & 3) != 0 || cmd == NULL || (data_len != 0 && data == NULL))
         return -1;
-    memset(&cdb, 0, sizeof(cdb));
 
-    M_DEBUG("sbp2_queue_cmd(0x%02x)\n", cmd[0]);
+    WaitSema(sbp2_io_sema);
+    if ((!dev->IsConnected && !dev->configuring) || dev->managementPending ||
+        dev->generation != iLinkGetGenerationNumber() || !sbp2CommandAvailable())
+        goto out;
 
-    cdb.misc = ORB_NOTIFY | ORB_REQUEST_FORMAT(0) | CDB_MAX_PAYLOAD(dev->max_payload) | CDB_SPEED(dev->speed);
-    cdb.misc |= data_wr ? CDB_DIRECTION(READ_TRANSACTION) : CDB_DIRECTION(WRITE_TRANSACTION); // flipped
-    if (data_len > 0)
-        cdb.misc |= CDB_DATA_SIZE(data_len);
-
-    cdb.DataDescriptor.low = data_wr ? (u32)writeBuffer : (u32)data;
-    cdb.DataDescriptor.high = 0;
-    cdb.DataDescriptor.NodeID = dev->InitiatorNodeID;
-
-    cdb.NextOrb.high = 0;
-    cdb.NextOrb.low = 0;
-    cdb.NextOrb.reserved = NULL_POINTER;
-
-    // Copy and BSWAP32 the SCSI command
-    for (i = 0; (unsigned int)i < cmd_len / 4; i++)
-        ((unsigned int *)cdb.CDBs)[i] = BSWAP32(((unsigned int *)cmd)[i]);
-
-    if ((data_len > 0) && (data_wr == 1)) {
-        // BSWAP32 all data we write
-        for (i = 0; (unsigned int)i < data_len / 4; i++)
-            ((unsigned int *)writeBuffer)[i] = BSWAP32(((unsigned int *)data)[i]);
+    // A completed status with DEAD set stops the fetch agent. Retrying a SCSI
+    // command without resetting it would wait for an ORB it will never fetch.
+    if (dev->fetchAgentNeedsReset) {
+        if (ieee1394_ResetFetchAgent(dev) < 0)
+            goto out;
+        dev->fetchAgentNeedsReset = 0;
     }
+    memset(cdb, 0, sizeof(*cdb));
+    cdb->misc = ORB_NOTIFY | CDB_MAX_PAYLOAD(dev->max_payload) | CDB_SPEED(dev->speed) |
+                CDB_DATA_SIZE(data_len);
+    // Disk reads make the target WRITE to IOP RAM; disk writes make it READ.
+    cdb->misc |= data_wr ? CDB_DIRECTION(READ_TRANSACTION) : CDB_DIRECTION(WRITE_TRANSACTION);
+    cdb->DataDescriptor.low = (u32)writeBuffer;
+    cdb->DataDescriptor.NodeID = dev->InitiatorNodeID;
+    cdb->NextOrb.reserved = NULL_POINTER;
+    /* The resident ORB union and sysmem transfer allocation are quadlet
+     * aligned. Copy possibly unaligned caller bytes once, then swap words
+     * directly; IOP builds use -fno-builtin, so memcpy per word is expensive. */
+    memcpy(cdb->CDBs, cmd, cmd_len);
+    words = (u32 *)cdb->CDBs;
+    for (i = 0; i < cmd_len / 4; i++)
+        words[i] = BSWAP32(words[i]);
 
-    // A transport error can follow an accepted pointer write. Keep this stack ORB and
-    // its data alive until completion; returning requires proven target quiescence.
-    ieee1394_SendCommandBlockORB(dev, &cdb);
-    ret = ieee1394_Sync();
-
-    if (ret != 0) {
-        M_DEBUG("sbp2_queue_cmd error %d\n", ret);
-    } else if ((data_len > 0) && (data_wr == 0)) {
-        // BSWAP32 all data we read
-        for (i = 0; (unsigned int)i < data_len / 4; i++)
-            ((unsigned int *)data)[i] = BSWAP32(((unsigned int *)data)[i]);
+    words = (u32 *)writeBuffer;
+    if (data_len & 3)
+        words[data_len / 4] = 0; /* padding only; do not clear a whole read buffer */
+    if (data_wr && data_len > 0) {
+        memcpy(writeBuffer, data, data_len);
+        for (i = 0; i < (data_len + 3) / 4; i++)
+            words[i] = BSWAP32(words[i]);
     }
-
-    return ret;
-}
-
-/* static unsigned int alarm_cb(void *arg)
-{
-    iSetEventFlag(sbp2_event_flag, ERROR_TIME_OUT);
-    return 0;
-} */
-
-static int ProcessStatus(void)
-{
-    u32 statusFIFO_result;
-    unsigned char status, resp, dead, sense, len;
-    int result;
-
-    statusFIFO_result = statusFIFO.status.status;
-    status = RESP_SBP_STATUS(statusFIFO_result);
-    resp = RESP_RESP(statusFIFO_result);
-    dead = RESP_DEAD(statusFIFO_result);
-    len = RESP_LEN(statusFIFO_result);
-    sense = ((statusFIFO.status.data[0]) >> 16) & 0xF;
-
-    M_DEBUG("result: 0x%08lx; status: 0x%02x; RESP: 0x%02x; Dead: %u; len: 0x%02x; sense: 0x%02x.\n", statusFIFO_result, status, resp, dead, len, sense);
-    if (sense == 0)
-        sense = 1; /* Workaround for faulty firmwares: The sense code is 0 or was not sent when it's supposed to be sent. */
-
-    result = (((status == 0) || (status == 0x0B)) && (resp == 0) && (!dead) && (len == 1)) ? 0 : -sense;
-
-    if (result < 0) {
-        M_PRINTF("result: 0x%08lx; status: 0x%02x; RESP: 0x%02x; Dead: %u; len: 0x%02x; sense: 0x%02x.\n", statusFIFO_result, status, resp, dead, len, sense);
+    command.orb = cdb;
+    result = sbp2PublishCommand(dev, scsi->timeout_us ? scsi->timeout_us : SBP2_COMMAND_BUDGET_US);
+    if (result == 0 && !data_wr && data_len > 0) {
+        for (i = 0; i < (data_len + 3) / 4; i++)
+            words[i] = BSWAP32(words[i]);
+        memcpy(data, writeBuffer, data_len);
     }
-
+out:
+    SignalSema(sbp2_io_sema);
     return result;
 }
 
-/* This is declared as inline as there is only one call to it. */
-static inline int ieee1394_Sync_withTimeout(u32 n500mSecUnits)
-{
-    /* iop_sys_clock_t timeout_clk;
-    u32 ef_result;
-
-    USec2SysClock(n500mSecUnits * 500000, &timeout_clk);
-
-    SetAlarm(&timeout_clk, &alarm_cb, NULL);
-    WaitEventFlag(sbp2_event_flag, WRITE_REQ_INCOMING | ERROR_TIME_OUT, WEF_OR | WEF_CLEAR, &ef_result);
-
-    if (ef_result & ERROR_TIME_OUT) {
-        M_DEBUG("-=Time out=-\n");
-        return (-1);
-    } else
-        CancelAlarm(&alarm_cb, NULL); */
-
-    unsigned int i = 0;
-
-    while (RESP_SRC(statusFIFO.status.status) == 0) {
-        if (i > n500mSecUnits * 10000) {
-            M_DEBUG("-=Time out=-\n");
-            return (-1);
-        }
-
-        DelayThread(50);
-        i++;
-    };
-
-    return (ProcessStatus());
-}
-
-int ieee1394_Sync(void)
-{
-    // WaitEventFlag(sbp2_event_flag, WRITE_REQ_INCOMING, WEF_AND | WEF_CLEAR, NULL);
-
-    while (RESP_SRC(statusFIFO.status.status) == 0) {
-        DelayThread(50);
-    };
-
-    return (ProcessStatus());
-}
 
 void DeinitIEEE1394(void)
 {

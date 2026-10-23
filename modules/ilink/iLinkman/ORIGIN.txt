@@ -14,4 +14,16 @@ RiptOPL recovery changes, also applied to POPStarter's embedded manager:
 test_ilink_manager_recovery.py compiles the real functions with fault injection
 and checks both copies with TTY on/off. The original source fails those cases.
 These source/host findings do not establish the reporter's hardware cause.
-No timeout was added to an outstanding SBP-2 ORB and no DMA buffer is freed early.
+October 22 follow-up:
+- Latch request IRQ errors, wake on split timeout/bus reset, keep response-TX
+  events separate, and retire outbound DMA before returning an error.
+- Serialize public client requests while preserving receive-thread response TX.
+- Match response node/label/type/generation/length, retire caller pointers,
+  and wait for copied block-read data before returning.
+- Check whole read/write packet spans, drain refusals and preserve partial words.
+- Correct EUI64 import 25, CROM deletion/counts, relative leaf offsets and
+  allocation-failure size publication. test_ilink_manager_irq.py and
+  test_ilink_manager_safety.py exercise the real functions from both copies.
+SBP-2 resident request storage and bounded completion polling are implemented in
+../IEEE1394_bd; an uncertain pending request is retained, never freed on timeout.
+Physical-console acceptance is still required.
