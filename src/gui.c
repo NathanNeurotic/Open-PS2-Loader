@@ -1205,7 +1205,6 @@ reshow_ui:
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
-        int previousFontSize = gFontSize;
         diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
 
         if (previousTheme != themeID && isBgmPlaying())
@@ -1214,8 +1213,6 @@ reshow_ui:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, langID, 1);
-        if (gFontSize != previousFontSize)
-            fntUpdateAspectRatio();
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
@@ -3079,7 +3076,7 @@ static int guiSettingsDisplayUpdater(int modified)
     diaGetInt(guiSettingsActiveDialog, UICFG_FONT_SIZE, &temp);
     if (temp != gFontSize) {
         gFontSize = temp;
-        fntUpdateAspectRatio();
+        guiUpdateScreenScale();
     }
     return 0;
 }
@@ -4786,6 +4783,7 @@ void guiUpdateScrollSpeed(void)
 void guiUpdateScreenScale(void)
 {
     fntUpdateAspectRatio();
+    thmRefreshFontSize();
 }
 
 // Greedily word-wrap `text` to innerW, writing '\n'-separated lines into out. Returns the line count.

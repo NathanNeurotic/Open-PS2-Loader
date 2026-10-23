@@ -1954,4 +1954,4 @@ gui_strings:
 - label: FONT_SIZE
   string: "Font Size"
 - label: HINT_FONT_SIZE
-  string: "Menu text size. Large is easier to read on a CRT; takes effect immediately and applies to theme and language fonts as well."
+  string: "Size of standard menu text. Theme fonts with other point sizes keep their original size."

@@ -533,20 +533,14 @@ static fnt_glyph_cache_entry_t *fntCacheGlyph(font_t *font, uint32_t gid)
 
 int fntScaleFontSize(int baseSize)
 {
-    int scaled;
-
-    if (gFontSize == FONT_SIZE_SMALL)
-        scaled = baseSize * 85 / 100;
-    else if (gFontSize == FONT_SIZE_LARGE)
-        scaled = baseSize * 125 / 100;
-    else
-        return baseSize;
-
-    if (scaled < 10)
-        scaled = 10;
-    if (scaled > 32)
-        scaled = 32;
-    return scaled;
+    // Themes can deliberately use larger titles or smaller labels. Preserve those sizes.
+    if (baseSize == FNTSYS_DEFAULT_SIZE) {
+        if (gFontSize == FONT_SIZE_SMALL)
+            return 15;
+        if (gFontSize == FONT_SIZE_LARGE)
+            return 19;
+    }
+    return baseSize;
 }
 
 void fntUpdateAspectRatio()

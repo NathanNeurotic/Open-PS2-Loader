@@ -36,6 +36,7 @@
 #include <debug.h>
 #include <ps2smb.h>
 #include "config.h"
+#include "fntsys.h"
 
 #include "include/hddsupport.h"
 #include "include/supportbase.h"
@@ -457,7 +458,7 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit);
 
 void setDefaultColors(void);
 
-#define MENU_ITEM_HEIGHT 19
+#define MENU_ITEM_HEIGHT (fntScaleFontSize(FNTSYS_DEFAULT_SIZE) + 2)
 
 #include "include/menusys.h"
 

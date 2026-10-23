@@ -8,9 +8,7 @@
 
 #define FNTSYS_DEFAULT_SIZE 17
 
-// User menu font size (Settings -> Interface -> Font Size, issue #757): a discrete
-// choice, not a free scale. Only these factors are ever applied, so the glyph
-// atlas load stays bounded and testable on CRT hardware.
+// Font size for text using FNTSYS_DEFAULT_SIZE, including translated/fallback fonts.
 enum {
     FONT_SIZE_SMALL = 0,
     FONT_SIZE_DEFAULT,
@@ -18,9 +16,7 @@ enum {
     FONT_SIZE_COUNT
 };
 
-/** Effective raster size for a font loaded at baseSize under the user's
- * FONT_SIZE_* choice. Default is the identity; Small/Large scale by
- * 85%/125% and clamp the result to [10, 32]. */
+/** Menu fonts use 15/17/19 px. Other theme-requested point sizes stay unchanged. */
 int fntScaleFontSize(int baseSize);
 
 /** Initializes the font subsystem */
