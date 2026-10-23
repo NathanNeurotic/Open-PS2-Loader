@@ -69,7 +69,20 @@ static int showPartPopup = 0;
 static int showThmPopup;
 static int showLngPopup;
 
-// The eight Settings peer screens reuse the established dialog definitions. Composite screens are
+enum gui_settings_page {
+    SETTINGS_SOURCES = 0,
+    SETTINGS_GENERAL,
+    SETTINGS_LANGUAGE,
+    SETTINGS_NETWORK,
+    SETTINGS_INTERFACE,
+    SETTINGS_LAUNCH,
+    SETTINGS_POPSTARTER,
+    SETTINGS_CONTROLLERS,
+    SETTINGS_AUDIO,
+    SETTINGS_PAGE_COUNT
+};
+
+// The Settings peer screens reuse the established dialog definitions. Composite screens are
 // assembled into scratch buffers at entry so the existing field ids, visibility rules and temporary
 // editor buttons remain owned by their original feature code. Values still live in the existing
 // globals/config sets; these buffers are only views, never a second configuration store.
@@ -617,11 +630,9 @@ int guiExitPathHandler(char *text, int maxLen)
 }
 
 // Legacy standalone General editor. The Settings peer shell is the normal route, but this stays
-// functional for callers outside it and shares the same Language/GSM backends.
+// functional for callers outside it and shares the same GSM backend.
 void guiShowConfig()
 {
-    const char **langNamesSnap = NULL;
-    int langID;
     int ret;
 
     // Exit To auto-resolves a built-in default when blank, so show a dim "Default" placeholder
@@ -638,12 +649,6 @@ void guiShowConfig()
     diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, gRememberLastPlayed);
     diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, gRememberLastPlayed);
 
-    guiLock();
-    langNamesSnap = guiCopyNameList((const char **)lngGetGuiList());
-    guiUnlock();
-    diaSetEnum(diaConfig, UICFG_LANG, langNamesSnap != NULL ? langNamesSnap : (const char **)lngGetGuiList());
-    diaSetInt(diaConfig, UICFG_LANG, lngGetGuiValue());
-
 reshow_config:
     ret = diaExecuteDialog(diaConfig, -1, 1, &guiUpdater);
     if (ret == GENERAL_GSM_DEFAULTS_BUTTON) {
@@ -651,7 +656,6 @@ reshow_config:
         goto reshow_config;
     }
     if (ret) {
-        diaGetInt(diaConfig, UICFG_LANG, &langID);
         snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
         diaGetString(diaConfig, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
@@ -660,11 +664,9 @@ reshow_config:
 
         DisableCron = 1; // Disable Auto Start Last Played counter (we don't want to call it right after enable it on GUI)
 
-        applyConfig(-1, langID, 0);
+        applyConfig(-1, -1, 0);
         menuReinitMainMenu();
     }
-
-    guiFreeNameList(langNamesSnap);
 }
 
 // Game Sources page: device start modes, the default device, and the block-device enables
@@ -1128,12 +1130,11 @@ static void guiRefreshAppsView(void)
 
 void guiShowUIConfig(void)
 {
-    int themeID = -1, langID = -1;
+    int themeID = -1;
     showCfgPopup = 0;
     guiResetNotifications();
 
     const char **themeNamesSnap = NULL;
-    const char **langNamesSnap = NULL;
 
     int previousTheme, previousVMode;
     const char *vmodeNames[] = {_l(_STR_AUTO), "PAL 640x512i @50Hz 24bit", "NTSC 640x448i @60Hz 24bit",
@@ -1147,23 +1148,13 @@ void guiShowUIConfig(void)
 reshow_ui:
     previousTheme = thmGetGuiValue();
     previousVMode = gVMode;
-    // Snapshot the theme/language name lists into dialog-owned copies: diaSetEnum stores raw
-    // pointers, and BOTH the outer arrays (thmRebuildGuiNames/lngRebuildLangNames free+realloc)
-    // AND the theme name strings (thmReinit frees them on device removal) are rebuilt on the IO
-    // worker when a deferred device update lands. Dialog frames render OUTSIDE guiStartFrame's
-    // lock, so a device event draining mid-dialog dereferenced freed memory. Re-snapshot on every
-    // reshow pass (applyConfig below can legitimately change the lists); on OOM fall back to
-    // the live list -- the pre-existing narrow race, not a new failure mode.
+    // Keep a dialog-owned theme-name snapshot across deferred device discovery.
     guiFreeNameList(themeNamesSnap);
-    guiFreeNameList(langNamesSnap);
     guiLock(); // must cover the getter FETCH too, not just the copy (Gemini review of #165)
     themeNamesSnap = guiCopyNameList((const char **)thmGetGuiList());
-    langNamesSnap = guiCopyNameList((const char **)lngGetGuiList());
     guiUnlock();
     diaSetEnum(diaUIConfig, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
-    diaSetEnum(diaUIConfig, UICFG_LANG, langNamesSnap != NULL ? langNamesSnap : (const char **)lngGetGuiList());
     diaSetInt(diaUIConfig, UICFG_THEME, thmGetGuiValue());
-    diaSetInt(diaUIConfig, UICFG_LANG, lngGetGuiValue());
     diaSetInt(diaUIConfig, UICFG_AUTOSORT, gAutosort);
     diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
@@ -1207,7 +1198,6 @@ reshow_ui:
     padRumbleFlush();
 
     if (ret) {
-        diaGetInt(diaUIConfig, UICFG_LANG, &langID);
         diaGetInt(diaUIConfig, UICFG_THEME, &themeID);
         diaGetInt(diaUIConfig, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
@@ -1226,7 +1216,7 @@ reshow_ui:
 
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
-        applyConfig(themeID, langID, 1);
+        applyConfig(themeID, -1, 1);
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
@@ -1249,7 +1239,6 @@ reshow_ui:
     }
 
     guiFreeNameList(themeNamesSnap);
-    guiFreeNameList(langNamesSnap);
 }
 
 static int httpTestBusy;
@@ -2890,7 +2879,7 @@ static void guiSettingsBeginDialog(struct UIItem *ui)
     if (!guiSettingsShellActive)
         return;
 
-    snprintf(guiSettingsPageIndicator, sizeof(guiSettingsPageIndicator), "%d/8", guiSettingsCurrentPage + 1);
+    snprintf(guiSettingsPageIndicator, sizeof(guiSettingsPageIndicator), "%d/%d", guiSettingsCurrentPage + 1, SETTINGS_PAGE_COUNT);
     diaSetSettingsShell(ui, guiSettingsPageIndicator);
     diaSetSettingsContext(1);
 }
@@ -2917,21 +2906,10 @@ static int guiSettingsShowGeneral(void)
 {
     const struct UIItem *parts[] = {diaConfig, diaSecurityConfig, diaAdvancedConfig};
     struct UIItem *ui = guiSettingsCompose(parts, 3, NULL, 0, -1, 1);
-    const char **langNamesSnap = NULL;
-    int langID;
     int result;
 
     if (ui == NULL)
         return 0;
-
-    // The General language row is intentionally the same enum/value as Interface, not a second
-    // setting. Snapshot ownership matches Interface so deferred language discovery cannot free a
-    // list while this dialog renders it.
-    guiLock();
-    langNamesSnap = guiCopyNameList((const char **)lngGetGuiList());
-    guiUnlock();
-    diaSetEnum(ui, UICFG_LANG, langNamesSnap != NULL ? langNamesSnap : (const char **)lngGetGuiList());
-    diaSetInt(ui, UICFG_LANG, lngGetGuiValue());
 
     guiExitPathBegin(ui);
     diaSetShowDefaultWhenEmpty(ui, CFG_CUSTOMCFGPATH, 1);
@@ -2956,7 +2934,6 @@ reshow_general:
     }
 
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, exitPathEdit, gExitPath)) {
-        diaGetInt(ui, UICFG_LANG, &langID);
         snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
         diaGetString(ui, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
         diaGetInt(ui, CFG_LASTPLAYED, &gRememberLastPlayed);
@@ -2968,8 +2945,52 @@ reshow_general:
         guiSaveAdvancedSettings(ui);
 
         DisableCron = 1;
-        applyConfig(-1, langID, 0);
+        applyConfig(-1, -1, 0);
         menuReinitMainMenu();
+    }
+
+    guiSettingsEndDialog();
+    guiSettingsActiveDialog = NULL;
+    return guiSettingsPageResult(result);
+}
+
+
+static int guiSettingsShowLanguage(void)
+{
+    const struct UIItem *parts[] = {diaLanguageConfig};
+    struct UIItem *ui = guiSettingsCompose(parts, 1, NULL, 0, -1, 1);
+    const char **langNamesSnap;
+    int result, langID;
+
+    if (ui == NULL)
+        return DIA_RESULT_INDEX;
+
+    // Discovery can rebuild the live list while a dialog is open. Own the names until exit.
+    guiLock();
+    langNamesSnap = guiCopyNameList((const char **)lngGetGuiList());
+    guiUnlock();
+    if (langNamesSnap == NULL) {
+        guiSettingsActiveDialog = NULL;
+        return DIA_RESULT_INDEX;
+    }
+    diaSetEnum(ui, UICFG_LANG, langNamesSnap);
+    diaSetInt(ui, UICFG_LANG, lngGetGuiValue());
+    guiSettingsBeginDialog(ui);
+
+reshow_language:
+    result = diaExecuteDialog(ui, -1, 1, NULL);
+    if (result == LAUNCH_OSD_DEFAULTS_BUTTON) {
+        guiGameShowOSDLanguageConfig(1);
+        guiSettingsSavePending = 1;
+        goto reshow_language;
+    }
+
+    if (result != UIID_BTN_CANCEL && result != -1) {
+        diaGetInt(ui, UICFG_LANG, &langID);
+        if (langID != lngGetGuiValue()) {
+            applyConfig(-1, langID, 1);
+            menuReinitMainMenu();
+        }
     }
 
     guiFreeNameList(langNamesSnap);
@@ -2977,7 +2998,6 @@ reshow_general:
     guiSettingsActiveDialog = NULL;
     return guiSettingsPageResult(result);
 }
-
 
 static int guiSettingsSourcesUpdater(int modified)
 {
@@ -3119,8 +3139,7 @@ static int guiSettingsShowInterface(void)
     // composed Interface page supplies its one copy at the top of diaUIConfig.
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, 1, 1);
     const char **themeNamesSnap = NULL;
-    const char **langNamesSnap = NULL;
-    int themeID, langID, previousTheme, previousVMode, result;
+    int themeID, previousTheme, previousVMode, result;
     int gameViewChanged = 0;
     int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
@@ -3135,15 +3154,12 @@ static int guiSettingsShowInterface(void)
 
     guiLock();
     themeNamesSnap = guiCopyNameList((const char **)thmGetGuiList());
-    langNamesSnap = guiCopyNameList((const char **)lngGetGuiList());
     guiUnlock();
     diaSetEnum(ui, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
-    diaSetEnum(ui, UICFG_LANG, langNamesSnap != NULL ? langNamesSnap : (const char **)lngGetGuiList());
     guiSetGameViewPicker(ui);
     guiSetAppsViewPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
-    diaSetInt(ui, UICFG_LANG, lngGetGuiValue());
     diaSetInt(ui, UICFG_AUTOSORT, gAutosort);
     diaSetInt(ui, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
@@ -3191,7 +3207,6 @@ reshow_interface:
 
     padRumbleFlush();
     if (result != UIID_BTN_CANCEL && result != -1) {
-        diaGetInt(ui, UICFG_LANG, &langID);
         diaGetInt(ui, UICFG_THEME, &themeID);
         diaGetInt(ui, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
@@ -3220,7 +3235,7 @@ reshow_interface:
             bgmStop();
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
-        applyConfig(themeID, langID, 1);
+        applyConfig(themeID, -1, 1);
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
@@ -3239,7 +3254,6 @@ reshow_interface:
     }
 
     guiFreeNameList(themeNamesSnap);
-    guiFreeNameList(langNamesSnap);
     guiSettingsEndDialog();
     guiSettingsActiveDialog = NULL;
     return guiSettingsPageResult(result);
@@ -3285,10 +3299,6 @@ static int guiSettingsShowLaunch(void)
 
 reshow_launch:
     result = diaExecuteDialog(ui, -1, 1, &guiSettingsLaunchUpdater);
-    if (result == LAUNCH_OSD_DEFAULTS_BUTTON) {
-        guiGameShowOSDLanguageConfig(1);
-        goto reshow_launch;
-    }
     if (result == LAUNCH_GSM_DEFAULTS_BUTTON) {
         if (guiGameShowGSConfig(1))
             guiSettingsSavePending = 1;
@@ -3446,18 +3456,6 @@ reshow_popstarter:
     return guiSettingsPageResult(result);
 }
 
-enum gui_settings_page {
-    SETTINGS_SOURCES = 0,
-    SETTINGS_GENERAL,
-    SETTINGS_NETWORK,
-    SETTINGS_INTERFACE,
-    SETTINGS_LAUNCH,
-    SETTINGS_POPSTARTER,
-    SETTINGS_CONTROLLERS,
-    SETTINGS_AUDIO,
-    SETTINGS_PAGE_COUNT
-};
-
 enum gui_settings_prompt_result {
     SETTINGS_PROMPT_SAVE = 1,
     SETTINGS_PROMPT_EXIT,
@@ -3529,6 +3527,7 @@ static int guiSettingsShowIndex(int *page)
     const char *labels[SETTINGS_PAGE_COUNT + 1] = {
         _l(_STR_GAME_SOURCES),
         _l(_STR_GENERAL_SYSTEM),
+        _l(_STR_LANGUAGE),
         _l(_STR_MENU_NETWORK),
         _l(_STR_INTERFACE_SETTINGS),
         _l(_STR_GAME_LAUNCHING),
@@ -3633,6 +3632,9 @@ static void guiShowSettingsFromPage(int page, int showIndexFirst)
         switch (page) {
             case SETTINGS_GENERAL:
                 result = guiSettingsShowGeneral();
+                break;
+            case SETTINGS_LANGUAGE:
+                result = guiSettingsShowLanguage();
                 break;
             case SETTINGS_SOURCES:
                 result = guiSettingsShowSources();

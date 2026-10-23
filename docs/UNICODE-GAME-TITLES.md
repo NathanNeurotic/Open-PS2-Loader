@@ -24,7 +24,7 @@ The example is illustrative. Your installation may use another path, including a
 
 ### Distinct from interface translation fonts
 
-The `RIPTOPL-LANGS` ZIP contains translated `.lng` files and matching fonts such as `LNG/font_Japanese.ttf`. Those fonts support the **Japanese UI language** when that language is selected in **Settings → Interface → Language**. A fallback font in the settings home is different: it works while **English remains selected**, and also while a custom theme is active. You can copy a suitable, appropriately licensed font from a language pack into the settings home and rename it `font_CJK.ttf`; the copy does not replace your language pack.
+The `RIPTOPL-LANGS` ZIP contains translated `.lng` files and matching fonts such as `LNG/font_Japanese.ttf`. Those fonts support the **Japanese UI language** when that language is selected on the **Settings → Language** page. A fallback font in the settings home is different: it works while **English remains selected**, and also while a custom theme is active. You can copy a suitable, appropriately licensed font from a language pack into the settings home and rename it `font_CJK.ttf`; the copy does not replace your language pack.
 
 ### Show CFG Titles in Game Lists (optional)
 
