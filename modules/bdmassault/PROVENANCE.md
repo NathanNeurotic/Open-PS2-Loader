@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 22185 | 9470a41a4c2b6e977e25295a6948111873a631a4218ec5efef16c5196e819bc8 |
+| usbhdfsd.irx.ilink | 27081 | cba6f974fb39af5746e3305819d83635e3bedc7dc8c44a9055c3381575993334 |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
@@ -58,9 +58,14 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   size and are bounded by the ORB/write-buffer byte limit; capacity counts include the last LBA.
   The previous 22025-byte binary was sha256
   `aec8f3d6b15af7024bb62120488ed1b83526c4f852add6161185a1232017edc2`.
+  The follow-up lifetime pass matches SBP-2 and manager responses to their active requests,
+  retains target-visible storage after uncertain timeouts, unwinds manager resources when the
+  combined startup fails, and accepts completed extended SCSI GOOD status. The 22185-byte
+  binary from the first pass was sha256
+  `9470a41a4c2b6e977e25295a6948111873a631a4218ec5efef16c5196e819bc8`.
   The current binary was obtained from the `popstarter-ilink-driver` job in Actions run
-  `39849607563`, source head `00bc8e58fd1552680c80569f057551f2f6d94349` (PR merge checkout
-  `e54924bd5046f7d58ca6911381fd80bd078e2c5a`). This remains a candidate pending console acceptance.
+  `39880856104`, source head `c37295fe5caf27641dc044d3e43e18f2886e877c` (PR merge checkout
+  `7e61175ae3833a2a4cbe32ac45ca44b171c3aae7`). This remains a candidate pending console acceptance.
   **Rebuilt from source:** the bytes above are the output of `make` in that directory inside
   `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11` (the
   PS2DEVPINNED container), which also reproduces the 21609-byte build from its source exactly. CI

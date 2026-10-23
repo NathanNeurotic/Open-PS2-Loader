@@ -138,8 +138,10 @@ re-registers the selected device driver as bare `mass:` before it resolves that 
 
 > **October 22 code audit:** the standard Beta 4221 report still has POPSTARTER failing.
 > This source corrects the older driver's reversed SBP-2 data direction, three manager
-> recovery defects, transfer byte limits and sector counts. The rebuilt iLink
-> `usbhdfsd.irx.ilink` is **22,185 bytes** (the Beta 4221 copy was 22,025 bytes).
+> recovery defects, transfer byte limits and sector counts; a follow-up pass matches
+> completions to their requests, unwinds a failed combined startup, and accepts extended
+> SCSI GOOD status. The rebuilt iLink
+> `usbhdfsd.irx.ilink` is **27,081 bytes** (the Beta 4221 copy was 22,025 bytes).
 > Replace the matching loose pair on the actual POPS seek path as well as the kit;
 > the stale-pair check rejects the old size. See the [audit and console test gate](ILINK_CODE_AUDIT_2026-10-22.md).
 > These are source/host-tested corrections awaiting a console result.
