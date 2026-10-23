@@ -14,7 +14,7 @@ refs/heads/test/korium-audit-remediation) ;;
 *) exit 0 ;;
 esac
 
-# The pinned job does not unshallow, and a merge-base needs history on both sides.
+# Direct callers may use shallow clones; the release workflow already fetches full history.
 git fetch --quiet --prune --unshallow origin 2>/dev/null || true
 git fetch --quiet origin rebuild/main
 base=$(git merge-base HEAD FETCH_HEAD)

@@ -111,8 +111,10 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Mark workspace safe and fetch history
+      - name: Mark workspace safe
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Resolve release channel (rolling / rolling-korium)
@@ -189,7 +191,7 @@ jobs:
       version: ${{ steps.ver.outputs.version }}
     steps:
       # Dependencies BEFORE checkout: with no git in the container, actions/checkout falls
-      # back to an API tarball (no .git at all) -> `git fetch --unshallow` fails, the Makefile's
+      # back to an API tarball (no .git at all), so the Makefile's
       # `test -d .git` marks the build "-dirty", and the version collapses to an uninformative
       # "vX.Y.Z-Beta-N-dirty" (exactly what hardware reporters were pasting back at us).
       - name: Install host dependencies (Alpine only)
@@ -224,11 +226,12 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Mark workspace safe and fetch history
+      - name: Mark workspace safe
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow || true
       - name: Resolve release channel (rolling / rolling-korium)
         run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
 
@@ -362,11 +365,12 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Mark workspace safe and fetch history
+      - name: Mark workspace safe
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow || true
       - name: Resolve release channel (rolling / rolling-korium)
         run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
 
@@ -450,11 +454,12 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Mark workspace safe and fetch history
+      - name: Mark workspace safe
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow || true
       - name: Resolve release channel (rolling / rolling-korium)
         run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
 
