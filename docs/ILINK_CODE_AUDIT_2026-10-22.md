@@ -120,8 +120,9 @@ FifthFox's enclosure encountered.
     REQUEST SENSE, and status sense keys use byte 1 rather than shifting an
     8-bit byte by 16. Valid extended SCSI GOOD status is accepted; an extended
     block is not automatically an error. Its first status quadlet must arrive
-    before it can complete the command. A completed DEAD status marks the command agent for reset
-    before SCSI retries; otherwise the stopped agent would never fetch the retry.
+    before it can complete the command. A completed DEAD status marks the command
+    agent for reset before SCSI retries; otherwise the stopped agent would never
+    fetch the retry.
     Agent-reset data is initialized rather than sending stack garbage.
 
 13. **Packet start bounds did not protect the end of a transfer.** Read and write
@@ -177,8 +178,9 @@ candidate from the same PS2DEVPINNED container:
 These section totals include executable code and BSS; existing stacks and kernel
 semaphore bookkeeping are outside the measurement. The one-pass transfer
 simplification itself adds 48 bytes of code per block-driver build and no
-additional static state relative to `54517ca7`. It removes the separate full-buffer pass on normal
-aligned I/O. Physical throughput and interrupt latency remain console checks.
+additional static state relative to `54517ca7`. It removes the separate
+full-buffer pass on normal aligned I/O. Physical throughput and interrupt
+latency remain console checks.
 
 ## Remaining limits
 
@@ -226,13 +228,13 @@ proves a launch bug: the existing binding and argv checks cover those paths.
   required checks. All new fixtures run in the flavour workflow.
 - Local target compilation and pinned CI builds establish buildability and
   binary provenance. They do not establish gameplay or explain a white screen.
-- The generation-change follow-up's POPStarter driver comes from
-  [pinned CI run 39899569001](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/39899569001),
-  source head `d77554b63c4bdcc262c44a1ab80e2ed454e7ded8`.
+- The current one-pass POPStarter driver is reproduced by
+  [pinned CI run 39910301683](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/39910301683),
+  source head `9fc75831abb25a0d8d262d9b7d6601478e3b5fe3`.
   All three shipped `usbhdfsd.irx.ilink` copies are 27,145 bytes, SHA-256
   `1a9c1baaf1dd020e35b75082b630f325b90e884819c743ddd5e1f27f106efcb6`.
-  The downloaded artifact ZIP's SHA-256 is
-  `e3e7e2d6263e9fcdc457fdd78c2b7f08cc35d9823e8ce526482001d5d40524c8`.
+  The matching recovery-modules artifact ZIP's SHA-256 is
+  `107cfbe92c65bc7178a96d7a01c4c43b8a0fbbdb2e7b69877649725df66dd286`.
 
 The next useful console test uses one source-pinned standard candidate with
 its matching ELF, both Neutrino modules and the rebuilt POPStarter driver.
