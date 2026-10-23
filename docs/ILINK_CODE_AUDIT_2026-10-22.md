@@ -176,8 +176,8 @@ candidate from the same PS2DEVPINNED container:
 
 These section totals include executable code and BSS; existing stacks and kernel
 semaphore bookkeeping are outside the measurement. The one-pass transfer
-simplification itself adds 16 bytes of code and no static state per block-driver
-build relative to `54517ca7`. It removes the separate full-buffer pass on normal
+simplification itself adds 48 bytes of code per block-driver build and no
+additional static state relative to `54517ca7`. It removes the separate full-buffer pass on normal
 aligned I/O. Physical throughput and interrupt latency remain console checks.
 
 ## Remaining limits
