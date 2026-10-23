@@ -140,10 +140,8 @@ static int isFolderRow(item_list_t *support, int id)
     return game != NULL && game->format == GAME_FORMAT_FOLDER;
 }
 
-/* The title as the row should show it: in RA builds a tracked game's badge mark stays on
-   whichever side of the name it was placed (gRABadgeSuffix): the prefix form in front,
-   the suffix form behind. The badge text is the plain name with exactly one affix, so
-   the affix is whichever end of it is not the name itself. */
+/* Preserve the cached mark around the CFG title. Match the complete known affix
+   so a filename such as "[RA]" cannot be mistaken for part of the mark. */
 static char *keepTitle(item_list_t *support, int id, const char *clean)
 {
     const char *prefix = "", *suffix = "";
@@ -156,10 +154,10 @@ static char *keepTitle(item_list_t *support, int id, const char *clean)
         const char *name = support->itemGetName != NULL ? support->itemGetName(support, id) : NULL;
         if (badge != NULL && name != NULL) {
             size_t badgeLen = strlen(badge), nameLen = strlen(name);
-            if (badgeLen > nameLen && nameLen > 0 && !strcmp(badge + badgeLen - nameLen, name)) {
+            if (badgeLen == nameLen + 3 && !strncmp(badge, "RA ", 3) && !strcmp(badge + 3, name)) {
                 prefix = badge;
                 prefixLen = badgeLen - nameLen;
-            } else if (badgeLen > nameLen && nameLen > 0 && !strncmp(badge, name, nameLen)) {
+            } else if (badgeLen == nameLen + 5 && !strncmp(badge, name, nameLen) && !strcmp(badge + nameLen, " [RA]")) {
                 suffix = badge + nameLen;
                 suffixLen = badgeLen - nameLen;
             }
@@ -170,12 +168,20 @@ static char *keepTitle(item_list_t *support, int id, const char *clean)
     (void)id;
 #endif
     len = strlen(clean);
-    kept = malloc(prefixLen + len + suffixLen + 1);
+#ifdef RETROACHIEVEMENTS
+    kept = malloc(prefixLen + len + suffixLen + 1 + len + 1);
+#else
+    kept = malloc(len + 1);
+#endif
     if (kept == NULL)
         return NULL;
     memcpy(kept, prefix, prefixLen);
     memcpy(kept + prefixLen, clean, len);
     memcpy(kept + prefixLen + len, suffix, suffixLen + 1);
+#ifdef RETROACHIEVEMENTS
+    // Keep the clean title in the same allocation for badge-independent sorting.
+    memcpy(kept + prefixLen + len + suffixLen + 1, clean, len + 1);
+#endif
     return kept;
 }
 
@@ -259,5 +265,15 @@ const char *cfgTitleForRow(item_list_t *support, int id)
 const char *cfgTitleDisplayName(item_list_t *support, int id, const char *text)
 {
     const char *title = cfgTitleForRow(support, id);
+    return title != NULL ? title : vcdDisplayNameForRow(support, id, text);
+}
+
+const char *cfgTitleSortName(item_list_t *support, int id, const char *text)
+{
+    const char *title = cfgTitleForRow(support, id);
+#ifdef RETROACHIEVEMENTS
+    if (title != NULL)
+        title += strlen(title) + 1;
+#endif
     return title != NULL ? title : vcdDisplayNameForRow(support, id, text);
 }

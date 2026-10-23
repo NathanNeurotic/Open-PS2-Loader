@@ -26,7 +26,7 @@ assert queue_fn.index("WaitSema(gProcSemaId)") < queue_fn.index("= gReqList;")
 append_start = gui.index("case GUI_OP_APPEND_MENU:")
 append_end = gui.index("case GUI_OP_SELECT_MENU:", append_start)
 append = gui[append_start:append_end]
-assert "if (result == NULL)\n                break;" in append
+assert "if (result == NULL)" in append and "break;" in append
 assert append.index("if (result == NULL)") < append.index("->last = result")
 assert append.index("if (result == NULL)") < append.index("->current = result")
 

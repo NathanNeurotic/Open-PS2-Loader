@@ -1100,14 +1100,7 @@ static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu
    may use any alignment, and we need the upper-right corner of what
    was drawn. Sizes come from the texture when the theme leaves them
    undefined, since covers vary in size. */
-/* H11 draft: the cover mark is now SMALLER and UNFRAMED (xeRAbora OPL a9f97397,
-   via fork-gap row 77). Unframed means it is no longer fitted into the case
-   overlay's quadrilateral as a slanted inlay -- the phase-3c treatment, whose
-   raQuadPoint/raQuadUsable helpers are removed with it -- but drawn as one
-   flat square at the cover's upper-right corner, with or without an overlay.
-   Trade-off, deliberate for this draft and still needing a visual check on
-   hardware: on a slanted case the flat mark no longer shares the cover's
-   slant, and its corner is the cover box's corner, not the quad's. */
+/* A smaller flat mark at the cover box's upper-right corner, including case overlays. */
 static void drawRAMark(struct submenu_list *item, struct theme_element *elem,
                        mutable_image_t *img, GSTEXTURE *cover)
 {

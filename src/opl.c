@@ -1382,9 +1382,10 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
                 gup->submenu.id = i;
 #ifdef RETROACHIEVEMENTS
                 {
-                    // The RA badge prefix, when this game has a watch list. NULL means plain name.
+                    // Keep the source name for identity; snapshot the badge before its cache is rebuilt.
                     const char *badge = raBadgeText(mdl->support, i);
-                    gup->submenu.text = (char *)(badge != NULL ? badge : mdl->support->itemGetName(mdl->support, i));
+                    gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
+                    gup->submenu.raText = badge != NULL ? strdup(badge) : NULL;
                     /* Resolve the cover mark HERE, on the I/O thread that owns the badge cache,
                        and carry the answer to the renderer as a plain int. */
                     gup->submenu.raBadged = (badge != NULL);
@@ -5012,7 +5013,7 @@ static void setDefaults(void)
     memset(gRAHostIp, 0, sizeof(gRAHostIp));
     gRATelemetry = 0;   // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
     gRABadges = 1;      // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
-    gRABadgeSuffix = 0; // prefix, the shipped form; Suffix is the opt-in that keeps the list alphabetical
+    gRABadgeSuffix = 0; // preserve the shipped prefix; placement does not affect sorting
     gRAExperimentalCards = 0;
 #endif
     gEnableArt = 1;

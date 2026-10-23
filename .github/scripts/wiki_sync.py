@@ -347,6 +347,7 @@ and translation maintenance are covered under {link('Languages', 'Languages')}.
 | I want to… | Start here |
 | --- | --- |
 | Run my first PS2 game | {link('Getting started', 'Getting-Started')} |
+| Use ISO, ZSO, CHD or CSO game images | {link('Game image formats', 'Game-Formats')} · {link('ZSO', 'ZSO')} |
 | Use USB, MX4SIO or iLink storage | {link('USB, MX4SIO and iLink', 'USB-MX4SIO-and-iLink')} |
 | Use an SD2PSX or compatible MMCE device | {link('MMCE', 'MMCE')} |
 | Test a supplied preview or diagnose a failed save card | {link('Test builds', 'Test-Builds')} · {link('VMC recovery', 'VMC-Recovery')} |

@@ -17,9 +17,12 @@ void cfgTitleForget(item_list_t *support);
 /* The kept title for a row, or NULL (always NULL while the setting is off). GUI thread. */
 const char *cfgTitleForRow(item_list_t *support, int id);
 
-/* What a game row shows and sorts by: its CFG title when one is kept, else the existing display
+/* What a game row shows: its CFG title when one is kept, else the existing display
    name (vcdDisplayNameForRow). Never changes the row's identity text. */
 const char *cfgTitleDisplayName(item_list_t *support, int id, const char *text);
+
+/* Alphabetical title without the cosmetic RA mark. text is the unchanged source name. */
+const char *cfgTitleSortName(item_list_t *support, int id, const char *text);
 
 /* Trims and validates a title (UTF-8, no control characters), cutting it on a character
    boundary to fit. 1 when out holds a usable title. */

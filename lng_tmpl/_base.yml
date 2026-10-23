@@ -1961,4 +1961,4 @@ gui_strings:
   string: Suffix
 
 - label: HINT_RA_BADGE_SUFFIX
-  string: "Prefix puts \"RA \" before the name. Suffix puts \" [RA]\" after it, so the list stays alphabetical."
+  string: "Prefix puts \"RA \" before the name. Suffix puts \" [RA]\" after it. Both keep alphabetical order."

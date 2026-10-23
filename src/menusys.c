@@ -1054,6 +1054,10 @@ static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int tex
     it->item.cache_uid = NULL;
     it->item.favourited = 0;
     it->item.isFolder = 0;
+#ifdef RETROACHIEVEMENTS
+    it->item.raBadged = 0;
+    it->item.raText = NULL;
+#endif
     submenuRebuildCache(it);
 
     return it;
@@ -1100,6 +1104,9 @@ submenu_list_t *submenuFindItemByIdAndText(submenu_list_t *submenu, int id, cons
 
 static void submenuDestroyItem(submenu_list_t *submenu)
 {
+#ifdef RETROACHIEVEMENTS
+    free(submenu->item.raText);
+#endif
     free(submenu->item.cache_id);
     free(submenu->item.cache_uid);
 
@@ -1191,6 +1198,10 @@ char *menuItemGetText(menu_item_t *it)
 
 char *submenuItemGetText(submenu_item_t *it)
 {
+#ifdef RETROACHIEVEMENTS
+    if (it->raText != NULL)
+        return it->raText;
+#endif
     if (it->text_id >= 0)
         return _l(it->text_id);
     else
@@ -1205,11 +1216,11 @@ static int submenuSortCompare(submenu_list_t *a, submenu_list_t *b, item_list_t 
     if (a->item.isFolder != b->item.isFolder)
         return a->item.isFolder ? -1 : 1;
 
-    txt1 = submenuItemGetText(&a->item);
-    txt2 = submenuItemGetText(&b->item);
+    txt1 = a->item.text_id >= 0 ? _l(a->item.text_id) : a->item.text;
+    txt2 = b->item.text_id >= 0 ? _l(b->item.text_id) : b->item.text;
     if (!a->item.isFolder) {
-        txt1 = cfgTitleDisplayName(support, a->item.id, txt1);
-        txt2 = cfgTitleDisplayName(support, b->item.id, txt2);
+        txt1 = cfgTitleSortName(support, a->item.id, txt1);
+        txt2 = cfgTitleSortName(support, b->item.id, txt2);
     }
     return strcasecmp(txt1, txt2);
 }
@@ -2128,7 +2139,7 @@ void menuRenderGameMenu()
     // game title
     fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0,
                     cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
-                                        selected_item->item->current->item.text),
+                                        submenuItemGetText(&selected_item->item->current->item)),
                     gTheme->selTextColor);
 
     // config source
@@ -2415,7 +2426,7 @@ void menuRenderAppMenu()
     // app title
     fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0,
                     cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
-                                        selected_item->item->current->item.text),
+                                        submenuItemGetText(&selected_item->item->current->item)),
                     gTheme->selTextColor);
 
     // A PS1 row opens this smaller menu, not the PS2 VMC editor. Say why the missing PS2 control

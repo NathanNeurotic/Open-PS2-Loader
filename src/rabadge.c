@@ -195,13 +195,7 @@ void raBadgeRefresh(item_list_t *support, int count)
            device. Do not probe SMB for every untracked USB VCD: that is
            both slow and can show a badge for a list POPStarter cannot use. */
         if (watchListExists(rowPrefix, serial, ps1 > 0)) {
-            /* The mark's side is the user's choice (gRABadgeSuffix). Suffix is
-               the sorting-safe form: submenuSortCompare orders by this shown
-               text, so a prefix pulls every tracked game to the top under
-               "R", while a suffix leaves the clean name to compare first and
-               only breaks ties between identical names. There is no separate
-               PS1 display mark in this fork (see badgeVcdKey), so unlike the
-               upstream port there is no second affix to place. */
+            /* Placement changes only the display snapshot; row identity and sorting stay clean. */
             if (gRABadgeSuffix)
                 snprintf(dst, RA_BADGE_TEXT, "%s%s",
                          support->itemGetName(support, i), RA_SUFFIX);
