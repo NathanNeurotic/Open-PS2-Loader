@@ -22,7 +22,7 @@ program = r'''
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-enum { VCD_BDMA_MODE_COUNT=7, VCD_BDMA_FAT32=0, O_RDONLY=0 };
+enum { VCD_BDMA_MODE_COUNT=7, VCD_BDMA_FAT32=0, VCD_BDMA_ILINK=5, O_RDONLY=0 };
 #define VCD_BDMA_MARKER "bdma_config.txt"
 typedef struct {int usbdSize,hdfsdSize;} bdma_pair_sig_t;
 static const char *vcdBdmaModule[]={"usbd.irx","usbhdfsd.irx"};
@@ -50,12 +50,20 @@ int main(void) {
         pairSize[1]=-1;assert(!vcdBdmaManualPairMatches(mode));
         markerMode=mode;assert(!vcdBdmaEnvironmentValid(mode));
     }
+    /* Reject each preceding iLink candidate, including the immediately previous rebuild. */
+    const int staleIlink[]={21609,21977,22025,22185,27081};
+    for(unsigned i=0;i<sizeof(staleIlink)/sizeof(staleIlink[0]);i++) {
+        pairSize[0]=48500;pairSize[1]=staleIlink[i];
+        markerMode=VCD_BDMA_ILINK;markerExists=1;
+        assert(!vcdBdmaEnvironmentValid(VCD_BDMA_ILINK));
+        markerExists=0;assert(!vcdBdmaManualPairMatches(VCD_BDMA_ILINK));
+    }
     pairSize[0]=pairSize[1]=-1;assert(vcdBdmaEnvironmentValid(0));
     pairSize[0]=48500;assert(!vcdBdmaEnvironmentValid(0));
     cardExists=0;assert(!vcdBdmaEnvironmentValid(1)&&!vcdBdmaManualPairMatches(1));
     assert(!vcdBdmaEnvironmentValid(-1)&&!vcdBdmaEnvironmentValid(7));
     assert(!vcdBdmaManualPairMatches(0)&&!vcdBdmaManualPairMatches(7));
-    puts("BDMA: all six shipped pairs accepted; wrong family/marker/missing/truncated pairs refused");
+    puts("BDMA: all six shipped pairs accepted; stale iLink and wrong family/marker/missing/truncated pairs refused");
 }
 '''.replace('@TABLE@', table).replace('@FUNCTIONS@', '\n'.join(function(s) for s in
     ['int vcdBdmaEnvironmentValid(', 'static int vcdBdmaManualPairMatches('])).replace(

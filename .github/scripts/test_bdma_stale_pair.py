@@ -254,7 +254,7 @@ static int cardHdfsd(void)
 int main(void)
 {
     const int u = vcdBdmaPairSig[VCD_BDMA_ILINK].usbdSize, h = vcdBdmaPairSig[VCD_BDMA_ILINK].hdfsdSize;
-    const int old = h > 22025 ? 22025 : 21609; /* Beta 4221, or the pre-#1024 pair. */
+    const int old = h > 27081 ? 27081 : h > 22025 ? 22025 : 21609; /* The preceding candidate, Beta 4221, or pre-#1024. */
     char diag[160];
 
     /* Card and iLink drive both still hold an actual previous release's pair. Nothing is copied, and the

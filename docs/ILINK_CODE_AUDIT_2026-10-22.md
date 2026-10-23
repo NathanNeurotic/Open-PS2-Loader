@@ -211,6 +211,13 @@ proves a launch bug: the existing binding and argv checks cover those paths.
   required checks. All new fixtures run in the flavour workflow.
 - Local target compilation and pinned CI builds establish buildability and
   binary provenance. They do not establish gameplay or explain a white screen.
+- The generation-change follow-up's POPStarter driver comes from
+  [pinned CI run 39899569001](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/39899569001),
+  source head `d77554b63c4bdcc262c44a1ab80e2ed454e7ded8`.
+  All three shipped `usbhdfsd.irx.ilink` copies are 27,145 bytes, SHA-256
+  `5b7de8d1ff749e8ca2ad8ef0c705ce76f5799d1c2dcedf5393dbf4cd7a58e6c8`.
+  The downloaded artifact ZIP's SHA-256 is
+  `e3e7e2d6263e9fcdc457fdd78c2b7f08cc35d9823e8ce526482001d5d40524c8`.
 
 The next useful console test uses one source-pinned standard candidate with
 its matching ELF, both Neutrino modules and the rebuilt POPStarter driver.
