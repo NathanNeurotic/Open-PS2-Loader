@@ -38,9 +38,43 @@ return could release its stack ORB or data before the target stops accessing the
 `.github/scripts/test_ilink_sbp2_completion.py` exercises these real functions in both driver copies
 with immediate and delayed target replies, stale LOGIN status, failed dummy status and failed
 publication, including accepted requests with lost acknowledgments and failed resets, plus missing
-dummy completions. The new binary is 22,025 bytes; its hash is recorded in `../PROVENANCE.md`. This is a
+dummy completions. That binary was 22,025 bytes; its hash is recorded in `../PROVENANCE.md`. This is a
 source/host-tested correction, not a confirmed repair of FifthFox's enclosure. No read-delay or
 transfer-speed setting is added by it.
+
+## Command direction and manager recovery (2026-10-22)
+
+The older block driver advertised the SBP-2 direction backwards: a disk read
+must let the target write into host memory, including INQUIRY and READ CAPACITY.
+It now uses the same mapping as the current SDK driver. The embedded manager
+also releases its TX semaphore when a bus generation changes, cancels a pending
+response alarm after an early error, and drains unhandled receive data with TTY
+logging disabled. Chunk limits use the discovered logical sector size, oversized
+requests are refused before copying/publishing, and capacity includes the last LBA.
+
+The first-pass binary was 22,185 bytes. The current byte count and pinned CI
+provenance are recorded in `../PROVENANCE.md`.
+The production-function regressions and remaining hardware/recovery limits are
+documented in `../../../docs/ILINK_CODE_AUDIT_2026-10-22.md`. These are code and
+host-test findings; FifthFox's console result remains the acceptance gate.
+
+## Request lifetime, response ownership and packet bounds (2026-10-22 follow-up)
+
+Both driver copies now match SBP-2 status to its ORB and retain remotely visible
+LOGIN, command, dummy and pointer storage after uncertain failures. The existing
+65024-byte allocation stages reads as well as writes, preventing late target DMA
+from reaching returned caller memory. A 30-second completion budget returns an
+error without freeing or overwriting a pending request. Late matching status
+allows reuse; a permanently missing completion requires a fresh driver start.
+Shared request submission is serialized, including bus-reset bookkeeping, while
+BDM callbacks run without that mutex. Warm-up accounts for command time, setup
+propagates failure, and SCSI retries reset a command agent after DEAD status.
+
+The embedded manager also latches IRQ errors, handles split timeout/reset wakeups,
+retires outbound DMA and matches active read/write responses before copying or
+signalling. Packet bounds cover the complete RAM/CROM span and refused packets
+are drained. CROM/API fixes and the source/host/target/console evidence boundaries
+are listed in `../../../docs/ILINK_CODE_AUDIT_2026-10-22.md`.
 
 ## Building
 The checked-in binaries are built in the PS2DEVPINNED container, which reproduces both the pre-#1018 build (21609 bytes) and the current one byte for byte:

@@ -26,7 +26,8 @@ int BD_iLink_start(int argc, char *argv[])
     }
 
     // initialize the IEEE1394 driver
-    init_ieee1394DiskDriver();
+    if (init_ieee1394DiskDriver() < 0)
+        return MODULE_NO_RESIDENT_END;
 
     return MODULE_RESIDENT_END;
 }

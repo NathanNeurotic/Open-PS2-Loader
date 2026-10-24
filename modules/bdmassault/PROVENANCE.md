@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 22025 | aec8f3d6b15af7024bb62120488ed1b83526c4f852add6161185a1232017edc2 |
+| usbhdfsd.irx.ilink | 27145 | 1a9c1baaf1dd020e35b75082b630f325b90e884819c743ddd5e1f27f106efcb6 |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
@@ -52,7 +52,28 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   missing acknowledgments do not prove rejection, and safe target quiescence remains separate work.
   Before that correction the #1024 binary was 21977 bytes, sha256
   `8f9a9e4e6984a58435fe7e24e1e5832f027dc537b3274bc4220245bbe1844714`.
-  **Rebuilt, not fetched:** the bytes above are the output of `make` in that directory inside
+  The October 22 audit corrects the older driver's reversed SBP-2 data direction, releases the
+  embedded manager's TX semaphore on generation changes, cancels pending response alarms after
+  errors, and drains unhandled RX data with TTY disabled. Transfers use the reported logical block
+  size and are bounded by the ORB/write-buffer byte limit; capacity counts include the last LBA.
+  The previous 22025-byte binary was sha256
+  `aec8f3d6b15af7024bb62120488ed1b83526c4f852add6161185a1232017edc2`.
+  The follow-up lifetime pass matches SBP-2 and manager responses to their active requests,
+  retains target-visible storage after uncertain timeouts, unwinds manager resources when the
+  combined startup fails, and accepts completed extended SCSI GOOD status. The 22185-byte
+  binary from the first pass was sha256
+  `9470a41a4c2b6e977e25295a6948111873a631a4218ec5efef16c5196e819bc8`.
+  The generation-change follow-up reports a bus reset consistently across transmit and response
+  waits. Its preceding 27081-byte binary was sha256
+  `cba6f974fb39af5746e3305819d83635e3bedc7dc8c44a9055c3381575993334`.
+  The aligned-transfer simplification fuses conversion with copying, preserving resident DMA
+  staging while removing a separate buffer pass for normal sector I/O. Its 27145-byte binary
+  was obtained from the `popstarter-ilink-driver` job in Actions run `39909136585`, source head
+  `8fe5d2559bc43ed0833a04c7ec13f3090eaef795` (PR merge checkout
+  `1aa2539ae4b00cab965ae5ddfa0f6834de28973d`). It has the same byte length as the preceding
+  generation-recovery build (SHA-256 `5b7de8d1ff749e8ca2ad8ef0c705ce76f5799d1c2dcedf5393dbf4cd7a58e6c8`);
+  use the hash, not size alone, to distinguish those two builds. Console acceptance is pending.
+  **Rebuilt from source:** the bytes above are the output of `make` in that directory inside
   `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11` (the
   PS2DEVPINNED container), which also reproduces the 21609-byte build from its source exactly. CI
   (`popstarter-ilink-driver` in `.github/workflows/flavours.yml`) rebuilds it on every PR and fails

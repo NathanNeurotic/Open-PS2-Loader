@@ -136,6 +136,17 @@ re-registers the selected device driver as bare `mass:` before it resolves that 
 > there.*, leaves the card as it is, and the launch goes ahead with the card's current driver.
 > Not yet confirmed on hardware.
 
+> **October 22 code audit:** the standard Beta 4221 report still has POPSTARTER failing.
+> This source corrects the older driver's reversed SBP-2 data direction, three manager
+> recovery defects, transfer byte limits and sector counts; a follow-up pass matches
+> completions to their requests, unwinds a failed combined startup, and accepts extended
+> SCSI GOOD status. The generation-change follow-up reports a bus reset consistently across
+> transmit and response waits. The rebuilt iLink `usbhdfsd.irx.ilink` is **27,145 bytes**
+> (the preceding candidate was 27,081 bytes; the Beta 4221 copy was 22,025 bytes).
+> Replace the matching loose pair on the actual POPS seek path as well as the kit;
+> the stale-pair check rejects the old size. See the [audit and console test gate](ILINK_CODE_AUDIT_2026-10-22.md).
+> These are source/host-tested corrections awaiting a console result.
+
 Where `POPSTARTER.ELF` is loaded from is controlled by **PS Emulation Settings →
 POPSTARTER.ELF Path**. The old device picker is gone. The path field displays **`<not set>`** until
 you enter a custom full path. When you upgrade, a device the old picker was set to becomes the matching
@@ -396,7 +407,7 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 7. **iLink returns to wLaunchELF?** Inspect the card after the attempt. A successful RiptOPL equip
    leaves `mc?:/POPSTARTER/bdma_config.txt` containing exactly `ilink`, plus `usbd.irx` (48,500 bytes;
    SHA-256 `5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369`) and `usbhdfsd.irx`
-   (21,977 bytes; SHA-256 `8F9A9E4E6984A58435FE7E24E1E5832F027DC537B3274BC4220245BBE1844714`). Missing or different files
+   (27,145 bytes; SHA-256 `5B7DE8D1FF749E8CA2AD8EF0C705CE76F5799D1C2DCEDF5393DBF4CD7A58E6C8`). Missing or different files
    put the defect on RiptOPL's external-equip side; exact files narrow it to POPSTARTER/BDMA runtime
    reinitialization after the handoff.
 8. **UDPFS shows Ember but no VCDs?** Select **UDPFS Files**, check server `POPS/*.VCD`
