@@ -8,4 +8,5 @@
 ./modules/network/smbman-ra
 ./modules/usb/usbd-ra
 ./modules/bdmassault
+./modules/ilink/iLinkman
 ./third_party/mbedtls

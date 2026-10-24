@@ -43,6 +43,7 @@ extern int nNodes;
 extern int NodeCapabilities;
 
 int IntrEventFlag, UBUFTxSema, UBUFThreadID;
+static int RequestSema;
 
 extern unsigned char IsBusRoot;
 
@@ -71,6 +72,8 @@ static inline unsigned int GetBIOSVersion(void)
 }
 #endif
 extern int BD_iLink_start(int argc, char *argv[]);
+
+int _exit(int argc, char *argv[]);
 
 int _start(int argc, char *argv[])
 {
@@ -110,6 +113,19 @@ int _start(int argc, char *argv[])
     CallBackFunction = NULL;
     IntrEventFlag = CreateEventFlag(&EventFlagData);
     UBUFTxSema = CreateMutex(IOP_MUTEX_UNLOCKED);
+    RequestSema = CreateMutex(IOP_MUTEX_UNLOCKED);
+    if (RequestSema < 0 || UBUFTxSema < 0 || IntrEventFlag < 0) {
+        if (RequestSema >= 0)
+            DeleteSema(RequestSema);
+        if (UBUFTxSema >= 0)
+            DeleteSema(UBUFTxSema);
+        if (IntrEventFlag >= 0)
+            DeleteEventFlag(IntrEventFlag);
+        iLinkShutdownHW();
+        FreeSysMemory(ConfigurationROM);
+        return MODULE_NO_RESIDENT_END;
+    }
+
 
     ThreadData.attr = TH_C;
     ThreadData.option = 0;
@@ -117,7 +133,17 @@ int _start(int argc, char *argv[])
     ThreadData.stacksize = 0x350;
     ThreadData.priority = 0x60;
 
-    StartThread(UBUFThreadID = CreateThread(&ThreadData), NULL);
+    UBUFThreadID = CreateThread(&ThreadData);
+    if (UBUFThreadID < 0 || StartThread(UBUFThreadID, NULL) < 0) {
+        if (UBUFThreadID >= 0)
+            DeleteThread(UBUFThreadID);
+        DeleteSema(RequestSema);
+        DeleteSema(UBUFTxSema);
+        DeleteEventFlag(IntrEventFlag);
+        iLinkShutdownHW();
+        FreeSysMemory(ConfigurationROM);
+        return MODULE_NO_RESIDENT_END;
+    }
 
     RegisterIntrHandler(IOP_IRQ_ILINK, 1, &iLinkIntrHandler, NULL);
     EnableIntr(IOP_IRQ_ILINK);
@@ -127,10 +153,14 @@ int _start(int argc, char *argv[])
 
     DEBUG_PRINTF("Initialization complete.\n");
 
-    if (RegisterLibraryEntries(&_exp_iLinkman) != 0)
+    if (RegisterLibraryEntries(&_exp_iLinkman) != 0) {
+        _exit(argc, argv);
         return MODULE_NO_RESIDENT_END;
-
-    return BD_iLink_start(argc, argv);
+    }
+    result = BD_iLink_start(argc, argv);
+    if (result != MODULE_RESIDENT_END)
+        _exit(argc, argv); /* no IRQ/thread/export may outlive a refused module */
+    return result;
 }
 
 int _exit(int argc, char *argv[])
@@ -147,6 +177,7 @@ int _exit(int argc, char *argv[])
     TerminateThread(UBUFThreadID);
     DeleteThread(UBUFThreadID);
     DeleteSema(UBUFTxSema);
+    DeleteSema(RequestSema);
     DeleteEventFlag(IntrEventFlag);
     iLinkShutdownHW();
 
@@ -186,12 +217,50 @@ void iLinkTrFree(int trContext)
 
 int iLinkTrWrite(int trContext, unsigned short int offset_high, unsigned int offset_low, void *buffer, unsigned int nBytes)
 {
-    return ((nBytes == 4) ? iLinkWriteReq(&TransactionContexts[trContext], offset_high, offset_low, buffer, nBytes) : iLinkWritePHTReq(&TransactionContexts[trContext], offset_high, offset_low, buffer, nBytes));
+    struct TransactionContextData context;
+    int result, state;
+
+    if (trContext < 0 || trContext >= MAX_CONCURRENT_TRANSACTIONS ||
+        buffer == NULL || nBytes == 0 || nBytes > 0xffff)
+        return -1002;
+    CpuSuspendIntr(&state);
+    context = TransactionContexts[trContext];
+    CpuResumeIntr(state);
+    if (!context.IsConnected)
+        return -1002;
+
+    // PHT 00, TargetBuffer and request error state have one outgoing owner.
+    // The receive thread's SendResponse uses UBUFTxSema independently.
+    WaitSema(RequestSema);
+    result = (nBytes == 4) ? iLinkWriteReq(&context, offset_high, offset_low, buffer, nBytes)
+                           : iLinkWritePHTReq(&context, offset_high, offset_low, buffer, nBytes);
+    iLinkFinishRequest();
+    SignalSema(RequestSema);
+    return result;
 }
 
 int iLinkTrRead(int trContext, unsigned short int offset_high, unsigned int offset_low, void *buffer, unsigned int nBytes)
 {
-    return ((nBytes == 4) ? iLinkReadReq(&TransactionContexts[trContext], offset_high, offset_low, buffer, nBytes) : iLinkReadPHTReq(&TransactionContexts[trContext], offset_high, offset_low, buffer, nBytes));
+    struct TransactionContextData context;
+    int result, state;
+
+    if (trContext < 0 || trContext >= MAX_CONCURRENT_TRANSACTIONS ||
+        buffer == NULL || nBytes == 0 || nBytes > 0xffff)
+        return -1002;
+    CpuSuspendIntr(&state);
+    context = TransactionContexts[trContext];
+    CpuResumeIntr(state);
+    if (!context.IsConnected)
+        return -1002;
+
+    // PHT 00, TargetBuffer and request error state have one outgoing owner.
+    // The receive thread's SendResponse uses UBUFTxSema independently.
+    WaitSema(RequestSema);
+    result = (nBytes == 4) ? iLinkReadReq(&context, offset_high, offset_low, buffer, nBytes)
+                           : iLinkReadPHTReq(&context, offset_high, offset_low, buffer, nBytes);
+    iLinkFinishRequest();
+    SignalSema(RequestSema);
+    return result;
 }
 
 unsigned int iLinkSetNodeCapabilities(unsigned int capabilities)

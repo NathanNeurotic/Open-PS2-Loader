@@ -149,13 +149,19 @@ struct SBP2Device
     unsigned long int maxLBA;
     void *cache;
 
+    /* Resident memory: never reuse a slot while a management ORB is pending. */
+    int generation;
+    unsigned char configuring, managementPending, fetchAgentNeedsReset;
+    volatile struct sbp2_status statusFIFO __attribute__((aligned(4)));
+    struct management_ORB managementORB __attribute__((aligned(4)));
+    struct sbp2_login_response loginResponse __attribute__((aligned(4)));
+    struct sbp2_pointer managementPointer __attribute__((aligned(4)));
+
     struct scsi_interface scsi;
 };
 
 /* Function prototypes. */
-extern void init_ieee1394DiskDriver(void);
-extern int ieee1394_SendCommandBlockORB(struct SBP2Device *dev, struct CommandDescriptorBlock *firstCDB);
-extern int ieee1394_Sync(void);
+extern int init_ieee1394DiskDriver(void);
 extern void DeinitIEEE1394(void);
 
 

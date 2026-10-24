@@ -64,3 +64,10 @@ I_iSetEventFlag
 I_WaitEventFlag
 I_DeleteEventFlag
 thevent_IMPORTS_end
+
+thsemap_IMPORTS_start
+I_CreateSema
+I_WaitSema
+I_SignalSema
+I_DeleteSema
+thsemap_IMPORTS_end

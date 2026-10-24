@@ -295,6 +295,7 @@ jobs:
           set -eu
           mkdir -p neutrino-ilink
           cp -f modules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx neutrino-ilink/IEEE1394_bd_mini.irx
+          cp -f modules/ilink/iLinkman/iLinkman.irx neutrino-ilink/iLinkman.irx
           ls -la neutrino-ilink
 
       - name: Upload the patched i.LINK driver
@@ -918,6 +919,15 @@ jobs:
                 exit 1
               fi
               echo "Replaced neutrino/modules/IEEE1394_bd_mini.irx with RiptOPL's build ($(wc -c < "$ILINK_DST") bytes)."
+              # The manager owns TX cancellation, alarms and receive FIFO draining.
+              # Replacing only the block driver would leave those fixes out of Neutrino.
+              MANAGER_DST="$PKG/neutrino/modules/iLinkman.irx"
+              if [ ! -s "$MANAGER_DST" ] || [ ! -s neutrino-ilink/iLinkman.irx ]; then
+                echo "ERROR: missing iLinkman module for the matched Neutrino pair." >&2
+                exit 1
+              fi
+              cp -f neutrino-ilink/iLinkman.irx "$MANAGER_DST"
+              cmp neutrino-ilink/iLinkman.irx "$MANAGER_DST"
               rm -f "$NEUT_ABS"
               echo "Extracted Neutrino into $PKG/neutrino (added config/bsd-udpfsbd.toml for UDPFS)."
               # UDPFS Files mode launches with stock -bsd=udpfs, which needs Neutrino's own

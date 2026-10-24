@@ -9,6 +9,7 @@
 #include <sysmem.h>
 #include <stdio.h>
 #include <thevent.h>
+#include <intrman.h>
 
 #include "iLinkman.h"
 #include "include/iLink_internal.h"
@@ -27,6 +28,35 @@ extern unsigned int ConfigurationROMSize;
 
 unsigned int *TargetBuffer, NodeData[63];
 unsigned int LocalCachedIntr0Register;
+static unsigned int ResponseLength;
+static unsigned short int ResponseNodeID;
+static unsigned char ResponseLabel, ResponseCode, ResponseActive;
+static int ResponseGeneration;
+
+void iLinkPrepareResponse(struct TransactionContextData *context, unsigned char label,
+                          unsigned char code, void *buffer, unsigned int length)
+{
+    int state;
+    CpuSuspendIntr(&state);
+    TargetBuffer = buffer;
+    ResponseLength = length;
+    ResponseNodeID = context->NodeID;
+    ResponseGeneration = context->GenerationNumber;
+    ResponseLabel = label;
+    ResponseCode = code;
+    ResponseActive = 1;
+    CpuResumeIntr(state);
+}
+
+void iLinkFinishRequest(void)
+{
+    int state;
+    CpuSuspendIntr(&state);
+    ResponseActive = 0;
+    TargetBuffer = NULL;
+    CpuResumeIntr(state);
+}
+
 
 unsigned char IsBusRoot = 1; /* Assume that the console is the root, in case this variable is polled before it was set correctly. */
 
@@ -40,9 +70,10 @@ static void NoResponseHandler(unsigned int header, volatile unsigned int *buffer
     DEBUG_PRINTF("NULL response handler called.\n");
 
     for (i = 0; i < nQuads; i++) { /* Flush the buffer. */
-#ifdef DEBUG_TTY_FEEDBACK
         unsigned int data;
         data = *buffer;
+        (void)data;
+#ifdef DEBUG_TTY_FEEDBACK
         DEBUG_PRINTF("Unhandled data: 0x%08x.\n", data);
 #endif
     }
@@ -101,106 +132,116 @@ static void PHYPacketHandler(unsigned int header, volatile unsigned int *buffer,
 
 static void ResponseHandler(unsigned int header, volatile unsigned int *buffer, unsigned int nQuads)
 {
-    unsigned int i, HeaderLength;
-    struct ieee1394_TrResponsePacketHdr ResponseData;
-    unsigned char tCode;
+    struct ieee1394_TrResponsePacketHdr response;
+    unsigned int headerQuads, payloadQuads, length, i, j, count, value, flags = 0;
+    unsigned char code = (header >> 4) & 0xf;
+    int state;
 
-    (void)nQuads;
-
-    tCode = (header >> 4) & 0xF;
-
-    HeaderLength = (tCode != IEEE1394_TCODE_WRITE_RESPONSE) ? 4 : 3; /* Write response packets are shorter by other responses by one quadlet! */
-
-    ResponseData.header = header;
-    for (i = 1; i < HeaderLength; i++) {
-        ((unsigned int *)&ResponseData)[i] = *buffer;
+    headerQuads = code == IEEE1394_TCODE_WRITE_RESPONSE ? 3 : 4;
+    if (nQuads < headerQuads) {
+        NoResponseHandler(header, buffer, nQuads);
+        return;
+    }
+    response.header = header;
+    for (i = 1; i < headerQuads; i++)
+        ((unsigned int *)&response)[i] = *buffer;
+    length = code == IEEE1394_TCODE_READB_RESPONSE ? response.LastField >> 16 : 0;
+    payloadQuads = (length + 3) / 4;
+    if (payloadQuads > nQuads - headerQuads) {
+        NoResponseHandler(header, buffer, nQuads - (headerQuads - 1));
+        return;
     }
 
-    switch (tCode) {
-        case IEEE1394_TCODE_WRITE_RESPONSE:
-            DEBUG_PRINTF("Data write result: ");
-            break;
-        case IEEE1394_TCODE_READQ_RESPONSE:
-            DEBUG_PRINTF("Writing to buffer %p.\n", TargetBuffer);
-            DEBUG_PRINTF("Quadlet read result: ");
-            *TargetBuffer = BSWAP32(ResponseData.LastField);
-            break;
-        case IEEE1394_TCODE_READB_RESPONSE:
-            DEBUG_PRINTF("Block read result: ");
-            break;
-        default:
-            DEBUG_PRINTF("Unknown IEE1394 transaction type 0x%02x result: ", (ResponseData.header >> 10) & 0x3F);
-    }
-
-    DEBUG_PRINTF("%u.\n", (ResponseData.header2 >> 12) & 0xF);
-    if (tCode == IEEE1394_TCODE_READB_RESPONSE) {
-        DEBUG_PRINTF("data length: 0x%08x.\n", ResponseData.LastField >> 16); /* This refers to the data_legnth field of a block read response packet. */
-        for (i = 0; i < (ResponseData.LastField >> 16); i += 4) {
-            *TargetBuffer = *buffer;
-            TargetBuffer++;
+    /* A timeout can precede a late response. Match the active request before
+     * touching caller memory or waking it. Copy/retirement cannot preempt one
+     * another: an error IRQ may otherwise return the caller halfway through. */
+    CpuSuspendIntr(&state);
+    if (ResponseActive && ResponseGeneration == GenerationNumber &&
+        (response.header2 >> 16) == ResponseNodeID &&
+        ((header >> 10) & 0x3f) == ResponseLabel && code == ResponseCode) {
+        if (((response.header2 >> 12) & 0xf) != 0 ||
+            (code == IEEE1394_TCODE_READB_RESPONSE && length != ResponseLength)) {
+            LocalCachedIntr0Register |= iLink_INTR0_UResp;
+            flags = iLinkEventRequestError;
+        } else {
+            if (code == IEEE1394_TCODE_READQ_RESPONSE)
+                *TargetBuffer = BSWAP32(response.LastField);
+            else if (code == IEEE1394_TCODE_READB_RESPONSE) {
+                for (i = 0; i < payloadQuads; i++) {
+                    value = *buffer;
+                    count = length - i * 4;
+                    if (count >= 4 && (((unsigned int)TargetBuffer & 3) == 0))
+                        TargetBuffer[i] = value;
+                    else {
+                        if (count > 4)
+                            count = 4;
+                        for (j = 0; j < count; j++)
+                            ((unsigned char *)TargetBuffer)[i * 4 + j] = ((unsigned char *)&value)[j];
+                    }
+                }
+                payloadQuads = 0;
+            }
+            flags = iLinkEventDataReceived;
         }
+        ResponseActive = 0;
+        TargetBuffer = NULL;
     }
-
-    (void)(*buffer); /* Read the last quadlet of the read response that contains only the speed. */
-    SetEventFlag(IntrEventFlag, iLinkEventDataReceived);
+    for (i = 0; i < payloadQuads; i++)
+        value = *buffer;
+    value = *buffer; /* speed trailer */
+    (void)value;
+    if (flags != 0)
+        SetEventFlag(IntrEventFlag, flags);
+    CpuResumeIntr(state);
 }
 
 static void WriteRequestHandler(unsigned int header, volatile unsigned int *buffer, unsigned int nQuads)
 {
-    struct ieee1394_TrPacketHdr WriteReqHeader;
-    unsigned int QuadsToRead, data;
-    unsigned int i;
-    unsigned char rCode, tLabel;
+    struct ieee1394_TrPacketHdr req;
+    unsigned int headerQuads, payloadQuads, i, j, data, count;
+    unsigned char rCode = 0;
 
-    (void)nQuads;
-
-    DEBUG_PRINTF("Incoming write request. Header: 0x%08x; Buffer: 0x%p; nQuads: 0x%08x.\n", header, buffer, nQuads);
-    rCode = 0;
-
-    /* Read in the header. */
-    WriteReqHeader.header = header;
-    QuadsToRead = sizeof(struct ieee1394_TrPacketHdr) >> 2;
-    if (((header >> 4) & 0xF) == IEEE1394_TCODE_WRITEQ) {
-        QuadsToRead--;           /* Quadlet write requests do not have the data length field. */
-        WriteReqHeader.misc = 4; /* nBytes=4 */
-        DEBUG_PRINTF("Quadlet");
-    } else {
-        DEBUG_PRINTF("Block");
+    headerQuads = (((header >> 4) & 0xF) == IEEE1394_TCODE_WRITEQ) ? 3 : 4;
+    if (nQuads < headerQuads) {
+        NoResponseHandler(header, buffer, nQuads);
+        return;
+    }
+    req.header = header;
+    req.misc = 4 << 16;
+    for (i = 1; i < headerQuads; i++)
+        ((unsigned int *)&req)[i] = *buffer;
+    req.misc >>= 16;
+    payloadQuads = (req.misc + 3) / 4;
+    if (payloadQuads > nQuads - headerQuads) {
+        NoResponseHandler(header, buffer, nQuads - (headerQuads - 1));
+        return;
     }
 
-    for (i = 1; i < QuadsToRead; i++) {
-        data = *buffer;
-        ((unsigned int *)(&WriteReqHeader))[i] = data;
-    }
-
-    WriteReqHeader.misc >>= 16;
-
-    DEBUG_PRINTF(" write request to 0x%08x %08x with length %u.\n", WriteReqHeader.offset_high, WriteReqHeader.offset_low, WriteReqHeader.misc);
-
-    /* Using the information in the header, write the data to the destination. */
 #ifdef REQ_CHECK_MEM_BOUNDARIES
-    if (WriteReqHeader.offset_low < 0x00200000) { /* Make sure that the write request falls within IOP memory. */
-#endif
-        for (i = 0; i < (WriteReqHeader.misc >> 2); i++) {
-            data = *buffer;
-            ((unsigned int *)WriteReqHeader.offset_low)[i] = data;
-        }
-#ifdef REQ_CHECK_MEM_BOUNDARIES
-    } else {
-        DEBUG_PRINTF("Invalid write request.");
+    if ((req.offset_high & 0xFFFF) != 0 || req.offset_low == 0 ||
+        req.offset_low >= 0x00200000 || req.misc > 0x00200000 - req.offset_low)
         rCode = 6;
-    }
 #endif
-
-    data = *buffer; /* Read in the last field that contains the speed. */
-
-    tLabel = (header >> 10) & 0x3F;
-    SendResponse(WriteReqHeader.offset_high >> 16, (header >> 16) >> 6, rCode, tLabel, IEEE1394_TCODE_WRITE_RESPONSE, (data >> 16) & 0x7, NULL, 0);
-
-    DEBUG_PRINTF("Response sent.\n");
-
-    if (CallBackFunction != NULL)
-        CallBackFunction(iLink_CB_WRITE_REQUEST, WriteReqHeader.offset_low, WriteReqHeader.misc);
+    // Rejected writes must consume the same payload/trailer as accepted writes.
+    for (i = 0; i < payloadQuads; i++) {
+        data = *buffer;
+        if (rCode == 0) {
+            count = req.misc - i * 4;
+            if (count > 4)
+                count = 4;
+            if (count == 4 && (req.offset_low & 3) == 0)
+                ((unsigned int *)req.offset_low)[i] = data;
+            else
+                for (j = 0; j < count; j++)
+                    ((unsigned char *)req.offset_low)[i * 4 + j] = ((unsigned char *)&data)[j];
+        }
+    }
+    data = *buffer;
+    SendResponse(req.offset_high >> 16, (header >> 16) >> 6, rCode,
+                 (header >> 10) & 0x3F, IEEE1394_TCODE_WRITE_RESPONSE,
+                 (data >> 16) & 0x7, NULL, 0);
+    if (rCode == 0 && CallBackFunction != NULL)
+        CallBackFunction(iLink_CB_WRITE_REQUEST, req.offset_low, req.misc);
 }
 
 struct ieee1394_TrCommonRdPktHdr
@@ -249,6 +290,10 @@ static void ReadRequestHandler(unsigned int header, volatile unsigned int *buffe
         DEBUG_PRINTF("Block");
     }
 
+    if (nQuads < QuadsToRead - 1) {
+        NoResponseHandler(header, buffer, nQuads);
+        return;
+    }
     for (i = 1; i < QuadsToRead; i++) {
         ReadReqHeader[i] = *buffer;
     }
@@ -277,7 +322,7 @@ static void ReadRequestHandler(unsigned int header, volatile unsigned int *buffe
     if (((offset_high & 0x0000FFFF) == 0x0000FFFF) && ((offset_low & 0xF0000000) == 0xF0000000)) {
 #endif
         offset_low &= 0x0FFFFFFF;
-        if ((offset_low - 0x400) < ConfigurationROMSize) {
+        if ((offset_low - 0x400) < ConfigurationROMSize && nBytes <= ConfigurationROMSize - (offset_low - 0x400)) {
             offset_high = 0;
             offset_low = (unsigned int)ConfigurationROM + (offset_low - 0x400);
         }
@@ -287,7 +332,7 @@ static void ReadRequestHandler(unsigned int header, volatile unsigned int *buffe
             rCode = 6;
             nBytes = 0;
         }
-    } else if ((offset_low >= 0x00200000) || (offset_low == 0)) {
+    } else if ((offset_high & 0xFFFF) != 0 || offset_low >= 0x00200000 || offset_low == 0 || nBytes > 0x00200000 - offset_low) {
         DEBUG_PRINTF("Invalid read request.");
         rCode = 6;
         nBytes = 0;
@@ -300,7 +345,7 @@ static void ReadRequestHandler(unsigned int header, volatile unsigned int *buffe
 
     DEBUG_PRINTF("Response sent!2.\n");
 
-    if (CallBackFunction != NULL)
+    if (rCode == 0 && CallBackFunction != NULL)
         CallBackFunction(iLink_CB_READ_REQUEST, offset_low, nBytes);
 }
 
@@ -325,7 +370,7 @@ const void *RequestHandlers[] = {
 
 int iLinkIntrHandler(void *arg)
 {
-    unsigned int LocalCachedIntr1Register, EventFlagBitsToSet;
+    unsigned int Intr0, LocalCachedIntr1Register, EventFlagBitsToSet;
 #ifdef REQ_CHECK_DMAC_STAT
     unsigned int i;
 #endif
@@ -334,21 +379,24 @@ int iLinkIntrHandler(void *arg)
 
     while (1) {
         /* Acknowledge interrupts while determining which interrupt events have occurred. Some events need to be acknowledged as early as possible or they will prevent the hardware from working properly. */
-        ILINKRegisterBase->intr0 = LocalCachedIntr0Register = ILINKRegisterBase->intr0 & ILINKRegisterBase->intr0Mask;
+        ILINKRegisterBase->intr0 = Intr0 = ILINKRegisterBase->intr0 & ILINKRegisterBase->intr0Mask;
         ILINKRegisterBase->intr1 = LocalCachedIntr1Register = ILINKRegisterBase->intr1 & ILINKRegisterBase->intr1Mask;
 
-        if (!LocalCachedIntr0Register && !LocalCachedIntr1Register)
+        if (!Intr0 && !LocalCachedIntr1Register)
             break;
 
+        // Preserve errors until the outgoing request consumes them. The ISR's
+        // final zero sample and unrelated receive interrupts must not erase them.
+        LocalCachedIntr0Register |= Intr0 & (iLink_INTR0_InvAck | iLink_INTR0_STO | iLink_INTR0_AckMiss | iLink_INTR0_RetEx | iLink_INTR0_UResp);
         EventFlagBitsToSet = 0;
 
-        DEBUG_PRINTF("iLink interrupt: 0x%08x 0x%08x\n", LocalCachedIntr0Register, LocalCachedIntr1Register);
+        DEBUG_PRINTF("iLink interrupt: 0x%08x 0x%08x\n", Intr0, LocalCachedIntr1Register);
 
         if (LocalCachedIntr1Register & iLink_INTR1_UTD)
             EventFlagBitsToSet |= iLinkEventDataSent;
 
 #ifdef REQ_CHECK_DMAC_STAT
-        if (LocalCachedIntr0Register & iLink_INTR0_DRFR) {
+        if (Intr0 & iLink_INTR0_DRFR) {
             iDEBUG_PRINTF("Handling DBUF FIFO data...\n");
 
             for (i = 0; i < 3; i++) {
@@ -373,43 +421,43 @@ int iLinkIntrHandler(void *arg)
         }
 #endif
 
-        if (LocalCachedIntr0Register & iLink_INTR0_PhyRst) {
+        if (Intr0 & iLink_INTR0_PhyRst) {
             iDEBUG_PRINTF("-=Bus reset start detected=-\n");
 
             GenerationNumber++;
 
             iLinkInitPHT();
-            EventFlagBitsToSet |= (iLinkEventBusReady | iLinkEventBusReset);
+            EventFlagBitsToSet |= (iLinkEventBusReady | iLinkEventBusReset | iLinkEventError | iLinkEventRequestError);
 
             iDEBUG_PRINTF("-=PHTs initialized=-\n");
         }
 
-        if (LocalCachedIntr0Register & iLink_INTR0_URx) {
+        if (Intr0 & iLink_INTR0_URx) {
             EventFlagBitsToSet |= iLinkEventURx;
         }
 
-        if (LocalCachedIntr0Register & (iLink_INTR0_InvAck | iLink_INTR0_RetEx | iLink_INTR0_UResp)) {
-            EventFlagBitsToSet |= iLinkEventError;
+        if (Intr0 & (iLink_INTR0_InvAck | iLink_INTR0_STO | iLink_INTR0_AckMiss | iLink_INTR0_RetEx | iLink_INTR0_UResp)) {
+            EventFlagBitsToSet |= iLinkEventError | iLinkEventRequestError;
             iDEBUG_PRINTF("-=Missing/invalid response detected=-\n");
         }
 
         /* For debugging purposes */
 #ifdef REQ_CHECK_ERRORS
-        if (LocalCachedIntr0Register & iLink_INTR0_HdrErr) {
+        if (Intr0 & iLink_INTR0_HdrErr) {
             iDEBUG_PRINTF("-=HdrErr=-\n");
         }
 
-        if (LocalCachedIntr0Register & iLink_INTR0_SntBsyAck) {
+        if (Intr0 & iLink_INTR0_SntBsyAck) {
             iDEBUG_PRINTF("-=iLink_INTR0_SntBsyAck=-\n");
         }
 #endif
 
-        if (LocalCachedIntr0Register & iLink_INTR0_PBCntR) {
+        if (Intr0 & iLink_INTR0_PBCntR) {
             EventFlagBitsToSet |= iLinkEventDMATransEnd;
             iDEBUG_PRINTF("-=End of DMA transfer=-\n");
         }
 
-        if (LocalCachedIntr0Register & iLink_INTR0_CmdRst) {
+        if (Intr0 & iLink_INTR0_CmdRst) {
             iDEBUG_PRINTF("-=CmdRst=-\n");
             iLinkPHYBusReset();
         }

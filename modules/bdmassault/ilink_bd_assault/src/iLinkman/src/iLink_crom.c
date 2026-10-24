@@ -91,11 +91,14 @@ int iLinkAddCROMUnit(unsigned int *data, unsigned int nQuads)
 
 void iLinkDeleteCROMUnit(unsigned int id)
 {
+    if (id >= 16 || ExtraCROMUnits[id] == NULL)
+        return;
+
     free(ExtraCROMUnits[id]);
     ExtraCROMUnits[id] = NULL;
-    BuildConfigurationROM();
-
+    ExtraCROMUnitsSize[id] = 0;
     nExtraCROMUnits--;
+    BuildConfigurationROM();
 }
 
 int iLinkGetNodeCapabilities(unsigned short NodeID)
@@ -289,8 +292,6 @@ static void BuildConfigurationROM(void)
     CROMSize = CROMSize + sizeof(struct DirectoryHeader) + sizeof(struct ModelID_Textual_Descriptor);
     CROMSize = CROMSize + sizeof(struct DirectoryHeader) + sizeof(struct Node_Unique_Id);
 
-    ConfigurationROMSize = CROMSize;
-
     if ((CROM_Buffer = malloc(CROMSize)) == NULL)
         return;
 
@@ -298,10 +299,10 @@ static void BuildConfigurationROM(void)
     /* Fill in the fields in the Root Directory (Exists immediately after the Bus Information block). */
     DirectoryHeader = (struct DirectoryHeader *)&CROM_Buffer[CurrentOffset];
     RootDirectory = (struct Root_Directory *)((unsigned char *)DirectoryHeader + sizeof(struct DirectoryHeader));
-    RootDirectory->Module_Vendor_ID_Texual_Descriptor_Offset = (IEEE1394_CROM_VENDOR << 24) | (sizeof(struct DirectoryHeader) * 2 / 4 + TotalRootDirectorySizeInQuads - 2 + sizeof(struct Module_Vendor_Id) / 4); /* Calculate the relative offset (In quadlets!!). */
+    RootDirectory->Module_Vendor_ID_Texual_Descriptor_Offset = (IEEE1394_CROM_MODEL_ID << 24) | (sizeof(struct DirectoryHeader) * 2 / 4 + TotalRootDirectorySizeInQuads - 2 + sizeof(struct Module_Vendor_Id) / 4); /* Calculate the relative offset (In quadlets!!). */
     RootDirectory->Node_Capabilities = (IEEE1394_CROM_NODE_CAPS << 24) | 0x0C0083C0;
-    RootDirectory->Node_Unique_ID_Offset = (IEEE1394_CROM_NODE_UID << 24) | (sizeof(struct DirectoryHeader) * 3 / 4 + TotalRootDirectorySizeInQuads - 2 + sizeof(struct Module_Vendor_Id) / 4 + sizeof(struct Module_Vendor_ID_Texual_Descriptor) / 4);
-    RootDirectory->Module_Vendor_ID_Offset = (IEEE1394_CROM_MODULE_VENDOR_ID << 24) | (nExtraCROMUnits + 1);
+    RootDirectory->Node_Unique_ID_Offset = (IEEE1394_CROM_NODE_UID << 24) | (sizeof(struct DirectoryHeader) * 3 / 4 + TotalRootDirectorySizeInQuads - 4 + sizeof(struct Module_Vendor_Id) / 4 + sizeof(struct Module_Vendor_ID_Texual_Descriptor) / 4);
+    RootDirectory->Module_Vendor_ID_Offset = (IEEE1394_CROM_MODULE_VENDOR_ID << 24) | (TotalExtraCROMUnitSize / 4 + 1);
 
     ieee1394Swab32(RootDirectory, RootDirectory, sizeof(struct Root_Directory) / 4); /* Convert this block of data to Big-endian data. */
 
@@ -320,7 +321,7 @@ static void BuildConfigurationROM(void)
 
     /* Fill in the fields of the Module Vendor ID record. */
     ModuleVendorID = (struct Module_Vendor_Id *)&CROM_Buffer[CurrentOffset + sizeof(struct DirectoryHeader)];
-    ModuleVendorID->Textual_Descriptor = (IEEE1394_CROM_MODEL_ID << 24) | ((sizeof(struct DirectoryHeader) * 2 / 4 + sizeof(struct Module_Vendor_ID_Texual_Descriptor) + sizeof(struct Node_Unique_Id)) / 4);
+    ModuleVendorID->Textual_Descriptor = (IEEE1394_CROM_MODEL_ID << 24) | ((sizeof(struct Module_Vendor_Id) + sizeof(struct DirectoryHeader) * 2 + sizeof(struct Module_Vendor_ID_Texual_Descriptor) + sizeof(struct Node_Unique_Id)) / 4);
 
     ieee1394Swab32(ModuleVendorID, ModuleVendorID, sizeof(struct Module_Vendor_Id) / 4); /* Convert this block of data to Big-endian data. */
 
@@ -393,4 +394,5 @@ static void BuildConfigurationROM(void)
     if (ConfigurationROM != NULL)
         free(ConfigurationROM);
     ConfigurationROM = (unsigned int *)CROM_Buffer;
+    ConfigurationROMSize = CROMSize;
 }
