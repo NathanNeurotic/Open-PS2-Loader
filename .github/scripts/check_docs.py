@@ -52,7 +52,7 @@ def audit(source, site):
     parsed = {path.resolve(): document(path) for path in files}
     errors, external, checked, upstream = [], {}, 0, []
     for path, (anchors, links) in parsed.items():
-        label = ("site/" + path.name) if site and path.parent == site else str(path.relative_to(source))
+        label = ("site/" + path.name) if site and path.parent == site else path.relative_to(source).as_posix()
         if path.suffix == ".html":
             errors += [f"{label}: duplicate id {key}" for key, count in Counter(anchors).items() if count > 1]
         for url in links:
