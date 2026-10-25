@@ -1,5 +1,8 @@
 # Documentation audit — October 19, 2026
 
+For the current refresh, see the [October 25 documentation and fork audit](DOCUMENTATION-AUDIT-2026-10-25.md).
+The revisions and outcomes below are the earlier baseline.
+
 Baseline: [`rebuild/main` at 7988eff5](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/7988eff5),
 [`gh-pages` at e8561ca8](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/e8561ca8),
 and wiki `8b9a756`. The local checkout was on an August-era forensic branch; it was clean

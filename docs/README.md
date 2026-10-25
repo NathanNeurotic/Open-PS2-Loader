@@ -14,6 +14,7 @@ Use the references below for implementation details, exact limits and contributo
 | Test a PR artifact or collect freeze diagnostics | [Test builds](TEST-BUILDS.md) |
 | Understand defaults and saved settings | [Fresh-start defaults](DEFAULTS.md) |
 | Diagnose setup or a failed launch | [Setup questions](SETUP-QUESTIONS.md) · [Troubleshooting](https://nathanneurotic.github.io/Open-PS2-Loader/troubleshooting.html) |
+| Separate package, core, transport and launch-stage failures | [Launch diagnostics](LAUNCH-DIAGNOSTICS.md) |
 | Recover a failed VMC creation | [VMC creation and recovery](VMC.md) |
 | Diagnose an APA disk without formatting it | [APA safety](APA-SAFETY.md) · [Recovery tool](../pc/apa-recovery/README.md) |
 
@@ -44,6 +45,9 @@ Use the references below for implementation details, exact limits and contributo
 [Maintenance](MAINTAINING-DOCS.md) explains which source owns each surface, how to validate
 changes, and how to regenerate search and wiki content. The [October audit](DOCUMENTATION-AUDIT-2026-10.md)
 records the reviewed revisions, corrections, link evidence and remaining validation limits.
+
+[Fork collaboration](FORK-COLLABORATION.md) explains candidate triage and evidence boundaries;
+the [October 25 audit](DOCUMENTATION-AUDIT-2026-10-25.md) records the current refresh.
 
 Integration plans, dated audits, community-report handoffs and `docs/superpowers/` are engineering
 history. Their old DONE/pending states, branches and package names describe that baseline;

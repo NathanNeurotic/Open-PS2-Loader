@@ -49,6 +49,7 @@ SITE_GROUPS = {
         ("getting-started", "Getting-Started", "Getting started"),
         ("install", "Installation", "Installation and first boot"),
         ("releases", "Releases", "Releases and packages"),
+        ("launch-diagnostics", "Launch-Diagnostics-Guide", "Launch diagnostics"),
     ],
     "Storage and networking": [
         ("usb", "USB-MX4SIO-and-iLink", "USB, MX4SIO and iLink"),
@@ -96,6 +97,8 @@ DOCS = {
     "docs/GAME-FORMATS.md": ("Game-Formats-Reference", "Game image formats reference"),
     "docs/README.md": ("Documentation-Index", "Documentation index"),
     "docs/TEST-BUILDS.md": ("Test-Builds", "Test builds and diagnostics"),
+    "docs/LAUNCH-DIAGNOSTICS.md": ("Launch-Diagnostics", "Launch diagnostics by package, core and transport"),
+    "docs/FORK-COLLABORATION.md": ("Fork-Collaboration", "Learning across PS2 loader projects"),
     "docs/VMC.md": ("VMC-Recovery", "VMC creation and recovery"),
     "docs/EXFAT.md": ("EXFAT-Reference", "exFAT and APA-Jail reference"),
     "docs/PC-CARD-CF.md": ("PC-CARD-CF-Reference", "PC CARD CF implementation reference"),
@@ -351,6 +354,8 @@ and translation maintenance are covered under {link('Languages', 'Languages')}.
 | Use USB, MX4SIO or iLink storage | {link('USB, MX4SIO and iLink', 'USB-MX4SIO-and-iLink')} |
 | Use an SD2PSX or compatible MMCE device | {link('MMCE', 'MMCE')} |
 | Test a supplied preview or diagnose a failed save card | {link('Test builds', 'Test-Builds')} · {link('VMC recovery', 'VMC-Recovery')} |
+| Diagnose by package, core and transport | {link('Launch diagnostics', 'Launch-Diagnostics')} |
+| Compare and share improvements across projects | {link('Fork collaboration', 'Fork-Collaboration')} |
 | Use experimental special hardware | {link('DESR DVR', 'PSX-DVR')} · {link('PC CARD CF', 'PC-CARD-CompactFlash')} |
 | Use an internal HDD | {link('APA and exFAT HDD', 'Internal-HDD')} · {link('Disk safety and code 402', 'APA-Safety')} |
 | Share games from a PC or NAS | {link('SMB', 'SMB')} · {link('UDPFS / UDPBD', 'Network-Boot')} · {link('HTTP', 'HTTP')} |
