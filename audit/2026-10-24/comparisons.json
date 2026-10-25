@@ -1,0 +1,4833 @@
+[
+  {
+    "repo": "dnunezx/LUNA",
+    "url": "https://api.github.com/repos/dnunezx/LUNA/compare/f3c765e23eee9fb9ff0829d4e63a22a542cd2199...386f352cf1c2d74a010b23f519c680d31826405d",
+    "status": "ahead",
+    "total_commits": 20,
+    "ahead_by": 20,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "33e367bd649cc0fc747152acaef4ecc2970bcdd7",
+        "subject": "Integrate native ADPCM ambient playback and package its audio asset",
+        "date": "2026-10-21T15:37:03Z"
+      },
+      {
+        "sha": "98c7f7bb642087e5a20a15d43af88020bdafa4e8",
+        "subject": "Update frontend for disc-swap Luna Glass styling",
+        "date": "2026-10-21T15:52:23Z"
+      },
+      {
+        "sha": "c49f5741d0b777e3d9d47c2f6b0c57bf3ee425f3",
+        "subject": "Update PSXCore to fe07985 after build validation",
+        "date": "2026-10-21T20:16:12Z"
+      },
+      {
+        "sha": "fd261718d9ccb376c5c5658626ca14af4fe6f0fd",
+        "subject": "Update PSXCore to fc34f14 after build validation",
+        "date": "2026-10-21T23:29:37Z"
+      },
+      {
+        "sha": "50501bed92e12b4574bf459f6c0e1602bc138497",
+        "subject": "Exclude diagnostics from production builds and packages",
+        "date": "2026-10-21T23:31:48Z"
+      },
+      {
+        "sha": "70c2412de9f46141c7a474b450685a832a711acd",
+        "subject": "Update PSXCore to d28c80b after build validation",
+        "date": "2026-10-22T06:42:44Z"
+      },
+      {
+        "sha": "dc6e74df0d1473d34811bc3d935757bbba6cbba1",
+        "subject": "Update PSXCore to 0e18d40 after build validation",
+        "date": "2026-10-22T17:37:49Z"
+      },
+      {
+        "sha": "df0305e7d33a7808819615b30a40f4f851175b5e",
+        "subject": "Update frontend for smoother artwork loading and rapid navigation",
+        "date": "2026-10-22T21:25:36Z"
+      },
+      {
+        "sha": "aaa09dd0883259d9330f5b4031c45cd7a80fd079",
+        "subject": "Update PSXCore to 2273d71 after build validation",
+        "date": "2026-10-22T23:43:35Z"
+      },
+      {
+        "sha": "02f00d7d629bd37b644b4d81b370cbcfb2658b4d",
+        "subject": "Update PSXCore to 721da5e after build validation",
+        "date": "2026-10-23T02:00:48Z"
+      },
+      {
+        "sha": "ba331364656b3516f42af77d9cf56e8f21f6f5bd",
+        "subject": "Update PSXCore to c315a85 after build validation",
+        "date": "2026-10-23T02:22:02Z"
+      },
+      {
+        "sha": "a3ec4c3b9948fad5f37640da85e3ed97fa0e7e54",
+        "subject": "Update frontend with PS1 HDTV Fix video option",
+        "date": "2026-10-23T02:53:40Z"
+      },
+      {
+        "sha": "cf045207c51fc3af3b1618a9551a3610948662e1",
+        "subject": "Update PSXCore to b8b98fe after build validation",
+        "date": "2026-10-23T17:40:29Z"
+      },
+      {
+        "sha": "1002300746965bbda6905986860e450f2f3aae29",
+        "subject": "Update PSXCore to 3cb87d3 after build validation",
+        "date": "2026-10-23T20:42:30Z"
+      },
+      {
+        "sha": "7c769ba0c1d6bae7ab2e66df930251f02c4e9623",
+        "subject": "Update PSXCore to 74253fd after build validation",
+        "date": "2026-10-23T23:36:55Z"
+      },
+      {
+        "sha": "ff77f47c8071ae5a53e119e1cac459d1f9d487f2",
+        "subject": "Update PSXCore to 827b7ca after build validation",
+        "date": "2026-10-24T01:58:47Z"
+      },
+      {
+        "sha": "3037a3215f0acb4d7ef93da510e87c88d19935e9",
+        "subject": "Update PSXCore to 636961d after build validation",
+        "date": "2026-10-24T07:15:02Z"
+      },
+      {
+        "sha": "e9bf32d51efe617cbb6342d0eeefc1255f96a7e5",
+        "subject": "Add isolated 3.1.3 MMCE hotfix build workflow",
+        "date": "2026-10-24T14:42:44Z"
+      },
+      {
+        "sha": "19e3d4e8d43e8d4879690737a932b1e91fe6a2af",
+        "subject": "Remove completed temporary 3.1.3 MMCE build workflow",
+        "date": "2026-10-24T18:16:39Z"
+      },
+      {
+        "sha": "386f352cf1c2d74a010b23f519c680d31826405d",
+        "subject": "Update frontend with MMCe scan fix and restored debug colors",
+        "date": "2026-10-24T18:42:40Z"
+      }
+    ],
+    "files": [
+      {
+        "path": ".gitignore",
+        "status": "modified"
+      },
+      {
+        "path": "nhddl",
+        "status": "modified"
+      },
+      {
+        "path": "psxcore",
+        "status": "modified"
+      },
+      {
+        "path": "tools/ambient-music-addon.txt",
+        "status": "modified"
+      },
+      {
+        "path": "tools/assert-production-package.ps1",
+        "status": "added"
+      },
+      {
+        "path": "tools/build-luna-psxcore.sh",
+        "status": "modified"
+      },
+      {
+        "path": "tools/build-opl-core.ps1",
+        "status": "modified"
+      },
+      {
+        "path": "tools/package-fmcb.ps1",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "dnunezx/PSXCore",
+    "url": "https://api.github.com/repos/dnunezx/PSXCore/compare/0d4348ea5fff50a16c303c5c1910038e65bf7915...636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae",
+    "status": "ahead",
+    "total_commits": 26,
+    "ahead_by": 26,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "b1d95b3dd9e0e517a618d4b78a4c091ac1679029",
+        "subject": "Enable exact polygon packets and CD command ordering by default",
+        "date": "2026-10-21T16:15:48Z"
+      },
+      {
+        "sha": "4ce9682b7cebfd0087358a14b5518cb808bbe495",
+        "subject": "Precompute exact polygon packet formats and harden installation",
+        "date": "2026-10-21T17:49:51Z"
+      },
+      {
+        "sha": "72afb56fb742545566949691d15963f300ecc7e9",
+        "subject": "Preserve all six MDEC run-length bits",
+        "date": "2026-10-21T18:18:01Z"
+      },
+      {
+        "sha": "756bc703c12e2eb7ba061640f187c2f5facd1402",
+        "subject": "Stop MDEC runs at the block boundary and shorten RLE decoding",
+        "date": "2026-10-21T18:49:07Z"
+      },
+      {
+        "sha": "fe07985ff5116c9f1a4dc34f9f161926ab199aad",
+        "subject": "Fix MDEC leading padding and streamline coefficient decoding",
+        "date": "2026-10-21T19:27:51Z"
+      },
+      {
+        "sha": "b957ec9dcd9d9bc5416c84f47d16e469eb575fed",
+        "subject": "Fix MDEC quant-table uploads and GTE MAC0 writes",
+        "date": "2026-10-21T20:45:54Z"
+      },
+      {
+        "sha": "d4bd57fe4ef7ad5e7abff1f5a48f3accf9e2e982",
+        "subject": "Fix GTE transfer side effects and streamline color conversion",
+        "date": "2026-10-21T21:32:19Z"
+      },
+      {
+        "sha": "fc34f1456236a725eeb31ae29744ee21ba654c10",
+        "subject": "Fix GTE screen reads, H readback, and read-only loads",
+        "date": "2026-10-21T21:51:53Z"
+      },
+      {
+        "sha": "20da1ee94526b91d0e8caf0457fd758b2ae5dfa4",
+        "subject": "Correct GTE and MDEC arithmetic and preserve FLAG writes",
+        "date": "2026-10-22T01:58:49Z"
+      },
+      {
+        "sha": "5d59342567dbb1cdd12f4ae890bf83bb782c8262",
+        "subject": "Restore native GTE and MDEC arithmetic paths",
+        "date": "2026-10-22T02:14:22Z"
+      },
+      {
+        "sha": "2e0326c61bd1770d560bcd215a67f841bba33174",
+        "subject": "Refresh README with core workflow and working runtime features",
+        "date": "2026-10-22T02:32:48Z"
+      },
+      {
+        "sha": "d28c80bb5744c4dc65f2179f0d4e5292cac9d89a",
+        "subject": "Remove graphics diagnostic overhead from hot paths",
+        "date": "2026-10-22T03:04:52Z"
+      },
+      {
+        "sha": "b5da494cb3a56cac05b0cb580c2285a649c1e782",
+        "subject": "Prioritize scratchpad accesses in native memory guards",
+        "date": "2026-10-22T12:59:20Z"
+      },
+      {
+        "sha": "0e18d40fb1899b1d18ab6174db1d2ae67c221cb8",
+        "subject": "Unroll fixed padding for aligned polygon packets",
+        "date": "2026-10-22T13:33:56Z"
+      },
+      {
+        "sha": "2200b9034db6ae14f945fe9df64915749e4878de",
+        "subject": "Retire stale translations at Rayman 2 executable handoff",
+        "date": "2026-10-22T22:34:31Z"
+      },
+      {
+        "sha": "58256dac0ea3ddf4399b2cd5a5d7cbd3b2f02de0",
+        "subject": "Register game-specific fixes through a shared startup dispatcher",
+        "date": "2026-10-22T22:46:04Z"
+      },
+      {
+        "sha": "2273d71dd29ef61a5d419bfcf718353d1b6b1417",
+        "subject": "Remove redundant Rayman patch build switch",
+        "date": "2026-10-22T22:52:11Z"
+      },
+      {
+        "sha": "721da5e2f4075e5e3b03dfda32d8365a38c6f4c3",
+        "subject": "Add opt-in HDTV output compatibility",
+        "date": "2026-10-23T01:51:42Z"
+      },
+      {
+        "sha": "c315a856c2865b5fb8d26ba56f84731f41d23d8e",
+        "subject": "Add HDTV command-line overrides to file launcher",
+        "date": "2026-10-23T02:18:07Z"
+      },
+      {
+        "sha": "479dc7d4c3d39287f619d1e35c574fa5563da5cb",
+        "subject": "Fix native GTE depth, color and clamp handling",
+        "date": "2026-10-23T12:54:34Z"
+      },
+      {
+        "sha": "b8b98fe9f8d116faf82121f5186bc0dbb1507fe6",
+        "subject": "Enable native GTE shift and near-plane fixes by default",
+        "date": "2026-10-23T15:20:56Z"
+      },
+      {
+        "sha": "7dd882fa1ff3deec2d810f0ef774ac05407df492",
+        "subject": "Fix native GTE MAC0 flags and depth-cue arithmetic",
+        "date": "2026-10-23T19:31:02Z"
+      },
+      {
+        "sha": "3cb87d3b3e272d4108bedb6e903cd09a950c2c05",
+        "subject": "Add opt-in native GTE special-matrix and far-color fixes",
+        "date": "2026-10-23T19:47:31Z"
+      },
+      {
+        "sha": "74253fdec4869d92b828a695da95005f0dcbc720",
+        "subject": "Add opt-in native MDEC zero-scale decoding",
+        "date": "2026-10-23T21:31:59Z"
+      },
+      {
+        "sha": "827b7cad0157aa6af7f41d42d7152db9c2d6837c",
+        "subject": "Enable native GTE matrix and MDEC zero-scale fixes by default",
+        "date": "2026-10-24T01:48:22Z"
+      },
+      {
+        "sha": "636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae",
+        "subject": "Schedule native GTE screen-offset load during division",
+        "date": "2026-10-24T03:21:49Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "CMakeLists.txt",
+        "status": "modified"
+      },
+      {
+        "path": "Makefile",
+        "status": "modified"
+      },
+      {
+        "path": "README.md",
+        "status": "modified"
+      },
+      {
+        "path": "include/psxcore_compat.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/psxcore_hdtv.h",
+        "status": "added"
+      },
+      {
+        "path": "include/psxcore_patch.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/psxcore_runtime.h",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/Makefile",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/cdorder.S",
+        "status": "added"
+      },
+      {
+        "path": "runtime/cdorder.c",
+        "status": "added"
+      },
+      {
+        "path": "runtime/file_storage.c",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/gamepatches.c",
+        "status": "added"
+      },
+      {
+        "path": "runtime/gamepatches.h",
+        "status": "added"
+      },
+      {
+        "path": "runtime/gamepatches/rayman2.c",
+        "status": "added"
+      },
+      {
+        "path": "runtime/gp0.S",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/gtecolor.S",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/gtenative_three.S",
+        "status": "added"
+      },
+      {
+        "path": "runtime/gtenative_three_patch.h",
+        "status": "added"
+      },
+      {
+        "path": "runtime/hdtv.S",
+        "status": "added"
+      },
+      {
+        "path": "runtime/loaderretire.S",
+        "status": "added"
+      },
+      {
+        "path": "runtime/main.c",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/mdec.S",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/mdecrle.S",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/memoryaccess.S",
+        "status": "modified"
+      },
+      {
+        "path": "runtime/packet_fast.S",
+        "status": "added"
+      },
+      {
+        "path": "runtime/polygonpacket_patch.h",
+        "status": "added"
+      },
+      {
+        "path": "runtime/resident.ld",
+        "status": "modified"
+      },
+      {
+        "path": "src/compat.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/hdtv.c",
+        "status": "added"
+      },
+      {
+        "path": "src/runtime_corrections.c",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "MiguelQueiroz010/OPL-DS4RTBT",
+    "url": "https://api.github.com/repos/MiguelQueiroz010/OPL-DS4RTBT/compare/e016d934e117a645e476564eddfd7f14f0188e01...9f250d4ca03c78adfd6b4db215c303d236a97cc4",
+    "status": "ahead",
+    "total_commits": 29,
+    "ahead_by": 29,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "9a6c716fb8a67b5493408466e3359e10b9ccf07e",
+        "subject": "PADEMU multitap: slot A without an emulated pad uses the real DS2 of the port; each slot keeps its own choice",
+        "date": "2026-10-18T15:37:30Z"
+      },
+      {
+        "sha": "d8294a02df7d6fe016a4383708cd0a227cef8e52",
+        "subject": "PADEMU multitap: route each slot / port on its own, also for two-port polls",
+        "date": "2026-10-18T16:13:06Z"
+      },
+      {
+        "sha": "4d0873e99f5850b4bc82bc5e52df02ff8e751143",
+        "subject": "MTAP Fix1",
+        "date": "2026-10-18T16:29:23Z"
+      },
+      {
+        "sha": "f992e52fa258d8f5238b512bfd0dc543e24be4dc",
+        "subject": "PADEMU: REDESIGN DIALOGS",
+        "date": "2026-10-18T16:31:12Z"
+      },
+      {
+        "sha": "f638621cdd40d834877745bda75fa01dae0e1d84",
+        "subject": "PADEMU menu: one control per row, new Bluetooth Pads screen",
+        "date": "2026-10-18T16:43:27Z"
+      },
+      {
+        "sha": "d3b83c5dbd20b0943bda9457eb62dadf90984c83",
+        "subject": "guigame: include delaythread.h for the Disconnect refresh delay",
+        "date": "2026-10-18T16:47:08Z"
+      },
+      {
+        "sha": "e5489cb45c7bf6590823748ed470af764078c6d0",
+        "subject": "PADEMU menu: say what each port / multitap slot really does",
+        "date": "2026-10-18T16:57:12Z"
+      },
+      {
+        "sha": "78616b689352a7a63833299a307a235e37e73734",
+        "subject": "MTAP FIX/LED FIX SAVECFG",
+        "date": "2026-10-18T17:22:27Z"
+      },
+      {
+        "sha": "05e5ddbba6a05d3709094cbed13eb6e93e9965a4",
+        "subject": "TEST MTAP FEATURE2",
+        "date": "2026-10-20T01:28:07Z"
+      },
+      {
+        "sha": "a0513bf061596543d723e74fecb6cfe07e5a58de",
+        "subject": "LED BUG FIX",
+        "date": "2026-10-20T01:40:16Z"
+      },
+      {
+        "sha": "e46fe12b5fca63f8e82ce4650ac5e0210bf2dd76",
+        "subject": "Makefile: only track .d for .o objects (fix 'No rule to make target obj/libds34usb.a')",
+        "date": "2026-10-20T18:30:37Z"
+      },
+      {
+        "sha": "0caca926a12ce27b61c974cb98e84a3f4eaa0514",
+        "subject": "pademu: start the pad driver early and send the real pad of a mixed poll alone",
+        "date": "2026-10-20T18:57:14Z"
+      },
+      {
+        "sha": "65d22222bf5228f29d225e494f7655c98e10e422",
+        "subject": "pademu: one early start of the pad driver (merge with the MTAP FIX one)",
+        "date": "2026-10-20T18:57:23Z"
+      },
+      {
+        "sha": "46a2b43b15cc32a7d105fee1d56472c56fead5f5",
+        "subject": "pademu_split: regdata element type follows the SIO2 struct (u32 on the IOP)",
+        "date": "2026-10-20T19:05:54Z"
+      },
+      {
+        "sha": "f80e4c37894f1846b381a04557deb9ba0ee69d50",
+        "subject": "pademu: copy the transfer with mips_memcpy (no memcpy import on the IOP)",
+        "date": "2026-10-20T19:08:24Z"
+      },
+      {
+        "sha": "43a3381764daa82f4274591f75b33befe8a59438",
+        "subject": "PADEMU: diagnostic log lines for connection / multitap / settings",
+        "date": "2026-10-20T19:28:11Z"
+      },
+      {
+        "sha": "3ccb979c4ad5d9666d129fa13a5cb829d1b037af",
+        "subject": "MTAP FIX ROUTE",
+        "date": "2026-10-20T20:03:17Z"
+      },
+      {
+        "sha": "2cf308511b187f8a0b209140f71936dca0bb0bae",
+        "subject": "FIX LOG",
+        "date": "2026-10-20T20:12:15Z"
+      },
+      {
+        "sha": "a23d595a018ee26aa302e7b338a291612cbfc1df",
+        "subject": "About: credit Miguel Queiroz and Rodrigo Galvan for the Bluetooth/DualSense work",
+        "date": "2026-10-21T22:25:51Z"
+      },
+      {
+        "sha": "ec06674883e6b9883e94450b2d037d3512bbd436",
+        "subject": "About: fit credits in the Coders block; README simplified, add pt-BR version",
+        "date": "2026-10-21T22:32:25Z"
+      },
+      {
+        "sha": "74c83c877debe210f1d3b40bf5e143d93137844e",
+        "subject": "Remove tools/ps2_log.txt from the tree; README: multitap emulation works",
+        "date": "2026-10-21T22:39:40Z"
+      },
+      {
+        "sha": "d7786603d90d9fbf3ac8d3028b4d09b94f4998b5",
+        "subject": "Controller Setup: Custom lightbar colour with a colour picker",
+        "date": "2026-10-21T22:46:51Z"
+      },
+      {
+        "sha": "c6d4741e079eadbdecd6cdcba318f81448de6601",
+        "subject": "Controller Setup: custom colour per port with picker shown on Custom rows, live lightbar preview",
+        "date": "2026-10-21T22:53:19Z"
+      },
+      {
+        "sha": "601b9de9280072eac2131bcf01670fba3b46bbfe",
+        "subject": "Network Config: Browse shares button lists the server's shares with folder icons",
+        "date": "2026-10-22T00:52:34Z"
+      },
+      {
+        "sha": "3356976e40d48e22f58f414e31f33e3ea5cb337c",
+        "subject": "FIXBROWSE SMB",
+        "date": "2026-10-22T01:09:31Z"
+      },
+      {
+        "sha": "960025554d75875678f0355eb6bdaafd02253207",
+        "subject": "FIXBROWSE SMB2",
+        "date": "2026-10-22T01:13:50Z"
+      },
+      {
+        "sha": "aa7fe724be7faa86818d1e16204d7bd46ede8475",
+        "subject": "Languages: keep the PADPORT and HINT_PAD_PORT strings",
+        "date": "2026-10-23T17:37:51Z"
+      },
+      {
+        "sha": "237340ce918916f31d63293a9f51b6fa8614e4ce",
+        "subject": "PADEMU: holding PS turns the controller off by default",
+        "date": "2026-10-23T17:37:51Z"
+      },
+      {
+        "sha": "9f250d4ca03c78adfd6b4db215c303d236a97cc4",
+        "subject": "README: back to the OPL-DualSense-BT README, with the new features",
+        "date": "2026-10-23T17:39:10Z"
+      }
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/release-bt.yml",
+        "status": "modified"
+      },
+      {
+        "path": "Makefile",
+        "status": "modified"
+      },
+      {
+        "path": "README.md",
+        "status": "modified"
+      },
+      {
+        "path": "RELEASE_NOTES_BT.md",
+        "status": "removed"
+      },
+      {
+        "path": "ee_core/Makefile",
+        "status": "modified"
+      },
+      {
+        "path": "ee_core/include/coreconfig.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/btkeys.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/dia.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/dialogs.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/ethsupport.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/guigame.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/padsetup.h",
+        "status": "modified"
+      },
+      {
+        "path": "lng_tmpl/_base.yml",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ds34bt/ee/libds34bt.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ds34bt/ee/libds34bt.h",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ds34bt/iop/ds34bt.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/pademu/Makefile",
+        "status": "modified"
+      },
+      {
+        "path": "modules/pademu/ds34bt.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/pademu/imports.lst",
+        "status": "modified"
+      },
+      {
+        "path": "modules/pademu/pademu.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/pademu/pademu_route.h",
+        "status": "added"
+      },
+      {
+        "path": "modules/pademu/pademu_split.h",
+        "status": "added"
+      },
+      {
+        "path": "src/dia.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dialogs.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/ethsupport.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/gui.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/guigame.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/system.c",
+        "status": "modified"
+      },
+      {
+        "path": "tools/ps2_log.txt",
+        "status": "removed"
+      },
+      {
+        "path": "tools/test_pademu_route.c",
+        "status": "added"
+      },
+      {
+        "path": "tools/test_pademu_split.c",
+        "status": "added"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "NathanNeurotic/Open-PS2-Loader",
+    "url": "https://api.github.com/repos/NathanNeurotic/Open-PS2-Loader/compare/2808a4cd579e4294c520e35149bbfc87d79cce45...55261de1381ae70ecfdfb2054f9cafbcfcd586cf",
+    "status": "ahead",
+    "total_commits": 55,
+    "ahead_by": 55,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "d61b4c9f994cb4f0b5f616d34bd90fb53879e2e1",
+        "subject": "fix(ilink): wait for the fetch agent's own SBP-2 completion",
+        "date": "2026-10-21T19:10:43Z"
+      },
+      {
+        "sha": "82f494cb4a2166c939acab5d40d58b55e3f0ef35",
+        "subject": "docs(notes): land pending audit notes, archive stashes, add current status",
+        "date": "2026-10-21T22:20:26Z"
+      },
+      {
+        "sha": "03f50fa6f42ff275be8b1d838737862cab4f72c9",
+        "subject": "fix: close small audit findings across drivers, isofs and launch config",
+        "date": "2026-10-21T22:23:31Z"
+      },
+      {
+        "sha": "a159433d4a3abbc0c0c88582972c22b65271c00b",
+        "subject": "docs(notes): fade decision (keep, #967), hardware-test tracker #1033, worktree pass 2",
+        "date": "2026-10-21T23:57:29Z"
+      },
+      {
+        "sha": "462d534cf4097feb7720d902e4dfd86f0bbbe9d2",
+        "subject": "fix(ilink): retain live commands after ambiguous pointer errors",
+        "date": "2026-10-22T00:52:41Z"
+      },
+      {
+        "sha": "d117308edbc9c7d9b63b8c24f63526ed62ec5057",
+        "subject": "Merge pull request #1031 from NathanNeurotic/codex/ilink-timing-investigation",
+        "date": "2026-10-22T00:58:31Z"
+      },
+      {
+        "sha": "f5f21bf6a694e0df8a6e9c27914d02d4887fcafb",
+        "subject": "Add Ember starting-disc selection from discs.txt",
+        "date": "2026-10-22T02:00:37Z"
+      },
+      {
+        "sha": "9d0b257c62e5d212ef0122c78f595c04536f521e",
+        "subject": "Discover UDPFS language packs after the server connects",
+        "date": "2026-10-22T02:09:26Z"
+      },
+      {
+        "sha": "fdda5bcb47d7403b5574a65ffbc8a2007af396a7",
+        "subject": "Keep launch-error dialogs from queuing background artwork",
+        "date": "2026-10-22T02:18:06Z"
+      },
+      {
+        "sha": "9d9a24bbd52430f7f29ff000c72529755c74a3cb",
+        "subject": "Merge pull request #1032 from NathanNeurotic/fix/audit-hardening-batch",
+        "date": "2026-10-22T04:00:53Z"
+      },
+      {
+        "sha": "ef5273d7fbfc55064b2bea81f5688942770d01a3",
+        "subject": "Merge remote-tracking branch 'origin/rebuild/main' into codex/ember-disc-selection",
+        "date": "2026-10-22T04:02:10Z"
+      },
+      {
+        "sha": "e496a664de0eaf7025ba5c5fa4fd57ab20596c90",
+        "subject": "Merge branch 'codex/ember-disc-selection' into codex/udpfs-language-discovery",
+        "date": "2026-10-22T04:05:57Z"
+      },
+      {
+        "sha": "91174a85b58d5ef948feb7f645731d68963b1608",
+        "subject": "Merge pull request #1034 from NathanNeurotic/codex/ember-disc-selection",
+        "date": "2026-10-22T04:07:45Z"
+      },
+      {
+        "sha": "804059afa5d2c42147edd983c9b811c7b83fa210",
+        "subject": "Merge current main after Ember selection was merged",
+        "date": "2026-10-22T04:09:33Z"
+      },
+      {
+        "sha": "2fe6acfbf82d55bc619026c2eb2f5fd82d3a3326",
+        "subject": "Merge pull request #1035 from NathanNeurotic/codex/udpfs-language-discovery",
+        "date": "2026-10-22T04:52:29Z"
+      },
+      {
+        "sha": "2089b7917a3cc1349d6900aa40d542db0e8c26da",
+        "subject": "docs: explain image formats and PS2-Servers decoding",
+        "date": "2026-10-22T04:59:00Z"
+      },
+      {
+        "sha": "17ceda18bbe5bcd59b594bb7da49cd0806461521",
+        "subject": "feat(settings): menu font size option for CRT legibility (#757) \u2014 DRAFT",
+        "date": "2026-10-22T12:30:20Z"
+      },
+      {
+        "sha": "6f50dea3032cd36fdb2b6464320fd954f80fcb47",
+        "subject": "fix(udpfs): load artwork once the server connects (#1036) \u2014 DRAFT",
+        "date": "2026-10-22T12:30:38Z"
+      },
+      {
+        "sha": "2aee62449b98723c578a267233479442c50729d2",
+        "subject": "feat(ra): selectable suffix RA mark and smaller unframed cover mark (H11, DRAFT)",
+        "date": "2026-10-22T12:31:11Z"
+      },
+      {
+        "sha": "3bc0e68b4e250b02c3b2f534999b2e36553ffdf7",
+        "subject": "docs(wiki): add game image formats to the home page starting-points table",
+        "date": "2026-10-22T12:41:49Z"
+      },
+      {
+        "sha": "ae6e6366b3d4a00afe65de2f8bd0dab48b2b0ecf",
+        "subject": "docs(notes): evening audit refresh \u2014 post-#1035 main line, confirmed fixes (#1010, #504, #1019), stale refs",
+        "date": "2026-10-22T12:41:55Z"
+      },
+      {
+        "sha": "40c52ceb457847a3006d640ef302f5a515d4b6c0",
+        "subject": "Merge pull request #1040 from NathanNeurotic/docs/wiki-home-formats",
+        "date": "2026-10-22T12:42:55Z"
+      },
+      {
+        "sha": "abe4b2e4434f021cd82a413aed52e15d54842265",
+        "subject": "docs: add AGENTS.md as canonical agent instruction file (DRAFT)",
+        "date": "2026-10-22T12:58:15Z"
+      },
+      {
+        "sha": "308bc6a15bdb8592455e62740ab5165422c0f06d",
+        "subject": "docs: keep agent instructions concise and actionable",
+        "date": "2026-10-22T13:51:26Z"
+      },
+      {
+        "sha": "312f9a19b44abe0be1fb9881a66497df75f5d6a0",
+        "subject": "fix(udpfs): declare ART resolver before first call",
+        "date": "2026-10-22T16:28:38Z"
+      },
+      {
+        "sha": "40738fd11d696a5b397f886cb24c7b38dec2be9d",
+        "subject": "fix(settings): unblock font-size build and document option",
+        "date": "2026-10-22T16:31:33Z"
+      },
+      {
+        "sha": "6ca1181cba214453a8ceb3730018ad918788f35b",
+        "subject": "fix(ra): resolve host-test and format failures",
+        "date": "2026-10-22T16:35:04Z"
+      },
+      {
+        "sha": "57c45b4fcc922ba00fed949c634caea0a2900c63",
+        "subject": "Merge pull request #1041 from NathanNeurotic/sable/agents-md",
+        "date": "2026-10-22T18:25:57Z"
+      },
+      {
+        "sha": "00bc8e58fd1552680c80569f057551f2f6d94349",
+        "subject": "fix(ilink): correct command direction and recover manager state",
+        "date": "2026-10-22T20:31:15Z"
+      },
+      {
+        "sha": "5ddab45ea5b9520ba5c00d60aeee47a4ee8b5dd5",
+        "subject": "build(ilink): pin rebuilt recovery driver and matched test modules",
+        "date": "2026-10-22T20:35:04Z"
+      },
+      {
+        "sha": "29997cc7a730c197e649527db202f1a2abcf9457",
+        "subject": "fix(ilink): retain request ownership through errors and reset",
+        "date": "2026-10-23T00:46:37Z"
+      },
+      {
+        "sha": "e934560c4c3f7da667a69b9bf6a57c1096189e78",
+        "subject": "fix(ilink): unwind manager resources when combined startup fails",
+        "date": "2026-10-23T00:50:08Z"
+      },
+      {
+        "sha": "c37295fe5caf27641dc044d3e43e18f2886e877c",
+        "subject": "fix(ilink): accept completed extended SCSI GOOD status",
+        "date": "2026-10-23T00:53:59Z"
+      },
+      {
+        "sha": "8576ecfb43ff5a339f4640330c0eb9a806be43f6",
+        "subject": "build(ilink): pin rebuilt recovery driver for lifetime fixes",
+        "date": "2026-10-23T03:13:21Z"
+      },
+      {
+        "sha": "d77554b63c4bdcc262c44a1ab80e2ed454e7ded8",
+        "subject": "fix(ilink): report reset generation changes consistently",
+        "date": "2026-10-23T04:17:06Z"
+      },
+      {
+        "sha": "a332277cb1ee065e5a1acf42fe94453c211d6c0b",
+        "subject": "fix(udpfs): complete late artwork discovery and cache retries",
+        "date": "2026-10-23T04:18:38Z"
+      },
+      {
+        "sha": "5fce162da0db3606e26be5a3c249a0949f8ebb5d",
+        "subject": "fix(ra): preserve row identity and owned badge text",
+        "date": "2026-10-23T04:21:50Z"
+      },
+      {
+        "sha": "0385fd5b7f1cab53f8223806f3cc84dcf5fcd0e5",
+        "subject": "fix(settings): fit font sizes to menu and dialog geometry",
+        "date": "2026-10-23T04:23:51Z"
+      },
+      {
+        "sha": "25b2ff942b1370ccc1adf6872b634f5b6f460b1f",
+        "subject": "Merge font-size changes and preserve appended language IDs",
+        "date": "2026-10-23T04:25:24Z"
+      },
+      {
+        "sha": "54517ca71e8c091255df5e62e5a33f1d01c96e4c",
+        "subject": "build(ilink): pin the rebuilt generation-recovery driver",
+        "date": "2026-10-23T04:26:12Z"
+      },
+      {
+        "sha": "8fe5d2559bc43ed0833a04c7ec13f3090eaef795",
+        "subject": "perf(ilink): fuse aligned transfer copies with byte swapping",
+        "date": "2026-10-23T06:02:34Z"
+      },
+      {
+        "sha": "1fd24a949f5dd27699cb8181af66f1482f9dc175",
+        "subject": "build(ilink): pin one-pass transfer driver and measured footprint",
+        "date": "2026-10-23T06:08:10Z"
+      },
+      {
+        "sha": "ad7578ed89fe0cfe2ffffa13d2e426d53f330220",
+        "subject": "docs(ilink): correct measured one-pass code delta",
+        "date": "2026-10-23T06:09:43Z"
+      },
+      {
+        "sha": "9fc75831abb25a0d8d262d9b7d6601478e3b5fe3",
+        "subject": "test(ilink): verify all bytes in aligned and partial reads",
+        "date": "2026-10-23T06:14:28Z"
+      },
+      {
+        "sha": "7774e4499ddeffc41d1d4be97c47252f14258b58",
+        "subject": "docs(ilink): align audit with verified one-pass artifact",
+        "date": "2026-10-23T06:22:21Z"
+      },
+      {
+        "sha": "090ef31a57baa5f30d4d187dd7ca9b70ddb6e694",
+        "subject": "feat(settings): give language selection its own page",
+        "date": "2026-10-23T14:54:49Z"
+      },
+      {
+        "sha": "f159d24a2974c69c92a8b9ecb6e8ba847a224407",
+        "subject": "fix(release): calculate build versions from complete history",
+        "date": "2026-10-23T15:01:48Z"
+      },
+      {
+        "sha": "bb8cac2e408ad0d395f9c08ae41cde50fac8ecfd",
+        "subject": "fix(settings): retain global OSD edits and restore per-game scope",
+        "date": "2026-10-23T17:56:39Z"
+      },
+      {
+        "sha": "9e17cc38b94e82d668ae5a5e7fa9e68e53a561b8",
+        "subject": "fix(ra): preserve hidden PS1 IDs when decorating titles",
+        "date": "2026-10-23T18:03:22Z"
+      },
+      {
+        "sha": "be724b87fa56ff17ec43621523658206e1bcfaab",
+        "subject": "Merge pull request #1044: fix release build versions",
+        "date": "2026-10-23T18:07:36Z"
+      },
+      {
+        "sha": "7d1a3809af63bd246563e3724c7b8b9e083bac1b",
+        "subject": "Merge pull request #1037: retry UDPFS artwork after connection",
+        "date": "2026-10-23T18:09:00Z"
+      },
+      {
+        "sha": "6db9209ad07546c7f2590eb7b14f340c477af1a8",
+        "subject": "Merge pull request #1038: add menu font sizing",
+        "date": "2026-10-23T18:09:47Z"
+      },
+      {
+        "sha": "4b6dee8793e55331a2249c7ba5a6e9bdced50b98",
+        "subject": "Merge pull request #1039: refine RA badge presentation",
+        "date": "2026-10-23T18:10:21Z"
+      },
+      {
+        "sha": "0bc2352133d2010337558b55b843668df3e12355",
+        "subject": "Merge pull request #1043: consolidate language settings",
+        "date": "2026-10-23T18:10:54Z"
+      },
+      {
+        "sha": "55261de1381ae70ecfdfb2054f9cafbcfcd586cf",
+        "subject": "Merge pull request #1042: repair i.LINK transaction ownership",
+        "date": "2026-10-24T01:02:52Z"
+      }
+    ],
+    "files": [
+      {
+        "path": ".clang-format-ignore",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/release_channel.sh",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_bdma_shipped_pairs.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_bdma_stale_pair.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_cfg_titles.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_ember_disc_selection.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_error_dialog_render.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_font_size.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ilink_bd_assault_reset.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_ilink_bd_reset.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_ilink_command_orb.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ilink_discovery.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ilink_manager_irq.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ilink_manager_recovery.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ilink_manager_safety.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ilink_sbp2_completion.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ilink_scsi_geometry.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_io_menu_lifetime.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_language_page.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_menu_sort.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_osd_defaults.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ra_badge_rows.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_ra_ps1.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_release_version.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_settings_back_keeps_edits.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_udpfs_art.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/test_udpfs_languages.py",
+        "status": "added"
+      },
+      {
+        "path": ".github/scripts/test_udpfs_themes.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/scripts/wiki_sync.py",
+        "status": "modified"
+      },
+      {
+        "path": ".github/workflows/flavours.yml",
+        "status": "modified"
+      },
+      {
+        "path": ".github/workflows/rolling-release.yml",
+        "status": "modified"
+      },
+      {
+        "path": "AGENTS.md",
+        "status": "added"
+      },
+      {
+        "path": "CLAUDE.md",
+        "status": "added"
+      },
+      {
+        "path": "Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/usbhdfsd.irx.ilink",
+        "status": "modified"
+      },
+      {
+        "path": "Makefile",
+        "status": "modified"
+      },
+      {
+        "path": "POPS/usbhdfsd.irx.ilink",
+        "status": "modified"
+      },
+      {
+        "path": "README.md",
+        "status": "modified"
+      },
+      {
+        "path": "ROLLING_RELEASE.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/COMPRESSED-IMAGES.md",
+        "status": "added"
+      },
+      {
+        "path": "docs/GAME-FORMATS.md",
+        "status": "added"
+      },
+      {
+        "path": "docs/ILINK_CODE_AUDIT_2026-10-22.md",
+        "status": "added"
+      },
+      {
+        "path": "docs/ILINK_TIMING_INVESTIGATION_2026-10-21.md",
+        "status": "added"
+      },
+      {
+        "path": "docs/INTERFACE.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/LANGUAGES.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/README.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/RETROACHIEVEMENTS.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/TEST-BUILDS.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/UNICODE-GAME-TITLES.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/VCD.md",
+        "status": "modified"
+      },
+      {
+        "path": "ee_core/src/iopmgr.c",
+        "status": "modified"
+      },
+      {
+        "path": "include/cfgtitle.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/config.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/cuesupport.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/dialogs.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/fntsys.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/gui.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/menusys.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/opl.h",
+        "status": "modified"
+      },
+      {
+        "path": "include/themes.h",
+        "status": "modified"
+      },
+      {
+        "path": "lng_tmpl/_base.yml",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdm/src/part_driver_gpt.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdm/src/part_driver_mbr.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/PROVENANCE.md",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/README.md",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/imports.lst",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/include/sbp2_disk.h",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/include/scsi.h",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/main.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/sbp2_driver.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/IEEE1394_bd/src/scsi.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/iLinkman/include/iLinkman.h",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/iLinkman/src/iLink.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/iLinkman/src/iLink_DMA.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/iLinkman/src/iLink_TxRx.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/iLinkman/src/iLink_crom.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/iLinkman/src/iLink_intr.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/ilink_bd_assault/src/iLinkman/src/include/iLink_internal.h",
+        "status": "modified"
+      },
+      {
+        "path": "modules/bdmassault/usbhdfsd.irx.ilink",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/IEEE1394_bd/ORIGIN.txt",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/IEEE1394_bd/src/imports.lst",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/IEEE1394_bd/src/include/sbp2_disk.h",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/IEEE1394_bd/src/include/scsi.h",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/IEEE1394_bd/src/main.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/IEEE1394_bd/src/sbp2_driver.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/IEEE1394_bd/src/scsi.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/ilink/iLinkman/LICENSE",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/Makefile",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/ORIGIN.txt",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/README",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/include/iLinkman.h",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/exports.tab",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/iLink.c",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/iLink_DMA.c",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/iLink_PHY.c",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/iLink_TxRx.c",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/iLink_crom.c",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/iLink_internal.c",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/iLink_intr.c",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/imports.lst",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/include/iLink_CROM.h",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/include/iLink_internal.h",
+        "status": "added"
+      },
+      {
+        "path": "modules/ilink/iLinkman/src/irx_imports.h",
+        "status": "added"
+      },
+      {
+        "path": "modules/isofs/isofs.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/isofs/zso.c",
+        "status": "modified"
+      },
+      {
+        "path": "modules/network/nbns/imports.lst",
+        "status": "modified"
+      },
+      {
+        "path": "modules/network/nbns/nbns.c",
+        "status": "modified"
+      },
+      {
+        "path": "notes/ILINK-DMA-AUDIT-2026-10-21.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/ISSUE-1010-COMMENT-DRAFT.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/ISSUE-1010-COPY-AGAIN-COMMENT-DRAFT.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/ISSUE-1010-FIX-COMMENT-DRAFT.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/MERGE-TRIAGE-2026-10-19.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/SIO2MAN-MMCE-AUDIT-2026-10-19.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/STATUS-2026-10-21.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/FORK-GAPS-2026-10-21.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/baseline-register.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/baseline.html",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/build_report.py",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/comparison-summary.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/consolidated-gaps.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/deltas.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/fork-gaps.html",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/id-dispositions.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/live-supplement.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/releases.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/repositories.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/repository-heads.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/fork-gap-audit-2026-10-21/validation-links.json",
+        "status": "added"
+      },
+      {
+        "path": "notes/stash-archive/README.md",
+        "status": "added"
+      },
+      {
+        "path": "notes/worktree-inventory-2026-10-21.txt",
+        "status": "added"
+      },
+      {
+        "path": "src/bdmsupport.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/cfgtitle.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/cuesupport.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dia.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dialogs.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/ethsupport.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/fntsys.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/gui.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/guigame.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/hddsupport.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/menusys.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/mmcesupport.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/opl.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/rabadge.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/system.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/texcache.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/themes.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/udpfssupport.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/vcdsupport.c",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "hacan359/xerabora",
+    "url": "https://api.github.com/repos/hacan359/xerabora/compare/28c6531ceb9f247cd88f37a2bfbac23b93265a27...faf24cdd4e2790868c880899bd58c8f775539d50",
+    "status": "ahead",
+    "total_commits": 1,
+    "ahead_by": 1,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "faf24cdd4e2790868c880899bd58c8f775539d50",
+        "subject": "Release 1.0.0",
+        "date": "2026-10-24T17:05:49Z"
+      }
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/build.yml",
+        "status": "modified"
+      },
+      {
+        "path": "README.md",
+        "status": "modified"
+      },
+      {
+        "path": "android/app/src/main/java/io/github/hacan359/xerabora/UpdateChecker.java",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/console.c",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/main.c",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/raweb.c",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/raweb.h",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/snapshot.c",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/snapshot.h",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/ui_page.c",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/version.h",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/webui.c",
+        "status": "modified"
+      },
+      {
+        "path": "client/src/webui.h",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/index.html",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/lang/es.json",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/lang/pt-BR.json",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/css/00-tokens.css",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/css/30-components.css",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/css/40-effects.css",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/css/50-stream.css",
+        "status": "added"
+      },
+      {
+        "path": "client/ui/src/css/60-theme-8bit.css",
+        "status": "added"
+      },
+      {
+        "path": "client/ui/src/js/01-util.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/js/02-store.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/js/03-api.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/js/10-components.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/js/20-live.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/js/22-game.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/js/24-settings.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/js/25-stream.js",
+        "status": "added"
+      },
+      {
+        "path": "client/ui/src/js/90-app.js",
+        "status": "modified"
+      },
+      {
+        "path": "client/ui/src/page.html",
+        "status": "modified"
+      },
+      {
+        "path": "client/xerabora.rc",
+        "status": "modified"
+      },
+      {
+        "path": "docs/TROUBLESHOOTING.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/USAGE.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/demo.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/es.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/index.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/lang/en.json",
+        "status": "modified"
+      },
+      {
+        "path": "docs/lang/es.json",
+        "status": "modified"
+      },
+      {
+        "path": "docs/lang/pt-BR.json",
+        "status": "modified"
+      },
+      {
+        "path": "docs/pt-br.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/screenshots/companion.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/screenshots/console.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/screenshots/follow.png",
+        "status": "modified"
+      },
+      {
+        "path": "docs/screenshots/game.png",
+        "status": "modified"
+      },
+      {
+        "path": "docs/screenshots/library.png",
+        "status": "modified"
+      },
+      {
+        "path": "docs/screenshots/live.png",
+        "status": "removed"
+      },
+      {
+        "path": "docs/screenshots/phone.png",
+        "status": "modified"
+      },
+      {
+        "path": "docs/screenshots/stream-8bit.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/screenshots/stream.png",
+        "status": "added"
+      },
+      {
+        "path": "third_party/rcheevos",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "rodrigoGalvanDev/OPL-DualSense-BT",
+    "url": "https://api.github.com/repos/rodrigoGalvanDev/OPL-DualSense-BT/compare/971ae6e505a2822e2affb3a819e076b5b1a288d2...38586e75babff587b156f6349465664276dba391",
+    "status": "ahead",
+    "total_commits": 1,
+    "ahead_by": 1,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "38586e75babff587b156f6349465664276dba391",
+        "subject": "Add CLAUDE.md with project context for Claude Code",
+        "date": "2026-10-22T01:03:35Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "CLAUDE.md",
+        "status": "added"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "akilluminati47/RIPPS2",
+    "url": "https://api.github.com/repos/akilluminati47/RIPPS2/compare/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803...28bc44d0d3a31b084d6b7e55ff91745f9a09c026",
+    "status": "ahead",
+    "total_commits": 12,
+    "ahead_by": 12,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "4728807fbef881cdafaefd9c7a577054060e3428",
+        "subject": "Build 111: ripped BIOS music plays, sounds load once per set, Save Settings To holds with a card in",
+        "date": "2026-10-21T17:51:28Z"
+      },
+      {
+        "sha": "4e49a0c57797b8c01a7397cc1a2d82d8fae82fbe",
+        "subject": "v1.1.1-beta: changelog, README, notes, the sounds lesson video",
+        "date": "2026-10-21T17:51:28Z"
+      },
+      {
+        "sha": "942849ef9132e76eb2990ae775ea931a62770840",
+        "subject": "psx-place bump draft for v1.1.0 and v1.1.1 (the Short's link filled in by psxplace_bump.py)",
+        "date": "2026-10-21T17:53:03Z"
+      },
+      {
+        "sha": "9ed76a14166ee4cbd1a269d790ada83331ec867c",
+        "subject": "README and v1.1.1-beta notes: the sounds lesson plays from GitHub Pages",
+        "date": "2026-10-21T17:54:27Z"
+      },
+      {
+        "sha": "8fef5a5a3302a9c72a741010788c8c11aaf1f7c4",
+        "subject": "Build 112: BIOS Music rips the menu's own piece (the clock), the red screen's, or both",
+        "date": "2026-10-21T22:27:24Z"
+      },
+      {
+        "sha": "6ed57af4ac2fe2999cc1e1db4bbebcac53c2bac4",
+        "subject": "v1.1.2-beta: changelog, README, notes, the one-take sounds walkthrough, the build 113 plan",
+        "date": "2026-10-21T22:27:24Z"
+      },
+      {
+        "sha": "fada1e0022d534744419ef3fcd71dabca166b9e0",
+        "subject": "Build 112 hotfix: the music chooser's lengths inside its box",
+        "date": "2026-10-22T08:04:28Z"
+      },
+      {
+        "sha": "70c123e1713e50061f3a004a033c831bb2b91f00",
+        "subject": "Build 113: the category sidebar, the legacy theme key, Ember and POPSTARTER found not carried, settings moved",
+        "date": "2026-10-22T18:48:53Z"
+      },
+      {
+        "sha": "9b876e6153e3d801c4fc18ce93f38229e319fd8f",
+        "subject": "v1.1.3-beta: README, release and Discord notes, the release ELF's lab images, build 113 done",
+        "date": "2026-10-22T18:58:11Z"
+      },
+      {
+        "sha": "82995a45cc08b5730425c31da1034df470ead563",
+        "subject": "Build 114 plan: All Games from a master list, hidden games, delete completely; compression as a decision",
+        "date": "2026-10-22T19:03:01Z"
+      },
+      {
+        "sha": "fd54d6627a9b874ed8f15d475021d735b5104f21",
+        "subject": "README: Neutrino by rickgaiser linked beside RiptOPL; special thanks to the YouTube love with the testers",
+        "date": "2026-10-22T19:16:49Z"
+      },
+      {
+        "sha": "28bc44d0d3a31b084d6b7e55ff91745f9a09c026",
+        "subject": "Build 114 plan: FifthFox's iLink and size report, Berion's APA warning; psx-place first post for v1.1.3",
+        "date": "2026-10-22T19:24:24Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "CHANGELOG.md",
+        "status": "modified"
+      },
+      {
+        "path": "README.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/plans/builds-104-on.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/plans/fonts-plan.md",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/lab/b113-settings-lab.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/lab/b113-sidebar-lab.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/b113-header-fonts.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/b113-sidebar-launch-disc.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/b113-sidebar-memory-files.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/b113-sidebar-sheet.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/b113-sidebar-storage-focus.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/b113-sidebar-storage-sources.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/b113-sidebar-storage.png",
+        "status": "added"
+      },
+      {
+        "path": "docs/plans/mockups/make_b113_sidebar.py",
+        "status": "added"
+      },
+      {
+        "path": "elf/build.sh",
+        "status": "modified"
+      },
+      {
+        "path": "elf/ember/LICENSE-BETA.txt",
+        "status": "removed"
+      },
+      {
+        "path": "elf/ember/README.md",
+        "status": "modified"
+      },
+      {
+        "path": "elf/ember/ember.elf",
+        "status": "removed"
+      },
+      {
+        "path": "elf/lang/Albanian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Arabic.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Bulgarian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Cebuano.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Croatian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Czech.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Danish.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Dutch.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Filipino.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/French.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Galician.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/German.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Greek.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Hungarian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Indonesian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Italian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Japanese.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Korean.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Laotian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Persian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Polish.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Portuguese.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Portuguese_BR.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Romana.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Russian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/SChinese.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Serbian.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Spanish.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Swedish.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/TChinese.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Turkish.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/Vietnamese.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/lang/_strings.yml",
+        "status": "modified"
+      },
+      {
+        "path": "elf/patches/0111-ripps2-soundclean.patch",
+        "status": "added"
+      },
+      {
+        "path": "elf/patches/0112-ripps2-menumusic.patch",
+        "status": "added"
+      },
+      {
+        "path": "elf/patches/0113-ripps2-sidebar.patch",
+        "status": "added"
+      },
+      {
+        "path": "elf/popstarter/POPSTARTER.ELF",
+        "status": "removed"
+      },
+      {
+        "path": "elf/popstarter/README.md",
+        "status": "modified"
+      },
+      {
+        "path": "elf/tests/test_ripps2_build110.py",
+        "status": "modified"
+      },
+      {
+        "path": "elf/tests/test_ripps2_build111.py",
+        "status": "added"
+      },
+      {
+        "path": "elf/tests/test_ripps2_build112.py",
+        "status": "added"
+      },
+      {
+        "path": "elf/tests/test_ripps2_build113.py",
+        "status": "added"
+      },
+      {
+        "path": "elf/tests/test_ripps2_build80.py",
+        "status": "modified"
+      },
+      {
+        "path": "elf/tests/test_ripps2_build99.py",
+        "status": "modified"
+      },
+      {
+        "path": "elf/theme/gfx/ripps2_sidebar_icons.png",
+        "status": "added"
+      },
+      {
+        "path": "elf/theme/make_sidebar_icons.py",
+        "status": "added"
+      },
+      {
+        "path": "media/b111/01-star-centred.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b111/02-settings-highlight.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b111/03-sounds-video.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b111/ripps2-v111-sounds.mp4",
+        "status": "added"
+      },
+      {
+        "path": "media/b112/01-music-chooser.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b112/02-both-ripped.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b112/03-sounds-video.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b112/ripps2-v112-sounds.mp4",
+        "status": "added"
+      },
+      {
+        "path": "media/b113/01-sidebar-storage.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b113/02-sidebar-launch.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b113/03-legacy-start.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/b113/04-cache.jpg",
+        "status": "added"
+      },
+      {
+        "path": "media/ripps2-test-me.png",
+        "status": "modified"
+      },
+      {
+        "path": "tools/dev/mcls.py",
+        "status": "modified"
+      },
+      {
+        "path": "tools/discord/notes/build111.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/build112.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/build113.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/next113.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/next114.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/psxplace112.txt",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/psxplace113.txt",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/release111.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/release112.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/notes/release113.md",
+        "status": "added"
+      },
+      {
+        "path": "tools/discord/psxplace_bump.py",
+        "status": "added"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "Luden02/OrbitPS2-Manager",
+    "url": "https://api.github.com/repos/Luden02/OrbitPS2-Manager/compare/cb915ca62d650a298fd951ec781ea3d39cf1f8cf...cdd590aed8f37b09fa69f3fd3deccc1d0fd4f56d",
+    "status": "ahead",
+    "total_commits": 1,
+    "ahead_by": 1,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "cdd590aed8f37b09fa69f3fd3deccc1d0fd4f56d",
+        "subject": "SP2 DVD rip from disc",
+        "date": "2026-10-22T10:51:32Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "angular/src/app/pages/import/import.component.html",
+        "status": "modified"
+      },
+      {
+        "path": "angular/src/app/pages/import/import.component.ts",
+        "status": "modified"
+      },
+      {
+        "path": "angular/src/app/window.d.ts",
+        "status": "modified"
+      },
+      {
+        "path": "src/ipc/import.ipc.ts",
+        "status": "modified"
+      },
+      {
+        "path": "src/preload.ts",
+        "status": "modified"
+      },
+      {
+        "path": "src/services/optical-drive.service.ts",
+        "status": "added"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "NathanNeurotic/PS2-Servers",
+    "url": "https://api.github.com/repos/NathanNeurotic/PS2-Servers/compare/42c0613bed67a603a06d59fd95375c7cc6a0fae3...0e00cc53ecaa529edf72c249ae180d0e67182ad8",
+    "status": "ahead",
+    "total_commits": 1,
+    "ahead_by": 1,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "0e00cc53ecaa529edf72c249ae180d0e67182ad8",
+        "subject": "release: bump PS2 Servers to v0.8.2 (#254)",
+        "date": "2026-10-23T17:49:52Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "launcher/release_metadata.py",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "NathanNeurotic/Launchstation",
+    "url": "https://api.github.com/repos/NathanNeurotic/Launchstation/compare/593f16dc808f203d3d10638c16462eb1eb0c40e8...3e03e640a1434a6d23dd1b80498fa0fbb7c88672",
+    "status": "ahead",
+    "total_commits": 45,
+    "ahead_by": 45,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "6947dd7ab4de100d071e6905de2d1e8959a56241",
+        "subject": "Build UDPFS SMAP from source and preserve odd receive tails",
+        "date": "2026-10-22T02:22:38Z"
+      },
+      {
+        "sha": "9e20fd5d52b2899f0295f7c4cdd5bd8ec030aa5e",
+        "subject": "Normalize imported SMAP source file endings",
+        "date": "2026-10-22T02:23:14Z"
+      },
+      {
+        "sha": "5d8515cae2d4810eb91c95a50ddd14a8cda507df",
+        "subject": "Fix inherited SMAP startup checks and address driver review",
+        "date": "2026-10-22T04:06:06Z"
+      },
+      {
+        "sha": "6906a538204d0778e43604668b0ee6956e40a139",
+        "subject": "Merge pull request #190 from NathanNeurotic/codex/udpfs-odd-read-tail",
+        "date": "2026-10-22T04:11:07Z"
+      },
+      {
+        "sha": "2e140ab6baa720334a90da4aad031228ab3d9baa",
+        "subject": "Implement wrap-around navigation and release-page summaries",
+        "date": "2026-10-22T16:26:36Z"
+      },
+      {
+        "sha": "3fe9309b3f3f9fe60b34418d6ee01c11fe9678ea",
+        "subject": "Fix navigation wrap visibility and add compatible device handoff choices",
+        "date": "2026-10-23T00:22:22Z"
+      },
+      {
+        "sha": "260022b07d9dab6833608dbae3ab06948aff8461",
+        "subject": "Treat same-directory paste as a successful no-op",
+        "date": "2026-10-23T00:27:29Z"
+      },
+      {
+        "sha": "0cde273f0105a2540a203c1bafa80ca540a711ed",
+        "subject": "Clarify the device handoff setting location",
+        "date": "2026-10-23T00:29:15Z"
+      },
+      {
+        "sha": "8e7774d49ad4f886a166ec952f2f0f5e91caeab2",
+        "subject": "Keep legacy mass labels in classic browser paths",
+        "date": "2026-10-23T00:31:01Z"
+      },
+      {
+        "sha": "f18957e07cf4463eabf38b89a38eca8f804c8413",
+        "subject": "Address device handoff and shortcut review follow-ups",
+        "date": "2026-10-23T00:34:34Z"
+      },
+      {
+        "sha": "29e5aaf3ba276aaa6c979d00804bef4df9d99f22",
+        "subject": "Merge pull request #191: navigation, USB presentation and handoff choices",
+        "date": "2026-10-23T00:38:26Z"
+      },
+      {
+        "sha": "d6e27dbef7b3b60f1ca191b7be73f9593a2c305d",
+        "subject": "Record approved R3Z feedback scope and validation gates",
+        "date": "2026-10-23T00:54:20Z"
+      },
+      {
+        "sha": "86f1d8c89f7b85b8e5c33f272d4ac504b8b5ca6b",
+        "subject": "docs: explicitly credit PS2BUILD SDK in README.md",
+        "date": "2026-10-23T04:09:48Z"
+      },
+      {
+        "sha": "f24a81cf941712a986342c2ed190386096d7ddf0",
+        "subject": "docs: explicitly credit PS2BUILD SDK in docs/THIRD_PARTY_CREDITS.md",
+        "date": "2026-10-23T04:09:50Z"
+      },
+      {
+        "sha": "c94819587b0b6a47f3a6fea7b4c0898b8710a312",
+        "subject": "docs: explicitly credit PS2BUILD SDK in docs-site/content/credits.html",
+        "date": "2026-10-23T04:09:53Z"
+      },
+      {
+        "sha": "0a04fdf96a1d8c39db3fe1ae41927580b9643ff3",
+        "subject": "docs: credit PS2BUILD SDK in src/dash_info.c",
+        "date": "2026-10-23T04:10:12Z"
+      },
+      {
+        "sha": "ac0f7599ddbb9e3de4c69f30c6c2411f3f7445e9",
+        "subject": "docs: credit PS2BUILD SDK in src/main_info_screens.c",
+        "date": "2026-10-23T04:10:14Z"
+      },
+      {
+        "sha": "e3cafff39dcab966ba13d468709d24c89d344ef0",
+        "subject": "docs: credit PS2BUILD SDK in tests/test_project_branding.py",
+        "date": "2026-10-23T04:10:17Z"
+      },
+      {
+        "sha": "1e911e508be84c28fd1b2ec626b942a18e92549f",
+        "subject": "Address R3Z browser, video and MMCE feedback",
+        "date": "2026-10-23T14:48:24Z"
+      },
+      {
+        "sha": "f829a99cc029c6436e30e4762893a6514a23f5e1",
+        "subject": "Clarify SDK documentation and standalone Wiki publication",
+        "date": "2026-10-23T15:26:03Z"
+      },
+      {
+        "sha": "8e2dbc080c2f8f2021beb142b9163e2c150f8643",
+        "subject": "Merge pull request #193 from NathanNeurotic/docs/credit-ps2build-sdk-20261022",
+        "date": "2026-10-23T15:43:46Z"
+      },
+      {
+        "sha": "79febb20bf41969e3f9ecf9ea07e6d8e1625b0fa",
+        "subject": "docs: publish PS2BUILD SDK clarification and build guide",
+        "date": "2026-10-23T15:58:07Z"
+      },
+      {
+        "sha": "344f0c1a08b76bb8cfebf87a50d396828a64de06",
+        "subject": "Merge pull request #194 from NathanNeurotic/docs/ps2build-sdk-live-20261023",
+        "date": "2026-10-23T16:00:10Z"
+      },
+      {
+        "sha": "abd4603b4f6bc34611dd2b8145db87f4ccf8c57b",
+        "subject": "Explain insufficient storage on paste",
+        "date": "2026-10-23T16:22:10Z"
+      },
+      {
+        "sha": "80c774f97115de0a5b34769699b028a119ce90c1",
+        "subject": "Merge pull request #195 from NathanNeurotic/nathanneurotic-fix-elf-paste-insufficient-space",
+        "date": "2026-10-23T16:24:09Z"
+      },
+      {
+        "sha": "f454fe4cc3b652eacf8c78b61c1164c5ef244b73",
+        "subject": "Merge master into codex/r3z-feedback-follow-up",
+        "date": "2026-10-23T16:54:48Z"
+      },
+      {
+        "sha": "f0ea7d1cc45b1f6ece4ad65094988b8a4e7bb830",
+        "subject": "Merge pull request #192 from NathanNeurotic/codex/r3z-feedback-follow-up",
+        "date": "2026-10-23T17:03:12Z"
+      },
+      {
+        "sha": "a3881f0a30a897ea41a8392f748706c3bdbf904f",
+        "subject": "Complete compact file-operation progress and modal wrap feedback",
+        "date": "2026-10-23T18:21:57Z"
+      },
+      {
+        "sha": "a4bda7fde4e0686eea3e5e6d0de84a9d1eddf6ac",
+        "subject": "Reset file overlay state before later device status prompts",
+        "date": "2026-10-23T18:23:53Z"
+      },
+      {
+        "sha": "ffe5f53dbc3575cfac87ff3acc03d766d22ad658",
+        "subject": "Give transfer filenames a dedicated full-width row",
+        "date": "2026-10-23T18:36:54Z"
+      },
+      {
+        "sha": "72f1afe771dd490d3d39fa8dc7303b0cce2a83db",
+        "subject": "Fix physical memory-card copy creation flags",
+        "date": "2026-10-24T01:24:49Z"
+      },
+      {
+        "sha": "b5eec7620be7335cdefd4584208d95661c20141d",
+        "subject": "Normalize FatFs stat errors before copy absence checks",
+        "date": "2026-10-24T01:24:49Z"
+      },
+      {
+        "sha": "6a11fff872458aa90e38028c780ab2926671861f",
+        "subject": "Show mounted USB paths without inventing MASS aliases",
+        "date": "2026-10-24T01:25:47Z"
+      },
+      {
+        "sha": "7fb1ff927fdcc0b32fc6079fe2331fb4ac58d380",
+        "subject": "Draw deletion status before blocking I/O and tighten modal coverage",
+        "date": "2026-10-24T01:36:34Z"
+      },
+      {
+        "sha": "7a6b70091428b6e64273ac775646a239eb946627",
+        "subject": "Keep shared browser documentation independent of mount-label changes",
+        "date": "2026-10-24T01:39:39Z"
+      },
+      {
+        "sha": "3faf2b707d758f8ca7b65237667dcbd0980b78e6",
+        "subject": "Clarify native browser labels without overlapping transfer documentation",
+        "date": "2026-10-24T01:39:41Z"
+      },
+      {
+        "sha": "77777412140d806c632aa3f93d69867e2623ce33",
+        "subject": "Place transfer documentation before navigation to avoid EOF overlap",
+        "date": "2026-10-24T01:40:22Z"
+      },
+      {
+        "sha": "74ea56257196243456fb2b21a4e15dee28c1df3d",
+        "subject": "Combine copy/storage recovery with transfer UI for full review",
+        "date": "2026-10-24T01:46:22Z"
+      },
+      {
+        "sha": "43912fd13157704ca4905bd6317fcb69d07e84ae",
+        "subject": "Document the combined recovery and transfer UI review scope",
+        "date": "2026-10-24T01:47:32Z"
+      },
+      {
+        "sha": "f35472cff575fd76e40b12ad26c202959036b06f",
+        "subject": "Preserve classic MASS labels in device panels",
+        "date": "2026-10-24T02:09:08Z"
+      },
+      {
+        "sha": "001c4ba049b4cef630750dd715446353e42b9207",
+        "subject": "Keep Neutrino options audible until launch is committed",
+        "date": "2026-10-24T02:22:45Z"
+      },
+      {
+        "sha": "cdf33f2d0ec7b2f8a382e0e9d7098b80f0fe2924",
+        "subject": "Normalize mcman/mmce getstat errors and prevent background fx stepdown jumps",
+        "date": "2026-10-24T04:35:43Z"
+      },
+      {
+        "sha": "a936fcf7f9293d5d5f864cf94dab19a53ee8decb",
+        "subject": "Address CodeRabbit review feedback on MMCE getstat, adaptive FX, and Neutrino audio tests",
+        "date": "2026-10-24T04:49:10Z"
+      },
+      {
+        "sha": "625e9272502cb5701b21d5c6ef1c92531883f908",
+        "subject": "Merge pull request #196 from NathanNeurotic/codex/transfer-progress-follow-up",
+        "date": "2026-10-24T05:38:04Z"
+      },
+      {
+        "sha": "3e03e640a1434a6d23dd1b80498fa0fbb7c88672",
+        "subject": "Revert repository state to 2e140ab6baa720334a90da4aad031228ab3d9baa",
+        "date": "2026-10-24T11:46:04Z"
+      }
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/compile.yml",
+        "status": "modified"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs-site/content/releases.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/THIRD_PARTY_CREDITS.md",
+        "status": "modified"
+      },
+      {
+        "path": "embed.make",
+        "status": "modified"
+      },
+      {
+        "path": "iop/udpfs_smap/LICENSE",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/Makefile",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/ORIGIN.md",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/include/irx_imports.h",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/include/main.h",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/include/mprintf.h",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/include/smap.h",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/include/xfer.h",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/src/exports.tab",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/src/imports.lst",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/src/main.c",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/src/smap.c",
+        "status": "added"
+      },
+      {
+        "path": "iop/udpfs_smap/src/xfer.c",
+        "status": "added"
+      },
+      {
+        "path": "ps2.yaml",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/check_udpfs_smap.py",
+        "status": "added"
+      },
+      {
+        "path": "scripts/release_notes.py",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_apps.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_browser.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_files.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_hdd.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_home.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_settings.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_tools.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/dash_widgets.c",
+        "status": "modified"
+      },
+      {
+        "path": "src/embed_blobs.S",
+        "status": "modified"
+      },
+      {
+        "path": "src/filer_copy.c",
+        "status": "modified"
+      },
+      {
+        "path": "tests/test_navigation_wraparound.py",
+        "status": "added"
+      },
+      {
+        "path": "tests/test_release_notes.py",
+        "status": "modified"
+      },
+      {
+        "path": "tests/test_udpfs_smap_fifo_tail.py",
+        "status": "added"
+      },
+      {
+        "path": "tests/test_udpfs_smap_startup.py",
+        "status": "added"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "pcm720/udpfsd",
+    "url": "https://api.github.com/repos/pcm720/udpfsd/compare/58d7c8f11ac196d4a5ca7b65b78743fbeedfdd80...ee94414f9f45ed33b8dd4ca4e03847440df946e9",
+    "status": "ahead",
+    "total_commits": 2,
+    "ahead_by": 2,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "a33e8656f51db06e38325b15d36da24b0187b61e",
+        "subject": "fs: fallback to os.Stat if path is not open",
+        "date": "2026-10-24T16:51:47Z"
+      },
+      {
+        "sha": "ee94414f9f45ed33b8dd4ca4e03847440df946e9",
+        "subject": "udpfsd: fix possible panic in UDP batch writer",
+        "date": "2026-10-24T16:52:15Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "internal/fs/fileops.go",
+        "status": "modified"
+      },
+      {
+        "path": "internal/udpfsd/udpwrite_linux.go",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "DKWDRV/DKWDRV",
+    "url": "https://api.github.com/repos/DKWDRV/DKWDRV/compare/7f41569e9d62981d2b0b35b9d2bd4ab1dbcd5746...31fe2a85f2f3dbc65fd33de31ede4174b9da8b83",
+    "status": "ahead",
+    "total_commits": 1,
+    "ahead_by": 1,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "31fe2a85f2f3dbc65fd33de31ede4174b9da8b83",
+        "subject": "Update README.md add 1.7.6t changelog",
+        "date": "2026-10-23T16:23:55Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "README.md",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "NathanNeurotic/launcHER",
+    "url": "https://api.github.com/repos/NathanNeurotic/launcHER/compare/94809b18aaf621dd16f03707eb7b0ce362cf742c...2f083b8aef3e17d3eada476f96d8af505d9f6afc",
+    "status": "ahead",
+    "total_commits": 2,
+    "ahead_by": 2,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "5e769b288f0a780180ba9df134016f044129e29c",
+        "subject": "Document explicit Ember CUE arguments and cover forwarding",
+        "date": "2026-10-22T03:19:41Z"
+      },
+      {
+        "sha": "2f083b8aef3e17d3eada476f96d8af505d9f6afc",
+        "subject": "Merge pull request #28 from NathanNeurotic/codex/ember-cue-argument",
+        "date": "2026-10-22T04:00:58Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "README.md",
+        "status": "modified"
+      },
+      {
+        "path": "docs/configuration.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/data/search-index.json",
+        "status": "modified"
+      },
+      {
+        "path": "docs/getting-started.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/index.html",
+        "status": "modified"
+      },
+      {
+        "path": "docs/troubleshooting.html",
+        "status": "modified"
+      },
+      {
+        "path": "examples/launcHER.CNF",
+        "status": "modified"
+      },
+      {
+        "path": "tools/test_launch_args.py",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "CosmicScale/PSBBN-Definitive-Project",
+    "url": "https://api.github.com/repos/CosmicScale/PSBBN-Definitive-Project/compare/59992562f2bf3fb90314104ae548201e23835230...6c7c122f7bc6f4cfbddcb99946e61b99cbdbb3a1",
+    "status": "ahead",
+    "total_commits": 3,
+    "ahead_by": 3,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "5763375718a8996c81e5060b9e17ed03ef27bb67",
+        "subject": "Run the installer natively on macOS (Apple silicon) (#677)",
+        "date": "2026-10-23T15:27:31Z"
+      },
+      {
+        "sha": "c5a5e0985f5aef23fed6e25a7839761315cc903c",
+        "subject": "Add macOS info to Spanish readme",
+        "date": "2026-10-23T19:28:15Z"
+      },
+      {
+        "sha": "6c7c122f7bc6f4cfbddcb99946e61b99cbdbb3a1",
+        "subject": "Update troubleshooting",
+        "date": "2026-10-23T20:22:25Z"
+      }
+    ],
+    "files": [
+      {
+        "path": ".github/ISSUE_TEMPLATE/new-issue.yml",
+        "status": "modified"
+      },
+      {
+        "path": ".gitignore",
+        "status": "modified"
+      },
+      {
+        "path": "PSBBN-Definitive-Patch.sh",
+        "status": "modified"
+      },
+      {
+        "path": "README-PT-BR.md",
+        "status": "modified"
+      },
+      {
+        "path": "README-SPA.md",
+        "status": "modified"
+      },
+      {
+        "path": "README.md",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/Extras.sh",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/Game-Installer.sh",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/HOSDMenu-Installer.sh",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/Media-Installer.sh",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/PSBBN-Installer.sh",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/Setup.sh",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/HDL Dump.elf",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/PFS Fuse.elf",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/PFS Shell.elf",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/PS2 APA Header Checksum Fixer.elf",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/PSU Extractor.elf",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/README.md",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/cue2pops",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/da-veto",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/da-veto.c",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/genvmc",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/genvmc-magic.patch",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/hdl-dump-apple.patch",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/hdl_dump",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/mkfs.exfat",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/pfsshell",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/pfsshell-name32.patch",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/pops2cue",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/darwin-arm64/sqlite",
+        "status": "added"
+      },
+      {
+        "path": "scripts/helper/music-installer.py",
+        "status": "modified"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/blkid",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/blockdev",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/convert",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/dd",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/df",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/dmsetup",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/findmnt",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/ldconfig",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/lsblk",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/lvm",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/mke2fs",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/mkfs.vfat",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/mount",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/mount.exfat-fuse",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/partprobe",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/pfs-fuse",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/rsync",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/sed",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/sfdisk",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/sudo",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/tar",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/timeout",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/umount",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/uname",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/bin/wipefs",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/check-deps.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/debugfs_apply.py",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/enter.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/formulae.txt",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/lib.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/manifest.py",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/pkgconfig/fuse.pc",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/slice_sums.py",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/docker/Dockerfile",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/docker/linux-check.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/e2e-docker.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/e2e-extents.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/e2e-hosdmenu.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/e2e-image.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/e2e-launchers.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/darwin/tests/run.sh",
+        "status": "added"
+      },
+      {
+        "path": "scripts/platform/load.sh",
+        "status": "added"
+      }
+    ],
+    "file_list_limit_note": null
+  },
+  {
+    "repo": "johnson-cooper/PS2SP",
+    "url": "https://api.github.com/repos/johnson-cooper/PS2SP/compare/b9e4c0c3254409ee4cddfa104bef35c905f64ed9...2c8737b0988b7792bad448560c6af98373d52547",
+    "status": "ahead",
+    "total_commits": 101,
+    "ahead_by": 101,
+    "behind_by": 0,
+    "commits": [
+      {
+        "sha": "331c7fb34b1881c3a2f7afca9acbf3ab978a64e0",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-21T15:35:36Z"
+      },
+      {
+        "sha": "0d2f3f0b4ca739fe20a344e52e819f549f66a943",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-21T17:23:40Z"
+      },
+      {
+        "sha": "d51fc7495cd76929a313f650db6e91e52df8f556",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-21T17:42:46Z"
+      },
+      {
+        "sha": "8bf1d2d6ac30a6fc8408aebf865dc04c52959c8b",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-21T17:52:16Z"
+      },
+      {
+        "sha": "9f50149f39f5f913793243c3a3e611a9de5fcaa9",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-21T19:18:02Z"
+      },
+      {
+        "sha": "5a6888925972fdee30df86c2cd22314c8ad04d39",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-21T19:21:50Z"
+      },
+      {
+        "sha": "5f2e4ce8dde0e404281e31c983a35df0c1976b11",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-21T19:37:48Z"
+      },
+      {
+        "sha": "08d21421f2e2d037b415a4dcd44a813a85030b0f",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-21T20:57:06Z"
+      },
+      {
+        "sha": "3ecf293fe8e1440a1231e5611cbea01f90c7caa4",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-21T21:10:44Z"
+      },
+      {
+        "sha": "729b2ea8daaa8ba83701e9236adf4421d593f3ce",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-21T21:50:34Z"
+      },
+      {
+        "sha": "687f4f7f9a373027ca3c25bc5bdd2fbdfe179e4a",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-21T22:42:58Z"
+      },
+      {
+        "sha": "7eec3034aca207d2a9000db84e8515a94000da3d",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-21T23:13:40Z"
+      },
+      {
+        "sha": "0798601405342dfcd297f5b30d7b9a310e0f64be",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-21T23:22:22Z"
+      },
+      {
+        "sha": "4dba671628261ff8d761bd261d02ce9667e07f4a",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-22T00:17:21Z"
+      },
+      {
+        "sha": "f30441db068c77671862c198fdab613d668b8362",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-22T00:23:49Z"
+      },
+      {
+        "sha": "4806f4a6fc1673b892eb0d579e9d709b6c9c65d1",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-22T01:50:29Z"
+      },
+      {
+        "sha": "e1c38e1a35f8874a6b7b4cf51b21d3cbbb6f52d4",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-22T04:30:45Z"
+      },
+      {
+        "sha": "a1d84a97ce51c1bd6c69e40d5f1512d0c8201966",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-22T04:48:50Z"
+      },
+      {
+        "sha": "10b9bb033f2d97770b09267f3f153703c0025506",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-22T05:04:11Z"
+      },
+      {
+        "sha": "c6955b3cb051ac0aadd1faa2b995c5521b21f97d",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-22T05:25:29Z"
+      },
+      {
+        "sha": "55d5f3b16e8ef4cb4ef3e58b9b99781982aa5dd3",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-22T05:42:43Z"
+      },
+      {
+        "sha": "60cfe0f069b1747196e95aeb0205f02153a94cba",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-22T07:56:37Z"
+      },
+      {
+        "sha": "a1370cb00cb077180ffb25fb91ff5c42362394c4",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-22T10:03:38Z"
+      },
+      {
+        "sha": "a2de1ea3bb7e61a7328ee66638f418ff4f69a079",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-22T10:13:34Z"
+      },
+      {
+        "sha": "24be0c68a07cdf6ccb975d512eea648dbc639d9a",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-22T10:42:07Z"
+      },
+      {
+        "sha": "258e27f95289ec90585b2cce71a0d8c421d0cf89",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-22T11:02:44Z"
+      },
+      {
+        "sha": "54077d2fb7687cb30e9de0e8070e6510f5aba5de",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-22T12:07:08Z"
+      },
+      {
+        "sha": "87a3c3be06cedcc6f855312748e1b0efc8ad1c16",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-22T14:07:52Z"
+      },
+      {
+        "sha": "25ec848419f782ec8f4d2458ec945e2f4b8569a0",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-22T15:08:25Z"
+      },
+      {
+        "sha": "1c1d2beec308ca9f649d47829a3c8e7fda4b096d",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-22T15:20:49Z"
+      },
+      {
+        "sha": "e358b21ded873d6eade1c517a560c66f925ea417",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-22T15:43:26Z"
+      },
+      {
+        "sha": "9f2db502def05f2c127357010003c29108fd035b",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-22T16:31:51Z"
+      },
+      {
+        "sha": "c3fcbc2825d7d8f3f8a5bfef6723a921019dc039",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-22T17:20:50Z"
+      },
+      {
+        "sha": "575388d0b302934e22061331b55a6172b51c81b0",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-22T18:48:02Z"
+      },
+      {
+        "sha": "1f33ad5f5c506f6ab1dc7691ae6c18ae5e8a872f",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-22T19:13:01Z"
+      },
+      {
+        "sha": "6c0e3cdb67426a6be439d635bd032fac77d776c7",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-22T19:18:27Z"
+      },
+      {
+        "sha": "5ede18d270d979578eb4251cb146f90ef63e1f06",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-22T19:34:10Z"
+      },
+      {
+        "sha": "7ec9992be6ed12ae2b7af52cc52a82e961ae0956",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-22T20:24:09Z"
+      },
+      {
+        "sha": "001de7dee76c977a1bee54a71e1df544b78346d6",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-22T21:46:04Z"
+      },
+      {
+        "sha": "e0bf71778ec6fb0da1844708bed6632939393b5e",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-22T22:26:08Z"
+      },
+      {
+        "sha": "1b942b084ac109c0223414498e2ab4e6927b43d2",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-22T22:47:36Z"
+      },
+      {
+        "sha": "b2265ae79f7fef6d36dcf5f4c11bc8cffbf9ee45",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-22T22:48:53Z"
+      },
+      {
+        "sha": "83a88ecaf8f2189b23f45ffb491965bca39cebc6",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-22T23:15:16Z"
+      },
+      {
+        "sha": "18e495ed783503f6bcaa621ccf3d1971bb3f7b8f",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-22T23:51:01Z"
+      },
+      {
+        "sha": "9894b8bb5756570dc9a62d1b0ffb416c0e11a4e4",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-23T01:02:11Z"
+      },
+      {
+        "sha": "e832452e7c0bc09fcc2d66197ac5ca5c027fdc56",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-23T01:34:03Z"
+      },
+      {
+        "sha": "c1b1bb8839b02efdf5fc969941df49ea2b6984c5",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-23T01:57:32Z"
+      },
+      {
+        "sha": "354eb472e1169cc2c8adac28e4b34ea8709abbff",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-23T03:05:59Z"
+      },
+      {
+        "sha": "830c968470a42bd6ddd2829a6252316ead454698",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-23T04:34:53Z"
+      },
+      {
+        "sha": "658e2fc6852c8dad38a245384e73d32faa40abfd",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-23T05:04:15Z"
+      },
+      {
+        "sha": "490252bc952a7a6a30a9488fa2258863427df44a",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-23T06:31:53Z"
+      },
+      {
+        "sha": "30237f7f67388da13d8366d80a68be6c300f2640",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-23T07:35:09Z"
+      },
+      {
+        "sha": "a8e0ad9499093949a0571ec74312c8fd25075cf1",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-23T07:59:33Z"
+      },
+      {
+        "sha": "57b71257f019f5b4ba0451069c1ce845ac0a85fd",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-23T09:02:37Z"
+      },
+      {
+        "sha": "2ba1420f9924bbb57e2e4c1d0631d17350f74f72",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-23T09:56:51Z"
+      },
+      {
+        "sha": "b87e0c52e85f4b38c149684b4cf8a31d30555f8f",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-23T11:50:52Z"
+      },
+      {
+        "sha": "b15021090a9208fae787dadd5f18cf010893abf0",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-23T12:10:29Z"
+      },
+      {
+        "sha": "152dc37346edd8413a59be31cd11c49701489ac1",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-23T13:29:31Z"
+      },
+      {
+        "sha": "7aae51c64a8caa515e2cacc84ea9f0a40117c533",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-23T13:47:04Z"
+      },
+      {
+        "sha": "3cc4175fa7cedad9f8795c76c84c1a99280b8ec4",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-23T14:37:28Z"
+      },
+      {
+        "sha": "715812f635d32c03e7b7ae4d6065f0b9775630c1",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-23T14:55:58Z"
+      },
+      {
+        "sha": "fc40d70eb1f004f13474596bf029d8efeda9e52f",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-23T17:30:02Z"
+      },
+      {
+        "sha": "c02fbd5b9d471356f2779f757ac02ee5a904db94",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-23T18:24:51Z"
+      },
+      {
+        "sha": "051a14a41a3d511045d26fa50544c6467c00b8dc",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-23T18:42:11Z"
+      },
+      {
+        "sha": "ac1e1b470ddfa7948def9cd1f33c31e514252d90",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-23T18:52:08Z"
+      },
+      {
+        "sha": "a795a7db66e941ecca019932dd31de272b076e05",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-23T19:05:40Z"
+      },
+      {
+        "sha": "8a2daa349c8ef04cbf654d3783c604027f98f648",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-23T20:42:05Z"
+      },
+      {
+        "sha": "5f8985f4a146a1da831954efcdf4237a2baf3d4b",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-23T21:31:49Z"
+      },
+      {
+        "sha": "108aad06a594ec24f4b2d5e85b0993ea80b4c6cd",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-23T21:49:14Z"
+      },
+      {
+        "sha": "f04886b36e4e0b0ba4a904ff222d6bb7b5129026",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-23T22:03:45Z"
+      },
+      {
+        "sha": "97ba5177847abae607b134221190fef5a2ada508",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-23T22:14:01Z"
+      },
+      {
+        "sha": "4fa06a1f3de1073464b68193e4bdf668a881f28f",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-23T22:36:13Z"
+      },
+      {
+        "sha": "ef502a8b3ff8a0ea3b46b028b250e106bf301de2",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-23T23:33:26Z"
+      },
+      {
+        "sha": "f5d9b037f8157a60dfbe90bbba9f1a39df3451e5",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-24T00:12:45Z"
+      },
+      {
+        "sha": "dc6b2bd07bbb2b3c65fd4d61bf4f474dea3b1639",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-24T00:31:29Z"
+      },
+      {
+        "sha": "fa67528eba4e51f035c5edcf13fca9f3d9aceb79",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-24T00:44:31Z"
+      },
+      {
+        "sha": "d285e11b7204bcb9fb6fb8bd259e20f9265589f9",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-24T01:03:11Z"
+      },
+      {
+        "sha": "93384200dc744f2e138c63502f66b389e6681ffc",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-24T02:01:55Z"
+      },
+      {
+        "sha": "efefe7b5c54cf9eed51b6a025e81f083863d9482",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-24T04:48:53Z"
+      },
+      {
+        "sha": "95b79c9687b4fb11c64566d973ddf893496f340a",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-24T05:20:10Z"
+      },
+      {
+        "sha": "799a88ec108230a1662abcc90e60a070403393e9",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-24T05:41:30Z"
+      },
+      {
+        "sha": "88347c642fda35051b4316f01217389724945c4b",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-24T05:56:56Z"
+      },
+      {
+        "sha": "6404e4f591b9645f91b231bfa34e167df4ec18b4",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-24T06:25:19Z"
+      },
+      {
+        "sha": "77312ee7073ca0e6680af96c61997c2f9c94212f",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-24T07:39:15Z"
+      },
+      {
+        "sha": "62f7e575876fe60da9df1fefc7727d3dcd0855e2",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-24T10:11:05Z"
+      },
+      {
+        "sha": "9cb145a57757bffab5b20f2666376eeabb92dd63",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-24T10:48:24Z"
+      },
+      {
+        "sha": "8bc5e5a0cf118452d98cc02b6fedbb9f76665490",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-24T11:02:28Z"
+      },
+      {
+        "sha": "c906a6010f160724820a41d88113c89e9932a33a",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-24T11:17:45Z"
+      },
+      {
+        "sha": "d95a31aa116ba2af746b79ce758d55997daf0e9a",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-24T11:32:49Z"
+      },
+      {
+        "sha": "b65022b0f7c5df21015397acf74fbe6d404036d2",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-24T12:16:49Z"
+      },
+      {
+        "sha": "d8e5e685020271ff91b2dd582c3da7f6a785fca5",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-24T14:13:48Z"
+      },
+      {
+        "sha": "c099f13cc7d69c14197cb0f548bc289a06373458",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-24T14:26:47Z"
+      },
+      {
+        "sha": "d33813a1a8f7081cdbdca554b0d82000180dd9d3",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-24T14:36:08Z"
+      },
+      {
+        "sha": "cab2c044dce950dee2aff59f0099502ce3032760",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-24T14:51:33Z"
+      },
+      {
+        "sha": "73d1ef0dae45251ff9e83e340e0f5fbca5f8d047",
+        "subject": "chore(deploy): publish batched PS2SP updates",
+        "date": "2026-10-24T16:05:28Z"
+      },
+      {
+        "sha": "57c182615fef9a9a2bf1725e8d77fcb50c1e4e78",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-24T16:17:49Z"
+      },
+      {
+        "sha": "6cc0090572434decbd07758f0d79a7eb0198f088",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance external Git discovery",
+        "date": "2026-10-24T17:47:31Z"
+      },
+      {
+        "sha": "2b14d5dcd03b3ff82936f4f25eda788b2e4a29cf",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 web discovery",
+        "date": "2026-10-24T18:03:40Z"
+      },
+      {
+        "sha": "72420ddba13a2950a4ec98ac462a5ae746af12ed",
+        "subject": "[CF-Pages-Skip] chore(catalog): synchronize project metadata",
+        "date": "2026-10-24T18:11:58Z"
+      },
+      {
+        "sha": "ceba5903ea0070ffa5cd3038c77699db43ddbabe",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance GitHub depth discovery",
+        "date": "2026-10-24T18:21:25Z"
+      },
+      {
+        "sha": "2c8737b0988b7792bad448560c6af98373d52547",
+        "subject": "[CF-Pages-Skip] chore(catalog): advance PS2 discovery",
+        "date": "2026-10-24T19:03:10Z"
+      }
+    ],
+    "files": [
+      {
+        "path": "content/projects/2004sp-ps2port-connordy.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/2004sp-ps2port-noblefalcon.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/3s-decomp-thyagofarya.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/3s-decomp-tlbjr.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/3s-decomp.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/3s-psp-demmis98.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/3s-psp-icelaglace.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/ace.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/acflash-dumper.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/aethersx-budy-winchester.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/ai-awesome-rea.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/android-external-libsmb2-aera-recovery.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/apollo-ps2-akuhak.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/apollo-ps2-mutter2009.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/apollo-ps2-zay448345045.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/apollo-ps2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/arduino-ps2-kvm-over-ip.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/armsx2-3d.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-5m6yw4k9kv-arch.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-aaron4567891-prog.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-alpha-xdaofangxix.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-armsx2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-arthizniwueu-jpg.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-arunoruto.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-batmanisunderwork.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-beebono.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-bradwindy.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-cg-ss.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-christhepimp.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-clashroyalemy29-collab.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-cn-afeimod.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-darktanator.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-davit33.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-deurefdfgdf.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/armsx2-devilphyo022-blip.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-dyzz.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-edgarlozada2k-sys.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-f1aprain.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-felipebasurto.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-gdelazzer.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-gold.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-gundamsrw.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-gutierri.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-hamzadevz.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-henyckma.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-humline.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-hy300leosquizz-ctrl.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-imcokeman.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-ipad16-labrsudl.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-ivanbusinessgs.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-jdpt0.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-johnpetersa19.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-june-21-garyhe231.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-kitakatashima.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-libmali.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-libretro-wizzardsk.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-lim2222.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-ljq123ok.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-loki666.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-lopezestrellajuandiego-gif.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-luistiagos.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-masies4fun.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-mauricio-gamedev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-medievalshell.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-moesuito.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-mostfa16356-cyber.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-nt-arm64-eotics-com.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-odin107.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-overhardgamer42.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-pi5-moosish.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-pietroooooooo.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-plusx2-bernadetesolsa-code.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-pstef.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-rec19dantas.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-resoa7767.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-richpol99.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-rote66.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-santiago046.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-seedlord.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-sergeymild.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-shriyashzzz.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-siramok.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-splaser.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-starlightbotanist.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-steam-frame-spd13.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-stefanomarchesi.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-stockparrot.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-sunshineinabox.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-swichroot-icchi16.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-termuxuser123.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-uanderson11.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-unitonz.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-vastendev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-wasm-beezbumba.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-wilu20tomaz-coder.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-xodiosx.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2-youngdstbeats-dev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx23-hawzhinqadry01-hash.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2ds-thorskin6657-sudo.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2ios-asrafaha1-spec.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2ishnya-ishnyabhai.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/armsx2test-murpgy.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/army-men-rts-ps2-advanced-cheat-pack-final.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-adaltonfernando.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-athenaenv-ps2-games.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-azkadev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-bardock88.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-carlos123oao.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-eclipsebladestudio.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-eonarheim.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-fjtrujy.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-garrlker.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-guiprav.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-gustavocastro1.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-h264-eclipsebladestudio.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-harshitaditya27.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-iamsuperbraeden-lab.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-igrizzz.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-israpps.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-j0sedavi.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-jcnmsg.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-luanalcolea.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-maraleao.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-matheuslm7.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-momo-aux1.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-moth1995.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-nakijun.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-osd-menu-ps2-edson-souza.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-ps2-frbruno.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-ps2devnoob.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-raycody597.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-ricardotester3000.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-sovereign-research.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-stayhye.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-subzeropl.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-tanosysoft.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-ulissesribeiro.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-wellinator.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-whizboy-arnold.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv-wilkersebastian.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/athenaenv.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/audioc0reps2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/awesome-ps2-retlaairtla.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/awesome-ps2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/bdmassault-362053534.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/bdmassault-okeanos86.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/bdmassault.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/berserk-ps2-recomp.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/bevy-playstation2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binmerger-noxiousdraco.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-akuhak.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-danielt3.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-jay-jay-opl.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-krahjohlito.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-projectcrayon.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-pstef.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-spicedev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-techwritescode.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/binutils-gdb-vertver.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/biohazard-outbreak-mac.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/black-decomp.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/blazium-toolchain.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/blockfall-ps2.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/bokuranokazoku-english.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/bootcard-igr-israpps.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/bt3-decompiled.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/burnout-revenge-chainkit.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/burnoutdominatorreversed.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-360-crazywastaken.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-360-marques16-bit.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-360-nogg-noggdeltarunelover.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-a2937.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-agb-ntr-pomsky2011.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-ai-clerify-fork-the-owen-programmer.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-alek0mc2009.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-arcdelta.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-azaka.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-basiccube.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-braydenwallen55-netizen.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-casrielasriel.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-cdkemoi.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-ckckckckckckckeaaa.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-cobaltgit.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-crabhead.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-cubycal.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-dos-darkresident55.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-droid124.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-eliandro4.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-emiyl.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-feiyunwill.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-frenchwizz.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-frenzi4309.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-ghfunnihe.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-ghostany1.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-guestdreemurr.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-ios-chickenchunk579.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-ios-lh29007.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-kennyheidi.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-kriscrossapple.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-ksp0o.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-leap0x7b.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-lukewarnut.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-mattx433.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-menieldm.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-miyoocfw-intycat.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-miyoocfw-jsjsjsjsjsjsjson.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-monobhvr.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-nanoshellos.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-producdevity.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-pugemon.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-purplesmaug96.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-randomlygeneratedhuman.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-renkoto.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-rf-splaatsites.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-rodrigo1593-dev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-sanyux4-debug.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-scamdisk.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-ske2004.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-suprusr123.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-thesillydoggo.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-thtrandomlurker.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-timofeylednev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-tronprogram.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-tuloxcontulox-tech.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-un1q32.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-v2-c3p0r2d2luke.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotch-windows-pc0m.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-wlroots.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch-yt-somedude677.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch360-next-ral-sei.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotch360-refresh-flaf1x.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotchds-ralcactus.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotchforwinrt-proudtcaplover.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotchmac-yt-terzi.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotchpm-sashaantipov2012.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/butterscotchuwp-grayforz2468.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/butterscotchwebos-ballslober12.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/caduceus.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/caracu-pcsx2-mariocjun.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/ccc.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/cenit-huevoman77.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chaindive-english-patch.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/champions-of-norrath-nathanian.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/champions-of-norrath.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/cheatdeviceps2-tkmsst.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chimera-core-pcsx2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicle-ivanperrella.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/chronicle-nintendo-switch.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicle-ps4.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicle-tororoi.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicle-wesker89.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicle-windows.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicletwo-argz-977.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/chronicletwo-carrdylan52.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicletwo-drkm9743.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicletwo-jeffiest.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chronicletwo-nf807942.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/chulip-decomp.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/cinnamon-latest-grayforz2468.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/classicube-4gwyh4y9w2-dev.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/classicube-claudiubancos.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/classicube-d3nd3.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/classicube-ibackupstuff.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/classicube-poyguylolz.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/classicube-sys.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/classicube-techcowboy.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/classicube-yansigit.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/clone-awesome-rea.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/clps2c-compiler-gigahawk.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/code-pbat.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/codeeasy-ps2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/coldwinterps2-model-viewer.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/conrecomp.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/console-skill.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/craftnova.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/crash-twinsanity-windows-gabriel-twobits.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/crash-twinsanity-windows.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/crashwoc-decomp-ps2-sploters.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/crashwoc-decomp-ps2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/crystalclock-mod-simplyhexagon.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/crystalclock-rrtry.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/cue2pops-362053534.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/daedalus-ps2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/dcdecomp-argz-977.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/dcdecomp.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/ddlc-ps2-source.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/dds-decomp-artemis626.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/dds-decomp-redthing1.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/dds1-randomizer.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-anything.md",
+        "status": "added"
+      },
+      {
+        "path": "content/projects/decomp-wots2-port-test-kattimasen-ops.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-wots2.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-wtf-ameerarsala.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-wtf-ashrid.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-wtf-auroraborealisno02.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-wtf-benwithjamin.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-wtf-bpstuder.md",
+        "status": "modified"
+      },
+      {
+        "path": "content/projects/decomp-wtf-briightcore.md",
+        "status": "modified"
+      }
+    ],
+    "file_list_limit_note": "GitHub compare returns at most 300 files; PS2SP is a catalogue-only delta, not an exhaustive project-source comparison."
+  }
+]

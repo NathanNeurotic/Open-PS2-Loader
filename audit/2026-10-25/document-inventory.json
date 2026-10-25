@@ -1,0 +1,2235 @@
+[
+  {
+    "surface": "source",
+    "path": ".github/scripts/fixtures/xerabora-alpha16/README.md",
+    "sha256": "50e761329752a12ddaa54ca8314f947aaeb2e41111a42a3b3e6ec43778935c84",
+    "headings": []
+  },
+  {
+    "surface": "source",
+    "path": "AGENTS.md",
+    "sha256": "9fe859269052fbe9b314040934a569e7bcc101b8ee000fca37578d7f10eaefae",
+    "headings": [
+      "# Agent instructions",
+      "## Working on changes",
+      "## Code map",
+      "## Commands and validation",
+      "## Language, configuration, and documentation"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "CLAUDE.md",
+    "sha256": "00102f77c5dade04900bd84ab0ab3ba6c8c287aad310b7e5f1d1da81084dd717",
+    "headings": [
+      "# Agent instructions"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/neutrino/README.md",
+    "sha256": "4f1caab4ada40679c340f10aad91d6546a28965df2db69fc0c3d0100a75dbbb7",
+    "headings": [
+      "# neutrino",
+      "## Design",
+      "## Environments",
+      "## Backing Store Driver (BSD)",
+      "### Block devices",
+      "### Block device fragmentation",
+      "## CD/DVD emulation",
+      "## ATA HDD emulation",
+      "## Usage instructions",
+      "## UDPFS / UDPBD PC Server",
+      "### Requirements",
+      "### Usage",
+      "# Share a USB drive (or any block device) with many games — typical UDPBD use case",
+      "# Share a single disk image (UDPBD mode)",
+      "# Share a directory as a filesystem (UDPFS mode)",
+      "# Share both a block device and a directory",
+      "# With transparent decompression (.iso is appended to .zso/.cso/.chd names)",
+      "# Read-only mode",
+      "### Compression support",
+      "## Third-Party Loaders"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "POPS/UDPFS-NOTICES/README.md",
+    "sha256": "a11c0a59545658193be8c2bbea7968b589f0e69c1c27b9fc75178ef414f34fa9",
+    "headings": [
+      "# BDM-UDPFS Assault credits and provenance"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "POPS/UDPFS-NOTICES/THIRD_PARTY_NOTICES.md",
+    "sha256": "471cae7fcdef217398a4e4beffb143bad8af1c1f5fc514bfccad1949f3061be8",
+    "headings": [
+      "# Third-party notices",
+      "## FatFs (ChaN)",
+      "## udpfsd (pcm720)"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "POPS/UDPFS-NOTICES/UPSTREAM-README.md",
+    "sha256": "24451ab006d713470064024529055d27e3ecd972770f1319803241a71febb74a",
+    "headings": [
+      "# BDM-UDPFS Assault",
+      "## What it does",
+      "## Usage",
+      "### POPStarter",
+      "### What goes where",
+      "### Any other homebrew",
+      "## Network configuration",
+      "## Building",
+      "## License",
+      "## CREDITS"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "README.md",
+    "sha256": "e8e6b3dd1491bab619154e22f700f84020bf1499b559ae1a8c89a2977a832fc8",
+    "headings": [
+      "## Interface languages",
+      "## Test builds and save-card recovery",
+      "## Community Contributors",
+      "### [@oMrRexD](https://github.com/oMrRexD) (MrRexD)",
+      "### [@dnunezx](https://github.com/dnunezx) (darkladark)",
+      "# RiptOPL",
+      "## Contents",
+      "## Releases",
+      "## Quick Start",
+      "### What you need",
+      "### Minimal startup path",
+      "### Known limitations",
+      "## Introduction",
+      "### Major Features Overview",
+      "### This Fork's Additions",
+      "#### PS1 games — two cores, one list",
+      "## Controls and In-Game Reset",
+      "## How to use",
+      "### Where your files live",
+      "## USB/MMCE/MX4SIO/iLink",
+      "## SMB",
+      "## HDD",
+      "## APPS",
+      "### conf_apps.cfg method (Legacy)",
+      "### title.cfg method",
+      "### The REBOOT IOP? prompt",
+      "## Cheats",
+      "### Cheat Modes",
+      "## NBD Server",
+      "## ZSO Format",
+      "## PS3 BC",
+      "## Some notes for DEVS",
+      "## OPL Archive",
+      "## Frequent Issues",
+      "### OPL freezes on logo or grey screen",
+      "### Game freezes on white screen",
+      "### OPL does not display anything on boot",
+      "### The internal HDD shows code 402, or \"Formatted: NO\" in another tool",
+      "### A drive shows code 500 and never appears",
+      "### A USB / MX4SIO / exFAT page lists no PS2 games",
+      "### The menu works, but launching a game loses the picture",
+      "## External Tools & Services",
+      "## Acknowledgements",
+      "### The wider Open PS2 Loader team",
+      "### Real-hardware testing (this fork)",
+      "### The name (this fork)",
+      "### Financial support (this fork)"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "ROLLING_RELEASE.md",
+    "sha256": "291b3ec2a67ed5d4fc28c504b978b2476a90458f98071b9ade1bb1312af85825",
+    "headings": [
+      "# Rolling Release",
+      "## What the rolling release contains",
+      "## Reading the build version",
+      "## Auto Loading global settings (#545; pending hardware validation)",
+      "## Which build should I use?",
+      "## Pull the latest build",
+      "# --fail matters: the asset is best-effort, and a plain `curl -L -o` writes the",
+      "# HTTP error page into the file and still exits 0 -- overwriting a loader that works.",
+      "# Everything in the current rolling release",
+      "# For just the normal installable package, copy its exact filename from the release page.",
+      "# Broad RIPTOPL-* globs also match RA, VARIANTS, DEBUG, LANGS and source archives.",
+      "## How it updates",
+      "## One pipeline, two channels",
+      "## Not a stable release",
+      "## Dedicated RetroAchievements release"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/APA-SAFETY.md",
+    "sha256": "20c7dba9401fd4e4feefb5b83ea3be7f06cd2b88dc28322d4b5dfae7a0c2b16b",
+    "headings": [
+      "# APA hard disk safety",
+      "## Why LBA 0–7 matter",
+      "## What happened",
+      "## What this build guarantees",
+      "## What it cannot guarantee",
+      "## If your disk shows \"Formatted: NO\" or code 402",
+      "## Hardware verification checklist (maintainers)"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/AUTOLAUNCH-GLOBAL-SETTINGS.md",
+    "sha256": "1c92c6eaf37dd1338d3eb25681c4f305250852047fbe0cca019b5888795dc38d",
+    "headings": [
+      "# Auto Loading global settings (#545)",
+      "## The disk layout",
+      "## What was wrong in RiptOPL",
+      "## Behaviour now",
+      "### APA HDL games started by sector",
+      "## Source review (not runtime tests)",
+      "## Diagnostic build",
+      "## Hardware gate",
+      "## Auto Loading discovery latency (#1000)"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/COMMUNITY_REPORTS_HANDOFF_2026-10-02.md",
+    "sha256": "a43afa5e40d857b65af0c97f898d6c7db2ba9a4e69da3eb88de9e70dd7b691ea",
+    "headings": [
+      "# Community reports handoff — October 2, 2026",
+      "## Preserved report evidence",
+      "## Implementation checkpoint",
+      "## Working rules and current checkout",
+      "## Report ledger",
+      "## E1 — Save Ember per-game settings before launch",
+      "## I1/I2 — iLink native and Neutrino launch reliability",
+      "## V1 — PAL game on an NTSC interlaced CRT with Neutrino",
+      "## T1 — CRT font legibility and perceived sluggishness",
+      "## A1 — Slow artwork in 3420 versus 3248",
+      "## P1/P2 — PS1 prerequisites, row identity, and memory-card guidance",
+      "## Suggested implementation sequence and completion gates"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/COMPRESSED-IMAGES.md",
+    "sha256": "7fd7a494ae6c411190a2477bd4355f10230fa91f4b3dc0fc5ffea857d2776320",
+    "headings": [
+      "# Compressed PS2 images: ZSO, CSO and CHD",
+      "## Trying a compressed game with PS2-Servers over UDPFS Files"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/CONTROLS.md",
+    "sha256": "7362687dc24463a72aa3a28dd77f2dd31252f67d415d881ab09664b55353a246",
+    "headings": [
+      "# Controls reference",
+      "## Game list",
+      "### With Coverflow or PSBBN Flow selected",
+      "### Notes on individual buttons",
+      "## Main menu and dialogs",
+      "### Settings screens",
+      "### On-screen keyboard",
+      "## In-game",
+      "## At boot",
+      "### Start — skip the config",
+      "### Triangle + Cross — force 480p",
+      "### Triangle + Circle — force Auto (interlaced)",
+      "### Keeping a new video mode",
+      "## Rumble",
+      "## See also"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/DEFAULTS.md",
+    "sha256": "12d300339f7189afd1b94afbbc9ac5d749d516f40e6132075988be816abefbb3",
+    "headings": [
+      "# Fresh-start defaults"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/DESR-DVR.md",
+    "sha256": "b1ba96b90c01826d5c8daf3894daed2839c517c585fc776b04a759746bed5ecc",
+    "headings": [
+      "# PSX DESR DVR ISO support (experimental, hardware gate)",
+      "## Reference implementation",
+      "## Current integration boundary",
+      "### Next hardware-dependent steps"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/DOCUMENTATION-AUDIT-2026-10-25.md",
+    "sha256": "b04351edad4fac777482c64b910ea96603707e07137b59ffd9f2e39a383c5dee",
+    "headings": [
+      "# Documentation and fork audit — October 25, 2026",
+      "## Coverage and method",
+      "## Findings and changes",
+      "## Surface review",
+      "## External reachability",
+      "## Validation limits"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/DOCUMENTATION-AUDIT-2026-10.md",
+    "sha256": "475f16de0d41cc5ddd5e89c9c88ec8ca638719760149de1a4256269df92935d3",
+    "headings": [
+      "# Documentation audit — October 19, 2026",
+      "## Scope and evidence",
+      "## Corrections and consolidation",
+      "## Website coverage",
+      "## Validation and limits"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/DOCUMENTATION-GAPS.md",
+    "sha256": "93a4b7ffaaf9043b5fa9a599afb1c74af697b314e19c2d22c43f8890e7e6181f",
+    "headings": [
+      "# Documentation gap index",
+      "## Tier 1 — Missing entirely (highest priority)",
+      "### 1. In-Game Reset (IGR) — the feature itself",
+      "### 2. Controls / button reference",
+      "### 3. Menu rumble",
+      "### 4. Folder browsing in the game list",
+      "### 5. XPARAM",
+      "## Tier 2 — Setting-line only (the option is listed; the feature is not explained)",
+      "### 6. GSM (video mode override)",
+      "### 7. IGS (In-Game Screenshot)",
+      "### 8. PADEMU (pad emulator)",
+      "### 9. Parental lock",
+      "### 10. Audio: BGM and menu SFX",
+      "### 11. Apps (`conf_apps.cfg` / `title.cfg`)",
+      "## Tier 3 — README ↔ site parity gaps",
+      "## Tier 4 — Exists but thin",
+      "## Progress",
+      "### Found during the work, not in the original audit",
+      "## Follow-up audit (2026-09-24)",
+      "## Follow-up audit 2026-10-08"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/EMBER-INTEGRATION-PLAN.md",
+    "sha256": "4bdbcaa0d2fb2aec264f670fb907da967e1852ea9c3d0f47a33e0b5227685309",
+    "headings": [
+      "# Ember as a second PS1 core — integration plan",
+      "## Implementation status",
+      "### How to test Ember on hardware",
+      "## Part 0 — What Ember actually is (measured, not guessed)",
+      "### 0.1 `launcher.elf` — the thing we are replacing",
+      "### 0.2 `ember.elf` — it never resets the IOP",
+      "### 0.3 Argument contract — measured from `main` at `0x158a88`–`0x15bb44`",
+      "### 0.4 Working directory, BIOS, disc discovery, memory cards",
+      "## Part 1 — Folder structure",
+      "### Which layouts Ember accepts, and why we list exactly one",
+      "### Verifying a folder actually holds a disc",
+      "### Where `<device-root>` is, per device class",
+      "#### ⛔ `__common` is NOT a library location — say what actually lives there",
+      "### Art and per-game config",
+      "## Part 2 — The view engine (L3)",
+      "### 2.1 What exists today",
+      "### 2.2 What it becomes",
+      "### 2.3 The conversion rule",
+      "# Must be ZERO -- the binary API is deleted, not shadowed.",
+      "# Per-file call-site counts, COMMENTS EXCLUDED, before vs after must match.",
+      "# A raw line count will mislead: comments mentioning the old names inflate the \"before\".",
+      "### 2.4 UI strings",
+      "## Part 3 — Scanning: `src/cuesupport.c` + `include/cuesupport.h`",
+      "## Part 4 — One PS1 list, two cores",
+      "## Part 5 — Launch",
+      "### 5.1 The primary handoff (keep-IOP) — `sysLaunchEmber()`",
+      "### 5.2 Per-device `*LaunchCue()`",
+      "### 5.3 `item_list_t` extension — APPEND ONLY",
+      "### 5.4 Failure surface",
+      "## Part 6 — Settings, config keys, favorites format, docs",
+      "### 6.1 New globals (`include/opl.h`) and keys (`include/config.h`)",
+      "### 6.2 Settings UI",
+      "### 6.3 Favorites file format — OFAV v3",
+      "### 6.4 Docs",
+      "## Part 7 — Risks, in priority order",
+      "### R1 — Pad modules (HIGHEST; this is the one that decides the architecture)",
+      "### R2 — Writable game folders",
+      "### R3 — IOP RAM headroom",
+      "### R4 — SMB path separators",
+      "### R5 — UDPBD / UDPFS (upside, not downside)",
+      "### R6 — `gDefaultGameView` semantics",
+      "## Part 8 — Phasing and validation gates",
+      "### Phase 0 — Prove the handoff (no UI)",
+      "### Phase 1 — View engine only",
+      "# Must be ZERO — the binary API is deleted, not shadowed.",
+      "# Call-site COUNT per file before and after must match; an N -> N-1 drop is the bug.",
+      "### Phase 2 — CUE list on BDM only (landed)",
+      "### Phase 3 — MMCE + ETH, settings page, docs (landed)",
+      "### Phase 4 — Favorites v3 + APA HDD (landed; hardware pending)",
+      "### Phase 5 — Network surface (landed; hardware pending)",
+      "## Part 9 — Quick reference for the implementing agent",
+      "## Part 10 — Ember Beta 2 settings (updated 2026-09-28)",
+      "### What Ember reads",
+      "### RiptOPL global behavior",
+      "### RiptOPL per-game behavior",
+      "### Launch data flow",
+      "### Validation",
+      "### Out of scope (follow-ups)"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/EXFAT.md",
+    "sha256": "fdf64926ad0eeb49bf2564f1e6ea21c0368c52728bd204fb549b4c26b0057f42",
+    "headings": [
+      "# exFAT storage: setup, benefits and limits",
+      "## Choose the layout",
+      "## Set up an internal exFAT HDD",
+      "## Benefits and limitations",
+      "## APA-Jail: APA/PFS and exFAT on the same disk",
+      "### Games and settings on APA-Jail",
+      "### Safety and troubleshooting",
+      "## HDD detected, but games missing"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/FORK-COLLABORATION.md",
+    "sha256": "09c67e371cd7516d97ade32f15971b2a366803df99e3092109199103e299fed9",
+    "headings": [
+      "# Learning across PS2 loader projects",
+      "## Evidence to retain for a candidate",
+      "## October 25 candidate triage",
+      "## Sharing results"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/GAME-FORMATS.md",
+    "sha256": "6fdde1653df5c42287f2648a0bb880f3e3fc4132fd164cd364d4220b08c3bad3",
+    "headings": [
+      "# Game image formats",
+      "## PS2 formats at a glance",
+      "## Direct ZSO playback",
+      "## CHD, CSO and ZSO over UDPFS",
+      "## HTTP, SMB and UDPBD differences",
+      "## PS1 images use separate cores",
+      "## Troubleshooting and evidence"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/GSM.md",
+    "sha256": "c8bc7d1d37a4de77d28c64036fe734ae9f4a6eba4218b302b1bca42937a0a252",
+    "headings": [
+      "# GSM — forced video modes",
+      "## Where to set it",
+      "## The options",
+      "### Available modes",
+      "## 1080p is experimental, and asks three times",
+      "## When a game loses the picture",
+      "### The game runs but looks wrong",
+      "## GSM and the other cores",
+      "## Related settings that are not GSM",
+      "## Notes for builders",
+      "## See also"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/HTTP-INTEGRATION-PLAN.md",
+    "sha256": "ec94473aee439299d07151b03cdcb428a3d274c86d84c26339c2a2a4d064d220",
+    "headings": [
+      "# HTTP integration plan (RiptOPL)",
+      "## Where this actually is",
+      "## 0. Read this first",
+      "### 0.1 Upstream source",
+      "### 0.2 Port, don't merge",
+      "### 0.3 Standing repo rules that bite this feature",
+      "## 1. How the feature works",
+      "### 1.1 Menu half — the catalog",
+      "### 1.2 Game half — byte ranges",
+      "### 1.3 What this means for scope",
+      "## 2. Three decisions the planning pass left open — settled",
+      "### 2.1 The bounded timeout and cancel mechanism, per stack",
+      "### 2.2 Where HTTP per-game metadata is written",
+      "### 2.3 The menu RPC ABI cannot carry this feature as it stands",
+      "## 3. What exists, and what must change",
+      "## 4. The catalog and wire profile",
+      "## 5. User-facing behaviour",
+      "## 6. Initial capability policy",
+      "## 7. Phased work plan",
+      "## 8. Traps, in one place",
+      "## 9. Verification",
+      "### Host-side",
+      "### Build and ABI",
+      "### Console",
+      "## 10. Still open",
+      "## Credits"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/HTTP.md",
+    "sha256": "764510d104bfa62ef71d2263cd2ad9ea2c286274c4847835c948c56b22adfa91",
+    "headings": [
+      "# HTTP",
+      "## Status",
+      "## Setting it up",
+      "### Quick start: actually launching a game",
+      "## The catalog",
+      "# Filename derived from the title; media defaults to DVD",
+      "# Explicit media",
+      "# Extension already on the title, not doubled",
+      "# Startup only; it doubles as title and filename",
+      "## What works, and what does not",
+      "### Where per-game data lives",
+      "## When something goes wrong",
+      "## Notes for anyone changing this code",
+      "## Credits"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/IGR.md",
+    "sha256": "fd019cac68475bc220b57e00b40e7ef5b400da1b5ad72faa4381aa8ee1bca647",
+    "headings": [
+      "# In-Game Reset (IGR)",
+      "## The button combinations",
+      "### The console power button",
+      "## Where a reset takes you",
+      "## When IGR is not available",
+      "## How IGR watches the pad",
+      "## In-Game Screenshots (IGS)",
+      "## Troubleshooting",
+      "## Where this lives in the source",
+      "## See also"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/ILINK_CODE_AUDIT_2026-10-22.md",
+    "sha256": "857944cb6fb34888b2e0c270ca7b3b536985376389c04386feafa088e089e4f7",
+    "headings": [
+      "# iLink code audit: command direction, completion ownership and reset recovery",
+      "## Confirmed defects corrected",
+      "## Ensure the fixes actually reach the runtime",
+      "## Deeper lifetime and interrupt audit",
+      "## Hardware cost and simplicity",
+      "## Remaining limits",
+      "## Validation and console gate"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/ILINK_TIMING_INVESTIGATION_2026-10-21.md",
+    "sha256": "6120454131a4ac045d2d11c7da740d3742641cd39affed9ebe6c96baaa76dac4",
+    "headings": [
+      "# i.LINK launch investigation — October 21, 2026",
+      "## Result",
+      "## What the chat establishes",
+      "## The menu, logo and game do not share one continuous driver session",
+      "## Why Mode 8 did not test a startup delay",
+      "## Link speed was checked separately",
+      "## Reproduction and validation",
+      "## Remaining boundary and console check"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/INTERFACE.md",
+    "sha256": "82bff478aac41ec6e63c71edfaa55b5a03fbb60d5d70ca5249c1f363186077cf",
+    "headings": [
+      "# Interface behaviours",
+      "## Language",
+      "## Theme selection",
+      "## Menu font size",
+      "## Folder browsing",
+      "### Supported devices only",
+      "## Parental lock",
+      "### What it actually gates",
+      "### Setting, using and clearing it",
+      "## Background music and sound effects",
+      "### Background music",
+      "### Sound effects",
+      "## See also"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/LANGUAGES.md",
+    "sha256": "021244b89ba7c8081b2e13ed17d7590c060723728896540d87981966b39f0c6f",
+    "headings": [
+      "# Languages / translations — how they work and how to maintain them",
+      "## The pieces",
+      "### `_base.yml` entry format",
+      "### `lng_fork/<Language>.yml` entry format",
+      "## The build flow (`make languages`, all via `tools/lang_compiler.py`)",
+      "## How to ADD a new string",
+      "## How to TRANSLATE a string (per language)",
+      "## Important: there is **no auto-translator** in the build",
+      "## Which languages are built, and adding one",
+      "## Optional Japanese/CJK game-title font",
+      "## Building just the languages",
+      "## Where the fork strings live",
+      "## Auditing actual translation coverage",
+      "## Translation provenance and review",
+      "## Installing and selecting language files"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/LAUNCH-DIAGNOSTICS.md",
+    "sha256": "203fe241804eb4d1e81204b967845337012eb53dc4b7560d982c21c5e1e922f4",
+    "headings": [
+      "# Launch diagnostics: identify the package, core and transport",
+      "## Choose the matching installation",
+      "## Identify the failing stage",
+      "## Keep transport and runtime evidence separate",
+      "## A useful controlled comparison",
+      "## Reading the fork comparison"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/MAINTAINING-DOCS.md",
+    "sha256": "25426d40d828029b4dc502de3f837dcdb493a59bff02d86bda467dc54878db94",
+    "headings": [
+      "# Maintaining documentation",
+      "## Ownership",
+      "## Local checks",
+      "## Wiki publication",
+      "## Language-guide publication order"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/MX4SIO.md",
+    "sha256": "785880dbbf507cc8e3706e1caf94550834a8dfd46c740efad4a4756cd3d90f5c",
+    "headings": [
+      "# MX4SIO game-launch module contract",
+      "## Why launches regressed",
+      "## Required implementation",
+      "## Verification boundary"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/NEUTRINO.md",
+    "sha256": "dae52034fe14f4ddaa9aae2abce3dc0e104b491e9e52310eeace662643261ba4",
+    "headings": [
+      "# Neutrino Core (External Loader)",
+      "## Credit and licence",
+      "### PSX DESR DVR filesystem (experimental)",
+      "## 1. Install Neutrino",
+      "### Custom paths and cross-device launches",
+      "### MMCE GameID",
+      "## 2. Pick the core per game",
+      "### Where Neutrino works",
+      "## 3. Launch arguments",
+      "### Global default args — applies to every Neutrino launch",
+      "### Per-game args — applies to one title",
+      "### Automatic `-elf=` (enabled by default)",
+      "### See the exact launch arguments",
+      "### Video-mode limits",
+      "## 4. Network boot — the Network Protocol selector",
+      "### UDPFS Access — Files vs Image",
+      "### Requirements",
+      "### When the network game list stays empty",
+      "## 5. Core-aware per-game settings",
+      "### Cheats under Neutrino",
+      "### VMC under Neutrino — how it actually works",
+      "## RetroAchievements edition runtime"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/PADEMU.md",
+    "sha256": "f340985b36e89b9e69166838c263e537b4dbeb695f6606a4157728316740a873",
+    "headings": [
+      "# PADEMU — DualShock 3 and 4 emulation",
+      "## Before you start",
+      "## Setting it up",
+      "## USB or Bluetooth",
+      "### Fake DS3 controllers",
+      "## DualSense (DualShock 5)",
+      "## Troubleshooting",
+      "## See also"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/PARENTAL-LOCK.md",
+    "sha256": "32a49e18dd4e32dae85687afa05b958d75aff9cab9617e80418236ccfd785822",
+    "headings": [
+      "# Per-game parental lock"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/PC-CARD-CF.md",
+    "sha256": "931269ba53ba128f08b847a4f866b5216e5674765905fcb0485f75a3eabf1607",
+    "headings": [
+      "# PC CARD CompactFlash (experimental)",
+      "## Ownership and limits",
+      "## DESR DVR switch",
+      "## Provenance"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/README.md",
+    "sha256": "15d577adb6b3872e20cc8034cf9952bc95cf738f692307ddc362a76d4cb5c0e0",
+    "headings": [
+      "# RiptOPL documentation",
+      "## Installation and troubleshooting",
+      "## Sources and game cores",
+      "## Settings and customization",
+      "## Documentation maintenance and history"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/RETROACHIEVEMENTS-INTEGRATION-PLAN.md",
+    "sha256": "70531aea32458a08e5093c2e1c67efff625c24ff51f5d4cb2bcbcd91dcc1496f",
+    "headings": [
+      "# RetroAchievements integration plan (RiptOPL)",
+      "## 0. Read this first",
+      "### 0.1 Upstream source",
+      "### 0.2 Port, don't merge",
+      "### 0.3 Standing repo rules that bite this feature",
+      "## 1. How the feature works",
+      "### 1.1 Menu half — \"is this game supported?\"",
+      "### 1.2 In-game half — telemetry",
+      "### 1.3 What this means for scope",
+      "## 2. The build flavour",
+      "### 2.1 Makefile flag",
+      "# RetroAchievements: 1 builds the RA flavour (menu check + in-game telemetry).",
+      "# A flag is not a dependency: run \"make clean\" when switching it.",
+      "### 2.2 Variants slot",
+      "## 3. Phased work plan",
+      "### Phase 0 — Scaffolding and the flag (no behaviour)",
+      "### Phase 1 — In-game telemetry (the hard, high-value half)",
+      "### Phase 2 — Hashing and the watch-list file",
+      "### Phase 3 — Menu integration",
+      "### Phase 4 — The `ps2ips` bridge fixes (worth landing regardless)",
+      "### Phase 5 — Disc mode (implemented; PS2 validation pending)",
+      "### Phase 6 — Documentation and credit",
+      "## 4. Runtime settings to add",
+      "## 5. Traps, in one place",
+      "## 6. Verification",
+      "## 7. Upstream file map",
+      "## 8. Open questions for the maintainer"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/RETROACHIEVEMENTS.md",
+    "sha256": "8c910c56ce8c6dc03ea9131faf88d47f4abe792cf4217fe8ba105a9720ca2368",
+    "headings": [
+      "# RetroAchievements",
+      "## Mode 6 (IGR disabled)",
+      "## RA Mode: Xerabora or Caduceus",
+      "### Neutrino in the RA edition",
+      "### Xerabora achievement browser",
+      "### Caduceus achievement browser and in-game cards",
+      "## Status",
+      "## Using it",
+      "### First tracked game",
+      "## Physical discs",
+      "## Which launch paths can work",
+      "### Do not expect a game with achievements to run from a network share",
+      "### An image an earlier run left open on the share can still be hashed",
+      "## Networking",
+      "## Files on the card",
+      "## Building",
+      "### Two IOP modules this flavour builds instead of taking from the SDK",
+      "## Before this is called finished",
+      "## Notes for anyone changing this code",
+      "## Credits",
+      "## PS1 achievements through USB POPStarter"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/SETUP-QUESTIONS.md",
+    "sha256": "6095cd00d269b72b0586e28df8f7fbed877ef14a5399962b26a12307928574bb",
+    "headings": [
+      "# Setup questions and reporting launch failures",
+      "## Which build should I download?",
+      "## Does Browser mean the memory-card browser?",
+      "## Why is another language unavailable?",
+      "## Neutrino worked, then returned to OSDSYS",
+      "## More noise at startup",
+      "## What do Neutrino's 1080i x1, x2 and x3 mean?",
+      "## RiptOPL, Neutrino and other frontends"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/SIO2MAN-COMPATIBILITY.md",
+    "sha256": "e815aa3e96ca5f4ca55011a5611d543600a18a4b6ac99e2e57c0bd585741e90e",
+    "headings": [
+      "# SIO2MAN hook compatibility"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/TECH_CONTRIBUTOR_ROADMAP_2026-10-03.md",
+    "sha256": "133afc94dce8a2bf66b42dc5fd8266e4e862d93ba8cff6af0258aded3c3542c4",
+    "headings": [
+      "# RiptOPL: what is left",
+      "## Finish line",
+      "## If tech wants to help"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/TEST-BUILDS.md",
+    "sha256": "cdd2a923a01f56ff8812cc12986b287f04b7f6e71fdd4efcd5bcbbd33f9608fd",
+    "headings": [
+      "# Testing a PR or Actions build",
+      "## In-game freeze report (FREEZEDIAG)",
+      "## RetroAchievements theme release previews",
+      "## Favorites and automatic VMC failure recovery"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/THEME_ENGINE.md",
+    "sha256": "acd8b632f0dc593196bed5beb62a94be8f4fcc20783cb6056fa927f01677554b",
+    "headings": [
+      "# OPL Theme Engine — Authoring Reference",
+      "## PSBBN Flow",
+      "### PSBBNFlow element properties",
+      "## 1. File structure",
+      "# lines starting with '#' are comments",
+      "### Block families",
+      "#### Mixed lists: the page picks the family, each row picks its own cover",
+      "### ⚠ Contiguous numbering rule",
+      "## 2. Global properties",
+      "### Colors (`#RRGGBB`)",
+      "### Fonts",
+      "### Other global keys",
+      "## 3. Common element properties",
+      "## 4. Image & overlay properties",
+      "## 5. Element types",
+      "### Text element extras",
+      "### List extras",
+      "### Per-device placement (`devices=`) — *this fork*",
+      "# The shared icon spot, used by every page not claimed below.",
+      "# On the MMCE and APA-HDD pages, pin the icon top-right instead.",
+      "### Using RiptOPL themes on regular OPL",
+      "## 6. `attribute=` values",
+      "### AttributeText (metadata text)",
+      "### AttributeImage (badge chosen by value)",
+      "#### `#DiscType` worked example *(issue #49)*",
+      "## 7. Built-in `default=` asset names",
+      "## 8. The Coverflow element (this fork)",
+      "### Per-theme properties (in `conf_theme.cfg`)",
+      "### Global Coverflow tuning (NOT in the theme)",
+      "## 9. The SaveIcon element (this fork)",
+      "## 10. A note on coordinates & scaling"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/UNICODE-GAME-TITLES.md",
+    "sha256": "a95e45e6847bc353f3ff10996519bedb8daaf20fb87862225468e7016e32b342",
+    "headings": [
+      "# Unicode and Japanese game titles",
+      "## Enable it",
+      "### Distinct from interface translation fonts",
+      "### Show CFG Titles in Game Lists (optional)",
+      "### What it supports",
+      "### Current limits",
+      "### Troubleshooting",
+      "### Development and testing"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/VCD.md",
+    "sha256": "180a0f46a6d07daae5607a8d490f94f4dd6167df2cf1170ecf17f77d24c73a3d",
+    "headings": [
+      "# PS1 Games via POPSTARTER and Ember",
+      "## Selecting an Ember starting disc",
+      "## 1. PS2 and PS1 libraries on each device",
+      "## 2. Choose Both, Mixed, PS2, or PS1",
+      "### APPS and PS1 ELF titles",
+      "### Favorite your PS1 games",
+      "## 3. How PS1 games launch (POPSTARTER only)",
+      "### Which *build* of POPSTARTER",
+      "## 4. Where to put your VCD files",
+      "## 5. Block-device PS1 support — the BDMA equip",
+      "### POPS UDPFS with BDM-UDPFS Assault",
+      "## 6. PS1 over SMB — POPSTARTER network settings",
+      "## 7. Troubleshooting — \"my VCDs don't show up\"",
+      "## 8. Notes & limitations"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/VMC-AUDIT-2026-10-08.md",
+    "sha256": "c115e315802d05c2be8a19bca801392645d0cae3ca85da94f3e0eb0ddc8e7744",
+    "headings": [
+      "# VMC creation and cancelled-launch audit ? 2026-10-08",
+      "## Cancelled native launch: already fixed",
+      "## Creation and allocation",
+      "## Different runtime limits",
+      "## Remaining hardware evidence",
+      "## Validation",
+      "## Follow-up: creation recovery and core-aware reporting",
+      "## Follow-up: VMC menu core resolution and Neutrino extent overflow prompt"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/VMC.md",
+    "sha256": "e9c4523625241703a101204199f9db01d9a9a2296ce0994b8713ba82999a66a0",
+    "headings": [
+      "# VMC creation and recovery",
+      "## Failed creation versus layout warnings",
+      "## New native BDM cards: contiguous reservation",
+      "## New HDD cards: PFS reservation and map check",
+      "## Rebuilding a card the native core cannot map"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/plans/pc-card-cf-integration.md",
+    "sha256": "4a1ad6672d5dedd9b40f0f0e3a7aefe2778eaf13270971b9a952a42263f731fe",
+    "headings": [
+      "# Plan: early PS2 PC CARD CompactFlash support (RiptOPL)",
+      "## Purpose and non-goals",
+      "## Shared architecture / detection contract",
+      "## Source references and licensing",
+      "## Agent handoff discipline",
+      "## RiptOPL implementation map",
+      "## Work stages and acceptance",
+      "## Runtime implementation progress (2026-10-15)",
+      "### Review follow-up: game import isolation"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/superpowers/plans/2026-10-12-ra-https-gameid.md",
+    "sha256": "b354ee7a4dbff37036c6fc6588e8c361da771540453982241add3b99f4915ae2",
+    "headings": [
+      "# RA HTTPS Game-ID Lookup Implementation Plan",
+      "## Global Constraints",
+      "## Review Focus",
+      "### Task 1: vendor mbedTLS and build it into RA builds only",
+      "### Task 2: `ratls`: an HTTPS GET with verified TLS",
+      "### Task 3: game-ID lookup in the Xerabora browser, licence shipping, docs"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/superpowers/plans/2026-10-12-udpfs-ra-identification.md",
+    "sha256": "90027cb5ab6609d33c4c2540043e52473b07bc6b1468fb3d13580880463b7a54",
+    "headings": [
+      "# UDPFS First-Time RA Identification Implementation Plan",
+      "## Global Constraints",
+      "## Review Focus",
+      "### Task 1: `mstack:` exchange device in udpfs_ministack",
+      "### Task 2: second transport under `ask()` in `src/ranet.c`",
+      "### Task 3: allow the check on UDPFS, plus docs",
+      "### Task 4: Caduceus achievement browser under UDPFS Files"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/superpowers/specs/2026-10-12-ra-https-gameid-design.md",
+    "sha256": "6526ffde0cda47de07f8d499d53fd622400224606af4432e3c3ba928ef34e283",
+    "headings": [
+      "# HTTPS game-ID lookup for the RA browser (ORBIT parity) — design",
+      "## Goal",
+      "## Decisions already made",
+      "## Facts this design relies on (checked 2026-10-12)",
+      "## Components",
+      "### 1. `third_party/mbedtls/` (vendored subset)",
+      "### 2. Trust anchors (`third_party/ca-roots/*.der`)",
+      "### 3. Time and entropy (`src/ratls_ps2.c`)",
+      "### 4. HTTPS transport (`src/ratls.c` portable, `src/ratls_ps2.c` platform)",
+      "### 5. Game-ID lookup and browser integration",
+      "## Error handling",
+      "## Testing",
+      "## Alternatives considered"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "docs/superpowers/specs/2026-10-12-udpfs-ra-identification-design.md",
+    "sha256": "3fb37f0d176bcfd067fd9a75a48bb0a7b737a8ddd53c0d3dd1e9f9039d76cd77",
+    "headings": [
+      "# First-time RA identification for UDPFS games — design",
+      "## Goal",
+      "## Scope",
+      "## Why the existing pieces are enough",
+      "## Design",
+      "### 1. ministack: a UDP exchange device (IOP)",
+      "### 2. ranet.c: a second transport under `ask()` (EE)",
+      "### 3. Menu: allow the check on UDPFS",
+      "## Error handling",
+      "## Testing",
+      "## Alternatives considered"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "lng/README.md",
+    "sha256": "95504beb4aad80346b089a4889a9d7d2dd9093148017c94bc6bcec9664b0de2b",
+    "headings": [
+      "# Translation guide",
+      "## For translators",
+      "## For developers",
+      "## Fork-specific strings (the `lng_fork/` overlay)",
+      "# lng_fork/French.yml"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "lng_fork/README.md",
+    "sha256": "e186a61fd3b5ceb2293956debaa910467cdb4ef61073713f50fc6ecb69c737e8",
+    "headings": [
+      "# Fork translation overlay"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "modules/bdmassault/PROVENANCE.md",
+    "sha256": "2fd49131ef48d6e2b2f08f3be247b7b91b19362e8403bad67907103ed29adba1",
+    "headings": [
+      "# BDMAssault variant driver pairs — embedded provenance",
+      "## Bytes (vendored 2026-07-21, sha256)",
+      "## Sources",
+      "## License",
+      "## Re-vendor"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "modules/bdmassault/ilink_bd_assault/README.md",
+    "sha256": "2e4b059eeb7575d09bb2abc4f2c69767290ad2accc496f59619dfb93f71eb4c2",
+    "headings": [
+      "# ilink_bd_assault (iLink BDM Driver for POPSTARTER)",
+      "## Origin & Lineage",
+      "## POPSTARTER Compatibility Modifications",
+      "## Reconnecting after POPSTARTER's IOP reset (#1018)",
+      "## SBP-2 completion ordering (2026-10-21, #1018)",
+      "## Command direction and manager recovery (2026-10-22)",
+      "## Request lifetime, response ownership and packet bounds (2026-10-22 follow-up)",
+      "## Building"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "modules/freepad/PROVENANCE.md",
+    "sha256": "f572b54792c57ddd3fb8def09bcdbb5a1de068f212b01f5735bad870da1595ff",
+    "headings": [
+      "# Vendored freepad.irx (pad driver, menu-side)",
+      "## Bytes",
+      "## Source",
+      "## Why vendored (hypothesis, hardware-verification pending)",
+      "## Re-vendor"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "modules/network/smap_udpbd/README.md",
+    "sha256": "c065a81f5db3445bee9276e517dfab64e4e0ef759f7dce4e9225128f6d462794",
+    "headings": [
+      "# SMAP UDPBD module"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "modules/network/udpfs_shared/README.md",
+    "sha256": "f5b03c7c826a0e1a5528e62409f78227d88b4faef5a9c88f3c42353a3b20a117",
+    "headings": [
+      "# Shared UDPFS transport implementation"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "modules/pccf/README.md",
+    "sha256": "7f61e36a9d89a69aab11b51dc69ead7011f6b06cf511007a2aabfa4fcaab1fe6",
+    "headings": [
+      "# PC CARD CF driver"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/IGR-PES2013-HARDWARE-TRIAGE.md",
+    "sha256": "72214a8140a9863fd12a8a1e692bfc687a190350a014261daaa96959f1f57fa8",
+    "headings": [
+      "# PES 2013 IGR regression — hardware triage (unverified)",
+      "## Reported reproduction",
+      "## Why this matters to RiptOPL",
+      "## Reproduction matrix (all results pending)",
+      "## Diagnostic plan",
+      "## Regression gate for any eventual fix",
+      "## Runtime fix policy"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/ILINK-DMA-AUDIT-2026-10-21.md",
+    "sha256": "2ca1bdb7796261c18843b4e2bfde35a135419c969267e9f43d50db862a49bb6e",
+    "headings": [
+      "# i.LINK timing and DMA audit — 2026-10-21",
+      "## Finding",
+      "## Full reporter context and its effect on the investigation",
+      "## Existing support and applicability",
+      "## Work already merged since the quoted investigation",
+      "## Interpreting the reports",
+      "## Recommended next step"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/INTERNAL-EXFAT-EMBER-IGR-2026-10-19.md",
+    "sha256": "cd61a810f1a379a087c9bd22071b8a9ccbe0df2d520ca0ecac16dfeaf810d843",
+    "headings": [
+      "# Internal exFAT: Ember listing and PS2 IGR investigation",
+      "## Ember: a reproduced listing defect",
+      "## PS2 IGR: restore the interrupt-side handoff",
+      "### Root cause and minimal fix",
+      "### Reproduction and validation",
+      "# Fails the two priority-0 handoffs on the previous source.",
+      "# Passes: READY-before-first-wait, blocked/resumed worker, current and queued",
+      "# priority-0 competitors, and the interrupt-before-wait notification boundary.",
+      "### Other comparison findings and limits"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/ISSUE-1010-COMMENT-DRAFT.md",
+    "sha256": "95ea652489bf8edb067ee92022ff7d5948a4725abc2700c77c63a8db9ed67a7e",
+    "headings": []
+  },
+  {
+    "surface": "source",
+    "path": "notes/ISSUE-1010-COPY-AGAIN-COMMENT-DRAFT.md",
+    "sha256": "4edb85f3638aa857066633ea373b01d23e25ccfef306c5a31063cc6ee6b98eb6",
+    "headings": []
+  },
+  {
+    "surface": "source",
+    "path": "notes/ISSUE-1010-FIX-COMMENT-DRAFT.md",
+    "sha256": "abc1223bee4d2669db62990ee6e7bc46d552e875aedf40d265cb7cc343b67110",
+    "headings": []
+  },
+  {
+    "surface": "source",
+    "path": "notes/MERGE-TRIAGE-2026-10-19.md",
+    "sha256": "bedd8fe047ad2884e696e0121a3763fad9c70ec543c19f5fb4f8150fa151aad3",
+    "headings": [
+      "# Merge triage: rebuild/main first-parent merges since 2026-10-09",
+      "## Most damaging first",
+      "## Autoload ~3 s slower: not in this window",
+      "## Defaults and behaviour changed without a setting",
+      "## Per-launch or per-boot I/O and delay added",
+      "## Per-merge table",
+      "## Notes for whoever acts on this"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/MMCE-EMBER-LISTING-2026-10-19.md",
+    "sha256": "682a6ea3644f78dc7fde3449a8fd7a4ee8c0c1b78267896b9e712b9fe9745947",
+    "headings": [
+      "# MMCE: Ember games never list",
+      "## Root cause: mmceman reports end of directory as an error",
+      "## Fix",
+      "## Evidence",
+      "## Same contract elsewhere (fixed by the same patch, not separately tested)",
+      "## Open lead"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/PR-894-DISCREPANCY-AUDIT-2026-10-10.md",
+    "sha256": "4920c9ee1bdc5cd08026301160592c94899c483107dc20cf93f87befa56b243d",
+    "headings": [
+      "# PR 894 discrepancy inventory — October 10, 2026",
+      "## Scope and exact state",
+      "## Confirmed discrepancies in added RA behavior",
+      "### R1 — P1: PS1 preparation checks an address, not launch network readiness",
+      "### R2 — P2: PS1 Caduceus launches skip the promised per-launch session check",
+      "### R3 — P2: explicit Xerabora host pin is lost in the POPS launch ABI",
+      "### R4 — P2: routed active discovery requires the remote host's ARP entry",
+      "### R5 — P2: verified-peer cache saves only the first SMB IP octet",
+      "## Inherited Ember/PS1 hardening gaps relevant to Vapor",
+      "### E1 — P2: scan errors become successful empty/partial enumerations",
+      "### E2 — P2: failed Ember half plus empty POPS half discards the previous list",
+      "### E3 — recovery gap: PS1 scan failure does not schedule bounded recovery",
+      "## Other coverage, documentation and integration discrepancies",
+      "## Report status and remaining acceptance gaps",
+      "## Validation performed for this audit",
+      "## Authorized remediation checkpoint - October 10",
+      "## Split-review verification, 2026-10-10"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/PR-894-VALIDATION-2026-10-09.md",
+    "sha256": "9f58a6954ba441a885b3b8e34bba7b783704c193885aa431d617e28318c99608",
+    "headings": [
+      "# PR 894 validation checkpoint, 2026-10-09",
+      "## Korium background report",
+      "## Confirmed review fix",
+      "## Validation and remaining limits",
+      "## Published-binary follow-up"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/PS1-RA-ALPHA16-AUDIT.md",
+    "sha256": "26bb52ca2139fdd616474f5adb9f0b9792b0703d9e00613e0dbad78647ad153d",
+    "headings": [
+      "# October 9, 2026 integration audit",
+      "## Published work retained",
+      "## Confirmed gaps and corrections",
+      "## PS2-Servers disposition",
+      "## Remaining acceptance work",
+      "## Follow-up review: PS1 watch identity and menu reachability"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/RA-PARITY-2026-10-11.md",
+    "sha256": "81e880588fe1eb1959cec60ca93de71b9fe5664218586f00c98decbfecefb050",
+    "headings": [
+      "# RetroAchievements parity audit",
+      "## Pinned references",
+      "## Capability comparison",
+      "## Confirmed receiver correction",
+      "## Card parity is not an enable-flag change",
+      "## Event snapshot correction",
+      "## Build isolation",
+      "## Experimental runtime opt-in",
+      "## Release acceptance and evidence"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/RE4-STARTUP-FREEZE-2026-10-14.md",
+    "sha256": "3425f6fca8a2539d59fc0d48de0b2271817f58cd0ae256c2be225dab1a04ecb7",
+    "headings": [
+      "# Resident Evil 4 startup freeze — October 14, 2026",
+      "## New report",
+      "## Interpret the IGR observation correctly",
+      "## Historical compatibility lead: VMC",
+      "## Recommended minimal diagnostic sequence",
+      "## Relationship to other freeze investigations",
+      "## Follow-up and pad-lifetime repair candidate"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/SIO2MAN-MMCE-AUDIT-2026-10-19.md",
+    "sha256": "b431ca72b117bf0d2f7c16bd24c16d7da78510afec3b8cd9c8dccd0a7ecd38bb",
+    "headings": [
+      "# SIO2MAN / MMCE in-game audit — 2026-10-19",
+      "## Verdict (short)",
+      "## 1. PR #962 vs upstream #1785 (e87ba689 + 7af5fdbe)",
+      "### Load order (same as upstream)",
+      "### Behavioural differences vs upstream master (SIO2-relevant only)",
+      "### Is SDK sio2man first safe?",
+      "### Which ps2sdk sio2man the rolling images ship",
+      "## 2. In-game MMCE driver pipeline",
+      "## 3. Symptom: MMCE game shows the PS2 logo, then black screen forever (PR #1004 build, standard flavour)",
+      "## Fix direction (not done here)",
+      "## Out of scope, noted"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/STATUS-2026-10-21.md",
+    "sha256": "6806e36ecb27df29fbd035bd7db2fc16cad216a3e838ee6a0715057c50bb092a",
+    "headings": [
+      "# Where we are — 2026-10-21 (evening)",
+      "## Main line",
+      "## Hardware reports: what we know (reports come from console testing of the betas)",
+      "## Hardware verification",
+      "## Open decisions (from the 10-19 merge triage, still not acted on)",
+      "## Open PRs",
+      "## Tracking issues",
+      "## Housekeeping done 2026-10-21"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/VAPOR-ARTWORK-METADATA-2026-10-10.md",
+    "sha256": "4f8545459dc9220de55c744b395e802e046fa0751285f3fe39240bfcc168535d",
+    "headings": [
+      "# Vapor artwork and metadata report, October 10, 2026"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/VAPOR-HDD-REGRESSION-2026-10-20.md",
+    "sha256": "c72044685e92b08a6e6da22b445da3e40e59c922c5f2c4628385bb96646b319b",
+    "headings": [
+      "# Vapor HDD compatibility investigation - 2026-10-20",
+      "## Evidence and boundary",
+      "## Confirmed source defect",
+      "## Comparison findings",
+      "## Validation and acceptance"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/fork-gap-audit-2026-10-21/FORK-GAPS-2026-10-21.md",
+    "sha256": "13c4e3e34d567a7473a6d34d378f9f5a8a7964375f10e30a35e400c08c692066",
+    "headings": [
+      "# Fork-gap refresh — October 21, 2026",
+      "## Updates since the relevant earlier baselines",
+      "## Corrections and open investigations",
+      "## Evidence and coverage files",
+      "## Single consolidated list of remaining console-loader differences"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "notes/stash-archive/README.md",
+    "sha256": "6056b6fbb8aed3e97639694f411539b57d9e236ec2bcfb072a463843906ad695",
+    "headings": [
+      "# Stash archive — exported 2026-10-21"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "pc/apa-recovery/README.md",
+    "sha256": "efd5dc830099c2cdd8071f0d9a3b197a3f079e0659b4cf1db569596cf1b0c5fa",
+    "headings": [
+      "# apa-recovery",
+      "## Requirements",
+      "## Diagnose (read-only, the default)",
+      "## Repair",
+      "## Tests"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "pc/http/README.md",
+    "sha256": "a8fdeae6945c2bc3bf2813a3e61c2885236c311042237793499cbcf289265540",
+    "headings": [
+      "# HTTP catalog and range conformance",
+      "## What is here",
+      "## Checking the parser",
+      "## Checking a server",
+      "### What it cannot tell you"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "third_party/PSUManager/README.md",
+    "sha256": "90c27b1be6f3e89459aa886713b90bb46e367095bc3384b46a8c777a7e86b14d",
+    "headings": [
+      "# PSUManager core (vendored)"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "third_party/ca-roots/README.md",
+    "sha256": "0482f4559681e2667a71680385455302f6cc1de5b4037e8571f32e22dade8d1f",
+    "headings": [
+      "# Trust anchors for the RA HTTPS lookup"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "third_party/mbedtls/README.md",
+    "sha256": "d6cc73aeeb3b2b3a742a5b5ce33c1aef59d0c115a0d8be123416d6f50ce0a4b2",
+    "headings": [
+      "# mbedTLS 3.6.7 (vendored subset)",
+      "## Licence",
+      "## Updating"
+    ]
+  },
+  {
+    "surface": "source",
+    "path": "third_party/orbit-neutrino/README.md",
+    "sha256": "4710f33b83958ea539c00779051b648846b59d733a6fac672b9d512a18b96def",
+    "headings": [
+      "# ORBIT Neutrino runtime for the RA edition"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "apps.html",
+    "sha256": "36fc7faec059bb1e4988dff69fa84e93986c7096e4a811facb74b08f4c4be371",
+    "headings": [
+      "Apps",
+      "The title.cfg method",
+      "Keys",
+      "The conf_apps.cfg method (legacy)",
+      "Where RiptOPL looks for it",
+      "Launching an app: the REBOOT IOP? prompt",
+      "Cover art for apps",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "cheats.html",
+    "sha256": "6a429b6cbd03fe7b5d26f003423dffbe5b857dde8d7d98b158976b1af810cd31",
+    "headings": [
+      "Cheats (PS2RD)",
+      "The CHT folder and .cht file format",
+      "A complete example .cht file",
+      "Enabling cheats for a game",
+      "Open Game Settings",
+      "Set the settings source",
+      "Enable the PS2RD Cheat Engine",
+      "Choose a cheat mode",
+      "When a game has no cheat file",
+      "Cheat modes",
+      "Cheats with the Neutrino core",
+      "PS2RD Cheat Image (.img)",
+      "The IMG folder",
+      "Enabling the image",
+      "Config keys reference",
+      "Related pages"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "controls.html",
+    "sha256": "99fcd1e588ef6790c2ae0710d124387c6ac5931277f6a86abb4b4ba478dabb44",
+    "headings": [
+      "Controls",
+      "Game list",
+      "With Coverflow or PSBBN Flow selected",
+      "Notes on individual buttons",
+      "Main menu and dialogs",
+      "Settings screens",
+      "On-screen keyboard",
+      "In-game",
+      "At boot",
+      "Start — skip the config",
+      "Triangle + Cross — force 480p",
+      "Triangle + Circle — force Auto (interlaced)",
+      "Keeping a new video mode",
+      "Rumble"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "coverflow.html",
+    "sha256": "aeb1642bb9f55adc2cb0f67736415c91968ed4002a8684f9421d153fdb19f6dc",
+    "headings": [
+      "Coverflow & PSBBN Flow",
+      "How Coverflow works",
+      "PSBBN Flow",
+      "Coverflow Settings",
+      "Cover art",
+      "Authoring a Coverflow theme",
+      "Config key reference"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "credits.html",
+    "sha256": "f83edfaf24b68d5f4320cb6f3c0e2396d4c8b68efd354808f195a1f811b0413b",
+    "headings": [
+      "Credits & Sources",
+      "The Foundation: ps2homebrew & PS2SDK",
+      "The OPL Family RiptOPL Draws From",
+      "Special Thanks",
+      "The Name",
+      "Companion Tools",
+      "Other Credits (from the OPL CREDITS file)",
+      "A Note on PS1 Emulation",
+      "PSX DVR / DTL TOOL: developers and technical references",
+      "License"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "favourites.html",
+    "sha256": "93cd67e45413d01476bc486db031485a0d2ab12f7ad19a291dd7145686788df9",
+    "headings": [
+      "Favorites",
+      "Quick start",
+      "Enable the Favorites tab",
+      "Star a game",
+      "Open the Favorites page",
+      "Launch normally",
+      "How it works",
+      "Persistence and compatibility",
+      "Game Sources option",
+      "PS2, PS1, ELF, and All in One views",
+      "Theme support"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "fork-gaps.html",
+    "sha256": "f287c5370705dfe5ebc50f26802082e5a41fa406b244f12b33e4a561efc10706",
+    "headings": [
+      "Fork Feature Gaps",
+      "Current reconciliation — October 25, 2026",
+      "Fork gap refresh — October 25, 2026",
+      "Changed tracked projects",
+      "Newly discovered forks",
+      "Evidence and remaining work",
+      "Single consolidated list of remaining differences",
+      "October 19, 2026 — focused delta audit",
+      "Sources surveyed",
+      "Searchable feature register",
+      "wOPL",
+      "OPLattice",
+      "OPHTML",
+      "Upstream OPL pull requests",
+      "BoliviaOS",
+      "PS2-Launcher",
+      "ORBIT",
+      "Project Titan Magenta Edition",
+      "OPL-Evolution",
+      "xeRAbora",
+      "RETROLauncher",
+      "Modulo R1",
+      "NHDDL",
+      "LUNA",
+      "Extended APA",
+      "E2OPL",
+      "Open PS2 Loader Modular PADEMU",
+      "uOPL (historical)",
+      "RRVE / exaconn OPL wheel work",
+      "Stable Open PS2 Loader (sOPL)",
+      "Caduceus & Caduceus OPL versus PS2-Servers & RiptOPL",
+      "Verified Caduceus gaps: CA1–CA7 and CO1–CO7",
+      "Compatibility and implementation boundaries",
+      "Integration priorities for our pairing",
+      "PS2CF — CompactFlash over the original PC CARD slot",
+      "OPL-DualSense-BT (October 2026)",
+      "RIPPS2 — current collaboration deep dive",
+      "RIPPS2 collaboration review — October 25, 2026",
+      "Exact revisions and reconstruction",
+      "What changed since the previous deep dive",
+      "Wins worth carrying between the projects",
+      "Safety and compatibility boundaries",
+      "Shared wins and useful next experiments",
+      "Enhanced PS2 Disc Launcher (2026)",
+      "OPL FUTURE (September 2026 beta)",
+      "Other recent PS2 loader projects checked (not counted as new gaps)",
+      "October 15 follow-up: desktop library, virtual SMB and visual OPL derivatives",
+      "OrbitPS2 Manager (desktop)",
+      "PS2SMB: HTTP range content presented as SMB files",
+      "Daniel's PS5-style Open PS2 Loader fork",
+      "Network-server ecosystem checked without new source-specific gaps",
+      "Checked and retained: existing parity or references",
+      "What changed in this refresh",
+      "Inclusive feature inventory — overlap, unshipped plans and unsupported paths retained",
+      "LUNA additions and overlaps (LU16–LU35)",
+      "PSXCore additions, disabled code and limitations (PX11–PX30)",
+      "xeRAbora alpha.18 and companion features (H4–H10)",
+      "Historical October 19 proposals (RI6–RI8): implemented later",
+      "New project comparisons — PSXCore, DS4RTBT and macOS tools",
+      "PSXCore (PX1–PX10) — POPStarter and Ember parity",
+      "OPL-DS4RTBT (DT1–DT3)",
+      "PS2 Manager for macOS (MA1–MA2)",
+      "Audit methodology and project coverage",
+      "Revision and validation scope",
+      "Notes",
+      "Alphabetical PS2 loader and companion project directory"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "game-formats.html",
+    "sha256": "e352d6805b45ed06720d8106f8dbe2f59950de1c198ec1b296a689abe0d047a0",
+    "headings": [
+      "Game image formats",
+      "PS2 formats at a glance",
+      "Direct ZSO playback",
+      "CHD, CSO and ZSO over UDPFS",
+      "HTTP, SMB and UDPBD differences",
+      "PS1 images use separate cores",
+      "Troubleshooting and evidence"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "getting-started.html",
+    "sha256": "87a833768b258a2cd4c678743f3aad581c5e2de3c7d1938ef413bbef88acb3e7",
+    "headings": [
+      "Getting Started",
+      "What you need",
+      "Pick a device",
+      "The OPL folder structure",
+      "Supported game image formats",
+      "Walk-through: USB to first launch",
+      "1. Prepare the drive",
+      "2. Plug in and boot RiptOPL",
+      "3. Enable USB in Game Sources",
+      "4. Launch a test game",
+      "5. Save your settings",
+      "Where to go next"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "gsm.html",
+    "sha256": "b63f2cbf57f185833fd69690bd3aa973e43eef3e1ba96eb7e00578e9c6490ffb",
+    "headings": [
+      "GSM — forced video modes",
+      "Where to set it",
+      "The options",
+      "Available modes",
+      "1080p is experimental, and asks three times",
+      "When a game loses the picture",
+      "The game runs but looks wrong",
+      "GSM and the other cores",
+      "Related settings that are not GSM"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "hdd.html",
+    "sha256": "a3de7aea254ae5a5b9dd95f11a80f39e0021ce234f45a3cd91e512e0e16f7cbb",
+    "headings": [
+      "Internal HDD (APA & exFAT)",
+      "APA / PFS (HDLoader format)",
+      "Capacity",
+      "The OPL data partition",
+      "Folder layout",
+      "Installing games (HDL-Dump / NBD)",
+      "Start the NBD server on the PS2",
+      "Connect from your PC",
+      "Inject the game with HDL-Dump",
+      "Enable HDD mode in RiptOPL",
+      "PS1 games on APA/PFS",
+      "exFAT via Block Device Manager (BDMA)",
+      "Why exFAT?",
+      "Formatting and partition table",
+      "Fragmentation warning",
+      "Enabling BDM HDD in RiptOPL",
+      "Enable Internal HDD (exFAT)",
+      "Copy your games",
+      "Launch a game",
+      "Folder layout",
+      "APA-Jail / APA + exFAT hybrid disks",
+      "PS1 games on exFAT (BDMA equip)",
+      "Disk safety and code 402",
+      "Stop writing to the disk",
+      "Connect it to a PC and image it",
+      "Diagnose (read-only)",
+      "Repair, if it says Repairable",
+      "APA/PFS vs. exFAT at a glance",
+      "Notes & limitations",
+      "exFAT storage: setup, benefits and limits",
+      "Choose the layout",
+      "Set up an internal exFAT HDD",
+      "Benefits and limitations",
+      "APA-Jail: APA/PFS and exFAT on the same disk",
+      "Games and settings on APA-Jail",
+      "Safety and troubleshooting",
+      "HDD detected, but games missing"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "http.html",
+    "sha256": "97a91892af9d85479fb17ec561da356ae4536d4f4e70a36f748aba8347d36d05",
+    "headings": [
+      "HTTP",
+      "Status",
+      "Setting it up",
+      "The catalog",
+      "What works, and what does not",
+      "Where per-game data lives",
+      "When something goes wrong",
+      "Notes for anyone changing this code",
+      "Credits"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "igr.html",
+    "sha256": "e8b6254606ea7af7d4c8441a1aa115e4d13bd166a4742f86c55bdd65880d05db",
+    "headings": [
+      "In-Game Reset (IGR)",
+      "The button combinations",
+      "The console power button",
+      "Where a reset takes you",
+      "When IGR is not available",
+      "Before the game opens a controller",
+      "When the game is incompatible",
+      "Under the Neutrino core",
+      "In-game screenshots (IGS)",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "index.html",
+    "sha256": "d08ff14182886cae42c0d60fe74e4cbb94dd12771013189d5631acb4a342e95e",
+    "headings": [
+      "RiptOPL Documentation",
+      "What RiptOPL adds on top of OPL",
+      "Full reference",
+      "Companion Ecosystem & Tools"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "install.html",
+    "sha256": "a6ccbb6c52cc481f2fb81d83fd2e1117fdbf7c69f093a180543510fceb73ecb3",
+    "headings": [
+      "Install & First Boot",
+      "What is RIPTOPL.ELF?",
+      "Release channels",
+      "Getting RIPTOPL.ELF onto your PS2",
+      "1. Download the package",
+      "2. Copy RIPTOPL.ELF to your boot location",
+      "3. (Optional) Place the Neutrino folder",
+      "4. Prepare your storage device",
+      "Optional: Unicode/Japanese game titles",
+      "First boot walkthrough",
+      "Launch RIPTOPL.ELF",
+      "Enable your device",
+      "Save settings",
+      "Launch a game",
+      "Fresh-start defaults",
+      "Config file: settings_riptopl.cfg",
+      "Coming from official OPL",
+      "Cover art at a glance",
+      "Next steps"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "languages.html",
+    "sha256": "198791010ab6831b457371173fab54256bda35488e7aa6987c82a6cc7c1ecda5",
+    "headings": [
+      "Languages",
+      "What is already there",
+      "Installing extra languages",
+      "File naming",
+      "Japanese game titles with English menus",
+      "Choosing a language",
+      "This is not the OSD language setting",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "launch-diagnostics.html",
+    "sha256": "5515d940ae1e44a6daac1b4334a85fa47c72d0428568c46f9d9a8ff5d3a3924a",
+    "headings": [
+      "Launch diagnostics: identify the package, core and transport",
+      "Choose the matching installation",
+      "Identify the failing stage",
+      "Keep transport and runtime evidence separate",
+      "A useful controlled comparison",
+      "Reading the fork comparison"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "mmce.html",
+    "sha256": "e799744e06df5ece414f934a1de7e94e8f965a5c409358b03a263a2a1753598b",
+    "headings": [
+      "MMCE (SD2PSX / MemCard PRO2)",
+      "Quick start",
+      "Prepare the SD card",
+      "Seat the device and boot",
+      "Enable MMCE in Game Sources",
+      "Launch a game",
+      "Folder layout",
+      "Where the MMCE settings live",
+      "MMCE Start Mode",
+      "MMCE Slot",
+      "MMCE Prefix Path",
+      "IGR Bootcard Slot(s)",
+      "Advanced MMCE Settings",
+      "Wait Cycles after /ACK low",
+      "Use Timeout Alarms",
+      "PS1 games on MMCE",
+      "Neutrino on MMCE",
+      "Notes & tips"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "nbd.html",
+    "sha256": "a7365be2eec0948ab592195b58aa6915b0cb973e08c98bf0534c4254edae2a0f",
+    "headings": [
+      "NBD Server",
+      "Prerequisites",
+      "Starting the server",
+      "Open the main menu",
+      "Select \"Start NBD Server\"",
+      "Connect from your PC",
+      "Disconnect and exit",
+      "Export name",
+      "nbd-client (Linux)",
+      "nbdfuse (Linux / WSL2)",
+      "wnbd (Windows)",
+      "macOS",
+      "Using hdl_dump over NBD",
+      "Connect the NBD client",
+      "Run hdl_dump",
+      "Disconnect",
+      "Related pages"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "network-boot.html",
+    "sha256": "54b20ede93e4bdd5e811bf309fc209615f182bd8f1ac79546f1603edefd7990b",
+    "headings": [
+      "Network Boot (SMB / UDP)",
+      "The Network rows",
+      "SMB Version — SMBv1 or SMB2",
+      "Switching protocols with saved settings",
+      "Access — Files vs IMG",
+      "Requirements",
+      "Selecting a network protocol",
+      "Set a static IP on the PS2 (UDPFS and UDPBD)",
+      "Pick your Network Protocol (and Access)",
+      "Start the PC server",
+      "Boot the PS2 and find your games",
+      "Neutrino-only: no OPL core fallback (UDPFS)",
+      "One NIC, one transport — how the four rows interlock",
+      "Config file keys",
+      "Game folder layout on the server",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "neutrino.html",
+    "sha256": "604f6e2247fef6565d88393ade6bb824daca9800a8395b8399a492220d6aa7a6",
+    "headings": [
+      "Neutrino Core",
+      "1. Install Neutrino",
+      "One complete runtime for local and network games",
+      "2. Pick the core per game",
+      "Open Game Settings",
+      "Set Loader Core",
+      "Save",
+      "Where Neutrino works",
+      "3. Neutrino Path",
+      "4. Launch arguments",
+      "Global and per-game extra args",
+      "Structured Neutrino Args sub-screen",
+      "See the exact arguments: Show Launch Arguments",
+      "5. Per-game Neutrino Video (-gsm)",
+      "Mode 7 — fix IOP buffer overrun ( -gc=7 )",
+      "6. Core-aware per-game settings",
+      "When Loader Core = Neutrino",
+      "When Loader Core = <OPL>",
+      "7. Network boot — UDPBD / UDPFS",
+      "When automatic installation lookup skips a folder"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "pademu.html",
+    "sha256": "80f075e5d0b963e1bd1300d9203e5281feefa48e23c50edd320ffc2e7b82d134",
+    "headings": [
+      "PADEMU — DualShock 3 and 4 emulation",
+      "Setting it up",
+      "USB or Bluetooth",
+      "Fake DS3 controllers",
+      "DualSense (DualShock 5)",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "pc-card-cf.html",
+    "sha256": "48fb2df0f77b5cb443d4bdb791d06127895559f19ae7625747b53601706b87bf",
+    "headings": [
+      "PC CARD CompactFlash (early Japanese PS2)",
+      "Required hardware",
+      "Experimental test instructions",
+      "Ownership and restrictions",
+      "Source provenance and developer credit"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "per-game-settings.html",
+    "sha256": "f4111f430b74c977b9082c7372ee49b0e00d5bd4056960f2162ec859d8b20804",
+    "headings": [
+      "Per-game Settings",
+      "Opening Game Settings",
+      "Game Settings",
+      "Loader Core",
+      "Neutrino Launch Args & Neutrino Video (Neutrino core only)",
+      "Compatibility Modes 1–7",
+      "DMA Mode",
+      "Game ID & Custom ELF",
+      "Per-game parental lock",
+      "VMC — Virtual Memory Cards",
+      "Cheat Settings",
+      "Configure GSM",
+      "Controller Emulation",
+      "OSD Settings",
+      "Core-aware adaptation",
+      "A Custom ELF path changed after saving",
+      "Save Changes, Test Changes, Remove Settings",
+      "Save Changes",
+      "Test Changes",
+      "Remove Settings",
+      "Config key reference"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "ps1-vcd.html",
+    "sha256": "07ad7d4705a91e8ffa53356721e66af0b81999f86095f1d0ec98b3d225c40791",
+    "headings": [
+      "PS1 Games",
+      "PS2 and PS1 libraries on each device",
+      "PS2/PS1 Game Display",
+      "How PS1 games launch",
+      "POPSTARTER.ELF path",
+      "Ember — the second PS1 core",
+      "Setting Ember up",
+      "Ember settings",
+      "Device support",
+      "Where to put your VCD files",
+      "POPS UDPFS with BDM-UDPFS Assault",
+      "exFAT support — the BDMA equip",
+      "BDMA Mode",
+      "BDMA Source",
+      "The equip step",
+      "Place module files",
+      "Turn VCD BDMA Apply on Launch off",
+      "Set BDMA Source",
+      "Set BDMA Mode",
+      "Save settings",
+      "PS1 over SMB",
+      "Internal HDD — APA partitions and exFAT",
+      "Notes & limitations",
+      "POPSTARTER internals — sister site",
+      "PS1 save icons"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "ps3-bc.html",
+    "sha256": "8ca6639a1912672471078e11f8afb891104b8f5b9ddc0403be9c2a7312200811",
+    "headings": [
+      "PS3 Backward Compatibility",
+      "Supported hardware scope",
+      "Inherited storage modes",
+      "Getting an entry point",
+      "Validation and bug reports"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "psx-dvr.html",
+    "sha256": "6b083b5fd55af08e9f4903170fa73d9451e91e656968a6beab1dbb5391f22509",
+    "headings": [
+      "PSX DVR (DESR) Game Loading",
+      "Hardware and DVR storage",
+      "Experimental setup",
+      "Start with a DESR and a current RiptOPL build",
+      "Install the complete DVR-enabled Neutrino",
+      "Set Neutrino Path and launch",
+      "Current limitations",
+      "Credits and further reference",
+      "Responsible testing"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "releases.html",
+    "sha256": "07a06a2809250cb9aed5767112ece1a14945a2c5b354ebf31fd035dde252ad42",
+    "headings": [
+      "Releases",
+      "Release channels",
+      "What the rolling release contains",
+      "Finding the exact build",
+      "Download a PR or Actions test build",
+      "Four toolchain flavours, ordered for testing",
+      "Bundled Neutrino core",
+      "How to pull the rolling release",
+      "How the pipeline works",
+      "After downloading",
+      "Extract the package zip",
+      "Install the ELF via your launch method",
+      "Set up Neutrino (optional)",
+      "Copy the language pack (optional)",
+      "Archive availability",
+      "The rolling archive",
+      "Building from source",
+      "Companion Ecosystem & Tools"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "retroachievements.html",
+    "sha256": "c8e61b3e091af61da9e22acf955856b62a3294cf6ec542fb6dbe70e59519ad21",
+    "headings": [
+      "RetroAchievements",
+      "Mode 6 (IGR disabled)",
+      "RA Mode: Xerabora or Caduceus",
+      "Neutrino in the RA edition",
+      "Xerabora achievement browser",
+      "Caduceus achievement browser and in-game cards",
+      "Status",
+      "Using it",
+      "First tracked game",
+      "Physical discs",
+      "Which launch paths can work",
+      "Do not expect a game with achievements to run from a network share",
+      "An image an earlier run left open on the share can still be hashed",
+      "Networking",
+      "Files on the card",
+      "Building",
+      "Two IOP modules this flavour builds instead of taking from the SDK",
+      "Before this is called finished",
+      "Notes for anyone changing this code",
+      "Credits",
+      "PS1 achievements through USB POPStarter"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "settings.html",
+    "sha256": "b17381ceb3e3d9fc5863546bf6b065331ffb21919a0b897a47906f0a1c013c5f",
+    "headings": [
+      "Settings Reference",
+      "The Settings screen",
+      "Game Sources",
+      "Devices and start modes",
+      "MMCE Settings",
+      "General & System",
+      "Folder browsing",
+      "Parental lock",
+      "What the lock actually gates",
+      "Setting, using and clearing it",
+      "Language",
+      "OSD Settings",
+      "Network",
+      "Protocol and PS2 address",
+      "SMB Server",
+      "HTTP server",
+      "RetroAchievements",
+      "POPSTARTER Network Settings",
+      "Interface",
+      "Coverflow Settings",
+      "Artwork Settings",
+      "Colors",
+      "Game Launching",
+      "Neutrino Defaults",
+      "PS Emulation Settings",
+      "VCD Games List Settings",
+      "Controller Settings",
+      "Audio Settings",
+      "Where the audio comes from",
+      "Per-game Settings (quick reference)"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "smb.html",
+    "sha256": "d13d59b564d78cf4270255002a1a956d1db343ae5f2a520f6f4aecb7bfa725d1",
+    "headings": [
+      "SMB (network share)",
+      "What you need",
+      "1. Set up the SMB server and share",
+      "Create a folder",
+      "Grant the access your features need",
+      "Place your game ISOs",
+      "2. Configure the Network page in OPL",
+      "PS2 IP address",
+      "Share address and credentials",
+      "Saving and connecting",
+      "3. Enable SMB in Game Sources",
+      "SMB Version — SMBv1 or SMB2",
+      "4. Game and folder layout",
+      "5. PS1 games over SMB",
+      "Copy the SMB modules to the memory card",
+      "Set up the POPSTARTER network config",
+      "6. SMB vs. Network Boot — the NIC interlock",
+      "7. Common problems",
+      "8. Config file keys",
+      "See also"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "themes.html",
+    "sha256": "b5322dc1f81a95c6162d86b8e02132a9646eb04e2e581d556db7456f963c062b",
+    "headings": [
+      "Theme Engine",
+      "1 · File & folder structure",
+      "2 · Block families & the contiguous-numbering rule",
+      "Mixed lists: the page picks the family, each row picks its own cover",
+      "3 · Global properties",
+      "Colours ( #RRGGBB )",
+      "Fonts",
+      "Other global keys",
+      "4 · Common element properties",
+      "5 · Element types",
+      "Text-element extras",
+      "Long text never draws over other elements — this fork",
+      "List extras",
+      "Per-device placement ( devices= ) — this fork",
+      "Using RiptOPL themes on regular OPL",
+      "6 · Image & overlay properties (incl. the two-layer system)",
+      "7 · attribute= values",
+      "AttributeText (metadata text)",
+      "AttributeImage (badge chosen by the game's value)",
+      "8 · Built-in default= asset names",
+      "9 · The Coverflow element",
+      "Per-theme properties (in conf_theme.cfg )",
+      "Global Coverflow tuning (NOT in the theme)",
+      "The PSBBNFlow element",
+      "10 · The SaveIcon element",
+      "11 · Coordinates & scaling",
+      "Author on 640×480",
+      "Use scaled=1 for undistorted art",
+      "Anchor to edges, not pixels",
+      "12 · Worked examples",
+      "An info-page metadata label",
+      "A framed cover with the two-layer case",
+      "A screenshot with a bezel overlay",
+      "13 · A complete, annotated sample theme",
+      "See also",
+      "Artwork on UDPFS shares"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "troubleshooting.html",
+    "sha256": "1154f16e3a8f2188155153581790108aa003ee139e16a84ff481c1dd59d8f58f",
+    "headings": [
+      "Troubleshooting",
+      "OPL freezes on the logo or grey screen",
+      "Skip config on boot",
+      "Open and re-save settings",
+      "Verify the fix",
+      "Game stops on a white screen",
+      "No display on boot (blank or black screen)",
+      "Menu works, but launching a game loses the picture",
+      "Internal HDD — code 402, 500, or \"Formatted: NO\"",
+      "PS1/VCD — \"my VCDs don't show up\" (works elsewhere)",
+      "Does the device page appear at all?",
+      "Do PS2 ISOs list from the device?",
+      "Check PS2/PS1 Game Display",
+      "Check the folder — root, not your games prefix",
+      "Check the filename",
+      "Fails only after selecting a game?",
+      "PS2 list empty — \"Could not open the CD or DVD folder\"",
+      "Read the error number",
+      "Check the path it names",
+      "Check the device on a PC",
+      "Press Select to try again",
+      "iLink — revision 2692 handoff failures",
+      "BDMA — \"module files not found on source device\"",
+      "Locate the module files",
+      "Copy them to the correct location",
+      "Note: the source must match the device's driver",
+      "Re-apply the equip",
+      "PS1 / VCD list not showing after a settings change",
+      "Japanese game names show squares or garbled characters",
+      "Quick-reference button combos",
+      "More help",
+      "VMC creation or layout errors",
+      "Details to include in a bug report",
+      "Setup questions and reporting launch failures",
+      "Which build should I download?",
+      "Does Browser mean the memory-card browser?",
+      "Why is another language unavailable?",
+      "Neutrino worked, then returned to OSDSYS",
+      "More noise at startup",
+      "What do Neutrino's 1080i x1, x2 and x3 mean?",
+      "RiptOPL, Neutrino and other frontends"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "unicode-titles.html",
+    "sha256": "9708bca18300165e18fd2c3287413b6ea58d54f7bd6dd340969065cb27543b66",
+    "headings": [
+      "Japanese & Unicode Game Titles",
+      "How to activate it",
+      "Example files",
+      "Two different Japanese font paths",
+      "What is supported, and what is not",
+      "Show CFG Titles in Game Lists (optional)",
+      "Compatible build / test artifact",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "usb.html",
+    "sha256": "2e985cd59910aa5d9f03239593eea151a413c8639c5e2c93d8c70919efe0f233",
+    "headings": [
+      "USB / MX4SIO / iLink",
+      "The three transports",
+      "USB",
+      "MX4SIO",
+      "iLink (IEEE 1394 / FireWire)",
+      "Supported filesystems",
+      "Folder layout",
+      "Fragmentation",
+      "Copy files off",
+      "Format the drive",
+      "Copy files back in order",
+      "USBExtreme format (.ul) for FAT32 and large games",
+      "Enabling devices in Game Sources",
+      "BDM Prefix",
+      "Multiple devices at once",
+      "Common issues"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "vmc.html",
+    "sha256": "9439111fa05d1ac3ddb60d8b5319d0900a8c4db587bfa344cc914912be2df931",
+    "headings": [
+      "Virtual Memory Cards (VMC)",
+      "Where VMC files live",
+      "Supported sizes",
+      "Assigning a VMC to a game",
+      "Open Game Settings",
+      "Enter the VMC screen",
+      "Choose or configure the VMC",
+      "Use Generic or Reset",
+      "Save",
+      "The Configure VMC screen",
+      "How image creation works",
+      "Recover from a failed VMC creation",
+      "Creation errors and fragmentation warnings",
+      "Access errors at launch",
+      "VMC with the Neutrino core",
+      "Automatic name suggestion (VMC groups)",
+      "Sharing VMCs across devices and builds"
+    ]
+  },
+  {
+    "surface": "site",
+    "path": "zso.html",
+    "sha256": "3ed90d32190c25573ee5e55bdfc769b73fa37e5e1dd1547ef6083f203cfb79e2",
+    "headings": [
+      "ZSO Format",
+      "Requirements",
+      "Compressing an ISO to ZSO",
+      "Optional flags",
+      "Decompressing a ZSO back to ISO",
+      "Using ZSO files on your PS2",
+      "USB, MMCE, MX4SIO, iLink, and SMB",
+      "Internal HDD (APA)",
+      "Internal HDD (exFAT / BDM)",
+      "Neutrino and ZSO",
+      "Quick reference"
+    ]
+  }
+]

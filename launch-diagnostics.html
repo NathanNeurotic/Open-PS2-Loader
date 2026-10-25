@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Launch diagnostics — RiptOPL</title>
+<meta content="Launch your first PS2 game with RiptOPL, end to end." name="description"/>
+<link href="assets/favicon.png" rel="icon" type="image/png"/>
+<meta content="RiptOPL Docs" property="og:site_name"/>
+<meta content="website" property="og:type"/>
+<meta content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png" property="og:image"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png" name="twitter:image"/>
+<link href="assets/style.css" rel="stylesheet"/>
+</head><body data-base="">
+<header class="topbar">
+<button aria-label="Menu" class="menu-btn">☰</button>
+<a class="brand" href="index.html">
+<span class="psbtns"><i class="tri">△</i><i class="cir">◯</i><i class="cro">✕</i><i class="squ">□</i></span>
+    RiptOPL <small>DOCS</small></a>
+<div class="topbar-actions">
+<a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+<a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" rel="noopener" target="_blank" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+</div>
+<div class="search">
+<span class="ico"></span>
+<input autocomplete="off" id="q" placeholder="Search devices, themes, Neutrino, settings…  ( / )" type="search"/>
+<kbd>/</kbd>
+<div id="results"></div>
+</div>
+</header>
+<div class="layout">
+<nav class="sidebar">
+<div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+<a href="index.html"><span class="icon icon-home"></span>Home</a>
+<h4>Start</h4>
+<a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+<a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+<h4>Game sources</h4>
+<a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+<a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+<a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+<a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+<a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+<a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+<a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+<a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+<h4>Features</h4>
+<a href="game-formats.html"><span class="icon icon-zso"></span>Game Image Formats</a>
+<a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+<a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+<a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+<a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+<a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+<a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+<a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+<a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+<a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+<a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+<a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+<h4>Theme Engine</h4>
+<a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+<h4>Reference</h4>
+<a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+<a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+<a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+<a href="unicode-titles.html"><span class="icon icon-languages"></span>Japanese / Unicode Titles</a>
+<a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+<a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+<a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+<a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+<a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+<a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+<a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="launch-diagnostics.html">Launch diagnostics</a>
+<a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+<a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+</nav>
+<main class="content">
+<h1 id="launch-diagnostics-identify-the-package-core-and-transport">Launch diagnostics: identify the package, core and transport</h1>
+<p>Record the loader build and the core that actually launches the game before changing settings.
+The same library row can use different runtimes. A working native OPL launch does not validate
+Neutrino, POPStarter, Ember or an achievements runtime on that transport.</p>
+<h2 id="choose-the-matching-installation">Choose the matching installation</h2>
+<table>
+<thead>
+<tr>
+<th>Installation</th>
+<th>What to preserve and check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard complete kit</td>
+<td>Keep its supplied <code>neutrino/</code>, <code>EMBER/</code>, POPS support files and notices together. The loose loader ELF alone does not refresh them</td>
+</tr>
+<tr>
+<td>RetroAchievements complete kit</td>
+<td>Use its paired companion and pinned ORBIT Neutrino runtime; see <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/RETROACHIEVEMENTS.md">RA setup</a>. A newer companion release is not automatically the tested pairing</td>
+</tr>
+<tr>
+<td>PR/Actions artifact</td>
+<td>Record PR, commit, workflow, flavour and artifact name. Read the artifact's contents rather than assuming it is a full install kit; see <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/TEST-BUILDS.md">test builds</a></td>
+</tr>
+<tr>
+<td>External or older runtime</td>
+<td>Record the runtime version and actual path. RiptOPL's argument-length checks do not establish that an arbitrary runtime recognizes every option</td>
+</tr>
+</tbody>
+</table>
+<p>Keep the previous working kit as a recovery copy. Do not mix runtimes while also changing the
+loader build and transport: that makes a useful before/after comparison difficult.</p>
+<h2 id="identify-the-failing-stage">Identify the failing stage</h2>
+<table>
+<thead>
+<tr>
+<th>Observation</th>
+<th>First checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source does not appear</td>
+<td>Source Start Mode, selected device/slot and hardware detection; then <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/SETUP-QUESTIONS.md">setup questions</a></td>
+</tr>
+<tr>
+<td>Source opens but a game is absent</td>
+<td>Folder, filename and supported image format; see <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/GAME-FORMATS.md">format matrix</a>. Refresh after changes. A listed cached game does not prove the device is present</td>
+</tr>
+<tr>
+<td>Immediate return to Browser</td>
+<td>Selected core, actual runtime and support-file paths, arguments and complete runtime configuration. Record the error verbatim; an unsupported option or malformed TOML is different from a game compatibility failure</td>
+</tr>
+<tr>
+<td>Logo then black/white screen</td>
+<td>Compare the same image/core/transport with the last working build; record compatibility modes, VMC, PADEMU, GSM and RA state</td>
+</tr>
+<tr>
+<td>Freeze after gameplay starts</td>
+<td>Record title serial/revision, time or action, core and transport, companion/server version and the full log. A network timeout is evidence of a failed request, not by itself the underlying cause</td>
+</tr>
+<tr>
+<td>VMC creation or replacement fails</td>
+<td>Preserve the existing card and recovery files. Use <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VMC.md">VMC recovery</a>; do not delete saves to test a hypothesis</td>
+</tr>
+<tr>
+<td>Exit/reset behaves differently</td>
+<td>Use the <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/IGR.md">core-specific IGR reference</a>. Native OPL, external Neutrino and the PS1 cores have separate hooks and return-path rules</td>
+</tr>
+</tbody>
+</table>
+<h2 id="keep-transport-and-runtime-evidence-separate">Keep transport and runtime evidence separate</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Details that change the diagnosis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>USB / MX4SIO / iLink / exFAT HDD</td>
+<td>Actual device and filesystem, selected core, VMC/PADEMU state and whether another device changes mount ordering. A <code>massN:</code> alias belongs to a mounted environment; it is not a permanent physical drive identity</td>
+</tr>
+<tr>
+<td>MMCE</td>
+<td>Device/firmware, slot, source mode, GameID and IGR bootcard settings, and where the loader/runtime resides. A GameID switch changes the emulated <code>mcN:</code> card contents; keep the runtime accessible after switching</td>
+</tr>
+<tr>
+<td>APA HDD</td>
+<td>Console/adapter, APA installation and per-core VMC support. Preserve the disk; use <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/APA-SAFETY.md">APA safety</a> before repair or repartitioning</td>
+</tr>
+<tr>
+<td>SMB</td>
+<td>Server implementation/version, share and prefix, credentials, negotiated SMB version, wired topology and core</td>
+</tr>
+<tr>
+<td>UDPFS / UDPBD</td>
+<td>Protocol and server version, Core/standalone server mode, generated runtime configuration and selected device. Do not infer UDPBD behavior from a UDPFS result</td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>Server profile, catalogue and range support; see <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/HTTP.md">HTTP limits</a>. Host conformance does not establish real-console game compatibility</td>
+</tr>
+</tbody>
+</table>
+<p>For MMCE, copying files or creating a per-game card can compete with loading and controller work.
+First reproduce with a known complete card and record firmware/device state. A read-only launch
+comparison is more useful than repeatedly recreating cards. For POPStarter and Ember, follow
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md">PS1 core and device restrictions</a> rather than applying PS2-core options.</p>
+<h2 id="a-useful-controlled-comparison">A useful controlled comparison</h2>
+<ol>
+<li>Preserve the working build, configuration and saves. Select one console, device and game image.</li>
+<li>Record loader commit/flavour, external runtime path/version and companion/server version.</li>
+<li>Reproduce with the current settings and record the last visible stage or exact message.</li>
+<li>Change one variable. For an optional feature, disable that feature first; preserve the original
+settings so the result can be repeated. For a regression, compare a control and candidate build.</li>
+<li>Verify the intended outcome: reaching a logo, reaching gameplay, save/load and returning to the
+loader are separate checks. A host test or build cannot substitute for any of them.</li>
+</ol>
+<p>Share the smallest repeatable sequence, the complete relevant log and both outcomes. Remove
+passwords/tokens from configuration excerpts. Keep reporter-owned issues open until the reporter
+confirms the affected setup, unless the maintainer explicitly decides otherwise.</p>
+<h2 id="reading-the-fork-comparison">Reading the fork comparison</h2>
+<p>The <a href="https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html">fork-gap report</a>
+tracks source mechanisms, release descriptions, development work and design alternatives.
+RIPPS2 Build 115's Trust Cache, Recent Games, artwork aliases and MMCE coordination are reviewed
+as that project's work; this guide does not claim those settings exist in RiptOPL.
+See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/FORK-COLLABORATION.md">collaboration review practice</a> for how candidates become small,
+credited changes with appropriate checks.</p>
+</main>
+<aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+<p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+<p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>
