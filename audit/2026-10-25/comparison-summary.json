@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-25",
+  "riptopl": "55261de1381ae70ecfdfb2054f9cafbcfcd586cf",
+  "prior_audit": "2026-10-24",
+  "records": 258,
+  "capability_families": 118,
+  "new_records": [
+    "RI34",
+    "RI35",
+    "RI36",
+    "RI37",
+    "RI38",
+    "RI39",
+    "RI40",
+    "YA1",
+    "NV1",
+    "LU40"
+  ],
+  "tracked_identities": 128,
+  "canonical_repositories": 126,
+  "changed": 7,
+  "unchanged": 121,
+  "unavailable": 0,
+  "new_forks_checked": 6,
+  "physical_console_tested": false
+}

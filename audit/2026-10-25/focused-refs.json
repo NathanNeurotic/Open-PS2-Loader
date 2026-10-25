@@ -1,0 +1,9 @@
+{
+  "riptopl": "55261de1381ae70ecfdfb2054f9cafbcfcd586cf",
+  "ripps2_main": "e1e3504f4a8bfd6b2f88425d284eb845393cfcb9",
+  "ripps2_release": "f59abffde0794debdadaee526c175414a4b12b21",
+  "ripps2_tag": "v1.1.4-beta",
+  "ripps2_b114": "20fcc576a2c01b172a095796f2b1bfa63c596238",
+  "ripps2_upstream": "57c45b4fcc922ba00fed949c634caea0a2900c63",
+  "method": "Build 113 reconstructed snapshot plus exact 0114 and 0115 patches; assets and tests from each pinned tree; upstream build scripts not executed"
+}

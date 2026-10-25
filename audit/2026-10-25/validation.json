@@ -1,0 +1,105 @@
+{
+  "status": "Local checks passed; source/Pages PR merge and public deployment are separate",
+  "source_base": "55261de1381ae70ecfdfb2054f9cafbcfcd586cf",
+  "source_commit": "ef323f5cb7a333217465c6a37526d1ea2058370b",
+  "markdown_files": 88,
+  "website_pages": 37,
+  "local_links_checked": 2707,
+  "local_link_errors": [],
+  "preserved_upstream_layout_links": [
+    {
+      "document": "POPS/UDPFS-NOTICES/UPSTREAM-README.md",
+      "upstream_relative_link": "docs/README_CONFIG.txt"
+    },
+    {
+      "document": "POPS/UDPFS-NOTICES/UPSTREAM-README.md",
+      "upstream_relative_link": "../LICENSE"
+    },
+    {
+      "document": "POPS/UDPFS-NOTICES/UPSTREAM-README.md",
+      "upstream_relative_link": "docs/THIRD_PARTY_NOTICES.md"
+    },
+    {
+      "document": "POPS/UDPFS-NOTICES/UPSTREAM-README.md",
+      "upstream_relative_link": "licenses/"
+    }
+  ],
+  "site_sync_tests": 7,
+  "wiki_sync_tests": 2,
+  "site_sync_check": "up to date",
+  "translation_check": "strict passed; overlay-only estimates because upstream language downloads absent",
+  "host_checks": [
+    {
+      "snapshot": "release",
+      "test": "test_ripps2_hd_modes.py",
+      "exit_code": 0,
+      "output": "HD modes: single pass, magnified, priority restored OK\n"
+    },
+    {
+      "snapshot": "release",
+      "test": "test_ripps2_grid.py",
+      "exit_code": 0,
+      "output": "grid: element, draw, two-axis navigation, edge drive change OK\n"
+    },
+    {
+      "snapshot": "release",
+      "test": "test_ripps2_build113.py",
+      "exit_code": 0,
+      "output": "build113: the category sidebar (glyphs in the bar, drawers, focus, hints) OK\n"
+    },
+    {
+      "snapshot": "release",
+      "test": "test_ripps2_build114.py",
+      "exit_code": 0,
+      "output": "build114: the merge, the launcher search, STATUS, the master list, hide and delete with the APA check, credits, launch write safety, the launch guard, one ELF, FreeType OK\n"
+    },
+    {
+      "snapshot": "main",
+      "test": "test_ripps2_hd_modes.py",
+      "exit_code": 0,
+      "output": "HD modes: single pass, magnified, priority restored OK\n"
+    },
+    {
+      "snapshot": "main",
+      "test": "test_ripps2_grid.py",
+      "exit_code": 0,
+      "output": "grid: element, draw, two-axis navigation, edge drive change OK\n"
+    },
+    {
+      "snapshot": "main",
+      "test": "test_ripps2_build113.py",
+      "exit_code": 0,
+      "output": "build113: the category sidebar (glyphs in the bar, drawers, focus, hints) OK\n"
+    },
+    {
+      "snapshot": "main",
+      "test": "test_ripps2_build114.py",
+      "exit_code": 0,
+      "output": "build114: the merge, the launcher search, STATUS, the master list, hide and delete with the APA check, credits, launch write safety, the launch guard, one ELF, FreeType OK\n"
+    },
+    {
+      "snapshot": "main",
+      "test": "test_art_names.py",
+      "exit_code": 0,
+      "output": "ART names: case, .png/.jpg/.jpeg, PNG first, real names, absent from RAM\nART aliases: OPL Manager kinds both ways, PS1 disc ID and XX.ELF names, nothing for themes\n"
+    },
+    {
+      "snapshot": "main",
+      "test": "test_neutrino_external.py",
+      "exit_code": 0,
+      "output": "Neutrino by version.txt, its strings or its config files; packed and missing ones; mass: after the IOP reset OK\n"
+    }
+  ],
+  "browser_checks": [
+    "258 of 258 records shown",
+    "RI34 filter: 1 of 258 records shown",
+    "Fork-gap overview screenshot inspected",
+    "Launch diagnostic guide screenshot inspected"
+  ],
+  "physical_console_tested": false,
+  "limits": [
+    "External HTTP 429/403/503/timeouts inconclusive",
+    "Every advertised branch was not exhaustively audited",
+    "Source checks and host fixtures do not validate gameplay or save durability"
+  ]
+}

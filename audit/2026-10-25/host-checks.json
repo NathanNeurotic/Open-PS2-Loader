@@ -1,0 +1,62 @@
+[
+  {
+    "snapshot": "release",
+    "test": "test_ripps2_hd_modes.py",
+    "exit_code": 0,
+    "output": "HD modes: single pass, magnified, priority restored OK\n"
+  },
+  {
+    "snapshot": "release",
+    "test": "test_ripps2_grid.py",
+    "exit_code": 0,
+    "output": "grid: element, draw, two-axis navigation, edge drive change OK\n"
+  },
+  {
+    "snapshot": "release",
+    "test": "test_ripps2_build113.py",
+    "exit_code": 0,
+    "output": "build113: the category sidebar (glyphs in the bar, drawers, focus, hints) OK\n"
+  },
+  {
+    "snapshot": "release",
+    "test": "test_ripps2_build114.py",
+    "exit_code": 0,
+    "output": "build114: the merge, the launcher search, STATUS, the master list, hide and delete with the APA check, credits, launch write safety, the launch guard, one ELF, FreeType OK\n"
+  },
+  {
+    "snapshot": "main",
+    "test": "test_ripps2_hd_modes.py",
+    "exit_code": 0,
+    "output": "HD modes: single pass, magnified, priority restored OK\n"
+  },
+  {
+    "snapshot": "main",
+    "test": "test_ripps2_grid.py",
+    "exit_code": 0,
+    "output": "grid: element, draw, two-axis navigation, edge drive change OK\n"
+  },
+  {
+    "snapshot": "main",
+    "test": "test_ripps2_build113.py",
+    "exit_code": 0,
+    "output": "build113: the category sidebar (glyphs in the bar, drawers, focus, hints) OK\n"
+  },
+  {
+    "snapshot": "main",
+    "test": "test_ripps2_build114.py",
+    "exit_code": 0,
+    "output": "build114: the merge, the launcher search, STATUS, the master list, hide and delete with the APA check, credits, launch write safety, the launch guard, one ELF, FreeType OK\n"
+  },
+  {
+    "snapshot": "main",
+    "test": "test_art_names.py",
+    "exit_code": 0,
+    "output": "ART names: case, .png/.jpg/.jpeg, PNG first, real names, absent from RAM\nART aliases: OPL Manager kinds both ways, PS1 disc ID and XX.ELF names, nothing for themes\n"
+  },
+  {
+    "snapshot": "main",
+    "test": "test_neutrino_external.py",
+    "exit_code": 0,
+    "output": "Neutrino by version.txt, its strings or its config files; packed and missing ones; mass: after the IOP reset OK\n"
+  }
+]

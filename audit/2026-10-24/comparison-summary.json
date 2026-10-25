@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-24",
+  "riptopl": "55261de1381ae70ecfdfb2054f9cafbcfcd586cf",
+  "prior_audit": "2026-10-21",
+  "previous_records": 212,
+  "records": 248,
+  "previous_capability_families": 106,
+  "closed_families": [
+    "H11"
+  ],
+  "new_families": [
+    "RI18",
+    "RI21",
+    "RI22",
+    "RI23",
+    "RI24",
+    "RI26",
+    "RI28",
+    "LU36"
+  ],
+  "capability_families": 113,
+  "scope": "128 repository identities / 126 canonical repositories; 15 changed recorded branches; separate b114, luna and release-tag review",
+  "evidence_note": "Source and release descriptions, retained historical evidence, development mechanisms and design alternatives; not proven console deficiencies",
+  "physical_console_tested": false
+}

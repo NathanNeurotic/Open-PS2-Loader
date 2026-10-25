@@ -1,0 +1,1682 @@
+[
+  {
+    "number": 1,
+    "ids": [
+      "RI5",
+      "RI9"
+    ],
+    "scope": "Localization",
+    "evidence": "Released source",
+    "feature": "Version-tolerant keyed language packs, layered fonts and RTL shaping",
+    "assessment": "RIPPS2 uses English-text hashes with fallback and adds Arabic/Persian joining/bidi plus Lao marks/wrapping. RiptOPL remains positional; printf-format validation already exists and is not counted as missing.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0104-ripps2-languages.patch"
+    ]
+  },
+  {
+    "number": 2,
+    "ids": [
+      "OH1",
+      "OH12"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Declarative HTML/CSS flexbox compilation and reusable C99 console UI runtime",
+    "assessment": "OPHTML compiles layouts to a bounded zero-allocation GS command list and publishes a reusable launcher-core archive; RiptOPL uses its existing theme configuration engine.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/tree/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/ophtml_console.h",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/examples/console-min/Makefile"
+    ]
+  },
+  {
+    "number": 3,
+    "ids": [
+      "OH2"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Pre-resolved pairwise HarfBuzz kerning",
+    "assessment": "Font shaping/kerning data is prepared off-console for EE use; separate from having UTF-8 fonts.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/fontgen.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c"
+    ]
+  },
+  {
+    "number": 4,
+    "ids": [
+      "OH3"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Palette-index theme switching without texture re-upload",
+    "assessment": "Specific instant color-scheme mechanism rather than ordinary theme switching.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.h",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c"
+    ]
+  },
+  {
+    "number": 5,
+    "ids": [
+      "OH4"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Runtime 2D layout-coordinate offsets for animated expansion",
+    "assessment": "OPHTML runtime layout primitive, beyond RiptOPL's element-specific carousel/list animations.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md"
+    ]
+  },
+  {
+    "number": 6,
+    "ids": [
+      "OH5"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Focus-subtree visibility masking with automatic navigation bypass",
+    "assessment": "A coordinated layout/focus-tree mechanism, not simply hiding one image.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md"
+    ]
+  },
+  {
+    "number": 7,
+    "ids": [
+      "OH10",
+      "OH11"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Bounded binary UI loading and compiler budgets for declarative themes",
+    "assessment": "Fuzzed .uib parsing, alignment checks and hard input/layout safety limits for OPHTML's format. Different architecture; not proof of an exploitable RiptOPL theme bug.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/tests/fuzz_load.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/caps.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/limits.js"
+    ]
+  },
+  {
+    "number": 8,
+    "ids": [
+      "P5"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Partial",
+    "feature": "Animated game-launch presentation beyond black fade",
+    "assessment": "RiptOPL has launch/video black fades; PS2-Launcher and Titan have their own staged launch animations. Retained as optional presentation, not missing handoff correctness.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c"
+    ]
+  },
+  {
+    "number": 9,
+    "ids": [
+      "K1"
+    ],
+    "scope": "Diagnostics",
+    "evidence": "Historical source",
+    "feature": "Write debug logs to a BDM storage device",
+    "assessment": "Historical uOPL logging output, distinct from RiptOPL's network/debug logging.",
+    "sources": [
+      "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/include/ioman.h",
+      "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/src/ioman.c"
+    ]
+  },
+  {
+    "number": 10,
+    "ids": [
+      "LU8"
+    ],
+    "scope": "Core",
+    "evidence": "Source",
+    "feature": "Neutrino in-game return/IGR",
+    "assessment": "RiptOPL has OPL-core IGR; the bundled Neutrino does not implement LUNA's held-combo return path.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/padhook.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/luna_igr_rpc.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/IGR.md"
+    ]
+  },
+  {
+    "number": 11,
+    "ids": [
+      "LU7"
+    ],
+    "scope": "Core",
+    "evidence": "Source",
+    "feature": "Coordinated Neutrino power-button shutdown",
+    "assessment": "Optical-work drain and DEV9 shutdown on the physical power event; separate from the OPL-core power path.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c",
+      "https://github.com/NathanNeurotic/neutrino/blob/master/iop/cdvdfsv/src/cdvdfsv.c"
+    ]
+  },
+  {
+    "number": 12,
+    "ids": [
+      "LU11",
+      "LU35"
+    ],
+    "scope": "Storage",
+    "evidence": "Partial",
+    "feature": "Neutrino VMC backing and management for APA/PFS games",
+    "assessment": "RiptOPL supports native-core VMC on APA, but deliberately drops Neutrino APA VMC arguments. LUNA's mapped backing has geometry and fragment limits; save/reload testing remains necessary.",
+    "sources": [
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/pfs_vmc.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/main.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/9ef8d643a739d88a4f4b5fd055a209d0b27299c4/docs/NEUTRINO.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ]
+  },
+  {
+    "number": 13,
+    "ids": [
+      "LU12",
+      "LU34",
+      "TV7"
+    ],
+    "scope": "PS1",
+    "evidence": "Source / claim",
+    "feature": "Grouped PS1 disc sets, starting-disc picker and in-game swaps",
+    "assessment": "LUNA implements ordered two-to-four-VCD sets and swaps in its matching runtime; FastLoader claims an Ember starting-disc picker. RiptOPL's ordinary PS1 listing is already present.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_discset.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ]
+  },
+  {
+    "number": 14,
+    "ids": [
+      "LU13",
+      "LU33"
+    ],
+    "scope": "PS1 saves",
+    "evidence": "Source",
+    "feature": "Named PS1 card pairs with import/export, paired backups and recovery",
+    "assessment": "The missing capability is the integrated pair-management lifecycle, beyond existing POPStarter/Ember saves and basic card creation.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_vmc.c",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ]
+  },
+  {
+    "number": 15,
+    "ids": [
+      "RI1",
+      "PX21"
+    ],
+    "scope": "Save tools",
+    "evidence": "Source",
+    "feature": "Browse save images and import/export PSU or copy card pairs",
+    "assessment": "Integrated VMC-as-folder/PSU tools and confirmed absent-destination PS1 pair copies; RiptOPL can create/assign cards but does not expose these save-browser operations.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0098-ripps2-build98-memory-files.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/main/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 16,
+    "ids": [
+      "RI2",
+      "B5"
+    ],
+    "scope": "Save tools",
+    "evidence": "Source / claim",
+    "feature": "Physical memory-card backup, restore, format and repair UI",
+    "assessment": "Other shells integrate these tools. Optional extension with destructive operations, rather than a missing ability to save a game.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0086-ripps2-build86-card-manager-neutrino-logo-first.patch",
+      "https://boliviaos.site/",
+      "https://github.com/ffgriever-pl/Memory-Card-Annihilator"
+    ]
+  },
+  {
+    "number": 17,
+    "ids": [
+      "RI3",
+      "T3",
+      "RI12",
+      "LU15"
+    ],
+    "scope": "In-game UI",
+    "evidence": "Experimental",
+    "feature": "Paused in-game actions menu with resume, return and power off",
+    "assessment": "RIPPS2 now enables its panel by default and adds power off; Titan has profile-gated suspend/resume, and LUNA integrates a native PS1 Quit/Play return panel. RiptOPL's reset and RA notices do not provide these menus.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0108-ripps2-ripshot.patch",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_SMART_IGR.md",
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0106-ripps2-poweroff-star.patch",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/tools/build-luna-psxcore.sh",
+      "https://github.com/dnunezx/PSXCore/blob/360a788ff7bb7c6853702a8edec6860cae49c0a2/runtime/igrloader/main.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md"
+    ]
+  },
+  {
+    "number": 18,
+    "ids": [
+      "RI6"
+    ],
+    "scope": "Disc tools",
+    "evidence": "Released source",
+    "feature": "Rip optical discs directly to the library or media storage",
+    "assessment": "RIPDISC now exists in builds 105-110: PS2 ISO/split output, PS1 BIN/CUE, audio CD and DVD-video paths. Previous planned status is obsolete; emulator reports are not PS2 acceptance.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0105-ripps2-ripdisc.patch"
+    ]
+  },
+  {
+    "number": 19,
+    "ids": [
+      "RI7",
+      "RI14",
+      "O13"
+    ],
+    "scope": "Screenshots",
+    "evidence": "Released source",
+    "feature": "Managed in-game screenshot capture and artwork development",
+    "assessment": "RIPSHOT has six-slot rolls, preview/Keep/Delete, ART/MEDIA output, PNG development and SCRn slideshow. RiptOPL inherits optional IGS code, so the gap is this complete managed workflow, not the existence of screenshot code.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0108-ripps2-ripshot.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/import-igs.py"
+    ]
+  },
+  {
+    "number": 20,
+    "ids": [
+      "B1",
+      "LU14",
+      "LU20",
+      "LU21",
+      "TV9"
+    ],
+    "scope": "Console tools",
+    "evidence": "Source / claim",
+    "feature": "Integrated multi-device file explorer and bulk operations",
+    "assessment": "Copy/move tray, rename/delete/mkdir, conflict choices, verified moves, text preview and ELF launch. Launchstation can supply file management externally; it is not embedded in RiptOPL.",
+    "sources": [
+      "https://boliviaos.site/",
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/ui/file_manager.c",
+      "https://github.com/NathanNeurotic/Launchstation",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ]
+  },
+  {
+    "number": 21,
+    "ids": [
+      "RI8"
+    ],
+    "scope": "Console tools",
+    "evidence": "Released source",
+    "feature": "Cross-device file/folder search that opens the matching location",
+    "assessment": "RIPPS2 build 107 implements bounded breadth-first search, cancellation and result navigation; it is no longer merely planned.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0107-ripps2-search.patch"
+    ]
+  },
+  {
+    "number": 22,
+    "ids": [
+      "TV2"
+    ],
+    "scope": "Library",
+    "evidence": "Claimed release",
+    "feature": "Coordinated game-file rename with art, VMC and metadata migration",
+    "assessment": "FastLoader claims renaming the ISO carries its associated assets, card and settings; display-title editing in RiptOPL is already available.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ]
+  },
+  {
+    "number": 23,
+    "ids": [
+      "TV1"
+    ],
+    "scope": "Library",
+    "evidence": "Claimed release",
+    "feature": "Automatic ISO discovery throughout arbitrary folder trees",
+    "assessment": "FastLoader claims four-level discovery outside CD/DVD. RiptOPL's prefix/subfolder navigation is not a whole-drive arbitrary-directory scan.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease"
+    ]
+  },
+  {
+    "number": 24,
+    "ids": [
+      "RI10"
+    ],
+    "scope": "Library",
+    "evidence": "Released source",
+    "feature": "Persistent per-source game-list snapshots with idle revalidation",
+    "assessment": "RIPPS2 caches MMCE/BDM/SMB lists on their source. RiptOPL already has ISO-ID and APA list caches; the missing scope is its equivalent across those other backends.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0110-ripps2-quicklists.patch"
+    ]
+  },
+  {
+    "number": 25,
+    "ids": [
+      "RI11",
+      "RI30"
+    ],
+    "scope": "Settings",
+    "evidence": "Partial",
+    "feature": "One settings-destination picker that provisions typed device paths",
+    "assessment": "RIPPS2 offers typed MC/HDD/USB/MX4SIO/iLink/MMCE destinations, provisions the directory, and Build 111 adds a bootstrap pointer that survives a competing memory-card config. RiptOPL has custom settings paths; exact precedence needs separate regression comparison.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0110-ripps2-quicklists.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0111-ripps2-soundclean.patch"
+    ]
+  },
+  {
+    "number": 26,
+    "ids": [
+      "O3"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "Recently played history containing multiple games",
+    "assessment": "OPLattice retains the last eight, rather than only RiptOPL's remembered last title.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch"
+    ]
+  },
+  {
+    "number": 27,
+    "ids": [
+      "O4"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "User-selectable alphabetical, reverse, recent and scan-order sorting",
+    "assessment": "Distinct from remembering a selected game and from PS1/PS2 filters.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch"
+    ]
+  },
+  {
+    "number": 28,
+    "ids": [
+      "O9"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "Per-game launch counts and accumulated play time",
+    "assessment": "A play-history/statistics layer, beyond a last-played selection.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/08-play-stats.patch"
+    ]
+  },
+  {
+    "number": 29,
+    "ids": [
+      "P3"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "One automatically aggregated library across every game device",
+    "assessment": "RiptOPL's Favorites can span sources and its platform filters mix PS1/PS2; neither aggregates all non-favorite games from every source into one library.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c"
+    ]
+  },
+  {
+    "number": 30,
+    "ids": [
+      "LU5"
+    ],
+    "scope": "Library",
+    "evidence": "Design option",
+    "feature": "Favorites stored per game drive and carried with that drive",
+    "assessment": "RiptOPL deliberately uses a shared cross-device favorites file. This is an alternative persistence policy, not missing Favorites.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/favsupport.c"
+    ]
+  },
+  {
+    "number": 31,
+    "ids": [
+      "LU6"
+    ],
+    "scope": "Reliability",
+    "evidence": "Partial",
+    "feature": "Staged replacement and recovery for last-title and title-ID cache files",
+    "assessment": "Favorites staging/recovery already exists in RiptOPL. Only LUNA's additional last-title/cache coverage remains to compare and extend.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/945",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/options.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/devices/iso.c"
+    ]
+  },
+  {
+    "number": 32,
+    "ids": [
+      "M1"
+    ],
+    "scope": "Network UI",
+    "evidence": "Claimed release",
+    "feature": "Choose among multiple discovered UDPFS servers",
+    "assessment": "Modulo exposes server selection; RiptOPL automatically chooses a server. Existing network-game transport is not missing.",
+    "sources": [
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2#readme"
+    ]
+  },
+  {
+    "number": 33,
+    "ids": [
+      "N1"
+    ],
+    "scope": "CLI",
+    "evidence": "Source",
+    "feature": "Generic backend/path forward-boot command line including no-init",
+    "assessment": "NHDDL accepts mode/DVD-path forwarding and reuse of the resident environment; RiptOPL's positional HDD/BDM autolaunch is narrower.",
+    "sources": [
+      "https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#forward-boot-mode"
+    ]
+  },
+  {
+    "number": 34,
+    "ids": [
+      "L1"
+    ],
+    "scope": "Storage",
+    "evidence": "Source",
+    "feature": "Extended APA addressing for HDDs above 2 TiB",
+    "assessment": "Different from existing exFAT/GPT large-drive support. Source integration and safe media layout need independent evaluation.",
+    "sources": [
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA/blob/main/EXTENDED_APA.md"
+    ]
+  },
+  {
+    "number": 35,
+    "ids": [
+      "X1"
+    ],
+    "scope": "Storage",
+    "evidence": "Historical source",
+    "feature": "EXT2 filesystem support on USB",
+    "assessment": "E2OPL's legacy filesystem path is distinct from RiptOPL's FAT32/exFAT support; no current hardware regression claim.",
+    "sources": [
+      "https://sourceforge.net/projects/e2opl/",
+      "https://sourceforge.net/p/e2opl/code/HEAD/tree/trunk/README"
+    ]
+  },
+  {
+    "number": 36,
+    "ids": [
+      "DL1"
+    ],
+    "scope": "Disc launching",
+    "evidence": "Source",
+    "feature": "Selectable DKWDRV/PS1VModeNeg physical-PS1-disc handoff",
+    "assessment": "RiptOPL has ordinary disc actions and PS1 image cores; this is the explicit enhanced-disc-launcher handoff workflow.",
+    "sources": [
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/src/main.c",
+      "https://github.com/DKWDRV/DKWDRV/releases/tag/1.7.6t"
+    ]
+  },
+  {
+    "number": 37,
+    "ids": [
+      "DL2"
+    ],
+    "scope": "Disc launching",
+    "evidence": "Source",
+    "feature": "Conditional import-disc OSD language override",
+    "assessment": "The enhanced launcher applies an override conditionally for import-disc behavior.",
+    "sources": [
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/src/main.c",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/disc-launcher.cnf"
+    ]
+  },
+  {
+    "number": 38,
+    "ids": [
+      "P2"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "Download cover artwork directly on the PS2",
+    "assessment": "PC artwork tools already work with RiptOPL; the missing operation is the console-initiated download.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c",
+      "https://irfanlesnar.github.io/PS2-Launcher-Manager/"
+    ]
+  },
+  {
+    "number": 39,
+    "ids": [
+      "U6"
+    ],
+    "scope": "Network",
+    "evidence": "Source",
+    "feature": "Broadcast a game-launch event for a Discord presence listener",
+    "assessment": "A console launch-announcement interface, distinct from an external companion calculating presence by other means.",
+    "sources": [
+      "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1736"
+    ]
+  },
+  {
+    "number": 40,
+    "ids": [
+      "DB1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "DualSense over Bluetooth in menu and in-game PADEMU",
+    "assessment": "RiptOPL already has an optional USB DualSense variant; Bluetooth support is the gap.",
+    "sources": [
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/ds34bt/iop/ds34bt.c",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/pademu/ds34bt.c"
+    ]
+  },
+  {
+    "number": 41,
+    "ids": [
+      "DB2"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Wireless device discovery, secure pairing and persisted link keys in the GUI",
+    "assessment": "Distinct from existing DS3 cable pairing and stock DS3/DS4 Bluetooth input.",
+    "sources": [
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/include/btkeys.h",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/src/dialogs.c"
+    ]
+  },
+  {
+    "number": 42,
+    "ids": [
+      "DT1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Automatic RTL8761B/BU Bluetooth firmware loading",
+    "assessment": "Menu and in-game dongle initialization in the Realtek fork.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/tree/2cf308511b187f8a0b209140f71936dca0bb0bae/modules/ds34bt"
+    ]
+  },
+  {
+    "number": 43,
+    "ids": [
+      "DT2"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Extended DS4-clone HID, CRC, handshake and rumble handling",
+    "assessment": "Additional clone protocol/feedback support; existing fake-DS3 workaround is not equivalent.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/tree/2cf308511b187f8a0b209140f71936dca0bb0bae/modules/ds34bt"
+    ]
+  },
+  {
+    "number": 44,
+    "ids": [
+      "DT3",
+      "DT5",
+      "P7",
+      "DT7"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Multi-pad connection/type/battery HUD and setup/test/disconnect UI",
+    "assessment": "Combines overlapping pad-status rows rather than counting each fork's screen twice.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/commit/f638621cdd40d834877745bda75fa01dae0e1d84",
+      "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/blob/c6d4741e079eadbdecd6cdcba318f81448de6601/src/gui.c",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/releases/tag/rt-2.8.0"
+    ]
+  },
+  {
+    "number": 45,
+    "ids": [
+      "DT4"
+    ],
+    "scope": "Controllers",
+    "evidence": "Released source",
+    "feature": "Mixed physical/wireless multitap routing per slot and two-port poll",
+    "assessment": "The rt-2.7.0 source splits real-pad transfers and preserves per-slot choices. RiptOPL has multitap emulation already; this is the additional routing behavior/fix.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/compare/e016d934e117a645e476564eddfd7f14f0188e01...rt-2.7.0"
+    ]
+  },
+  {
+    "number": 46,
+    "ids": [
+      "P1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Xbox One and Series controllers over USB",
+    "assessment": "Requires a controller driver/protocol beyond RiptOPL's DS3/DS4 and optional DS5 paths.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/tree/main/modules/xboxusb"
+    ]
+  },
+  {
+    "number": 47,
+    "ids": [
+      "MP1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Historical source",
+    "feature": "Xbox 360 controllers over USB",
+    "assessment": "Separate controller class from Xbox One/Series; implemented in historical modular PADEMU.",
+    "sources": [
+      "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/xbox360usb/xbox360usb.c"
+    ]
+  },
+  {
+    "number": 48,
+    "ids": [
+      "MP2"
+    ],
+    "scope": "Controllers",
+    "evidence": "Historical source",
+    "feature": "Generic descriptor-driven USB HID gamepads",
+    "assessment": "Generic report parsing, rather than only a whitelist of controller-specific drivers.",
+    "sources": [
+      "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/hidusb/hidusb.c"
+    ]
+  },
+  {
+    "number": 49,
+    "ids": [
+      "P6"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Additional Steam Controller, Shanwan PS3 and GP300 USB support",
+    "assessment": "Specific protocol/device coverage in PS2-Launcher, not a claim that every clone is supported there.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0"
+    ]
+  },
+  {
+    "number": 50,
+    "ids": [
+      "RR1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "USB Driving Force wheel presented as a negCon",
+    "assessment": "An experimental wheel translation path, distinct from ordinary pad emulation.",
+    "sources": [
+      "https://github.com/exaconn/Open-PS2-Loader/commit/3ab34d2028e3da9592b99b4681a7cdb324e3a070",
+      "https://github.com/exaconn/Open-PS2-Loader/commit/e70e6cbddf39a68497c28b302d19695ee2ce753a",
+      "https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition"
+    ]
+  },
+  {
+    "number": 51,
+    "ids": [
+      "T9",
+      "B6"
+    ],
+    "scope": "Controllers",
+    "evidence": "Experimental",
+    "feature": "Xbox Bluetooth/BLE and USB keyboard/mouse input classes",
+    "assessment": "Titan's modern-input contracts are source/host validated with target acceptance pending; BoliviaOS separately advertises USB keyboard input.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_MODERN_CONTROLLER_MATRIX.md",
+      "https://boliviaos.site/"
+    ]
+  },
+  {
+    "number": 52,
+    "ids": [
+      "P4"
+    ],
+    "scope": "In-game UI",
+    "evidence": "Source",
+    "feature": "Hold SELECT alone to leave a game",
+    "assessment": "Alternative configurable exit interaction, beyond existing multi-button IGR.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/ee_core/src/padhook.c"
+    ]
+  },
+  {
+    "number": 53,
+    "ids": [
+      "O1",
+      "RI17"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Two-axis flat tile-grid library navigation",
+    "assessment": "RiptOPL's linear Coverflow and PSBBN perspective fan do not provide the same grid.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0078-ripps2-build78-grid-element-frosted-glass-towers-key.patch"
+    ]
+  },
+  {
+    "number": 54,
+    "ids": [
+      "LU2"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Depth-sorted orbital ring library view",
+    "assessment": "A complete selectable ring renderer with perspective and depth falloff.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_orbit.c"
+    ]
+  },
+  {
+    "number": 55,
+    "ids": [
+      "LU9",
+      "LU26"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Projected 3D case grid with case styles and inspection",
+    "assessment": "LUNA's projected case layout and PS1 case presentation; distinct from flat tiles and PSBBN Flow.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_3d.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/include/ui/navigation.h",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ]
+  },
+  {
+    "number": 56,
+    "ids": [
+      "LU10",
+      "LU27",
+      "LU29"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Experimental",
+    "feature": "Ambient-orb Scroll view with logo/title fallback and controls",
+    "assessment": "A full browsing view, not a claim that RiptOPL lacks animation or missing-art text.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_scroll.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/gui.c",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ]
+  },
+  {
+    "number": 57,
+    "ids": [
+      "LU4",
+      "LU25"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Continuously rotating disc-label art and paired-art presentation",
+    "assessment": "RiptOPL already supports ICO/LGO/COV artwork; animation is the differentiated capability.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_classic.c",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ]
+  },
+  {
+    "number": 58,
+    "ids": [
+      "LU23",
+      "LU24",
+      "LU28"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Design option",
+    "feature": "LUNA-specific view toggles, Random Scan and presentation presets",
+    "assessment": "Includes view enablement, orbital auto-browsing, glass/font/background options; generic theme selection already exists in RiptOPL.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ]
+  },
+  {
+    "number": 59,
+    "ids": [
+      "O10",
+      "RI15"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "SHELF dashboard/sidebar with Home, Library, Apps and Settings",
+    "assessment": "Optional sidebar shells differ: OPLattice offers Home/Library/Apps/Settings; RIPPS2 Build 113 adds three category glyphs, bounded source drawers and exclusive focus. Counted once as the sidebar family, not as a new storage capability.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0113-ripps2-sidebar.patch"
+    ]
+  },
+  {
+    "number": 60,
+    "ids": [
+      "CO1"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Interpolated XMB category and game-list rails",
+    "assessment": "Caduceus OPL's specific navigation model.",
+    "sources": [
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1088-L1242"
+    ]
+  },
+  {
+    "number": 61,
+    "ids": [
+      "CO2"
+    ],
+    "scope": "RetroAchievements UI",
+    "evidence": "Partial",
+    "feature": "Game-details card with automatic RA support/status checks",
+    "assessment": "RiptOPL already has achievement support checks and a browser; the additional automatic details-card workflow remains different.",
+    "sources": [
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1367-L1505"
+    ]
+  },
+  {
+    "number": 62,
+    "ids": [
+      "CO7"
+    ],
+    "scope": "Device UI",
+    "evidence": "Source",
+    "feature": "Initialize manual devices asynchronously when their category receives focus",
+    "assessment": "RiptOPL has manual and automatic discovery, but not this specific category-focus policy.",
+    "sources": [
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/opl.c#L272-L298"
+    ]
+  },
+  {
+    "number": 63,
+    "ids": [
+      "OF1"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Experimental",
+    "feature": "Dedicated carousel/device dock and system-status HUD primitives",
+    "assessment": "OPL FUTURE's optional interface architecture; no generalized console-performance claim.",
+    "sources": [
+      "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_UI.md",
+      "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_QA_REPORT.md"
+    ]
+  },
+  {
+    "number": 64,
+    "ids": [
+      "E1"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Experimental",
+    "feature": "Unified controller, memory-card, storage and network dashboard",
+    "assessment": "OPL Evolution's integrated status surface; ordinary individual status indicators overlap existing behavior.",
+    "sources": [
+      "https://github.com/officialjuicedesigns/OPL-Evolution/blob/evo-development/src/evo_ui.c"
+    ]
+  },
+  {
+    "number": 65,
+    "ids": [
+      "DN1"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Configurable framebuffer blur/frosted-glass compositing",
+    "assessment": "A new render/compositing primitive rather than an image that resembles blur.",
+    "sources": [
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/rmblur.c",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/themes.c"
+    ]
+  },
+  {
+    "number": 66,
+    "ids": [
+      "DN2"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "CardShelf element and crossfading cover-art wallpaper",
+    "assessment": "Daniel's PS5-style theme primitives; generic carousel/artwork display already exists.",
+    "sources": [
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/themes.c",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/themes/PS5/conf_theme.cfg"
+    ]
+  },
+  {
+    "number": 67,
+    "ids": [
+      "W1"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Load an entire theme from a TAR archive",
+    "assessment": "RiptOPL already loads ART/CFG/CHT archives; the missing archive type is THM/theme resources.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/pull/370",
+      "https://github.com/ps2homebrew/wOPL/pull/378"
+    ]
+  },
+  {
+    "number": 68,
+    "ids": [
+      "W2",
+      "O7"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Theme X-position controls specifically for widescreen layouts",
+    "assessment": "wsX and x_scaled address the same broad layout requirement and are counted together.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch"
+    ]
+  },
+  {
+    "number": 69,
+    "ids": [
+      "W3"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Live PADEMU/GSM/cheat-state icons supplied to themes",
+    "assessment": "Distinct from static metadata badges in AttributeImage.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/textures.c",
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c"
+    ]
+  },
+  {
+    "number": 70,
+    "ids": [
+      "W6"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Design option",
+    "feature": "Info-only page without list navigation",
+    "assessment": "An alternative information-screen interaction policy.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/pull/308"
+    ]
+  },
+  {
+    "number": 71,
+    "ids": [
+      "O2"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Bind image elements to non-selected neighboring game rows",
+    "assessment": "Offset-driven hero/filmstrip layouts.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch"
+    ]
+  },
+  {
+    "number": 72,
+    "ids": [
+      "O5"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "MenuTabs strip showing all devices and custom labels",
+    "assessment": "Existing MenuText/current-device selection is narrower.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch"
+    ]
+  },
+  {
+    "number": 73,
+    "ids": [
+      "O6"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Theme-controlled game-count prefix and suffix",
+    "assessment": "Current RiptOPL GameCountText uses the localized FILE_COUNT format.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch"
+    ]
+  },
+  {
+    "number": 74,
+    "ids": [
+      "O11"
+    ],
+    "scope": "Apps",
+    "evidence": "Source",
+    "feature": "Per-app subtitle metadata and display",
+    "assessment": "A separate subtitle field in the app's title.cfg.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch"
+    ]
+  },
+  {
+    "number": 75,
+    "ids": [
+      "RI13"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Released source",
+    "feature": "Per-row star, highlight and platform-decorator controls",
+    "assessment": "RiptOPL has Favorites and decorators; the configurable star column/highlight/PS1/PS2/app controls are additional.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0106-ripps2-poweroff-star.patch"
+    ]
+  },
+  {
+    "number": 76,
+    "ids": [
+      "TV8"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Claimed release",
+    "feature": "Cycle startup backgrounds without repeats until the set is exhausted",
+    "assessment": "Specific shuffle-bag behavior advertised by FastLoader, not basic background/theme support.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ]
+  },
+  {
+    "number": 77,
+    "ids": [
+      "T1"
+    ],
+    "scope": "Enhancements",
+    "evidence": "Source",
+    "feature": "Independent graphics-enhancement files and selection",
+    "assessment": "Titan separates ENH enhancements from gameplay CHT cheats, with separate per-game choices and metadata.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_GAME_PATCHES.md"
+    ]
+  },
+  {
+    "number": 78,
+    "ids": [
+      "T4"
+    ],
+    "scope": "Profiles",
+    "evidence": "Source",
+    "feature": "Named system users whose selected profile chooses an exclusive VMC",
+    "assessment": "Different from per-game card assignment alone.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_user_profile.h",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_profile_storage.c"
+    ]
+  },
+  {
+    "number": 79,
+    "ids": [
+      "T5"
+    ],
+    "scope": "System UI",
+    "evidence": "Source",
+    "feature": "Notification center with retained activity/download progress",
+    "assessment": "RiptOPL has transient notifications rather than a retained activity service.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_notifications.h",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_shell_catalog.c"
+    ]
+  },
+  {
+    "number": 80,
+    "ids": [
+      "T2"
+    ],
+    "scope": "System platform",
+    "evidence": "Source",
+    "feature": "Installable native app packages and an in-process application SDK",
+    "assessment": "Titan TPKG/runtime services; ordinary external ELF launching is already present.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition#product-components",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_PACKAGE_FORMAT.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/reference/TITAN_STANDALONE_SDK.md"
+    ]
+  },
+  {
+    "number": 81,
+    "ids": [
+      "T6"
+    ],
+    "scope": "System tools",
+    "evidence": "Source",
+    "feature": "Integrated lightweight interactive web browser",
+    "assessment": "HTTP text/link browsing and bridge-backed HTTPS, rather than HTTP game streaming.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/apps/internet-browser/README.md"
+    ]
+  },
+  {
+    "number": 82,
+    "ids": [
+      "T7"
+    ],
+    "scope": "System tools",
+    "evidence": "Source",
+    "feature": "In-console staged/rollback-capable system updater",
+    "assessment": "RiptOPL distributes release kits instead of performing transactional console installation.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/SYSTEM_UPDATE_PUP.md"
+    ]
+  },
+  {
+    "number": 83,
+    "ids": [
+      "T10"
+    ],
+    "scope": "System platform",
+    "evidence": "Experimental",
+    "feature": "Repository catalog, dependency resolution and verified package downloads",
+    "assessment": "Titan Store foundation; target download acceptance remains pending and no finished-storefront claim is made.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_STORE_ARCHITECTURE.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_DOWNLOAD_SERVICE.md"
+    ]
+  },
+  {
+    "number": 84,
+    "ids": [
+      "T8"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Packaged scene/keyframe themes with transitions, idle loops and audio",
+    "assessment": "More than existing OPL theme images, BGM and built-in animations.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/THEME_AUTHORING.md"
+    ]
+  },
+  {
+    "number": 85,
+    "ids": [
+      "B2"
+    ],
+    "scope": "Media tools",
+    "evidence": "Claimed / source",
+    "feature": "General-purpose console music player",
+    "assessment": "Separate from RiptOPL background music playback.",
+    "sources": [
+      "https://boliviaos.site/"
+    ]
+  },
+  {
+    "number": 86,
+    "ids": [
+      "B3"
+    ],
+    "scope": "Media tools",
+    "evidence": "Claimed / source",
+    "feature": "General-purpose image and font viewers",
+    "assessment": "Separate from rendering game artwork and UI fonts.",
+    "sources": [
+      "https://boliviaos.site/"
+    ]
+  },
+  {
+    "number": 87,
+    "ids": [
+      "B4"
+    ],
+    "scope": "System tools",
+    "evidence": "Claimed / source",
+    "feature": "Integrated text/code editor and terminal",
+    "assessment": "BoliviaOS tool suite, outside normal game launching.",
+    "sources": [
+      "https://boliviaos.site/"
+    ]
+  },
+  {
+    "number": 88,
+    "ids": [
+      "B7"
+    ],
+    "scope": "Media tools",
+    "evidence": "Claimed / source",
+    "feature": "Integrated PDF viewer",
+    "assessment": "A separate document-viewing application in the console shell.",
+    "sources": [
+      "https://boliviaos.site/"
+    ]
+  },
+  {
+    "number": 89,
+    "ids": [
+      "R1",
+      "TV3"
+    ],
+    "scope": "Emulator frontend",
+    "evidence": "Source / claim",
+    "feature": "Retro-system ROM libraries with configured emulator/core launch",
+    "assessment": "RETROLauncher and the Retro Arcade suite provide ROM catalogs beyond RiptOPL's PS1/PS2/Apps views; launching an emulator ELF through Apps already exists.",
+    "sources": [
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher#readme",
+      "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease"
+    ]
+  },
+  {
+    "number": 90,
+    "ids": [
+      "TV4"
+    ],
+    "scope": "Emulator frontend",
+    "evidence": "Claimed release",
+    "feature": "Retro Arcade launch-mode picker and return to the selected ROM",
+    "assessment": "The suite documents 240p/480i/480p selection and returning to the same game; not a new PS2 OPL/Neutrino compatibility mode.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease"
+    ]
+  },
+  {
+    "number": 91,
+    "ids": [
+      "PX3",
+      "PX4"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "Select PSXCore as a third PS1 runtime / use its source-buildable adapter",
+    "assessment": "RiptOPL ships POPStarter and Ember, not PSXCore. Main no longer ships tester sources; the tester branch is separate.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/INTEGRATION.md",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md"
+    ]
+  },
+  {
+    "number": 92,
+    "ids": [
+      "PX1"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "Optional guarded decoded-instruction code validation",
+    "assessment": "A PSXCore mechanism; different from RiptOPL checking file/module identities before launch.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/compat.c"
+    ]
+  },
+  {
+    "number": 93,
+    "ids": [
+      "PX2",
+      "PX31",
+      "PX32"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore GPU/GTE/DMA semantic corrections",
+    "assessment": "Current source extends the earlier GPU/GTE/DMA work with exact polygon packets, native GTE read/flag/depth/clamp and far-color/special-matrix corrections. Some options were reverted or default-enabled later; this audit follows net 636961dd source, not every intermediate commit message.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/runtime_corrections.c",
+      "https://github.com/dnunezx/PSXCore/commit/9d9c7a36c493abd741793fec4dafb018883b0212",
+      "https://github.com/dnunezx/PSXCore/commit/2f35645aa9c35a4af83feee91da79f39155ced1c",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/src/runtime_corrections.c"
+    ]
+  },
+  {
+    "number": 94,
+    "ids": [
+      "PX5",
+      "PX33",
+      "PX36",
+      "LU39"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore MDEC/RGB24/buffered-interlace corrections",
+    "assessment": "PSXCore source now includes MDEC run-length/quantization corrections and an opt-in output-only interlaced HDTV patch, with a wrapper-pinned per-game UI. These are specific runtime mechanisms; POPStarter/Ember already have PS1 video paths. No universal HD or compatibility win is claimed.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/runtime/Makefile",
+      "https://github.com/dnunezx/PSXCore/commit/dcf1fc868de33a957ae14072145a2d6810abc3ff",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/src/hdtv.c",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/runtime/hdtv.S",
+      "https://github.com/dnunezx/nhddl-luna/blob/15f01bd180f076d8098529b5c5d5df4d07b13f46/src/ui/game_options.c",
+      "https://github.com/dnunezx/LUNA/tree/386f352cf1c2d74a010b23f519c680d31826405d"
+    ]
+  },
+  {
+    "number": 95,
+    "ids": [
+      "PX6"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore SPU, capture-IRQ, reverb and CDDA corrections",
+    "assessment": "Alternative runtime implementation, not a claim RiptOPL has no PS1 audio.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/runtime_corrections.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/runtime/Makefile"
+    ]
+  },
+  {
+    "number": 96,
+    "ids": [
+      "PX7",
+      "PX34",
+      "PX37"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore guest-memory, CPU-timing and load-delay fast paths",
+    "assessment": "Includes precomputed addressing and smaller DMA/GP0/GP1 saves now enabled by default, with disable switches retained.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/compare/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9...0d4348ea5fff50a16c303c5c1910038e65bf7915",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/runtime/gamepatches/rayman2.c",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/runtime/gamepatches.c"
+    ]
+  },
+  {
+    "number": 97,
+    "ids": [
+      "PX8",
+      "PX14"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore firmware-identity and transactional runtime-patch planner",
+    "assessment": "Includes byte guards, overlap/capacity checks and revision-specific license-string changes; no generic region-bypass claim.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/patch.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 98,
+    "ids": [
+      "PX9",
+      "PX29"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore native-save worker, PFS ownership and flush guards",
+    "assessment": "Partially provisioned native-partition path; source mechanisms do not establish power-loss durability or a complete APA user flow.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/INTEGRATION.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 99,
+    "ids": [
+      "PX10"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore disc/TOC fingerprint binding to save identity",
+    "assessment": "A content-identity mechanism beyond ordinary file naming.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/discset.c"
+    ]
+  },
+  {
+    "number": 100,
+    "ids": [
+      "PX11"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "Optional adaptive PCM output-rate feedback",
+    "assessment": "Off by default, changes rate/possibly pitch; not a CPU-speed fix.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 101,
+    "ids": [
+      "PX24"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore bounded sector-tail cache and seek-status correction",
+    "assessment": "Runtime I/O mechanism; broad game-speed improvement is unmeasured.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 102,
+    "ids": [
+      "PX25"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore exact raster/polygon-cost fast path",
+    "assessment": "Keep timing/compatibility evidence separate from build success.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 103,
+    "ids": [
+      "PX26"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore GP0 packet/callback/empty-flush fast paths",
+    "assessment": "Source optimization, not a standalone proven end-user compatibility feature.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 104,
+    "ids": [
+      "PX30"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore bounded aligned/unaligned upload-row copies",
+    "assessment": "The newer branch streams rows with aligned quadword loads while retaining bounds.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ]
+  },
+  {
+    "number": 105,
+    "ids": [
+      "PX23",
+      "PX35"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore boot/save-worker and patch-plan diagnostics",
+    "assessment": "Current adapter also reports planner failures and increases its bounded capacity.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/commit/f1333504bdd43815f295081f434276dcfae80eff"
+    ]
+  },
+  {
+    "number": 106,
+    "ids": [
+      "RI18"
+    ],
+    "scope": "Rendering design",
+    "evidence": "Source design alternative",
+    "feature": "Magnified single-pass 720p/1080i menu presentation",
+    "assessment": "Uses 640-wide framebuffers with GS magnification and one render pass. This trades horizontal raster resolution for lower queue replay/VRAM pressure; RiptOPL already has HD output. Benchmark before adopting.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0075-ripps2-build75-one-pass-hd-early-boot-sound-neutrino-show-args.patch"
+    ]
+  },
+  {
+    "number": 107,
+    "ids": [
+      "RI21"
+    ],
+    "scope": "Library",
+    "evidence": "Released source",
+    "feature": "Master library before sources answer, with waiting rows",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 stores allgames.bin, validates its schema/checksum and resolves waiting rows through their source at launch. Different from RI10 per-source snapshots. Development source, not released Build 113 or proven cold-boot/game acceptance.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ]
+  },
+  {
+    "number": 108,
+    "ids": [
+      "RI22"
+    ],
+    "scope": "Library",
+    "evidence": "Released source",
+    "feature": "Per-device hidden-game catalogue and Hidden Games manager",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 stores RIPPS2.HID on each source and offers restoration through Settings. Separate from parental-lock policy and temporarily unavailable sources.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ]
+  },
+  {
+    "number": 109,
+    "ids": [
+      "RI23"
+    ],
+    "scope": "Game management",
+    "evidence": "Released source",
+    "feature": "Managed full-game cleanup with a read-only APA preflight",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 plans associated-file removal, explicit save choices and APA header/size/alignment/link checks before partition deletion. Synthetic tests are useful but do not certify arbitrary real disks, interrupted deletion or shared-save ownership.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ]
+  },
+  {
+    "number": 110,
+    "ids": [
+      "RI24"
+    ],
+    "scope": "Image tools",
+    "evidence": "Released source",
+    "feature": "On-console ISO/ZSO conversion with staged read-back checks",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 implements LZ4 packing/unpacking, free-space checks, aligned streaming, per-run CRC read-back and a separate confirmation before source removal. OPL-core ZSO support is not Neutrino support. Needs malformed-header, overflow, cancellation, temp-file ownership and power-loss tests before adoption.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ]
+  },
+  {
+    "number": 111,
+    "ids": [
+      "RI26"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Released source",
+    "feature": "Editable named Color Sweeps with speed and delete controls",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 adds a named sweep manager, distinguishes Sweep from Theme Color and keeps theme ordering explicit. Optional presentation source; not a game-loading requirement.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ]
+  },
+  {
+    "number": 112,
+    "ids": [
+      "RI28"
+    ],
+    "scope": "Menu audio",
+    "evidence": "Released source",
+    "feature": "16-bit WAV mono/rate conversion for menu music",
+    "assessment": "Released Build 111 streams mono WAVs as stereo and resamples rates for audsrv; Build 112 distinguishes the two BIOS-derived pieces. RiptOPL’s existing Vorbis BGM is not the same PCM input path. No audio assets are redistributed by this audit.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0111-ripps2-soundclean.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0112-ripps2-menumusic.patch"
+    ]
+  },
+  {
+    "number": 113,
+    "ids": [
+      "LU36"
+    ],
+    "scope": "Audio design",
+    "evidence": "Wrapper-pinned source",
+    "feature": "SPU2 ADPCM hardware-loop ambient playback",
+    "assessment": "LUNA now pins the implementation and packages its bounded LADP asset. RiptOPL already has streaming BGM; this alternative removes continuous decoding for a fixed resident loop but reserves SPU2 memory/voices and changes the asset format.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA/tree/386f352cf1c2d74a010b23f519c680d31826405d",
+      "https://github.com/dnunezx/nhddl-luna/blob/15f01bd180f076d8098529b5c5d5df4d07b13f46/src/ui/ambient.c"
+    ]
+  },
+  {
+    "number": 114,
+    "ids": [
+      "RI34"
+    ],
+    "scope": "Correctness / design review",
+    "evidence": "Development source",
+    "feature": "Version-aware external Neutrino argument negotiation",
+    "assessment": "Build 115 reads version.txt, then ELF strings/config markers before teardown and gates automatically generated options. RiptOPL already validates token boundaries and argument budgets, but that is not runtime option negotiation. Unknown or packed installs retain permissive compatibility behavior in its tests; a conservative fallback would need separate design. Inspect ORBIT and user overrides independently.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ]
+  },
+  {
+    "number": 115,
+    "ids": [
+      "RI35"
+    ],
+    "scope": "Correctness / design review",
+    "evidence": "Development source",
+    "feature": "MMCE busy/card-creation coordination before scans and launch",
+    "assessment": "Build 115 checks device busy state, delays card reads and writes play history before waiting for the game card. Device busy is different from loader IO busy. Recheck firmware semantics, cancellation, timeout and shared SIO2 scheduling before any port; upstream hardware notes still describe a failed MMCE game launch.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ]
+  },
+  {
+    "number": 116,
+    "ids": [
+      "RI36"
+    ],
+    "scope": "Artwork interoperability",
+    "evidence": "Development source",
+    "feature": "Artwork name aliases with exact case-preserved directory lookup",
+    "assessment": "Build 115 adds JPEG/case-aware lookup, OPL Manager BG_00/SCR_00/SCR_01 aliases and PS1 disc/ELF alternatives. Source-extracted host check passed. Avoid extra network misses and define deterministic precedence when two aliases exist.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ]
+  },
+  {
+    "number": 117,
+    "ids": [
+      "RI38"
+    ],
+    "scope": "Library navigation",
+    "evidence": "Development source",
+    "feature": "Recent Games as a lazy-source page, up to 99 entries",
+    "assessment": "A separate sidebar list shares All Games source proxies; Manual drives start when selected. RiptOPL already retains last-played/favorite concepts; a bounded history page is a distinct UI extension, not missing history altogether.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ]
+  },
+  {
+    "number": 118,
+    "ids": [
+      "NV1"
+    ],
+    "scope": "In-game audio",
+    "evidence": "Uncompiled proof of concept",
+    "feature": "In-game master-volume RPC with framebuffer overlay",
+    "assessment": "New fork explicitly calls this an uncompiled proof of concept. SPU2 master-volume RPC and active-framebuffer drawing need build and console checks, game-owned audio reconfiguration, IOP reset/rebind and DMA race analysis. Not release-ready or evidence of safe arbitrary-game overlays.",
+    "sources": [
+      "https://github.com/Nrlemo/Open-PS2-Loader-volume/blob/c1a5b3305be955bb1d4a6115bbf12335880f8176/docs/IN_GAME_VOLUME_CONTROL.md",
+      "https://github.com/Nrlemo/Open-PS2-Loader-volume/blob/c1a5b3305be955bb1d4a6115bbf12335880f8176/docs/IN_GAME_VOLUME_OVERLAY.md"
+    ]
+  }
+]

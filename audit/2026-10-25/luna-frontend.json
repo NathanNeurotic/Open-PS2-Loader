@@ -1,0 +1,333 @@
+{
+  "url": "https://api.github.com/repos/dnunezx/nhddl-luna/compare/15f01bd180f076d8098529b5c5d5df4d07b13f46...df394982c12e331dd7a18390ac055b6ba957fbbb",
+  "html_url": "https://github.com/dnunezx/nhddl-luna/compare/15f01bd180f076d8098529b5c5d5df4d07b13f46...df394982c12e331dd7a18390ac055b6ba957fbbb",
+  "permalink_url": "https://github.com/dnunezx/nhddl-luna/compare/dnunezx:15f01bd...dnunezx:df39498",
+  "diff_url": "https://github.com/dnunezx/nhddl-luna/compare/15f01bd180f076d8098529b5c5d5df4d07b13f46...df394982c12e331dd7a18390ac055b6ba957fbbb.diff",
+  "patch_url": "https://github.com/dnunezx/nhddl-luna/compare/15f01bd180f076d8098529b5c5d5df4d07b13f46...df394982c12e331dd7a18390ac055b6ba957fbbb.patch",
+  "base_commit": {
+    "sha": "15f01bd180f076d8098529b5c5d5df4d07b13f46",
+    "node_id": "C_kwDOUsm_ytoAKDE1ZjAxYmQxODBmMDc2ZDgwOTg1MjliNWM1ZDVkZjRkMDdiMTNmNDY",
+    "commit": {
+      "author": {
+        "name": "Danny Nunez",
+        "email": "dnunezx@users.noreply.github.com",
+        "date": "2026-10-24T18:42:38Z"
+      },
+      "committer": {
+        "name": "Danny Nunez",
+        "email": "dnunezx@users.noreply.github.com",
+        "date": "2026-10-24T18:42:38Z"
+      },
+      "message": "Restore debug-color controls for OPL and Neutrino",
+      "tree": {
+        "sha": "2a40cb8e84ce83205e687ea2307337070361c029",
+        "url": "https://api.github.com/repos/dnunezx/nhddl-luna/git/trees/2a40cb8e84ce83205e687ea2307337070361c029"
+      },
+      "url": "https://api.github.com/repos/dnunezx/nhddl-luna/git/commits/15f01bd180f076d8098529b5c5d5df4d07b13f46",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/15f01bd180f076d8098529b5c5d5df4d07b13f46",
+    "html_url": "https://github.com/dnunezx/nhddl-luna/commit/15f01bd180f076d8098529b5c5d5df4d07b13f46",
+    "comments_url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/15f01bd180f076d8098529b5c5d5df4d07b13f46/comments",
+    "author": {
+      "login": "dnunezx",
+      "id": 156245780,
+      "node_id": "U_kgDOCVAfFA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/156245780?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/dnunezx",
+      "html_url": "https://github.com/dnunezx",
+      "followers_url": "https://api.github.com/users/dnunezx/followers",
+      "following_url": "https://api.github.com/users/dnunezx/following{/other_user}",
+      "gists_url": "https://api.github.com/users/dnunezx/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/dnunezx/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/dnunezx/subscriptions",
+      "organizations_url": "https://api.github.com/users/dnunezx/orgs",
+      "repos_url": "https://api.github.com/users/dnunezx/repos",
+      "events_url": "https://api.github.com/users/dnunezx/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/dnunezx/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "dnunezx",
+      "id": 156245780,
+      "node_id": "U_kgDOCVAfFA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/156245780?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/dnunezx",
+      "html_url": "https://github.com/dnunezx",
+      "followers_url": "https://api.github.com/users/dnunezx/followers",
+      "following_url": "https://api.github.com/users/dnunezx/following{/other_user}",
+      "gists_url": "https://api.github.com/users/dnunezx/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/dnunezx/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/dnunezx/subscriptions",
+      "organizations_url": "https://api.github.com/users/dnunezx/orgs",
+      "repos_url": "https://api.github.com/users/dnunezx/repos",
+      "events_url": "https://api.github.com/users/dnunezx/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/dnunezx/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "1689f4a1445dd0c9059e4eed56b09d313334c36c",
+        "url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/1689f4a1445dd0c9059e4eed56b09d313334c36c",
+        "html_url": "https://github.com/dnunezx/nhddl-luna/commit/1689f4a1445dd0c9059e4eed56b09d313334c36c"
+      }
+    ]
+  },
+  "merge_base_commit": {
+    "sha": "15f01bd180f076d8098529b5c5d5df4d07b13f46",
+    "node_id": "C_kwDOUsm_ytoAKDE1ZjAxYmQxODBmMDc2ZDgwOTg1MjliNWM1ZDVkZjRkMDdiMTNmNDY",
+    "commit": {
+      "author": {
+        "name": "Danny Nunez",
+        "email": "dnunezx@users.noreply.github.com",
+        "date": "2026-10-24T18:42:38Z"
+      },
+      "committer": {
+        "name": "Danny Nunez",
+        "email": "dnunezx@users.noreply.github.com",
+        "date": "2026-10-24T18:42:38Z"
+      },
+      "message": "Restore debug-color controls for OPL and Neutrino",
+      "tree": {
+        "sha": "2a40cb8e84ce83205e687ea2307337070361c029",
+        "url": "https://api.github.com/repos/dnunezx/nhddl-luna/git/trees/2a40cb8e84ce83205e687ea2307337070361c029"
+      },
+      "url": "https://api.github.com/repos/dnunezx/nhddl-luna/git/commits/15f01bd180f076d8098529b5c5d5df4d07b13f46",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/15f01bd180f076d8098529b5c5d5df4d07b13f46",
+    "html_url": "https://github.com/dnunezx/nhddl-luna/commit/15f01bd180f076d8098529b5c5d5df4d07b13f46",
+    "comments_url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/15f01bd180f076d8098529b5c5d5df4d07b13f46/comments",
+    "author": {
+      "login": "dnunezx",
+      "id": 156245780,
+      "node_id": "U_kgDOCVAfFA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/156245780?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/dnunezx",
+      "html_url": "https://github.com/dnunezx",
+      "followers_url": "https://api.github.com/users/dnunezx/followers",
+      "following_url": "https://api.github.com/users/dnunezx/following{/other_user}",
+      "gists_url": "https://api.github.com/users/dnunezx/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/dnunezx/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/dnunezx/subscriptions",
+      "organizations_url": "https://api.github.com/users/dnunezx/orgs",
+      "repos_url": "https://api.github.com/users/dnunezx/repos",
+      "events_url": "https://api.github.com/users/dnunezx/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/dnunezx/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "dnunezx",
+      "id": 156245780,
+      "node_id": "U_kgDOCVAfFA",
+      "avatar_url": "https://avatars.githubusercontent.com/u/156245780?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/dnunezx",
+      "html_url": "https://github.com/dnunezx",
+      "followers_url": "https://api.github.com/users/dnunezx/followers",
+      "following_url": "https://api.github.com/users/dnunezx/following{/other_user}",
+      "gists_url": "https://api.github.com/users/dnunezx/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/dnunezx/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/dnunezx/subscriptions",
+      "organizations_url": "https://api.github.com/users/dnunezx/orgs",
+      "repos_url": "https://api.github.com/users/dnunezx/repos",
+      "events_url": "https://api.github.com/users/dnunezx/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/dnunezx/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "1689f4a1445dd0c9059e4eed56b09d313334c36c",
+        "url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/1689f4a1445dd0c9059e4eed56b09d313334c36c",
+        "html_url": "https://github.com/dnunezx/nhddl-luna/commit/1689f4a1445dd0c9059e4eed56b09d313334c36c"
+      }
+    ]
+  },
+  "status": "ahead",
+  "ahead_by": 1,
+  "behind_by": 0,
+  "total_commits": 1,
+  "commits": [
+    {
+      "sha": "df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "node_id": "C_kwDOUsm_ytoAKGRmMzk0OTgyYzEyZTMzMWRkN2ExODM5MGFjMDU1YjZiYTk1N2ZiYmI",
+      "commit": {
+        "author": {
+          "name": "Danny Nunez",
+          "email": "dnunezx@users.noreply.github.com",
+          "date": "2026-10-25T00:52:55Z"
+        },
+        "committer": {
+          "name": "Danny Nunez",
+          "email": "dnunezx@users.noreply.github.com",
+          "date": "2026-10-25T00:52:55Z"
+        },
+        "message": "Restore tolerant library scans and retain partial results",
+        "tree": {
+          "sha": "016add8e0a78ccd4bd7b0500a19ab47a2402830c",
+          "url": "https://api.github.com/repos/dnunezx/nhddl-luna/git/trees/016add8e0a78ccd4bd7b0500a19ab47a2402830c"
+        },
+        "url": "https://api.github.com/repos/dnunezx/nhddl-luna/git/commits/df394982c12e331dd7a18390ac055b6ba957fbbb",
+        "comment_count": 0,
+        "verification": {
+          "verified": false,
+          "reason": "unsigned",
+          "signature": null,
+          "payload": null,
+          "verified_at": null
+        }
+      },
+      "url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "html_url": "https://github.com/dnunezx/nhddl-luna/commit/df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "comments_url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/df394982c12e331dd7a18390ac055b6ba957fbbb/comments",
+      "author": {
+        "login": "dnunezx",
+        "id": 156245780,
+        "node_id": "U_kgDOCVAfFA",
+        "avatar_url": "https://avatars.githubusercontent.com/u/156245780?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/dnunezx",
+        "html_url": "https://github.com/dnunezx",
+        "followers_url": "https://api.github.com/users/dnunezx/followers",
+        "following_url": "https://api.github.com/users/dnunezx/following{/other_user}",
+        "gists_url": "https://api.github.com/users/dnunezx/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/dnunezx/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/dnunezx/subscriptions",
+        "organizations_url": "https://api.github.com/users/dnunezx/orgs",
+        "repos_url": "https://api.github.com/users/dnunezx/repos",
+        "events_url": "https://api.github.com/users/dnunezx/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/dnunezx/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "committer": {
+        "login": "dnunezx",
+        "id": 156245780,
+        "node_id": "U_kgDOCVAfFA",
+        "avatar_url": "https://avatars.githubusercontent.com/u/156245780?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/dnunezx",
+        "html_url": "https://github.com/dnunezx",
+        "followers_url": "https://api.github.com/users/dnunezx/followers",
+        "following_url": "https://api.github.com/users/dnunezx/following{/other_user}",
+        "gists_url": "https://api.github.com/users/dnunezx/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/dnunezx/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/dnunezx/subscriptions",
+        "organizations_url": "https://api.github.com/users/dnunezx/orgs",
+        "repos_url": "https://api.github.com/users/dnunezx/repos",
+        "events_url": "https://api.github.com/users/dnunezx/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/dnunezx/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "parents": [
+        {
+          "sha": "15f01bd180f076d8098529b5c5d5df4d07b13f46",
+          "url": "https://api.github.com/repos/dnunezx/nhddl-luna/commits/15f01bd180f076d8098529b5c5d5df4d07b13f46",
+          "html_url": "https://github.com/dnunezx/nhddl-luna/commit/15f01bd180f076d8098529b5c5d5df4d07b13f46"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "sha": "e7f457dd3475842c0c7545b8086c7f68d634f455",
+      "filename": "include/devices/devices.h",
+      "status": "modified",
+      "additions": 6,
+      "deletions": 2,
+      "changes": 8,
+      "blob_url": "https://github.com/dnunezx/nhddl-luna/blob/df394982c12e331dd7a18390ac055b6ba957fbbb/include%2Fdevices%2Fdevices.h",
+      "raw_url": "https://github.com/dnunezx/nhddl-luna/raw/df394982c12e331dd7a18390ac055b6ba957fbbb/include%2Fdevices%2Fdevices.h",
+      "contents_url": "https://api.github.com/repos/dnunezx/nhddl-luna/contents/include%2Fdevices%2Fdevices.h?ref=df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "patch": "@@ -6,7 +6,11 @@\n \n #define MAX_DEVICES 20\n \n-// Must scan the device entry for titles and add them to TargetList\n+// A partial scan owns validated targets but could not inspect every item.\n+#define TITLE_SCAN_PARTIAL 1\n+\n+// Returns 0 for a complete scan, TITLE_SCAN_PARTIAL for recoverable omissions,\n+// or a negative error when results cannot be used (-ENOENT means empty).\n typedef int (*titleScanFunc)(TargetList *result, struct DeviceMapEntry *device);\n // Must sync the device\n typedef void (*syncFunc)();\n@@ -43,7 +47,7 @@ const char *getMountedPFSPartition(void);\n //\n \n // Scans given storage device for ISO files and appends valid launch candidates to TargetList\n-// Returns 0 if successful, non-zero if no targets were found or an error occurs\n+// Uses the complete/partial/error contract of titleScanFunc above.\n // Implemented in devices_iso.c\n int findISO(TargetList *list, struct DeviceMapEntry *device);\n "
+    },
+    {
+      "sha": "6c0b871ff6a20dced53f3f0045c0e2cb2bb5a614",
+      "filename": "include/storage.h",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/dnunezx/nhddl-luna/blob/df394982c12e331dd7a18390ac055b6ba957fbbb/include%2Fstorage.h",
+      "raw_url": "https://github.com/dnunezx/nhddl-luna/raw/df394982c12e331dd7a18390ac055b6ba957fbbb/include%2Fstorage.h",
+      "contents_url": "https://api.github.com/repos/dnunezx/nhddl-luna/contents/include%2Fstorage.h?ref=df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "patch": "@@ -15,6 +15,7 @@ typedef struct {\n   int devices;\n   int games;\n   int error;\n+  int incomplete;\n } StorageStatus;\n extern StorageSettings STORAGE_SETTINGS;\n extern StorageStatus STORAGE_STATUS[STORAGE_SOURCE_COUNT];"
+    },
+    {
+      "sha": "d7645b467a600780dfc821a28d021915bb5bfead",
+      "filename": "src/devices/iso.c",
+      "status": "modified",
+      "additions": 42,
+      "deletions": 53,
+      "changes": 95,
+      "blob_url": "https://github.com/dnunezx/nhddl-luna/blob/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fdevices%2Fiso.c",
+      "raw_url": "https://github.com/dnunezx/nhddl-luna/raw/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fdevices%2Fiso.c",
+      "contents_url": "https://api.github.com/repos/dnunezx/nhddl-luna/contents/src%2Fdevices%2Fiso.c?ref=df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "patch": "@@ -32,8 +32,9 @@ typedef struct TitleIDCache {\n   CacheEntry *entries; // Pointer to cache entry array\n } TitleIDCache;\n \n-int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device);\n-int processTitleID(TargetList *result, struct DeviceMapEntry *device);\n+int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device,\n+             const char *path);\n+int processTitleID(TargetList *result, struct DeviceMapEntry *device, int completeScan);\n \n int storeTitleIDCache(TargetList *list, struct DeviceMapEntry *device);\n int loadTitleIDCache(TitleIDCache *cache, struct DeviceMapEntry *device);\n@@ -50,7 +51,7 @@ const char *ignoredDirs[] = {\n static int curRecursionLevel = 1;\n \n // Scans given storage device and appends valid launch candidates to TargetList\n-// Returns 0 if successful, non-zero if no targets were found or an error occurs\n+// Keep usable games when a folder or image cannot be read.\n int findISO(TargetList *result, struct DeviceMapEntry *device) {\n   DIR *directory;\n \n@@ -65,53 +66,46 @@ int findISO(TargetList *result, struct DeviceMapEntry *device) {\n     return -EIO;\n   }\n \n-  char previousDirectory[PATH_MAX + 1];\n-  if (!getcwd(previousDirectory, sizeof(previousDirectory)) || chdir(device->mountpoint)) {\n-    closedir(directory);\n-    return -EIO;\n-  }\n-  int scanResult = _findISO(directory, result, device);\n+  int scanResult = _findISO(directory, result, device, device->mountpoint);\n   // PS2SDK can return the closed descriptor on success; only negatives fail.\n   if (closedir(directory) < 0 && !scanResult)\n-    scanResult = -EIO;\n-  if (chdir(previousDirectory) && !scanResult)\n-    scanResult = -EIO;\n-  if (scanResult)\n+    scanResult = TITLE_SCAN_PARTIAL;\n+  if (scanResult < 0)\n     return scanResult;\n \n   if (result->total == 0) {\n-    return -ENOENT;\n+    return scanResult ? scanResult : -ENOENT;\n   }\n \n   // Get title IDs for each found title\n-  int metadataResult = processTitleID(result, device);\n-  if (metadataResult) return metadataResult;\n+  int metadataResult = processTitleID(result, device, scanResult == 0);\n+  if (metadataResult < 0) return metadataResult;\n+  if (metadataResult == TITLE_SCAN_PARTIAL) scanResult = TITLE_SCAN_PARTIAL;\n #ifdef LUNA_ENABLE_PSXCORE\n   metadataResult = lunaPsxGroupTargets(result);\n   if (metadataResult) return metadataResult;\n #endif\n \n   if (result->first == NULL) {\n-    return -ENOENT;\n+    return scanResult ? scanResult : -ENOENT;\n   }\n \n-  return 0;\n+  return scanResult;\n }\n \n // Searches rootpath and adds discovered ISOs to TargetList\n-int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device) {\n+int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device,\n+             const char *path) {\n   if (directory == NULL)\n     return -EIO;\n \n   // Read directory entries\n   struct dirent *entry;\n   char *fileext;\n   char titlePath[PATH_MAX + 1];\n-  if (!getcwd(titlePath, PATH_MAX + 1)) { // Initialize titlePath with current working directory\n-    uiSplashError(\"Failed to get cwd\\n\");\n-    return -EIO;\n-  }\n-  int cwdLen = strlen(titlePath);     // Get the length of base path string\n+  int cwdLen = snprintf(titlePath, sizeof(titlePath), \"%s\", path);\n+  if (cwdLen <= 0 || (size_t)cwdLen >= sizeof(titlePath))\n+    return -ENAMETOOLONG;\n   if (titlePath[cwdLen - 1] != '/') { // Add path separator if cwd doesn't have one\n     if ((size_t)cwdLen >= sizeof(titlePath) - 1)\n       return -ENAMETOOLONG;\n@@ -126,14 +120,14 @@ int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device)\n     errno = 0;\n     entry = readdir(directory);\n     if (!entry) {\n-      if (errno) scanResult = -EIO;\n+      if (errno) scanResult = TITLE_SCAN_PARTIAL;\n       break;\n     }\n     // Reset titlePath by ending string on base path\n     titlePath[cwdLen] = '\\0';\n     if (strlen(entry->d_name) > sizeof(titlePath)-1-(size_t)cwdLen) {\n-      scanResult = -ENAMETOOLONG;\n-      goto done;\n+      scanResult = TITLE_SCAN_PARTIAL;\n+      continue;\n     }\n \n     // Ignore .files and directories\n@@ -145,7 +139,7 @@ int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device)\n     if (type == DT_UNKNOWN) {\n       struct stat info;\n       snprintf(titlePath + cwdLen, sizeof(titlePath) - cwdLen, \"%s\", entry->d_name);\n-      if (stat(titlePath, &info) < 0) { scanResult = -EIO; goto done; }\n+      if (stat(titlePath, &info) < 0) { scanResult = TITLE_SCAN_PARTIAL; continue; }\n       type = S_ISDIR(info.st_mode) ? DT_DIR : DT_REG;\n       titlePath[cwdLen] = '\\0';\n     }\n@@ -164,27 +158,22 @@ int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device)\n           goto next;\n       }\n \n-      // Generate full path, open dir and change cwd\n+      // Recurse using full paths, independently of the launcher's working directory.\n       strcat(titlePath, entry->d_name);\n       DIR *d = opendir(titlePath);\n       if (d == NULL) {\n-        scanResult = -EIO;\n-        goto done;\n-      }\n-      if (chdir(titlePath)) {\n-        closedir(d);\n-        scanResult = -EIO;\n-        goto done;\n+        scanResult = TITLE_SCAN_PARTIAL;\n+        continue;\n       }\n       // Process inner directory recursively\n-      scanResult = _findISO(d, result, device);\n-      if (closedir(d) < 0 && !scanResult)\n-        scanResult = -EIO;\n-      titlePath[cwdLen] = '\\0';\n-      if (chdir(titlePath) && !scanResult)\n-        scanResult = -EIO;\n-      if (scanResult)\n+      int childResult = _findISO(d, result, device, titlePath);\n+      if (closedir(d) < 0 && childResult >= 0)\n+        childResult = TITLE_SCAN_PARTIAL;\n+      if (childResult == -ENOMEM) {\n+        scanResult = childResult;\n         goto done;\n+      }\n+      if (childResult) scanResult = TITLE_SCAN_PARTIAL;\n \n     next:\n       break;\n@@ -233,7 +222,7 @@ int _findISO(DIR *directory, TargetList *result, struct DeviceMapEntry *device)\n }\n \n // Fills in title ID for every entry in the list\n-int processTitleID(TargetList *result, struct DeviceMapEntry *device) {\n+int processTitleID(TargetList *result, struct DeviceMapEntry *device, int completeScan) {\n   if (result->total == 0)\n     return 0;\n \n@@ -257,7 +246,7 @@ int processTitleID(TargetList *result, struct DeviceMapEntry *device) {\n   // For every entry in target list, try to get title ID from cache\n   // If cache doesn't have title ID for the path,\n   // get it from ISO\n-  int cacheMisses = 0;\n+  int cacheMisses = 0, scanResult = 0;\n   char *titleID = NULL;\n   Target *curTarget = result->first;\n   while (curTarget != NULL) {\n@@ -272,8 +261,7 @@ int processTitleID(TargetList *result, struct DeviceMapEntry *device) {\n       char id[12];\n       const char *error = lunaPsxDiscInfo(curTarget->fullPath,id);\n       if (error && (!strcmp(error, \"disc-open\") || !strcmp(error, \"disc-read\"))) {\n-        freeTitleCache(cache);\n-        return -EIO;\n+        scanResult = TITLE_SCAN_PARTIAL;\n       }\n       if (error) {\n         curTarget=freeTarget(result,curTarget); continue;\n@@ -296,13 +284,13 @@ int processTitleID(TargetList *result, struct DeviceMapEntry *device) {\n       cacheMisses++;\n       curTarget->id = getTitleID(curTarget->fullPath);\n       if (curTarget->id == NULL) {\n-        // Invalid images may be skipped; I/O/allocation failures invalidate\n-        // this rescan so storageRefresh can retain the previous library.\n+        // A bad image must not hide other readable games on the device.\n         int error = errno;\n-        if (error != EINVAL) {\n+        if (error == ENOMEM) {\n           freeTitleCache(cache);\n-          return error == ENOMEM ? -ENOMEM : -EIO;\n+          return -ENOMEM;\n         }\n+        if (error != EINVAL) scanResult = TITLE_SCAN_PARTIAL;\n         curTarget = freeTarget(result, curTarget);\n         continue;\n       }\n@@ -312,10 +300,11 @@ int processTitleID(TargetList *result, struct DeviceMapEntry *device) {\n   }\n   freeTitleCache(cache);\n \n-  if ((cacheMisses > 0) || (isCacheUpdateNeeded)) {\n+  // Never replace a complete cache with an incomplete scan.\n+  if (completeScan && !scanResult && ((cacheMisses > 0) || isCacheUpdateNeeded)) {\n     (void)storeTitleIDCache(result, device);\n   }\n-  return 0;\n+  return scanResult;\n }\n \n //"
+    },
+    {
+      "sha": "7161106c74c2bbd8a8a4abf36de722202d2a50c7",
+      "filename": "src/storage.c",
+      "status": "modified",
+      "additions": 26,
+      "deletions": 2,
+      "changes": 28,
+      "blob_url": "https://github.com/dnunezx/nhddl-luna/blob/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fstorage.c",
+      "raw_url": "https://github.com/dnunezx/nhddl-luna/raw/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fstorage.c",
+      "contents_url": "https://api.github.com/repos/dnunezx/nhddl-luna/contents/src%2Fstorage.c?ref=df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "patch": "@@ -9,6 +9,7 @@\n #include <stdio.h>\n #include <stdlib.h>\n #include <string.h>\n+#include <strings.h>\n \n StorageSettings STORAGE_SETTINGS;\n StorageStatus STORAGE_STATUS[STORAGE_SOURCE_COUNT];\n@@ -201,6 +202,22 @@ static void mergeTitles(TargetList *destination, TargetList *source) {\n   free(source);\n }\n \n+static int hasScannedTarget(const TargetList *list, const Target *old) {\n+  int relative = getRelativePathIdx(old->fullPath);\n+  const char *path = old->fullPath + (relative < 0 ? 0 : relative);\n+  for (Target *t = list->first; t; t = t->next) {\n+    int offset = getRelativePathIdx(t->fullPath);\n+    if (t->platform == old->platform &&\n+        !strcmp(t->fullPath + (offset < 0 ? 0 : offset), path)) return 1;\n+    // A newly discovered valid playlist already represents its member images.\n+    if (old->platform == TARGET_PS1 && !old->discs && t->discs &&\n+        !t->discs->error[0])\n+      for (unsigned i = 0; i < t->discs->count; i++)\n+        if (!strcasecmp(t->discs->paths[i], path)) return 1;\n+  }\n+  return 0;\n+}\n+\n TargetList *storageRefresh(TargetList *previous) {\n   TargetList *next = calloc(1, sizeof(*next));\n   if (!next) return NULL;\n@@ -238,8 +255,10 @@ TargetList *storageRefresh(TargetList *previous) {\n     ModeType mode = modes[s];\n     if (!(desired.enabled & mode)) continue;\n     STORAGE_STATUS[s].error = (failed & mode) ? -EIO : 0;\n-    if (!(scan & mode) && !STORAGE_STATUS[s].error)\n+    if (!(scan & mode) && !STORAGE_STATUS[s].error) {\n       STORAGE_STATUS[s].error = previousStatus[s].error;\n+      STORAGE_STATUS[s].incomplete = previousStatus[s].incomplete;\n+    }\n     for (int i = 0; i < MAX_DEVICES; i++) {\n       struct DeviceMapEntry *dev = &deviceModeMap[i];\n       if (!dev->mountpoint || dev->mode != mode || !dev->scan) continue;\n@@ -250,15 +269,20 @@ TargetList *storageRefresh(TargetList *previous) {\n       if (scan & mode) {\n         result = dev->scan(part, dev);\n       }\n+      if (result == -ENOMEM) { freeTargetList(part); goto fail; }\n+      if (result == TITLE_SCAN_PARTIAL) STORAGE_STATUS[s].incomplete = 1;\n       if (!(scan & mode) || (result && result != -ENOENT)) {\n-        if (result) {\n+        if (result < 0) {\n           freeTargetList(part);\n           part = calloc(1, sizeof(*part));\n           if (!part) goto fail;\n           STORAGE_STATUS[s].error = result;\n         }\n         if (previous) for (Target *t = previous->first; t; t = t->next) {\n           if (matchDevice(t->device) != dev) continue;\n+          // Prefer freshly read metadata; keep missing old entries until a\n+          // complete rescan can establish whether they were actually removed.\n+          if (result == TITLE_SCAN_PARTIAL && hasScannedTarget(part, t)) continue;\n           Target *copy = copyTarget(t);\n           if (!copy) { freeTargetList(part); goto fail; }\n           copy->device = dev;"
+    },
+    {
+      "sha": "844f34c9b472f2d2c58c97852b43da55359a0738",
+      "filename": "src/ui/file_manager.c",
+      "status": "modified",
+      "additions": 10,
+      "deletions": 3,
+      "changes": 13,
+      "blob_url": "https://github.com/dnunezx/nhddl-luna/blob/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fui%2Ffile_manager.c",
+      "raw_url": "https://github.com/dnunezx/nhddl-luna/raw/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fui%2Ffile_manager.c",
+      "contents_url": "https://api.github.com/repos/dnunezx/nhddl-luna/contents/src%2Fui%2Ffile_manager.c?ref=df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "patch": "@@ -2611,6 +2611,9 @@ static int storageRow(int index, char *name, size_t nameSize,\n     snprintf(name, nameSize, \"%s\", storageSourceName(index));\n     if (!(settings->enabled & mode)) snprintf(detail, detailSize, lunaText(\"Disabled\"));\n     else if (!(STORAGE_SETTINGS.enabled & mode)) snprintf(detail, detailSize, lunaText(\"Enable pending\"));\n+    else if (STORAGE_STATUS[index].incomplete ||\n+             (STORAGE_STATUS[index].error && STORAGE_STATUS[index].games))\n+      snprintf(detail, detailSize, lunaText(\"Incomplete - %d games\"), STORAGE_STATUS[index].games);\n     else if (STORAGE_STATUS[index].error) snprintf(detail, detailSize, lunaText(\"Scan failed\"));\n     else if (!STORAGE_STATUS[index].devices) snprintf(detail, detailSize, lunaText(\"No device found\"));\n     else snprintf(detail, detailSize, lunaText(\"Ready - %d games\"), STORAGE_STATUS[index].games);\n@@ -2787,10 +2790,14 @@ int uiMainMenuLoop(int hasLibrary) {\n   MainMenuContext menu = {.hasLibrary = hasLibrary};\n   BrowserSelector selector = {.selected = -1, .wordOnly = 1};\n   while (1) {\n-    int scanFailed = 0;\n-    for (int source = 0; source < STORAGE_SOURCE_COUNT; source++)\n+    int scanFailed = 0, scanIncomplete = 0;\n+    for (int source = 0; source < STORAGE_SOURCE_COUNT; source++) {\n       if (STORAGE_STATUS[source].error) scanFailed = 1;\n-    drawMainMenuFrame(hasLibrary ? lunaText(\"Main menu\") :\n+      if (STORAGE_STATUS[source].incomplete ||\n+          (STORAGE_STATUS[source].error && STORAGE_STATUS[source].games)) scanIncomplete = 1;\n+    }\n+    drawMainMenuFrame(scanIncomplete ? lunaText(\"Some items could not be scanned\") :\n+                     hasLibrary ? lunaText(\"Main menu\") :\n                      scanFailed ? lunaText(\"Scan failed\") : lunaText(\"No games found\"),\n                      count, selected, &menu, &selector, 0);\n     int input = readInput();"
+    },
+    {
+      "sha": "10fb3663fabd0439e0a29fcab1c994fce4f79d1d",
+      "filename": "src/ui/language_catalog.inc",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 0,
+      "changes": 2,
+      "blob_url": "https://github.com/dnunezx/nhddl-luna/blob/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fui%2Flanguage_catalog.inc",
+      "raw_url": "https://github.com/dnunezx/nhddl-luna/raw/df394982c12e331dd7a18390ac055b6ba957fbbb/src%2Fui%2Flanguage_catalog.inc",
+      "contents_url": "https://api.github.com/repos/dnunezx/nhddl-luna/contents/src%2Fui%2Flanguage_catalog.inc?ref=df394982c12e331dd7a18390ac055b6ba957fbbb",
+      "patch": "@@ -255,6 +255,7 @@\n   {\"IOP: Fix game buffer overrun\", \"IOP: Corregir desborde del b\u00fafer\", \"IOP: Corrigir estouro de buffer\"},\n   {\"IOP: Sync reads\", \"IOP: Lecturas s\u00edncronas\", \"IOP: Leituras s\u00edncronas\"},\n   {\"Included with selected cheats.\", \"Incluido con los trucos seleccionados.\", \"Inclu\u00eddo com os c\u00f3digos selecionados.\"},\n+  {\"Incomplete - %d games\", \"Incompleto - %d juegos\", \"Incompleto - %d jogos\"},\n   {\"Incomplete multiline cheat entry\", \"Entrada de truco multil\u00ednea incompleta\", \"Entrada de c\u00f3digo multilinha incompleta\"},\n   {\"Inherit (Off)\", \"Heredar (desactivado)\", \"Herdar (desativado)\"},\n   {\"Inherit (On)\", \"Heredar (activado)\", \"Herdar (ativado)\"},\n@@ -454,6 +455,7 @@\n   {\"Size\", \"Tama\u00f1o\", \"Tamanho\"},\n   {\"Skip\", \"Omitir\", \"Pular\"},\n   {\"Skull\", \"Calavera\", \"Caveira\"},\n+  {\"Some items could not be scanned\", \"No se pudieron examinar algunos elementos\", \"N\u00e3o foi poss\u00edvel verificar alguns itens\"},\n   {\"Sort by\", \"Ordenar por\", \"Ordenar por\"},\n   {\"Sort: date (newest first)\", \"Ordenar: fecha (recientes primero)\", \"Ordenar: data (recentes primeiro)\"},\n   {\"Sort: name\", \"Ordenar: nombre\", \"Ordenar: nome\"},"
+    }
+  ]
+}
