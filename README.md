@@ -20,6 +20,12 @@ to contribute missing strings. CWD support requires a build containing #1017.
 
 ## Test builds and save-card recovery
 
+For launch failures, use [Launch diagnostics](docs/LAUNCH-DIAGNOSTICS.md) to identify the
+installed package, actual game core, transport and failing stage before changing settings.
+Our [fork collaboration review](docs/FORK-COLLABORATION.md) and
+[current comparison](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html)
+track shared improvements and candidates from RIPPS2 and other projects with their evidence limits.
+
 For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves. For build flavours, app placement, Browser/OSDSYS and launch-failure reports, see [Setup questions](docs/SETUP-QUESTIONS.md).
 
 ## Community Contributors
