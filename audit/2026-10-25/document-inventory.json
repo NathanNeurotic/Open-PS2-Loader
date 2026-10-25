@@ -1722,7 +1722,7 @@
   {
     "surface": "site",
     "path": "launch-diagnostics.html",
-    "sha256": "5515d940ae1e44a6daac1b4334a85fa47c72d0428568c46f9d9a8ff5d3a3924a",
+    "sha256": "f4e7bdf512267d275e45144711298d4943cb53019480cd57fc07480fe59b9494",
     "headings": [
       "Launch diagnostics: identify the package, core and transport",
       "Choose the matching installation",
