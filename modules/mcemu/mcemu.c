@@ -537,6 +537,7 @@ void Sio2McEmu(Sio2Packet *sd, int ver)
         register u32 ddi, *pctl, result, length;
         register u8 *wdma, *rdma;
         register MemoryCard *mcd;
+        int io_error = 0; /* a device page read, write or erase failed in this transfer */
 
         wdma = (u8 *)sd->wrmaddr; /* address of write buffers */
         rdma = (u8 *)sd->rdmaddr; /* address of read buffers */
@@ -559,6 +560,8 @@ void Sio2McEmu(Sio2Packet *sd, int ver)
                         case 0x21: /* erase block */
                             SioResponse(mcd, rdma, length);
                             result = MceEraseBlock(mcd, GetInt(&wdma[2]));
+                            if (!result)
+                                io_error = 1;
                             break;
                         /* 0x81 0x22 - Start writing to a memory card */
                         case 0x22: /* write start */
@@ -598,18 +601,22 @@ void Sio2McEmu(Sio2Packet *sd, int ver)
                         /* 0x81 0x42 - Write data to a memory card */
                         case 0x42:
                             SioResponse(mcd, rdma, length);
-                            if (result)
+                            if (result) {
                                 result = MceWrite(mcd, &wdma[3], wdma[2]);
-                            else
+                                if (!result)
+                                    io_error = 1;
+                            } else
                                 DPRINTF("skipping write command after I/O error.\n");
                             break;
                         /* 0x81 0x43 - Read data from a memory card */
                         case 0x43:
                             length = wdma[2]; /* length = (*pctl >> 18) & 0x1FF; */
                             SioResponse(mcd, rdma, 5);
-                            if (result)
+                            if (result) {
                                 result = MceRead(mcd, &rdma[4], length);
-                            else
+                                if (!result)
+                                    io_error = 1;
+                            } else
                                 DPRINTF("skipping read command after I/O error.\n");
                             if (!result)
                                 mips_memset(&rdma[4], 0xFF, length);
@@ -657,7 +664,10 @@ void Sio2McEmu(Sio2Packet *sd, int ver)
             rdma = &rdma[sd->rdwords * 4]; /* set address of next dma read-buffer */
         }
 
-        sd->iostatus = (result > 0) ? 0x1000 : 0x1D000; /* <- set I/O flags */
+        /* A failed page read, write or erase fails the whole transfer. MCMAN puts a status command in
+           the same transfer (ps2sdk's mcman: 0x81 after a page read, 0x82 after an erase), and its
+           unconditional result = 1 would otherwise report the failed access to MCMAN as a success. */
+        sd->iostatus = (result > 0 && !io_error) ? 0x1000 : 0x1D000; /* <- set I/O flags */
         sd->iostatus |= (ddi & 0xF) << 8;
     } else {
         sd->iostatus = 0x1D100;
