@@ -52,8 +52,8 @@ device tabs.
 
 **RiptOPL’s UDPFS Files page lists Ember titles and uppercase `POPS/*.VCD` files.**
 Ember keeps the mounted network transport alive. POPSTARTER reads UDPFS VCDs through Okeanos’s
-separate BDM-UDPFS Assault driver and USB support files; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
-With **BDMA Apply on Launch**, RiptOPL attempts to equip the `.udpfs` pair before VCD handoff.
+separate UDPFS Assault BDMA variants; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
+With **BDMA Apply on Launch**, RiptOPL equips the selected `.udpfs` or `.udpfsnet` pair from the game device before VCD handoff.
 An already usable matching manual pair also works. Without a valid pair, the network VCD launch
 is stopped. UDPBD remains outside this POPSTARTER driver's scope.
 
@@ -225,6 +225,14 @@ the filename lookup misses. For the example above, the fallback names are
 
 ### RetroGEM / PSBBN disc IDs — art and title metadata (both PS1 cores)
 
+Disc serials are normalized using CosmicScale's PSBBN convention: uppercase,
+remove existing `_`, `.` and `-` separators, and rebuild `AAAA_NNN.NN`.
+The `SLUSP` prefix maps to `SLUS`; `LSP` serials instead keep their first eight
+characters together followed by a dot (for example `LSP12345.67`). Normalization
+is applied to the serial extracted from `SYSTEM.CNF`, so metadata and the launch
+barcode use the same result. The normalizer rejects unsupported or oversized
+tokens; the existing resolver's legacy canonical/dash parsing remains available.
+
 Independently of the filename rules above, RiptOPL resolves each PS1 row's own disc ID — the Sony
 serial (`AAAA_NNN.NN`) that RetroGEM, PSBBN and cross-launcher art packs standardize on — and uses
 it as an additional metadata key, exactly like a PS2 title uses its disc ID:
@@ -328,58 +336,79 @@ so POPSTARTER itself can read them off the exFAT volume.
 
 ### POPS UDPFS with BDM-UDPFS Assault
 
-[Okeanos's BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases/tag/Alpha)
-adds **read-only UDPFS fallback** to POPSTARTER's USB driver. USB is tried first; when a VCD
-is absent there, the driver requests the same path from the UDPFS server after POPSTARTER's
-IOP reset. This is a POPSTARTER driver, separate from Neutrino's PS2 UDPFS loader.
+Okeanos supplies two POPSTARTER BDMA variants. Both use the existing BDMA equip and
+memory-card population flow; their runtime filesystem is separate from RiptOPL's
+mounted UDPFS connection and starts again after POPSTARTER resets the IOP.
 
-The included `POPS/` folder supplies these four files:
+| BDMA mode | Included POPS pair | Runtime files and saves |
+| --- | --- | --- |
+| **USB + UDPFS** | `usbd.irx.udpfs`, `usbhdfsd.irx.udpfs` | USB first; only missing VCD reads fall back to the server. Other POPS files and VMC writes stay on USB. |
+| **UDPFS (network R/W)** | `usbd.irx.udpfsnet`, `usbhdfsd.irx.udpfsnet` | Every `mass:` request uses the server, including POPS dependencies and VMC writes. USB is not required. |
 
-| Included file | Installation / purpose |
-| --- | --- |
-| `usbd.irx.udpfs` | Copy to `mc?:/POPSTARTER/usbd.irx`, removing `.udpfs` |
-| `usbhdfsd.irx.udpfs` | Copy to `mc?:/POPSTARTER/usbhdfsd.irx`, removing `.udpfs` |
-| `IPCONFIG.DAT` | USB `mass:/POPS/IPCONFIG.DAT`: PS2 IP, netmask, optional gateway |
-| `UDPFSCONFIG.DAT` | USB `mass:/POPS/UDPFSCONFIG.DAT`: UDPFS server IP; empty file enables discovery |
+The binaries are unchanged releases of [BDM-UDPFS Assault 1.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0)
+and [UDPFS Assault 1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0).
+The companion is identical in both pairs. RiptOPL installs the selected pair as
+`mc?:/POPSTARTER/usbd.irx` and `usbhdfsd.irx`, without the suffixes.
 
-Keep your own `POPS_IOX.PAK` and other runtime POPS files on USB. The driver pair can be
-sourced from `POPS/` on any supported device, including APA HDD `__common/POPS/`.
-On the server, place the VCD at the matching path relative to the shared root, for example
-`POPS/SLUS_011.56.VCD`; the driver also accepts `POPS0/` through `POPS9/`. Use uppercase
-`.VCD`. Only VCD reads fall back to the network; other files and writes stay on USB.
-The upstream release reports testing with `udpfsd` and `udpfs_server.py`.
+Keep the supplied modules and optional settings together in the **game device's
+`POPS/` folder**. For a game listed on UDPFS, that is `POPS/` under the server's
+shared root (`udpfs:/POPS/` while RiptOPL is running). Automatic launch equip reads
+that folder exclusively; it does not substitute another device's pair. A matching
+installed pair skips the copy. The older Alpha pair is detected as stale.
 
-Edit the supplied examples for your LAN before use: `IPCONFIG.DAT` contains
-`192.168.1.10 255.255.255.0 192.168.1.1`, and `UDPFSCONFIG.DAT` contains `192.168.1.11`.
-Without a valid IP config, the driver uses PS2 `192.168.1.10/24`; without a valid same-subnet
-server address it uses broadcast discovery. The server must be on the PS2's subnet: the
-driver does not route through the gateway. These files are read from USB, not from the
-memory card and not from RiptOPL's saved network settings.
+| Optional file in the game's POPS folder | MC destination | Contents |
+| --- | --- | --- |
+| `IPCONFIG.DAT` | `mc?:/SYS-CONF/IPCONFIG.DAT` | PS2 IP, netmask, optional gateway, e.g. `192.168.1.10 255.255.255.0 192.168.1.1` |
+| `UDPFSCONFIG.DAT` | `mc?:/SYS-CONF/UDPFSCONFIG.DAT` | Server IP, e.g. `192.168.1.11`; an empty file selects discovery |
 
-**RiptOPL setup:** open **POPS Network Settings → POPS UDPFS Network Settings** and enter
-your PS2 IP, netmask and server IP. Server `0.0.0.0` selects broadcast discovery. Saving writes
-both files to **every connected USB volume's `POPS/` folder**, with replacement confirmation
-for existing files. This editor is separate from the SMB memory-card configuration.
+Edit the supplied examples for your LAN. Before launch, RiptOPL checks each file
+independently: **an existing copy on either MC is preserved**; a missing file is
+copied from the game's POPS folder if supplied. This also runs when the drivers
+are already equipped. Absent source files are optional and create no config files.
+New files go to the card holding the POPSTARTER folder, or the first available card.
+Files over the upstream 120-byte limit are refused rather than truncated.
 
-The **UDPFS Files** PS1/Mixed view now lists uppercase `POPS/*.VCD` alongside Ember titles.
-Launching a VCD there, or from Favorites, checks the USB config pair on every connected USB
-volume and requires matching valid values before proceeding. This explicit check is an interim
-requirement because the Alpha IRX reads runtime configs from USB `mass:/POPS/`; upstream
-itself permits missing files and falls back to defaults. Installing support files on another
-device does not change that runtime USB requirement.
+Both drivers look up each config file at `mc0:/SYS-CONF/`, then `mc1:/SYS-CONF/`.
+The USB-first driver additionally checks `mass:/SYS-CONF/`. RiptOPL's automatic
+population uses MC, so USB config copies are unnecessary. The former Alpha
+`mass:/POPS/` runtime location no longer applies. Without configuration the driver
+uses PS2 `192.168.1.10/24` and server discovery. The server must be on the PS2's
+subnet; the driver does not route through the gateway.
 
-With **VCD BDMA Apply on Launch** enabled, RiptOPL equips the `.udpfs` pair on the memory
-card and hands POPSTARTER its usual `mass:/POPS/XX.<name>.ELF` selector. With automatic
-equip disabled, select **BDMA Mode → UDPFS** and equip the pair manually. Existing BDMA
-equip failures remain best-effort warnings, so inspect the installed pair if a launch fails.
-USB VCDs take precedence over the server when both contain the same path. UDPBD and UDPFS
-IMG remain Ember-only. The new RiptOPL VCD handoff is implemented and host-tested; physical
-console validation is still pending, and POPS UDPFS RetroAchievements integration is unavailable.
+**POPS UDPFS Network Settings** edits the effective MC configuration, with explicit
+replacement confirmation. The screen shows its MC location(s). MC0 wins for a file
+present on both cards, and the editor updates that effective copy. Saving backs up
+and verifies the originals and replacements without relying on unsupported MC
+rename operations. A `.bak` retained after a failed restoration requires recovery
+before another save. SMB's separate `mc?:/POPSTARTER/` network settings are preserved.
 
-Credit goes to **Okeanos** for BDM-UDPFS Assault, **israpps** for the original BDM Assault,
-**krHACKen** for POPSTARTER, **rickgaiser** for Neutrino/UDPFS/UDPRDMA, **pcm720** for `udpfsd`,
-and the **PS2SDK contributors**. The upstream release is **Alpha**. Its license and third-party
-notices accompany the drivers in `POPS/UDPFS-NOTICES/`.
+The UDPFS Files PS1/Mixed view and Favorites use the same launch callback. With
+**VCD BDMA Apply on Launch**, an unconfigured card gets the USB-first `.udpfs` mode.
+To use full network, disable automatic equip, select **BDMA Mode → UDPFS (network
+R/W)** and equip it; automatic equip can then be re-enabled. The installed network
+mode, including a matching unmarked manual pair, is respected on UDPFS launches.
+With automatic equip disabled, the selected pair must already be usable. Missing
+or stale required pairs stop the network launch before teardown.
+
+For USB-first mode, keep your own `POPS_IOX.PAK` and other POPS runtime files on
+USB. For full-network mode, put them on the server at their normal paths under
+`POPS/`, together with VCDs and any VMCs intended for that mode. RiptOPL does not
+migrate existing saves. Use uppercase `.VCD` and the exact path casing on Linux.
+USB-first mode uses the USB VCD when both sources contain the same path.
+
+**Full-network saves require a writable share** (`udpfsd` without `-ro`, or
+`udpfs_server.py` without `--read-only`). Keep VMC backups: upstream documents that
+an interruption exceeding its retry window during a save can leave an incomplete
+file. Network R/W mode does not make saves atomic.
+
+Ember keeps its existing live `udpfs:` handoff; POPSTARTER's card pair does not
+replace that backend. UDPBD and UDPFS IMG are outside this POPSTARTER feature.
+POPS UDPFS RetroAchievements integration remains unavailable. Target builds and
+host tests do not establish physical-console gameplay or save durability.
+
+Credit goes to **Okeanos**, **israpps**, **krHACKen**, **ps2max32 / rickgaiser**,
+**pcm720**, **Gageformer**, and the **PS2SDK contributors**. Unmodified release
+instructions, licenses and checksums accompany the pairs in `POPS/UDPFS-NOTICES/`.
 
 ## 6. PS1 over SMB — POPSTARTER network settings
 

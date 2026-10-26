@@ -1072,12 +1072,22 @@ static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, str
         if (list->mode != FAV_MODE && list->mode != APP_MODE && list->itemGet != NULL) {
             const base_game_info_t *row = (const base_game_info_t *)list->itemGet(list, item->id);
             if (row != NULL) {
-                int kind = cueIsCueEntry(row)                                                 ? PS1_ROW_CUE :
-                           (row->extension[0] != '\0' && !strcasecmp(row->extension, ".VCD")) ? PS1_ROW_VCD :
-                                                                                                -1;
+                int kind = -1;
+                if (cueIsCueEntry(row))
+                    kind = PS1_ROW_CUE;
+                else if (row->extension[0] != '\0' && !strcasecmp(row->extension, ".VCD"))
+                    kind = PS1_ROW_VCD;
                 if (kind >= 0) {
                     char id[VCD_ID_MAX];
+                    ps1RowIdRequest(startup, kind); // verify provisional filename IDs too
                     if (ps1RowIdCached(startup, kind, id, sizeof(id))) {
+                        // The row shares its slot with the name fallback. UID alone cannot
+                        // identify which value owns it; let reunion-by-value find the ID slot.
+                        // A parked absence has no value attached, so recheck it by value too.
+                        if (*cacheId == -2 || (*cacheId >= 0 && *cacheId < cache->count &&
+                                               strlen(id) < sizeof(cache->content[0].key) &&
+                                               strcmp(cache->content[*cacheId].key, id) != 0))
+                            *cacheId = -1;
                         GSTEXTURE *idTex = cacheGetTextureEx(cache, list, cacheId, cacheUid, id, isPriority);
                         if (idTex != NULL)
                             return idTex;
@@ -1099,7 +1109,6 @@ static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, str
                         }
                         return NULL; // id art is still loading; adopted on a later frame
                     }
-                    ps1RowIdRequest(startup, kind); // cold memo: background resolve, upgrade next frame
                 }
             }
         }

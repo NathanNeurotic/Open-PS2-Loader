@@ -359,8 +359,8 @@ support = (ROOT / 'src/supportbase.c').read_text(encoding='utf-8')
 cfg_fn = support[support.index('PS1 metadata fallback (both cores)'):]
 cfg_fn = cfg_fn[:cfg_fn.index('\n    }\n')]
 assert 'if (isPs1) {' in cfg_fn, 'the id-keyed Title merge must run for every PS1 row lacking a Title'
-assert 'haveMetaKey = !isVcd;' in cfg_fn, \
-    'a .VCD with a parsing name keeps the wholesale fallback precedence (read only when the name cfg is absent)'
+assert 'haveMetaKey = !isVcd || configLoaded;' in cfg_fn, \
+    'a loaded name CFG must not suppress ID-keyed Title; absent-name VCDs keep their wholesale fallback'
 assert 'configGetStr(meta, "Title", &metaTitle)' in cfg_fn, 'Title is the only merged key'
 assert 'configMerge(config, meta)' not in cfg_fn, 'settings must never merge from the id-keyed cfg'
 assert 'config->modified = wasModified;' in cfg_fn, 'metadata must not dirty the name cfg'
@@ -372,3 +372,148 @@ assert 'vcdNoteScanDirKind(entries[i].name, devPrefix, PS1_ROW_CUE);' in cues, \
     'the CUE scan must notify the shared memo per row'
 
 print('PASS: art probe order/park-restore, Title-only cfg merge, CUE scan notification')
+
+# The actual renderer and metadata merge are compiled too: mocking only the memo
+# misses caller-order bugs and UID slots shared between name and ID probes.
+CONSUMERS = r'''
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#define VCD_ID_MAX 16
+#define RETROGEM_GAMEID_MAX 12
+#define PS1_ROW_VCD 0
+#define PS1_ROW_CUE 1
+#define FAV_MODE 10
+#define APP_MODE 11
+typedef struct { int marker; } GSTEXTURE;
+typedef struct { GSTEXTURE texture; int UID; char key[128]; } cache_entry_t;
+typedef struct { int userId, count; char *suffix; cache_entry_t *content; } image_cache_t;
+typedef struct { char name[256], extension[8]; int cue; } base_game_info_t;
+typedef struct item_list item_list_t;
+struct item_list { int mode; char *(*itemGetStartup)(item_list_t *, int); void *(*itemGet)(item_list_t *, int); };
+struct submenu_item { int isFolder, id; int *cache_id, *cache_uid; };
+static struct { int gameCacheCount; } theme = {1}, *gTheme = &theme;
+static int gEnableArt = 1, gEnableBGArt = 1;
+static int isHiddenArtworkCache(image_cache_t *c) { (void)c; return 0; }
+static int cueIsCueEntry(const base_game_info_t *r) { return r->cue; }
+static base_game_info_t row;
+static char *startup(item_list_t *l, int i) { (void)l; (void)i; return row.name; }
+static void *getrow(item_list_t *l, int i) { (void)l; (void)i; return &row; }
+static int requests, resolved, idPresent = 1, namePresent = 1, idLoading;
+static void ps1RowIdRequest(const char *n, int k) { (void)n; (void)k; requests++; }
+static int ps1RowIdCached(const char *n, int k, char *out, int size)
+{ (void)n; (void)k; snprintf(out, size, "%s", resolved ? "SLUS_222.22" : "SLUS_111.11"); return 1; }
+/* Cache contract: UID fast path precedes value lookup, and -2 parks absence. */
+static GSTEXTURE *cacheGetTextureEx(image_cache_t *c, item_list_t *l, int *slot, int *uid, char *v, int p)
+{
+    (void)l; (void)p;
+    if (*slot == -2) return NULL;
+    if (*slot >= 0 && *slot < c->count && c->content[*slot].UID == *uid)
+        return &c->content[*slot].texture;
+    *slot = -1;
+    int isId = strcmp(v, row.name) != 0;
+    if ((isId && !idPresent) || (!isId && !namePresent)) { *slot = -2; *uid = 9; return NULL; }
+    if (isId && idLoading) return NULL;
+    for (int i = 0; i < c->count; i++)
+        if (!strcmp(c->content[i].key, v)) { *slot = i; *uid = c->content[i].UID; return &c->content[i].texture; }
+    return NULL;
+}
+@ART@
+typedef struct { const char *title; int modified, setting; } config_set_t;
+static config_set_t metadata = {"Disc title", 0, 999};
+static int reads;
+static int configGetStr(config_set_t *c, const char *k, const char **out)
+{ assert(!strcmp(k, "Title")); *out = c->title; return *out != NULL; }
+static config_set_t *configAlloc(int t, void *u, const char *p)
+{ (void)t; (void)u; assert(strstr(p, "CFG/SLUS_111.11.cfg")); return &metadata; }
+static int configRead(config_set_t *c) { assert(c == &metadata); reads++; return 1; }
+static void configFree(config_set_t *c) { assert(c == &metadata); }
+static void configSetStr(config_set_t *c, const char *k, const char *v)
+{ assert(!strcmp(k, "Title")); c->title = v; c->modified = 1; }
+static int vcdExtractGameId(const char *n, char *out, int size)
+{ if (strncmp(n, "SLUS_", 5)) return 0; snprintf(out, size, "SLUS_111.11"); return 1; }
+static void populate(base_game_info_t *game, config_set_t *config, int configLoaded)
+{
+    char path[256]; const char *prefix = "mass0:/", *sep = "/";
+    int isVcd = !strcmp(game->extension, ".VCD"), isPs1 = isVcd || game->cue;
+    @CFG@
+}
+@NORMALIZE@
+@CLEAN@
+static void normalized(const char *raw, const char *expected)
+{
+    char out[12]; assert(retrogemNormalizeGameID(raw, out, sizeof(out)));
+    assert(!strcmp(out, expected));
+}
+int main(void)
+{
+    cache_entry_t entries[3] = {{{1}, 101, "SLUS_111.11.Name"}, {{2}, 102, "SLUS_111.11"}, {{3}, 103, "SLUS_222.22"}};
+    image_cache_t cache = {0, 3, "COV", entries}; item_list_t list = {0, startup, getrow};
+    int slot = 0, uid = 101; struct submenu_item item = {0, 0, &slot, &uid};
+    strcpy(row.name, "SLUS_111.11.Name"); strcpy(row.extension, ".VCD");
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[1].texture);
+    assert(requests == 1); /* parsed ID must still request disc verification */
+    resolved = 1;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[2].texture);
+    resolved = 0; idPresent = 0;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[0].texture);
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[0].texture);
+    namePresent = 0; slot = -1;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == NULL && slot == -2);
+    idPresent = 1;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[1].texture);
+    slot = 0; uid = 101; idLoading = 1;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == NULL);
+    row.cue = 1; idLoading = 0;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[1].texture);
+    int before = requests; list.mode = FAV_MODE; slot = 0; uid = 101;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[0].texture && requests == before);
+    row.cue = 0;
+    config_set_t cfg = {NULL, 0, 42}; populate(&row, &cfg, 1);
+    assert(!strcmp(cfg.title, "Disc title") && cfg.setting == 42 && cfg.modified == 0);
+    cfg.title = ""; cfg.modified = 1; populate(&row, &cfg, 1);
+    assert(!strcmp(cfg.title, "Disc title") && cfg.modified == 1);
+    before = reads; cfg.title = "Name title"; populate(&row, &cfg, 1);
+    assert(reads == before && !strcmp(cfg.title, "Name title"));
+    cfg.title = NULL; populate(&row, &cfg, 0); assert(reads == before);
+    row.cue = 1; strcpy(row.extension, ".CUE"); populate(&row, &cfg, 0);
+    assert(reads == before + 1 && !strcmp(cfg.title, "Disc title"));
+    normalized("slus_123.45", "SLUS_123.45"); normalized("SlUs-12345", "SLUS_123.45");
+    normalized("SLUS12345", "SLUS_123.45"); normalized("SLUS.123_45", "SLUS_123.45");
+    normalized("slusp_123.45", "SLUS_123.45"); normalized("lsp12345.67", "LSP12345.67");
+    normalized("LSP-123456", "LSP12345.6");
+    char out[12]; assert(!retrogemNormalizeGameID(NULL, out, sizeof(out)));
+    assert(!retrogemNormalizeGameID("", out, sizeof(out)));
+    assert(!retrogemNormalizeGameID("SLUS123456", out, sizeof(out)));
+    assert(!retrogemNormalizeGameID("SLUS12X45", out, sizeof(out)));
+    assert(!retrogemNormalizeGameID("LSP12345678", out, sizeof(out)));
+    assert(!retrogemNormalizeGameID("Crash Bandicoot", out, sizeof(out)));
+    assert(!retrogemNormalizeGameID("SLUS12345", out, 11));
+    assert(retrogemCleanTitleID("cdrom:\\slusp_123.45;1", out, sizeof(out)));
+    assert(!strcmp(out, "SLUS_123.45"));
+    assert(retrogemCleanTitleID("cdrom0:\\lsp12345.67;1", out, sizeof(out)));
+    assert(!strcmp(out, "LSP12345.67"));
+    assert(retrogemCleanTitleID("cdrom:\\slus12345;1", out, sizeof(out)));
+    assert(!strcmp(out, "SLUS_123.45"));
+    assert(!retrogemCleanTitleID("cdrom:\\Crash.exe;1", out, sizeof(out)));
+    puts("PASS: actual art/CFG consumers and CosmicScale serial normalization");
+    return 0;
+}
+'''
+cfg_block = cfg_fn[cfg_fn.index('    if (isPs1) {'):] + '\n    }'
+consumer_source = CONSUMERS.replace('@ART@', function('src/themes.c',
+    'static GSTEXTURE *getGameImageTextureEx(')).replace('@CFG@', cfg_block)
+normalizer = function('src/retrogem.c', 'static int retrogemTitlePrefixChar(')
+normalizer += '\n' + function('src/retrogem.c', 'int retrogemNormalizeGameID(')
+consumer_source = consumer_source.replace('@NORMALIZE@', normalizer)
+consumer_source = consumer_source.replace('@CLEAN@', function('src/retrogem.c',
+    'static int retrogemCleanTitleID('))
+with tempfile.TemporaryDirectory() as directory:
+    folder = Path(directory)
+    cfile = folder / 'consumers.c'
+    binary = folder / ('consumers.exe' if sys.platform == 'win32' else 'consumers')
+    cfile.write_text(consumer_source, encoding='utf-8')
+    subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', str(cfile), '-o', str(binary)], check=True)
+    subprocess.run([str(binary)], check=True, timeout=15)

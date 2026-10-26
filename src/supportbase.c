@@ -1245,10 +1245,12 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
         int haveMetaKey = 0;
 
         if (!configGetStr(config, "Title", &title) || title == NULL || title[0] == '\0') {
+            // With no name CFG, the VCD compatibility fallback already read the parsed ID CFG.
+            // Otherwise it may still supply Title without importing any of its settings.
             if (vcdExtractGameId(game->name, metaKey, sizeof(metaKey)))
-                haveMetaKey = !isVcd;                                                       // a .VCD with a parsing name keeps the wholesale fallback's
-            else                                                                            // precedence: its CFG/<id>.cfg is read only when the name
-                haveMetaKey = ps1RowIdCached(game->name, isVcd ? PS1_ROW_VCD : PS1_ROW_CUE, // cfg is absent
+                haveMetaKey = !isVcd || configLoaded;
+            else
+                haveMetaKey = ps1RowIdCached(game->name, isVcd ? PS1_ROW_VCD : PS1_ROW_CUE,
                                              metaKey, sizeof(metaKey));
         }
 
