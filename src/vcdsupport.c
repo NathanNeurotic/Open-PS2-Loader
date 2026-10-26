@@ -31,7 +31,8 @@
 #include "include/lang.h"        // _l + _STR_BDMA_ERR_* (same texts the Settings-screen equip shows)
 #include "include/textures.h"    // texDiscoverLoad + ERR_BAD_FILE (VCD POPS cover fallback)
 #include "include/vcdsupport.h"
-#include "include/libview.h" // which list a page is showing (the L3 ring)
+#include "include/cuesupport.h" // cueResolveGameImage -- the Ember half of the PS1-row id memo
+#include "include/libview.h"    // which list a page is showing (the L3 ring)
 #include "include/retrogem.h"
 
 
@@ -271,7 +272,8 @@ typedef struct vcd_id_memo
 {
     struct vcd_id_memo *next;
     char id[VCD_ID_MAX];     // resolved disc id; empty once absent
-    char *dir;               // directory this VCD was scanned from -- the ONLY correct path source
+    char *dir;               // directory this row was scanned from -- the ONLY correct path source
+    unsigned char kind;      // ps1_row_kind_t -- .VCD (POPS dir) vs .CUE (device root) row
     unsigned char state;     // vcd_id_state_t
     unsigned char retries;   // count of failed read attempts before transitioning to ABSENT
     unsigned int retryFrame; // guiFrameId when deferred retry is next permitted
@@ -281,27 +283,28 @@ typedef struct vcd_id_memo
 static vcd_id_memo_t *gVcdIdMemo = NULL;
 static int gVcdIdMemoCount = 0;
 
-static vcd_id_memo_t *vcdIdMemoFind(const char *name)
+static vcd_id_memo_t *vcdIdMemoFind(const char *name, unsigned char kind)
 {
     for (vcd_id_memo_t *m = gVcdIdMemo; m != NULL; m = m->next) {
-        if (!strcmp(m->name, name))
+        if (m->kind == kind && !strcmp(m->name, name))
             return m;
     }
     return NULL;
 }
 
-// Called for EVERY entry the scan sees. STRING WORK ONLY -- no device access, deliberately: the scan
-// builds the list the user is waiting to see, and nothing that blocks it belongs here. All this does
-// is remember which directory a VCD came from, because that is the one thing the lazy resolver
-// cannot work out for itself: vcdScanDir appends POPS/ to a device root while vcdScanDirRoot takes a
-// directory directly (the APA/PFS HDD), so any attempt to reconstruct the path later can only be
-// right about one of the two layouts.
-void vcdNoteScanDir(const char *name, const char *dirPath)
+// Called for EVERY entry EITHER scan sees. STRING WORK ONLY -- no device access, deliberately: the
+// scan builds the list the user is waiting to see, and nothing that blocks it belongs here. All this
+// does is remember where a PS1 row came from, because that is the one thing the lazy resolver cannot
+// work out for itself: the VCD scan appends POPS/ to a device root (or takes a directory directly on
+// APA/PFS), while the CUE scan works from a device root, so any attempt to reconstruct the path later
+// can only be right about one of the two layouts. `dir` is the scanned directory for a .VCD row and
+// the device ROOT (devPrefix) for a .CUE row.
+void vcdNoteScanDirKind(const char *name, const char *dirPath, int kind)
 {
     if (name == NULL || dirPath == NULL || name[0] == '\0')
         return;
 
-    vcd_id_memo_t *m = vcdIdMemoFind(name);
+    vcd_id_memo_t *m = vcdIdMemoFind(name, (unsigned char)kind);
     if (m != NULL) {
         if (m->dir == NULL || strcmp(m->dir, dirPath) != 0) {
             free(m->dir); // same name on a different device: re-point, and re-ask the disc
@@ -322,6 +325,7 @@ void vcdNoteScanDir(const char *name, const char *dirPath)
     if (m == NULL)
         return;
     memcpy(m->name, name, len + 1);
+    m->kind = (unsigned char)kind;
     m->id[0] = '\0';
     m->state = VCD_ID_UNREQUESTED;
     m->retries = 0;
@@ -330,6 +334,11 @@ void vcdNoteScanDir(const char *name, const char *dirPath)
     m->next = gVcdIdMemo;
     gVcdIdMemo = m;
     gVcdIdMemoCount++;
+}
+
+void vcdNoteScanDir(const char *name, const char *dirPath)
+{
+    vcdNoteScanDirKind(name, dirPath, PS1_ROW_VCD);
 }
 
 void vcdInvalidateGameIds(void)
@@ -398,42 +407,43 @@ static int vcdCanonDisplayId(const char *idIn, char *idOut, int idSize)
     return 0; // not a recognisable id shape: the caller keeps the resolver's string untouched
 }
 
-// Called from the per-game CONFIG path, which is where a value like this belongs: that path is
-// already asynchronous, already runs on the io worker, already fires once per SETTLED row, and since
-// rebuild-155 is gated on the theme actually having an element that displays it. So a theme that
-// shows the id pays one disc read per game per session, and a theme that does not pays nothing --
-// exactly how #Size behaves, and exactly what Nathan asked for: it may arrive late, it must never
-// hold anything up.
-int vcdResolveDisplayId(const char *name, char *idOut, int idSize)
+// The one device read both cores share: the ground-truth id from the image, via the SAME resolver
+// the RetroGEM barcode uses at launch, so a game reports one id to the theme, to the scanner and to
+// art/CFG metadata. `m` is the scanned memo row. Returns 1 and writes the canonical id; on failure
+// allows bounded retries with backoff before the row settles ABSENT.
+static int vcdResolveMemoEntry(vcd_id_memo_t *m, const char *name, char *idOut, int idSize)
 {
-    if (name == NULL || idOut == NULL || idSize <= 0)
-        return 0;
-    idOut[0] = '\0';
-
-    vcd_id_memo_t *m = vcdIdMemoFind(name);
-    if (m == NULL || m->dir == NULL)
-        return 0; // never scanned (or the table was full): caller falls back to the filename
-
-    if (m->state == VCD_ID_RESOLVED) {
-        snprintf(idOut, idSize, "%s", m->id);
-        return 1;
-    }
-    if (m->state == VCD_ID_ABSENT)
-        return 0;
-
-    char vcdPath[256];
     char discId[RETROGEM_GAMEID_MAX];
-    size_t dl = strlen(m->dir);
-    const char *sep = (dl > 0 && m->dir[dl - 1] == '/') ? "" : "/";
+    int found = 0;
 
-    if (snprintf(vcdPath, sizeof(vcdPath), "%s%s%s.VCD", m->dir, sep, name) >= (int)sizeof(vcdPath)) {
-        m->state = VCD_ID_ABSENT;
-        return 0;
+    if (m->kind == PS1_ROW_CUE) {
+        // Ember row: follow the folder to the disc Ember itself would mount, then read its id.
+        // A multi-disc folder's discs.txt order is authoritative when present (disc 1 carries the
+        // game's art/metadata id); otherwise the folder's best-priority image wins.
+        char imagePath[640];
+        cue_disc_list_t *discs = NULL;
+        int haveImage = 0;
+
+        if (cueReadDiscList(m->dir, name, &discs) > 0 && discs->count > 0)
+            haveImage = cueBuildDiscPath(m->dir, name, discs->names[0], imagePath, sizeof(imagePath));
+        free(discs);
+        if (!haveImage)
+            haveImage = cueResolveGameImage(m->dir, name, imagePath, sizeof(imagePath)) == 1;
+        if (haveImage)
+            found = retrogemGetPs1ImageGameID(imagePath, discId, sizeof(discId)) && discId[0] != '\0';
+    } else {
+        char vcdPath[256];
+        size_t dl = strlen(m->dir);
+        const char *sep = (dl > 0 && m->dir[dl - 1] == '/') ? "" : "/";
+
+        if (snprintf(vcdPath, sizeof(vcdPath), "%s%s%s.VCD", m->dir, sep, name) >= (int)sizeof(vcdPath)) {
+            m->state = VCD_ID_ABSENT;
+            return 0;
+        }
+        found = retrogemGetVcdGameID(vcdPath, discId, sizeof(discId)) && discId[0] != '\0';
     }
 
-    // The image is ground truth, and this is the SAME resolver the RetroGEM barcode uses at launch,
-    // so a game reports one id to the theme and to the scanner.
-    if (retrogemGetVcdGameID(vcdPath, discId, sizeof(discId)) && discId[0] != '\0') {
+    if (found) {
         // Canonicalise BEFORE the memo stores it: the caption renders one id shape whether this id
         // came from the disc or from the filename fallback (step-171). The barcode's own launch
         // resolver never reads the memo and is untouched.
@@ -457,6 +467,37 @@ int vcdResolveDisplayId(const char *name, char *idOut, int idSize)
         m->id[0] = '\0';
     }
     return 0;
+}
+
+static int vcdResolveRowId(const char *name, int kind, char *idOut, int idSize)
+{
+    if (name == NULL || idOut == NULL || idSize <= 0)
+        return 0;
+    idOut[0] = '\0';
+
+    vcd_id_memo_t *m = vcdIdMemoFind(name, (unsigned char)kind);
+    if (m == NULL || m->dir == NULL)
+        return 0; // never scanned (or the table was full): caller falls back to the filename
+
+    if (m->state == VCD_ID_RESOLVED) {
+        snprintf(idOut, idSize, "%s", m->id);
+        return 1;
+    }
+    if (m->state == VCD_ID_ABSENT)
+        return 0;
+
+    return vcdResolveMemoEntry(m, name, idOut, idSize);
+}
+
+// DISPLAY ONLY, and lazy: the caption resolver. That path is already asynchronous, already runs on
+// the io worker, already fires once per SETTLED row, and since rebuild-155 is gated on the theme
+// actually having an element that displays it. So a theme that shows the id pays one disc read per
+// game per session, and a theme that does not pays nothing -- exactly how #Size behaves: it may
+// arrive late, it must never hold anything up. VCD rows only; the metadata id (ps1RowId*) is the
+// art/CFG consumer for BOTH cores.
+int vcdResolveDisplayId(const char *name, char *idOut, int idSize)
+{
+    return vcdResolveRowId(name, PS1_ROW_VCD, idOut, idSize);
 }
 
 // ---- Async display-id resolution for the caption (issue #380, step-170) -------------------------
@@ -485,7 +526,7 @@ int vcdDisplayIdCached(const char *name, char *idOut, int idSize)
         return 0;
     idOut[0] = '\0';
 
-    vcd_id_memo_t *m = vcdIdMemoFind(name);
+    vcd_id_memo_t *m = vcdIdMemoFind(name, PS1_ROW_VCD);
     if (m == NULL || m->state != VCD_ID_RESOLVED || m->id[0] == '\0')
         return 0;
     snprintf(idOut, idSize, "%s", m->id);
@@ -494,14 +535,17 @@ int vcdDisplayIdCached(const char *name, char *idOut, int idSize)
 
 // One outstanding resolve request: the GUI writes it, the io worker reads and clears it. Both
 // bracket with DIntr/EIntr -- EE thread preemption requires an interrupt, so that is a complete
-// guard (same pattern as the SFX dispatch ring).
+// guard (same pattern as the SFX dispatch ring). Kind-tagged so the two PS1 cores can never
+// resolve each other's row of the same name.
 static char gVcdIdReqName[256];
+static volatile unsigned char gVcdIdReqKind = PS1_ROW_VCD;
 static volatile int gVcdIdReqPending = 0;
 
 static void vcdResolveQueuedDisplayId(void)
 {
     char name[256];
     char id[VCD_ID_MAX];
+    unsigned char kind;
 
     DIntr();
     if (!gVcdIdReqPending) {
@@ -509,10 +553,11 @@ static void vcdResolveQueuedDisplayId(void)
         return;
     }
     snprintf(name, sizeof(name), "%s", gVcdIdReqName);
+    kind = gVcdIdReqKind;
     gVcdIdReqPending = 0;
     EIntr();
 
-    vcd_id_memo_t *m = vcdIdMemoFind(name);
+    vcd_id_memo_t *m = vcdIdMemoFind(name, kind);
 
     // Async is not enough by itself: a device read can still starve the same USB/PFS channel
     // used by artwork and BGM. If either pipeline is busy, transition to DEFERRED with a throttled
@@ -525,21 +570,25 @@ static void vcdResolveQueuedDisplayId(void)
         return;
     }
 
-    vcdResolveDisplayId(name, id, sizeof(id));
+    vcdResolveRowId(name, kind, id, sizeof(id));
 }
 
-void vcdRequestDisplayId(const char *name)
+// Shared request body. verifyParsedName=0 keeps the display path's zero-IO contract for
+// well-named rows (the caption renders the parsed id without asking the disc); the metadata path
+// passes 1 so a filename-parsed id is still verified against the image in the background -- art
+// must match the id the RetroGEM barcode actually reports.
+static void vcdRequestRowIdInternal(const char *name, int kind, int verifyParsedName)
 {
     char parsed[VCD_ID_MAX];
 
     if (name == NULL || name[0] == '\0')
         return;
 
-    // Filename already supplies exactly what ItemText needs: zero IO
-    if (vcdExtractGameId(name, parsed, sizeof(parsed)))
+    // Filename already supplies an id; the display path needs nothing more from the disc
+    if (!verifyParsedName && vcdExtractGameId(name, parsed, sizeof(parsed)))
         return;
 
-    vcd_id_memo_t *m = vcdIdMemoFind(name);
+    vcd_id_memo_t *m = vcdIdMemoFind(name, (unsigned char)kind);
     if (m == NULL || m->dir == NULL)
         return;
 
@@ -560,6 +609,7 @@ void vcdRequestDisplayId(const char *name)
         return;
     }
     snprintf(gVcdIdReqName, sizeof(gVcdIdReqName), "%s", name);
+    gVcdIdReqKind = (unsigned char)kind;
     gVcdIdReqPending = 1;
     m->state = VCD_ID_QUEUED;
     EIntr();
@@ -572,6 +622,42 @@ void vcdRequestDisplayId(const char *name)
         m->retryFrame = guiFrameId + 60;
         EIntr();
     }
+}
+
+void vcdRequestDisplayId(const char *name)
+{
+    vcdRequestRowIdInternal(name, PS1_ROW_VCD, 0);
+}
+
+void ps1RowIdRequest(const char *name, int kind)
+{
+    vcdRequestRowIdInternal(name, kind, 1);
+}
+
+int ps1RowIdCached(const char *name, int kind, char *idOut, int idSize)
+{
+    vcd_id_memo_t *m;
+    char parsed[VCD_ID_MAX];
+
+    if (name == NULL || idOut == NULL || idSize <= 0)
+        return 0;
+    idOut[0] = '\0';
+
+    // Disc-verified answer first: metadata must match the id the RetroGEM barcode reports at launch.
+    m = vcdIdMemoFind(name, (unsigned char)kind);
+    if (m != NULL && m->state == VCD_ID_RESOLVED && m->id[0] != '\0') {
+        snprintf(idOut, idSize, "%s", m->id);
+        return 1;
+    }
+
+    // Zero-IO provisional id from a PSBBN/BatchKit-style row name (works for Ember folder names
+    // too). A queued verify corrects it later if the filename lies.
+    if (vcdExtractGameId(name, parsed, sizeof(parsed))) {
+        snprintf(idOut, idSize, "%s", parsed);
+        return 1;
+    }
+
+    return 0;
 }
 
 // dirPath is the directory that was just opened; fileName is what readdir returned (with ".VCD");

@@ -223,6 +223,29 @@ the filename lookup misses. For the example above, the fallback names are
 `CFG/SCUS_123.45.cfg` and `ART/SCUS_123.45_COV.png`. This is a same-folder compatibility fallback;
 `POPS/ART/` and a suffixless `POPS/<name>.png` remain POPSLoader-only layouts.
 
+### RetroGEM / PSBBN disc IDs — art and title metadata (both PS1 cores)
+
+Independently of the filename rules above, RiptOPL resolves each PS1 row's own disc ID — the Sony
+serial (`AAAA_NNN.NN`) that RetroGEM, PSBBN and cross-launcher art packs standardize on — and uses
+it as an additional metadata key, exactly like a PS2 title uses its disc ID:
+
+- The ID is read from the disc image itself (`SYSTEM.CNF`), by the same resolver the RetroGEM
+  launch barcode uses, so a game reports one ID to the scanner and to its artwork. Resolution is
+  lazy and session-memoized: badly-named images are verified in the background and their art
+  upgrades when the answer lands. A PSBBN/BatchKit-style name (`SLUS_004.17.Final Fantasy VII`)
+  supplies the ID immediately with no disc read.
+- **Art**: `ART/<ID>_COV.png` (and every other suffix — loose files and `art.tar`) is tried first;
+  when no ID-keyed art exists, the name-keyed lookup above still runs, so existing art keeps
+  showing. Device pages only — the Favourites page keeps name-keyed art for now.
+- **CFG metadata**: `CFG/<ID>.cfg` may supply `Title` (the "CFG Titles in game lists" name
+  override) when the name-keyed cfg has none. Only `Title` is merged — a per-game setting is never
+  read from an ID-keyed file.
+
+This applies to both cores: POPStarter `.VCD` rows and Ember game folders alike (a multi-disc
+folder uses disc 1's ID — the first `discs.txt` entry when present). Row identity does not change:
+launch, rename, Favourites, per-game settings and Ember's `settings.txt` remain keyed by the
+filename/folder name, and `CFG/<name>.cfg` stays the file settings are saved to.
+
 APA `PP.<name>` and `__.<name>` one-game installs are the naming exception: every partition contains
 the same physical `IMAGE0.VCD` filename, so config and art use the displayed `<name>` from the label.
 

@@ -41,6 +41,33 @@ int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList);
 // Returns 1 and writes the 11-character ID on success; otherwise returns 0 and writes an empty string.
 int vcdExtractGameId(const char *name, char *idOut, int idSize);
 
+// Which PS1 core a memo row / lookup belongs to. The two libraries can hold the same display name
+// (one game kept for both cores is the expected case), so the memo keys on name AND kind.
+typedef enum {
+    PS1_ROW_VCD = 0, // POPSTARTER disc image, scanned from its POPS directory
+    PS1_ROW_CUE      // Ember game folder, scanned from a device root (dir = devPrefix)
+} ps1_row_kind_t;
+
+// As vcdNoteScanDir, for either core: remember which directory a PS1 row was scanned from. String
+// work only -- NO device access; the scan must never block on IO. For a CUE row dirPath is the
+// DEVICE ROOT (devPrefix), because the Ember games directory is derived from it, not scanned directly.
+void vcdNoteScanDirKind(const char *name, const char *dirPath, int kind);
+
+// Remember which directory a VCD was scanned from. String work only -- NO device access; the scan
+// must never block on IO. Called per entry by the scan.
+void vcdNoteScanDir(const char *name, const char *dirPath);
+
+// METADATA-KEY half of the memo (art / CFG), for BOTH cores. Unlike the display trio below, these
+// are safe (and intended) for the art and per-game-config paths:
+//   ps1RowIdCached -- best id WITHOUT device IO: the memo's disc-verified id when resolved, else
+//     the strict filename parse (a PSBBN/BatchKit-style name supplies the id for free). 0 = unknown.
+//   ps1RowIdRequest -- queue a background disc-verify resolve (same one-slot worker as the display
+//     path). Call on the render path when Cached misses: the answer lands in the memo and the next
+//     lookup upgrades. Never opens the image synchronously.
+// Row identity does NOT change: launch, rename, Favourites and settings keys stay the row name.
+int ps1RowIdCached(const char *name, int kind, char *idOut, int idSize);
+void ps1RowIdRequest(const char *name, int kind);
+
 // Strict one-game POPS HDD partition label PP.<DISC-ID>.POPS.<NAME>: returns the offset of <NAME>
 // inside the label, or 0 when the label is not a strict PP-POPS partition. Pure string parsing.
 int vcdPopsPartitionTitleOffset(const char *label);

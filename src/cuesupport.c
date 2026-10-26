@@ -991,6 +991,9 @@ static int cueFillGameListUnsorted(const char *devPrefix, base_game_info_t **out
         snprintf(games[i].extension, sizeof(games[i].extension), "%s", CUE_ROW_EXTENSION);
         games[i].parts = 1;
         games[i].format = GAME_FORMAT_ISO; // harmless; the row's extension gates the launch path
+        // Share the PS1-row id memo the VCD rows use: name + device root, string work only -- the
+        // RetroGEM art/CFG id for this row resolves lazily from here, never on the scan path.
+        vcdNoteScanDirKind(entries[i].name, devPrefix, PS1_ROW_CUE);
     }
 
     free(entries);
