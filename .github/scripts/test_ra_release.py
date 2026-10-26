@@ -5,6 +5,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -69,6 +70,45 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(pack.standard_asset([{"name": name} for name in names]), names[1])
         with self.assertRaises(ValueError):
             pack.standard_asset([{"name": names[0]}])
+
+    def old_shared_kit(self):
+        archive = self.folder / "standard.zip"
+        with zipfile.ZipFile(archive, "w") as output:
+            output.writestr("APPS/APP_RIPTOPL/RIPTOPL.ELF", b"\x7fELFborrowed-standard-loader")
+            output.writestr("POPS/usbd.irx.udpfs", b"old Alpha driver")
+            output.writestr("POPS/CHEATS.TXT", b"install-kit-only runtime file")
+        return archive
+
+    def verify_shared_udpfs(self, args):
+        # Exercise the real payload validator against the exact archive handed
+        # to full-kit validation; unrelated app/PSU layout has separate tests.
+        with zipfile.ZipFile(args.zip) as package:
+            pack.app.verify_udpfs_payload(package)
+            self.assertEqual(package.read("POPS/CHEATS.TXT"), b"install-kit-only runtime file")
+            self.assertEqual(package.read("APPS/APP_RIPTOPL/RIPTOPL.ELF"), args.source_elf.read_bytes())
+
+    def test_preview_refreshes_old_pops_before_validation_without_changing_input(self):
+        archive = self.old_shared_kit()
+        original = pack.digest(archive)
+        shared = self.folder / "shared"
+        with patch.object(pack.app, "verify", side_effect=self.verify_shared_udpfs) as verify:
+            pack.stage_shared_kit(archive, shared, preview=True)
+        verify.assert_called_once()
+        self.assertEqual(pack.digest(archive), original)
+        for suffix in ("udpfs", "udpfsnet"):
+            for module in ("usbd.irx", "usbhdfsd.irx"):
+                name = f"{module}.{suffix}"
+                self.assertEqual((shared / "POPS" / name).read_bytes(), (pack.ROOT / "POPS" / name).read_bytes())
+        self.assertEqual((shared / "POPS/CHEATS.TXT").read_bytes(), b"install-kit-only runtime file")
+
+    def test_publication_does_not_refresh_or_accept_stale_shared_pops(self):
+        archive = self.old_shared_kit()
+        shared = self.folder / "shared"
+        with patch.object(pack.app, "verify", side_effect=self.verify_shared_udpfs), \
+                self.assertRaisesRegex(ValueError, "missing UDPFS"):
+            pack.stage_shared_kit(archive, shared, preview=False)
+        self.assertEqual((shared / "POPS/usbd.irx.udpfs").read_bytes(), b"old Alpha driver")
+        self.assertFalse((self.folder / "preview-standard.zip").exists())
 
     def test_standard_release_never_builds_or_stages_ra(self):
         root = pack.ROOT
