@@ -415,8 +415,10 @@ void menuRequestInfoSize(void)
     int configId = selected_item->item->current->item.id;
 
     // Folder rows have no size; direct HDD/HDL rows already carry it in APA metadata
-    // (total_size_in_kb), so the generic CFG+stat pass would be a redundant read there.
-    if (list == NULL || list->mode == HDD_MODE || selected_item->item->current->item.isFolder) {
+    // (total_size_in_kb), so the generic CFG+stat pass would be a redundant read there. HDD PS1
+    // rows still go through: a one-game PP. partition is only measured on demand (hddGetConfig).
+    if (list == NULL || selected_item->item->current->item.isFolder ||
+        (list->mode == HDD_MODE && libListRowView(list, configId) != LIB_VIEW_PS1)) {
         SignalSema(menuSemaId);
         return;
     }

@@ -1,4 +1,5 @@
 #include "sys/fcntl.h"
+#include <sys/stat.h> // stat -- PP. partition IMAGE0.VCD #Size
 #include "include/opl.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/achievements.h"
@@ -2908,6 +2909,60 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     sysLaunchLoaderElf(filename, "HDD_MODE", size_irx, irx, size_mcemu_irx, hdd_mcemu_irx, EnablePS2Logo, compatMode);
 }
 
+// #Size for an HDD PS1 row on the info screen. Pooled __.POPS and __.EMBER rows were measured by
+// the scan while their partition was mounted; a one-game PP. partition is never mounted by the scan,
+// so it is measured here, once: mount it read-only on the pfs1: scan slot, stat IMAGE0.VCD, unmount,
+// and cache the result in the row. Info-screen only (sbConfigStatSizeEnabled) -- never on scroll.
+// The list can be republished under guiLock while the mount runs, so snapshot first and write back
+// only if the same row is still there.
+static u32 hddVcdResolveSize(int id)
+{
+    char part[APA_IDMAX + 1];
+    char name[sizeof(((base_game_info_t *)0)->name)];
+    char mountSrc[64];
+    struct stat st;
+    u32 sizeMB = 0;
+
+    guiLock();
+    if (hddVcdGames == NULL || hddVcdParts == NULL || id < 0 || id >= hddVcdGameCount) {
+        guiUnlock();
+        return 0;
+    }
+    sizeMB = hddVcdGames[id].sizeMB;
+    snprintf(part, sizeof(part), "%s", hddVcdParts[id]);
+    snprintf(name, sizeof(name), "%s", hddVcdGames[id].name);
+    guiUnlock();
+
+    if (sizeMB != 0 || !sbConfigStatSizeEnabled() || !hddIsPopsPartitionGame(part))
+        return sizeMB;
+
+    snprintf(mountSrc, sizeof(mountSrc), "hdd0:%s", part);
+    fileXioUmount("pfs1:");
+    if (fileXioMount("pfs1:", mountSrc, FIO_MT_RDONLY) < 0)
+        return 0;
+    if (stat("pfs1:/IMAGE0.VCD", &st) == 0)
+        sizeMB = (u32)(st.st_size >> 20);
+    fileXioUmount("pfs1:");
+
+    guiLock();
+    if (hddVcdGames != NULL && id < hddVcdGameCount && strcmp(hddVcdGames[id].name, name) == 0)
+        hddVcdGames[id].sizeMB = sizeMB;
+    guiUnlock();
+    return sizeMB;
+}
+
+u32 hddVcdSizeByName(const char *name)
+{
+    int id;
+
+    if (name == NULL)
+        return 0;
+    guiLock();
+    id = hddFindVcdByName(name);
+    guiUnlock();
+    return id >= 0 ? hddVcdResolveSize(id) : 0;
+}
+
 static config_set_t *hddGetConfig(item_list_t *itemList, int id)
 {
     char path[256];
@@ -2918,7 +2973,9 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
     // APA even when the persistent config/art PFS home is temporarily unavailable. In that state
     // return a runtime-only config instead of dereferencing a NULL prefix or hiding the whole list.
     if (hddGetItemView(itemList, id) == LIB_VIEW_PS1) {
-        base_game_info_t *g = hddActiveVcd(hddGetSourceId(itemList, id));
+        int vcdId = hddGetSourceId(itemList, id);
+        hddVcdResolveSize(vcdId); // PP. rows: measured on the info screen only; cached in the row
+        base_game_info_t *g = hddActiveVcd(vcdId);
         if (gHDDPrefix != NULL)
             return sbPopulateConfig(g, gHDDPrefix, "/");
 
