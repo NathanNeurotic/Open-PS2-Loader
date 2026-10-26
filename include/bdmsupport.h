@@ -214,4 +214,7 @@ int bdmReadDriverName(int dir, char *driverName, int driverNameLength);
  * private bdm_device_data_t, which a background rescan rewrites.
  */
 int bdmModeIsSIO2(int mode);
+// Device root holding POPS/ and EMBER/ for a BDM page ("massN:/"); NOT the OPL games prefix.
+void bdmGetPs1Root(int mode, char *target, int targetLength);
+
 #endif

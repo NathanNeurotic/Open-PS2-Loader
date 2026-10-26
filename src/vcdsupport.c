@@ -663,7 +663,9 @@ int ps1RowIdCached(const char *name, int kind, char *idOut, int idSize)
 // dirPath is the directory that was just opened; fileName is what readdir returned (with ".VCD");
 // baseName is that name with the extension stripped. Writes the id, or an empty string when none.
 
-static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
+static int vcdJoinDirFile(char *out, int outSize, const char *dirPath, const char *fileName); // used by the scan
+
+static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList, int statSize)
 {
     errno = 0; // clear BEFORE opendir so the NULL branch reads THIS call's errno, not a stale one
     DIR *dir = opendir(dirPath);
@@ -728,6 +730,14 @@ static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
         memcpy(list[count].name, de->d_name, baseLen);
         list[count].name[baseLen] = '\0';
         vcdNoteScanDir(list[count].name, dirPath); // string only -- NO device IO on the scan path
+        if (statSize) {
+            // HDD only: one PFS stat per VCD while the pooled container is already mounted. Every
+            // other device keeps the zero-IO scan and resolves #Size lazily (sbResolvePs1Size).
+            char filePath[320];
+            struct stat st;
+            if (vcdJoinDirFile(filePath, sizeof(filePath), dirPath, de->d_name) == 0 && stat(filePath, &st) == 0)
+                list[count].sizeMB = (u32)(st.st_size >> 20);
+        }
         count++;
     }
     closedir(dir);
@@ -763,7 +773,7 @@ int vcdScanDir(const char *devPrefix, vcd_entry_t **outList)
     char dirPath[256];
     snprintf(dirPath, sizeof(dirPath), "%s%s", devPrefix, POPS_FOLDER); // "<prefix>POPS" (prefix ends in '/')
 
-    return vcdScanOpenDir(dirPath, outList);
+    return vcdScanOpenDir(dirPath, outList, 0);
 }
 
 // Scan a directory path DIRECTLY (no POPS/ subfolder) for *.VCD -- used for the APA/PFS HDD, where
@@ -776,7 +786,7 @@ int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList)
     if (dirPath == NULL)
         return 0;
 
-    return vcdScanOpenDir(dirPath, outList);
+    return vcdScanOpenDir(dirPath, outList, 1);
 }
 
 // POPStarter path separator for a device prefix: '\\' for SMB (ethPrefix ends in '\\'), else '/'.

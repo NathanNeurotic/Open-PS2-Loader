@@ -231,6 +231,11 @@ static void bdmBuildPs1Prefix(char *target, int targetLength, int massSlot)
     snprintf(target, targetLength, "mass%d:/", massSlot);
 }
 
+void bdmGetPs1Root(int mode, char *target, int targetLength)
+{
+    bdmBuildPs1Prefix(target, targetLength, mode);
+}
+
 /* ⚠ NEVER ASK FOR THE DRIVER NAME WITH A RETURN BUFFER UNTIL YOU KNOW THE VOLUME IS MOUNTED.
    ps2sdk's handler NULL-DEREFERENCES otherwise. iop/fs/bdmfs_fatfs/src/fs_driver.c, upstream master,
    verified 2026-08-26:

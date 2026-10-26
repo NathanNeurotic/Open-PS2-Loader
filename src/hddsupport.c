@@ -1382,6 +1382,7 @@ static int hddBuildVcdGameList(void)
             snprintf(g->extension, sizeof(g->extension), ".VCD");
             g->parts = 1;
             g->format = GAME_FORMAT_ISO;
+            g->sizeMB = vcds[i].sizeMB; // #Size: sbPopulateConfig publishes it with no further IO
             snprintf(newParts[total + kept], APA_IDMAX + 1, "%s", parts.names[p]);
             kept++;
         }
@@ -2912,7 +2913,7 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
         if (config == NULL)
             return NULL;
         configSetStr(config, CONFIG_ITEM_NAME, g->name);
-        configSetInt(config, CONFIG_ITEM_SIZE, 0);
+        configSetInt(config, CONFIG_ITEM_SIZE, g->sizeMB);
         configSetStr(config, CONFIG_ITEM_FORMAT, "VCD");
         sbSetDiscAttributes(config, 1, 1);
         configSetStr(config, CONFIG_ITEM_STARTUP,

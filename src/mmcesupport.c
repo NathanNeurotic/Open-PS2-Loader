@@ -1355,6 +1355,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     sysLaunchLoaderElf(filename, "MMCE_MODE", irx_size, irx, size_mcemu_irx, mmce_mcemu_irx, EnablePS2Logo, compatmask);
 }
 
+void mmceGetPs1Root(char *root, int size)
+{
+    mmceGetDeviceRoot(root, (size_t)size);
+}
+
 static config_set_t *mmceGetConfig(item_list_t *itemList, int id)
 {
     // Config (CFG + #Format/#System/#DiscType badges) comes from the ACTIVE view's array; mmceActiveGame
