@@ -293,6 +293,9 @@ struct block_device {
 static int depth, waits;
 static void WaitSema(int s) { (void)s; assert(depth == 0); depth++; waits++; }
 static void SignalSema(int s) { (void)s; assert(depth == 1); depth--; }
+/* The IGR VMC drain's activity hooks (cdvdman.c); they do not affect the result. */
+static void __attribute__((unused)) cdvdman_vmc_io_begin(int w) { (void)w; }
+static void __attribute__((unused)) cdvdman_vmc_io_end(void) {}
 static int bdm_io_sema;
 static struct block_device *g_bd;
 #define BASE 1000u /* the VMC file's first sector */
@@ -348,6 +351,9 @@ MMCE_SIM = COMMON + r'''
 static int depth, waits;
 static void WaitSema(int s) { (void)s; assert(depth == 0); depth++; waits++; }
 static void SignalSema(int s) { (void)s; assert(depth == 1); depth--; }
+/* The IGR VMC drain's activity hooks (cdvdman.c); they do not affect the result. */
+static void __attribute__((unused)) cdvdman_vmc_io_begin(int w) { (void)w; }
+static void __attribute__((unused)) cdvdman_vmc_io_end(void) {}
 static int mmce_io_sema;
 @FPS@
 #define FD 7
