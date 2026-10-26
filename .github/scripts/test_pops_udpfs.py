@@ -27,7 +27,6 @@ pieces = '\n'.join(function(s) for s in (
     'static int vcdUdpfsParseQuad(', 'static int vcdPopsUdpfsConfigPath(',
     'static int vcdWritePopsUdpfsFile(', 'int vcdInstallPopsUdpfsNet(',
     'int vcdReadPopsUdpfsNet(', 'int vcdWritePopsUdpfsNet(',
-    'int vcdPreparePopsUdpfsLaunch(',
 ))
 HARNESS = r'''
 #include <stdio.h>
@@ -44,7 +43,7 @@ HARNESS = r'''
 #define MAX_BDM_DEVICES 10
 #define BDM_TYPE_USB 7
 #define LOG(...) ((void)0)
-static int writes, failWrite, failRestore, noSpace, corruptWrite, volumes=1;
+static int writes, failWrite, failRestore, noSpace, corruptWrite;
 static const char *deny;
 static const char *mapped(const char *p) {
  static char b[8][512];static unsigned next;
@@ -82,8 +81,6 @@ static int vcdSafeWriteFile(const char *p,const void *buf,int len) {
  if(fclose(f))ok=0;
  return ok?0:-3;
 }
-static void bdmEnsureSourceModules(int type,int timeout) {if(type!=BDM_TYPE_USB||timeout!=2000)abort();}
-static int bdmGetDeviceSlotsByType(int type,int *slots,int max) {if(type!=BDM_TYPE_USB||max<volumes)abort();if(volumes)slots[0]=3;return volumes;}
 #define open hostOpen
 #define mkdir hostMkdir
 #define unlink hostUnlink
@@ -96,7 +93,7 @@ static void put(const char *p,const char *text){FILE*f=fopen(mapped(p),"wb");if(
 static int equals(const char *p,const char *text){char b[512]={0};FILE*f=fopen(mapped(p),"rb");if(!f)return 0;fread(b,1,sizeof(b)-1,f);fclose(f);return !strcmp(b,text);}
 static int exists(const char *p){struct stat s;return stat(mapped(p),&s)==0;}
 int main(void) {
- vcd_pops_udpfs_t c,changed;char root[64];
+ vcd_pops_udpfs_t c,changed;
  const char *ip="192.168.1.20 255.255.255.0 0.0.0.0\n",*srv="192.168.1.21\n";
  const char *ip0="mc0:/SYS-CONF/IPCONFIG.DAT",*srv0="mc0:/SYS-CONF/UDPFSCONFIG.DAT";
  const char *ip1="mc1:/SYS-CONF/IPCONFIG.DAT",*srv1="mc1:/SYS-CONF/UDPFSCONFIG.DAT";
@@ -169,9 +166,6 @@ int main(void) {
     unlink("mc1:/SYS-CONF/UDPFSCONFIG.DAT.bak");
     noSpace=1;CHECK(vcdInstallPopsUdpfsNet("udpfs:/POPS/")==-2 && !exists(srv1));noSpace=0;
     corruptWrite=1;CHECK(vcdInstallPopsUdpfsNet("udpfs:/POPS/")!=0 && !exists(srv1));
- CHECK(vcdPreparePopsUdpfsLaunch(root,sizeof(root))&&!strcmp(root,"mass3:/"));
- CHECK(!vcdPreparePopsUdpfsLaunch(root,3));volumes=0;
- CHECK(!vcdPreparePopsUdpfsLaunch(root,sizeof(root)));
  printf("POPS UDPFS: %d population, precedence, config and rollback checks passed\n",checks);return 0;
 }
 '''
@@ -186,7 +180,7 @@ udpfs = (ROOT/'src/udpfssupport.c').read_text(encoding='utf-8')
 launch = udpfs[udpfs.index('static void udpfsLaunchVcd('):udpfs.index('static void udpfsLaunchCue(')]
 assert launch.index('vcdInstallPopsUdpfsNet(') < launch.index('vcdEquipBdmaFromPops(') < launch.index('sysLaunchPopstarter(')
 assert 'vcdInstallPopstarterMc(udpfsPrefix)' in launch
-assert 'VCD_BDMA_UDPFS_NET' in launch and 'VCD_PREFIX_MASS' in launch
+assert 'VCD_BDMA_UDPFS' in launch and 'VCD_PREFIX_MASS' in launch
 assert 'vcdEnsureBdmaForLaunch(' not in launch
 assert 'ps1FillGameList(udpfsPrefix, &udpfsPs1Games)' in udpfs
 launch_harness = r'''
@@ -195,7 +189,6 @@ launch_harness = r'''
 #include <string.h>
 #include <strings.h>
 #define VCD_BDMA_UDPFS 6
-#define VCD_BDMA_UDPFS_NET 7
 #define VCD_PREFIX_MASS 1
 #define POPS_FOLDER "POPS"
 #define O_RDONLY 0
@@ -204,11 +197,9 @@ enum {_STR_POPS_UDPFS_NOT_READY,_STR_ERR_FILE_INVALID,_STR_POPSTARTER_NOT_FOUND,
 typedef struct {int mode;} item_list_t;
 typedef int config_set_t;
 static const char *udpfsPrefix="udpfs:/";
-static int marker,ready,usb,gBdmaApplyOnLaunch,equips,configs,installs,launched,teardown,error;
+static int ready,gBdmaApplyOnLaunch,equips,configs,installs,launched,teardown,error;
 static int equipError,configError,clean=1;
-static int vcdReadBdmaMode(void){return marker;}
 static int vcdBdmaLaunchReady(int m){return ready==m;}
-static int vcdPreparePopsUdpfsLaunch(char *p,int n){snprintf(p,n,"mass3:/");return usb;}
 static const char *_l(int s){(void)s;return "message";}
 static int guiMsgBox(const char *s,int a,void *b){(void)s;(void)a;(void)b;error++;return 0;}
 static void guiMsgBoxMissing(const char *s,const char *p){(void)s;(void)p;error++;}
@@ -220,7 +211,7 @@ static void guiRenderTextScreen(const char *s){(void)s;}
 static int vcdInstallPopstarterMc(const char *p){assert(!strcmp(p,udpfsPrefix));installs++;return 0;}
 static int vcdInstallPopsUdpfsNet(const char *p){assert(!strcmp(p,"udpfs:/POPS/"));configs++;return configError;}
 static int vcdEquipBdmaFromPops(const char *p,int m,char *d,int n){(void)d;(void)n;assert(!strcmp(p,"udpfs:/POPS/"));equips++;if(!equipError)ready=m;return equipError;}
-static int vcdConfirmCleanLaunch(const char *p){assert(!strcmp(p,marker==7||ready==7?"udpfs:/":"mass3:/"));return clean;}
+static int vcdConfirmCleanLaunch(const char *p){assert(!strcmp(p,"udpfs:/"));return clean;}
 static void vcdBuildSelector(const char *p,int mode,const char *name,char *s,int n){assert(!strcmp(p,udpfsPrefix)&&mode==1&&!strcmp(name,"Game"));snprintf(s,n,"mass:/POPS/XX.Game.ELF");}
 static void vcdPrepareRetroGemBarcode(const char *p){assert(!strcmp(p,"udpfs:/POPS/Game.VCD"));}
 static int sbLoaderDeinitException(const char *p){(void)p;return 0;}
@@ -228,23 +219,20 @@ static int oplPath2Mode(const char *p){(void)p;return 0;}
 static void deinitEx(int a,int b,int c){(void)a;(void)b;(void)c;teardown++;}
 static void sysLaunchPopstarter(const char *p,const char *s){assert(!strcmp(p,"udpfs:/POPS/POPSTARTER.ELF")&&!strcmp(s,"mass:/POPS/XX.Game.ELF"));launched++;}
 @LAUNCH@
-static void reset(void){marker=ready=usb=equips=configs=installs=launched=teardown=error=equipError=configError=0;gBdmaApplyOnLaunch=clean=1;}
+static void reset(void){ready=equips=configs=installs=launched=teardown=error=equipError=configError=0;gBdmaApplyOnLaunch=clean=1;}
 int main(void){
  item_list_t list={0};
- reset();marker=7;udpfsLaunchVcd(&list,"Game",NULL);
- assert(launched==1&&teardown==1&&equips==1&&configs==1&&installs==1);
- reset();ready=7;udpfsLaunchVcd(&list,"Game",NULL); // matching unmarked network pair; no USB
+ reset();udpfsLaunchVcd(&list,"Game",NULL);
+ assert(launched==1&&teardown==1&&equips==1&&configs==1&&installs==1&&ready==6);
+ reset();ready=6;udpfsLaunchVcd(&list,"Game",NULL);
  assert(launched==1&&equips==0&&configs==1);
- reset();usb=1;udpfsLaunchVcd(&list,"Game",NULL);
- assert(launched==1&&equips==1&&ready==6);
- reset();udpfsLaunchVcd(&list,"Game",NULL);assert(error&&launched==0&&teardown==0);
- reset();marker=ready=7;gBdmaApplyOnLaunch=0;udpfsLaunchVcd(&list,"Game",NULL);
+ reset();ready=6;gBdmaApplyOnLaunch=0;udpfsLaunchVcd(&list,"Game",NULL);
  assert(launched==1&&equips==0&&configs==1);
- reset();marker=7;gBdmaApplyOnLaunch=0;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown);
- reset();marker=7;equipError=-5;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown);
- reset();marker=ready=7;configError=-3;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown&&!equips);
- reset();marker=ready=7;clean=0;udpfsLaunchVcd(&list,"Game",NULL);assert(!launched&&!teardown);
- puts("POPS UDPFS: both production launch modes, no-USB network, manual pairs, skip-on-valid and pre-teardown failures passed");
+ reset();gBdmaApplyOnLaunch=0;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown);
+ reset();equipError=-5;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown);
+ reset();ready=6;configError=-3;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown&&!equips);
+ reset();ready=6;clean=0;udpfsLaunchVcd(&list,"Game",NULL);assert(!launched&&!teardown);
+ puts("POPS UDPFS: network-only launch without USB, automatic/manual pairs, skip-on-valid and pre-teardown failures passed");
 }
 '''
 with tempfile.TemporaryDirectory() as temp:
@@ -254,7 +242,9 @@ with tempfile.TemporaryDirectory() as temp:
     exe = path/('launch.exe' if os.name == 'nt' else 'launch')
     subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', str(cfile), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
-for release in json.loads((ROOT/'POPS/UDPFS-NOTICES/PROVENANCE.json').read_text()):
+releases = json.loads((ROOT/'POPS/UDPFS-NOTICES/PROVENANCE.json').read_text())
+assert len(releases) == 1 and releases[0]['tag'] == '1.0.0'
+for release in releases:
     for name, expected in release['files'].items():
         data = (ROOT/name).read_bytes()
         assert len(data) == expected['bytes']
@@ -263,7 +253,7 @@ print('POPS UDPFS: game-device equip, shared launch callback and upstream binary
 
 payload = {p.relative_to(ROOT).as_posix(): p.read_bytes()
            for p in (ROOT/'POPS/UDPFS-NOTICES').rglob('*') if p.is_file()}
-for suffix in ('udpfs', 'udpfsnet'):
+for suffix in ('udpfs',):
     for module in ('usbd.irx', 'usbhdfsd.irx'):
         name = f'POPS/{module}.{suffix}'
         payload[name] = (ROOT/name).read_bytes()
@@ -278,7 +268,7 @@ def verify_zip(files):
         return verify_udpfs_payload(package)
 
 assert verify_zip(payload) == set(payload)
-for missing in ('POPS/usbhdfsd.irx.udpfsnet', 'POPS/UDPFS-NOTICES/NETWORK/LICENSE'):
+for missing in ('POPS/usbhdfsd.irx.udpfs', 'POPS/UDPFS-NOTICES/NETWORK/LICENSE'):
     changed = dict(payload)
     del changed[missing]
     try:
@@ -288,7 +278,7 @@ for missing in ('POPS/usbhdfsd.irx.udpfsnet', 'POPS/UDPFS-NOTICES/NETWORK/LICENS
     else:
         raise AssertionError(f'package accepted missing {missing}')
 changed = dict(payload)
-name = 'POPS/usbd.irx.udpfsnet'
+name = 'POPS/usbd.irx.udpfs'
 changed[name] = bytes([payload[name][0] ^ 1]) + payload[name][1:]
 try:
     verify_zip(changed)

@@ -671,12 +671,12 @@ translations:
   FAV_REMOVE_FAILED: Kon niet verwijderen uit Favoriete games
   POPS_UDPFS_SETTINGS: POPS UDPFS-netwerkinstellingen
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = detectie"
-  POPS_UDPFS_NOT_READY: "USB + UDPFS vereist een USB-station. Kies zonder USB de UDPFS-netwerkmodus."
+  POPS_UDPFS_NOT_READY: "POPS UDPFS heeft het driverpaar .udpfs nodig, geïnstalleerd op de geheugenkaart. Zet het er handmatig op of zet BDMA Toepassen bij starten aan."
   HINT_POPS_UDPFS_IP: Vast PS2-IP dat de POPS UDPFS-driver gebruikt na zijn IOP-reset.
   POPS_UDPFS_ALL_USB_FOLDERS: Alle POPS-mappen op USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ongeldig)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (onvolledig)'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS heeft het driverpaar .udpfs / .udpfs / .udpfsnetnet nodig, geïnstalleerd op de geheugenkaart. Zet het er handmatig op of zet BDMA Toepassen bij starten aan.
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS heeft het driverpaar .udpfs nodig, geïnstalleerd op de geheugenkaart. Zet het er handmatig op of zet BDMA Toepassen bij starten aan.
   VMC_REPLACE_REQUIRES_DELETE: De VMC-grootte wijzigen zou de opgeslagen games wissen. Maak een back-up van de bestaande VMC en gebruik Verwijderen voordat je een nieuwe grootte maakt.
   VMC_CREATE_FAILED: Kon de VMC niet maken. Controleer het apparaat, de verbinding en de schrijftoegang. Bestaande saves zijn niet vervangen.
   RA_EXPERIMENTAL_CARDS: Experimentele Caduceus-kaarten

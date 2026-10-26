@@ -701,19 +701,11 @@ static void udpfsRenameGame(item_list_t *itemList, int id, char *newName)
 // One handoff for the UDPFS page and Favorites, using the existing BDMA equip.
 static void udpfsLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
 {
-    char usbRoot[64], elf[256], selector[320], vcdPath[320];
-    int mode = (vcdReadBdmaMode() == VCD_BDMA_UDPFS_NET || vcdBdmaLaunchReady(VCD_BDMA_UDPFS_NET)) ?
-                   VCD_BDMA_UDPFS_NET :
-                   VCD_BDMA_UDPFS;
+    char elf[256], selector[320], vcdPath[320];
+    const int mode = VCD_BDMA_UDPFS;
     (void)configSet;
     if (vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER"))
         return;
-    if (mode == VCD_BDMA_UDPFS && !vcdPreparePopsUdpfsLaunch(usbRoot, sizeof(usbRoot))) {
-        guiMsgBox(_l(_STR_POPS_UDPFS_NOT_READY), 0, NULL);
-        return;
-    }
-    if (mode == VCD_BDMA_UDPFS_NET)
-        snprintf(usbRoot, sizeof(usbRoot), "%s", udpfsPrefix);
     // Linux servers are case-sensitive and this IRX only accepts uppercase .VCD.
     snprintf(vcdPath, sizeof(vcdPath), "%sPOPS/%s.VCD", udpfsPrefix, vcdName);
     int fd = open(vcdPath, O_RDONLY);
@@ -722,9 +714,8 @@ static void udpfsLaunchVcd(item_list_t *itemList, const char *vcdName, config_se
         return;
     }
     close(fd);
-    if (!vcdResolvePopstarter(udpfsPrefix, elf, sizeof(elf)) &&
-        !vcdResolvePopstarter(usbRoot, elf, sizeof(elf))) {
-        vcdDescribePopstarterLookup(usbRoot, elf, sizeof(elf));
+    if (!vcdResolvePopstarter(udpfsPrefix, elf, sizeof(elf))) {
+        vcdDescribePopstarterLookup(udpfsPrefix, elf, sizeof(elf));
         guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), elf);
         return;
     }
@@ -754,7 +745,7 @@ static void udpfsLaunchVcd(item_list_t *itemList, const char *vcdName, config_se
     }
     // POPS UDPFS has no RA integration yet. Do not leave our USB-only RA module
     // reading a network VCD through unsupported telemetry hooks.
-    if (!vcdConfirmCleanLaunch(usbRoot))
+    if (!vcdConfirmCleanLaunch(udpfsPrefix))
         return;
     vcdBuildSelector(udpfsPrefix, VCD_PREFIX_MASS, vcdName, selector, sizeof(selector));
     vcdPrepareRetroGemBarcode(vcdPath);

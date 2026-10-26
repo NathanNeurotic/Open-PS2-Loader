@@ -35,7 +35,7 @@ start = source.index('static int vcdWriteBdmaMarker(')
 end = source.index('\n}', source.index('void vcdApplyUsbModeForLaunch(')) + 2
 region = source[start:end]
 
-suffixes = ['usbexfat', 'mx4sio', 'mmce', 'ata', 'ilink', 'udpfs', 'udpfsnet']
+suffixes = ['usbexfat', 'mx4sio', 'mmce', 'ata', 'ilink', 'udpfs']
 shipped = [[(root / 'POPS' / f'{name}.{suffix}').stat().st_size for name in ['usbd.irx', 'usbhdfsd.irx']]
            for suffix in suffixes]
 
@@ -55,7 +55,7 @@ PROGRAM = r'''
 #define BDM_TYPE_ILINK 1
 #define BDM_TYPE_SDC 2
 #define BDM_TYPE_ATA 3
-enum { VCD_BDMA_FAT32 = 0, VCD_BDMA_USBEXFAT, VCD_BDMA_MX4SIO, VCD_BDMA_MMCE, VCD_BDMA_ATA, VCD_BDMA_ILINK, VCD_BDMA_UDPFS, VCD_BDMA_UDPFS_NET, VCD_BDMA_MODE_COUNT };
+enum { VCD_BDMA_FAT32 = 0, VCD_BDMA_USBEXFAT, VCD_BDMA_MX4SIO, VCD_BDMA_MMCE, VCD_BDMA_ATA, VCD_BDMA_ILINK, VCD_BDMA_UDPFS, VCD_BDMA_MODE_COUNT };
 enum { VCD_BDMA_SRC_USB = 0, VCD_BDMA_SRC_MX4SIO, VCD_BDMA_SRC_MMCE, VCD_BDMA_SRC_HDD, VCD_BDMA_SRC_ILINK, VCD_BDMA_SRC_COUNT };
 enum { _STR_BDMA_ERR_SRC, _STR_BDMA_ERR_SPACE, _STR_BDMA_ERR_IO, _STR_BDMA_ERR_OLD };
 static const char *labels[] = {"BDMA_ERR_SRC", "BDMA_ERR_SPACE", "BDMA_ERR_IO", "BDMA_ERR_OLD"};
@@ -330,9 +330,20 @@ int main(void)
     CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == -4 && copies == 0);
     pair("udpfs:/POPS/", VCD_BDMA_UDPFS, uu - 1, uh);
     CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == -5 && copies == 0);
-    pair("udpfs:/POPS/", VCD_BDMA_UDPFS_NET, vcdBdmaPairSig[VCD_BDMA_UDPFS_NET].usbdSize, uh);
-    CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS_NET, diag, sizeof(diag)) == 0);
-    CHECK(vcdBdmaLaunchReady(VCD_BDMA_UDPFS_NET));
+    pair("udpfs:/POPS/", VCD_BDMA_UDPFS, vcdBdmaPairSig[VCD_BDMA_UDPFS].usbdSize, uh);
+    CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == 0);
+    CHECK(vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
+
+    /* Alpha and released USB-first pairs must upgrade to network-only UDPFS. */
+    const int retiredUdpfs[] = {76365, 79501};
+    for (unsigned i = 0; i < sizeof(retiredUdpfs)/sizeof(retiredUdpfs[0]); i++) {
+        reset();
+        card(VCD_BDMA_UDPFS, retiredUdpfs[i], uh);
+        CHECK(!vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
+        pair("udpfs:/POPS/", VCD_BDMA_UDPFS, uu, uh);
+        CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == 0);
+        CHECK(vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
+    }
 
     /* The USB fat32/exFAT launch dialog takes the same path. */
     reset();

@@ -684,12 +684,12 @@ translations:
   FAV_REMOVE_FAILED: ເອົາອອກ ຈາກເກມທີ່ມັກ ບໍ່ໄດ້
   POPS_UDPFS_SETTINGS: ການຕັ້ງຄ່າເຄືອຂ່າຍ POPS UDPFS
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = ຄົ້ນຫາ"
-  POPS_UDPFS_NOT_READY: "USB + UDPFS ຕ້ອງມີ USB. ຖ້າບໍ່ມີ USB ໃຫ້ເລືອກໂໝດເຄືອຂ່າຍ UDPFS."
+  POPS_UDPFS_NOT_READY: "POPS UDPFS ຕ້ອງການຄູ່ໄດຣເວີ .udpfs ຕິດຕັ້ງ ເທິງເມມໂມຣີກາດ. ກຽມມັນເອງ ຫຼື ເປີດ ໃຊ້ VCD BDMA ຕອນເລີ່ມ."
   HINT_POPS_UDPFS_IP: IP ຄົງທີ່ ຂອງ PS2 ທີ່ໄດຣເວີ POPS UDPFS ໃຊ້ ຫຼັງ IOP reset ຂອງມັນ.
   POPS_UDPFS_ALL_USB_FOLDERS: ທຸກໂຟນເດີ POPS ເທິງ USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ບໍ່ຖືກຕ້ອງ)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (ບໍ່ຄົບ)'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS ຕ້ອງການຄູ່ໄດຣເວີ .udpfs / .udpfs / .udpfsnetnet ຕິດຕັ້ງ ເທິງເມມໂມຣີກາດ. ກຽມມັນເອງ ຫຼື ເປີດ ໃຊ້ VCD BDMA ຕອນເລີ່ມ.
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS ຕ້ອງການຄູ່ໄດຣເວີ .udpfs ຕິດຕັ້ງ ເທິງເມມໂມຣີກາດ. ກຽມມັນເອງ ຫຼື ເປີດ ໃຊ້ VCD BDMA ຕອນເລີ່ມ.
   VMC_REPLACE_REQUIRES_DELETE: ການປ່ຽນຂະໜາດ VMC ຈະລົບເຊບ ຂອງມັນ. ສຳຮອງ VMC ທີ່ມີຢູ່ ແລະ ໃຊ້ ລົບ ກ່ອນສ້າງຂະໜາດໃໝ່.
   VMC_CREATE_FAILED: ສ້າງ VMC ບໍ່ໄດ້. ກວດອຸປະກອນ, ການເຊື່ອມຕໍ່ ແລະ ສິດຂຽນ. ເຊບທີ່ມີຢູ່ ບໍ່ຖືກແທນທີ່.
   RA_EXPERIMENTAL_CARDS: ກາດທົດລອງ Caduceus

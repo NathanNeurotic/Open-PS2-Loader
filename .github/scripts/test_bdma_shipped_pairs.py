@@ -15,14 +15,14 @@ def function(signature):
     return source[start:source.index('\n}', start) + 2]
 
 table = re.search(r'static const bdma_pair_sig_t vcdBdmaPairSig\[[^;]+;', source, re.S).group()
-suffixes = ['usbexfat', 'mx4sio', 'mmce', 'ata', 'ilink', 'udpfs', 'udpfsnet']
+suffixes = ['usbexfat', 'mx4sio', 'mmce', 'ata', 'ilink', 'udpfs']
 sizes = [[(root / 'POPS' / f'{name}.{suffix}').stat().st_size
           for name in ['usbd.irx', 'usbhdfsd.irx']] for suffix in suffixes]
 program = r'''
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-enum { VCD_BDMA_MODE_COUNT=8, VCD_BDMA_FAT32=0, VCD_BDMA_ILINK=5, O_RDONLY=0 };
+enum { VCD_BDMA_MODE_COUNT=7, VCD_BDMA_FAT32=0, VCD_BDMA_ILINK=5, O_RDONLY=0 };
 #define VCD_BDMA_MARKER "bdma_config.txt"
 typedef struct {int usbdSize,hdfsdSize;} bdma_pair_sig_t;
 static const char *vcdBdmaModule[]={"usbd.irx","usbhdfsd.irx"};
@@ -61,9 +61,9 @@ int main(void) {
     pairSize[0]=pairSize[1]=-1;assert(vcdBdmaEnvironmentValid(0));
     pairSize[0]=48500;assert(!vcdBdmaEnvironmentValid(0));
     cardExists=0;assert(!vcdBdmaEnvironmentValid(1)&&!vcdBdmaManualPairMatches(1));
-    assert(!vcdBdmaEnvironmentValid(-1)&&!vcdBdmaEnvironmentValid(8));
-    assert(!vcdBdmaManualPairMatches(0)&&!vcdBdmaManualPairMatches(8));
-    puts("BDMA: all seven shipped pairs accepted; wrong family/marker/missing/truncated pairs refused");
+    assert(!vcdBdmaEnvironmentValid(-1)&&!vcdBdmaEnvironmentValid(7));
+    assert(!vcdBdmaManualPairMatches(0)&&!vcdBdmaManualPairMatches(7));
+    puts("BDMA: all six shipped pairs accepted; wrong family/marker/missing/truncated pairs refused");
 }
 '''.replace('@TABLE@', table).replace('@FUNCTIONS@', '\n'.join(function(s) for s in
     ['int vcdBdmaEnvironmentValid(', 'static int vcdBdmaManualPairMatches('])).replace(

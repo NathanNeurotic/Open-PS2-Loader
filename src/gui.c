@@ -1795,8 +1795,7 @@ static void guiSetBdmaSettings(struct UIItem *ui)
     bdmaModeStrs[3] = _l(_STR_BDMA_MODE_MMCE);
     bdmaModeStrs[4] = _l(_STR_BDMA_MODE_ATA);
     bdmaModeStrs[5] = _l(_STR_BDMA_MODE_ILINK);
-    bdmaModeStrs[VCD_BDMA_UDPFS] = "USB + UDPFS";
-    bdmaModeStrs[VCD_BDMA_UDPFS_NET] = "UDPFS (network R/W)";
+    bdmaModeStrs[VCD_BDMA_UDPFS] = "UDPFS";
     vcdUsbBdmaStrs[0] = _l(_STR_VCD_USB_BDMA_ASK);
     vcdUsbBdmaStrs[1] = _l(_STR_VCD_USB_MODE_EXFAT);
     vcdUsbBdmaStrs[2] = _l(_STR_VCD_USB_MODE_FAT32);

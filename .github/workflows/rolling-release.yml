@@ -795,8 +795,7 @@ jobs:
             usbd.irx.mmce usbhdfsd.irx.mmce \
             usbd.irx.ata usbhdfsd.irx.ata \
             usbd.irx.ilink usbhdfsd.irx.ilink \
-            usbd.irx.udpfs usbhdfsd.irx.udpfs \
-            usbd.irx.udpfsnet usbhdfsd.irx.udpfsnet IPCONFIG.DAT UDPFSCONFIG.DAT; do
+            usbd.irx.udpfs usbhdfsd.irx.udpfs IPCONFIG.DAT UDPFSCONFIG.DAT; do
             if [ ! -s "$PKG/POPS/$f" ]; then
               echo "ERROR: POPS/$f missing or empty -- the release must contain every loose BDMA pair" >&2
               exit 1

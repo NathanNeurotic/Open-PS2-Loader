@@ -168,8 +168,7 @@ enum {
     VCD_BDMA_MMCE,      // MMCE exFAT
     VCD_BDMA_ATA,       // internal ATA HDD exFAT (BDMAssault)
     VCD_BDMA_ILINK,     // iLink / IEEE 1394 (appended so persisted mode values stay stable)
-    VCD_BDMA_UDPFS,     // POPSTARTER USB driver with read-only UDPFS VCD fallback
-    VCD_BDMA_UDPFS_NET, // UDPFS serves all mass: files, including VMC writes
+    VCD_BDMA_UDPFS,     // UDPFS serves all mass: files, including VMC writes
     VCD_BDMA_MODE_COUNT
 };
 // "BDMA SOURCE": which device holds the user-provided variant files in its POPS/ folder. The equip
@@ -271,8 +270,6 @@ int vcdPopsUdpfsNetValid(const vcd_pops_udpfs_t *cfg);
 int vcdWritePopsUdpfsNet(const vcd_pops_udpfs_t *cfg);
 // Copy optional game-device POPS/*.DAT only when absent from both cards.
 int vcdInstallPopsUdpfsNet(const char *popsDir);
-// Locate USB support files for the USB-first fallback variant.
-int vcdPreparePopsUdpfsLaunch(char *usbRoot, int rootSize);
 
 typedef enum {
     VCD_POPSNET_SMB_IMPORT_OK = 0,

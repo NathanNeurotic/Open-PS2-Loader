@@ -628,12 +628,12 @@ translations:
   FAV_REMOVE_FAILED: Nuk u hoq dot nga Lojërat e preferuara
   POPS_UDPFS_SETTINGS: Cilësimet e rrjetit UDPFS të POPS
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = zbulim"
-  POPS_UDPFS_NOT_READY: "USB + UDPFS kërkon një pajisje USB. Pa USB, zgjidhni modalitetin UDPFS të rrjetit."
+  POPS_UDPFS_NOT_READY: "POPS UDPFS ka nevojë që çifti i drajverëve .udpfs të jetë i instaluar në kartën e memories. Përgatite me dorë ose ndiz Zbato BDMA të VCD në nisje."
   HINT_POPS_UDPFS_IP: IP statike e PS2 që përdor drajveri POPS UDPFS pas rinisjes së tij të IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Të gjitha dosjet POPS në USB
   POPS_UDPFS_INVALID_SUFFIX: ' (e pavlefshme)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (e paplotë)'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS ka nevojë që çifti i drajverëve .udpfs / .udpfs / .udpfsnetnet të jetë i instaluar në kartën e memories. Përgatite me dorë ose ndiz Zbato BDMA të VCD në nisje.
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS ka nevojë që çifti i drajverëve .udpfs të jetë i instaluar në kartën e memories. Përgatite me dorë ose ndiz Zbato BDMA të VCD në nisje.
   VMC_REPLACE_REQUIRES_DELETE: Ndryshimi i madhësisë së VMC do t'i fshinte ruajtjet e tij. Ruaj një kopje rezervë të VMC ekzistuese dhe përdor Fshi para se të krijosh një madhësi të re.
   VMC_CREATE_FAILED: VMC nuk u krijua dot. Kontrollo pajisjen, lidhjen dhe qasjen e shkrimit. Ruajtjet ekzistuese nuk u zëvendësuan.
   RA_EXPERIMENTAL_CARDS: Kartat eksperimentale të Caduceus

@@ -633,12 +633,12 @@ translations:
   FAV_REMOVE_FAILED: Não foi possível remover de Jogos favoritos
   POPS_UDPFS_SETTINGS: Configurações de rede UDPFS do POPS
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = descoberta"
-  POPS_UDPFS_NOT_READY: "USB + UDPFS requer uma unidade USB. Sem USB, escolha o modo de rede UDPFS."
+  POPS_UDPFS_NOT_READY: "O POPS UDPFS precisa do par de drivers .udpfs instalado no cartão de memória. Instale à mão ou ligue BDMA Aplicar ao iniciar."
   HINT_POPS_UDPFS_IP: IP fixo do PS2 usado pelo driver UDPFS do POPS depois de reiniciar o IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Todas as pastas POPS do USB
   POPS_UDPFS_INVALID_SUFFIX: ' (inválido)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (incompleto)'
-  POPS_UDPFS_DRIVER_NOT_READY: O POPS UDPFS precisa do par de drivers .udpfs / .udpfs / .udpfsnetnet instalado no cartão de memória. Instale à mão ou ligue BDMA Aplicar ao iniciar.
+  POPS_UDPFS_DRIVER_NOT_READY: O POPS UDPFS precisa do par de drivers .udpfs instalado no cartão de memória. Instale à mão ou ligue BDMA Aplicar ao iniciar.
   VMC_REPLACE_REQUIRES_DELETE: Mudar o tamanho da VMC apagaria os saves dela. Faça backup da VMC existente e use Apagar antes de criar um tamanho novo.
   VMC_CREATE_FAILED: Não foi possível criar a VMC. Confira a unidade, a conexão e a permissão de gravação. Os saves existentes não foram substituídos.
   RA_EXPERIMENTAL_CARDS: Cartões experimentais do Caduceus

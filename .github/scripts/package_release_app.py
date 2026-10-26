@@ -34,7 +34,7 @@ APP_COMPANIONS = (
     "list.icn",
 )
 ART_SUFFIXES = ("BG", "COV", "COV2", "ICO", "LAB", "LGO", "SCR", "SCR2")
-BDMA_SUFFIXES = ("usbexfat", "mx4sio", "mmce", "ata", "ilink", "udpfs", "udpfsnet")
+BDMA_SUFFIXES = ("usbexfat", "mx4sio", "mmce", "ata", "ilink", "udpfs")
 PSU_ENTRY = struct.Struct("<HHI8sII8sI28s448s")
 PSU_DIR_MODE = 0x8027
 PSU_FILE_MODE = 0x8017
@@ -43,7 +43,7 @@ MAX_MC_NAME = 31
 
 
 def verify_udpfs_payload(package: zipfile.ZipFile) -> set[str]:
-    """Require the two unmodified upstream pairs and their redistribution notices."""
+    """Require the current unmodified UDPFS pair and redistribution notices."""
     notices = ROOT / "POPS" / "UDPFS-NOTICES"
     required = {p.relative_to(ROOT).as_posix() for p in notices.rglob("*") if p.is_file()}
     releases = json.loads((notices / "PROVENANCE.json").read_text(encoding="utf-8"))

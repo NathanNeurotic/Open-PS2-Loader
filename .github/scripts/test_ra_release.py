@@ -95,7 +95,7 @@ class ReleaseTests(unittest.TestCase):
             pack.stage_shared_kit(archive, shared, preview=True)
         verify.assert_called_once()
         self.assertEqual(pack.digest(archive), original)
-        for suffix in ("udpfs", "udpfsnet"):
+        for suffix in ("udpfs",):
             for module in ("usbd.irx", "usbhdfsd.irx"):
                 name = f"{module}.{suffix}"
                 self.assertEqual((shared / "POPS" / name).read_bytes(), (pack.ROOT / "POPS" / name).read_bytes())

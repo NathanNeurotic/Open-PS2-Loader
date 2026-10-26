@@ -1231,7 +1231,7 @@ int vcdSafeWriteFile(const char *dstPath, const void *buf, int len)
 // name bdma_config.txt with the variant suffix as its single-token contents.)
 
 // MODE -> variant suffix on the loose source files (usbd.irx.<suffix>) AND the marker token.
-static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "mx4sio", "mmce", "ata", "ilink", "udpfs", "udpfsnet"};
+static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "mx4sio", "mmce", "ata", "ilink", "udpfs"};
 // The two driver files POPStarter loads, equipped onto the MC WITHOUT the .<suffix>.
 static const char *vcdBdmaModule[2] = {"usbd.irx", "usbhdfsd.irx"};
 
@@ -1413,6 +1413,8 @@ int vcdReadBdmaMode(void)
     buf[r] = '\0';
     while (r > 0 && (buf[r - 1] == '\n' || buf[r - 1] == '\r' || buf[r - 1] == ' ' || buf[r - 1] == '\t'))
         buf[--r] = '\0'; // trim trailing whitespace/newline
+    if (strcmp(buf, "udpfsnet") == 0)
+        return VCD_BDMA_UDPFS; // accept the interim PR marker for this same network driver
     for (int m = 0; m < VCD_BDMA_MODE_COUNT; m++) {
         if (strcmp(buf, vcdBdmaSuffix[m]) == 0)
             return m;
@@ -1531,7 +1533,7 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shipp
             }
         }
 
-        if (mode == VCD_BDMA_UDPFS || mode == VCD_BDMA_UDPFS_NET)
+        if (mode == VCD_BDMA_UDPFS)
             pre[npre++] = "udpfs:/POPS/";
         for (int i = 0; i < npre && !found; i++) {
             snprintf(src0, sizeof(src0), "%s%s.%s", pre[i], vcdBdmaModule[0], suffix);
@@ -1670,7 +1672,7 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shipp
     }
 
     int mr = vcdWriteBdmaMarker(mcDir, mode);
-    if (mr == 0 && (mode == VCD_BDMA_UDPFS || mode == VCD_BDMA_UDPFS_NET)) {
+    if (mr == 0 && (mode == VCD_BDMA_UDPFS)) {
         char sourcePops[96];
         snprintf(sourcePops, sizeof(sourcePops), "%s", src0);
         char *slash = strrchr(sourcePops, '/');
@@ -1714,7 +1716,6 @@ static const bdma_pair_sig_t vcdBdmaPairSig[VCD_BDMA_MODE_COUNT] = {
     {11841, 19733}, // mmce
     {42749, 21837}, // ata
     {48500, 27145}, // iLink (27081 before consistent generation-change errors)
-    {79501, 34508}, // BDM-UDPFS Assault 1.0 (USB first)
     {44597, 34508}  // UDPFS Assault 1.0.0 (network read/write)
 };
 
@@ -1866,7 +1867,7 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
 
     // 2. Perform transactional equip of the pair this release ships
     int er = vcdEquipBdmaFrom(source, mode, NULL, 1, diag, sizeof(diag));
-    if (mode == VCD_BDMA_UDPFS || mode == VCD_BDMA_UDPFS_NET) {
+    if (mode == VCD_BDMA_UDPFS) {
         // The game's source chooses the variant, not where its support files live. Another source can
         // still hold this release's pair when an earlier one had only an older release's (-5).
         int older = (er == -5);
@@ -2352,16 +2353,7 @@ rollback:
     return -3;
 }
 
-int vcdPreparePopsUdpfsLaunch(char *usbRoot, int rootSize)
-{
-    int slots[MAX_BDM_DEVICES];
-    bdmEnsureSourceModules(BDM_TYPE_USB, 2000);
-    int count = bdmGetDeviceSlotsByType(BDM_TYPE_USB, slots, MAX_BDM_DEVICES);
-    if (count <= 0 || usbRoot == NULL || rootSize <= 0)
-        return 0;
-    int n = snprintf(usbRoot, rootSize, "mass%d:/", slots[0]);
-    return n > 0 && n < rootSize;
-}
+
 
 // Parse "<IP> <NETMASK> <GATEWAY>". Returns 1 when a full valid triple was read. The caller
 // separately recognizes blank as DHCP; nonblank parse failure is invalid, never silently DHCP.
