@@ -263,6 +263,7 @@ int bdm_readSector(u64 lba, unsigned short int nsectors, unsigned char *buffer)
 
     DPRINTF("%s\n", __func__);
 
+    cdvdman_vmc_io_begin(0);
     WaitSema(bdm_io_sema);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_begin(FREEZE_DIAG_VMC_READ, (unsigned int)lba);
@@ -272,6 +273,7 @@ int bdm_readSector(u64 lba, unsigned short int nsectors, unsigned char *buffer)
     freeze_diag_vmc_end();
 #endif
     SignalSema(bdm_io_sema);
+    cdvdman_vmc_io_end();
 
     return rv == nsectors;
 }
@@ -282,6 +284,7 @@ int bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *b
 
     DPRINTF("%s\n", __func__);
 
+    cdvdman_vmc_io_begin(1);
     WaitSema(bdm_io_sema);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_begin(FREEZE_DIAG_VMC_WRITE, (unsigned int)lba);
@@ -291,6 +294,7 @@ int bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *b
     freeze_diag_vmc_end();
 #endif
     SignalSema(bdm_io_sema);
+    cdvdman_vmc_io_end();
 
     return rv == nsectors;
 }
