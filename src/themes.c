@@ -1072,8 +1072,9 @@ static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, str
         if (list->mode != FAV_MODE && list->mode != APP_MODE && list->itemGet != NULL) {
             const base_game_info_t *row = (const base_game_info_t *)list->itemGet(list, item->id);
             if (row != NULL) {
-                int kind = cueIsCueEntry(row) ? PS1_ROW_CUE :
-                           (row->extension[0] != '\0' && !strcasecmp(row->extension, ".VCD")) ? PS1_ROW_VCD : -1;
+                int kind = cueIsCueEntry(row)                                                 ? PS1_ROW_CUE :
+                           (row->extension[0] != '\0' && !strcasecmp(row->extension, ".VCD")) ? PS1_ROW_VCD :
+                                                                                                -1;
                 if (kind >= 0) {
                     char id[VCD_ID_MAX];
                     if (ps1RowIdCached(startup, kind, id, sizeof(id))) {

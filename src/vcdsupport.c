@@ -31,8 +31,8 @@
 #include "include/lang.h"        // _l + _STR_BDMA_ERR_* (same texts the Settings-screen equip shows)
 #include "include/textures.h"    // texDiscoverLoad + ERR_BAD_FILE (VCD POPS cover fallback)
 #include "include/vcdsupport.h"
-#include "include/cuesupport.h"  // cueResolveGameImage -- the Ember half of the PS1-row id memo
-#include "include/libview.h" // which list a page is showing (the L3 ring)
+#include "include/cuesupport.h" // cueResolveGameImage -- the Ember half of the PS1-row id memo
+#include "include/libview.h"    // which list a page is showing (the L3 ring)
 #include "include/retrogem.h"
 
 
