@@ -984,7 +984,9 @@ static config_set_t *favGetConfig(item_list_t *itemList, int id)
                  (favArray[id].kind == FAV_KIND_CUE) ? CUE_ROW_EXTENSION : ".VCD");
         game.parts = 1;
         game.format = GAME_FORMAT_ISO; // matches the device scans; the extension drives the PS1 badge
-        return sbPopulateConfig(&game, prefix, sep);
+        config_set_t *config = sbPopulateConfig(&game, prefix, sep);
+        sbResolvePs1Size(&game, prefix, config); // best effort: game is a stack copy, nothing caches
+        return config;
     }
     if (o->itemGetConfig == NULL || !favOwnerHasId(o, favArray[id].id))
         return NULL;

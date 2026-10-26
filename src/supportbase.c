@@ -1182,6 +1182,33 @@ int sbConfigStatSizeEnabled(void)
     return sbConfigStatSize;
 }
 
+// Info-screen #Size for a PS1 row (sbPopulateConfig never stats one: its prefix is the OPL config
+// root, while PS1 games live under the device's PS1 root -- POPS/<name>.VCD or EMBER/games/<name>/).
+// Callers pass that PS1 root (ending in its separator). No-op on the scroll path, for non-PS1 rows,
+// or once a size has been cached in game->sizeMB.
+void sbResolvePs1Size(base_game_info_t *game, const char *ps1Root, config_set_t *config)
+{
+    char gamepath[256];
+    struct stat st;
+    int len;
+
+    if (!sbConfigStatSize || game == NULL || ps1Root == NULL || config == NULL || game->sizeMB != 0)
+        return;
+
+    if (!strcasecmp(game->extension, ".VCD")) {
+        len = (int)strlen(ps1Root);
+        snprintf(gamepath, sizeof(gamepath), "%s%s%c%s%s", ps1Root, POPS_FOLDER,
+                 (len > 0 && ps1Root[len - 1] == '\\') ? '\\' : '/', game->name, game->extension);
+        if (stat(gamepath, &st) == 0)
+            game->sizeMB = st.st_size >> 20;
+    } else if (cueIsCueEntry(game)) {
+        game->sizeMB = cueGameSizeMB(ps1Root, game->name);
+    } else
+        return;
+
+    configSetInt(config, CONFIG_ITEM_SIZE, game->sizeMB);
+}
+
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep)
 {
     char path[256];

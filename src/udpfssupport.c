@@ -929,7 +929,13 @@ static config_set_t *udpfsGetConfig(item_list_t *itemList, int id)
 {
     base_game_info_t *game = udpfsActiveGame(itemList, id);
 
-    return game == &udpfsEmptyGame ? NULL : sbPopulateConfig(game, udpfsPrefix, "/");
+    config_set_t *config;
+
+    if (game == &udpfsEmptyGame)
+        return NULL;
+    config = sbPopulateConfig(game, udpfsPrefix, "/");
+    sbResolvePs1Size(game, udpfsPrefix, config);
+    return config;
 }
 
 static int udpfsGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)

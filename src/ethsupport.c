@@ -1003,7 +1003,9 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
 static config_set_t *ethGetConfig(item_list_t *itemList, int id)
 {
     base_game_info_t *game = ethGameForView(itemList, id);
-    return game != NULL ? sbPopulateConfig(game, ethPrefix, "\\") : NULL;
+    config_set_t *config = game != NULL ? sbPopulateConfig(game, ethPrefix, "\\") : NULL;
+    sbResolvePs1Size(game, ethPrefix, config);
+    return config;
 }
 
 static int ethGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)

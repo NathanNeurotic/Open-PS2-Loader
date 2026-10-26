@@ -414,6 +414,13 @@ void menuRequestInfoSize(void)
     item_list_t *list = selected_item->item->userdata;
     int configId = selected_item->item->current->item.id;
 
+    // Folder rows have no size; direct HDD/HDL rows already carry it in APA metadata
+    // (total_size_in_kb), so the generic CFG+stat pass would be a redundant read there.
+    if (list == NULL || list->mode == HDD_MODE || selected_item->item->current->item.isFolder) {
+        SignalSema(menuSemaId);
+        return;
+    }
+
     if (infoSizeWorkerPending && infoSizeRequestList == list && infoSizeRequestId == configId) {
         SignalSema(menuSemaId);
         return; // exact same work is already active/queued
@@ -2084,8 +2091,10 @@ void menuHandleInputInfo()
             selected_item->item->execCross(selected_item->item);
     } else if (getKey(KEY_UP)) {
         menuPrevV();
+        menuRequestInfoSize();
     } else if (getKey(KEY_DOWN)) {
         menuNextV();
+        menuRequestInfoSize();
     } else if (getKeyOn(KEY_CIRCLE)) {
         if (gSelectButton == KEY_CROSS)
             guiSwitchScreen(GUI_SCREEN_MAIN);
@@ -2093,12 +2102,16 @@ void menuHandleInputInfo()
             selected_item->item->execCircle(selected_item->item);
     } else if (getKey(KEY_L1)) {
         menuPrevPage();
+        menuRequestInfoSize();
     } else if (getKey(KEY_R1)) {
         menuNextPage();
+        menuRequestInfoSize();
     } else if (getKeyOn(KEY_L2)) {
         menuFirstPage();
+        menuRequestInfoSize();
     } else if (getKeyOn(KEY_R2)) {
         menuLastPage();
+        menuRequestInfoSize();
     }
 }
 

@@ -81,6 +81,7 @@ void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, 
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);
 void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id, char *newname);
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep);
+void sbResolvePs1Size(base_game_info_t *game, const char *ps1Root, config_set_t *config);
 // Gate for sbPopulateConfig's per-game size stat. OFF while scrolling the game list -- over SMB a
 // fresh stat() of an ISO can cost seconds, and the main page only needs the metadata-derived badges
 // (#DiscType/#Media/#Format), never #Size. The info screen flips it on via menuRequestInfoSize() so

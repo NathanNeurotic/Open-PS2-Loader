@@ -2831,7 +2831,13 @@ static config_set_t *bdmGetConfig(item_list_t *itemList, int id)
 
     // Active view's array (#120 split) -- a VCD's per-game CFG keys off its own entry, and a stale
     // id resolves to the empty entry instead of indexing outside either backing array.
-    config = sbPopulateConfig(bdmActiveGame(itemList, id), pDeviceData->bdmPrefix, "/");
+    base_game_info_t *game = bdmActiveGame(itemList, id);
+    config = sbPopulateConfig(game, pDeviceData->bdmPrefix, "/");
+    if (sbConfigStatSizeEnabled()) {
+        char ps1Prefix[BDM_DEVICE_ROOT_MAX + 2];
+        bdmBuildPs1Prefix(ps1Prefix, sizeof(ps1Prefix), itemList->mode); // PS1 games live at the device root
+        sbResolvePs1Size(game, ps1Prefix, config);
+    }
     bdmLogIdentityDiagnosticLive("config-create", itemList, config);
     return config;
 }
