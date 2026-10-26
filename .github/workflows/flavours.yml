@@ -107,7 +107,7 @@ jobs:
         run: python3 .github/scripts/test_bdma_stale_pair.py
       - name: Check POPSTARTER's i.LINK driver logs back in after an IOP reset
         run: python3 .github/scripts/test_ilink_bd_assault_reset.py
-      - name: Check POPS UDPFS config validation and USB save rollback
+      - name: Check POPS UDPFS game-device population and MC save rollback
         run: python3 .github/scripts/test_pops_udpfs.py
       - name: Check unsupported MMCE ioctls cannot report VMC fragmentation
         run: python3 .github/scripts/test_vmc_contiguity.py
@@ -698,5 +698,7 @@ jobs:
             RIPTOPL-*.ELF
             OPNPS2LD-*.ELF
             BUILD-MANIFEST.txt
+            POPS/
+            docs/VCD.md
           if-no-files-found: error
           retention-days: 14

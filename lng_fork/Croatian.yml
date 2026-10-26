@@ -625,13 +625,13 @@ translations:
   FAV_REMOVED: Uklonjeno iz Favorita
   FAV_REMOVE_FAILED: Uklanjanje iz Favorita nije uspjelo
   POPS_UDPFS_SETTINGS: POPS UDPFS mrežne postavke
-  POPS_UDPFS_DISCOVERY: Sprema u svaku USB mapu POPS. Poslužitelj 0.0.0.0 koristi otkrivanje.
-  POPS_UDPFS_NOT_READY: POPS UDPFS zahtijeva odgovarajuće valjane IPCONFIG.DAT i UDPFSCONFIG.DAT u svakoj USB mapi POPS. Postavi ih u POPS mrežnim postavkama.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = otkrivanje"
+  POPS_UDPFS_NOT_READY: "USB + UDPFS zahtijeva USB uređaj. Bez USB-a odaberite mrežni način UDPFS."
   HINT_POPS_UDPFS_IP: Statička PS2 IP adresa koju POPS UDPFS upravljački program koristi nakon ponovnog pokretanja IOP-a.
   POPS_UDPFS_ALL_USB_FOLDERS: Sve USB mape POPS
   POPS_UDPFS_INVALID_SUFFIX: ' (nevaljano)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (nepotpuno)'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS zahtijeva da par upravljačkih programa .udpfs bude instaliran na memorijskoj kartici. Pripremi ga ručno ili uključi Primijeni BDMA pri pokretanju.
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS zahtijeva da par upravljačkih programa .udpfs / .udpfs / .udpfsnetnet bude instaliran na memorijskoj kartici. Pripremi ga ručno ili uključi Primijeni BDMA pri pokretanju.
   VMC_REPLACE_REQUIRES_DELETE: Promjena veličine VMC-a izbrisala bi njegove spremljene igre. Napravi sigurnosnu kopiju postojećeg VMC-a i upotrijebi Izbriši prije stvaranja nove veličine.
   VMC_CREATE_FAILED: VMC se nije mogao stvoriti. Provjeri uređaj, vezu i pristup za pisanje. Postojeće spremljene igre nisu zamijenjene.
   RA_EXPERIMENTAL_CARDS: Eksperimentalne Caduceus kartice

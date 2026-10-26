@@ -645,13 +645,13 @@ translations:
   FAV_REMOVED: Inalis sa Mga Paborito
   FAV_REMOVE_FAILED: Hindi maalis sa Mga Paborito
   POPS_UDPFS_SETTINGS: Network settings ng POPS UDPFS
-  POPS_UDPFS_DISCOVERY: Sine-save sa bawat USB POPS folder. Discovery ang gamit ng server 0.0.0.0.
-  POPS_UDPFS_NOT_READY: Kailangan ng POPS UDPFS ang magkatugma at tamang IPCONFIG.DAT at UDPFSCONFIG.DAT sa bawat USB POPS folder. I-configure ang mga ito sa POPS Network Settings.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = pagtuklas"
+  POPS_UDPFS_NOT_READY: "Kailangan ng USB drive sa USB + UDPFS. Kung walang USB, piliin ang UDPFS network mode."
   HINT_POPS_UDPFS_IP: Static na PS2 IP na ginagamit ng POPS UDPFS driver pagkatapos ng IOP reset nito.
   POPS_UDPFS_ALL_USB_FOLDERS: Lahat ng USB POPS folder
   POPS_UDPFS_INVALID_SUFFIX: ' (hindi tama)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (kulang)'
-  POPS_UDPFS_DRIVER_NOT_READY: Kailangan ng POPS UDPFS na naka-install sa memory card ang .udpfs driver pair. Ihanda ito nang manu-mano o i-enable ang BDMA Apply on Launch.
+  POPS_UDPFS_DRIVER_NOT_READY: Kailangan ng POPS UDPFS na naka-install sa memory card ang .udpfs / .udpfs / .udpfsnetnet driver pair. Ihanda ito nang manu-mano o i-enable ang BDMA Apply on Launch.
   VMC_REPLACE_REQUIRES_DELETE: Mabubura ang mga save nito kapag binago ang laki ng VMC. I-backup ang umiiral na VMC at gamitin ang Delete bago gumawa ng bagong laki.
   VMC_CREATE_FAILED: Hindi magawa ang VMC. Tingnan ang device, koneksyon at write access. Hindi napalitan ang mga umiiral na save.
   RA_EXPERIMENTAL_CARDS: Mga eksperimental na card ng Caduceus

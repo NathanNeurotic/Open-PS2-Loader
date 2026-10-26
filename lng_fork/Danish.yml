@@ -622,13 +622,13 @@ translations:
   FAV_REMOVED: Fjernet fra Stjernemarkerede spil
   FAV_REMOVE_FAILED: Kunne ikke fjerne fra Stjernemarkerede spil
   POPS_UDPFS_SETTINGS: Netværksindstillinger for POPS UDPFS
-  POPS_UDPFS_DISCOVERY: Gemmer i hver POPS-mappe på USB. Serveren 0.0.0.0 bruger registrering.
-  POPS_UDPFS_NOT_READY: POPS UDPFS kræver matchende gyldige IPCONFIG.DAT og UDPFSCONFIG.DAT i hver POPS-mappe på USB. Konfigurer dem i netværksindstillingerne for POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = registrering"
+  POPS_UDPFS_NOT_READY: "USB + UDPFS kræver et USB-drev. Uden USB skal du vælge UDPFS-netværkstilstand."
   HINT_POPS_UDPFS_IP: Statisk PS2-IP, som POPS UDPFS-driveren bruger efter sin IOP-nulstilling.
   POPS_UDPFS_ALL_USB_FOLDERS: Alle POPS-mapper på USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ugyldig)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (ufuldstændig)'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS kræver driverparret .udpfs installeret på memorykortet. Læg det på manuelt, eller slå BDMA Anvend ved start til.
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS kræver driverparret .udpfs / .udpfs / .udpfsnetnet installeret på memorykortet. Læg det på manuelt, eller slå BDMA Anvend ved start til.
   VMC_REPLACE_REQUIRES_DELETE: At ændre VMC-størrelsen ville slette dens gemte spil. Tag en sikkerhedskopi af den eksisterende VMC, og brug Slet, før du opretter en ny størrelse.
   VMC_CREATE_FAILED: Kunne ikke oprette VMC'en. Tjek enheden, forbindelsen og skriveadgangen. Eksisterende gemte spil blev ikke erstattet.
   RA_EXPERIMENTAL_CARDS: Eksperimentelle Caduceus-kort

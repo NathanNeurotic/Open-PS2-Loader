@@ -607,13 +607,13 @@ translations:
   FAV_REMOVED: 已从收藏游戏中移除
   FAV_REMOVE_FAILED: 无法从收藏游戏中移除
   POPS_UDPFS_SETTINGS: POPS UDPFS 网络设置
-  POPS_UDPFS_DISCOVERY: 保存到每个 USB 上的 POPS 文件夹。服务器 0.0.0.0 表示自动发现。
-  POPS_UDPFS_NOT_READY: POPS UDPFS 需要每个 USB 上的 POPS 文件夹中都有有效且匹配的 IPCONFIG.DAT 和 UDPFSCONFIG.DAT。请在 POPS 网络设置中配置。
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 自动发现"
+  POPS_UDPFS_NOT_READY: "USB + UDPFS 需要 USB 存储设备。没有 USB 时，请选择 UDPFS 网络模式。"
   HINT_POPS_UDPFS_IP: POPS 的 UDPFS 驱动在 IOP 重启后使用的 PS2 静态 IP。
   POPS_UDPFS_ALL_USB_FOLDERS: 所有 USB 上的 POPS 文件夹
   POPS_UDPFS_INVALID_SUFFIX: ' （无效）'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' （不完整）'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS 需要在记忆卡上安装 .udpfs 驱动组。请手动安装，或开启 BDMA“启动时应用”。
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS 需要在记忆卡上安装 .udpfs / .udpfsnet 驱动组。请手动安装，或开启 BDMA“启动时应用”。
   VMC_REPLACE_REQUIRES_DELETE: 更改 VMC 大小会清除其中的存档。请先备份现有 VMC 并使用“删除”，再创建新大小。
   VMC_CREATE_FAILED: 无法创建 VMC。请检查设备、连接和写入权限。已有存档未被替换。
   RA_EXPERIMENTAL_CARDS: Caduceus 实验性卡片

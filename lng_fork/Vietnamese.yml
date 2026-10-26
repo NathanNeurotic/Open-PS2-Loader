@@ -649,13 +649,13 @@ translations:
   FAV_REMOVED: Đã gỡ khỏi Trò chơi gắn sao
   FAV_REMOVE_FAILED: Không gỡ được khỏi Trò chơi gắn sao
   POPS_UDPFS_SETTINGS: Cài đặt mạng POPS UDPFS
-  POPS_UDPFS_DISCOVERY: Lưu vào mọi thư mục POPS trên USB. Máy chủ 0.0.0.0 dùng tự tìm.
-  POPS_UDPFS_NOT_READY: POPS UDPFS cần IPCONFIG.DAT và UDPFSCONFIG.DAT hợp lệ, khớp nhau trong mọi thư mục POPS trên USB. Hãy đặt chúng trong Cài đặt mạng POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = tự tìm"
+  POPS_UDPFS_NOT_READY: "USB + UDPFS cần ổ USB. Nếu không có USB, hãy chọn chế độ mạng UDPFS."
   HINT_POPS_UDPFS_IP: IP tĩnh của PS2 mà trình điều khiển POPS UDPFS dùng sau khi đặt lại IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Mọi thư mục POPS trên USB
   POPS_UDPFS_INVALID_SUFFIX: ' (không hợp lệ)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (chưa đủ)'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS cần cặp trình điều khiển .udpfs được cài trên thẻ nhớ. Hãy cài thủ công hoặc bật BDMA Áp dụng khi chạy.
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS cần cặp trình điều khiển .udpfs / .udpfsnet được cài trên thẻ nhớ. Hãy cài thủ công hoặc bật BDMA Áp dụng khi chạy.
   VMC_REPLACE_REQUIRES_DELETE: Đổi kích thước VMC sẽ xóa các bản lưu trong đó. Hãy sao lưu VMC có sẵn và dùng Xóa trước khi tạo kích thước mới.
   VMC_CREATE_FAILED: Không tạo được VMC. Hãy kiểm tra thiết bị, kết nối và quyền ghi. Bản lưu có sẵn không bị thay.
   RA_EXPERIMENTAL_CARDS: Thẻ thử nghiệm Caduceus

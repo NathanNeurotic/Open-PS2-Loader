@@ -854,13 +854,13 @@ translations:
   FAV_REMOVED: از علاقه‌مندی‌ها حذف شد
   FAV_REMOVE_FAILED: حذف از علاقه‌مندی‌ها ممکن نشد
   POPS_UDPFS_SETTINGS: تنظیمات شبکه POPS UDPFS
-  POPS_UDPFS_DISCOVERY: در همه پوشه‌های POPS روی USB ذخیره می‌کند. سرور 0.0.0.0 از کشف استفاده می‌کند.
-  POPS_UDPFS_NOT_READY: POPS UDPFS به IPCONFIG.DAT و UDPFSCONFIG.DAT معتبر و هم‌خوان در همه پوشه‌های POPS روی USB نیاز دارد. آن‌ها را در تنظیمات شبکه POPS پیکربندی کنید.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = کشف"
+  POPS_UDPFS_NOT_READY: "USB + UDPFS به درایو USB نیاز دارد. بدون USB، حالت شبکه UDPFS را انتخاب کنید."
   HINT_POPS_UDPFS_IP: IP ثابت PS2 که درایور POPS UDPFS پس از بازنشانی IOP خود به کار می‌برد.
   POPS_UDPFS_ALL_USB_FOLDERS: همه پوشه‌های POPS روی USB
   POPS_UDPFS_INVALID_SUFFIX: ' (نامعتبر)'
   POPS_UDPFS_INCOMPLETE_SUFFIX: ' (ناقص)'
-  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS نیاز دارد جفت درایور .udpfs روی کارت حافظه نصب باشد. آن را دستی آماده کنید یا اعمال BDMA هنگام اجرا را روشن کنید.
+  POPS_UDPFS_DRIVER_NOT_READY: POPS UDPFS نیاز دارد جفت درایور .udpfs / .udpfs / .udpfsnetnet روی کارت حافظه نصب باشد. آن را دستی آماده کنید یا اعمال BDMA هنگام اجرا را روشن کنید.
   VMC_REPLACE_REQUIRES_DELETE: تغییر اندازه VMC ذخیره‌هایش را پاک می‌کند. از VMC موجود پشتیبان بگیرید و پیش از ساخت اندازه تازه از حذف استفاده کنید.
   VMC_CREATE_FAILED: VMC ساخته نشد. دستگاه، اتصال و دسترسی نوشتن را بررسی کنید. ذخیره‌های موجود جایگزین نشدند.
   RA_EXPERIMENTAL_CARDS: کارت‌های آزمایشی Caduceus

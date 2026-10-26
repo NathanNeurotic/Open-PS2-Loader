@@ -698,18 +698,22 @@ static void udpfsRenameGame(item_list_t *itemList, int id, char *newName)
     udpfsIsoScanned = 0;
 }
 
-// One handoff for the UDPFS page and Favorites. The Alpha driver reads its runtime
-// config and non-VCD dependencies on USB, but driver sources remain device-aware.
+// One handoff for the UDPFS page and Favorites, using the existing BDMA equip.
 static void udpfsLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
 {
     char usbRoot[64], elf[256], selector[320], vcdPath[320];
+    int mode = (vcdReadBdmaMode() == VCD_BDMA_UDPFS_NET || vcdBdmaLaunchReady(VCD_BDMA_UDPFS_NET)) ?
+                   VCD_BDMA_UDPFS_NET :
+                   VCD_BDMA_UDPFS;
     (void)configSet;
     if (vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER"))
         return;
-    if (!vcdPreparePopsUdpfsLaunch(usbRoot, sizeof(usbRoot))) {
+    if (mode == VCD_BDMA_UDPFS && !vcdPreparePopsUdpfsLaunch(usbRoot, sizeof(usbRoot))) {
         guiMsgBox(_l(_STR_POPS_UDPFS_NOT_READY), 0, NULL);
         return;
     }
+    if (mode == VCD_BDMA_UDPFS_NET)
+        snprintf(usbRoot, sizeof(usbRoot), "%s", udpfsPrefix);
     // Linux servers are case-sensitive and this IRX only accepts uppercase .VCD.
     snprintf(vcdPath, sizeof(vcdPath), "%sPOPS/%s.VCD", udpfsPrefix, vcdName);
     int fd = open(vcdPath, O_RDONLY);
@@ -725,9 +729,25 @@ static void udpfsLaunchVcd(item_list_t *itemList, const char *vcdName, config_se
         return;
     }
     guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
-    (void)vcdInstallPopstarterMc(usbRoot);
-    vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_UDPFS);
-    if (!vcdBdmaLaunchReady(VCD_BDMA_UDPFS)) {
+    (void)vcdInstallPopstarterMc(udpfsPrefix);
+    char popsDir[96], diag[160];
+    snprintf(popsDir, sizeof(popsDir), "%s" POPS_FOLDER "/", udpfsPrefix);
+    int er = vcdInstallPopsUdpfsNet(popsDir);
+    if (er != 0) {
+        guiMsgBox(_l(er == -2 ? _STR_BDMA_ERR_SPACE : _STR_BDMA_ERR_IO), 0, NULL);
+        return;
+    }
+    if (gBdmaApplyOnLaunch && !vcdBdmaLaunchReady(mode)) {
+        er = vcdEquipBdmaFromPops(popsDir, mode, diag, sizeof(diag));
+        if (er != 0) {
+            guiMsgBox(_l(er == -5 ? _STR_BDMA_ERR_OLD : er == -4 ? _STR_BDMA_ERR_SRC :
+                                                    er == -2     ? _STR_BDMA_ERR_SPACE :
+                                                                   _STR_BDMA_ERR_IO),
+                      0, NULL);
+            return;
+        }
+    }
+    if (!vcdBdmaLaunchReady(mode)) {
         // Unlike local POPSTARTER, network VCDs require this exact driver family.
         guiMsgBox(_l(_STR_POPS_UDPFS_DRIVER_NOT_READY), 0, NULL);
         return;

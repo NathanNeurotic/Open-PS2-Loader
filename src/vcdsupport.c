@@ -1145,7 +1145,7 @@ int vcdSafeWriteFile(const char *dstPath, const void *buf, int len)
 // name bdma_config.txt with the variant suffix as its single-token contents.)
 
 // MODE -> variant suffix on the loose source files (usbd.irx.<suffix>) AND the marker token.
-static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "mx4sio", "mmce", "ata", "ilink", "udpfs"};
+static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "mx4sio", "mmce", "ata", "ilink", "udpfs", "udpfsnet"};
 // The two driver files POPStarter loads, equipped onto the MC WITHOUT the .<suffix>.
 static const char *vcdBdmaModule[2] = {"usbd.irx", "usbhdfsd.irx"};
 
@@ -1398,7 +1398,12 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shipp
     // This is also the FAST order: both pre-candidates live on ALREADY-LOADED stacks (we booted from
     // one and are launching from the other), so a hit here costs a few open() probes and skips the
     // family search's transport force-loads and bounded mount waits entirely.
-    {
+    if (popsDir != NULL) {
+        // An explicit game-device POPS source is authoritative.
+        snprintf(src0, sizeof(src0), "%s%s.%s", popsDir, vcdBdmaModule[0], suffix);
+        snprintf(src1, sizeof(src1), "%s%s.%s", popsDir, vcdBdmaModule[1], suffix);
+        found = vcdProbeBdmaPair(src0, src1, mode, shippedOnly, stale, sizeof(stale));
+    } else {
         char preBuf[2][96];
         const char *pre[4];
         int npre = 0;
@@ -1440,9 +1445,7 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shipp
             }
         }
 
-        if (popsDir != NULL)
-            pre[npre++] = popsDir;
-        if (mode == VCD_BDMA_UDPFS)
+        if (mode == VCD_BDMA_UDPFS || mode == VCD_BDMA_UDPFS_NET)
             pre[npre++] = "udpfs:/POPS/";
         for (int i = 0; i < npre && !found; i++) {
             snprintf(src0, sizeof(src0), "%s%s.%s", pre[i], vcdBdmaModule[0], suffix);
@@ -1462,8 +1465,8 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shipp
     const char *cands[MAX_BDM_DEVICES];
     char bdmRoots[MAX_BDM_DEVICES][BDM_DEVICE_ROOT_MAX + 2];
     int nc = 0;
-    if (found) {
-        // Adaptive pre-probe already located the pair -- no transport force-loads needed.
+    if (found || popsDir != NULL) {
+        // Explicit POPS sources never fall back to another device.
     } else if (source == VCD_BDMA_SRC_MMCE) {
         // Ensure mmceman is loaded even when MMCE games are off / Manual-not-started -- otherwise mmce0:/
         // mmce1:/ are dead and nothing can be read. Then offer only slots that actually have a card, so
@@ -1514,7 +1517,7 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shipp
             vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, nc ? cands[0] : "no matching device");
         if (diag != NULL && diagSize > 0)
             snprintf(diag, diagSize, "Need %s.%s + %s.%s in a device POPS/ folder; searched %s.",
-                     vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, nc ? cands[0] : "no matching device");
+                     vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, popsDir != NULL ? popsDir : (nc ? cands[0] : "no matching device"));
         return -4;
     }
 
@@ -1581,6 +1584,15 @@ static int vcdEquipBdmaFrom(int source, int mode, const char *popsDir, int shipp
     }
 
     int mr = vcdWriteBdmaMarker(mcDir, mode);
+    if (mr == 0 && (mode == VCD_BDMA_UDPFS || mode == VCD_BDMA_UDPFS_NET)) {
+        char sourcePops[96];
+        snprintf(sourcePops, sizeof(sourcePops), "%s", src0);
+        char *slash = strrchr(sourcePops, '/');
+        if (slash != NULL) {
+            slash[1] = '\0';
+            return vcdInstallPopsUdpfsNet(sourcePops);
+        }
+    }
     return (mr != 0) ? mr : 0;
 }
 
@@ -1616,7 +1628,8 @@ static const bdma_pair_sig_t vcdBdmaPairSig[VCD_BDMA_MODE_COUNT] = {
     {11841, 19733}, // mmce
     {42749, 21837}, // ata
     {48500, 27145}, // iLink (27081 before consistent generation-change errors)
-    {76365, 34508}  // UDPFS Alpha
+    {79501, 34508}, // BDM-UDPFS Assault 1.0 (USB first)
+    {44597, 34508}  // UDPFS Assault 1.0.0 (network read/write)
 };
 
 // Returns file size in bytes, or -1 if absent / unreadable.
@@ -1767,7 +1780,7 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
 
     // 2. Perform transactional equip of the pair this release ships
     int er = vcdEquipBdmaFrom(source, mode, NULL, 1, diag, sizeof(diag));
-    if (mode == VCD_BDMA_UDPFS) {
+    if (mode == VCD_BDMA_UDPFS || mode == VCD_BDMA_UDPFS_NET) {
         // The game's source chooses the variant, not where its support files live. Another source can
         // still hold this release's pair when an earlier one had only an older release's (-5).
         int older = (er == -5);
@@ -2013,18 +2026,6 @@ int vcdPopsUdpfsNetValid(const vcd_pops_udpfs_t *cfg)
                            (server & mask) == (ip & mask));
 }
 
-// Every USB volume gets the same pair: POPSTARTER re-enumerates USB after reset
-// and the supplied IRX reads bare mass:, not OPL's current massN: identity.
-static int vcdPopsUdpfsUsbHomes(char homes[][96])
-{
-    int slots[MAX_BDM_DEVICES];
-    bdmEnsureSourceModules(BDM_TYPE_USB, 2000);
-    int count = bdmGetDeviceSlotsByType(BDM_TYPE_USB, slots, MAX_BDM_DEVICES);
-    for (int i = 0; i < count; i++)
-        snprintf(homes[i], 96, "mass%d:/POPS", slots[i]);
-    return count;
-}
-
 // Accept the upstream config syntax: BOM, leading blank/comment lines, CRLF and
 // an optional gateway. All octets and the subnet are checked before use.
 static const char *vcdUdpfsConfigLine(const char *buf)
@@ -2063,21 +2064,110 @@ static int vcdUdpfsParseQuad(const char **text, int quad[4])
     return 1;
 }
 
-static int vcdReadPopsUdpfsNetAt(const char *home, vcd_pops_udpfs_t *out)
+// Resolve each file independently in the same order as the upstream module.
+// An unreadable existing file is an error, never permission to overwrite it.
+static int vcdPopsUdpfsConfigPath(const char *name, char *path, int pathSize)
 {
-    char path[128], buf[256];
+    static const char *homes[] = {"mc0:/SYS-CONF", "mc1:/SYS-CONF"};
+    for (int i = 0; i < 2; i++) {
+        snprintf(path, pathSize, "%s/%s", homes[i], name);
+        int fd = open(path, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+        if (errno != ENOENT && errno != ENODEV)
+            return -3;
+    }
+    char card[64];
+    if (vcdFindPopstarterMc(card, sizeof(card))) {
+        snprintf(path, pathSize, "%.4s/SYS-CONF/%s", card, name);
+        return 0;
+    }
+    for (int i = 0; i < 2; i++) {
+        DIR *root = opendir(i == 0 ? "mc0:/" : "mc1:/");
+        if (root != NULL) {
+            closedir(root);
+            snprintf(path, pathSize, "%s/%s", homes[i], name);
+            return 0;
+        }
+    }
+    return -3;
+}
+
+static int vcdWritePopsUdpfsFile(const char *path, const void *data, int size)
+{
+    char verify[256];
+    int result = vcdSafeWriteFile(path, data, size);
+    if (result != 0)
+        return result;
+    if (vcdReadNetFile(path, verify, sizeof(verify)) != size || memcmp(verify, data, size) != 0)
+        return -3;
+    return 0;
+}
+
+// Missing configs are optional. Each is copied only from the game's POPS folder,
+// independently of whether the BDMA pair is already equipped.
+int vcdInstallPopsUdpfsNet(const char *popsDir)
+{
+    static const char *names[] = {"IPCONFIG.DAT", "UDPFSCONFIG.DAT"};
+    if (popsDir == NULL || popsDir[0] == '\0')
+        return -1;
+    for (int i = 0; i < 2; i++) {
+        char src[320], dst[128], home[128], data[121];
+        int present = vcdPopsUdpfsConfigPath(names[i], dst, sizeof(dst));
+        if (present < 0)
+            return present;
+        if (present)
+            continue;
+        snprintf(src, sizeof(src), "%s%s", popsDir, names[i]);
+        int fd = open(src, O_RDONLY);
+        if (fd < 0) {
+            if (errno == ENOENT)
+                continue;
+            return -3;
+        }
+        // Small bounded read also works on MMCE sources without SEEK_END.
+        int size = 0, got = 0;
+        while (size < (int)sizeof(data) && (got = read(fd, data + size, sizeof(data) - size)) > 0)
+            size += got;
+        close(fd);
+        if (got < 0 || size > 120)
+            return -3;
+        char backup[132], check[256];
+        snprintf(backup, sizeof(backup), "%s.bak", dst);
+        if (vcdReadNetFile(backup, check, sizeof(check)) != -1)
+            return -3; // interrupted editor save needs recovery, not automatic population
+        snprintf(home, sizeof(home), "%s", dst);
+        *strrchr(home, '/') = '\0';
+        if (mkdir(home, 0777) != 0 && errno != EEXIST)
+            return -3;
+        int result = vcdWritePopsUdpfsFile(dst, data, size);
+        if (result != 0) {
+            unlink(dst); // only this call's newly created file
+            return result;
+        }
+        LOG("[POPSTARTER] installed %s from %s\n", dst, src);
+    }
+    return 0;
+}
+
+int vcdReadPopsUdpfsNet(vcd_pops_udpfs_t *out)
+{
+    char paths[2][128], buf[256];
     if (out == NULL)
         return -1;
     memset(out, 0, sizeof(*out));
-    snprintf(out->home, sizeof(out->home), "%s", home);
-    snprintf(path, sizeof(path), "%s/IPCONFIG.DAT", out->home);
-    int r = vcdReadNetFile(path, buf, sizeof(buf));
+    if (vcdPopsUdpfsConfigPath("IPCONFIG.DAT", paths[0], sizeof(paths[0])) < 0 ||
+        vcdPopsUdpfsConfigPath("UDPFSCONFIG.DAT", paths[1], sizeof(paths[1])) < 0)
+        return -3;
+    int r = vcdReadNetFile(paths[0], buf, sizeof(buf));
     if (r < -1)
         return -3;
     out->ipExists = r >= 0;
-    if (r >= 0) {
+    if (out->ipExists) {
         const char *line = vcdUdpfsConfigLine(buf);
-        out->invalid = !vcdUdpfsParseQuad(&line, out->ps2Ip);
+        out->invalid = r > 120 || !vcdUdpfsParseQuad(&line, out->ps2Ip);
         while (*line == ' ' || *line == '\t')
             line++;
         out->invalid |= !vcdUdpfsParseQuad(&line, out->mask);
@@ -2085,133 +2175,106 @@ static int vcdReadPopsUdpfsNetAt(const char *home, vcd_pops_udpfs_t *out)
             line++;
         if (*line && *line != '\r' && *line != '\n')
             out->invalid |= !vcdUdpfsParseQuad(&line, out->gateway);
+    } else {
+        int address[4] = {192, 168, 1, 10}, mask[4] = {255, 255, 255, 0};
+        memcpy(out->ps2Ip, address, sizeof(address));
+        memcpy(out->mask, mask, sizeof(mask));
     }
-    snprintf(path, sizeof(path), "%s/UDPFSCONFIG.DAT", out->home);
-    r = vcdReadNetFile(path, buf, sizeof(buf));
+    r = vcdReadNetFile(paths[1], buf, sizeof(buf));
     if (r < -1)
         return -3;
     out->serverExists = r >= 0;
-    if (r >= 0) {
+    if (out->serverExists) {
         const char *line = vcdUdpfsConfigLine(buf);
-        if (*line && !vcdUdpfsParseQuad(&line, out->server))
+        if (r > 120 || (*line && !vcdUdpfsParseQuad(&line, out->server)))
             out->invalid = 1;
     }
-    if (out->ipExists && !vcdPopsUdpfsNetValid(out))
-        out->invalid = 1;
+    out->invalid |= !vcdPopsUdpfsNetValid(out);
+    *strrchr(paths[0], '/') = '\0';
+    *strrchr(paths[1], '/') = '\0';
+    snprintf(out->home, sizeof(out->home), "%.95s", strcmp(paths[0], paths[1]) == 0 ? paths[0] : "mc0:/SYS-CONF + mc1:/SYS-CONF");
     return 0;
 }
 
-static int vcdPopsUdpfsSame(const vcd_pops_udpfs_t *a, const vcd_pops_udpfs_t *b)
-{
-    return !memcmp(a->ps2Ip, b->ps2Ip, sizeof(a->ps2Ip)) &&
-           !memcmp(a->mask, b->mask, sizeof(a->mask)) &&
-           !memcmp(a->gateway, b->gateway, sizeof(a->gateway)) &&
-           !memcmp(a->server, b->server, sizeof(a->server));
-}
-
-int vcdReadPopsUdpfsNet(vcd_pops_udpfs_t *out)
-{
-    char homes[MAX_BDM_DEVICES][96];
-    vcd_pops_udpfs_t cfg;
-    int count = vcdPopsUdpfsUsbHomes(homes);
-    if (out == NULL || count <= 0)
-        return -1;
-    if (vcdReadPopsUdpfsNetAt(homes[0], out) != 0)
-        return -3;
-    if (count > 1 && (!out->ipExists || !out->serverExists))
-        out->invalid = 1;
-    for (int i = 1; i < count; i++) {
-        if (vcdReadPopsUdpfsNetAt(homes[i], &cfg) != 0)
-            return -3;
-        // Show one representative editor, but detect any incomplete/different USB
-        // copy so OK cannot incorrectly treat it as an unchanged complete setup.
-        out->invalid |= cfg.invalid || !cfg.ipExists || !cfg.serverExists ||
-                        !vcdPopsUdpfsSame(out, &cfg);
-        out->ipExists |= cfg.ipExists;
-        out->serverExists |= cfg.serverExists;
-    }
-    return 0;
-}
-
-// Stage both files on every USB volume before replacing any original. Retain
-// backups until all replacements succeed; a failure restores the previous copies.
+// MC does not support rename. Back up originals before writing either live file;
+// restore from those snapshots on failure and retain a backup if restoration fails.
 int vcdWritePopsUdpfsNet(const vcd_pops_udpfs_t *cfg)
 {
-    char homes[MAX_BDM_DEVICES][96], paths[MAX_BDM_DEVICES * 2][128];
-    char staged[MAX_BDM_DEVICES * 2][132], backup[MAX_BDM_DEVICES * 2][132], buf[2][128];
-    int old[MAX_BDM_DEVICES * 2] = {0}, committed[MAX_BDM_DEVICES * 2] = {0};
-    int count = vcdPopsUdpfsUsbHomes(homes), files = count * 2;
-    if (!vcdPopsUdpfsNetValid(cfg) || count <= 0 || strcmp(homes[0], cfg->home) != 0)
+    char paths[2][128], backup[2][132], oldData[2][256], buf[2][128];
+    int oldSize[2], committed[2] = {0, 0}, backed[2] = {0, 0};
+    if (!vcdPopsUdpfsNetValid(cfg))
         return -1;
-    for (int i = 0; i < count; i++)
-        if (mkdir(homes[i], 0777) != 0 && errno != EEXIST)
-            return -3;
+    if (vcdPopsUdpfsConfigPath("IPCONFIG.DAT", paths[0], sizeof(paths[0])) < 0 ||
+        vcdPopsUdpfsConfigPath("UDPFSCONFIG.DAT", paths[1], sizeof(paths[1])) < 0)
+        return -3;
     int len[2];
     len[0] = snprintf(buf[0], sizeof(buf[0]), "%d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d\n",
                       cfg->ps2Ip[0], cfg->ps2Ip[1], cfg->ps2Ip[2], cfg->ps2Ip[3],
                       cfg->mask[0], cfg->mask[1], cfg->mask[2], cfg->mask[3],
                       cfg->gateway[0], cfg->gateway[1], cfg->gateway[2], cfg->gateway[3]);
+    // An empty server file explicitly selects discovery and shadows lower cards.
     len[1] = vcdUdpfsAddress(cfg->server) == 0 ? 0 :
                                                  snprintf(buf[1], sizeof(buf[1]), "%d.%d.%d.%d\n", cfg->server[0], cfg->server[1], cfg->server[2], cfg->server[3]);
-    for (int i = 0; i < files; i++) {
-        snprintf(paths[i], sizeof(paths[i]), "%s/%s", homes[i / 2], (i % 2) ? "UDPFSCONFIG.DAT" : "IPCONFIG.DAT");
-        snprintf(staged[i], sizeof(staged[i]), "%s.tmp", paths[i]);
+    for (int i = 0; i < 2; i++) {
         snprintf(backup[i], sizeof(backup[i]), "%s.bak", paths[i]);
-        // An interrupted previous save needs recovery, not deletion of its backup.
-        if (vcdGetFileSize(backup[i]) >= 0)
+        char check[256];
+        if (vcdReadNetFile(backup[i], check, sizeof(check)) != -1)
+            return -3;
+        oldSize[i] = vcdReadNetFile(paths[i], oldData[i], sizeof(oldData[i]));
+        if (oldSize[i] < -1)
             return -3;
     }
-    for (int i = 0; i < files; i++) {
-        if (vcdSafeWriteFile(staged[i], buf[i % 2], len[i % 2]) != 0)
+    for (int i = 0; i < 2; i++) {
+        char home[128];
+        snprintf(home, sizeof(home), "%s", paths[i]);
+        *strrchr(home, '/') = '\0';
+        if (mkdir(home, 0777) != 0 && errno != EEXIST)
             goto rollback;
-    }
-    for (int i = 0; i < files; i++) {
-        if (vcdGetFileSize(paths[i]) >= 0) {
-            if (rename(paths[i], backup[i]) != 0)
+        if (oldSize[i] >= 0) {
+            if (vcdWritePopsUdpfsFile(backup[i], oldData[i], oldSize[i]) != 0) {
+                unlink(backup[i]); // this call's failed backup; live original is intact
                 goto rollback;
-            old[i] = 1;
+            }
+            backed[i] = 1;
         }
-        if (rename(staged[i], paths[i]) != 0)
-            goto rollback;
-        committed[i] = 1;
     }
-    for (int i = 0; i < files; i++)
-        if (old[i])
+    for (int i = 0; i < 2; i++) {
+        committed[i] = 1; // the failed write may already have removed a partial file
+        int result = vcdWritePopsUdpfsFile(paths[i], buf[i], len[i]);
+        if (result == -2)
+            committed[i] = 0; // free-space gate left the original intact
+        if (result != 0)
+            goto rollback;
+    }
+    for (int i = 0; i < 2; i++)
+        if (backed[i])
             unlink(backup[i]);
     return 0;
 rollback:
-    for (int i = 0; i < files; i++) {
-        if (old[i]) {
-            // USB rename need not replace an existing destination. Park the new
-            // copy in its now-vacant staging path before restoring the original.
-            if (committed[i] && rename(paths[i], staged[i]) != 0)
-                continue; // retain the live replacement and original backup
-            if (rename(backup[i], paths[i]) != 0) {
-                LOG("POPS UDPFS: restoration failed for %s (backup at %s)\n", paths[i], backup[i]);
-                if (committed[i] && rename(staged[i], paths[i]) != 0)
-                    continue; // retain both .tmp and .bak for manual recovery
+    for (int i = 0; i < 2; i++) {
+        if (committed[i]) {
+            if (oldSize[i] >= 0) {
+                if (vcdWritePopsUdpfsFile(paths[i], oldData[i], oldSize[i]) != 0)
+                    continue; // retain .bak for manual recovery
+            } else {
+                unlink(paths[i]);
             }
-        } else if (committed[i]) {
-            // A newly created file has no previous version to preserve.
-            unlink(paths[i]);
         }
-        unlink(staged[i]);
+        if (backed[i])
+            unlink(backup[i]);
     }
     return -3;
 }
 
 int vcdPreparePopsUdpfsLaunch(char *usbRoot, int rootSize)
 {
-    vcd_pops_udpfs_t cfg;
-    if (vcdReadPopsUdpfsNet(&cfg) != 0 || !cfg.ipExists || !cfg.serverExists ||
-        cfg.invalid || !vcdPopsUdpfsNetValid(&cfg))
+    int slots[MAX_BDM_DEVICES];
+    bdmEnsureSourceModules(BDM_TYPE_USB, 2000);
+    int count = bdmGetDeviceSlotsByType(BDM_TYPE_USB, slots, MAX_BDM_DEVICES);
+    if (count <= 0 || usbRoot == NULL || rootSize <= 0)
         return 0;
-    int n = (int)strlen(cfg.home) - 4; // strip POPS, retain trailing '/'
-    if (n <= 0 || n >= rootSize)
-        return 0;
-    memcpy(usbRoot, cfg.home, n);
-    usbRoot[n] = '\0';
-    return 1;
+    int n = snprintf(usbRoot, rootSize, "mass%d:/", slots[0]);
+    return n > 0 && n < rootSize;
 }
 
 // Parse "<IP> <NETMASK> <GATEWAY>". Returns 1 when a full valid triple was read. The caller

@@ -7,7 +7,7 @@ The license of this project itself is in the `LICENSE` file.
 |---|---|---|---|
 | BDM Assault | israpps and contributors | Academic Free License 2.0 | base of this project |
 | PS2SDK / PS2DEV headers and libraries | PS2DEV / PS2SDK contributors | Academic Free License 2.0 | build system, IOP headers, imports |
-| Neutrino, UDPFS, UDPBD, UDPRDMA, `udpfs_server.py` (all in the Neutrino repository) | rickgaiser | Academic Free License 3.0 | protocol implemented by the client; `src/net/` derives from UDPBD |
+| Neutrino, UDPFS, UDPBD, UDPRDMA, `udpfs_server.py` (all in the Neutrino repository) | ps2max32 | Academic Free License 3.0 | protocol implemented by the client; `src/net/` derives from UDPBD |
 | FatFs R0.14b | Copyright (C) 2014–2021, ChaN | FatFs license (1 condition, below) | `bdmfs_ff.c` and related FatFs files |
 | udpfsd | Copyright 2026 Ivan V (pcm720) | BSD-3-Clause (below) | reference for the protocol (no code copied) |
 
