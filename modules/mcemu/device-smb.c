@@ -7,6 +7,9 @@
 
 #include "mcemu.h"
 
+/* smb_WriteFile() and smb_ReadFile() return the requested byte count when every byte was transferred,
+   and 0 or a negative error code otherwise. smb_OpenAndX() returns 1 on success and a negative code on failure. */
+
 int DeviceWritePage(int mc_num, void *buf, u32 page_num)
 {
     u32 offset;
@@ -14,7 +17,7 @@ int DeviceWritePage(int mc_num, void *buf, u32 page_num)
     offset = page_num * vmcSpec[mc_num].cspec.PageSize;
     DPRINTF("writing page 0x%lx at offset 0x%lx\n", page_num, offset);
 
-    return (smb_WriteFile(vmcSpec[mc_num].fid, offset, 0, buf, vmcSpec[mc_num].cspec.PageSize) != 0 ? 1 : 0);
+    return (smb_WriteFile(vmcSpec[mc_num].fid, offset, 0, buf, vmcSpec[mc_num].cspec.PageSize) == vmcSpec[mc_num].cspec.PageSize ? 1 : 0);
 }
 
 int DeviceReadPage(int mc_num, void *buf, u32 page_num)
@@ -25,11 +28,11 @@ int DeviceReadPage(int mc_num, void *buf, u32 page_num)
     DPRINTF("reading page 0x%lx at offset 0x%lx\n", page_num, offset);
 
     if (vmcSpec[mc_num].fid == 0xFFFF) {
-        if (!smb_OpenAndX(vmcSpec[mc_num].fname, &vmcSpec[mc_num].fid, 1))
+        if (smb_OpenAndX(vmcSpec[mc_num].fname, &vmcSpec[mc_num].fid, 1) <= 0)
             return 0;
     }
 
-    return (smb_ReadFile(vmcSpec[mc_num].fid, offset, 0, buf, vmcSpec[mc_num].cspec.PageSize) != 0 ? 1 : 0);
+    return (smb_ReadFile(vmcSpec[mc_num].fid, offset, 0, buf, vmcSpec[mc_num].cspec.PageSize) == vmcSpec[mc_num].cspec.PageSize ? 1 : 0);
 }
 
 void DeviceShutdown(void)
