@@ -368,6 +368,8 @@ jobs:
         run: python3 .github/scripts/test_udpfs_languages.py
       - name: Check Ember disc selection changes only the launch argument and Back preserves the menu
         run: python3 .github/scripts/test_ember_disc_selection.py
+      - name: Check PS1 RetroGEM id memo (kind separation, disc-beats-parse, retries) and art/cfg id contracts
+        run: python3 .github/scripts/test_ps1_retrogem_metadata.py
       - name: Check launch errors do not render the active library behind their opaque background
         run: python3 .github/scripts/test_error_dialog_render.py
       - name: Check a missing Ember core still lists its games and never fails the PS1 scan
