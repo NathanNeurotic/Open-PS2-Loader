@@ -1419,20 +1419,30 @@ static int hddBuildVcdGameList(void)
             // still lists them; the launch then names the missing ember.elf (cueScanDir).
             cue_entry_t *cues = NULL;
             int n = cueScanDir("pfs1:/", &cues);
+            // #Size: the partition is only mounted here, so measure each folder now (as the pooled
+            // VCD scan does). A failed allocation just leaves the sizes at 0.
+            u32 *cueSizes = (n > 0) ? (u32 *)calloc(n, sizeof(u32)) : NULL;
+            if (cueSizes != NULL) {
+                for (int i = 0; i < n; i++)
+                    cueSizes[i] = cueGameSizeMB("pfs1:/", cues[i].name);
+            }
             fileXioUmount("pfs1:");
             if (n < 0) {
                 free(cues);
+                free(cueSizes);
                 scanIncomplete = 1;
                 continue;
             }
             if (n == 0) {
                 free(cues);
+                free(cueSizes);
                 continue;
             }
 
             base_game_info_t *grownGames = realloc(newGames, (total + n) * sizeof(base_game_info_t));
             if (grownGames == NULL) {
                 free(cues);
+                free(cueSizes);
                 scanIncomplete = 1;
                 break;
             }
@@ -1440,6 +1450,7 @@ static int hddBuildVcdGameList(void)
             char(*grownParts)[APA_IDMAX + 1] = realloc(newParts, (total + n) * sizeof(*newParts));
             if (grownParts == NULL) {
                 free(cues);
+                free(cueSizes);
                 scanIncomplete = 1;
                 break;
             }
@@ -1473,10 +1484,12 @@ static int hddBuildVcdGameList(void)
                 snprintf(g->extension, sizeof(g->extension), "%s", CUE_ROW_EXTENSION);
                 g->parts = 1;
                 g->format = GAME_FORMAT_ISO; // harmless; the row's extension gates the launch path
+                g->sizeMB = cueSizes != NULL ? cueSizes[i] : 0;
                 snprintf(newParts[total + kept], APA_IDMAX + 1, "%s", emberParts.names[p]);
                 kept++;
             }
             free(cues);
+            free(cueSizes);
             total += kept;
         }
         hddFreePopsPartitionList(&emberParts);
