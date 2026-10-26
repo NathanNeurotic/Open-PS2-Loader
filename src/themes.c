@@ -1057,7 +1057,64 @@ static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, str
         if (startup == NULL || startup[0] == '\0')
             return NULL;
 
-        return cacheGetTextureEx(cache, list, &item->cache_id[cache->userId], &item->cache_uid[cache->userId], startup, isPriority);
+        int *cacheId = &item->cache_id[cache->userId];
+        int *cacheUid = &item->cache_uid[cache->userId];
+
+        // PS1 rows (device pages only): the RetroGEM disc id is the PRIMARY art key --
+        // ART/<id>_COV.png, the same rule a PS2 title gets from its disc id -- so PSBBN/RetroGEM
+        // art packs work without renaming anyone's library. The row NAME stays the fallback: when
+        // no id-keyed art exists the name-keyed probe below still runs and existing name art keeps
+        // showing. FAV/APP pages are excluded: Favourites resolve their art source by matching this
+        // very value against fav identities (favGetArtMode), which only the name (or its free
+        // filename parse) satisfies. The id resolves off-thread into the session memo (ps1RowId*);
+        // until it lands the name value is used, and the request makes that happen even without a
+        // theme ItemText element demanding it. Row identity (launch/rename/favourites/settings
+        // keys) is never the id -- this changes which file a cover is READ from, nothing else.
+        if (list->mode != FAV_MODE && list->mode != APP_MODE && list->itemGet != NULL) {
+            const base_game_info_t *row = (const base_game_info_t *)list->itemGet(list, item->id);
+            if (row != NULL) {
+                int kind = -1;
+                if (cueIsCueEntry(row))
+                    kind = PS1_ROW_CUE;
+                else if (row->extension[0] != '\0' && !strcasecmp(row->extension, ".VCD"))
+                    kind = PS1_ROW_VCD;
+                if (kind >= 0) {
+                    char id[VCD_ID_MAX];
+                    ps1RowIdRequest(startup, kind); // verify provisional filename IDs too
+                    if (ps1RowIdCached(startup, kind, id, sizeof(id))) {
+                        // The row shares its slot with the name fallback. UID alone cannot
+                        // identify which value owns it; let reunion-by-value find the ID slot.
+                        // A parked absence has no value attached, so recheck it by value too.
+                        if (*cacheId == -2 || (*cacheId >= 0 && *cacheId < cache->count &&
+                                               strlen(id) < sizeof(cache->content[0].key) &&
+                                               strcmp(cache->content[*cacheId].key, id) != 0))
+                            *cacheId = -1;
+                        GSTEXTURE *idTex = cacheGetTextureEx(cache, list, cacheId, cacheUid, id, isPriority);
+                        if (idTex != NULL)
+                            return idTex;
+                        if (*cacheId == -2) {
+                            // The id-keyed art is parked absent for this fail generation. That memo
+                            // belongs to the id value: park it aside so it cannot shadow the
+                            // name-keyed fallback, and restore it only when the name probe left the
+                            // slot untouched. (A name entry that is loading or resident owns the
+                            // slot; the reunion-by-value pass re-derives either value on demand,
+                            // and the next list rebuild re-seats everything anyway.)
+                            int parkId = *cacheId, parkUid = *cacheUid;
+                            *cacheId = -1;
+                            GSTEXTURE *nameTex = cacheGetTextureEx(cache, list, cacheId, cacheUid, startup, isPriority);
+                            if (*cacheId == -1) {
+                                *cacheId = parkId;
+                                *cacheUid = parkUid;
+                            }
+                            return nameTex;
+                        }
+                        return NULL; // id art is still loading; adopted on a later frame
+                    }
+                }
+            }
+        }
+
+        return cacheGetTextureEx(cache, list, cacheId, cacheUid, startup, isPriority);
     }
 
     return NULL;

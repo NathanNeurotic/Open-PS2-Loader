@@ -12,13 +12,17 @@
 
 #define RETROGEM_GAMEID_MAX 12
 
+// Normalize a serial token for metadata: case/separators, SLUSP alias and LSP layout.
+// Invalid or oversized tokens fail rather than truncating into another game's key.
+int retrogemNormalizeGameID(const char *raw, char *out, size_t maxLen);
+
 /**
- * Extract an 11-character PS1 Game ID from the boot executable named by SYSTEM.CNF
+ * Extract a PS1 Game ID (up to 11 characters) from the boot executable named by SYSTEM.CNF
  * in the VCD disc filesystem. No timestamp, partition-name or filename fallbacks are used;
  * an unresolved image returns failure instead of inventing a Game ID.
  *
  * @param vcdPath Full path to the .VCD file or partition item
- * @param gameID Output buffer for the 11-character Game ID (plus NUL terminator)
+ * @param gameID Output buffer for the Game ID (plus NUL terminator)
  * @param maxLen Size of the output buffer (must be at least 12 bytes)
  * @return 1 on successful extraction, 0 on failure/unresolved
  */

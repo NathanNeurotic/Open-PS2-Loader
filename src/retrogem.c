@@ -60,6 +60,50 @@ static int retrogemTitlePrefixChar(char c)
     return isalnum((unsigned char)c);
 }
 
+int retrogemNormalizeGameID(const char *raw, char *out, size_t maxLen)
+{
+    char cleaned[12];
+    size_t n = 0, i;
+    if (out == NULL || maxLen == 0)
+        return 0;
+    out[0] = '\0';
+    if (raw == NULL)
+        return 0;
+    // CosmicScale's PSBBN convention drops the extra P in the SLUSP prefix.
+    int slusp = !strncasecmp(raw, "SLUSP", 5);
+    for (i = 0; raw[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)raw[i];
+        if ((slusp && i == 4) || c == '_' || c == '.' || c == '-')
+            continue;
+        if (!isalnum(c) || n >= sizeof(cleaned) - 1)
+            return 0;
+        cleaned[n++] = (char)toupper(c);
+    }
+    cleaned[n] = '\0';
+    if (n >= 9 && n <= 10 && !strncmp(cleaned, "LSP", 3)) {
+        for (i = 3; i < n; i++)
+            if (!isdigit((unsigned char)cleaned[i]))
+                return 0;
+        if (maxLen < n + 2)
+            return 0;
+        // LSP keeps its first eight characters together, then inserts a dot.
+        memcpy(out, cleaned, 8);
+        out[8] = '.';
+        memcpy(out + 9, cleaned + 8, n - 8 + 1);
+        return 1;
+    }
+    if (n != 9 || maxLen < RETROGEM_GAMEID_MAX)
+        return 0;
+    for (i = 0; i < 4; i++)
+        if (!retrogemTitlePrefixChar(cleaned[i]))
+            return 0;
+    for (i = 4; i < n; i++)
+        if (!isdigit((unsigned char)cleaned[i]))
+            return 0;
+    snprintf(out, maxLen, "%.4s_%.3s.%.2s", cleaned, cleaned + 4, cleaned + 7);
+    return 1;
+}
+
 // Accept only real PS1 serial shapes. A human game/folder name is NOT a GameID fallback.
 static int retrogemCleanTitleID(const char *raw, char *out, size_t maxLen)
 {
@@ -83,6 +127,17 @@ static int retrogemCleanTitleID(const char *raw, char *out, size_t maxLen)
         !strncasecmp(p, "EL.", 3) || !strncasecmp(p, "SM.", 3) ||
         !strncasecmp(p, "PP.", 3) || !strncmp(p, "__.", 3))
         p += 3;
+
+    // SYSTEM.CNF tokens may end in an ISO9660 version suffix. Normalize the
+    // serial itself before the legacy prefix parser (which also accepts names).
+    char token[32];
+    size_t tokenLen = strcspn(p, "; \t\r\n\"");
+    if (tokenLen < sizeof(token)) {
+        memcpy(token, p, tokenLen);
+        token[tokenLen] = '\0';
+        if (retrogemNormalizeGameID(token, out, maxLen))
+            return 1;
+    }
 
     // All accepted serial spellings need at least ten characters. Guard before indexed reads so
     // a malformed short BOOT token or path component cannot make this metadata parser read beyond
