@@ -359,8 +359,8 @@ support = (ROOT / 'src/supportbase.c').read_text(encoding='utf-8')
 cfg_fn = support[support.index('PS1 metadata fallback (both cores)'):]
 cfg_fn = cfg_fn[:cfg_fn.index('\n    }\n')]
 assert 'if (isPs1) {' in cfg_fn, 'the id-keyed Title merge must run for every PS1 row lacking a Title'
-assert 'haveMetaKey = !isVcd || configLoaded;' in cfg_fn, \
-    'a loaded name CFG must not suppress ID-keyed Title; absent-name VCDs keep their wholesale fallback'
+assert 'haveMetaKey && isVcd && !configLoaded' in cfg_fn, \
+    'skip only the parsed-ID CFG already handled by the absent-name VCD compatibility fallback'
 assert 'configGetStr(meta, "Title", &metaTitle)' in cfg_fn, 'Title is the only merged key'
 assert 'configMerge(config, meta)' not in cfg_fn, 'settings must never merge from the id-keyed cfg'
 assert 'config->modified = wasModified;' in cfg_fn, 'metadata must not dirty the name cfg'
@@ -427,7 +427,7 @@ static int reads;
 static int configGetStr(config_set_t *c, const char *k, const char **out)
 { assert(!strcmp(k, "Title")); *out = c->title; return *out != NULL; }
 static config_set_t *configAlloc(int t, void *u, const char *p)
-{ (void)t; (void)u; assert(strstr(p, "CFG/SLUS_111.11.cfg")); return &metadata; }
+{ (void)t; (void)u; assert(strstr(p, resolved ? "CFG/SLUS_222.22.cfg" : "CFG/SLUS_111.11.cfg")); return &metadata; }
 static int configRead(config_set_t *c) { assert(c == &metadata); reads++; return 1; }
 static void configFree(config_set_t *c) { assert(c == &metadata); }
 static void configSetStr(config_set_t *c, const char *k, const char *v)
@@ -478,8 +478,17 @@ int main(void)
     before = reads; cfg.title = "Name title"; populate(&row, &cfg, 1);
     assert(reads == before && !strcmp(cfg.title, "Name title"));
     cfg.title = NULL; populate(&row, &cfg, 0); assert(reads == before);
+    /* A verified disc ID overrides the parsed ID for Title, just as for art. */
+    resolved = 1; metadata.title = "Verified disc title";
+    populate(&row, &cfg, 1);
+    assert(reads == before + 1 && !strcmp(cfg.title, "Verified disc title"));
+    cfg.title = NULL; populate(&row, &cfg, 0);
+    assert(reads == before + 2 && !strcmp(cfg.title, "Verified disc title"));
+    cfg.title = "Name title"; populate(&row, &cfg, 1);
+    assert(reads == before + 2 && !strcmp(cfg.title, "Name title"));
+    cfg.title = NULL; before = reads;
     row.cue = 1; strcpy(row.extension, ".CUE"); populate(&row, &cfg, 0);
-    assert(reads == before + 1 && !strcmp(cfg.title, "Disc title"));
+    assert(reads == before + 1 && !strcmp(cfg.title, "Verified disc title"));
     normalized("slus_123.45", "SLUS_123.45"); normalized("SlUs-12345", "SLUS_123.45");
     normalized("SLUS12345", "SLUS_123.45"); normalized("SLUS.123_45", "SLUS_123.45");
     normalized("slusp_123.45", "SLUS_123.45"); normalized("lsp12345.67", "LSP12345.67");

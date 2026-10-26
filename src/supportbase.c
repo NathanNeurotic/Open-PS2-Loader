@@ -1245,13 +1245,17 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
         int haveMetaKey = 0;
 
         if (!configGetStr(config, "Title", &title) || title == NULL || title[0] == '\0') {
-            // With no name CFG, the VCD compatibility fallback already read the parsed ID CFG.
-            // Otherwise it may still supply Title without importing any of its settings.
-            if (vcdExtractGameId(game->name, metaKey, sizeof(metaKey)))
-                haveMetaKey = !isVcd || configLoaded;
-            else
-                haveMetaKey = ps1RowIdCached(game->name, isVcd ? PS1_ROW_VCD : PS1_ROW_CUE,
-                                             metaKey, sizeof(metaKey));
+            // The memo prefers the verified disc ID over a provisional filename ID.
+            haveMetaKey = ps1RowIdCached(game->name, isVcd ? PS1_ROW_VCD : PS1_ROW_CUE,
+                                         metaKey, sizeof(metaKey));
+            if (haveMetaKey && isVcd && !configLoaded) {
+                char fallbackKey[VCD_ID_MAX];
+                // The legacy fallback already read this parsed ID CFG. A different
+                // verified ID can still supply Title when that fallback had none.
+                if (vcdExtractGameId(game->name, fallbackKey, sizeof(fallbackKey)) &&
+                    !strcmp(metaKey, fallbackKey))
+                    haveMetaKey = 0;
+            }
         }
 
         if (haveMetaKey) {
