@@ -2973,9 +2973,9 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
     // APA even when the persistent config/art PFS home is temporarily unavailable. In that state
     // return a runtime-only config instead of dereferencing a NULL prefix or hiding the whole list.
     if (hddGetItemView(itemList, id) == LIB_VIEW_PS1) {
-        int vcdId = hddGetSourceId(itemList, id);
-        hddVcdResolveSize(vcdId); // PP. rows: measured on the info screen only; cached in the row
-        base_game_info_t *g = hddActiveVcd(vcdId);
+        int vcdRow = hddGetSourceId(itemList, id);
+        hddVcdResolveSize(vcdRow); // PP. rows: measured on the info screen only; cached in the row
+        base_game_info_t *g = hddActiveVcd(vcdRow);
         if (gHDDPrefix != NULL)
             return sbPopulateConfig(g, gHDDPrefix, "/");
 
