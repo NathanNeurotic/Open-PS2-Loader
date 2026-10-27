@@ -11,7 +11,8 @@ name: build-flavours
 # iLink driver job below rebuilds against the PS2DEVPINNED digest because it checks exact bytes.
 #
 # Rolling means the toolchain moves without us changing anything (issue #382). When a build or a
-# console result regresses, compare against a pinned release asset before blaming the source.
+# console result regresses, rebuild the SAME commit with the PS2DEVPINNED digest (see README.md)
+# before blaming the source -- a pinned release asset may come from a different commit.
 #
 # ⚠ EVERY BUG REPORT MUST NAME ITS FLAVOUR. Each artifact carries BUILD-MANIFEST.txt recording the
 # image, the resolved digest where known, the compiler version and the source commit -- so a report
