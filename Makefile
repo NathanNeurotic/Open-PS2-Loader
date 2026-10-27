@@ -265,16 +265,19 @@ else
 endif
 
 # ---- Which prebuilt IOP modules the loader embeds -------------------------------------------
-# Two of ps2sdk's shipped .irx files are replaced by fork-built ones (see the rules further down
-# for the full account of each). Both defaults below are the stock ps2sdk prebuilt, and the RA
-# branch swaps in ours.
+# Two of ps2sdk's shipped .irx files are replaced by fork-built ones in every flavour (see the
+# rules further down for the full account of each). Both started in the RA flavour, hence the
+# "-ra" directory names; neither is RetroAchievements code.
 #
 # THE USBD SWAP IS FORK-WIDE, ON PURPOSE. It fixes a bug present in every build this fork ships
 # -- and in official OPL too -- so it is deliberately NOT gated: a CD-era game run off a USB
 # stick loses its pad AND its sound at the game's first IOP reboot with ps2sdk's post-2024-09-04
 # driver, whatever flavour you built. See the rule further down for the whole account.
+#
+# SO IS THE SMBMAN SWAP: ps2sdk's smbman reports a write as complete whenever the server answers
+# with a success status, whatever byte count the server says it stored. See the rule further down.
 USBD_MINI_IRX = modules/usb/usbd-ra/usbd_mini.irx
-SMBMAN_IRX    = $(PS2SDK)/iop/irx/smbman.irx
+SMBMAN_IRX    = modules/network/smbman-ra/smbman.irx
 
 # RetroAchievements flavour. Everything the feature adds hangs off this one switch, on BOTH sides
 # of the EE/ee_core split -- the define reaches the menu build directly and ee_core through
@@ -283,7 +286,6 @@ SMBMAN_IRX    = $(PS2SDK)/iop/irx/smbman.irx
 ifeq ($(RETROACHIEVEMENTS),1)
   EE_CFLAGS += -DRETROACHIEVEMENTS
   EECORE_EXTRA_FLAGS += RETROACHIEVEMENTS=1
-  SMBMAN_IRX = modules/network/smbman-ra/smbman.irx
   # md5 (vendored, zlib licence): the game hash the PC client keys achievements on.
   # rawatch: the watch list the menu hands to ee_core, loaded from <device>RA/.
   # rahash:  the image hash RetroAchievements keys a game on, taken by walking
@@ -1039,7 +1041,8 @@ modules/network/ps2ips/ps2ips.irx: $(wildcard modules/network/ps2ips/*.c) $(wild
 $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-# FORK-BUILT smbman (modules/network/smbman-ra) -- RA-only, see SMBMAN_IRX above.
+# FORK-BUILT smbman (modules/network/smbman-ra) -- every flavour, see SMBMAN_IRX above. It began
+# as RA-only (the held-image fix) and took over from ps2sdk's copy for the write-count fix.
 #
 # A console that ran a game off a share and was switched off leaves the image OPEN on the server:
 # OPL logs off from nothing, the session dies with the console, and a cheap server never reaps it.
@@ -1051,18 +1054,23 @@ $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 # So: try NT create first, and fall back to the legacy open only when the server says the file is
 # held, and only for a read. A write/create/truncate still returns -EBUSY -- reaching past someone
 # else's handle to write is not ours to ask for -- and rahash turns that -EBUSY into a menu message
-# naming the held image instead of a silent failure.
+# naming the held image instead of a silent failure. Outside RA the same fallback lets the menu
+# read a held file (a cheat file, say) that ps2sdk's smbman fails with -EIO.
 #
-# It also carries a "Write-count fix" that ps2sdk lacks: smb_WriteAndX returns the server's WRITE_ANDX
-# Count, so a write to a full share fails instead of reporting success. Every other flavour embeds
-# ps2sdk's own smbman.irx, which still reports such a write as complete.
+# The "Write-count fix", which ps2sdk lacks: ps2sdk's smb_WriteAndX returns the byte count it ASKED
+# to write whenever the reply status is success. It now returns the server's WRITE_ANDX Count, so a
+# server that stores less than asked -- MS-CIFS 2.2.4.43.2 allows success with Count 0 for a full
+# disk, and ksmbd's SMB1 code (read, not run) returns a short Count -- gets the rest resent, or a
+# failed write, instead of a write reported as complete. Samba, Windows (per MS-CIFS) and the
+# PS2-Servers servers answer a full disk with an error status, which ps2sdk's copy already failed.
 #
-# The source is ps2sdk master's iop/network/smbman with those marked changes -- verified on 2026-10-27
-# by diffing every file against ps2dev/ps2sdk master: smb.c (+48/-5, both fixes), smb.h (+4, RA fix)
-# and auth.c (+6/-1, the password-buffer bound from 14cd9ff3) differ, the rest is byte-identical, so
-# vendoring drops no upstream behaviour. Both new status constants decode under
-# this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT STATUS_SHARING_VIOLATION, 0x00200001
-# is the same refusal in the DOS class (ERRDOS=0x01, ERRbadshare=32). Do not reformat it.
+# The source is ps2sdk master's iop/network/smbman -- verified on 2026-10-27 by diffing every file
+# against ps2dev/ps2sdk master: smb.c (+48/-5: the two marked fixes), smb.h (+4, RA fix) and auth.c
+# (+6/-1, an unmarked password-buffer bound from 14cd9ff3) differ, the rest is byte-identical, and
+# only the module Makefile is ours, so vendoring drops no upstream behaviour. Both new status
+# constants decode under this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT
+# STATUS_SHARING_VIOLATION, 0x00200001 is the same refusal in the DOS class (ERRDOS=0x01,
+# ERRbadshare=32). Do not reformat it.
 modules/network/smbman-ra/smbman.irx: $(wildcard modules/network/smbman-ra/*.c) $(wildcard modules/network/smbman-ra/*.h) modules/network/smbman-ra/imports.lst modules/network/smbman-ra/Makefile
 	$(MAKE) -C modules/network/smbman-ra rebuild
 

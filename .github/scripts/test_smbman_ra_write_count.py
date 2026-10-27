@@ -1,16 +1,19 @@
-"""The RetroAchievements smbman (modules/network/smbman-ra) trusts only the server's WRITE_ANDX Count.
+"""The menu's smbman (modules/network/smbman-ra, embedded in every flavour) trusts only the server's WRITE_ANDX Count.
 
-smb_WriteAndX() used to return the requested count for any success status. A full file system answers
-WRITE_ANDX with a success status and a Count of zero (MS-CIFS 2.2.4.43.2), so a write to a full share
-was reported to the EE as complete: a config, a cache file or a created VMC was cut short with no error.
-ps2sdk master has the same code; this module is the RA flavour's copy of it.
+smb_WriteAndX() used to return the requested count for any success status, as ps2sdk master's still does.
+MS-CIFS 2.2.4.43.2 lets a server answer a write to a full disk with a success status and a Count of zero,
+and a server may store less than it was sent (ksmbd's SMB1 code returns what the kernel wrote), so against
+such a server a write cut short reached the EE as complete. Samba, Windows (per MS-CIFS) and the
+PS2-Servers servers answer a full disk with an error status instead, which was already a failed write.
 
 This compiles the real smb_WriteAndX() and smb_WriteFile() from smb.c, and the real smb_write() from
-smb_fio.c, against scripted server replies, and checks: smb_WriteAndX() returns the server's Count;
-smb_WriteFile() sends the rest of the data from the right place in the buffer and at the right 64-bit
-offset after a short Count, and returns 0 on a zero one; a truncated reply, a short WordCount or a Count
-over the request fails; and smb_write() hands the EE 0 for a full share and advances the file position
-only by what the server stored.
+smb_fio.c, against scripted server replies, and checks: smb_WriteAndX() builds the WRITE_ANDX request
+it should and returns the server's Count; smb_WriteFile() sends the rest of the data from the right place
+in the buffer and at the right 64-bit offset after a short Count, and returns 0 on a zero one (bytes an
+earlier chunk of the same call stored are then not reported, as in cdvdman's copy); a reply shorter than
+the six-word response, a WordCount under 6 or a Count over the request fails, while a 45-byte reply with
+six words is enough; and smb_write() hands the EE 0 or -EIO for a failed write with the file position and
+size untouched, and otherwise advances them by the bytes written.
 This is a host regression check, not a console test.
 """
 from pathlib import Path
@@ -130,7 +133,7 @@ typedef struct
     u16 count_high;
 } reply_t;
 static reply_t replies[4];
-static int nreplies, calls, bad_request;
+static int nreplies, calls, bad_request, fid;
 static s64 call_off[4];
 static int call_len[4];
 static long call_from[4]; /* where in buf each request's data starts */
@@ -144,9 +147,14 @@ static int GetSMBServerReply(int shdrlen, void *spayload, int rhdrlen)
     WriteAndXResponse_t *rsp = (WriteAndXResponse_t *)reply;
     int asked = WR->DataLengthLow | (WR->DataLengthHigh << 16);
 
+    /* The request itself: one padding byte after the parameter block, data right behind it, write-through,
+       and ByteCount covering padding and data whenever that fits its 16 bits. */
     if (shdrlen != (int)sizeof(WriteAndXRequest_t) + 1 || rhdrlen != 0 || spayload == NULL ||
-        session_length != (u32)(shdrlen + asked) || WR->smbH.Cmd != SMB_COM_WRITE_ANDX || WR->smbWordcount != 14 ||
-        WR->smbH.UID != UID || WR->smbH.TID != TID)
+        session_length != (u32)(shdrlen + asked) || WR->smbH.Magic != SMB_MAGIC ||
+        !(WR->smbH.Flags2 & SMB_FLAGS2_32BIT_STATUS) || WR->smbH.Cmd != SMB_COM_WRITE_ANDX ||
+        WR->smbWordcount != 14 || WR->smbAndxCmd != SMB_COM_NONE || WR->smbH.UID != UID || WR->smbH.TID != TID ||
+        WR->FID != fid || WR->WriteMode != 0x0001 || WR->DataOffset != sizeof(WriteAndXRequest_t) + 1 ||
+        (asked + 1 <= 0xFFFF && WR->ByteCount != asked + 1))
         bad_request++;
     if (calls < 4) {
         call_off[calls] = (s64)WR->OffsetLow | ((s64)WR->OffsetHigh << 32);
@@ -190,6 +198,7 @@ static void reset(int n, const reply_t *r)
     for (i = 0; i < n; i++)
         replies[i] = r[i];
     memset(&fh, 0, sizeof(fh));
+    fid = 0x10;
     fh.smb_fid = 0x10;
     fh.mode = O_RDWR;
     fh.position = 1000;
@@ -225,6 +234,8 @@ int main(void)
     static const reply_t half_count[] = {{38, STATUS_SUCCESS, 6, 0, 0}};
     static const reply_t no_reserved[] = {{44, STATUS_SUCCESS, 6, 0, 0}};
     static const reply_t few_words[] = {{REPLY_LEN, STATUS_SUCCESS, 2, ASKED, 0}};
+    static const reply_t five_words[] = {{REPLY_LEN, STATUS_SUCCESS, 5, ASKED, 0}};
+    static const reply_t no_bytecount[] = {{45, STATUS_SUCCESS, 6, ASKED, 0}};
     static const reply_t lost[] = {{-2, STATUS_SUCCESS, 6, ASKED, 0}};
 
     reset(0, NULL);
@@ -252,13 +263,19 @@ int main(void)
     report("status-disk-full", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
     /* FID 512 lands where the reply's Count goes: a truncated reply must not read it as Count. */
     reset(1, truncated);
+    fid = 512;
     report("reply-truncated", smb_WriteFile(UID, TID, 512, 1000, buf, 512));
     reset(1, half_count); /* ends inside Count: its high byte is still the request FID's */
+    fid = 512;
     report("reply-ends-in-count", smb_WriteFile(UID, TID, 512, 1000, buf, 512));
     reset(1, no_reserved); /* Count 0 arrived, the last parameter word did not */
     report("reply-44-bytes", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
     reset(1, few_words);
     report("reply-wordcount-2", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
+    reset(1, five_words); /* a whole 47-byte reply, but MS-CIFS says six words */
+    report("reply-wordcount-5", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
+    reset(1, no_bytecount); /* all six words, no ByteCount: Count is all this needs */
+    report("reply-45-bytes", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
     reset(1, lost);
     report("transport-error", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
     reset(0, NULL);
@@ -274,6 +291,13 @@ int main(void)
     reset(2, half_rest);
     report_file("write-half-then-rest", smb_write(&file, buf, 512));
     report_at("write-half-then-rest-at");
+    /* Inside the file: the position moves, the size does not. */
+    reset(2, half_rest);
+    fh.position = 0;
+    report_file("write-inside-file", smb_write(&file, buf, 512));
+    report_at("write-inside-file-at");
+    reset(1, disk_full);
+    report_file("write-status-disk-full", smb_write(&file, buf, 512));
 
     printf("bad-request %d\n", bad_request);
     return 0;
@@ -297,6 +321,8 @@ WANT = [
     'reply-ends-in-count ret=-5 calls=1',
     'reply-44-bytes ret=-5 calls=1',
     'reply-wordcount-2 ret=-5 calls=1',
+    'reply-wordcount-5 ret=-5 calls=1',
+    'reply-45-bytes ret=512 calls=1',
     'transport-error ret=-5 calls=1',
     'chunks ret=70000 calls=2',
     'chunks-at 65535@0 from 0, 4465@65535 from 65535',
@@ -305,6 +331,9 @@ WANT = [
     'write-half-then-full-share ret=0 calls=2 position=1000 filesize=1000 locks=1/1',
     'write-half-then-rest ret=512 calls=2 position=1512 filesize=1512 locks=1/1',
     'write-half-then-rest-at 512@1000 from 0, 256@1256 from 256',
+    'write-inside-file ret=512 calls=2 position=512 filesize=1000 locks=1/1',
+    'write-inside-file-at 512@0 from 0, 256@256 from 256',
+    'write-status-disk-full ret=-5 calls=1 position=1000 filesize=1000 locks=1/1',
     'bad-request 0',
 ]
 
@@ -333,4 +362,4 @@ for index in range(max(len(got), len(WANT))):
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('smbman-ra: WRITE_ANDX trusts only the server Count; a full share reaches the EE as a failed write')
+print('smbman-ra: WRITE_ANDX trusts only the server Count; a short Count is resent, a zero one fails the write')
