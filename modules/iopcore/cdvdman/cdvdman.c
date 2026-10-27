@@ -346,7 +346,8 @@ int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)
     // read first block if not aligned to sector size
     if (pos) {
         int r = MIN(size, (2048 - pos));
-        ReadSectors(lba, ziso_tmp_buf, 1);
+        if (ReadSectors(lba, ziso_tmp_buf, 1) != SCECdErNO)
+            return -1; // a failed read must never be decompressed as if it were data
         memcpy(addr, ziso_tmp_buf + pos, r);
         size -= r;
         lba++;
@@ -359,7 +360,8 @@ int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)
         n_blocks++;
     if (n_blocks > 1) {
         int r = 2048 * (n_blocks - 1);
-        ReadSectors(lba, addr, n_blocks - 1);
+        if (ReadSectors(lba, addr, n_blocks - 1) != SCECdErNO)
+            return -1;
         size -= r;
         addr += r;
         lba += n_blocks - 1;
@@ -367,7 +369,8 @@ int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)
 
     // read remaining data
     if (size) {
-        ReadSectors(lba, ziso_tmp_buf, 1);
+        if (ReadSectors(lba, ziso_tmp_buf, 1) != SCECdErNO)
+            return -1;
         memcpy(addr, ziso_tmp_buf, size);
         size = 0;
     }

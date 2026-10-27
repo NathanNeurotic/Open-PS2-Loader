@@ -60,7 +60,10 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 
     // refresh index table if needed
     if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
-        read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0);
+        if (read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0) <= 0) {
+            ziso_idx_start_block = -1; // a failed read leaves the cache invalid, never half-trusted
+            return 0;
+        }
         ziso_idx_start_block = lsn;
     }
 
@@ -71,7 +74,8 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     // read all compressed data to the end of provided buffer to reduce IO
     // there should be no overflow or overrun, as long as compressed data is smaller, and it should be
     u8 *c_buff = addr + (count * 2048) - compressed_size;
-    read_raw_data(c_buff, compressed_size, o_start, ziso_align);
+    if (read_raw_data(c_buff, compressed_size, o_start, ziso_align) != (int)compressed_size)
+        return 0; // a short or failed read must not be decompressed as if it were the image
 
     // process each sector
     for (unsigned int i = 0; i < count; i++) {
