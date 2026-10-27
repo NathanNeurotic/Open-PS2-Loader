@@ -736,10 +736,28 @@ static u32 padPollElapsedMs(void)
     return ticks / CLOCKS_PER_MILISEC;
 }
 
+/* Most hold time one poll may credit to a held key's repeat countdown.
+
+   Time between two polls is UNOBSERVED: nothing read the pad in it, so it is not evidence that the
+   key stayed down -- the same rule the self-heal idle gate applies (PAD_IDLE_MAX_CLEAN_GAP_MS). The
+   countdown used to take the whole gap. The gap right after a press is where the GUI thread can
+   block (the press's own cursor sound is a synchronous audsrv RPC, and just after boot the IOP can
+   be busy with the game list, the art sweep and BGM priming). If the next poll still reads the
+   press from freepad's buffer, the whole stall counted as hold time, the countdown passed zero and
+   getKey() fired a repeat: one tap moved two rows. That matches the report of the first d-pad, L1
+   or R1 press after boot moving twice on every theme (likely path, not yet confirmed on hardware).
+   With the cap a repeat needs the key seen down on later polls too. A real hold still repeats on
+   schedule and a long stall still cannot freeze the counter (#729). 100 is about three frames in
+   these units. */
+#define PAD_REPEAT_MAX_CREDIT_MS 100
+
 // A held key counts down to its next repeat (getKey); a released one rearms at the initial delay.
 static void padAdvanceRepeatTimers(u32 elapsedMs)
 {
     int i;
+
+    if (elapsedMs > PAD_REPEAT_MAX_CREDIT_MS)
+        elapsedMs = PAD_REPEAT_MAX_CREDIT_MS;
 
     for (i = 0; i < 16; ++i) {
         if (getKeyPressed(i + 1))

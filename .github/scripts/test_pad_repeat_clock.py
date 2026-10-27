@@ -14,7 +14,10 @@ R1 at 60 Hz for 70 s from several points before a wrap:
 - every repeat after the initial delay must follow the previous one within one repeat period plus
   one frame, across every wrap;
 - the elapsed-time sum must track real time to the millisecond over ten simulated minutes;
-- a long stall between polls must produce one repeat, not a freeze.
+- a long stall between polls must not freeze a held key, and must not fire a repeat by itself:
+  the gap is unobserved time, so only polls that still see the key down move it towards a repeat;
+- a tap whose sample is still in the pad buffer across a stall right after the press must move
+  once, not twice (the first-press-after-boot double move).
 
 The same run is repeated with the old divide-then-subtract clock (kept here only as the reference),
 and must show the freeze -- proof that the harness can see the defect it guards against.
@@ -77,6 +80,7 @@ typedef uint64_t u64;
 
 #define CLOCKS_PER_MILISEC @CLOCKS@
 #define DEFAULT_PAD_DELAY @DELAY@
+#define PAD_REPEAT_MAX_CREDIT_MS @CREDIT@
 
 #define PAD_LEFT 0x0080
 #define PAD_DOWN 0x0040
@@ -121,6 +125,18 @@ static u32 oldPollElapsedMs(void)
     return elapsed;
 }
 
+/* The removed countdown, which credited the whole gap between polls; reference only. */
+static void oldAdvanceRepeatTimers(u32 elapsedMs)
+{
+    int i;
+    for (i = 0; i < 16; ++i) {
+        if (getKeyPressed(i + 1))
+            delaycnt[i] -= elapsedMs;
+        else
+            delaycnt[i] = getKeyDelay(i + 1, 0);
+    }
+}
+
 #define FRAME_MS (1000.0 / 59.94)
 
 static int failures;
@@ -131,8 +147,11 @@ static int poll(double nowMs, u64 startTicks, int held, int useOld)
     fakeTicks = (u32)(startTicks + (u64)(nowMs * CLOCKS_PER_MILISEC));
     oldpaddata = paddata;
     paddata = held ? PAD_R1 : 0;
-    u32 elapsed = useOld ? oldPollElapsedMs() : padPollElapsedMs();
-    padAdvanceRepeatTimers(elapsed);
+    if (useOld) {
+        oldAdvanceRepeatTimers(oldPollElapsedMs());
+        return getKey(KEY_R1);
+    }
+    padAdvanceRepeatTimers(padPollElapsedMs());
     return getKey(KEY_R1);
 }
 
@@ -218,23 +237,74 @@ int main(void)
         }
     }
 
-    /* A 5 s stall between polls while held: the next poll repeats once, then the normal cadence. */
+    /* A 5 s stall between polls while held. The stall itself is unobserved, so it must not fire a
+       repeat on the next poll; a key that is still down afterwards repeats once its countdown has
+       been observed to run out, at most the initial delay later -- never a burst, never a freeze. */
     {
         u64 startTicks = 1000000;
-        double t = 0;
+        double t = 0, firstAt = -1;
         int hits = 0;
         for (; t < 1000; t += FRAME_MS)
             poll(t, startTicks, 0, 0);
         poll(t, startTicks, 1, 0); /* press */
         t += 5000.0;
-        hits += poll(t, startTicks, 1, 0);
-        t += FRAME_MS;
-        hits += poll(t, startTicks, 1, 0);
-        poll(t + FRAME_MS, startTicks, 0, 0);
-        printf("5 s stall while held: %d repeat(s) on the next two polls\n", hits);
-        if (hits != 1) {
-            printf("  FAIL: a stall must yield exactly one repeat, not a burst or a freeze\n");
+        double resumed = t;
+        int next = poll(t, startTicks, 1, 0);
+        for (t += FRAME_MS; t < resumed + 3 * DEFAULT_PAD_DELAY + FRAME_MS; t += FRAME_MS) {
+            if (poll(t, startTicks, 1, 0)) {
+                if (firstAt < 0)
+                    firstAt = t - resumed;
+                hits++;
+            }
+        }
+        poll(t, startTicks, 0, 0);
+        printf("5 s stall while held: next poll %s, %d repeat(s) in the following %d ms (first after %.1f ms)\n",
+               next ? "REPEATED" : "quiet", hits, 3 * DEFAULT_PAD_DELAY, firstAt);
+        if (next || hits != 1) {
+            printf("  FAIL: a stall must not repeat by itself; a key still held must repeat exactly once on schedule\n");
             failures++;
+        }
+    }
+
+    /* The reported bug: a tap whose stale sample is read once more after a stall that follows the
+       press (the press's own GUI-thread work blocks the next poll while the IOP has not refreshed
+       the pad buffer), then released. One tap must be one move. The unclamped countdown is replayed
+       alongside as the reference and must show the double move. */
+    {
+        static const double stalls[] = {150.0, 400.0, 800.0, 2000.0};
+        int s;
+        for (s = 0; s < (int)(sizeof(stalls) / sizeof(stalls[0])); s++) {
+            int pass, moves[2];
+            for (pass = 0; pass < 2; pass++) {
+                u64 startTicks = 3000000;
+                double t = 0;
+                int n = 0;
+                for (; t < 1000; t += FRAME_MS)
+                    poll(t, startTicks, 0, 0);
+                n += poll(t, startTicks, 1, 0); /* key-on */
+                t += stalls[s];
+                if (pass == 0) {
+                    n += poll(t, startTicks, 1, 0); /* stale "still held" sample after the stall */
+                } else {
+                    fakeTicks = (u32)(startTicks + (u64)(t * CLOCKS_PER_MILISEC));
+                    oldpaddata = paddata;
+                    paddata = PAD_R1;
+                    oldAdvanceRepeatTimers(padPollElapsedMs());
+                    n += getKey(KEY_R1);
+                }
+                for (t += FRAME_MS; t < 1000 + stalls[s] + 500; t += FRAME_MS)
+                    n += poll(t, startTicks, 0, 0); /* released */
+                moves[pass] = n;
+            }
+            printf("tap, %.0f ms stall, stale held sample: %d move(s); unclamped reference: %d\n", stalls[s], moves[0], moves[1]);
+            if (moves[0] != 1) {
+                printf("  FAIL: one tap must be one move\n");
+                failures++;
+            }
+            if (stalls[s] >= 3 * DEFAULT_PAD_DELAY && moves[1] != 2) {
+                printf("  FAIL: the harness no longer reproduces the double move with the old countdown\n");
+                failures++;
+            }
         }
     }
 
@@ -245,6 +315,7 @@ int main(void)
 if not failures:
     source = (HARNESS.replace('@CLOCKS@', define('CLOCKS_PER_MILISEC'))
                      .replace('@DELAY@', define('DEFAULT_PAD_DELAY'))
+                     .replace('@CREDIT@', define('PAD_REPEAT_MAX_CREDIT_MS'))
                      .replace('@TABLE@', key_table.group(0))
                      .replace('@FUNCTIONS@', functions))
 
