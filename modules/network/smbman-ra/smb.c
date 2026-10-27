@@ -1182,6 +1182,8 @@ int smb_WriteFile(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
         toWrite = remaining > CLIENT_MAX_XFER_SIZE ? CLIENT_MAX_XFER_SIZE : remaining;
 
         result = smb_WriteAndX(UID, TID, FID, pos, ptr, toWrite);
+        if (result == 0 && remaining < nbytes)
+            return nbytes - remaining; // the server stored what earlier requests sent, and no more
         if (result <= 0)
             return result;
 

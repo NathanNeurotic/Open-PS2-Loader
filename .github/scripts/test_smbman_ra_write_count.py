@@ -9,8 +9,8 @@ PS2-Servers servers answer a full disk with an error status instead, which was a
 This compiles the real smb_WriteAndX() and smb_WriteFile() from smb.c, and the real smb_write() from
 smb_fio.c, against scripted server replies, and checks: smb_WriteAndX() builds the WRITE_ANDX request
 it should and returns the server's Count; smb_WriteFile() sends the rest of the data from the right place
-in the buffer and at the right 64-bit offset after a short Count, and returns 0 on a zero one (bytes an
-earlier chunk of the same call stored are then not reported, as in cdvdman's copy); a reply shorter than
+in the buffer and at the right 64-bit offset after a short Count, and on a zero one returns the bytes
+earlier chunks of the same call stored, or 0 when there were none; a reply shorter than
 the six-word response, a WordCount under 6 or a Count over the request fails, while a 45-byte reply with
 six words is enough; and smb_write() hands the EE 0 or -EIO for a failed write with the file position and
 size untouched, and otherwise advances them by the bytes written.
@@ -311,7 +311,7 @@ WANT = [
     'count-half-then-rest-at 512@1000 from 0, 256@1256 from 256',
     'count-half-past-4g ret=512 calls=2',
     'count-half-past-4g-at 512@4294967040 from 0, 256@4294967296 from 256',
-    'count-half-then-zero ret=0 calls=2',
+    'count-half-then-zero ret=256 calls=2',
     'count-over-asked ret=-5 calls=1',
     'count-high-ignored ret=512 calls=1',
     'count-high-ignored-andx ret=512',
@@ -328,7 +328,7 @@ WANT = [
     'chunks-at 65535@0 from 0, 4465@65535 from 65535',
     'write-saved ret=512 calls=1 position=1512 filesize=1512 locks=1/1',
     'write-full-share ret=0 calls=1 position=1000 filesize=1000 locks=1/1',
-    'write-half-then-full-share ret=0 calls=2 position=1000 filesize=1000 locks=1/1',
+    'write-half-then-full-share ret=256 calls=2 position=1256 filesize=1256 locks=1/1',
     'write-half-then-rest ret=512 calls=2 position=1512 filesize=1512 locks=1/1',
     'write-half-then-rest-at 512@1000 from 0, 256@1256 from 256',
     'write-inside-file ret=512 calls=2 position=512 filesize=1000 locks=1/1',
@@ -362,4 +362,4 @@ for index in range(max(len(got), len(WANT))):
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('smbman-ra: WRITE_ANDX trusts only the server Count; a short Count is resent, a zero one fails the write')
+print('smbman-ra: WRITE_ANDX trusts only the server Count; a short Count is resent, a zero one ends the write')

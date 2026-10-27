@@ -1,4 +1,4 @@
-From 8aa9b9f401dca66d824313b724548518702e93a7 Mon Sep 17 00:00:00 2001
+From 6f36ba6a9684d18db53451d78e0293f7f8e25d3c Mon Sep 17 00:00:00 2001
 From: NathanNeurotic <109461996+NathanNeurotic@users.noreply.github.com>
 Date: Tue, 27 Oct 2026 06:52:01 +0000
 Subject: [PATCH] smbman: a write is complete only for the bytes the server
@@ -14,8 +14,10 @@ the caller as complete.
 
 Return the server's Count instead. smb_WriteFile() already advances by
 the returned value and stops on a result <= 0, so a short Count now
-sends the rest from the right buffer position and file offset, and a
-zero Count reaches the caller as write() returning 0. A reply shorter
+sends the rest from the right buffer position and file offset. A zero
+Count ends the write: smb_WriteFile() returns the bytes that earlier
+requests of the same call stored, or 0 when there were none, so the
+caller's file position matches what the server holds. A reply shorter
 than the six-word WRITE_ANDX response, a WordCount under 6, or a Count
 larger than the request is a failed write (-EIO). CountHigh is not read:
 smb_WriteFile() never asks for more than CLIENT_MAX_XFER_SIZE (65535)
@@ -27,11 +29,11 @@ are unaffected: that reply already returned -EIO.
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01RwNwRWSWvoz4YfK5AEj37D
 ---
- iop/network/smbman/src/smb.c | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+ iop/network/smbman/src/smb.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/iop/network/smbman/src/smb.c b/iop/network/smbman/src/smb.c
-index 4d201bd..588a14a 100644
+index 4d201bd..b0ed621 100644
 --- a/iop/network/smbman/src/smb.c
 +++ b/iop/network/smbman/src/smb.c
 @@ -1119,7 +1119,17 @@ int smb_WriteAndX(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
@@ -53,6 +55,15 @@ index 4d201bd..588a14a 100644
  }
  
  int smb_WriteFile(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int nbytes)
+@@ -1138,6 +1148,8 @@ int smb_WriteFile(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
+         toWrite = remaining > CLIENT_MAX_XFER_SIZE ? CLIENT_MAX_XFER_SIZE : remaining;
+ 
+         result = smb_WriteAndX(UID, TID, FID, pos, ptr, toWrite);
++        if (result == 0 && remaining < nbytes)
++            return nbytes - remaining; // the server stored what earlier requests sent, and no more
+         if (result <= 0)
+             return result;
+ 
 -- 
 2.43.0
 
