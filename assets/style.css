@@ -1866,3 +1866,20 @@ footer {
   .topbar .brand { font-size: 12px; }
   .topbar .brand .psbtns { display: none; }
 }
+
+/* Legacy notice: one strip under the top bar on every page, outside main.content so
+   site_sync.py page renders keep it. check_docs.py --site fails a page without it. */
+.legacy-notice {
+  position: relative;
+  z-index: 1;
+  padding: 10px 24px;
+  background: linear-gradient(90deg, rgba(60, 36, 0, 0.92), rgba(18, 10, 0, 0.85));
+  border-bottom: 1px solid rgba(255, 184, 48, 0.45);
+  color: var(--ink-bright);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+.legacy-notice b { color: var(--warn); }
+.legacy-notice a { color: var(--warn); font-weight: 700; text-decoration: underline; }
+@media (max-width: 600px) { .legacy-notice { padding: 8px 16px; font-size: 13px; text-align: left; } }
