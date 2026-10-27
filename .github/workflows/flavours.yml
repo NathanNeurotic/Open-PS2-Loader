@@ -75,6 +75,8 @@ jobs:
         run: python3 .github/scripts/test_igr_vmc_drain.py
       - name: Check docs/VCD.md documents the shipped i.LINK usbhdfsd.irx size and hash
         run: python3 .github/scripts/test_vcd_doc_ilink_hash.py
+      - name: Check audit_translations --strict still rejects a bad fork string after the overlay merge
+        run: python3 .github/scripts/test_audit_translations_overlay_owner.py
       - name: Check the in-game freeze report stays in its flavour and cannot hang IGR
         run: python3 .github/scripts/test_ingame_freeze_diag.py
       - name: Check the in-game freeze report text

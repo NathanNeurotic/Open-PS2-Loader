@@ -98,7 +98,9 @@ def audit() -> dict:
         for key, value in merged.items():
             if key not in english:
                 continue
-            from_upstream = key in upstream
+            # After `make languages` the overlay is merged into lng_src/, so a fork string is also
+            # "in upstream" there. It is only upstream-owned when lng_src/ says something else (#1055).
+            from_upstream = key in upstream and upstream[key] != overlay.get(key)
             problems = warnings if from_upstream else errors
             where = f"{name}/{key} ({'upstream' if from_upstream else 'overlay'})"
             try:
