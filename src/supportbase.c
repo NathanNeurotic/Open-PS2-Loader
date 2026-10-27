@@ -592,12 +592,15 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
             if ((newlist = (base_game_info_t *)malloc(sizeof(base_game_info_t) * total)) != NULL) {
                 memset(newlist, 0, sizeof(base_game_info_t) * total);
 
-                while (size > 0) {
-                    base_game_info_t *g = &newlist[id++];
-
-                    // populate game entry in list even if entry corrupted
-                    read(fd, &GameEntry, sizeof(USBExtreme_game_entry_t));
+                // Whole entries only: count above was sized with floor(size / entry), so a trailing
+                // partial entry has no slot reserved for it and would write past the list.
+                while (size >= (int)sizeof(USBExtreme_game_entry_t)) {
+                    // populate game entry in list even if entry corrupted -- but never from a short
+                    // read, which would leave the rest of the entry as stack garbage.
+                    if (read(fd, &GameEntry, sizeof(USBExtreme_game_entry_t)) != (int)sizeof(USBExtreme_game_entry_t))
+                        break;
                     size -= sizeof(USBExtreme_game_entry_t);
+                    base_game_info_t *g = &newlist[id++];
 
                     // to ensure no leaks happen, we copy manually and pad the strings
                     memcpy(g->name, GameEntry.name, UL_GAME_NAME_MAX);
@@ -678,7 +681,9 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
     // Success or genuinely-empty: publish the freshly-built list (frees the previous one). Guard on
     // newlist so a failed allocation publishes an EMPTY list (count 0) rather than a NULL pointer with
     // a non-zero count -- an OOB on the very next render.
-    const int published = (newlist != NULL && total > 0) ? total : 0;
+    // Publish the rows actually filled (id), not the reserved total: a ul.cfg that ends in a short
+    // read leaves its reserved slots zeroed, and those must not appear as nameless games.
+    const int published = (newlist != NULL && total > 0) ? (id < total ? id : total) : 0;
     free(*list);
     *list = newlist;
     if (fsize != NULL)
