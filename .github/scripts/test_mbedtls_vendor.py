@@ -2,7 +2,7 @@
 
 The RA edition looks games up on retroachievements.org over HTTPS (ORBIT parity). TLS comes from
 mbedTLS, taken under Apache-2.0 so RiptOPL keeps no GPL code. Only RA builds may compile or link it,
-and only six pinned roots are trusted. The expected root fingerprints are written here, checked
+and only five pinned roots are trusted. The expected root fingerprints are written here, checked
 against the Mozilla root store when vendored, so a wrong DER can't pass with a matching README.
 """
 import hashlib
@@ -16,7 +16,6 @@ ROOTS = ROOT / "third_party/ca-roots"
 # Issuer roots (Google Trust Services, ISRG), SHA-256 of the DER.
 PINNED = {
     "gtsr1.der": "d947432abde7b7fa90fc2e6b59101b1280e0e1c7e4e40fa3c6887fff57a7f4cf",
-    "gtsr2.der": "8d25cd97229dbf70356bda4eb3cc734031e24cf00fafcfd32dc76eb5841c7ea8",
     "gtsr3.der": "34d8a73ee208d9bcdb0d956520934b4e40e69482596e8b6f73c8426b010a6f48",
     "gtsr4.der": "349dfa4058c5e263123b398ae795573c4e1313c83fe68f93556cd5e8031b3c7d",
     "isrgrootx1.der": "96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6",
@@ -52,7 +51,7 @@ for number, line in enumerate(lines, 1):
         assert any(stack), f"Makefile:{number} outside a RETROACHIEVEMENTS=1 block: {stripped}"
 assert hits >= 4, "the RA-only mbedTLS build rules are missing"
 
-# Six pinned roots, nothing else.
+# Five pinned roots, nothing else.
 assert sorted(p.name for p in ROOTS.glob("*.der")) == sorted(PINNED)
 roots_readme = (ROOTS / "README.md").read_text(encoding="utf-8")
 for name, expected in PINNED.items():
@@ -67,4 +66,4 @@ for unwanted in ("MBEDTLS_SSL_SRV_C", "MBEDTLS_FS_IO", "MBEDTLS_SSL_RENEGOTIATIO
                  "MBEDTLS_TIMING_C", "MBEDTLS_DEBUG_C"):
     assert not re.search(rf"^#define {unwanted}\b", config, re.M), unwanted
 
-print("PASS: mbedTLS 3.6.7 vendored (Apache-2.0), RA-only, six pinned roots")
+print("PASS: mbedTLS 3.6.7 vendored (Apache-2.0), RA-only, five pinned roots")

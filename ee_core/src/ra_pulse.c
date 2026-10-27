@@ -83,18 +83,20 @@ void RA_PulseOnVblank(unsigned int frames)
     if (e->magic == RA_EVENT_MAGIC && generation != ra_ovl_seen && e->commit == generation) {
         struct ra_event notice = *e;
         /* SIF DMA can replace the event while it is being copied. Act only
-           on a complete snapshot, never a kind from the following event. */
-        if (notice.magic != RA_EVENT_MAGIC || notice.seq != generation || notice.commit != generation ||
-            e->seq != generation || e->commit != generation)
-            return;
-        ra_ovl_seen = notice.seq;
-        if ((notice.kind & RA_EVENT_KIND_MASK) == RA_EVENT_RESET) {
-            IGR_RequestReset();
-            return;
-        }
-        if ((notice.kind & RA_EVENT_KIND_MASK) == RA_EVENT_UNLOCK) {
-            ra_ovl_start = frames;
-            ra_ovl_running = 1;
+           on a complete snapshot, never a kind from the following event. A
+           torn copy skips only the event: a running flash still advances
+           below, and the next frame reads the event again (#1062). */
+        if (notice.magic == RA_EVENT_MAGIC && notice.seq == generation && notice.commit == generation &&
+            e->seq == generation && e->commit == generation) {
+            ra_ovl_seen = notice.seq;
+            if ((notice.kind & RA_EVENT_KIND_MASK) == RA_EVENT_RESET) {
+                IGR_RequestReset();
+                return;
+            }
+            if ((notice.kind & RA_EVENT_KIND_MASK) == RA_EVENT_UNLOCK) {
+                ra_ovl_start = frames;
+                ra_ovl_running = 1;
+            }
         }
     }
 

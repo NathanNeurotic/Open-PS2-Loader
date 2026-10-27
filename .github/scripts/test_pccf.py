@@ -214,4 +214,6 @@ int main(void) {
 print('PASS: CF hardware-inert DEV9/ATAD exports and ordinal ABI')
 
 refresh = function((root / "src/opl.c").read_text(encoding="utf-8"), "static void itemExecRefresh(")
-assert "if (bdmModeIsPCCF(support->mode))\n            bdmRequestPccfProbe();" in refresh
+# #1061: a CF page exists only after pccf_bd loaded, when bdmRequestPccfProbe is a no-op, so Refresh
+# must not pretend to retry; the CF toggle is the retry.
+assert "bdmRequestPccfProbe" not in refresh

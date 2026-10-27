@@ -382,7 +382,7 @@ void RA_OverlayOnVblank(unsigned int frames)
         struct ra_event notice = *e;
         if (notice.magic != RA_EVENT_MAGIC || notice.seq != generation || notice.commit != generation ||
             e->seq != generation || e->commit != generation)
-            return;
+            goto advance; /* torn: skip only this event, the running card still draws (#1062) */
         kind = notice.kind & RA_EVENT_KIND_MASK;
         ra_ovl_seen = notice.seq;
         if (kind == RA_EVENT_RESET) {
@@ -405,6 +405,7 @@ void RA_OverlayOnVblank(unsigned int frames)
             ra_ovl_running = 1;
         }
     }
+advance:
     if (!ra_ovl_running)
         return;
     if (frames - ra_ovl_start >= RA_CARD_FRAMES) {

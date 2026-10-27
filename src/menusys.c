@@ -2700,6 +2700,7 @@ void menuRenderAchievements(void)
                                                                  gNetworkProtocol == NET_PROTO_UDPFS   ? _STR_CAD_PAIR_UDPFS :
                                                                  gNetworkProtocol == NET_PROTO_UDPFSBD ? _STR_CAD_UDPFS_IMG :
                                                                                                          _STR_CAD_PAIR) :
+                              page.state == ACH_NET_BUSY    ? _l(_STR_RA_NET_BUSY) :
                               page.state == ACH_UNSUPPORTED ? _l(xera ? _STR_XERA_UNKNOWN_GAME : _STR_CAD_UNKNOWN_GAME) :
                               page.state == ACH_NOT_PLAYED  ? _l(achievementsClockUnset() ? _STR_XERA_SET_CLOCK : _STR_XERA_NOT_PLAYED) :
                                                               _l(xera ? _STR_XERA_CONNECTION_ERROR : _STR_CAD_CONNECTION_ERROR);

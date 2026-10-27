@@ -244,6 +244,12 @@ int sysInitDev9(void)
 
 void sysShutdownDev9(void)
 {
+    // Same bus lock as sysInitDev9 and sysTryClaimPccf: an unlocked decrement here could lose an
+    // update against them, leaving the count stuck above 0 (CF never claimable) or skipping the
+    // power-off (#1061). The power-off devctl below does not take this lock.
+    if (sysDev9BusLock < 0)
+        return;
+    WaitSema(sysDev9BusLock);
     if (dev9InitCount > 0) {
         --dev9InitCount;
 
@@ -258,6 +264,7 @@ void sysShutdownDev9(void)
             }
         }
     }
+    SignalSema(sysDev9BusLock);
 }
 
 void sysReset(int modload_mask)
