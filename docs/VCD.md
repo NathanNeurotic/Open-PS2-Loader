@@ -452,7 +452,8 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 8. **UDPFS shows Ember but no VCDs?** Select **UDPFS Files**, check server `POPS/*.VCD`
    with uppercase `.VCD`, and refresh the PS1/Mixed view. For launch failures, check the
    [BDM-UDPFS Assault setup](#pops-udpfs-with-bdm-udpfs-assault): installed memory-card
-   pair, matching USB configs, runtime support files and same-subnet server. UDPBD and UDPFS
+   pair, `IPCONFIG.DAT` and `UDPFSCONFIG.DAT` in `mc?:/SYS-CONF/` (missing ones are copied there at
+   launch from the server's `POPS/` folder), runtime support files and same-subnet server. UDPBD and UDPFS
    IMG remain Ember-only.
 9. **"Missing ember.elf", "Missing bios.bin beside ember.elf" or "Missing POPSTARTER.ELF" on
    launch?** The message's second line is the exact file RiptOPL looked for, for example
