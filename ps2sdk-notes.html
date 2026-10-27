@@ -178,13 +178,14 @@ one-off test from the 2026-10-27 review that is not in the repository.</li>
 </tr>
 </tbody>
 </table>
-<p>ps2ips also has one defect of our own, caused by our workaround; it is listed with ps2ips. Defects we saw
-in modules we did not change are under <a href="#other-ps2sdk-modules">other ps2sdk modules</a>.</p>
+<p>ps2ips and IEEE1394_bd each also have one defect of our own, listed with the module. Defects we saw in
+modules we did not change are under <a href="#other-ps2sdk-modules">other ps2sdk modules</a>.</p>
 <p>The <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/ps2sdk-patches/0001-smbman-a-write-is-complete-only-for-the-bytes-the-se.patch">smbman write-count fix</a>
 is ready as a ps2sdk patch: it applies to master <code>329e2bb</code> with <code>git am</code>. For the rest, our copies are the
-reference. smbman-ra, usbd-ra, ps2ips and iLinkman diff cleanly against ps2sdk. atad, APA, BDM and
-IEEE1394_bd were reformatted with clang-format, so diff them against their formatting commit, which each
-<code>ORIGIN.txt</code> names.</p>
+reference. smbman-ra, usbd-ra, ps2ips and iLinkman diff cleanly against ps2sdk. APA, BDM and IEEE1394_bd
+were reformatted with clang-format in a baseline commit that each <code>ORIGIN.txt</code> describes, so diff them
+against that commit. atad was added already reformatted and changed (<code>bcac683b</code>), so diff it against its
+pin with whitespace ignored (<code>diff -w</code>), or follow its <code>/* FORK */</code> markers.</p>
 <h2 id="smbman">smbman</h2>
 <p>Our copy is ps2sdk's <code>iop/network/smbman</code> with three changes. ps2sdk has not changed those sources since
 <code>d44e0128</code> (2024-12-12). Every flavour embeds our copy; before 2026-10-27 only the RetroAchievements
@@ -202,8 +203,9 @@ bytes than it was sent. In both cases <code>write()</code> reports success for b
 SMB1 code (read from source, not run). Samba (read from source), Windows (per MS-CIFS) and PS2-Servers
 (run against a full disk) answer with an error status instead, which smbman already turns into <code>-EIO</code>.</li>
 <li><strong>Our change:</strong> return the server's Count. A reply shorter than 45 bytes, a WordCount under 6, or a
-Count larger than the request is a failed write. <code>smb_WriteFile()</code> needs no change: it already sends the
-rest after a short Count and stops on 0.</li>
+Count larger than the request is a failed write. <code>smb_WriteFile()</code> already sends the rest after a short
+Count. On a zero Count it now returns the bytes that earlier requests of the same call stored, instead
+of 0, so the caller's file position stays true.</li>
 <li><strong>Evidence:</strong> host test
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/.github/scripts/test_smbman_ra_write_count.py"><code>test_smbman_ra_write_count.py</code></a>. It fails on master's
 <code>smb.c</code> and passes with the patch. Not tested on hardware or against a live server that sends a short
@@ -302,8 +304,9 @@ paths. The EE side stays ps2sdk's stock libps2ips, which a loader cannot change.
 <li><strong>Where:</strong> <code>do_recv()</code> and <code>do_recvfrom()</code> DMA <code>sizeof(rests_pkt)</code>, 144 bytes, to the EE.
 <code>ee/rpc/tcpips/src/ps2ipc.c</code> receives them in <code>static int _intr_data[32]</code>, 128 bytes.</li>
 <li><strong>What goes wrong:</strong> bytes 128–143 land on whatever the EE linker placed next. In our RA build that is
-libcglue's socket operations table, which fits the reported symptom of sockets leaking until <code>socket()</code>
-fails (unconfirmed). <code>fa7359ff</code> (2018) grew the packet without growing the EE buffer.</li>
+libps2ips's socket operations table (<code>__ps2ipc_fdman_ops_socket</code>, defined in
+<code>ee/rpc/tcpips/src/ps2ipc_ps2sdk.c</code>), which fits the reported symptom of sockets leaking until
+<code>socket()</code> fails (unconfirmed). <code>fa7359ff</code> (2018) grew the packet without growing the EE buffer.</li>
 <li><strong>Who hits it:</strong> every EE program using libps2ips, on every TCP <code>recv()</code> that returns data.</li>
 <li><strong>Our change:</strong> the IRX sends at most 128 bytes, 80 when there is no unaligned tail. This is a
 workaround, because the EE library is ps2sdk's, and it causes the defect of our own listed below. The
@@ -318,9 +321,10 @@ tested on hardware.</li>
 <ul>
 <li><strong>Where:</strong> <code>do_recvfrom()</code> copies the sender's address into the reply, which shares the RPC buffer with
 the request, before it reads the request's <code>ee_addr</code> and <code>intr_data</code>.</li>
-<li><strong>What goes wrong:</strong> by then those fields hold the address's zeroed padding, so both DMAs go to EE
-address 0. <code>recvfrom()</code> returns the datagram length, but the buffer holds nothing new. This has been so
-since the 2004 import.</li>
+<li><strong>What goes wrong:</strong> by then those fields hold the address's zeroed padding, so the rests packet is sent to
+EE address 0, and for a datagram over 64 bytes the data DMA goes to an address below 64 instead of the
+caller's buffer. <code>recvfrom()</code> returns the datagram length, but the buffer holds nothing new. This has been
+so since the 2004 import.</li>
 <li><strong>Who hits it:</strong> every UDP receive through libps2ips.</li>
 <li><strong>Our change:</strong> read <code>ee_addr</code> and <code>intr_data</code> into locals first.</li>
 <li><strong>Evidence:</strong> review harness: the stock code sends both DMAs to <code>0x00000000</code>. A matching hardware
@@ -341,9 +345,10 @@ and is up to 1024 bytes long.</li>
 the extra 32 bytes overwrite the request still being handled. A receive then DMAs to an EE address taken
 from the received data, and a send uses a socket, flags and destination taken from the caller's own
 data. <code>fa7359ff</code> (2018) introduced it.</li>
-<li><strong>Who hits it:</strong> a receive of more than 992 bytes into a 64-byte-aligned buffer, or a send of 1024 bytes
-or more from a buffer with fewer than 32 bytes before its first 64-byte boundary; large TCP transfers
-such as HTTP.</li>
+<li><strong>Who hits it:</strong> any receive or send whose transfer in one call (at most 1024 bytes) is more than
+992 + k bytes, where k is the number of bytes before the buffer's first 64-byte boundary (0 for a
+64-byte-aligned buffer). Examples: more than 992 bytes into or from an aligned buffer, or 1024 bytes
+with k under 32. Large TCP transfers such as HTTP do this.</li>
 <li><strong>Our change:</strong> <code>BUFF_SIZE + 64</code>. That fixes sends as well, though our source comment mentions only
 receives.</li>
 <li><strong>Evidence:</strong> disassembly of a prebuilt <code>ps2ips.irx</code>, and review harnesses for receive and send. Not
@@ -535,11 +540,11 @@ more sectors than its partition holds writes into the next partition. Our copy r
 written to be overflow-safe; it needs the previous fix. (<code>test_bdm_partitions.py</code>.)</p>
 <h3 id="a-device-whose-sectors-are-not-512-bytes-overflows-the-block-cache">A device whose sectors are not 512 bytes overflows the block cache</h3>
 <p><strong>Still in master.</strong></p>
-<p><code>bd_cache.c</code> slots hold 8 × 512 bytes and every offset assumes 512, but <code>bdm_connect_bd()</code> creates a cache
-for every device. A device with 4096-byte sectors writes 32 KiB into each 4 KiB slot, past the end of the
-allocation once a high slot is used, and cached reads return wrong data. Our <code>bd_cache_create()</code> returns
-NULL when the sector size is not 512. (The overflow is source reading; <code>test_bdm_partitions.py</code> checks the
-refusal.)</p>
+<p><code>bd_cache.c</code> slots hold 8 × 512 bytes and every offset assumes 512, but <code>bdm_connect_bd()</code> creates a cache for
+every whole device (<code>parNr</code> 0), whatever its sector size. A device with 4096-byte sectors writes 32 KiB into
+each 4 KiB slot, past the end of the allocation once a high slot is used, and cached reads return wrong data.
+Our <code>bd_cache_create()</code> returns NULL when the sector size is not 512. (The overflow is source reading;
+<code>test_bdm_partitions.py</code> checks the refusal.)</p>
 <h3 id="a-4k-sector-device-is-offered-to-drivers-that-use-512-byte-buffers">A 4K-sector device is offered to drivers that use 512-byte buffers</h3>
 <p><strong>Still in master.</strong></p>
 <p><code>bdm_try_mount()</code> offers every device to every filesystem driver. The MBR probe reads one sector into a
@@ -610,13 +615,19 @@ So it spins forever on a 0-byte file (start cluster 0), on a free or value-1 ent
 volume unmounted under an open file; a chain that loops back never ends either. It runs under the
 filesystem lock, so every other bdmfs_fatfs call, and disconnecting the device, block too. Our walker
 returns 0 for an empty file, stops after the expected number of clusters, and rejects clusters below 2.
-(<code>test_bdmfs_frag_walk.py</code> covers loops and a value-1 entry; the empty-file case only a review harness.)</p>
+(<code>test_bdmfs_frag_walk.py</code> covers loops, a free entry, a value-1 entry and a 0-byte file on our walker.
+Its 0-byte file has start cluster 2, so it does not reproduce the stock walker's hang on start cluster 0;
+only a review harness does.)</p>
 <h3 id="the-fragment-list-after-the-device-is-gone-reads-through-null">The fragment list after the device is gone reads through NULL</h3>
 <p><strong>Still in master.</strong></p>
 <p>After a disconnect or a STOP devctl, an open file's block device is NULL, and <code>get_frag_list()</code> reads
 <code>bd-&gt;sectorOffset</code> through it. It also writes through a NULL <code>rdata</code> when <code>rdatalen</code> is not 0, and
-truncates an extent of more than 2^32 sectors. Our walker returns <code>-ENODEV</code>, <code>-EINVAL</code> and <code>-EOVERFLOW</code>
-for these. (Source; the refusals are host-tested.)</p>
+truncates an extent of more than 2^32 sectors. Our walker refuses all three. After a disconnect or STOP,
+<code>f_unmount()</code> has already cleared <code>fs_type</code>, so the walker returns <code>-EINVAL</code> (0 for an empty file), and a
+<code>-ENODEV</code> check on the block device is a backstop. A NULL <code>rdata</code> gives <code>-EINVAL</code>, and an extent of more
+than 2^32 sectors gives <code>-EOVERFLOW</code>. (Source. The host test models the lost device as a NULL block
+device with <code>fs_type</code> intact and checks only for a negative result. The <code>-EOVERFLOW</code> path is not
+exercised.)</p>
 <h3 id="o_creat--o_excl-opens-or-truncates-an-existing-file">O_CREAT | O_EXCL opens or truncates an existing file</h3>
 <p><strong>Still in master.</strong></p>
 <p><code>fs_open()</code> maps <code>O_CREAT</code> to <code>FA_OPEN_ALWAYS</code> and never looks at <code>O_EXCL</code> (<code>0x0800</code>), which libcglue does
@@ -643,9 +654,11 @@ is meant; probably unreachable.</li>
 since, so nothing below is fixed upstream. Every flavour embeds both, and we also replace the copies in
 the bundled Neutrino. POPStarter's i.LINK driver comes from an older copy (BDMAssault) with the same
 changes, plus ps2sdk's own SBP-2 direction fix (<code>5eb6bbc6</code>, <code>0123ebbc</code>).</p>
-<p>None of these changes is confirmed on hardware. Console reports so far are failures, both before and after
-the changes (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/ILINK_CODE_AUDIT_2026-10-22.md">i.LINK audit</a>), and our host findings do not establish what
-caused them. Several of the <code>scsi.c</code> defects are also in <code>iop/usb/usbmass_bd/src/scsi.c</code>, and some
+<p>None of these changes is confirmed on hardware. Console reports so far are mixed. Before the changes,
+games listed and Ember booted, but native OPL, Neutrino and POPStarter did not. The latest report, after
+the first of the changes, has Ember working, native OPL intermittent, and Neutrino and POPStarter failing
+(<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/ILINK_CODE_AUDIT_2026-10-22.md">i.LINK audit</a>). Our host findings do not establish what caused the
+failures. Several of the <code>scsi.c</code> defects are also in <code>iop/usb/usbmass_bd/src/scsi.c</code>, and some
 <code>sbp2_driver.c</code> ones in <code>iop/iLink/IEEE1394_disk</code>.</p>
 <p>"Host test" here means a test in this repository that fails on ps2sdk's code: for some entries, an earlier
 version of the test, because the current one needs functions only our copy has. "Source" on an entry means
@@ -664,16 +677,16 @@ waits for management ORBs per the unit's timeout (500 ms when 0, at most 5 s). H
 becomes ready holds the bus-reset thread, so no device is published and later bus resets are never
 handled. Our copy polls at most 300 times, 100 ms apart, within 30 s. Host test.</p>
 <h4 id="a-drive-that-failed-setup-is-still-offered-to-bdm">A drive that failed setup is still offered to BDM</h4>
-<p><code>scsi_connect()</code> ignores <code>scsi_warmup()</code>'s result and connects the device anyway, with whatever sector
-size the slot had (0 for a fresh slot), and a READ CAPACITY block length of 0 is accepted. The failed slot
-is never freed. Our copy connects only after a successful warm-up and frees the slot otherwise. Host test
-(<code>test_ilink_bd_reset.py</code>, <code>test_ilink_scsi_geometry.py</code>).</p>
+<p><code>scsi_connect()</code> ignores <code>scsi_warmup()</code>'s result and connects the device anyway, with whatever sector size
+the slot had (0 for a fresh slot), and a READ CAPACITY block length of 0 is accepted. The slot stays taken by
+the half-set-up device until the next bus reset disconnects it. Our copy connects only after a successful
+warm-up and frees the slot otherwise. Host test (<code>test_ilink_bd_reset.py</code>, <code>test_ilink_scsi_geometry.py</code>).</p>
 <h4 id="fetch-agent-setup-reads-the-previous-status-and-frees-its-orb-too-early">Fetch-agent setup reads the previous status and frees its ORB too early</h4>
 <p>After LOGIN, the shared status FIFO still holds LOGIN's status. <code>ieee1394_InitializeFetchAgent()</code> waits
-without clearing it, returns at once, and frees the dummy ORB while the target may still fetch it. It
-ignores the wait's result and always reports success. Our copy clears the status, keeps the ORB until its
-own completion, and passes failures on. Host test (<code>test_ilink_sbp2_completion.py</code>, an earlier version: 12
-failures on ps2sdk's code). <code>IEEE1394_disk</code> frees its dummy ORB the same way.</p>
+without clearing it, returns at once, and frees the dummy ORB while the target may still fetch it. It ignores
+the wait's result and reports success whenever the ORB_POINTER write went through. Our copy clears the status,
+keeps the ORB until its own completion, and passes failures on. Host test (<code>test_ilink_sbp2_completion.py</code>, an
+earlier version: 12 failures on ps2sdk's code). <code>IEEE1394_disk</code> frees its dummy ORB the same way.</p>
 <h4 id="a-command-can-complete-on-the-wrong-status-or-wait-forever">A command can complete on the wrong status, or wait forever</h4>
 <p>All devices share one status FIFO, and <code>ieee1394_Sync()</code> accepts any status without matching its ORB, so
 unsolicited status or another device's status completes the current command while the target may still
@@ -689,11 +702,17 @@ command. (Source.)</p>
 <p><code>ProcessStatus()</code> computes <code>(data[0] &gt;&gt; 16) &amp; 0xF</code> on a <code>u8</code>, which is always 0 and is then forced to 1,
 so the real sense key is always lost. It also requires a status length of 1, so a bridge that returns a
 longer status block for a successful command fails it, and after 16 retries the read or write returns
-<code>-EIO</code>. Both date from the 2018 import, and <code>IEEE1394_disk</code> has the same code. Our copy decodes the sense
-key and accepts a longer GOOD status. <strong>Open question in our copy:</strong> our decode assumes the status bytes
-arrive in wire order, but the driver byte-swaps everything else the target writes; if status quadlets are
-stored in host order, our check reads the wrong bytes. It needs a hardware dump of a CHECK CONDITION
-status. (Source.)</p>
+<code>-EIO</code>. Both date from the 2018 import, and <code>IEEE1394_disk</code> has the same code. Our copy tries to decode
+the sense key and accept a longer GOOD status, but reads the wrong bytes; see the next entry. (Source.)</p>
+<h4 id="our-defect-the-status-decode-reads-the-wrong-bytes">Our defect: the status decode reads the wrong bytes</h4>
+<p>Like everything the target writes, the status quadlets are stored in host order. The driver reads the
+status header, <code>ORB_low</code> and the login response without swapping and byte-swaps only data-phase payload,
+and ps2sdk's own wait loop, which listed games on hardware, could not end if the header were in wire
+order. So in our <code>ProcessStatus()</code>, <code>data[1] &amp; 0xf</code> is the low nibble of the ASC, and the GOOD check
+reads the ASCQ: a CHECK CONDITION whose ASCQ is 0, such as an unrecovered read error (ASC 0x11, ASCQ
+0x00), passes as success. <code>sbp2StatusReady()</code> also tests that byte for 0xff. The decode should read the
+third status quadlet as a number (sense key <code>(q &gt;&gt; 16) &amp; 0xF</code>, format <code>q &gt;&gt; 30</code>, status
+<code>(q &gt;&gt; 24) &amp; 0x3F</code>). Not fixed yet. (Source; no hardware dump of a CHECK CONDITION status exists.)</p>
 <h4 id="disk-capacity-is-one-sector-short">Disk capacity is one sector short</h4>
 <p><code>scsi_warmup()</code> stores READ CAPACITY's last LBA as the sector count, so the last sector is unreachable. The
 READ CAPACITY(16) path has the same off-by-one, and does not check its block length or an all-ones LBA.
@@ -743,9 +762,10 @@ copied into the caller's buffer later by the receive thread. Neither ps2sdk SBP-
 reads. Our copy waits for the response. Host test (<code>test_ilink_manager_irq.py</code>).</p>
 <h4 id="late-foreign-or-error-responses-write-caller-memory">Late, foreign or error responses write caller memory</h4>
 <p><code>ResponseHandler()</code> does not check the source node, transaction label, bus generation, response code or
-length; every request uses label 1, and the target buffer pointer is never cleared. A response that
-arrives after its request timed out writes through a stale pointer, often a stack variable, and an error
-response counts as success. Our copy matches each response to its request and rotates labels. (Source.)</p>
+length; every quadlet request uses label 1 and every block request label 0x3F, and the target buffer pointer
+is never cleared. A response that arrives after its request timed out writes through a stale pointer, often a
+stack variable, and an error response counts as success. Our copy matches each response to its request and
+rotates labels. (Source.)</p>
 <h4 id="two-threads-can-take-each-others-replies">Two threads can take each other's replies</h4>
 <p>The public read and write functions take no lock, and the response buffer and events are global. They do
 not check the transaction context index either, and a racing IEEE1394_bd thread can pass -1 after a bus
@@ -771,15 +791,16 @@ these. (Source.)</p>
 <p>Defects we found in modules we embed unchanged. We worked around them, or left them.</p>
 <ul>
 <li><strong>usbmass_bd</strong> (<code>iop/usb/usbmass_bd/src/scsi.c</code>): the same unbounded TEST UNIT READY loop, the same
-connect-after-failed-warm-up, and the same one-sector-short capacity as IEEE1394_bd above. Its debug
-build's log line also divides by the sector size. OPL's own <code>bdmevent</code> module does not report a
-device whose sector size is 0 as unsupported. (Source.)</li>
+connect-after-failed-warm-up, and the same one-sector-short capacity as IEEE1394_bd above. Its non-mini
+build (<code>usbmass_bd.irx</code>, which OPL embeds only in <code>DEBUG=1</code> builds) also divides by the sector size in a log
+line. OPL's own <code>bdmevent</code> module does not report a device whose sector size is 0 as unsupported. (Source.)</li>
 <li><strong>hdpro_atad</strong> (<code>iop/dev9/hdpro_atad</code>): the same probe latch as atad. We left it, because no HDPro user
 has reported the symptom. (Source.)</li>
 <li><strong>libcglue and fileXio</strong>: <code>getdents()</code> applies <code>__transform_errno()</code> twice, so a failed directory read
 leaves <code>errno</code> set to <code>EPERM</code>, and <code>__fileXioDreadHelper()</code> turns every negative result into <code>-ENOENT</code>.
-Together they made every MMCE directory listing end with an error. We worked around it in our mmceman
-patch, which is not ps2sdk code. (Source.)</li>
+On their own they only change which errno a failed read reports. Every MMCE directory listing ended
+with an error because mmceman's DREAD returned -1 at the end of each directory; our mmceman patch, which
+is not ps2sdk code, makes it return 0. (Source.)</li>
 </ul>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
