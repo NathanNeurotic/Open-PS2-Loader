@@ -176,6 +176,9 @@ candidate from the same PS2DEVPINNED container:
 | Native / standard Neutrino manager + mini block driver | 16,079 B | 20,955 B | 4,876 B | 572 B |
 | POPStarter combined driver | 18,389 B | 22,773 B | 4,384 B | 576 B |
 
+This table was measured at `1fd24a94`. The 2026-10-27 status-decode fix makes
+each build 16 bytes smaller (20,939 B and 22,757 B), measured in the same image.
+
 These section totals include executable code and BSS; existing stacks and kernel
 semaphore bookkeeping are outside the measurement. The one-pass transfer
 simplification itself adds 48 bytes of code per block-driver build and no

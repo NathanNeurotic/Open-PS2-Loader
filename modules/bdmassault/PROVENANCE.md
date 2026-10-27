@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 27145 | 1a9c1baaf1dd020e35b75082b630f325b90e884819c743ddd5e1f27f106efcb6 |
+| usbhdfsd.irx.ilink | 27129 | e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917 |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
