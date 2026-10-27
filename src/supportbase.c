@@ -1067,37 +1067,63 @@ int sbMcemuSlotWord(const void *irx, int size, int slot, int *cache)
     return cache[slot];
 }
 
-void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID)
+// Writes the USBLD games of list, except excludeID, to path. 0 only when every entry was written and the
+// file closed cleanly: a buffered write can first fail at fclose.
+static int sbWriteULCfg(const char *path, base_game_info_t **list, int gamecount, int excludeID)
 {
-    char path[256];
     USBExtreme_game_entry_t GameEntry;
-    snprintf(path, sizeof(path), "%sul.cfg", prefix);
+    int i, ok = 1;
 
     FILE *file = fopen(path, "wb");
-    if (file != NULL) {
-        int i;
-        base_game_info_t *game;
+    if (file == NULL)
+        return -1;
 
-        memset(&GameEntry, 0, sizeof(GameEntry));
-        GameEntry.Byte08 = 0x08; // just to be compatible with original ul.cfg
-        memcpy(GameEntry.magic, "ul.", 3);
+    memset(&GameEntry, 0, sizeof(GameEntry));
+    GameEntry.Byte08 = 0x08; // just to be compatible with original ul.cfg
+    memcpy(GameEntry.magic, "ul.", 3);
 
-        for (i = 0; i < gamecount; i++) {
-            game = &(*list)[i];
+    for (i = 0; ok && i < gamecount; i++) {
+        base_game_info_t *game = &(*list)[i];
 
-            if (game->format == GAME_FORMAT_USBLD && (i != excludeID)) {
-                memcpy(GameEntry.startup, game->startup, GAME_STARTUP_MAX);
-                memcpy(GameEntry.name, game->name, UL_GAME_NAME_MAX);
-                // don't fill last symbol with zero, cause trailing symbol can be useful character
-                GameEntry.parts = game->parts;
-                GameEntry.media = game->media;
+        if (game->format == GAME_FORMAT_USBLD && (i != excludeID)) {
+            memcpy(GameEntry.startup, game->startup, GAME_STARTUP_MAX);
+            memcpy(GameEntry.name, game->name, UL_GAME_NAME_MAX);
+            // don't fill last symbol with zero, cause trailing symbol can be useful character
+            GameEntry.parts = game->parts;
+            GameEntry.media = game->media;
 
-                fwrite(&GameEntry, sizeof(GameEntry), 1, file);
-            }
+            ok = fwrite(&GameEntry, sizeof(GameEntry), 1, file) == 1;
         }
-
-        fclose(file);
     }
+
+    if (fclose(file) != 0)
+        ok = 0;
+    return ok ? 0 : -1;
+}
+
+// Rewriting ul.cfg in place truncated it first, so a write that failed part-way -- a share or drive
+// dropping out -- silently dropped every USBLD game after that point from the list. The new list now goes
+// to ul.cfg.tmp, and ul.cfg is replaced only once that file is complete. Not every driver renames over an
+// existing file, so ul.cfg is removed first; if the rename still fails, ul.cfg is written directly, as
+// before, and ul.cfg.tmp is kept until that succeeds. The menu shows no error; failures are logged.
+void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID)
+{
+    char path[256], tmp[256];
+    snprintf(path, sizeof(path), "%sul.cfg", prefix);
+    snprintf(tmp, sizeof(tmp), "%sul.cfg.tmp", prefix);
+
+    if (sbWriteULCfg(tmp, list, gamecount, excludeID) != 0) {
+        unlink(tmp);
+        LOG("sbRebuildULCfg: writing %s failed; %s left as it was\n", tmp, path);
+        return;
+    }
+    unlink(path);
+    if (rename(tmp, path) == 0)
+        return;
+    if (sbWriteULCfg(path, list, gamecount, excludeID) == 0)
+        unlink(tmp);
+    else
+        LOG("sbRebuildULCfg: replacing %s failed; the new list is in %s\n", path, tmp);
 }
 
 static void sbCreatePath_name(const base_game_info_t *game, char *path, const char *prefix, const char *sep, int part, const char *game_name)
