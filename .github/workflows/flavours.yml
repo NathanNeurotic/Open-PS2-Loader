@@ -1,32 +1,23 @@
 name: build-flavours
 
-# FOUR FLAVOURS, along two independent axes: WHICH toolchain, and PINNED vs ROLLING.
+# PR/push CI builds the two ROLLING toolchains only (plus their DIAG/FREEZEDIAG/RA variants):
 #
-#                      pinned (reproducible)          rolling (early warning)
-#   ps2dev             PS2DEVPINNED                   PS2DEVROLLING
-#   official OPL CI    OFFICIALPINNED                 OFFICIALROLLING
+#   ps2dev             PS2DEVROLLING      (ghcr.io/ps2dev/ps2dev:latest)
+#   official OPL CI    OFFICIALROLLING    (ghcr.io/ps2homebrew/ps2homebrew:main)
 #
-# WHY THIS SPLIT EXISTS. Issue #382: one tester ran the same build in three flavours and got three
-# different results -- official worked, ps2dev-latest started the game then black-screened, the
-# pinned build failed outright. Identical source. There was then no way to tell whether that spread
-# was our bug or the toolchain moving underneath us, because "latest" means something different every
-# day: a report from last week was not comparable to a report from today, and neither could be
-# reproduced on demand.
+# The digest-pinned PS2DEVPINNED/OFFICIALPINNED flavours were dropped from per-PR CI: they doubled
+# the build matrix without catching anything the rolling pair did not. They still exist where
+# reproducibility is the point -- the rolling/RA release workflows publish pinned assets, and the
+# iLink driver job below builds in its own ps2dev pin (taken 2026-08-13) because it checks exact bytes.
+# That pin is not PS2DEVPINNED: PS2DEVPINNED is the 2026-07-28 digest the release workflows build with.
 #
-# The two columns answer two different questions and should be read that way:
-#   PINNED  -- what testers should use. Reproducible, comparable across weeks, and the only builds a
-#              bug report can meaningfully name. If a pinned build breaks, it is us.
-#   ROLLING -- early warning. Tracks upstream so a toolchain regression surfaces here rather than in
-#              a release. If a rolling build breaks while its pinned twin does not, it is upstream,
-#              and that is a different bug with a different owner.
+# Rolling means the toolchain moves without us changing anything (issue #382). When a build or a
+# console result regresses, rebuild the SAME commit in the PS2DEVPINNED image (README.md has the
+# command) before blaming the source -- a pinned release asset may come from a different commit.
 #
 # ⚠ EVERY BUG REPORT MUST NAME ITS FLAVOUR. Each artifact carries BUILD-MANIFEST.txt recording the
 # image, the resolved digest where known, the compiler version and the source commit -- so a report
-# identifies exactly what ran. Without that this is four names and the same ambiguity as before.
-#
-# ⚠ THE PINS ARE A DELIBERATE, DATED DECISION, not a snapshot to refresh casually. Moving one
-# invalidates comparability with every report gathered against it. Bump them on purpose, note the
-# date, and expect to re-baseline.
+# identifies exactly what ran.
 #
 # Each ELF also self-identifies via LOCALVERSION ("-<FLAVOUR>" suffix), so a stray ELF with no zip
 # around it is still identifiable.
@@ -77,6 +68,18 @@ jobs:
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
         run: python3 .github/scripts/test_igr_polling.py
+      - name: Check SMB VMC I/O releases smb_io_sema, reports failed pages and trusts only the server's write Count
+        run: python3 .github/scripts/test_smb_vmc_io_result.py
+      - name: Check BDM and MMCE VMC writes, reads and erases report device failures
+        run: python3 .github/scripts/test_vmc_write_result.py
+      - name: Check IGR and power-off let an in-flight VMC save finish, bounded
+        run: python3 .github/scripts/test_igr_vmc_drain.py
+      - name: Check a failed ZSO device read is a read error, through the sector cache too, and an SMB image's last sector reads
+        run: python3 .github/scripts/test_zso_read_errors.py
+      - name: Check docs/VCD.md documents the shipped i.LINK usbhdfsd.irx size and hash
+        run: python3 .github/scripts/test_vcd_doc_ilink_hash.py
+      - name: Check audit_translations --strict still rejects a bad fork string after the overlay merge
+        run: python3 .github/scripts/test_audit_translations_overlay_owner.py
       - name: Check the in-game freeze report stays in its flavour and cannot hang IGR
         run: python3 .github/scripts/test_ingame_freeze_diag.py
       - name: Check the in-game freeze report text
@@ -107,7 +110,7 @@ jobs:
         run: python3 .github/scripts/test_bdma_stale_pair.py
       - name: Check POPSTARTER's i.LINK driver logs back in after an IOP reset
         run: python3 .github/scripts/test_ilink_bd_assault_reset.py
-      - name: Check POPS UDPFS config validation and USB save rollback
+      - name: Check POPS UDPFS game-device population and MC save rollback
         run: python3 .github/scripts/test_pops_udpfs.py
       - name: Check unsupported MMCE ioctls cannot report VMC fragmentation
         run: python3 .github/scripts/test_vmc_contiguity.py
@@ -448,9 +451,9 @@ jobs:
           "$RUNNER_TEMP/site-sync/bin/python" .github/scripts/test_site_sync.py
 
   # POPS/usbhdfsd.irx.ilink is a checked-in binary built from modules/bdmassault/ilink_bd_assault.
-  # Rebuild it with that module's own Makefile in the PS2DEVPINNED container and require the bytes
-  # to match every checked-in copy, so the shipped driver is always the output of the committed
-  # source (#1018). This container reproduces both the pre-#1018 binary and the current one exactly.
+  # Rebuild it with that module's own Makefile in the iLink driver pin (ps2dev, 2026-08-13; not the
+  # release PS2DEVPINNED digest) and require the bytes to match every checked-in copy, so the shipped
+  # driver is always the output of the committed source (#1018). This container reproduces both the pre-#1018 binary and the current one exactly.
   # A source change therefore needs the rebuilt binary in the same PR: take it from this job's
   # artifact, or build it locally in the same image.
   popstarter-ilink-driver:
@@ -479,7 +482,7 @@ jobs:
           {
             echo "Source head: ${{ github.event.pull_request.head.sha || github.sha }}"
             echo "Checkout: $GITHUB_SHA"
-            echo "Toolchain: PS2DEVPINNED (2026-08-13)"
+            echo "Toolchain: ps2dev iLink driver pin (2026-08-13), not the release PS2DEVPINNED"
             mipsel-none-elf-gcc --version | head -1
             sha256sum build/ilink-recovery/*.irx build/ilink-recovery/*.ilink
           } > build/ilink-recovery/BUILD-MANIFEST.txt
@@ -514,7 +517,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v6
         with:
-          name: ilink-recovery-modules-PS2DEVPINNED
+          name: ilink-recovery-modules-ilink-driver-pin
           path: build/ilink-recovery/
           if-no-files-found: ignore
 
@@ -523,22 +526,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # --- PINNED: reproducible. Give these to testers. ---
-          # ps2dev, pinned 2026-08-13.
-          # GHCR and Docker Hub are published from the same ps2dev image manifests.
-          # Keep the 2026-08-13 digest unchanged for pinned comparability; avoid
-          # anonymous Docker Hub pulls which fail on hosted runners (HTTP 429).
-          - flavour: PS2DEVPINNED
-            image: ghcr.io/ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            pinned: "yes (2026-08-13)"
-            opldiag: "0"
-          # Official OPL's own CI container, pinned 2026-08-13.
-          - flavour: OFFICIALPINNED
-            image: ghcr.io/ps2homebrew/ps2homebrew@sha256:a1b1f87f09a88f64efbe11356aae47098d4d54b3b3a84f0609fa42369244e25d
-            digest: sha256:a1b1f87f09a88f64efbe11356aae47098d4d54b3b3a84f0609fa42369244e25d
-            pinned: "yes (2026-08-13)"
-            opldiag: "0"
           # --- ROLLING: early warning. Expect these to move without us changing anything. ---
           - flavour: PS2DEVROLLING
             image: ghcr.io/ps2dev/ps2dev:latest
@@ -550,17 +537,16 @@ jobs:
             digest: ""
             pinned: "no (tracks ps2homebrew:main)"
             opldiag: "0"
-          # --- DIAGNOSTIC: same pinned toolchain as PS2DEVPINNED, built with OPLDIAG=1.
+          # --- DIAGNOSTIC: PS2DEVROLLING built with OPLDIAG=1.
           # Adds the on-screen boot-stage labels and the error-code detail suffix. Those are raw
           # untranslated developer strings, which is exactly why they must never reach a build a
           # normal user runs -- and exactly why a tester needs a build that HAS them. This is the
           # ELF to hand out when the question is WHERE a console wedges.
-          # It is NOT a DEBUG build: no TTY link, no -g. Everything else matches its pinned twin,
-          # so a result gathered here is directly comparable with one gathered on PS2DEVPINNED.
-          - flavour: PS2DEVPINNED-DIAG
-            image: ghcr.io/ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            pinned: "yes (2026-08-13)"
+          # It is NOT a DEBUG build: no TTY link, no -g. Everything else matches PS2DEVROLLING.
+          - flavour: PS2DEVROLLING-DIAG
+            image: ghcr.io/ps2dev/ps2dev:latest
+            digest: ""
+            pinned: "no (tracks ps2dev/ps2dev:latest)"
             opldiag: "1"
           # --- FREEZE REPORT: OFFICIALROLLING (the toolchain the release app uses) built with
           # INGAMEDIAG=1. When a game freezes, the IGR combo (L1+L2+R1+R2+Start+Select) saves what
@@ -700,5 +686,7 @@ jobs:
             RIPTOPL-*.ELF
             OPNPS2LD-*.ELF
             BUILD-MANIFEST.txt
+            POPS/
+            docs/VCD.md
           if-no-files-found: error
           retention-days: 14

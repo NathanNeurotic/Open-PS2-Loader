@@ -233,3 +233,10 @@ with tempfile.TemporaryDirectory() as directory:
     subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-sign-compare',
                     '-Wno-missing-field-initializers', str(cfile), '-o', str(binary)], check=True)
     subprocess.run([str(binary), str(folder)], check=True, timeout=15)
+
+# #1053: the RetroGEM barcode reports disc 1 (the first discs.txt entry) like the metadata path,
+# and only falls back to readdir priority when there is no manifest.
+barcode = function('src/cuesupport.c', 'void cuePrepareRetroGemBarcode(')
+assert barcode.index('cueReadDiscList(') < barcode.index('cueResolveGameImage('), 'barcode must consult discs.txt first'
+assert 'discs->names[0]' in barcode and 'cueBuildDiscPath(' in barcode, 'barcode must use the first discs.txt entry'
+print('Ember barcode follows discs.txt order')

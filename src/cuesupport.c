@@ -848,6 +848,45 @@ int cueResolveGameImage(const char *devPrefix, const char *name, char *out, int 
     return found;
 }
 
+// Info-screen #Size for an Ember row: the sum of every .bin track at the top of the game
+// folder (a multi-track .cue references several .bin tracks, so the .cue alone is meaningless).
+// Same top-level-only rule as io_find_disc. Returns 0 when the folder cannot be read.
+unsigned int cueGameSizeMB(const char *devPrefix, const char *name)
+{
+    char gamesDir[288];
+    char gameDir[320];
+    char filePath[640];
+    struct dirent *de;
+    struct stat st;
+    DIR *dir;
+    u64 total = 0;
+
+    if (devPrefix == NULL || name == NULL || name[0] == '\0')
+        return 0;
+
+    cueBuildGamesDir(devPrefix, gamesDir, sizeof(gamesDir));
+    if (gamesDir[0] == '\0')
+        return 0;
+    snprintf(gameDir, sizeof(gameDir), "%s%c%s", gamesDir, cueSep(devPrefix), name);
+
+    dir = opendir(gameDir);
+    if (dir == NULL)
+        return 0;
+    while ((de = readdir(dir)) != NULL) {
+        int len = (int)strlen(de->d_name);
+
+        if (len < 5 || strcasecmp(de->d_name + len - 4, ".bin") != 0)
+            continue;
+        if (snprintf(filePath, sizeof(filePath), "%s%c%s", gameDir, cueSep(devPrefix), de->d_name) >= (int)sizeof(filePath))
+            continue;
+        if (stat(filePath, &st) == 0 && S_ISREG(st.st_mode))
+            total += (u64)st.st_size;
+    }
+    closedir(dir);
+
+    return (unsigned int)(total >> 20);
+}
+
 int cueGameHasImage(const char *devPrefix, const char *name)
 {
     char imagePath[640];
@@ -871,8 +910,20 @@ void cuePrepareRetroGemBarcode(const char *devPrefix, const char *name)
         return;
 
     // Best-effort metadata only. A transient read failure must never turn GameID into a launch gate.
-    if (cueResolveGameImage(devPrefix, name, imagePath, sizeof(imagePath)) != 1)
+    // A multi-disc folder reports disc 1 -- the first discs.txt entry -- like the art/CFG metadata
+    // does (#1053); readdir order would pick whichever CUE was copied first.
+    cue_disc_list_t *discs = NULL;
+    int discCount = cueReadDiscList(devPrefix, name, &discs);
+    if (discCount > 0) {
+        int built = discs->count > 0 && cueBuildDiscPath(devPrefix, name, discs->names[0], imagePath, sizeof(imagePath));
+        free(discs);
+        if (!built)
+            return;
+    } else if (discCount < 0) {
+        return; // malformed manifest: the launch preflight already refused it
+    } else if (cueResolveGameImage(devPrefix, name, imagePath, sizeof(imagePath)) != 1) {
         return;
+    }
 
     if (retrogemGetPs1ImageGameID(imagePath, gameID, sizeof(gameID)) && gameID[0] != '\0')
         displayRetroGemGameID(gameID, 2);

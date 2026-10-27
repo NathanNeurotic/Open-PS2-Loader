@@ -592,12 +592,15 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
             if ((newlist = (base_game_info_t *)malloc(sizeof(base_game_info_t) * total)) != NULL) {
                 memset(newlist, 0, sizeof(base_game_info_t) * total);
 
-                while (size > 0) {
-                    base_game_info_t *g = &newlist[id++];
-
-                    // populate game entry in list even if entry corrupted
-                    read(fd, &GameEntry, sizeof(USBExtreme_game_entry_t));
+                // Whole entries only: count above was sized with floor(size / entry), so a trailing
+                // partial entry has no slot reserved for it and would write past the list.
+                while (size >= (int)sizeof(USBExtreme_game_entry_t)) {
+                    // populate game entry in list even if entry corrupted -- but never from a short
+                    // read, which would leave the rest of the entry as stack garbage.
+                    if (read(fd, &GameEntry, sizeof(USBExtreme_game_entry_t)) != (int)sizeof(USBExtreme_game_entry_t))
+                        break;
                     size -= sizeof(USBExtreme_game_entry_t);
+                    base_game_info_t *g = &newlist[id++];
 
                     // to ensure no leaks happen, we copy manually and pad the strings
                     memcpy(g->name, GameEntry.name, UL_GAME_NAME_MAX);
@@ -678,7 +681,9 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
     // Success or genuinely-empty: publish the freshly-built list (frees the previous one). Guard on
     // newlist so a failed allocation publishes an EMPTY list (count 0) rather than a NULL pointer with
     // a non-zero count -- an OOB on the very next render.
-    const int published = (newlist != NULL && total > 0) ? total : 0;
+    // Publish the rows actually filled (id), not the reserved total: a ul.cfg that ends in a short
+    // read leaves its reserved slots zeroed, and those must not appear as nameless games.
+    const int published = (newlist != NULL && total > 0) ? (id < total ? id : total) : 0;
     free(*list);
     *list = newlist;
     if (fsize != NULL)
@@ -1170,16 +1175,48 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
 // main page only needs the metadata-derived badges (#DiscType/#Media/#Format), never #Size.
 // The info screen flips this on via menuRequestInfoSize() so #Size still resolves on demand;
 // game->sizeMB is cached after the first resolve, so later scrolls show the size for free.
+// Owned by the thread that enabled it: menuLoadConfig runs itemGetConfig on the GUI thread while the
+// IO worker may be inside an info-size resolve, and a global flag let the launch path take that
+// worker's stat/mount work too -- including the shared pfs1: scratch mount for HDD PP. rows.
 static int sbConfigStatSize = 0;
+static int sbConfigStatSizeThread = -1;
 
 void sbSetConfigStatSize(int enable)
 {
+    sbConfigStatSizeThread = enable ? GetThreadId() : -1;
     sbConfigStatSize = enable;
 }
 
 int sbConfigStatSizeEnabled(void)
 {
-    return sbConfigStatSize;
+    return sbConfigStatSize && sbConfigStatSizeThread == GetThreadId();
+}
+
+// Info-screen #Size for a PS1 row (sbPopulateConfig never stats one: its prefix is the OPL config
+// root, while PS1 games live under the device's PS1 root -- POPS/<name>.VCD or EMBER/games/<name>/).
+// Callers pass that PS1 root (ending in its separator). No-op on the scroll path, for non-PS1 rows,
+// or once a size has been cached in game->sizeMB.
+void sbResolvePs1Size(base_game_info_t *game, const char *ps1Root, config_set_t *config)
+{
+    char gamepath[256];
+    struct stat st;
+    int len;
+
+    if (!sbConfigStatSizeEnabled() || game == NULL || ps1Root == NULL || config == NULL || game->sizeMB != 0)
+        return;
+
+    if (!strcasecmp(game->extension, ".VCD")) {
+        len = (int)strlen(ps1Root);
+        snprintf(gamepath, sizeof(gamepath), "%s%s%c%s%s", ps1Root, POPS_FOLDER,
+                 (len > 0 && ps1Root[len - 1] == '\\') ? '\\' : '/', game->name, game->extension);
+        if (stat(gamepath, &st) == 0)
+            game->sizeMB = st.st_size >> 20;
+    } else if (cueIsCueEntry(game)) {
+        game->sizeMB = cueGameSizeMB(ps1Root, game->name);
+    } else
+        return;
+
+    configSetInt(config, CONFIG_ITEM_SIZE, game->sizeMB);
 }
 
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep)
@@ -1289,7 +1326,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     else
         subseg[0] = '\0';
 
-    if (sbConfigStatSize && !isPs1 && game->sizeMB == 0) {
+    if (sbConfigStatSizeEnabled() && !isPs1 && game->sizeMB == 0) {
         char gamepath[256];
 
         if (game->format == GAME_FORMAT_ISO) {

@@ -541,13 +541,28 @@ inherited paths; current RiptOPL features are not all validated on PS3. See the
 Repository helpers live in `tools/`, with CI and documentation helpers in `.github/scripts/`; run them from the repository root. Existing
 Makefile targets retain their names and output locations.
 
-Use one of the toolchain images in [the CI matrix](.github/workflows/flavours.yml). Both pinned
+Use one of the toolchain images in [the CI workflow](.github/workflows/flavours.yml). Both pinned
 and rolling SDK images are supported; the latest SDK is not required. For a reproducible baseline,
-use the `PS2DEVPINNED` image digest from that matrix. From the repository root with Docker available:
+use the `PS2DEVPINNED` image: the 2026-07-28 ps2dev pin that `build-rolling-pinned` in
+[rolling-release.yml](.github/workflows/rolling-release.yml) builds every `-PS2DEVPINNED` release
+asset with. The image carries the toolchain only. The command below repeats that job's steps: it
+installs the same host packages, replaces the SDK's `mmceman.irx` and `bdmfs_fatfs.irx` with the
+patched builds every release embeds (both scripts download from GitHub), and runs the same serial
+`make`. From the repository root with Docker available:
 
 ```sh
-docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11 make -j4
+docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:c64ae69c9817865ed98ff054e4ae5360b9e280ed952c97946bca95d9d35be995 sh -c '
+  apk add --no-cache bash make git zip unzip tar gzip xz python3 py3-pip py3-yaml gmp mpfr4 mpc1 perl cmake pkgconf coreutils findutils grep sed gawk diffutils &&
+  git config --global --add safe.directory "*" &&
+  sh .github/scripts/install_coherent_mmce.sh &&
+  python3 .github/scripts/install_safe_bdmfs.py &&
+  make clean && make LOCALVERSION=PS2DEVPINNED release'
 ```
+
+The iLink driver job (`popstarter-ilink-driver` in flavours.yml) builds in a different ps2dev pin,
+taken 2026-08-13 (`sha256:8fba50ec…`), because it must reproduce the checked-in
+`usbhdfsd.irx.ilink` bytes exactly (see `modules/bdmassault/PROVENANCE.md`). That pin is not
+`PS2DEVPINNED`; do not compare its builds with `-PS2DEVPINNED` release assets.
 
 Use a clean checkout/build directory when changing SDK images. See the Makefile for flags such as
 `DUALSENSE=1` and `EXTRA_FEATURES=1`; build success does not establish console compatibility.

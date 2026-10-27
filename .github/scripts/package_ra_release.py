@@ -45,6 +45,24 @@ def extract(archive, destination):
         source.extractall(destination)
 
 
+def stage_shared_kit(archive, destination, preview):
+    extract(archive, destination)
+    validation_archive = archive
+    if preview:
+        # PR previews may bootstrap from an older published standard kit. Its
+        # POPS payload must match the PR's loader and validator, while extra
+        # runtime files supplied only by the install kit remain available.
+        shutil.copytree(ROOT / "POPS", destination / "POPS", dirs_exist_ok=True)
+        validation_archive = destination.parent / "preview-standard.zip"
+        with zipfile.ZipFile(validation_archive, "w", zipfile.ZIP_STORED) as output:
+            for file in sorted(destination.rglob("*")):
+                if file.is_file():
+                    output.write(file, file.relative_to(destination).as_posix())
+    app.verify(argparse.Namespace(zip=validation_archive,
+        source_elf=destination / "APPS/APP_RIPTOPL/RIPTOPL.ELF",
+        app_name="APP_RIPTOPL", elf_name="RIPTOPL.ELF", ra=False))
+
+
 def validate_builds(builds, revision, korium_revision):
     records = []
     for theme in THEMES:
@@ -88,10 +106,7 @@ def package(args):
     with tempfile.TemporaryDirectory() as temporary:
         temporary = Path(temporary)
         shared = temporary / "shared"
-        extract(args.standard_kit, shared)
-        app.verify(argparse.Namespace(zip=args.standard_kit,
-            source_elf=shared / "APPS/APP_RIPTOPL/RIPTOPL.ELF",
-            app_name="APP_RIPTOPL", elf_name="RIPTOPL.ELF", ra=False))
+        stage_shared_kit(args.standard_kit, shared, args.preview)
         archive = args.orbit_archive or temporary / pin["asset"]
         if args.orbit_archive is None:
             url = f"https://github.com/{pin['repository']}/releases/download/{pin['tag']}/{pin['asset']}"
@@ -123,7 +138,7 @@ def package(args):
             main = args.builds / f"{theme}-OFFICIALROLLING/pademu1.ELF"
             manifest = dict(revision=args.revision, korium_revision=args.korium_revision,
                 theme=theme, version=args.version, orbit=pin, builds=records, preview=args.preview,
-                shared_kit_sha256=digest(args.standard_kit))
+                shared_kit_sha256=digest(args.standard_kit), pops_revision=args.revision)
             (kit / "RA-BUILD.json").write_text(json.dumps(manifest, indent=2) + "\n")
             name = f"RIPTOPL-RetroAchievements-{theme}-{args.version}.zip"
             target = args.output / name

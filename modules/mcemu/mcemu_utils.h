@@ -38,22 +38,23 @@ int getModInfo(char *modname, modinfo_t *info);
 int oplRegisterShutdownCallback(oplShutdownCb_t cb);
 #define I_oplRegisterShutdownCallback DECLARE_IMPORT(5, oplRegisterShutdownCallback)
 
-/* BDM Transfer Imports */
+/* BDM Transfer Imports: 1 when every sector was transferred, 0 otherwise */
 #ifdef BDM_DRIVER
 
-void bdm_readSector(u64 lba, unsigned short int nsectors, unsigned char *buffer);
+int bdm_readSector(u64 lba, unsigned short int nsectors, unsigned char *buffer);
 #define I_bdm_readSector DECLARE_IMPORT(6, bdm_readSector)
 
-void bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *buffer);
+int bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *buffer);
 #define I_bdm_writeSector DECLARE_IMPORT(7, bdm_writeSector)
 
 #endif
 
+/* MMCE Transfer Imports: 1 when the seek and all size bytes succeeded, 0 otherwise */
 #ifdef MMCE_DRIVER
-void mmce_read_offset(int fd, unsigned int offset, unsigned int size, unsigned char *buffer);
+int mmce_read_offset(int fd, unsigned int offset, unsigned int size, unsigned char *buffer);
 #define I_mmce_read_offset DECLARE_IMPORT(6, mmce_read_offset)
 
-void mmce_write_offset(int fd, unsigned int offset, unsigned int size, const unsigned char *buffer);
+int mmce_write_offset(int fd, unsigned int offset, unsigned int size, const unsigned char *buffer);
 #define I_mmce_write_offset DECLARE_IMPORT(7, mmce_write_offset)
 #endif
 

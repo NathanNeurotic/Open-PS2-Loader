@@ -645,8 +645,8 @@ translations:
   FAV_REMOVED: Inalis sa Mga Paborito
   FAV_REMOVE_FAILED: Hindi maalis sa Mga Paborito
   POPS_UDPFS_SETTINGS: Network settings ng POPS UDPFS
-  POPS_UDPFS_DISCOVERY: Sine-save sa bawat USB POPS folder. Discovery ang gamit ng server 0.0.0.0.
-  POPS_UDPFS_NOT_READY: Kailangan ng POPS UDPFS ang magkatugma at tamang IPCONFIG.DAT at UDPFSCONFIG.DAT sa bawat USB POPS folder. I-configure ang mga ito sa POPS Network Settings.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = pagtuklas"
+  POPS_UDPFS_NOT_READY: "Hindi mabasa ang network settings ng POPS UDPFS mula sa memory card."
   HINT_POPS_UDPFS_IP: Static na PS2 IP na ginagamit ng POPS UDPFS driver pagkatapos ng IOP reset nito.
   POPS_UDPFS_ALL_USB_FOLDERS: Lahat ng USB POPS folder
   POPS_UDPFS_INVALID_SUFFIX: ' (hindi tama)'

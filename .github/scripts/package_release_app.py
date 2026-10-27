@@ -11,6 +11,7 @@ independent of checkout and file times. The vendored reader checks both outputs.
 import argparse
 import datetime as dt
 import hashlib
+import json
 import re
 import shutil
 import struct
@@ -39,6 +40,29 @@ PSU_DIR_MODE = 0x8027
 PSU_FILE_MODE = 0x8017
 PSU_CLUSTER = 1024
 MAX_MC_NAME = 31
+
+
+def verify_udpfs_payload(package: zipfile.ZipFile) -> set[str]:
+    """Require the current unmodified UDPFS pair and redistribution notices."""
+    notices = ROOT / "POPS" / "UDPFS-NOTICES"
+    required = {p.relative_to(ROOT).as_posix() for p in notices.rglob("*") if p.is_file()}
+    releases = json.loads((notices / "PROVENANCE.json").read_text(encoding="utf-8"))
+    required.update(name for release in releases for name in release["files"])
+    missing = required - set(package.namelist())
+    if missing:
+        raise ValueError(f"missing UDPFS drivers or notices: {sorted(missing)}")
+    for path in sorted(notices.rglob("*")):
+        if path.is_file():
+            name = path.relative_to(ROOT).as_posix()
+            if package.read(name) != path.read_bytes():
+                raise ValueError(f"packaged UDPFS notice differs from the repository copy: {name}")
+    for release in releases:
+        for name, expected in release["files"].items():
+            data = package.read(name)
+            if len(data) != expected["bytes"] or hashlib.sha256(data).hexdigest() != expected["sha256"]:
+                raise ValueError(f"packaged UDPFS driver differs from upstream release: {name}")
+    return required
+
 
 # Port of the timestamp planner in R3Z3N's SAS-TIMESTAMPSTOMLV3.py. The release
 # packer writes PSU directory records directly, so its psu.toml and Windows
@@ -316,6 +340,7 @@ def verify(args: argparse.Namespace) -> None:
         required.update(f"ART/{args.elf_name}_{suffix}.png" for suffix in ART_SUFFIXES)
         required.update({"POPS/IPCONFIG.DAT", "POPS/UDPFSCONFIG.DAT"})
         required.update(f"POPS/{module}.{suffix}" for suffix in BDMA_SUFFIXES for module in ("usbd.irx", "usbhdfsd.irx"))
+        required.update(verify_udpfs_payload(package))
         if args.ra:
             required.add("xeRAbora.url")
             required.add("LICENSE-MBEDTLS.txt")

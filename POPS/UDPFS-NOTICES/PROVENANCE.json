@@ -1,0 +1,17 @@
+[
+  {
+    "tag": "1.0.0",
+    "url": "https://github.com/Okeanos86/BDMAssault/releases/download/1.0.0/UDPFS_Assault.zip",
+    "archive_sha256": "a22311192bbf4d5252d62aec130e57a900505bc71f8603407fc45b7c453da27e",
+    "files": {
+      "POPS/usbd.irx.udpfs": {
+        "bytes": 44597,
+        "sha256": "f6bda124c58f1eb770f4278d6366bb99c8c568fea94a06968c50c265d6f6cba7"
+      },
+      "POPS/usbhdfsd.irx.udpfs": {
+        "bytes": 34508,
+        "sha256": "70a369e47745e7f995fa771edbbfed086727b759fba915a7070c0fbcf061dd34"
+      }
+    }
+  }
+]

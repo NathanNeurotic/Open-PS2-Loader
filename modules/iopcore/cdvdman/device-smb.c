@@ -138,10 +138,17 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
             } else
                 esc_flag = 1;
 
-            if (smb_ReadCD(offslsn, sectors_to_read, &p[r], i) <= 0) {
+            // A ZSO file seldom ends on a sector boundary, so the read of its last sector stops at the
+            // end of the file. Pad that sector with zeros, as a block device returns a whole sector.
+            // Any larger shortfall is a failed read.
+            int want = (int)(sectors_to_read * 2048);
+            int got = smb_ReadCD(offslsn, sectors_to_read, &p[r], i);
+            if (got < 0 || got <= want - 2048) {
                 rv = SCECdErREAD;
                 break;
             }
+            if (got < want)
+                memset(&p[r + got], 0, want - got);
 
             r += sectors_to_read * 2048;
             offslsn += sectors_to_read;
@@ -154,4 +161,32 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     }
 
     return rv;
+}
+
+//
+// oplutils exported functions, used by MCEMU for VMC pages. They take the oplutils slots that
+// smb_ReadFile and smb_WriteFile had, and report each call so that oplShutdown can let a save
+// finish. (DeviceReadSectors also uses smb_ReadFile, for the game image, which is not a VMC call.)
+//
+
+int smb_vmcReadFile(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, int nbytes)
+{
+    int res;
+
+    cdvdman_vmc_io_begin(0);
+    res = smb_ReadFile(FID, offsetlow, offsethigh, readbuf, nbytes);
+    cdvdman_vmc_io_end();
+
+    return res;
+}
+
+int smb_vmcWriteFile(u16 FID, u32 offsetlow, u32 offsethigh, void *writebuf, int nbytes)
+{
+    int res;
+
+    cdvdman_vmc_io_begin(1);
+    res = smb_WriteFile(FID, offsetlow, offsethigh, writebuf, nbytes);
+    cdvdman_vmc_io_end();
+
+    return res;
 }

@@ -8,6 +8,8 @@
 // block offset cache, reduces IO access
 u32 *ziso_idx_cache = NULL;
 int ziso_idx_start_block = -1;
+// entries the last index read returned; only these hold offsets
+static u32 ziso_idx_entries = 0;
 
 // header data that we need for the reader
 u32 ziso_align;
@@ -40,6 +42,7 @@ void ziso_init(ZISO_header *header, u32 first_block)
   Taken from ARK-4's Inferno 2 ISO Driver.
   Tailored for OPL.
   It's made to work with 2048 block size (matching DVD sector size) and LZ4 compression (ZSO).
+  Returns the sectors decoded (fewer near the end of the image), or -1 when a device read failed.
 */
 int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 {
@@ -59,8 +62,15 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     }
 
     // refresh index table if needed
-    if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
-        read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0);
+    if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ziso_idx_entries - 1) {
+        int r = read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0);
+        // A file-backed read can come back short, and the rest of the cache still holds the previous
+        // window's offsets. Keep only the entries read, and fail unless they cover this request.
+        ziso_idx_entries = (r > 0) ? (u32)r / sizeof(u32) : 0;
+        if (ziso_idx_entries < count + 1) {
+            ziso_idx_start_block = -1; // a failed read leaves the cache invalid, never half-trusted
+            return -1;
+        }
         ziso_idx_start_block = lsn;
     }
 
@@ -71,7 +81,8 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     // read all compressed data to the end of provided buffer to reduce IO
     // there should be no overflow or overrun, as long as compressed data is smaller, and it should be
     u8 *c_buff = addr + (count * 2048) - compressed_size;
-    read_raw_data(c_buff, compressed_size, o_start, ziso_align);
+    if (read_raw_data(c_buff, compressed_size, o_start, ziso_align) != (int)compressed_size)
+        return -1; // a short or failed read must not be decompressed as if it were the image
 
     // process each sector
     for (unsigned int i = 0; i < count; i++) {

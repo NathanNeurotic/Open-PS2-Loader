@@ -231,6 +231,11 @@ static void bdmBuildPs1Prefix(char *target, int targetLength, int massSlot)
     snprintf(target, targetLength, "mass%d:/", massSlot);
 }
 
+void bdmGetPs1Root(int mode, char *target, int targetLength)
+{
+    bdmBuildPs1Prefix(target, targetLength, mode);
+}
+
 /* ⚠ NEVER ASK FOR THE DRIVER NAME WITH A RETURN BUFFER UNTIL YOU KNOW THE VOLUME IS MOUNTED.
    ps2sdk's handler NULL-DEREFERENCES otherwise. iop/fs/bdmfs_fatfs/src/fs_driver.c, upstream master,
    verified 2026-08-26:
@@ -2831,7 +2836,13 @@ static config_set_t *bdmGetConfig(item_list_t *itemList, int id)
 
     // Active view's array (#120 split) -- a VCD's per-game CFG keys off its own entry, and a stale
     // id resolves to the empty entry instead of indexing outside either backing array.
-    config = sbPopulateConfig(bdmActiveGame(itemList, id), pDeviceData->bdmPrefix, "/");
+    base_game_info_t *game = bdmActiveGame(itemList, id);
+    config = sbPopulateConfig(game, pDeviceData->bdmPrefix, "/");
+    if (sbConfigStatSizeEnabled()) {
+        char ps1Prefix[BDM_DEVICE_ROOT_MAX + 2];
+        bdmBuildPs1Prefix(ps1Prefix, sizeof(ps1Prefix), itemList->mode); // PS1 games live at the device root
+        sbResolvePs1Size(game, ps1Prefix, config);
+    }
     bdmLogIdentityDiagnosticLive("config-create", itemList, config);
     return config;
 }

@@ -1355,12 +1355,24 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     sysLaunchLoaderElf(filename, "MMCE_MODE", irx_size, irx, size_mcemu_irx, mmce_mcemu_irx, EnablePS2Logo, compatmask);
 }
 
+void mmceGetPs1Root(char *root, int size)
+{
+    mmceGetDeviceRoot(root, (size_t)size);
+}
+
 static config_set_t *mmceGetConfig(item_list_t *itemList, int id)
 {
     // Config (CFG + #Format/#System/#DiscType badges) comes from the ACTIVE view's array; mmceActiveGame
     // picks it (VCD keys off the basename) and returns a safe empty entry for any stale/invalid id,
     // so this can never index the wrong/NULL array out of range.
-    return sbPopulateConfig(mmceActiveGame(itemList, id), mmcePrefix, "/");
+    base_game_info_t *game = mmceActiveGame(itemList, id);
+    config_set_t *config = sbPopulateConfig(game, mmcePrefix, "/");
+    if (sbConfigStatSizeEnabled()) {
+        char ps1Root[sizeof(mmcePrefix)];
+        mmceGetDeviceRoot(ps1Root, sizeof(ps1Root)); // POPS/ and EMBER/ live at the card root
+        sbResolvePs1Size(game, ps1Root, config);
+    }
+    return config;
 }
 
 static int mmceGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)

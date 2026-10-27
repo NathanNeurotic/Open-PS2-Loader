@@ -165,6 +165,8 @@ void cueApplySettings(const char *devPrefix, const char *name, config_set_t *con
 // failure must never block a launch. Returns 1 when an image is present, 0 when the folder is
 // readable and holds none, and 1 when the folder cannot be read at all (let Ember be the judge).
 int cueGameHasImage(const char *devPrefix, const char *name);
+// Total MiB of the disc-image files in an Ember game folder (info-screen #Size); 0 if unreadable.
+unsigned int cueGameSizeMB(const char *devPrefix, const char *name);
 
 // Resolve the exact disc image Ember would select for this game folder using Ember's priority
 // (.cue, then .exe, then .bin). Returns 1 and writes the full path, 0 if readable but empty,

@@ -24,7 +24,7 @@ typedef uint32_t u32;
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define SEEK_SET 0
 #define SEEK_CUR 1
-static int probed_fd, reads, seeks, hddReads;
+static int probed_fd, reads, seeks, hddReads, hddFail;
 static u32 probed_lba;
 static u8 ziso_tmp_buf[2048];
 static int lseek(int fd,unsigned int offset,int whence) {
@@ -33,8 +33,8 @@ static int lseek(int fd,unsigned int offset,int whence) {
 static int read(int fd,void *out,unsigned int bytes) {
     assert(fd==probed_fd&&fd>=0);reads++;memset(out,0x5a,bytes);return bytes;
 }
-static void ReadHDDSectors(u32 lba,u8 *out,u32 count) {
-    (void)lba;assert(probed_lba>0&&probed_fd==0);hddReads++;memset(out,0xa5,count*2048);
+static int ReadHDDSectors(u32 lba,u8 *out,u32 count) {
+    (void)lba;assert(probed_lba>0&&probed_fd==0);hddReads++;if(hddFail)return -1;memset(out,0xa5,count*2048);return 0;
 }
 @FUNCTIONS@
 int main(void) {
@@ -47,6 +47,9 @@ int main(void) {
     probed_fd=0;probed_lba=100;
     assert(read_raw_data(out,sizeof(out),64,0)==sizeof(out));
     assert(hddReads==1&&reads==2&&out[0]==0xa5&&out[99]==0xa5);
+    hddFail=1;
+    assert(read_raw_data(out,sizeof(out),64,0)<0); /* a failed HDD sector read is reported, never returned as data */
+    hddFail=0;hddReads=1;
     probed_fd=-1;probed_lba=0;
     assert(read_raw_data(out,sizeof(out),64,0)<0&&hddReads==1&&reads==2);
     probed_fd=3;probed_lba=100;

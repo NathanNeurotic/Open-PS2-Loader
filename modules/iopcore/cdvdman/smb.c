@@ -686,8 +686,12 @@ int smb_ReadFile(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, int nbyt
         toRead = remaining > CLIENT_MAX_RECV_SIZE ? CLIENT_MAX_RECV_SIZE : remaining;
 
         result = smb_ReadAndX(FID, offsetlow, offsethigh, ptr, toRead);
-        if (result <= 0)
-            return result;
+        if (result <= 0) {
+            SIGNALIOSEMA(smb_io_sema);
+            // Zero bytes means the read reached the end of the file (MS-CIFS 3.3.5.36). Return the
+            // bytes read before it as a short count; callers that need all nbytes compare with nbytes.
+            return (result == 0) ? nbytes - remaining : result;
+        }
 
         //Check for and handle overflow.
         if (offsetlow + result < offsetlow)
@@ -738,7 +742,15 @@ static int smb_WriteAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *writebuf,
     if ((WRsp->smbH.Eclass | (WRsp->smbH.Ecode << 16)) != STATUS_SUCCESS)
         return -EIO;
 
-    return nbytes;
+    // A success status does not mean every byte was written: a full file system is reported with a
+    // success status and a Count of zero (MS-CIFS 2.2.4.43.2). Return the server's Count, so that a
+    // VMC page it did not store is reported as a failed write. smb_WriteFile sends at most CLIENT_MAX_XMIT_SIZE (65535)
+    // bytes per request, so the 16-bit Count holds the whole answer and CountHigh is not needed.
+    // A reply too short to hold Count, or one that claims more than was sent, is a failed write.
+    if (r < (int)sizeof(WriteAndXResponse_t) || WRsp->smbWordcount < 6 || WRsp->Count > nbytes)
+        return -EIO;
+
+    return WRsp->Count;
 }
 
 int smb_WriteFile(u16 FID, u32 offsetlow, u32 offsethigh, void *writebuf, int nbytes)
@@ -755,8 +767,10 @@ int smb_WriteFile(u16 FID, u32 offsetlow, u32 offsethigh, void *writebuf, int nb
         toWrite = remaining > CLIENT_MAX_XMIT_SIZE ? CLIENT_MAX_XMIT_SIZE : remaining;
 
         result = smb_WriteAndX(FID, offsetlow, offsethigh, ptr, toWrite);
-        if (result <= 0)
+        if (result <= 0) {
+            SIGNALIOSEMA(smb_io_sema);
             return result;
+        }
 
         //Check for and handle overflow.
         if (offsetlow + result < offsetlow)

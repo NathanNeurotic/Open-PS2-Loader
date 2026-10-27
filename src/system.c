@@ -1592,7 +1592,20 @@ static int sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *device
         LOG("[NEUTRINO] no %s -- neutrino cannot boot this transport without it\n", tomlPath);
         return -1; // missing bsd toml = guaranteed post-teardown failure -> abort while GUI is alive
     }
-    len = read(fd, toml, sizeof(toml) - 1);
+    // read() may return a file in chunks (#1051): accumulate until EOF or a full buffer. Rewriting
+    // from a short first read would truncate everything after it. A read error mid-file counts as
+    // unreadable rather than as a shorter file.
+    len = 0;
+    while (len < (int)sizeof(toml) - 1) {
+        int got = read(fd, toml + len, sizeof(toml) - 1 - len);
+        if (got < 0) {
+            len = -1;
+            break;
+        }
+        if (got == 0)
+            break;
+        len += got;
+    }
     close(fd);
     if (len <= 0)
         return -1; // unreadable/empty bsd toml -> same guaranteed failure
