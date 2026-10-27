@@ -617,7 +617,6 @@ translations:
   FAV_REMOVE_FAILED: 無法從最愛遊戲中移除
   POPS_UDPFS_SETTINGS: POPS UDPFS 網路設定
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 自動探索"
-  POPS_UDPFS_NOT_READY: "POPS UDPFS 需要在記憶卡上安裝 .udpfs 驅動程式組。請手動安裝，或開啟 BDMA「啟動時套用」。"
   HINT_POPS_UDPFS_IP: POPS 的 UDPFS 驅動程式在 IOP 重設後使用的 PS2 靜態 IP。
   POPS_UDPFS_ALL_USB_FOLDERS: 所有 USB 上的 POPS 資料夾
   POPS_UDPFS_INVALID_SUFFIX: ' （無效）'

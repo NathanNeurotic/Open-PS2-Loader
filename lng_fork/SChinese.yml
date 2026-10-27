@@ -608,7 +608,6 @@ translations:
   FAV_REMOVE_FAILED: 无法从收藏游戏中移除
   POPS_UDPFS_SETTINGS: POPS UDPFS 网络设置
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 自动发现"
-  POPS_UDPFS_NOT_READY: "POPS UDPFS 需要在记忆卡上安装 .udpfs 驱动组。请手动安装，或开启 BDMA“启动时应用”。"
   HINT_POPS_UDPFS_IP: POPS 的 UDPFS 驱动在 IOP 重启后使用的 PS2 静态 IP。
   POPS_UDPFS_ALL_USB_FOLDERS: 所有 USB 上的 POPS 文件夹
   POPS_UDPFS_INVALID_SUFFIX: ' （无效）'

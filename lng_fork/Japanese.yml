@@ -607,7 +607,6 @@ translations:
   FAV_REMOVE_FAILED: お気に入りゲームから外せませんでした
   POPS_UDPFS_SETTINGS: POPS UDPFS ネットワーク設定
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 自動検出"
-  POPS_UDPFS_NOT_READY: "POPS UDPFS にはメモリーカードに .udpfs ドライバーの組がインストールされている必要があります。手動で入れるか、BDMA の「起動時に適用」をオンにしてください。"
   HINT_POPS_UDPFS_IP: POPS の UDPFS ドライバーが IOP リセット後に使う PS2 の固定 IP。
   POPS_UDPFS_ALL_USB_FOLDERS: すべての USB の POPS フォルダ
   POPS_UDPFS_INVALID_SUFFIX: ' （無効）'

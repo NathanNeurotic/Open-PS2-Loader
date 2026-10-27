@@ -608,7 +608,6 @@ translations:
   FAV_REMOVE_FAILED: Неуспешно премахване от Любими игри
   POPS_UDPFS_SETTINGS: Мрежови настройки на POPS UDPFS
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = откриване"
-  POPS_UDPFS_NOT_READY: "POPS UDPFS се нуждае от двойката драйвери .udpfs, инсталирана на картата с памет. Сложете я ръчно или включете BDMA Прилагане при стартиране."
   HINT_POPS_UDPFS_IP: Статичен IP на PS2, който драйверът POPS UDPFS използва след нулиране на IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Всички папки POPS на USB
   POPS_UDPFS_INVALID_SUFFIX: ' (невалидно)'

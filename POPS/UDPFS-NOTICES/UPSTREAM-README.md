@@ -99,4 +99,4 @@ network. Read this before trusting it with data you care about.
 ## Credits and licenses
 
 See [NETWORK/docs/THIRD_PARTY_NOTICES.md](NETWORK/docs/THIRD_PARTY_NOTICES.md). The project is
-under the Academic Free License 2.0 (`licenses/`).
+under the Academic Free License 2.0 (`NETWORK/licenses/`).

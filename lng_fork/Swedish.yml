@@ -628,7 +628,6 @@ translations:
   FAV_REMOVE_FAILED: Kunde inte ta bort från Stjärnmärkta spel
   POPS_UDPFS_SETTINGS: Nätverksinställningar för POPS UDPFS
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = upptäckt"
-  POPS_UDPFS_NOT_READY: "POPS UDPFS behöver drivrutinsparet .udpfs installerat på minneskortet. Lägg in det manuellt eller slå på BDMA Tillämpa vid start."
   HINT_POPS_UDPFS_IP: Statisk PS2-IP som POPS UDPFS-drivrutinen använder efter sin IOP-återställning.
   POPS_UDPFS_ALL_USB_FOLDERS: Alla POPS-mappar på USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ogiltig)'
