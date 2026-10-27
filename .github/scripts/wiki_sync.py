@@ -90,6 +90,7 @@ SITE_GROUPS = {
         ("ps3-bc", "PS3-Compatibility", "Backward-compatible PS3"),
         ("credits", "Credits", "Credits and sources"),
         ("fork-gaps", "Fork-Feature-Gaps", "Features in other forks"),
+        ("ps2sdk-notes", "PS2SDK-Notes", "Notes for ps2sdk"),
         ("index", "Project-Overview", "Project overview"),
     ],
 }

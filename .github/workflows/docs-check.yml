@@ -14,6 +14,7 @@ on:
       - '.github/scripts/*wiki_sync*'
       - '.github/requirements-docs.txt'
       - '.github/workflows/docs-check.yml'
+      - '.github/workflows/docs-sync.yml'
   push:
     branches: [rebuild/main]
     paths:
@@ -27,6 +28,7 @@ on:
       - '.github/scripts/*wiki_sync*'
       - '.github/requirements-docs.txt'
       - '.github/workflows/docs-check.yml'
+      - '.github/workflows/docs-sync.yml'
   workflow_dispatch:
 
 permissions:
