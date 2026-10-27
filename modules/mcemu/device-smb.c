@@ -7,7 +7,8 @@
 
 #include "mcemu.h"
 
-/* smb_WriteFile() and smb_ReadFile() return the requested byte count when every byte was transferred.
+/* smb_WriteFile() and smb_ReadFile() return the requested byte count when the server reports every byte
+   transferred (a WRITE_ANDX reply's Count, a READ_ANDX reply's data length).
    Otherwise they return 0 or a negative error code, or for a read that reached the end of the file, the
    smaller count read before it. smb_OpenAndX() returns 1 on success and a negative code on failure. */
 
