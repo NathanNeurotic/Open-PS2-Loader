@@ -910,8 +910,20 @@ void cuePrepareRetroGemBarcode(const char *devPrefix, const char *name)
         return;
 
     // Best-effort metadata only. A transient read failure must never turn GameID into a launch gate.
-    if (cueResolveGameImage(devPrefix, name, imagePath, sizeof(imagePath)) != 1)
+    // A multi-disc folder reports disc 1 -- the first discs.txt entry -- like the art/CFG metadata
+    // does (#1053); readdir order would pick whichever CUE was copied first.
+    cue_disc_list_t *discs = NULL;
+    int discCount = cueReadDiscList(devPrefix, name, &discs);
+    if (discCount > 0) {
+        int built = discs->count > 0 && cueBuildDiscPath(devPrefix, name, discs->names[0], imagePath, sizeof(imagePath));
+        free(discs);
+        if (!built)
+            return;
+    } else if (discCount < 0) {
+        return; // malformed manifest: the launch preflight already refused it
+    } else if (cueResolveGameImage(devPrefix, name, imagePath, sizeof(imagePath)) != 1) {
         return;
+    }
 
     if (retrogemGetPs1ImageGameID(imagePath, gameID, sizeof(gameID)) && gameID[0] != '\0')
         displayRetroGemGameID(gameID, 2);
