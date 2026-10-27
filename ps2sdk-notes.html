@@ -108,7 +108,7 @@ one-off test from the 2026-10-27 review that is not in the repository.</li>
 <td><a href="#smbman">smbman</a></td>
 <td><code>iop/network/smbman</code></td>
 <td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/modules/network/smbman-ra"><code>modules/network/smbman-ra</code></a></td>
-<td>3</td>
+<td>4</td>
 <td>0</td>
 <td>1</td>
 </tr>
@@ -178,16 +178,17 @@ one-off test from the 2026-10-27 review that is not in the repository.</li>
 </tr>
 </tbody>
 </table>
-<p>ps2ips and IEEE1394_bd each also have one defect of our own, listed with the module. Defects we saw in
-modules we did not change are under <a href="#other-ps2sdk-modules">other ps2sdk modules</a>.</p>
-<p>The <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/ps2sdk-patches/0001-smbman-a-write-is-complete-only-for-the-bytes-the-se.patch">smbman write-count fix</a>
-is ready as a ps2sdk patch: it applies to master <code>329e2bb</code> with <code>git am</code>. For the rest, our copies are the
-reference. smbman-ra, usbd-ra, ps2ips and iLinkman diff cleanly against ps2sdk. APA, BDM and IEEE1394_bd
+<p>ps2ips and IEEE1394_bd each had one defect of our own, both fixed on 2026-10-27 and listed with the
+module. Defects we saw in modules we did not change are under <a href="#other-ps2sdk-modules">other ps2sdk modules</a>.</p>
+<p>The smbman <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/ps2sdk-patches/0001-smbman-a-write-is-complete-only-for-the-bytes-the-se.patch">write-count</a>
+and <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/ps2sdk-patches/0002-smbman-send-at-most-65534-bytes-per-WRITE_ANDX-reque.patch">write ByteCount</a>
+fixes are ready as ps2sdk patches: they apply in that order to master <code>329e2bb</code> with <code>git am</code>. For the
+rest, our copies are the reference. smbman-ra, usbd-ra, ps2ips and iLinkman diff cleanly against ps2sdk. APA, BDM and IEEE1394_bd
 were reformatted with clang-format in a baseline commit that each <code>ORIGIN.txt</code> describes, so diff them
 against that commit. atad was added already reformatted and changed (<code>bcac683b</code>), so diff it against its
 pin with whitespace ignored (<code>diff -w</code>), or follow its <code>/* FORK */</code> markers.</p>
 <h2 id="smbman">smbman</h2>
-<p>Our copy is ps2sdk's <code>iop/network/smbman</code> with three changes. ps2sdk has not changed those sources since
+<p>Our copy is ps2sdk's <code>iop/network/smbman</code> with four changes. ps2sdk has not changed those sources since
 <code>d44e0128</code> (2024-12-12). Every flavour embeds our copy; before 2026-10-27 only the RetroAchievements
 flavour did. Only the menu loads it; in-game SMB access uses OPL's own driver in
 <code>modules/iopcore/cdvdman</code>.</p>
@@ -211,6 +212,21 @@ call gets the zero Count or the error.</li>
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/.github/scripts/test_smbman_ra_write_count.py"><code>test_smbman_ra_write_count.py</code></a>. It fails on master's
 <code>smb.c</code> and passes with the patch. Not tested on hardware or against a live server that sends a short
 Count.</li>
+</ul>
+<h3 id="a-65535-byte-write-request-says-it-carries-no-data">A 65535-byte write request says it carries no data</h3>
+<p><strong>Still in master.</strong></p>
+<ul>
+<li><strong>Where:</strong> <code>smb.c</code>. <code>smb_WriteAndX()</code> sets <code>WR-&gt;ByteCount = (u16)nbytes + padding</code>, and
+<code>smb_WriteFile()</code> sends up to <code>CLIENT_MAX_XFER_SIZE</code> (65535) bytes per request.</li>
+<li><strong>What goes wrong:</strong> ByteCount is 16 bits and counts the one padding byte as well as the data, so a
+65535-byte request goes out with a ByteCount of 0.</li>
+<li><strong>Who hits it:</strong> IOP callers writing 65535 bytes or more in one call; EE fileXio callers only after
+raising the RW buffer to at least that size. How servers treat a ByteCount of 0 was not checked.</li>
+<li><strong>Our change:</strong> send at most 65534 bytes per request (<code>CLIENT_MAX_WRITE_SIZE</code>). Reads keep 65535.</li>
+<li><strong>Evidence:</strong> host test
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/.github/scripts/test_smbman_ra_write_count.py"><code>test_smbman_ra_write_count.py</code></a> now requires a
+ByteCount of data plus one on every request and fails with the 65535-byte chunk. Not tested on
+hardware or against a live server.</li>
 </ul>
 <h3 id="a-file-another-session-still-holds-cannot-be-opened-even-to-read">A file another session still holds cannot be opened, even to read</h3>
 <p><strong>Still in master.</strong></p>
@@ -252,10 +268,6 @@ copy does not. Not tested on hardware.</li>
 </ul>
 <h3 id="seen-in-smbman-not-changed-here">Seen in smbman, not changed here</h3>
 <ul>
-<li><code>WR-&gt;ByteCount = (u16)nbytes + padding;</code> wraps to 0 for a 65535-byte chunk, the largest that
-<code>smb_WriteFile()</code> sends. IOP callers writing 65535 bytes or more reach it; EE fileXio callers only after
-raising the RW buffer to at least that size. Sending at most 65534 bytes per chunk avoids it. How
-servers treat a ByteCount of 0 was not checked. (Source, plus a compiled check of the arithmetic.)</li>
 <li><code>STATUS_OBJECT_NAME_NOT_FOUND</code> is defined but never used, so opening a missing file returns <code>-EIO</code>, not
 <code>-ENOENT</code>. OPL works around it in its EE code. (Source.)</li>
 <li><code>smb_write()</code>'s check <code>!(mode &amp; O_RDWR) &amp;&amp; !(mode &amp; O_WRONLY)</code> never rejects a read-only handle. It is
@@ -309,9 +321,10 @@ libps2ips's socket operations table (<code>__ps2ipc_fdman_ops_socket</code>, def
 <code>ee/rpc/tcpips/src/ps2ipc_ps2sdk.c</code>), which fits the reported symptom of sockets leaking until
 <code>socket()</code> fails (unconfirmed). <code>fa7359ff</code> (2018) grew the packet without growing the EE buffer.</li>
 <li><strong>Who hits it:</strong> every EE program using libps2ips, on every TCP <code>recv()</code> that returns data.</li>
-<li><strong>Our change:</strong> the IRX sends at most 128 bytes, 80 when there is no unaligned tail. This is a
-workaround, because the EE library is ps2sdk's, and it causes the defect of our own listed below. The
-ps2sdk fix belongs on the EE side: make <code>_intr_data</code> at least <code>sizeof(rests_pkt)</code> (144 bytes), rounded
+<li><strong>Our change:</strong> the IRX sends at most 128 bytes, 80 when there is no unaligned tail, so it can return
+only 48 bytes of a receive's unaligned tail. It peeks first and takes only what fits. This is a
+workaround, because the EE library is ps2sdk's; the entry on our own defect below says what its first
+version lost and what it still costs UDP. The ps2sdk fix belongs on the EE side: make <code>_intr_data</code> at least <code>sizeof(rests_pkt)</code> (144 bytes), rounded
 up to a multiple of 64 bytes and kept 64-byte aligned. Ship it together with the next fix, which
 otherwise starts sending recvfrom's 144 bytes there too.</li>
 <li><strong>Evidence:</strong> review harness (stock code DMAs 144 bytes) and the symbol layout of our RA build. Not
@@ -361,12 +374,20 @@ tested on hardware.</li>
 <code>ret-&gt;h_addr_list[0]</code>, the address it points to. Every name resolves to an IOP memory address. This has
 been so since <code>e9c45741</code> (2015). Host test <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/.github/scripts/test_ps2ips_dns.py"><code>test_ps2ips_dns.py</code></a>
 fails on master's code and passes on ours.</p>
-<h3 id="our-defect-a-receive-with-a-long-unaligned-tail-loses-data">Our defect: a receive with a long unaligned tail loses data</h3>
-<p>This is a defect in our copy, not in ps2sdk. Because of the 128-byte workaround above, when the unaligned
-tail of a receive is longer than 48 bytes, the IRX lowers the returned length after lwIP has already
-consumed the bytes. A UDP datagram looks shorter; a TCP stream silently loses up to 15 bytes. It affects
-the RetroAchievements flavour's TCP readers in <code>src/ranet.c</code> and <code>src/ratls_ps2.c</code>. Shrinking the length
-passed to lwIP so that the tail never exceeds 48 bytes would avoid the loss. (Review harness.)</p>
+<h3 id="our-defect-fixed-a-receive-with-a-long-unaligned-tail-lost-data">Our defect, fixed: a receive with a long unaligned tail lost data</h3>
+<p>This was a defect in our copy, not in ps2sdk. Because of the 128-byte workaround above, when the unaligned
+tail of a receive was longer than 48 bytes, the IRX lowered the returned length after lwIP had already
+consumed the bytes, so a TCP stream silently lost up to 15 bytes. It affected the RetroAchievements
+flavour's TCP readers in <code>src/ranet.c</code> and <code>src/ratls_ps2.c</code>. Since 2026-10-27 our copy peeks with
+<code>MSG_PEEK</code> and then receives only the bytes whose tail fits (<code>rests_fit()</code>). lwIP 2.2's TCP peek copies
+from the first queued buffer and leaves it queued, so the second receive returns exactly what it asks
+for and the rest waits for the next call. A receive therefore returns at most that first buffer, usually
+one TCP segment, which <code>recv()</code> allows. A UDP datagram with such a tail still arrives up to 15 bytes
+short, as if the caller's buffer were smaller, because a datagram cannot be continued. A peek that
+returns 0 is followed by a non-blocking 0-byte receive, so an empty UDP datagram is consumed instead of
+being returned forever (found by review the same day, before release). Host test
+(<code>test_ps2ips_recv_tail.py</code>: 8 failures on the old code); lwIP's peek is modelled from its 2.2.1 source,
+not run.</p>
 <h3 id="seen-in-ps2ips-not-changed-here">Seen in ps2ips, not changed here</h3>
 <ul>
 <li><code>do_accept()</code>, <code>do_getsockname()</code> and <code>do_getpeername()</code> pass <code>addrlen</code> uninitialised. lwIP then copies
@@ -704,17 +725,22 @@ command. (Source.)</p>
 <p><code>ProcessStatus()</code> computes <code>(data[0] &gt;&gt; 16) &amp; 0xF</code> on a <code>u8</code>, which is always 0 and is then forced to 1,
 so the real sense key is always lost. It also requires a status length of 1, so a bridge that returns a
 longer status block for a successful command fails it, and after 16 retries the read or write returns
-<code>-EIO</code>. Both date from the 2018 import, and <code>IEEE1394_disk</code> has the same code. Our copy tries to decode
-the sense key and accept a longer GOOD status, but reads the wrong bytes; see the next entry. (Source.)</p>
-<h4 id="our-defect-the-status-decode-reads-the-wrong-bytes">Our defect: the status decode reads the wrong bytes</h4>
+<code>-EIO</code>. Both date from the 2018 import, and <code>IEEE1394_disk</code> has the same code. Our copy decodes the sense
+key and accepts a longer GOOD status. Our first attempt read the wrong bytes; see the next entry. (Source;
+our side is host-tested.)</p>
+<h4 id="our-defect-fixed-the-status-decode-read-the-wrong-bytes">Our defect, fixed: the status decode read the wrong bytes</h4>
 <p>Like everything the target writes, the status quadlets are stored in host order. The driver reads the
 status header, <code>ORB_low</code> and the login response without swapping and byte-swaps only data-phase payload,
 and ps2sdk's own wait loop, which listed games on hardware, could not end if the header were in wire
-order. So in our <code>ProcessStatus()</code>, <code>data[1] &amp; 0xf</code> is the low nibble of the ASC, and the GOOD check
-reads the ASCQ: a CHECK CONDITION whose ASCQ is 0, such as an unrecovered read error (ASC 0x11, ASCQ
-0x00), passes as success. <code>sbp2StatusReady()</code> also tests that byte for 0xff. The decode should read the
-third status quadlet as a number (sense key <code>(q &gt;&gt; 16) &amp; 0xF</code>, format <code>q &gt;&gt; 30</code>, status
-<code>(q &gt;&gt; 24) &amp; 0x3F</code>). Not fixed yet. (Source; no hardware dump of a CHECK CONDITION status exists.)</p>
+order. Our first decode indexed the third status quadlet as bytes in wire order, so <code>data[1] &amp; 0xf</code> was
+the low nibble of the ASC and the GOOD check read the ASCQ: a CHECK CONDITION whose ASCQ is 0, such as an
+unrecovered read error (ASC 0x11, ASCQ 0x00), passed as success. <code>sbp2StatusReady()</code> tested the same byte
+for 0xff, so a real ASCQ of 0xff looked like a status that had not arrived. Since 2026-10-27 both our
+copies read that quadlet as a number: format <code>q &gt;&gt; 30</code>, status <code>(q &gt;&gt; 24) &amp; 0x3F</code>, sense key
+<code>(q &gt;&gt; 16) &amp; 0xF</code>. An all-ones quadlet marks a status not yet written; a target would have to send the
+vendor-specific format 3 with every bit set to match it. Host test (<code>test_ilink_sbp2_completion.py</code>: 6
+failures on each copy's old decode). No hardware dump of a CHECK CONDITION status exists, so the
+host-order premise rests on the source.</p>
 <h4 id="disk-capacity-is-one-sector-short">Disk capacity is one sector short</h4>
 <p><code>scsi_warmup()</code> stores READ CAPACITY's last LBA as the sector count, so the last sector is unreachable. The
 READ CAPACITY(16) path has the same off-by-one, and does not check its block length or an all-ones LBA.
