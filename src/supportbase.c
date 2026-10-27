@@ -806,6 +806,8 @@ static const struct
     int compatModes;
 } sbTitleCompatDefaults[] = {
     {"SLES_511.14", COMPAT_MODE_1}, // Pro Evolution Soccer 2 (Europe): streamed audio breaks without Accurate Reads (upstream OPL #1686)
+    {"SLUS_210.41", COMPAT_MODE_1}, // Shadow Hearts: Covenant (USA) disc 1: black screens / lock-ups on area changes and save loads (PCSX2 #7139: Mode 1 fixes it under OPL)
+    {"SLUS_210.44", COMPAT_MODE_1}, // Shadow Hearts: Covenant (USA) disc 2: same engine and streaming as disc 1
     {"SLUS_217.23", COMPAT_MODE_6}, // Fatal Fury: Battle Archives Volume 2 (USA): black screen with IGR's VBLANK_END handler (upstream OPL #1762, #984)
 };
 
