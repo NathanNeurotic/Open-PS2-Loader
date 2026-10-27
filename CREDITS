@@ -205,8 +205,8 @@ Special and sincere thanks to:
     and unmerged work alive. Thank you.
   - bbsan2k - for the MMCE (Memory Card Mass Storage) protocol that makes SD-via-
     memory-card loading through the PS2's memory-card slot possible.
-  - Okeanos (https://github.com/Okeanos86) - for BDM-UDPFS Assault,
-    POPSTARTER read-only UDPFS VCD fallback based on israpps' BDM Assault.
+  - Okeanos (https://github.com/Okeanos86) - for BDM-UDPFS Assault 1.0.0,
+    POPSTARTER network read/write over UDPFS, based on israpps' BDM Assault.
     Releases: https://github.com/Okeanos86/BDMAssault/releases
   - saildot4k - for BDMA-ATA (exFAT internal-HDD block-device support), and the
     fixes, feedback, and oversight that shaped this fork's block-device work.

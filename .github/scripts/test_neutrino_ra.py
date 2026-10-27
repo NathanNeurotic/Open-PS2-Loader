@@ -37,7 +37,7 @@ harness = r'''
 static char gNeutrinoArgs[256], sysNeutrinoCheatArg[24], sysNeutrinoCheatStartup[32];
 static char sysNeutrinoRAArg[336], sysNeutrinoRAStartup[32];
 static int gRATelemetry=1, gRAMode, gRAHostIp[4]={192,168,1,2}, ps2_ip[4]={192,168,1,10}, ps2_ip_use_dhcp;
-static int count=2, bytes=5, nodes, warning, networkCalls, writes, missingMarker, badMarker, failWrite, failClose;
+static int count=2, bytes=5, nodes, warning, networkCalls, writes, missingMarker, badMarker, futureMarker, failWrite, failClose;
 static int nicBusy, sessionFail; /* a resident UDP transport; a Caduceus bridge reporting OFFLINE */
 static unsigned int entries[2]={RA_WATCH_PACK(0x100000,4),RA_WATCH_PACK(0x100004,1)};
 static char cfg[2048], watch[128], lastPath[512];
@@ -49,7 +49,7 @@ static int fake_open(const char *path,int flags,...) {
     return 2;
 }
 static int fake_read(int fd,void *out,int size) {
-    (void)fd; const char *s=badMarker ? "not a supported runtime" : "RiptOPL ORBIT RA handoff v1\nORBIT credits\n";
+    (void)fd; const char *s=badMarker ? "not a supported runtime" : futureMarker ? "RiptOPL ORBIT RA handoff v12\n" : "RiptOPL ORBIT RA handoff v1\nORBIT credits\n";
     int n=strlen(s); if(n>size)n=size; memcpy(out,s,n);return n;
 }
 static int fake_write(int fd,const void *in,int size) {
@@ -112,6 +112,8 @@ int main(void) {
     missingMarker=1;warning=0;sysNeutrinoPrepareRA("mmce1:/Games/","SLUS_999.99","usb","mmce1:/neutrino/neutrino.elf","");
     assert(!sysNeutrinoRAArg[0] && !warning);missingMarker=0;
     badMarker=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);badMarker=0;
+    /* The marker must match in full: a later "v12" runtime is not the v1 handoff (#1065). */
+    futureMarker=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);futureMarker=0;
     ps2_ip_use_dhcp=1;prepare("udpfs", "");assert(!sysNeutrinoRAArg[0] && !writes && !networkCalls);ps2_ip_use_dhcp=0;
     failWrite=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && warning);failWrite=0;
     failClose=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && warning);failClose=0;

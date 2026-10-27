@@ -137,7 +137,7 @@ static inline void CopyFromFIFO(volatile u8 *smap_regbase, void *buffer, unsigne
 #ifdef RETROACHIEVEMENTS
 /* Copy only achievement datagrams while the normal driver owns RX.
    No extra socket/mailbox round trip and no SMB descriptors are stolen. */
-static unsigned char ra_notice[128];
+static unsigned char ra_notice[4 + 128]; /* the sender's IPv4 address, then the datagram */
 static volatile unsigned int ra_notice_size;
 int SMAPReadNotice(void *out, unsigned int capacity)
 {
@@ -165,9 +165,11 @@ static void ra_tap_notice(const unsigned char *p, unsigned int n)
         return;
     if (!ra_notice_size) {
         unsigned int i;
+        for (i = 0; i < 4; i++)
+            ra_notice[i] = p[26 + i];
         for (i = 0; i < bytes - 8; i++)
-            ra_notice[i] = p[42 + i];
-        ra_notice_size = bytes - 8;
+            ra_notice[4 + i] = p[42 + i];
+        ra_notice_size = 4 + bytes - 8;
     }
 }
 

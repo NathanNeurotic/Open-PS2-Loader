@@ -1348,6 +1348,9 @@ static int bsdfsDeviceCapable = 1;
 // row greyed for a VCD game even when the global default core is Neutrino (the locked "Default" row
 // would otherwise resolve to the global and un-grey them).
 static int coreNeverNeutrino = 0;
+// The core whose title defaults filled the compatibility checkboxes in guiGameLoadConfig. Saving compares
+// against that core's defaults: the Loader row can change afterwards without refilling the checkboxes (#1072).
+static int compatShownNeutrino = 0;
 
 // Appended "Default" (follow the global) enum indices for the per-game Neutrino Video / GSM-comp
 // pickers: values 0..5 / 0..3 persist 1:1 (system.c gsmVideoTokens); "Default" removes the key so
@@ -1405,13 +1408,16 @@ static void guiGameSaveGSMGlobalConfig(config_set_t *configGame)
 }
 
 // The core the compatibility dialog's Loader row selects, resolving "Default" to the global core.
-static int guiGameDialogCoreIsNeutrino(int neverNeutrino)
+static int guiGameDialogCoreIsNeutrino(item_list_t *support, int neverNeutrino)
 {
     int coreChoice = 0;
 
-    diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreChoice);
     if (neverNeutrino)
         return 0;
+    // UDPFS and UDPBD always boot Neutrino, whatever the Loader row says before the dialog locks it.
+    if (support != NULL && (support->mode == UDPFS_MODE || bdmSupportIsUDPBD(support)))
+        return 1;
+    diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreChoice);
     return (coreChoice == 1) || (coreChoice == 2 && gDefaultCoreLoader == 1);
 }
 
@@ -1602,10 +1608,10 @@ static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
             configRemoveKey(configSet, CONFIG_ITEM_DMA);
     }
 
-    // The screen showed the title default for the chosen core. Saving that unchanged keeps following the
+    // The screen showed the title default for the core it was loaded with. Saving that unchanged keeps following the
     // defaults (a default limited to one core must not become a saved value that applies to both); anything
     // else is saved, including an explicit 0 ("none"), or the title default would come back.
-    if (compatMode == sbTitleCompatDefault(configSet, guiGameDialogCoreIsNeutrino(coreNeverNeutrino)))
+    if (compatMode == sbTitleCompatDefault(configSet, compatShownNeutrino))
         configRemoveKey(configSet, CONFIG_ITEM_COMPAT);
     else
         result = configSetInt(configSet, CONFIG_ITEM_COMPAT, compatMode);
@@ -2239,7 +2245,10 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
 
     // Includes a title default for the selected core, so the screen matches what launches.
     // coreNeverNeutrino belongs to the last dialog, so work out the sources that only boot the OPL core here.
-    compatMode = sbGetCompatModes(configSet, guiGameDialogCoreIsNeutrino(support != NULL && (libViewActive(support->mode) == LIB_VIEW_PS1 || support->mode == ETH_MODE)));
+    int neverNeutrino = support != NULL && (libViewActive(support->mode) == LIB_VIEW_PS1 || support->mode == ETH_MODE ||
+                                            support->mode == HTTP_MODE || bdmModeIsPCCF(support->mode));
+    compatShownNeutrino = guiGameDialogCoreIsNeutrino(support, neverNeutrino);
+    compatMode = sbGetCompatModes(configSet, compatShownNeutrino);
     for (i = 0; i < COMPAT_MODE_COUNT; ++i)
         diaSetInt(diaCompatConfig, COMPAT_MODE_BASE + i, (compatMode & (1 << i)) > 0 ? 1 : 0);
 

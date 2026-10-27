@@ -363,6 +363,10 @@ int main(void) {
     assert(raPopsPrepare("","","game.vcd",1)==0);
     assert(access("POPS/MODULE_9.IRX",0)<0); /* Partial module removed. */
     fail_write=0;
+    count=RA_WATCH_MAX+1;
+    assert(raPopsPrepare("","","game.vcd",1)==0); /* Oversize list: launch untracked (#1065). */
+    assert(access("POPS/MODULE_9.IRX",0)<0);
+    count=1;
     memset(rapops_irx,0,sizeof(rapops_irx));
     assert(raPopsPrepare("","","game.vcd",1)==0); /* Absent embedded magic. */
     assert(access("POPS/MODULE_9.IRX",0)<0);

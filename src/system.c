@@ -1897,7 +1897,7 @@ void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *d
         goto untracked;
     len = read(fd, text, 40);
     close(fd);
-    if (len < 26 || memcmp(text, "RiptOPL ORBIT RA handoff v1\n", 26))
+    if (len < 28 || memcmp(text, "RiptOPL ORBIT RA handoff v1\n", 28)) // all 28 bytes: "v12" is not "v1" (#1065)
         goto untracked;
     snprintf(marker, sizeof(marker), "%smodules/raagent.irx", dir);
     fd = open(marker, O_RDONLY);
@@ -2456,14 +2456,17 @@ int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *s
     int result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
 #ifdef RETROACHIEVEMENTS
     // The RA handoff's two arguments must never cost the player the game: when they push the argv over
-    // the launch budget, drop them and launch without achievements instead of refusing.
+    // the launch budget, drop them and launch without achievements instead of refusing. Warn only when the
+    // retry goes ahead: an argv still over budget without them is refused below, never "launched untracked" (#1065).
     if (result < 0 && result != NEUTRINO_LAUNCH_DECLINED && sysNeutrinoRAArg[0] != '\0' && startup != NULL &&
         !strcmp(startup, sysNeutrinoRAStartup)) {
-        LOG("[RA] handoff arguments exceed the launch budget for %s; launching untracked\n", startup);
         sysNeutrinoRAArg[0] = '\0';
         sysNeutrinoRAStartup[0] = '\0';
-        guiWarning(_l(_STR_RA_NEUTRINO_UNTRACKED), 6);
         result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
+        if (result == 0) {
+            LOG("[RA] handoff arguments exceed the launch budget for %s; launching untracked\n", startup);
+            guiWarning(_l(_STR_RA_NEUTRINO_UNTRACKED), 6);
+        }
     }
 #endif
     if (result == NEUTRINO_LAUNCH_DECLINED)

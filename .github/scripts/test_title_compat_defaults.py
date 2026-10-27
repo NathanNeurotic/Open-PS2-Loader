@@ -42,6 +42,15 @@ assert mmce.index('sbEnsureIgrUsbDrivers(compatmask);\n\n        // VMC -> neutr
 
 # The settings screen saves only a change from the default it showed, so a core-limited default
 # never turns into a saved value for both cores.
-assert 'if (compatMode == sbTitleCompatDefault(configSet, guiGameDialogCoreIsNeutrino(coreNeverNeutrino)))' in src['src/guigame.c']
+# Compared with the core whose defaults filled the checkboxes: the Loader row can change after loading (#1072).
+assert 'if (compatMode == sbTitleCompatDefault(configSet, compatShownNeutrino))' in src['src/guigame.c']
+assert 'compatShownNeutrino = guiGameDialogCoreIsNeutrino(support, neverNeutrino);' in src['src/guigame.c']
+
+# The screen resolves a source that boots one core only before the Loader row: UDPFS and UDPBD are always
+# Neutrino, so a core-limited default shown there matches the launch.
+gui = src['src/guigame.c']
+helper = gui[gui.index('static int guiGameDialogCoreIsNeutrino('):]
+helper = helper[:helper.index('\n}\n')]
+assert 'support->mode == UDPFS_MODE || bdmSupportIsUDPBD(support)' in helper
 
 print('PASS: title compat defaults are evidence-backed and routed per core')
