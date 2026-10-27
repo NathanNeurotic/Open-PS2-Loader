@@ -1053,9 +1053,14 @@ $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 # else's handle to write is not ours to ask for -- and rahash turns that -EBUSY into a menu message
 # naming the held image instead of a silent failure.
 #
-# The source is ps2sdk master's iop/network/smbman with the changes marked "RA fix" -- verified by
-# diffing every file against ps2dev/ps2sdk: only smb.c (35 lines) and smb.h (4) differ, the rest is
-# byte-identical, so vendoring drops no upstream behaviour. Both new status constants decode under
+# It also carries a "Write-count fix" that ps2sdk lacks: smb_WriteAndX returns the server's WRITE_ANDX
+# Count, so a write to a full share fails instead of reporting success. Every other flavour embeds
+# ps2sdk's own smbman.irx, which still reports such a write as complete.
+#
+# The source is ps2sdk master's iop/network/smbman with those marked changes -- verified on 2026-10-27
+# by diffing every file against ps2dev/ps2sdk master: smb.c (+48/-5, both fixes), smb.h (+4, RA fix)
+# and auth.c (+6/-1, the password-buffer bound from 14cd9ff3) differ, the rest is byte-identical, so
+# vendoring drops no upstream behaviour. Both new status constants decode under
 # this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT STATUS_SHARING_VIOLATION, 0x00200001
 # is the same refusal in the DOS class (ERRDOS=0x01, ERRbadshare=32). Do not reformat it.
 modules/network/smbman-ra/smbman.irx: $(wildcard modules/network/smbman-ra/*.c) $(wildcard modules/network/smbman-ra/*.h) modules/network/smbman-ra/imports.lst modules/network/smbman-ra/Makefile

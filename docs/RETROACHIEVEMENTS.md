@@ -363,7 +363,7 @@ and both are selected by `USBD_MINI_IRX` / `SMBMAN_IRX` at the top of the Makefi
 
 | Module | Why | Diff from ps2sdk |
 |---|---|---|
-| `modules/network/smbman-ra` | the held-image fix above | `smb.c` (35 lines) and `smb.h` (4); every other file byte-identical to ps2sdk master |
+| `modules/network/smbman-ra` | the held-image fix above; also a write to a full share now fails instead of being reported as complete (ps2sdk's smbman, which every other flavour embeds, still has that bug) | `smb.c` (+48/−5: both fixes), `smb.h` (+4) and `auth.c` (+6/−1: a password-buffer bound); every other file byte-identical to ps2sdk master, checked 2026-10-27 |
 | `modules/usb/usbd-ra` | see below | **nothing** — byte-identical to ps2sdk `iop/usb/usbd` at `314d87e7` (2024-04-01); only the Makefile is ours |
 
 **The usbd swap is not a RetroAchievements feature.** ps2sdk rewrote its USB host driver on

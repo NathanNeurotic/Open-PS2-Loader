@@ -248,6 +248,8 @@ jobs:
         run: python3 .github/scripts/test_ra_mstack_link.py
       - name: Check the RA support check runs on UDPFS games
         run: python3 .github/scripts/test_ra_udpfs_check.py
+      - name: Check the RA smbman trusts only the server's write Count, so a full share fails the write
+        run: python3 .github/scripts/test_smbman_ra_write_count.py
       - name: Check PS1 VCD identification, module ownership and POPS snapshot reads
         run: python3 .github/scripts/test_ra_ps1.py
       - name: Check RA row ownership and badge-independent alphabetical sorting

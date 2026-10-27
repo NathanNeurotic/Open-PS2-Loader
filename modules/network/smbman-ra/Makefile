@@ -6,8 +6,9 @@
 # share mode it asks for, so the image can no longer be hashed although
 # the game still boots off it: in-game OPL opens the old way, in
 # compatibility mode, which the same server grants. The source is a copy
-# of ps2sdk iop/network/smbman with the changes marked "RA fix".
-# Candidate for upstreaming to ps2sdk.
+# of ps2sdk iop/network/smbman with the changes marked "RA fix", plus
+# one marked "Write-count fix": a write to a full share fails instead of
+# being reported as complete. Both are candidates for upstreaming to ps2sdk.
 IOP_BIN  = smbman.irx
 IOP_OBJS = smbman.o smb_fio.o smb.o poll.o auth.o des.o md4.o imports.o
 
