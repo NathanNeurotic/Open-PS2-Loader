@@ -213,7 +213,9 @@ static int mc_writecluster(int fd, int cluster, void *buf, int dup)
     if (aborted)
         return -2;
 
-    lseek(fd, cluster * mcdi->cluster_size, SEEK_SET);
+    // A failed seek would land the cluster at the wrong offset of the card (#1052).
+    if (lseek(fd, cluster * mcdi->cluster_size, SEEK_SET) < 0)
+        return -1;
     size = mcdi->cluster_size * dup;
     r = write(fd, buf, size);
     if (r != size)

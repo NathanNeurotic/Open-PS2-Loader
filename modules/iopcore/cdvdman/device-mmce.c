@@ -169,6 +169,7 @@ int mmce_read_offset(int fd, unsigned int offset, unsigned int size, unsigned ch
     int ret = 0;
     DPRINTF("%s\n", __func__);
 
+    cdvdman_vmc_io_begin(0);
     WaitSema(mmce_io_sema);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_begin(FREEZE_DIAG_VMC_READ, offset / 512);
@@ -183,6 +184,7 @@ int mmce_read_offset(int fd, unsigned int offset, unsigned int size, unsigned ch
     freeze_diag_vmc_end();
 #endif
     SignalSema(mmce_io_sema);
+    cdvdman_vmc_io_end();
 
     return ret;
 }
@@ -192,6 +194,7 @@ int mmce_write_offset(int fd, unsigned int offset, unsigned int size, const unsi
     int ret = 0;
     DPRINTF("%s\n", __func__);
 
+    cdvdman_vmc_io_begin(1);
     WaitSema(mmce_io_sema);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_begin(FREEZE_DIAG_VMC_WRITE, offset / 512);
@@ -206,6 +209,7 @@ int mmce_write_offset(int fd, unsigned int offset, unsigned int size, const unsi
     freeze_diag_vmc_end();
 #endif
     SignalSema(mmce_io_sema);
+    cdvdman_vmc_io_end();
 
     return ret;
 }

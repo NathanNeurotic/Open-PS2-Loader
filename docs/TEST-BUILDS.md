@@ -5,10 +5,8 @@ A test artifact belongs to one GitHub Actions run and commit. It is separate fro
 | Artifact | Toolchain or purpose |
 | --- | --- |
 | OPL-OFFICIALROLLING | Moving official ps2homebrew toolchain |
-| OPL-OFFICIALPINNED | Digest-pinned official toolchain |
 | OPL-PS2DEVROLLING | Moving ps2dev toolchain |
-| OPL-PS2DEVPINNED | Digest-pinned ps2dev toolchain |
-| OPL-PS2DEVPINNED-DIAG | Diagnostic build |
+| OPL-PS2DEVROLLING-DIAG | Diagnostic build, moving ps2dev toolchain |
 | OPL-OFFICIALROLLING-RA | RetroAchievements build using the moving official ps2homebrew toolchain |
 | OPL-OFFICIALROLLING-FREEZEDIAG | In-game freeze report (see below), moving official ps2homebrew toolchain |
 

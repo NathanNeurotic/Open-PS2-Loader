@@ -131,3 +131,20 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
 
     return SCECdErNO;
 }
+
+//
+// oplutils exported function, used by MCEMU for VMC pages. It takes the oplutils slot that
+// sceAtaDmaTransfer had, and reports each call so that oplShutdown can let a save finish.
+// (Games get a dummy sceAtaDmaTransfer from the atad table, and DeviceReadSectors is not a VMC call.)
+//
+
+int hdd_vmcDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
+{
+    int res;
+
+    cdvdman_vmc_io_begin(dir == ATA_DIR_WRITE);
+    res = sceAtaDmaTransfer(device, buf, lba, nsectors, dir);
+    cdvdman_vmc_io_end();
+
+    return res;
+}

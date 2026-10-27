@@ -71,7 +71,10 @@ static struct sfxEffect sfx_files[SFX_COUNT] = {
 static struct audsrv_adpcm_t sfx[SFX_COUNT];
 static int audio_initialized = 0;
 
-#define SFX_CLOCKS_PER_MS 147456 // EE cpu_ticks() rate
+// Same deliberate half-rate as pad.c's CLOCKS_PER_MILISEC (the real cpu_ticks() rate is 294,912 per
+// ms): the SFX coalesce/one-shot windows were tuned on hardware in these units (#504 sound cut), so
+// changing this alone would double them.
+#define SFX_CLOCKS_PER_MS 147456
 
 #define CURSOR_SFX_CHANNEL_BASE  SFX_COUNT
 #define CURSOR_SFX_CHANNEL_COUNT 6

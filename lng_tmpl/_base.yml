@@ -1759,10 +1759,10 @@ gui_strings:
   string: "POPS UDPFS Network Settings"
 
 - label: POPS_UDPFS_DISCOVERY
-  string: "Saves to every USB POPS folder. Server 0.0.0.0 uses discovery."
+  string: "mc?:/SYS-CONF/ | 0.0.0.0 = discovery"
 
 - label: POPS_UDPFS_NOT_READY
-  string: "POPS UDPFS needs matching valid IPCONFIG.DAT and UDPFSCONFIG.DAT in every USB POPS folder. Configure them in POPS Network Settings."
+  string: "Could not read the POPS UDPFS network settings from the memory card."
 
 - label: HINT_POPS_UDPFS_IP
   string: "Static PS2 IP used by the POPS UDPFS driver after its IOP reset."
@@ -1777,7 +1777,7 @@ gui_strings:
   string: " (incomplete)"
 
 - label: POPS_UDPFS_DRIVER_NOT_READY
-  string: "POPS UDPFS needs the .udpfs driver pair installed on the memory card. Equip it manually or enable BDMA Apply on Launch."
+  string: "POPS UDPFS needs the selected .udpfs pair on the memory card. Equip it manually or enable BDMA Apply on Launch."
 
 - label: VMC_REPLACE_REQUIRES_DELETE
   string: "Changing the VMC size would erase its saved games. Back up the existing VMC and use Delete before creating a new size."

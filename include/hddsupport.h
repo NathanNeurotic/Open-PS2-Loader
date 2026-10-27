@@ -180,4 +180,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
 int hddIsPresent();
 int hddGetArtArchivePath(item_list_t *itemList, char *out, int outSize);
 
+// Info-screen #Size of an HDD PS1 row by name (HDD-backed Favourites); measures a PP. partition once.
+u32 hddVcdSizeByName(const char *name);
+
 #endif

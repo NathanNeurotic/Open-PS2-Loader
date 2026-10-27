@@ -611,8 +611,8 @@ translations:
   FAV_REMOVED: Yıldızlı Oyunlar'dan kaldırıldı
   FAV_REMOVE_FAILED: Yıldızlı Oyunlar'dan kaldırılamadı
   POPS_UDPFS_SETTINGS: POPS UDPFS Ağ Ayarları
-  POPS_UDPFS_DISCOVERY: Her USB POPS klasörüne kaydeder. Sunucu 0.0.0.0 keşfi kullanır.
-  POPS_UDPFS_NOT_READY: POPS UDPFS, her USB POPS klasöründe eşleşen geçerli IPCONFIG.DAT ve UDPFSCONFIG.DAT dosyalarına ihtiyaç duyar. Onları POPS Ağ Ayarları'nda yapılandırın.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = keşif"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS ağ ayarları hafıza kartından okunamadı."
   HINT_POPS_UDPFS_IP: POPS UDPFS sürücüsünün IOP sıfırlamasından sonra kullandığı statik PS2 IP'si.
   POPS_UDPFS_ALL_USB_FOLDERS: Tüm USB POPS klasörleri
   POPS_UDPFS_INVALID_SUFFIX: ' (geçersiz)'

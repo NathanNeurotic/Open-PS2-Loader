@@ -614,8 +614,8 @@ translations:
   FAV_REMOVED: Eltávolítva a Kedvenc játékok közül
   FAV_REMOVE_FAILED: Nem sikerült eltávolítani a Kedvenc játékok közül
   POPS_UDPFS_SETTINGS: POPS UDPFS hálózati beállítások
-  POPS_UDPFS_DISCOVERY: Minden USB-s POPS mappába ment. A 0.0.0.0 szerver felderítést használ.
-  POPS_UDPFS_NOT_READY: A POPS UDPFS-hez minden USB-s POPS mappában egymásnak megfelelő, érvényes IPCONFIG.DAT és UDPFSCONFIG.DAT kell. Állítsd be őket a POPS hálózati beállításokban.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = felderítés"
+  POPS_UDPFS_NOT_READY: "Nem sikerült beolvasni a POPS UDPFS hálózati beállításokat a memóriakártyáról."
   HINT_POPS_UDPFS_IP: A PS2 statikus IP-je, amelyet a POPS UDPFS illesztőprogram az IOP-alaphelyzetbe állítás után használ.
   POPS_UDPFS_ALL_USB_FOLDERS: Minden USB-s POPS mappa
   POPS_UDPFS_INVALID_SUFFIX: ' (érvénytelen)'

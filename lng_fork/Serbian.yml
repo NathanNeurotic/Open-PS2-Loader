@@ -521,8 +521,8 @@ translations:
   FAV_REMOVED: Uklonjeno iz Omiljenih igara
   FAV_REMOVE_FAILED: Uklanjanje iz Omiljenih igara nije uspelo
   POPS_UDPFS_SETTINGS: POPS UDPFS mrežna podešavanja
-  POPS_UDPFS_DISCOVERY: Čuva u svaku USB fasciklu POPS. Server 0.0.0.0 koristi otkrivanje.
-  POPS_UDPFS_NOT_READY: POPS UDPFS zahteva odgovarajuće ispravne IPCONFIG.DAT i UDPFSCONFIG.DAT u svakoj USB fascikli POPS. Podesite ih u POPS mrežnim podešavanjima.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = otkrivanje"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS mrežna podešavanja nisu mogla da se pročitaju sa memorijske kartice."
   HINT_POPS_UDPFS_IP: Statička PS2 IP adresa koju POPS UDPFS drajver koristi posle ponovnog pokretanja IOP-a.
   POPS_UDPFS_ALL_USB_FOLDERS: Sve USB fascikle POPS
   POPS_UDPFS_INVALID_SUFFIX: ' (neispravno)'

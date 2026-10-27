@@ -53,7 +53,7 @@ device tabs.
 **RiptOPL’s UDPFS Files page lists Ember titles and uppercase `POPS/*.VCD` files.**
 Ember keeps the mounted network transport alive. POPSTARTER reads UDPFS VCDs through Okeanos’s
 separate UDPFS Assault BDMA variants; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
-With **BDMA Apply on Launch**, RiptOPL equips the selected `.udpfs` or `.udpfsnet` pair from the game device before VCD handoff.
+With **BDMA Apply on Launch**, RiptOPL equips the `.udpfs` pair from the game device before VCD handoff.
 An already usable matching manual pair also works. Without a valid pair, the network VCD launch
 is stopped. UDPBD remains outside this POPSTARTER driver's scope.
 
@@ -347,79 +347,66 @@ so POPSTARTER itself can read them off the exFAT volume.
 
 ### POPS UDPFS with BDM-UDPFS Assault
 
-Okeanos supplies two POPSTARTER BDMA variants. Both use the existing BDMA equip and
-memory-card population flow; their runtime filesystem is separate from RiptOPL's
-mounted UDPFS connection and starts again after POPSTARTER resets the IOP.
+RiptOPL uses [Okeanos's UDPFS Assault 1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0)
+as its sole POPSTARTER UDPFS BDMA driver. It serves every `mass:` request from the
+UDPFS server, including POPS dependencies and VMC writes. **USB is not required.**
+The older Alpha and USB-first fallback driver are no longer bundled or selected.
+This runtime starts again after POPSTARTER resets the IOP, independently of
+RiptOPL's mounted UDPFS connection.
 
-| BDMA mode | Included POPS pair | Runtime files and saves |
-| --- | --- | --- |
-| **USB + UDPFS** | `usbd.irx.udpfs`, `usbhdfsd.irx.udpfs` | USB first; only missing VCD reads fall back to the server. Other POPS files and VMC writes stay on USB. |
-| **UDPFS (network R/W)** | `usbd.irx.udpfsnet`, `usbhdfsd.irx.udpfsnet` | Every `mass:` request uses the server, including POPS dependencies and VMC writes. USB is not required. |
+The existing **BDMA Mode -> UDPFS** uses `POPS/usbd.irx.udpfs` (the unmodified
+44,597-byte `udp_fs_assault.irx`) and `POPS/usbhdfsd.irx.udpfs` (the 34,508-byte
+`usbd_bd_assault.irx`). They install as `mc?:/POPSTARTER/usbd.irx` and
+`usbhdfsd.irx`. The mode ID and `udpfs` marker remain unchanged. With **VCD BDMA
+Apply on Launch** enabled, a UDPFS game equips this pair automatically; matching
+installed/manual pairs skip copying, while old Alpha/USB-first pairs are stale.
+With automatic equip disabled, equip **UDPFS** manually before launching.
 
-The binaries are unchanged releases of [BDM-UDPFS Assault 1.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0)
-and [UDPFS Assault 1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0).
-The companion is identical in both pairs. RiptOPL installs the selected pair as
-`mc?:/POPSTARTER/usbd.irx` and `usbhdfsd.irx`, without the suffixes.
-
-Keep the supplied modules and optional settings together in the **game device's
-`POPS/` folder**. For a game listed on UDPFS, that is `POPS/` under the server's
-shared root (`udpfs:/POPS/` while RiptOPL is running). Automatic launch equip reads
-that folder exclusively; it does not substitute another device's pair. A matching
-installed pair skips the copy. The older Alpha pair is detected as stale.
+Keep all support files together in the **game device's POPS folder**: for UDPFS,
+that is `POPS/` under the server's shared root (`udpfs:/POPS/` while RiptOPL is
+running). Automatic launch equip reads this folder exclusively and never
+substitutes another device's pair. Put your own `POPS_IOX.PAK`, VCDs and other
+POPS dependencies on the server at their normal paths. RiptOPL does not migrate
+existing saves. Use uppercase `.VCD` and exact path casing on Linux.
 
 | Optional file in the game's POPS folder | MC destination | Contents |
 | --- | --- | --- |
-| `IPCONFIG.DAT` | `mc?:/SYS-CONF/IPCONFIG.DAT` | PS2 IP, netmask, optional gateway, e.g. `192.168.1.10 255.255.255.0 192.168.1.1` |
-| `UDPFSCONFIG.DAT` | `mc?:/SYS-CONF/UDPFSCONFIG.DAT` | Server IP, e.g. `192.168.1.11`; an empty file selects discovery |
+| `IPCONFIG.DAT` | `mc?:/SYS-CONF/IPCONFIG.DAT` | PS2 IP, netmask, optional gateway |
+| `UDPFSCONFIG.DAT` | `mc?:/SYS-CONF/UDPFSCONFIG.DAT` | Server IP; absent/empty selects discovery |
 
-Edit the supplied examples for your LAN. Before launch, RiptOPL checks each file
-independently: **an existing copy on either MC is preserved**; a missing file is
-copied from the game's POPS folder if supplied. This also runs when the drivers
-are already equipped. Absent source files are optional and create no config files.
-New files go to the card holding the POPSTARTER folder, or the first available card.
-Files over the upstream 120-byte limit are refused rather than truncated.
+Edit the supplied DAT examples for your LAN. Before launch, each file is checked
+independently: an existing copy on either MC is preserved; a missing file is
+copied from the game's POPS folder if supplied. This runs even when the drivers
+are already equipped. Missing optional source files create no config files. New
+files go to the card holding POPSTARTER, or the first available card. Inputs over
+the upstream 120-byte limit are refused rather than truncated.
 
-Both drivers look up each config file at `mc0:/SYS-CONF/`, then `mc1:/SYS-CONF/`.
-The USB-first driver additionally checks `mass:/SYS-CONF/`. RiptOPL's automatic
-population uses MC, so USB config copies are unnecessary. The former Alpha
-`mass:/POPS/` runtime location no longer applies. Without configuration the driver
-uses PS2 `192.168.1.10/24` and server discovery. The server must be on the PS2's
-subnet; the driver does not route through the gateway.
+The driver looks up each config at `mc0:/SYS-CONF/`, then `mc1:/SYS-CONF/`.
+Without configuration it uses PS2 `192.168.1.10/24` and server discovery. The
+server must be on the PS2's subnet: the driver does not route through the gateway.
+The old Alpha USB `mass:/POPS/` runtime configuration is no longer used.
 
-**POPS UDPFS Network Settings** edits the effective MC configuration, with explicit
-replacement confirmation. The screen shows its MC location(s). MC0 wins for a file
-present on both cards, and the editor updates that effective copy. Saving backs up
-and verifies the originals and replacements without relying on unsupported MC
-rename operations. A `.bak` retained after a failed restoration requires recovery
-before another save. SMB's separate `mc?:/POPSTARTER/` network settings are preserved.
+**POPS UDPFS Network Settings** edits these effective MC files with explicit
+replacement confirmation. The screen shows their MC locations. Each MC0 file
+wins over its MC1 counterpart. Saving verifies originals and replacements and
+uses backups without relying on MC rename. Retained `.bak` files after a failed
+restoration need recovery before another save. SMB's separate POPSTARTER-folder
+configuration is preserved.
 
-The UDPFS Files PS1/Mixed view and Favorites use the same launch callback. With
-**VCD BDMA Apply on Launch**, an unconfigured card gets the USB-first `.udpfs` mode.
-To use full network, disable automatic equip, select **BDMA Mode → UDPFS (network
-R/W)** and equip it; automatic equip can then be re-enabled. The installed network
-mode, including a matching unmarked manual pair, is respected on UDPFS launches.
-With automatic equip disabled, the selected pair must already be usable. Missing
-or stale required pairs stop the network launch before teardown.
+**The server must allow writes** (`udpfsd` without `-ro`, or `udpfs_server.py`
+without `--read-only`). VMC saves now live on the server. Keep backups: upstream
+documents that a prolonged interruption during saving can leave an incomplete
+file. Network saves are not atomic.
 
-For USB-first mode, keep your own `POPS_IOX.PAK` and other POPS runtime files on
-USB. For full-network mode, put them on the server at their normal paths under
-`POPS/`, together with VCDs and any VMCs intended for that mode. RiptOPL does not
-migrate existing saves. Use uppercase `.VCD` and the exact path casing on Linux.
-USB-first mode uses the USB VCD when both sources contain the same path.
+The UDPFS Files PS1/Mixed view and Favorites share this launch path. Missing or
+stale required pairs stop launch before teardown. Ember retains its existing
+inherited `udpfs:` backend; UDPBD and UDPFS IMG are outside this POPSTARTER feature.
+POPS UDPFS RA is unsupported. Physical-console gameplay and save acceptance must
+be established separately from passing host checks and target builds.
 
-**Full-network saves require a writable share** (`udpfsd` without `-ro`, or
-`udpfs_server.py` without `--read-only`). Keep VMC backups: upstream documents that
-an interruption exceeding its retry window during a save can leave an incomplete
-file. Network R/W mode does not make saves atomic.
-
-Ember keeps its existing live `udpfs:` handoff; POPSTARTER's card pair does not
-replace that backend. UDPBD and UDPFS IMG are outside this POPSTARTER feature.
-POPS UDPFS RetroAchievements integration remains unavailable. Target builds and
-host tests do not establish physical-console gameplay or save durability.
-
-Credit goes to **Okeanos**, **israpps**, **krHACKen**, **ps2max32 / rickgaiser**,
-**pcm720**, **Gageformer**, and the **PS2SDK contributors**. Unmodified release
-instructions, licenses and checksums accompany the pairs in `POPS/UDPFS-NOTICES/`.
+Credit goes to Okeanos, israpps, krHACKen, ps2max32 / rickgaiser, pcm720,
+Gageformer and PS2SDK contributors. Unmodified upstream instructions, license
+notices and verified hashes are in `POPS/UDPFS-NOTICES/`.
 
 ## 6. PS1 over SMB — POPSTARTER network settings
 
@@ -459,13 +446,14 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 7. **iLink returns to wLaunchELF?** Inspect the card after the attempt. A successful RiptOPL equip
    leaves `mc?:/POPSTARTER/bdma_config.txt` containing exactly `ilink`, plus `usbd.irx` (48,500 bytes;
    SHA-256 `5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369`) and `usbhdfsd.irx`
-   (27,145 bytes; SHA-256 `5B7DE8D1FF749E8CA2AD8EF0C705CE76F5799D1C2DCEDF5393DBF4CD7A58E6C8`). Missing or different files
+   (27,145 bytes; SHA-256 `1A9C1BAAF1DD020E35B75082B630F325B90E884819C743DDD5E1F27F106EFCB6`). Missing or different files
    put the defect on RiptOPL's external-equip side; exact files narrow it to POPSTARTER/BDMA runtime
    reinitialization after the handoff.
 8. **UDPFS shows Ember but no VCDs?** Select **UDPFS Files**, check server `POPS/*.VCD`
    with uppercase `.VCD`, and refresh the PS1/Mixed view. For launch failures, check the
    [BDM-UDPFS Assault setup](#pops-udpfs-with-bdm-udpfs-assault): installed memory-card
-   pair, matching USB configs, runtime support files and same-subnet server. UDPBD and UDPFS
+   pair, `IPCONFIG.DAT` and `UDPFSCONFIG.DAT` in `mc?:/SYS-CONF/` (missing ones are copied there at
+   launch from the server's `POPS/` folder), runtime support files and same-subnet server. UDPBD and UDPFS
    IMG remain Ember-only.
 9. **"Missing ember.elf", "Missing bios.bin beside ember.elf" or "Missing POPSTARTER.ELF" on
    launch?** The message's second line is the exact file RiptOPL looked for, for example

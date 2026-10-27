@@ -633,20 +633,9 @@ static void itemExecSquare(struct menu_item *curMenu)
     if (curMenu->current && curMenu->current->item.isFolder)
         return;
     if (curMenu->current && gTheme->infoElems.first) {
-        // #Size is skipped while scrolling so the badges paint instantly; resolve it now (async) --
-        // but NEVER for a VCD (PS1) list. A VCD carries no meaningful #Size: vcdFillGameList tags the
-        // entry .VCD/GAME_FORMAT_ISO (vcdsupport.c), so sbPopulateConfig stats the CD/DVD folder while
-        // .VCDs actually live in POPS/ -- the stat always misses, game->sizeMB stays 0 and never
-        // caches, so it re-runs on EVERY entry. That makes the resolve a pure redundant CFG re-read +
-        // failing stat on the shared MMCE/fileXio channel whose only visible effect is raising the
-        // busy spinner (Andrew, #120). Skipping it for VCD strictly REDUCES channel traffic and drops
-        // no displayed data (the info page shows no size for a VCD anyway).
-        item_list_t *support = curMenu->userdata;
-        // Direct HDD/HDL rows already carry their size in APA metadata (total_size_in_kb), so the
-        // generic CFG+stat pass is redundant there. VCD rows likewise have no meaningful #Size.
-        // Avoid putting either no-op read onto the shared IO worker merely for opening Info.
-        if (support == NULL || (itemSelectedView(curMenu, support) != LIB_VIEW_PS1 && support->mode != HDD_MODE))
-            menuRequestInfoSize();
+        // #Size is skipped while scrolling so the badges paint instantly; resolve it now (async).
+        // menuRequestInfoSize decides which rows need it (and is re-run on every info-page move).
+        menuRequestInfoSize();
         guiSwitchScreen(GUI_SCREEN_INFO);
     }
 }

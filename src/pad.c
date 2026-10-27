@@ -19,7 +19,11 @@
 
 #define MAX_PADS 4
 
-// Cpu ticks per one milisecond
+// NOT the real rate: the EE COP0 Count register behind cpu_ticks() runs at the 294.912 MHz core
+// clock, i.e. 294,912 ticks per millisecond. This value (inherited from upstream OPL) is half that,
+// so every "ms" timed with it -- pad repeat delays, rumble pulses -- lasts about half a real
+// millisecond. Those durations were tuned on hardware in these units (#504), so the constant is kept
+// as-is on purpose: correcting it would double every delay. Retune the ms values together with it.
 #define CLOCKS_PER_MILISEC 147456
 
 // 200 ms per repeat

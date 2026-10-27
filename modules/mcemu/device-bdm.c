@@ -12,9 +12,7 @@ int DeviceWritePage(int mc_num, void *buf, u32 page_num)
     u64 lba = vmcSpec[mc_num].stsec + page_num;
     DPRINTF("writing page 0x%lx at lba 0x%08x%08x\n", page_num, ((u32 *)&lba)[1], ((u32 *)&lba)[0]);
 
-    bdm_writeSector(lba, 1, buf);
-
-    return 1;
+    return bdm_writeSector(lba, 1, buf) ? 1 : 0;
 }
 
 int DeviceReadPage(int mc_num, void *buf, u32 page_num)
@@ -22,9 +20,7 @@ int DeviceReadPage(int mc_num, void *buf, u32 page_num)
     u64 lba = vmcSpec[mc_num].stsec + page_num;
     DPRINTF("reading page 0x%lx at lba 0x%08x%08x\n", page_num, ((u32 *)&lba)[1], ((u32 *)&lba)[0]);
 
-    bdm_readSector(lba, 1, buf);
-
-    return 1;
+    return bdm_readSector(lba, 1, buf) ? 1 : 0;
 }
 
 void DeviceShutdown(void)

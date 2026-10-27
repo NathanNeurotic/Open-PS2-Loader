@@ -72,6 +72,7 @@ static const char *vcdResolveCustomPopstarter(void)
     return NULL;
 }
 static int gBdmaApplyOnLaunch;
+static int vcdInstallPopsUdpfsNet(const char *p) {(void)p;return 0;}
 
 /* Files on every device and the card, by full path. */
 static struct { char path[128]; int size; char data[32]; int used; } files[64];
@@ -321,6 +322,29 @@ int main(void)
     vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_UDPFS);
     CHECK(warned == NULL && vcdBdmaEnvironmentValid(VCD_BDMA_UDPFS));
 
+    /* Explicit game-device POPS never substitutes an unrelated source. */
+    reset();
+    devType[0] = BDM_TYPE_USB;
+    strcpy(gBootDir, "mass0:/");
+    pair("mass0:/POPS/", VCD_BDMA_UDPFS, uu, uh);
+    CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == -4 && copies == 0);
+    pair("udpfs:/POPS/", VCD_BDMA_UDPFS, uu - 1, uh);
+    CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == -5 && copies == 0);
+    pair("udpfs:/POPS/", VCD_BDMA_UDPFS, vcdBdmaPairSig[VCD_BDMA_UDPFS].usbdSize, uh);
+    CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == 0);
+    CHECK(vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
+
+    /* Alpha and released USB-first pairs must upgrade to network-only UDPFS. */
+    const int retiredUdpfs[] = {76365, 79501};
+    for (unsigned i = 0; i < sizeof(retiredUdpfs)/sizeof(retiredUdpfs[0]); i++) {
+        reset();
+        card(VCD_BDMA_UDPFS, retiredUdpfs[i], uh);
+        CHECK(!vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
+        pair("udpfs:/POPS/", VCD_BDMA_UDPFS, uu, uh);
+        CHECK(vcdEquipBdmaFromPops("udpfs:/POPS/", VCD_BDMA_UDPFS, diag, sizeof(diag)) == 0);
+        CHECK(vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
+    }
+
     /* The USB fat32/exFAT launch dialog takes the same path. */
     reset();
     devType[0] = BDM_TYPE_USB;
@@ -346,8 +370,8 @@ int main(void)
     CHECK(vcdEquipBdma(VCD_BDMA_SRC_ILINK, VCD_BDMA_ILINK, diag, sizeof(diag)) == 0 && cardHdfsd() == old);
 
     /* Every pair in the release's POPS/ folder, on its own device, installs at launch without a toast. */
-    static const int source[] = {0, VCD_BDMA_SRC_USB, VCD_BDMA_SRC_MX4SIO, VCD_BDMA_SRC_MMCE, VCD_BDMA_SRC_HDD, VCD_BDMA_SRC_ILINK, VCD_BDMA_SRC_USB};
-    static const int type[] = {0, BDM_TYPE_USB, BDM_TYPE_SDC, -1, BDM_TYPE_ATA, BDM_TYPE_ILINK, BDM_TYPE_USB};
+    static const int source[] = {0, VCD_BDMA_SRC_USB, VCD_BDMA_SRC_MX4SIO, VCD_BDMA_SRC_MMCE, VCD_BDMA_SRC_HDD, VCD_BDMA_SRC_ILINK, VCD_BDMA_SRC_USB, VCD_BDMA_SRC_USB};
+    static const int type[] = {0, BDM_TYPE_USB, BDM_TYPE_SDC, -1, BDM_TYPE_ATA, BDM_TYPE_ILINK, BDM_TYPE_USB, BDM_TYPE_USB};
     for (int mode = 1; mode < VCD_BDMA_MODE_COUNT; mode++) {
         reset();
         mmcePresent = 1;

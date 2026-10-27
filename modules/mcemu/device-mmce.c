@@ -17,9 +17,7 @@ int DeviceWritePage(int mc_num, void *buf, u32 page_num)
 
     DPRINTF("writing page 0x%lx at offset 0x%lx\n", page_num, offset);
 
-    mmce_write_offset(vmc_fd, offset, vmcSpec[mc_num].cspec.PageSize, buf);
-
-    return 1;
+    return mmce_write_offset(vmc_fd, offset, vmcSpec[mc_num].cspec.PageSize, buf) ? 1 : 0;
 }
 
 int DeviceReadPage(int mc_num, void *buf, u32 page_num)
@@ -32,9 +30,7 @@ int DeviceReadPage(int mc_num, void *buf, u32 page_num)
 
     DPRINTF("fd: %i reading page 0x%lx at offset 0x%lx\n", vmc_fd, page_num, offset);
 
-    mmce_read_offset(vmc_fd, offset, vmcSpec[mc_num].cspec.PageSize, buf);
-
-    return 1;
+    return mmce_read_offset(vmc_fd, offset, vmcSpec[mc_num].cspec.PageSize, buf) ? 1 : 0;
 }
 
 void DeviceShutdown(void)

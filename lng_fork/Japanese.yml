@@ -606,8 +606,8 @@ translations:
   FAV_REMOVED: お気に入りゲームから外しました
   FAV_REMOVE_FAILED: お気に入りゲームから外せませんでした
   POPS_UDPFS_SETTINGS: POPS UDPFS ネットワーク設定
-  POPS_UDPFS_DISCOVERY: すべての USB の POPS フォルダに保存します。サーバー 0.0.0.0 は自動検出を使います。
-  POPS_UDPFS_NOT_READY: POPS UDPFS には、すべての USB の POPS フォルダに有効で一致する IPCONFIG.DAT と UDPFSCONFIG.DAT が必要です。POPS ネットワーク設定で設定してください。
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 自動検出"
+  POPS_UDPFS_NOT_READY: "メモリーカードから POPS UDPFS ネットワーク設定を読み込めませんでした。"
   HINT_POPS_UDPFS_IP: POPS の UDPFS ドライバーが IOP リセット後に使う PS2 の固定 IP。
   POPS_UDPFS_ALL_USB_FOLDERS: すべての USB の POPS フォルダ
   POPS_UDPFS_INVALID_SUFFIX: ' （無効）'

@@ -315,3 +315,6 @@ translations:
   VIEW_APPS: アプリ表示そーん
   EMBER_DISPLAY: Ember ぬ表示モード
   HINT_EMBER_DISPLAY: Ember ぬ PS1 ゲームんかい使ゆる出力モード。240p やか 480p 選りば、起動した機器ぬ EMBER フォルダぬ settings.txt んかい書かりゆん。既定 選りば ぬ設定や消さってぃ、他に何ん無ーらんねー ファイルまでぃ消さりゆん。
+
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 自動検出"
+  POPS_UDPFS_NOT_READY: "メモリーカードから POPS UDPFS ぬネットワーク設定読みきらんたん。"

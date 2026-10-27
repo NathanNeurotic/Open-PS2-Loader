@@ -36,4 +36,7 @@ void mmceArmGameIDTransport(void);
 // Called on non-game launches (Apps / Favorites) so homebrew doesn't inherit a per-game VMC.
 int mmceReset(void);
 
+// Card root holding POPS/ and EMBER/ ("mmceN:/"); NOT the OPL games prefix.
+void mmceGetPs1Root(char *root, int size);
+
 #endif

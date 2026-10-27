@@ -26,10 +26,12 @@
 #include "include/config.h"
 #include "include/supportbase.h" // sbPopulateConfig + base_game_info_t (VCD favourite config)
 #include "include/vcdsupport.h"
-#include "include/cuesupport.h" // CUE_ROW_EXTENSION -- a PS1 favourite names its core  // VCD favourites: name-addressed POPSTARTER launch helpers
-#include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
-#include "include/ethsupport.h" // ETH ISO favourite resolution while the live source is in VCD view
-#include "include/bdmsupport.h" // bdmSupportIsUDPBD -- POPSTARTER favourites cannot bind to UDPBD
+#include "include/cuesupport.h"  // CUE_ROW_EXTENSION -- a PS1 favourite names its core  // VCD favourites: name-addressed POPSTARTER launch helpers
+#include "include/libview.h"     // libViewActive / libListViewActive -- which list this page shows
+#include "include/ethsupport.h"  // ETH ISO favourite resolution while the live source is in VCD view
+#include "include/bdmsupport.h"  // bdmSupportIsUDPBD -- POPSTARTER favourites cannot bind to UDPBD
+#include "include/mmcesupport.h" // mmceGetPs1Root -- PS1 favourite #Size on an MMCE card
+#include "include/hddsupport.h"  // hddVcdSizeByName -- PS1 favourite #Size on the APA HDD
 #include "include/favsupport.h"
 
 int gFAVStartMode;
@@ -984,7 +986,27 @@ static config_set_t *favGetConfig(item_list_t *itemList, int id)
                  (favArray[id].kind == FAV_KIND_CUE) ? CUE_ROW_EXTENSION : ".VCD");
         game.parts = 1;
         game.format = GAME_FORMAT_ISO; // matches the device scans; the extension drives the PS1 badge
-        return sbPopulateConfig(&game, prefix, sep);
+        config_set_t *config = sbPopulateConfig(&game, prefix, sep);
+        if (sbConfigStatSizeEnabled()) {
+            // #Size resolves against the device's PS1 root, which on BDM/MMCE is the device root,
+            // not the OPL games prefix. HDD rows take the size the owner list already holds.
+            char ps1Root[64];
+            const char *root = prefix;
+            if (o->mode >= BDM_MODE && o->mode <= BDM_MODE_LAST) {
+                bdmGetPs1Root(o->mode, ps1Root, sizeof(ps1Root));
+                root = ps1Root;
+            } else if (o->mode == MMCE_MODE) {
+                mmceGetPs1Root(ps1Root, sizeof(ps1Root));
+                root = ps1Root;
+            }
+            if (o->mode == HDD_MODE) {
+                // APA: reuse the owner row's size (scan-measured, or a PP. partition measured once).
+                if (config != NULL)
+                    configSetInt(config, CONFIG_ITEM_SIZE, hddVcdSizeByName(game.name));
+            } else
+                sbResolvePs1Size(&game, root, config); // game is a stack copy: re-resolved per Info open
+        }
+        return config;
     }
     if (o->itemGetConfig == NULL || !favOwnerHasId(o, favArray[id].id))
         return NULL;

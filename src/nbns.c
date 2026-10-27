@@ -1,6 +1,7 @@
 #include <string.h>
 #include <kernel.h>
 #include <sifrpc.h>
+#include <delaythread.h>
 
 #include "nbns.h"
 #include "ioman.h"
@@ -10,12 +11,17 @@ static char RpcBuffer[64] ALIGNED(64);
 
 int nbnsInit(void)
 {
-    while (SifBindRpc(&SifRpcClient, 0x00001B13, 0) < 0 || SifRpcClient.server == NULL) {
-        LOG("libnbns: bind failed\n");
-        nopdelay();
+    // Bounded like HttpInit: if nbns.irx failed to load the server never appears, and an unbounded
+    // spin would hang SMB startup on the IO worker forever. Without NBNS, name lookups fail cleanly
+    // (nbnsFindName returns -1) and IP addresses keep working.
+    for (int attempt = 0; attempt < 300; attempt++) {
+        if (SifBindRpc(&SifRpcClient, 0x00001B13, 0) >= 0 && SifRpcClient.server != NULL)
+            return 0;
+        DelayThread(10000);
     }
-
-    return 0;
+    LOG("libnbns: bind timed out\n");
+    nbnsDeinit();
+    return -1;
 }
 
 void nbnsDeinit(void)
@@ -26,6 +32,9 @@ void nbnsDeinit(void)
 int nbnsFindName(const char *name, unsigned char *ip_address)
 {
     int result;
+
+    if (SifRpcClient.server == NULL)
+        return -1; // nbnsInit never bound (or timed out): no NBNS service to ask
 
     strncpy(RpcBuffer, name, 16);
     RpcBuffer[16] = '\0';

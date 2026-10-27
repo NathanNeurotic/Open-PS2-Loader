@@ -1636,6 +1636,10 @@ static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
         else
             configRemoveKey(configSet, CONFIG_ITEM_ENABLEGSM);
 
+        // The legacy arm has no inherit state (an absent key means mode 0), so "Default" here is
+        // resolved to the global mode at save time instead of storing its out-of-range row index.
+        if (GSMVMode == GSM_VMODE_DEFAULT_IDX && !configGetInt(configGame, CONFIG_ITEM_GSMVMODE, &GSMVMode))
+            GSMVMode = 0;
         if (GSMVMode != 0)
             result = configSetInt(configSet, CONFIG_ITEM_GSMVMODE, GSMVMode);
         else
@@ -1657,7 +1661,10 @@ static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
             configRemoveKey(configSet, CONFIG_ITEM_GSMFIELDFIX);
     } else if (gGSMSource == SETTINGS_GLOBAL) {
         configSetInt(configGame, CONFIG_ITEM_ENABLEGSM, EnableGSM);
-        configSetInt(configGame, CONFIG_ITEM_GSMVMODE, GSMVMode);
+        // "Default" (follow the global) on the global itself changes nothing: keep the stored mode
+        // rather than writing the Default row's out-of-range index.
+        if (GSMVMode != GSM_VMODE_DEFAULT_IDX)
+            configSetInt(configGame, CONFIG_ITEM_GSMVMODE, GSMVMode);
         configSetInt(configGame, CONFIG_ITEM_GSMXOFFSET, GSMXOffset);
         configSetInt(configGame, CONFIG_ITEM_GSMYOFFSET, GSMYOffset);
         configSetInt(configGame, CONFIG_ITEM_GSMFIELDFIX, GSMFIELDFix);

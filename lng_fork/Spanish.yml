@@ -628,8 +628,8 @@ translations:
   FAV_REMOVED: Quitado de Juegos favoritos
   FAV_REMOVE_FAILED: No se pudo quitar de Juegos favoritos
   POPS_UDPFS_SETTINGS: Ajustes de red UDPFS de POPS
-  POPS_UDPFS_DISCOVERY: Guarda en cada carpeta POPS de USB. El servidor 0.0.0.0 usa detección.
-  POPS_UDPFS_NOT_READY: POPS UDPFS necesita IPCONFIG.DAT y UDPFSCONFIG.DAT válidos y a juego en cada carpeta POPS de USB. Configúralos en Ajustes de red de POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = detección"
+  POPS_UDPFS_NOT_READY: "No se pudieron leer los ajustes de red de POPS UDPFS desde la tarjeta de memoria."
   HINT_POPS_UDPFS_IP: IP fija de la PS2 que usa el controlador UDPFS de POPS tras reiniciar el IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Todas las carpetas POPS de USB
   POPS_UDPFS_INVALID_SUFFIX: ' (no válido)'

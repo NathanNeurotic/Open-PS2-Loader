@@ -3794,6 +3794,11 @@ static int thmLoad(const char *themePath)
     char path[256];
     theme_t *curT = gTheme;
     theme_t *newT = (theme_t *)malloc(sizeof(theme_t));
+    if (newT == NULL) {
+        // Same contract as an abandoned load: the current theme stays, a later trigger retries.
+        LOG("THEMES Load: out of memory for the theme struct -- keeping the current theme\n");
+        return -1;
+    }
     memset(newT, 0, sizeof(theme_t));
 
     newT->useDefault = 1;
