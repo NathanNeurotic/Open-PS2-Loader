@@ -1,204 +1,195 @@
-"""Rewriting ul.cfg after a USBLD game is deleted or renamed never leaves it truncated.
+"""Deleting or renaming a USBLD game must never lose the other games' ul.cfg entries or split a game (#1068).
 
-sbRebuildULCfg() used to open ul.cfg with "wb" and ignore fwrite() and fclose(), so a write that failed
-part-way (a share or drive dropping out) silently dropped every USBLD game after that point. It now writes
-ul.cfg.tmp, checks every write and the close, and replaces ul.cfg only once that file is complete.
+sbRebuildULCfg() used to fopen ul.cfg with "wb", truncating every USBLD game's entry, and ignore fwrite()
+and fclose(), so a full device or a drive or share dropping out left a short or empty list. sbRename()
+ignored each part's rename, so a failure halfway left a game whose parts carried two names, and still wrote
+the new name to ul.cfg. RiptOPL fixed both the same way (RiptOPL 0529574); this is the C copy.
 
-The real sbWriteULCfg() and sbRebuildULCfg() from src/supportbase.c are compiled against a small in-memory
-file system whose fopen, fwrite, fclose, unlink and rename can be made to fail, and checks what ul.cfg and
-ul.cfg.tmp hold afterwards. Pass another supportbase.c to check it instead. This is a host check, not a
-console test.
+The real span of src/supportbase.c from sbWriteULCfg() through sbRename() is compiled on the host over a
+temporary folder, with fopen, fwrite, fclose and rename failures injected. It checks:
+
+- a rebuild writes every USBLD entry (not the deleted one, not ISO rows) through ul.cfg.new, leaving none;
+- a failed open, write or close leaves ul.cfg byte for byte as it was, and no ul.cfg.new;
+- a driver that refuses to rename onto an existing file still gets the new list;
+- when both renames fail, ul.cfg is written directly; when that fails too, ul.cfg.new keeps the full list
+  and a rename keeps the new name it lists;
+- a rename whose second part fails puts the first part back and keeps the old name and ul.cfg;
+- a rename whose ul.cfg rewrite fails puts every part back and keeps the old name.
+
+Pass another supportbase.c to check it instead. This is a host check, not a console test.
 """
+from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "src/supportbase.c"
-source = path.read_text(encoding="utf-8")
-header = (ROOT / "include/supportbase.h").read_text(encoding="utf-8")
+root = Path(__file__).resolve().parents[2]
+path = Path(sys.argv[1]) if len(sys.argv) > 1 else root / 'src/supportbase.c'
+source = path.read_text(encoding='utf-8')
+header = (root / 'include/supportbase.h').read_text(encoding='utf-8')
+first = 'static int sbWriteULCfg(' if 'static int sbWriteULCfg(' in source else 'void sbRebuildULCfg('
+start = source.rindex('\n\n', 0, source.index(first))
+end = source.index('\n}\n', source.index('void sbRename(')) + 3
+span = source[start:end]
+types = ''.join(re.search(r'^#define %s\b.*$' % n, header, re.M).group(0) + '\n' for n in
+                ('UL_GAME_NAME_MAX', 'ISO_GAME_NAME_MAX', 'ISO_GAME_EXTENSION_MAX', 'GAME_STARTUP_MAX'))
+enum = header.index('enum GAME_FORMAT {')
+types += header[enum:header.index('};', enum) + 3]
+for name in ('base_game_info_t', 'USBExtreme_game_entry_t'):
+    tail = header.index('} %s;' % name)
+    types += header[header.rindex('typedef struct', 0, tail):tail] + '} %s;\n' % name
 
-
-def function(signature):
-    match = re.search(r"^" + re.escape(signature) + r"[^;{]*\)\s*\{", source, re.M)
-    if match is None:
-        sys.exit(f"{path}: {signature}...) not found")
-    return source[match.start():source.index("\n}\n", match.start()) + 3]
-
-
-def typedef(name):
-    end = header.index("} %s;" % name)
-    return header[header.rfind("typedef struct", 0, end):end] + "} %s;\n" % name
-
-
-code = (function("static int sbWriteULCfg(") if "static int sbWriteULCfg(" in source else "") + \
-    function("void sbRebuildULCfg(")
-types = "".join(re.search(r"^#define %s\b.*$" % n, header, re.M).group(0) + "\n" for n in
-                ("UL_GAME_NAME_MAX", "ISO_GAME_NAME_MAX", "ISO_GAME_EXTENSION_MAX", "GAME_STARTUP_MAX"))
-types += header[header.index("enum GAME_FORMAT {"):header.index("};", header.index("enum GAME_FORMAT {")) + 3]
-types += typedef("base_game_info_t") + typedef("USBExtreme_game_entry_t")
-
-harness = r'''
+HARNESS = r'''
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 typedef unsigned char u8;
 typedef unsigned int u32;
-@TYPES@
+#define SCECdPS2CD 0x12
+#define FOLDER_SUB_MAX 64
 #define LOG(...) printf("  log: " __VA_ARGS__)
-
-/* A file system of a few named files. Each fopen("wb") truncates; writes go through a stdio-like buffer
-   that reaches the file only at fclose, so a failing device can first show at fclose. */
-#define NFILES 4
-static struct { char name[64]; unsigned char data[4096]; int size, used; } fs[NFILES];
-static int fail_open_tmp, fail_write_at, fail_close, fail_rename, fail_direct, writes, direct_opens;
-typedef struct { int f; unsigned char buf[4096]; int len; int direct; } FAKEFILE;
-static int lookup(const char *name)
+static char sbBrowseSub[FOLDER_SUB_MAX + 1];
+static u32 USBA_crc32(const char *s) { u32 h = 0; while (*s) h = h * 31 + (u8)*s++; return h; }
+@TYPES@
+static int failOpenNew, failWrite, failClose, refuseOverwrite, failRenameAt = -1, failRenameAlso = -1, renames, writes;
+static FILE *fakeFopen(const char *p, const char *m) { return failOpenNew && strstr(p, ".new") ? NULL : fopen(p, m); }
+static size_t fakeFwrite(const void *p, size_t s, size_t n, FILE *f) { writes++; return failWrite && --failWrite == 0 ? 0 : fwrite(p, s, n, f); }
+static int fakeFclose(FILE *f) { int r = fclose(f); return failClose ? -1 : r; }
+static int fakeRename(const char *a, const char *b)
 {
-    for (int i = 0; i < NFILES; i++) if (fs[i].used && !strcmp(fs[i].name, name)) return i;
-    return -1;
+    struct stat st;
+    int n = renames++;
+    if (n == failRenameAt || n == failRenameAlso || (refuseOverwrite && stat(b, &st) == 0))
+        return -1;
+    return rename(a, b);
 }
-static int create(const char *name)
+#define fopen fakeFopen
+#define fwrite fakeFwrite
+#define fclose fakeFclose
+#define rename fakeRename
+@SPAN@
+#undef rename
+#undef fclose
+#undef fwrite
+#undef fopen
+static char dir[256];
+static int failures;
+#define CHECK(c, m) do { if (!(c)) { printf("FAIL: %s\n", m); failures++; } } while (0)
+static long fileSize(const char *name) { char p[512]; struct stat st; snprintf(p, sizeof(p), "%s%s", dir, name); return stat(p, &st) == 0 ? st.st_size : -1; }
+static int readFile(const char *name, char *buf, int max) { char p[512]; snprintf(p, sizeof(p), "%s%s", dir, name); FILE *f = fopen(p, "rb"); if (!f) return -1; int n = (int)fread(buf, 1, max, f); fclose(f); return n; }
+static void touch(const char *name) { char p[512]; snprintf(p, sizeof(p), "%s%s", dir, name); FILE *f = fopen(p, "wb"); fputs("x", f); fclose(f); }
+static void game(base_game_info_t *g, const char *name, int parts, int format) { memset(g, 0, sizeof(*g)); strcpy(g->name, name); strcpy(g->startup, "SLUS_123.45"); g->parts = parts; g->media = 0x14; g->format = format; }
+static void partName(char *out, const base_game_info_t *g, const char *name, int part) { sbCreatePath_name(g, out, "", "/", part, name); }
+/* The names ul.cfg (or another list file) holds, in order, joined by commas. */
+static void names(const char *file, char *out)
 {
-    int i = lookup(name);
-    if (i < 0) for (i = 0; fs[i].used; i++);
-    fs[i].used = 1; strcpy(fs[i].name, name); fs[i].size = 0;
-    return i;
-}
-static FAKEFILE *fake_fopen(const char *name, const char *mode)
-{
-    int tmp = strstr(name, ".tmp") != NULL;
-    if (strcmp(mode, "wb") || (tmp && fail_open_tmp) || (!tmp && fail_direct == 1)) return NULL;
-    FAKEFILE *f = calloc(1, sizeof(*f));
-    direct_opens += !tmp;
-    f->f = create(name); f->direct = !tmp;
-    return f;
-}
-static size_t fake_fwrite(const void *p, size_t size, size_t n, FAKEFILE *f)
-{
-    if (++writes == fail_write_at || (f->direct && fail_direct == 2)) return 0;
-    memcpy(f->buf + f->len, p, size * n); f->len += size * n;
-    return n;
-}
-static int fake_fclose(FAKEFILE *f)
-{
-    int fail = fail_close || (f->direct && fail_direct == 3);
-    if (!fail) { memcpy(fs[f->f].data, f->buf, f->len); fs[f->f].size = f->len; }
-    else fs[f->f].size = f->len / 2; /* what a dropped device leaves */
-    free(f);
-    return fail ? -1 : 0;
-}
-static int fake_unlink(const char *name) { int i = lookup(name); if (i < 0) return -1; fs[i].used = 0; return 0; }
-static int fake_rename(const char *from, const char *to)
-{
-    int i = lookup(from);
-    if (i < 0 || fail_rename || lookup(to) >= 0) return -1; /* like FatFs: no rename over a file */
-    strcpy(fs[i].name, to);
-    return 0;
-}
-#define FILE FAKEFILE
-#define fopen fake_fopen
-#define fwrite fake_fwrite
-#define fclose fake_fclose
-#define unlink fake_unlink
-#define rename fake_rename
-
-@CODE@
-
-static base_game_info_t games[5];
-static base_game_info_t *list = games;
-static int fails;
-#define CHECK(c, ...) do { if (!(c)) { fails++; printf("FAIL: " __VA_ARGS__); puts(""); } } while (0)
-
-static void reset(void)
-{
-    memset(fs, 0, sizeof(fs));
-    fail_open_tmp = fail_write_at = fail_close = fail_rename = fail_direct = writes = direct_opens = 0;
-    memset(games, 0, sizeof(games));
-    for (int i = 0; i < 5; i++) {
-        snprintf(games[i].name, sizeof(games[i].name), "Game %d", i);
-        snprintf(games[i].startup, sizeof(games[i].startup), "SLUS_%03d.%02d", i, i);
-        games[i].parts = (u8)(i + 1); games[i].media = 0x14; games[i].format = GAME_FORMAT_USBLD;
+    USBExtreme_game_entry_t e[8];
+    int n = readFile(file, (char *)e, sizeof(e)) / (int)sizeof(e[0]);
+    out[0] = '\0';
+    for (int i = 0; i < n; i++) {
+        CHECK(!memcmp(e[i].magic, "ul.", 3) && e[i].Byte08 == 0x08 && e[i].media == 0x14 && !memcmp(e[i].startup, "SLUS_123.45", 11), "entry layout");
+        strncat(out, e[i].name, UL_GAME_NAME_MAX); strcat(out, ",");
     }
-    games[2].format = GAME_FORMAT_ISO; /* never written to ul.cfg */
-    int f = create("mass0:ul.cfg");
-    fs[f].size = 4 * (int)sizeof(USBExtreme_game_entry_t);
-    memset(fs[f].data, 0x5A, fs[f].size); /* the previous ul.cfg */
 }
-static int entries(const char *name) { int i = lookup(name); return i < 0 ? -1 : fs[i].size / (int)sizeof(USBExtreme_game_entry_t); }
-static int old_kept(void) { int i = lookup("mass0:ul.cfg"); return i >= 0 && fs[i].size == 4 * (int)sizeof(USBExtreme_game_entry_t) && fs[i].data[0] == 0x5A; }
-static void check_list(const char *name, int exclude)
+static void reset(void) { failOpenNew = failWrite = failClose = refuseOverwrite = renames = writes = 0; failRenameAt = failRenameAlso = -1; }
+int main(int argc, char **argv)
 {
-    int i = lookup(name), n = 0;
-    for (int g = 0; g < 5; g++) {
-        if (games[g].format != GAME_FORMAT_USBLD || g == exclude) continue;
-        USBExtreme_game_entry_t *e = (USBExtreme_game_entry_t *)fs[i].data + n++;
-        CHECK(!memcmp(e->name, games[g].name, UL_GAME_NAME_MAX) && !memcmp(e->startup, games[g].startup, GAME_STARTUP_MAX) &&
-                  e->parts == games[g].parts && e->media == 0x14 && !memcmp(e->magic, "ul.", 3) && e->Byte08 == 0x08,
-              "%s entry %d is not game %d", name, n - 1, g);
+    (void)argc;
+    snprintf(dir, sizeof(dir), "%s/", argv[1]);
+    base_game_info_t games[4], *list = games;
+    game(&games[0], "Alpha", 2, GAME_FORMAT_USBLD); game(&games[1], "Beta", 1, GAME_FORMAT_USBLD);
+    game(&games[2], "Disc", 1, GAME_FORMAT_ISO); game(&games[3], "Gamma", 1, GAME_FORMAT_USBLD);
+    char list3[] = "Alpha,Beta,Gamma,", got[512], before[4096], after[4096];
+    int n0, n1;
+
+    reset();
+    CHECK(sbRebuildULCfg(&list, dir, 4, -1) == 0, "a clean rebuild returns 0");
+    names("ul.cfg", got);
+    CHECK(!strcmp(got, list3) && fileSize("ul.cfg.new") < 0, "a rebuild writes every USBLD entry, no ISO row, and no ul.cfg.new");
+    CHECK(renames == 1, "a clean rebuild renames ul.cfg.new over ul.cfg once");
+
+    n0 = readFile("ul.cfg", before, sizeof(before));
+    reset(); failOpenNew = 1;
+    CHECK(sbRebuildULCfg(&list, dir, 4, 1) == -1, "a failed open returns -1");
+    reset(); failWrite = 2;
+    CHECK(sbRebuildULCfg(&list, dir, 4, 1) == -1, "a failed write returns -1");
+    reset(); failClose = 1;
+    CHECK(sbRebuildULCfg(&list, dir, 4, 1) == -1, "a failed close returns -1");
+    n1 = readFile("ul.cfg", after, sizeof(after));
+    CHECK(n0 == n1 && !memcmp(before, after, n0) && fileSize("ul.cfg.new") < 0, "a failed open, write or close keeps ul.cfg byte for byte and leaves no ul.cfg.new");
+
+    reset(); refuseOverwrite = 1;
+    CHECK(sbRebuildULCfg(&list, dir, 4, 1) == 0, "a driver without rename-over still succeeds");
+    names("ul.cfg", got);
+    CHECK(!strcmp(got, "Alpha,Gamma,") && fileSize("ul.cfg.new") < 0, "a driver without rename-over gets the new list");
+    CHECK(renames == 2 && writes == 2, "a driver without rename-over gets ul.cfg.new renamed, not a second write");
+
+    reset(); failRenameAt = 0; failRenameAlso = 1;
+    CHECK(sbRebuildULCfg(&list, dir, 4, -1) == 0, "with both renames failing, the direct write still succeeds");
+    names("ul.cfg", got);
+    CHECK(!strcmp(got, list3) && fileSize("ul.cfg.new") < 0, "the direct write holds the new list and ul.cfg.new is removed");
+
+    reset(); failRenameAt = 0; failRenameAlso = 1; failWrite = 4; /* three staged entries, then the direct write fails */
+    CHECK(sbRebuildULCfg(&list, dir, 4, 3) == 1, "with renames and the direct write failing, the result is 1");
+    names("ul.cfg.new", got);
+    CHECK(!strcmp(got, "Alpha,Beta,"), "ul.cfg.new keeps the full new list");
+    reset();
+    CHECK(sbRebuildULCfg(&list, dir, 4, -1) == 0 && fileSize("ul.cfg.new") < 0, "the next rebuild replaces a leftover ul.cfg.new");
+
+    char path[256], other[256];
+    for (int part = 0; part < 2; part++) { partName(path, &games[0], "Alpha", part); touch(path); }
+    reset(); failRenameAt = 1;
+    sbRename(&list, dir, "/", 4, 0, (char *)"Omega");
+    CHECK(strcmp(games[0].name, "Alpha") == 0, "a failed part rename keeps the old name");
+    for (int part = 0; part < 2; part++) {
+        partName(path, &games[0], "Alpha", part); partName(other, &games[0], "Omega", part);
+        CHECK(fileSize(path) == 1 && fileSize(other) < 0, "after a failed part rename every part is back under the old name");
     }
-    CHECK(entries(name) == n, "%s holds %d entries, want %d", name, entries(name), n);
-}
+    names("ul.cfg", got);
+    CHECK(!strcmp(got, list3), "a failed part rename leaves ul.cfg alone");
 
-int main(void)
-{
-    reset();
-    sbRebuildULCfg(&list, "mass0:", 5, 1);
-    check_list("mass0:ul.cfg", 1);
-    CHECK(lookup("mass0:ul.cfg.tmp") < 0, "a clean rewrite left ul.cfg.tmp behind");
-    CHECK(direct_opens == 0, "a clean rewrite opened ul.cfg itself instead of renaming the complete list over it");
-
-    reset();
-    sbRebuildULCfg(&list, "mass0:", 5, -1); /* a rename rewrites every game */
-    check_list("mass0:ul.cfg", -1);
-
-    reset();
-    fail_write_at = 2;
-    sbRebuildULCfg(&list, "mass0:", 5, -1);
-    CHECK(old_kept(), "a failed write changed ul.cfg");
-    CHECK(lookup("mass0:ul.cfg.tmp") < 0, "a failed write left ul.cfg.tmp behind");
-
-    reset();
-    fail_close = 1;
-    sbRebuildULCfg(&list, "mass0:", 5, 0);
-    CHECK(old_kept(), "a failed close changed ul.cfg");
-    CHECK(lookup("mass0:ul.cfg.tmp") < 0, "a failed close left ul.cfg.tmp behind");
-
-    reset();
-    fail_open_tmp = 1;
-    sbRebuildULCfg(&list, "mass0:", 5, 0);
-    CHECK(old_kept(), "a failed open changed ul.cfg");
-
-    reset();
-    fail_rename = 1; /* a driver without rename: ul.cfg is written directly, as before */
-    sbRebuildULCfg(&list, "mass0:", 5, 3);
-    check_list("mass0:ul.cfg", 3);
-    CHECK(lookup("mass0:ul.cfg.tmp") < 0, "the direct write left ul.cfg.tmp behind");
-
-    for (int mode = 1; mode <= 3; mode++) {
-        reset();
-        fail_rename = 1; fail_direct = mode; /* and then the direct write fails too: the new list survives */
-        sbRebuildULCfg(&list, "mass0:", 5, 3);
-        CHECK(lookup("mass0:ul.cfg.tmp") >= 0, "with rename and direct write failing (%d), ul.cfg.tmp was removed", mode);
-        if (lookup("mass0:ul.cfg.tmp") >= 0) check_list("mass0:ul.cfg.tmp", 3);
+    reset(); failWrite = 1; /* parts rename, then the ul.cfg write fails */
+    sbRename(&list, dir, "/", 4, 0, (char *)"Omega");
+    names("ul.cfg", got);
+    CHECK(strcmp(games[0].name, "Alpha") == 0 && !strcmp(got, list3), "a failed ul.cfg rewrite keeps the old name and list");
+    for (int part = 0; part < 2; part++) {
+        partName(path, &games[0], "Alpha", part);
+        CHECK(fileSize(path) == 1, "a failed ul.cfg rewrite puts the parts back");
     }
 
     reset();
-    for (int i = 0; i < 5; i++) games[i].format = GAME_FORMAT_ISO;
-    sbRebuildULCfg(&list, "mass0:", 5, -1);
-    CHECK(entries("mass0:ul.cfg") == 0, "no USBLD games should leave an empty ul.cfg");
+    sbRename(&list, dir, "/", 4, 0, (char *)"Omega");
+    partName(path, &games[0], "Omega", 1);
+    names("ul.cfg", got);
+    CHECK(strcmp(games[0].name, "Omega") == 0 && fileSize(path) == 1 && !strcmp(got, "Omega,Beta,Gamma,"), "a clean rename renames every part and rewrites ul.cfg");
 
-    if (fails) { printf("%d failure(s)\n", fails); return 1; }
-    return 0;
+    reset(); failRenameAt = 2; failRenameAlso = 3; failWrite = 4; /* parts rename; ul.cfg.new is written but cannot replace ul.cfg */
+    sbRename(&list, dir, "/", 4, 0, (char *)"Delta");
+    partName(path, &games[0], "Delta", 1);
+    names("ul.cfg.new", got);
+    CHECK(strcmp(games[0].name, "Delta") == 0 && fileSize(path) == 1 && !strcmp(got, "Delta,Beta,Gamma,"),
+          "with ul.cfg gone, the parts keep the name ul.cfg.new lists");
+
+    reset();
+    partName(path, &games[1], "Beta", 0); touch(path);
+    sbDelete(&list, dir, "/", 4, 1);
+    names("ul.cfg", got);
+    CHECK(fileSize(path) < 0 && !strcmp(got, "Delta,Gamma,"), "a delete removes the part and the entry");
+    return failures != 0;
 }
 '''
-with tempfile.TemporaryDirectory() as tmp:
-    src = Path(tmp) / "ulcfg.c"
-    exe = Path(tmp) / "ulcfg.exe"
-    src.write_text(harness.replace("@TYPES@", types).replace("@CODE@", code), encoding="utf-8")
-    subprocess.run(["cc", "-std=gnu99", "-Wall", "-Wno-unused-function", str(src), "-o", str(exe)], check=True)
-    if subprocess.run([str(exe)]).returncode:
-        sys.exit(f"FAIL: {path}")
-print("PASS: a failed ul.cfg rewrite keeps the previous list; a complete one replaces it")
+
+with tempfile.TemporaryDirectory() as directory:
+    work = Path(directory)
+    data = work / 'device'
+    data.mkdir()
+    (work / 'harness.c').write_text(HARNESS.replace('@TYPES@', types).replace('@SPAN@', span), encoding='utf-8')
+    subprocess.run(['cc', '-std=gnu99', '-Wall', '-Wno-unused-function', str(work / 'harness.c'), '-o', str(work / 'harness')], check=True)
+    result = subprocess.run([str(work / 'harness'), str(data)], capture_output=True, text=True)
+    sys.stdout.write(result.stdout)
+    if result.returncode != 0:
+        sys.exit(f'FAIL: {path}')
+print('PASS: ul.cfg is replaced only by a complete list, and a failed rename leaves the game whole')
