@@ -541,9 +541,9 @@ inherited paths; current RiptOPL features are not all validated on PS3. See the
 Repository helpers live in `tools/`, with CI and documentation helpers in `.github/scripts/`; run them from the repository root. Existing
 Makefile targets retain their names and output locations.
 
-Use one of the toolchain images in [the CI matrix](.github/workflows/flavours.yml). Both pinned
+Use one of the toolchain images in [the CI workflow](.github/workflows/flavours.yml). Both pinned
 and rolling SDK images are supported; the latest SDK is not required. For a reproducible baseline,
-use the `PS2DEVPINNED` image digest from that matrix. From the repository root with Docker available:
+use the `PS2DEVPINNED` image digest (the one the iLink driver job builds with). From the repository root with Docker available:
 
 ```sh
 docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11 make -j4
