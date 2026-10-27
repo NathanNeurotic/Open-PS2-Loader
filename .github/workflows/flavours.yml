@@ -283,6 +283,8 @@ jobs:
         run: python3 .github/scripts/test_mbedtls_vendor.py
       - name: Check the ps2ips DNS reply carries the IPv4 address, not a pointer
         run: python3 .github/scripts/test_ps2ips_dns.py
+      - name: Check ps2ips receives keep every TCP byte and never overrun the EE buffers
+        run: python3 .github/scripts/test_ps2ips_recv_tail.py
       - name: Check the verified HTTPS client (TLS 1.3/1.2, certificates, clock, deadline) against local servers
         run: python3 .github/scripts/test_ratls_host.py
       - name: Compile vendored mbedTLS with the RiptOPL configuration (host)

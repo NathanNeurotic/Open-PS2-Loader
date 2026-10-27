@@ -34,7 +34,7 @@ Each entry gives its evidence:
 | [IEEE1394_bd](#ieee1394_bd) | `iop/iLink/IEEE1394_bd` | [`modules/ilink/IEEE1394_bd`](../modules/ilink/IEEE1394_bd/) | 10 | 0 | 1 |
 | [iLinkman](#ilinkman) | `iop/iLink/iLinkman` | [`modules/ilink/iLinkman`](../modules/ilink/iLinkman/) | 11 | 0 | 0 |
 
-ps2ips also has one defect of our own, and IEEE1394_bd had one that is fixed; both are listed with the
+ps2ips and IEEE1394_bd each had one defect of our own, both fixed on 2026-10-27 and listed with the
 module. Defects we saw in modules we did not change are under [other ps2sdk modules](#other-ps2sdk-modules).
 
 The [smbman write-count fix](ps2sdk-patches/0001-smbman-a-write-is-complete-only-for-the-bytes-the-se.patch)
@@ -184,9 +184,10 @@ paths. The EE side stays ps2sdk's stock libps2ips, which a loader cannot change.
   `ee/rpc/tcpips/src/ps2ipc_ps2sdk.c`), which fits the reported symptom of sockets leaking until
   `socket()` fails (unconfirmed). `fa7359ff` (2018) grew the packet without growing the EE buffer.
 - **Who hits it:** every EE program using libps2ips, on every TCP `recv()` that returns data.
-- **Our change:** the IRX sends at most 128 bytes, 80 when there is no unaligned tail. This is a
-  workaround, because the EE library is ps2sdk's, and it causes the defect of our own listed below. The
-  ps2sdk fix belongs on the EE side: make `_intr_data` at least `sizeof(rests_pkt)` (144 bytes), rounded
+- **Our change:** the IRX sends at most 128 bytes, 80 when there is no unaligned tail, so it can return
+  only 48 bytes of a receive's unaligned tail. It peeks first and takes only what fits. This is a
+  workaround, because the EE library is ps2sdk's; the entry on our own defect below says what its first
+  version lost and what it still costs UDP. The ps2sdk fix belongs on the EE side: make `_intr_data` at least `sizeof(rests_pkt)` (144 bytes), rounded
   up to a multiple of 64 bytes and kept 64-byte aligned. Ship it together with the next fix, which
   otherwise starts sending recvfrom's 144 bytes there too.
 - **Evidence:** review harness (stock code DMAs 144 bytes) and the symbol layout of our RA build. Not
@@ -244,13 +245,19 @@ address when that is under 16, and none when it is 0. Our fix: `int fromlen = si
 been so since `e9c45741` (2015). Host test [`test_ps2ips_dns.py`](../.github/scripts/test_ps2ips_dns.py)
 fails on master's code and passes on ours.
 
-### Our defect: a receive with a long unaligned tail loses data
+### Our defect, fixed: a receive with a long unaligned tail lost data
 
-This is a defect in our copy, not in ps2sdk. Because of the 128-byte workaround above, when the unaligned
-tail of a receive is longer than 48 bytes, the IRX lowers the returned length after lwIP has already
-consumed the bytes. A UDP datagram looks shorter; a TCP stream silently loses up to 15 bytes. It affects
-the RetroAchievements flavour's TCP readers in `src/ranet.c` and `src/ratls_ps2.c`. Shrinking the length
-passed to lwIP so that the tail never exceeds 48 bytes would avoid the loss. (Review harness.)
+This was a defect in our copy, not in ps2sdk. Because of the 128-byte workaround above, when the unaligned
+tail of a receive was longer than 48 bytes, the IRX lowered the returned length after lwIP had already
+consumed the bytes, so a TCP stream silently lost up to 15 bytes. It affected the RetroAchievements
+flavour's TCP readers in `src/ranet.c` and `src/ratls_ps2.c`. Since 2026-10-27 our copy peeks with
+`MSG_PEEK` and then receives only the bytes whose tail fits (`rests_fit()`). lwIP 2.2's TCP peek copies
+from the first queued buffer and leaves it queued, so the second receive returns exactly what it asks
+for and the rest waits for the next call. A receive therefore returns at most that first buffer, usually
+one TCP segment, which `recv()` allows. A UDP datagram with such a tail still arrives up to 15 bytes
+short, as if the caller's buffer were smaller, because a datagram cannot be continued. Host test
+(`test_ps2ips_recv_tail.py`: 8 failures on the old code); lwIP's peek is modelled from its 2.2.1 source,
+not run.
 
 ### Seen in ps2ips, not changed here
 

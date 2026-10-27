@@ -1017,7 +1017,7 @@ $(EE_ASM_DIR)netman.c: $(PS2SDK)/iop/irx/netman.irx | $(EE_ASM_DIR)
 
 # FORK-VENDORED ps2ips (modules/network/ps2ips): the ps2sdk prebuilt has five defects in the
 # EE<->IOP socket bridge, and the first one corrupts EE memory on every TCP receive that returns data.
-# docs/PS2SDK-NOTES.md#ps2ips has the full account, including the TCP bytes our workaround drops.
+# docs/PS2SDK-NOTES.md#ps2ips has the full account, including what our workaround still costs UDP.
 #
 #   * do_recv DMAs the whole 144-byte rests_pkt into the EE's _intr_data[32], which is 128 bytes
 #     (do_recvfrom would too, once the next defect is fixed). In the LINKED OPL the next object in
@@ -1034,8 +1034,8 @@ $(EE_ASM_DIR)netman.c: $(PS2SDK)/iop/irx/netman.irx | $(EE_ASM_DIR)
 #   * do_gethostbyname copies the h_addr_list[0] pointer instead of the address it points to.
 #
 # The source is current ps2sdk master with the first four spots marked "RA fix" and the DNS fix
-# unmarked -- verified by diffing against ps2dev/ps2sdk master: 7 hunks, and every removed line is
-# one of the defects above, so
+# unmarked -- verified by diffing against ps2dev/ps2sdk master: 8 hunks, and every removed line is
+# one of the defects above or the receive calls the first one's workaround changes, so
 # vendoring drops no upstream behaviour. It keeps the ps2ips.irx name and the same export table, so
 # nbns, httpclient and everything else on the EE socket API bind exactly as before.
 #
