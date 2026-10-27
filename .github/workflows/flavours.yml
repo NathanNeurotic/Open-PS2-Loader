@@ -216,6 +216,8 @@ jobs:
         run: python3 .github/scripts/test_title_compat_defaults.py
       - name: Check menu rumble is off by default
         run: python3 .github/scripts/test_rumble_default.py
+      - name: Check network-share art bypasses the directory index
+        run: python3 .github/scripts/test_artindex_network.py
 
   release-notes-tests:
     runs-on: ubuntu-24.04

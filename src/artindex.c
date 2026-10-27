@@ -275,7 +275,13 @@ int artIndexMayExist(const char *fullPath)
 
     // Reject SMB / backslash paths: artIndexSplit expects '/' directory separators.
     // Returning 1 ("uncertain; perform real open") guarantees SMB art is never falsely declared absent.
-    if (strchr(fullPath, '\\') != NULL || !strncmp(fullPath, "smb", 3))
+    //
+    // UDPFS is skipped too (#1070). Listing a folder costs one network round trip per entry, and an ART
+    // folder holds several files per game, so the sweep held the art worker for seconds before the first
+    // cover -- and again after ART discovery invalidated it. A missing cover there is one fast open. The
+    // listing is also only as complete as the server says: PS2-Servers ends a listing early when it
+    // cannot stat one entry, which this index would take as "every later cover is absent".
+    if (strchr(fullPath, '\\') != NULL || !strncmp(fullPath, "smb", 3) || !strncmp(fullPath, "udpfs", 5))
         return 1;
 
     // Not the owner thread: never touch the slots at all. See gArtIndexOwnerThread.
