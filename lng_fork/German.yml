@@ -633,6 +633,7 @@ translations:
   FAV_REMOVE_FAILED: Konnte nicht aus Lieblingsspielen entfernen
   POPS_UDPFS_SETTINGS: UDPFS-Netzwerkeinstellungen für POPS
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = Erkennung"
+  POPS_UDPFS_NOT_READY: "Die Netzwerkeinstellungen für POPS UDPFS ließen sich nicht von der Speicherkarte lesen."
   HINT_POPS_UDPFS_IP: Feste PS2-IP, die der UDPFS-Treiber von POPS nach seinem IOP-Reset nutzt.
   POPS_UDPFS_ALL_USB_FOLDERS: Alle POPS-Ordner auf USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ungültig)'

@@ -626,6 +626,7 @@ translations:
   FAV_REMOVE_FAILED: Uklanjanje iz Favorita nije uspjelo
   POPS_UDPFS_SETTINGS: POPS UDPFS mrežne postavke
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = otkrivanje"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS mrežne postavke nisu se mogle pročitati s memorijske kartice."
   HINT_POPS_UDPFS_IP: Statička PS2 IP adresa koju POPS UDPFS upravljački program koristi nakon ponovnog pokretanja IOP-a.
   POPS_UDPFS_ALL_USB_FOLDERS: Sve USB mape POPS
   POPS_UDPFS_INVALID_SUFFIX: ' (nevaljano)'

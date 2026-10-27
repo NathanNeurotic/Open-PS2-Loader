@@ -634,6 +634,7 @@ translations:
   FAV_REMOVE_FAILED: Dili matangtang sa Mga Paborito
   POPS_UDPFS_SETTINGS: Network settings sa POPS UDPFS
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = pagpangita"
+  POPS_UDPFS_NOT_READY: "Dili mabasa ang network settings sa POPS UDPFS gikan sa memory card."
   HINT_POPS_UDPFS_IP: Static nga PS2 IP nga gigamit sa POPS UDPFS driver human sa IOP reset niini.
   POPS_UDPFS_ALL_USB_FOLDERS: Tanang USB POPS folder
   POPS_UDPFS_INVALID_SUFFIX: ' (dili sakto)'
