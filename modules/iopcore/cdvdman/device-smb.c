@@ -155,3 +155,31 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
 
     return rv;
 }
+
+//
+// oplutils exported functions, used by MCEMU for VMC pages. They take the oplutils slots that
+// smb_ReadFile and smb_WriteFile had, and report each call so that oplShutdown can let a save
+// finish. (DeviceReadSectors also uses smb_ReadFile, for the game image, which is not a VMC call.)
+//
+
+int smb_vmcReadFile(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, int nbytes)
+{
+    int res;
+
+    cdvdman_vmc_io_begin(0);
+    res = smb_ReadFile(FID, offsetlow, offsethigh, readbuf, nbytes);
+    cdvdman_vmc_io_end();
+
+    return res;
+}
+
+int smb_vmcWriteFile(u16 FID, u32 offsetlow, u32 offsethigh, void *writebuf, int nbytes)
+{
+    int res;
+
+    cdvdman_vmc_io_begin(1);
+    res = smb_WriteFile(FID, offsetlow, offsethigh, writebuf, nbytes);
+    cdvdman_vmc_io_end();
+
+    return res;
+}

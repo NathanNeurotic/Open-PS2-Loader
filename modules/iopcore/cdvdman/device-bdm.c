@@ -251,33 +251,50 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
 //
 // oplutils exported function, used by MCEMU
 //
+// Both return 1 when the block device transferred all nsectors and 0 otherwise (the contract of
+// mmce_read_offset/mmce_write_offset), so mcemu can report a failed VMC page access to MCMAN
+// instead of acknowledging a save that never landed. On failure usbmass_bd, IEEE1394_bd and the
+// ATA block device return a negative errno but mx4sio_bd returns a SHORT count, so only
+// "== nsectors" catches every failure (bd_defrag_read applies the same test to ISO reads).
 
-void bdm_readSector(u64 lba, unsigned short int nsectors, unsigned char *buffer)
+int bdm_readSector(u64 lba, unsigned short int nsectors, unsigned char *buffer)
 {
+    int rv;
+
     DPRINTF("%s\n", __func__);
 
+    cdvdman_vmc_io_begin(0);
     WaitSema(bdm_io_sema);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_begin(FREEZE_DIAG_VMC_READ, (unsigned int)lba);
 #endif
-    g_bd->read(g_bd, lba, buffer, nsectors);
+    rv = g_bd->read(g_bd, lba, buffer, nsectors);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_end();
 #endif
     SignalSema(bdm_io_sema);
+    cdvdman_vmc_io_end();
+
+    return rv == nsectors;
 }
 
-void bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *buffer)
+int bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *buffer)
 {
+    int rv;
+
     DPRINTF("%s\n", __func__);
 
+    cdvdman_vmc_io_begin(1);
     WaitSema(bdm_io_sema);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_begin(FREEZE_DIAG_VMC_WRITE, (unsigned int)lba);
 #endif
-    g_bd->write(g_bd, lba, buffer, nsectors);
+    rv = g_bd->write(g_bd, lba, buffer, nsectors);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_end();
 #endif
     SignalSema(bdm_io_sema);
+    cdvdman_vmc_io_end();
+
+    return rv == nsectors;
 }

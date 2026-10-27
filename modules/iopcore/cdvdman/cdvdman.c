@@ -133,10 +133,113 @@ void oplRegisterShutdownCallback(oplShutdownCb_t cb)
     vmcShutdownCb = cb;
 }
 
+//-------------------------------------------------------------------------
+/* VMC save drain for oplShutdown.
+
+   oplShutdown (IGR, IGR power-off, and the power button when IGR is off) takes the device lock and
+   never releases it. MCEMU's IOP threads keep running while the EE is stopped, and one MCMAN call
+   can make many VMC page writes (MCEMU turns each block erase into 16 of them), so a save in
+   progress was cut at its next page once the lock was taken.
+
+   MCEMU reads and writes VMC pages only through this module's oplutils exports, and each of them
+   reports here. VMC I/O whose gaps are all shorter than VMC_DRAIN_QUIET_MS is one burst. Before it
+   takes the lock, oplShutdown waits for a burst that has written to end, for at most
+   VMC_DRAIN_CAP_MS. Without a VMC, or while the burst has only read, it does not wait.
+
+   A save that the game spreads over several MCMAN calls can still be cut between two calls: the
+   EE is stopped and never sends the next one. Pressing reset does the same to a real card. */
+
+#define VMC_TICKS_PER_MS   36864 // GetSystemTime counts the 36.864 MHz IOP clock.
+#define VMC_DRAIN_QUIET_MS 100   // Gaps inside one MCMAN call are IOP work and SIO2 handoffs.
+#define VMC_DRAIN_CAP_MS   500   // ee_core's INGAMEDIAG flavour allows this whole RPC 2000 ms.
+#define VMC_DRAIN_POLL_US  10000
+
+static int vmc_io_busy;             // VMC calls between begin and end, including any waiting for the device.
+static int vmc_burst_wrote;         // The current burst includes a page write (or an erase, which writes).
+static iop_sys_clock_t vmc_io_last; // Latest begin or end.
+
+static int vmc_clock_after(const iop_sys_clock_t *a, const iop_sys_clock_t *b)
+{
+    return a->hi > b->hi || (a->hi == b->hi && a->lo > b->lo);
+}
+
+// Ticks from then to now: 0 if then is later, 0xFFFFFFFF from about 116 s on. No 64-bit math on the IOP.
+static u32 vmc_ticks_between(const iop_sys_clock_t *then, const iop_sys_clock_t *now)
+{
+    u32 lo, hi;
+
+    if (vmc_clock_after(then, now))
+        return 0;
+    lo = now->lo - then->lo;
+    hi = now->hi - then->hi - (now->lo < then->lo ? 1 : 0);
+    return hi != 0 ? 0xFFFFFFFF : lo;
+}
+
+// Called by the oplutils VMC exports before they wait for the device.
+void cdvdman_vmc_io_begin(int is_write)
+{
+    iop_sys_clock_t now;
+    int oldstate;
+
+    GetSystemTime(&now);
+    CpuSuspendIntr(&oldstate);
+    if (vmc_io_busy == 0 && vmc_ticks_between(&vmc_io_last, &now) >= VMC_DRAIN_QUIET_MS * VMC_TICKS_PER_MS)
+        vmc_burst_wrote = 0; // A quiet gap ended the previous burst.
+    if (is_write)
+        vmc_burst_wrote = 1;
+    vmc_io_busy++;
+    if (vmc_clock_after(&now, &vmc_io_last))
+        vmc_io_last = now;
+    CpuResumeIntr(oldstate);
+}
+
+// Called by the oplutils VMC exports after the device call has returned.
+void cdvdman_vmc_io_end(void)
+{
+    iop_sys_clock_t now;
+    int oldstate;
+
+    GetSystemTime(&now);
+    CpuSuspendIntr(&oldstate);
+    vmc_io_busy--;
+    if (vmc_clock_after(&now, &vmc_io_last))
+        vmc_io_last = now;
+    CpuResumeIntr(oldstate);
+}
+
+static void cdvdman_vmc_drain(void)
+{
+    iop_sys_clock_t start, now, last;
+    int busy, wrote, oldstate;
+
+    GetSystemTime(&start);
+    for (;;) {
+        CpuSuspendIntr(&oldstate);
+        busy = vmc_io_busy;
+        wrote = vmc_burst_wrote;
+        last = vmc_io_last;
+        CpuResumeIntr(oldstate);
+        GetSystemTime(&now); // Read after the snapshot, so now is never before last.
+
+        // No VMC, or nothing written in this burst: nothing to finish.
+        if (!wrote)
+            return;
+        // The burst has ended.
+        if (!busy && vmc_ticks_between(&last, &now) >= VMC_DRAIN_QUIET_MS * VMC_TICKS_PER_MS)
+            return;
+        // A writer that does not stop, or a device call that does not return, cannot hold up the shutdown.
+        if (vmc_ticks_between(&start, &now) >= VMC_DRAIN_CAP_MS * VMC_TICKS_PER_MS)
+            return;
+        // Sleeping lets the lower-priority MCMAN and MCEMU threads run.
+        DelayThread(VMC_DRAIN_POLL_US);
+    }
+}
+
 static void oplShutdown(int poff)
 {
     u32 stat;
 
+    cdvdman_vmc_drain();
     DeviceLock();
     if (vmcShutdownCb != NULL)
         vmcShutdownCb();

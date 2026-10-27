@@ -67,6 +67,12 @@ jobs:
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
         run: python3 .github/scripts/test_igr_polling.py
+      - name: Check SMB VMC I/O releases smb_io_sema and reports failed pages
+        run: python3 .github/scripts/test_smb_vmc_io_result.py
+      - name: Check BDM and MMCE VMC writes, reads and erases report device failures
+        run: python3 .github/scripts/test_vmc_write_result.py
+      - name: Check IGR and power-off let an in-flight VMC save finish, bounded
+        run: python3 .github/scripts/test_igr_vmc_drain.py
       - name: Check the in-game freeze report stays in its flavour and cannot hang IGR
         run: python3 .github/scripts/test_ingame_freeze_diag.py
       - name: Check the in-game freeze report text

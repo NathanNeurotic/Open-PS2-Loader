@@ -111,6 +111,10 @@ extern int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf);
 extern int cdvdman_sendSCmd(u8 cmd, const void *in, u16 in_size, void *out, u16 out_size);
 extern void cdvdman_cb_event(int reason);
 
+// VMC page I/O through the oplutils exports MCEMU calls, so oplShutdown can let a save finish.
+extern void cdvdman_vmc_io_begin(int is_write);
+extern void cdvdman_vmc_io_end(void);
+
 extern void cdvdman_init(void);
 extern void cdvdman_fs_init(void);
 extern void cdvdman_searchfile_init(void);

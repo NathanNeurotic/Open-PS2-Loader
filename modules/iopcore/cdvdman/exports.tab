@@ -256,12 +256,12 @@ DECLARE_EXPORT_TABLE(oplutils, 1, 2)
 	DECLARE_EXPORT(mmce_write_offset)
 #endif
 #ifdef HDD_DRIVER
-	DECLARE_EXPORT(sceAtaDmaTransfer)
+	DECLARE_EXPORT(hdd_vmcDmaTransfer) // MCEMU's sceAtaDmaTransfer
 #endif
 #ifdef SMB_DRIVER
 	DECLARE_EXPORT(smb_OpenAndX)
-	DECLARE_EXPORT(smb_ReadFile)
-	DECLARE_EXPORT(smb_WriteFile)
+	DECLARE_EXPORT(smb_vmcReadFile)  // MCEMU's smb_ReadFile
+	DECLARE_EXPORT(smb_vmcWriteFile) // MCEMU's smb_WriteFile
 	DECLARE_EXPORT(smb_Close)
 #endif
 END_EXPORT_TABLE
