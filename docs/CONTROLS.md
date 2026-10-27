@@ -200,7 +200,7 @@ can't show leaves you looking at a black screen, so pressing buttons blind can't
 ## Rumble
 
 RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by
-**Controller Vibration in Menus** in *Settings → Controller Settings*.
+**Controller Vibration in Menus** in *Settings → Controller Settings*, and is off on a fresh install.
 
 It needs a **DualShock in analog mode** — with the analog light off, the controller has no motors
 available and the setting does nothing. Third-party pads and most adapters vary in whether they
