@@ -364,8 +364,8 @@ cheap server never reaps the handle. From then on the server refused every NT op
 a sharing violation, so "check game support" could only report that it could not open the image —
 while the game still <em>booted</em> off it, because the in-play open uses the older command, which the same
 server grants in compatibility mode.</p>
-<p>This flavour now carries its own <code>smbman</code> (<code>modules/network/smbman-ra</code>) that tries NT create first
-and falls back to the legacy open <strong>only</strong> when the server says the file is held, and <strong>only for a
+<p>OPL now carries its own <code>smbman</code> (<code>modules/network/smbman-ra</code>, first in this flavour and now in every
+flavour) that tries NT create first and falls back to the legacy open <strong>only</strong> when the server says the file is held, and <strong>only for a
 read</strong> — reaching past another handle to write is not something worth asking for. If both are
 refused, the hash log names the image as held instead of saying nothing. hacan359 confirmed this on
 hardware on 2026-09-10: two images held open by earlier runs hashed anyway, and the hashes matched
@@ -491,11 +491,14 @@ archive also carries <strong><code>xeRAbora.url</code></strong> (pointing direct
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
 diagnostic bundle rather than installable payload. The default build is unaffected by all of this — every RA source file and
 every call site is behind <code>#ifdef RETROACHIEVEMENTS</code>, and that is checked by comparing the two builds'
-symbol tables, loader core and embedded IOP modules. PR CI also builds the pinned
+symbol tables, loader core and embedded IOP modules. The two IOP modules in the next section are not RA
+code: they fix bugs every flavour has, so every flavour embeds them. PR CI also builds the pinned
 <strong>OFFICIALROLLING-RA</strong> flavour and records the RA flag in its build manifest.</p>
-<h3 id="two-iop-modules-this-flavour-builds-instead-of-taking-from-the-sdk">Two IOP modules this flavour builds instead of taking from the SDK</h3>
+<h3 id="two-iop-modules-opl-builds-instead-of-taking-from-the-sdk">Two IOP modules OPL builds instead of taking from the SDK</h3>
 <p>Both are ps2sdk sources vendored with a marked change, the way <code>modules/network/ps2ips</code> already is,
-and both are selected by <code>USBD_MINI_IRX</code> / <code>SMBMAN_IRX</code> at the top of the Makefile.</p>
+and both are selected by <code>USBD_MINI_IRX</code> / <code>SMBMAN_IRX</code> at the top of the Makefile. Both began in this
+flavour; every flavour now embeds both. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/PS2SDK-NOTES.md">Notes for ps2sdk</a> lists the ps2sdk side of
+both, and of every other SDK module the fork replaces.</p>
 <table>
 <thead>
 <tr>
@@ -507,8 +510,8 @@ and both are selected by <code>USBD_MINI_IRX</code> / <code>SMBMAN_IRX</code> at
 <tbody>
 <tr>
 <td><code>modules/network/smbman-ra</code></td>
-<td>the held-image fix above</td>
-<td><code>smb.c</code> (35 lines) and <code>smb.h</code> (4); every other file byte-identical to ps2sdk master</td>
+<td>the held-image fix above; also a write now counts only the bytes the server's WRITE_ANDX Count says it stored, where ps2sdk's smbman takes any success status as the whole write. That matters on a server that answers a full disk, or a partial write, with success and a short or zero Count, which MS-CIFS allows; Samba, Windows (per MS-CIFS) and PS2-Servers answer a full disk with an error status, which both copies already fail. A write request also carries at most 65,534 bytes, so its 16-bit ByteCount no longer wraps to 0</td>
+<td><code>smb.c</code> (+57/−8: the three fixes), <code>smb.h</code> (+4) and <code>auth.c</code> (+6/−1: an unmarked password-buffer bound); every other source file byte-identical to ps2sdk master, checked 2026-10-27; only the Makefile is ours</td>
 </tr>
 <tr>
 <td><code>modules/usb/usbd-ra</code></td>
