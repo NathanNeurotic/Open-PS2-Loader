@@ -35,7 +35,7 @@ Tested on hardware with:
   to `usbhdfsd.irx`.
 - Optional: `IPCONFIG.DAT` and `UDPFSCONFIG.DAT` in `mc?:/SYS-CONF/` (see below).
 - Ember: use a launcher to load this module, load the memory card modules
-  before it (see docs/README_CONFIG.txt).
+  before it (see NETWORK/docs/README_CONFIG.txt).
 
 Not supported: `rename` (neither POPStarter nor Ember use it, and the UDPFS
 protocol has no such request), `ioctl2`, files of 4 GiB or more (the position
@@ -56,7 +56,7 @@ kept by the driver is 32 bit).
 
 Two optional files on the memory card: `IPCONFIG.DAT` (PS2 IP) and
 `UDPFSCONFIG.DAT` (server IP), in `mc0:/SYS-CONF/` then `mc1:/SYS-CONF/`.
-See [docs/README_CONFIG.txt](docs/README_CONFIG.txt). Without them the PS2 uses
+See [NETWORK/docs/README_CONFIG.txt](NETWORK/docs/README_CONFIG.txt). Without them the PS2 uses
 192.168.1.10 and the server is found by broadcast.
 
 ## Building
@@ -98,5 +98,5 @@ network. Read this before trusting it with data you care about.
 
 ## Credits and licenses
 
-See [docs/THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md). The project is
+See [NETWORK/docs/THIRD_PARTY_NOTICES.md](NETWORK/docs/THIRD_PARTY_NOTICES.md). The project is
 under the Academic Free License 2.0 (`licenses/`).

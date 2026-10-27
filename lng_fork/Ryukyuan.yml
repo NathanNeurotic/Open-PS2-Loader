@@ -318,4 +318,4 @@ translations:
 
   POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 自動検出"
 
-  POPS_UDPFS_NOT_READY: "POPS UDPFS: .udpfs"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS や メモリーカードんかい .udpfs ドライバーぬ組ぬ 入っとーらんねー ならん。手動し入りーか、BDMA ぬ「起動時に適用」 オンにさびり。"

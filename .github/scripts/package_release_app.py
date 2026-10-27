@@ -51,6 +51,11 @@ def verify_udpfs_payload(package: zipfile.ZipFile) -> set[str]:
     missing = required - set(package.namelist())
     if missing:
         raise ValueError(f"missing UDPFS drivers or notices: {sorted(missing)}")
+    for path in sorted(notices.rglob("*")):
+        if path.is_file():
+            name = path.relative_to(ROOT).as_posix()
+            if package.read(name) != path.read_bytes():
+                raise ValueError(f"packaged UDPFS notice differs from the repository copy: {name}")
     for release in releases:
         for name, expected in release["files"].items():
             data = package.read(name)
