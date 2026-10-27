@@ -43,7 +43,8 @@ misc/*.sys binary
 *.url text eol=crlf
 *.bat text eol=crlf
 
-# Patches for ps2sdk, whose sources are LF. A patch checked out with CRLF no longer applies to them.
+# Patches for ps2sdk, whose sources are LF. A patch checked out with CRLF fails `git apply` (git am and
+# GNU patch strip the CRs).
 # A blank context line in a patch is a single space, which `git diff --check` would report.
 docs/ps2sdk-patches/*.patch text eol=lf -whitespace
 

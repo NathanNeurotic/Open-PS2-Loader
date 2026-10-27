@@ -55,10 +55,11 @@ IRX_ID(MODNAME, 1, 1);
    The EE-side buffer size lives in libps2ips and cannot be changed from
    here, so the rule is: never transfer more than RESTS_DMA_MAX bytes into
    intr_data. The tail buffer then has RESTS_EBUF_MAX usable bytes; a
-   longer unaligned tail is truncated and the shorter length reported -- a
-   visible, harmless loss instead of memory corruption. The RA protocol
-   never reaches that case: the PC pads every reply to a multiple of 64
-   and the EE receives into 64-aligned buffers, so erest is 0. */
+   longer unaligned tail is truncated and the shorter length reported.
+   lwIP has already consumed those bytes, so a TCP stream silently loses
+   them: a defect of ours, which docs/PS2SDK-NOTES.md#ps2ips records. It
+   needs a receive whose unaligned tail is longer than RESTS_EBUF_MAX,
+   which the RA flavour's TCP readers can make. */
 #define RESTS_DMA_MAX	128
 #define RESTS_EBUF_MAX	(RESTS_DMA_MAX - 16 - 64) /* header + sbuffer */
 
@@ -251,7 +252,8 @@ static void do_recvfrom( void * rpcBuffer, int size )
 	   copies the sockaddr into ret_pkt->sockaddr (bytes 4..19) and only
 	   then reads recv_pkt->ee_addr (12..15) and intr_data (16..19), which
 	   that copy has already overwritten with the zero tail of a
-	   sockaddr_in. Both DMA transfers then target EE address 0, so UDP
+	   sockaddr_in. The rests packet then goes to EE address 0, and the
+	   data of a datagram over 64 bytes to an address below 64, so UDP
 	   receive on the EE never worked through this module. The TCP path
 	   in do_recv has no sockaddr copy and is unaffected. The fix reads
 	   the request fields into locals before anything is written to the

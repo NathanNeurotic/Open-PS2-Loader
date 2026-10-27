@@ -1016,20 +1016,21 @@ $(EE_ASM_DIR)netman.c: $(PS2SDK)/iop/irx/netman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 # FORK-VENDORED ps2ips (modules/network/ps2ips): the ps2sdk prebuilt has five defects in the
-# EE<->IOP socket bridge, and the first one corrupts EE memory on every receive that returns data.
+# EE<->IOP socket bridge, and the first one corrupts EE memory on every TCP receive that returns data.
 # docs/PS2SDK-NOTES.md#ps2ips has the full account, including the TCP bytes our workaround drops.
 #
-#   * do_recv and do_recvfrom DMA the whole 144-byte rests_pkt into the EE's _intr_data[32], which is
-#     128 bytes. In the LINKED OPL the next object in .bss is __ps2ipc_fdman_ops_socket -- the table of
-#     function pointers behind every EE socket call -- and bytes 128..143 are exactly its getfd /
-#     getfilename / close / read entries. Overwriting them makes close() stop calling the IOP, so
-#     the lwIP socket leaks and the UDP PCB pool runs dry: roughly ONE network operation per boot.
+#   * do_recv DMAs the whole 144-byte rests_pkt into the EE's _intr_data[32], which is 128 bytes
+#     (do_recvfrom would too, once the next defect is fixed). In the LINKED OPL the next object in
+#     .bss is __ps2ipc_fdman_ops_socket -- the table of function pointers behind every EE socket call
+#     -- and bytes 128..143 are exactly its getfd / getfilename / close / read entries. Overwriting
+#     them makes close() stop calling the IOP, so the lwIP socket leaks and the UDP PCB pool runs dry:
+#     roughly ONE network operation per boot.
 #   * the reply sockaddr is written into the shared RPC buffer BEFORE the request's ee_addr and
-#     intr_data are read, so both DMA transfers target EE address 0 -- EE-side UDP receive has
-#     never worked.
+#     intr_data are read, so the rests packet goes to EE address 0 and the data to an address below
+#     64 -- EE-side UDP receive has never worked.
 #   * fromlen is passed uninitialised, so the sender address comes back zeroed.
 #   * lwip_buffer is BUFF_SIZE + 32 where a receive at offset 64 needs BUFF_SIZE + 64 (a send of
-#     1 KB overruns it the same way).
+#     more than 992 bytes from an aligned buffer overruns it the same way).
 #   * do_gethostbyname copies the h_addr_list[0] pointer instead of the address it points to.
 #
 # The source is current ps2sdk master with the first four spots marked "RA fix" and the DNS fix
