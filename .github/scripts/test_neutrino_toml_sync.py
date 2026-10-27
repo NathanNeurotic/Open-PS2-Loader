@@ -139,7 +139,7 @@ static int ps2_ip[4];
 /* One fake file. mc = 1 behaves like mcman: O_TRUNC is ignored unless O_CREAT is set, and O_CREAT
    recreates the file empty. mc = 0 behaves like FAT: O_TRUNC empties it. */
 static char file[8192];
-static int fileLen, filePos, fileMc, writes;
+static int fileLen, filePos, fileMc, writes, readChunk;
 
 static int fake_open(const char *path, int flags, ...)
 {
@@ -155,6 +155,8 @@ static int fake_read(int fd, void *buf, int size)
 {
     (void)fd;
     int n = fileLen - filePos < size ? fileLen - filePos : size;
+    if (readChunk > 0 && n > readChunk)
+        n = readChunk; /* a backend that hands the file back a few bytes at a time (#1051) */
     memcpy(buf, file + filePos, n);
     filePos += n;
     return n;
@@ -292,6 +294,17 @@ int main(void)
     setIp(192, 168, 1, 10);
     expect(torn, sysSyncNeutrinoUdpfsToml(path, "udpfs"), "broken at the top");
     if (writes) { printf("FAIL a toml broken at the top was written\n"); fails++; }
+
+    /* #1051: short reads must be accumulated, never treated as the whole file. */
+    readChunk = 7;
+    setFile(stock, 0);
+    setIp(10, 0, 0, 5);
+    expect(withIp(stock, "10.0.0.5"), sysSyncNeutrinoUdpfsToml(path, "udpfs"), "7-byte reads, new ip");
+    setFile(hand, 1);
+    setIp(192, 168, 1, 10);
+    expect(hand, sysSyncNeutrinoUdpfsToml(path, "udpfs"), "7-byte reads, ip in sync");
+    if (writes) { printf("FAIL 7-byte reads rewrote an in-sync toml\n"); fails++; }
+    readChunk = 0;
 
     if (sysTomlTornTailCut(stock, (int)strlen(stock)) != (int)strlen(stock)) { printf("FAIL stock toml judged torn\n"); fails++; }
     if (sysTomlTornTailCut(hand, (int)strlen(hand)) != (int)strlen(hand)) { printf("FAIL hand-edited toml judged torn\n"); fails++; }
