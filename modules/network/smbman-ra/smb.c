@@ -27,6 +27,10 @@ static server_specs_t server_specs;
 
 #define CLIENT_MAX_BUFFER_SIZE USHRT_MAX // Allow up to 65535 bytes to be received.
 #define CLIENT_MAX_XFER_SIZE   USHRT_MAX // Allow up to 65535 bytes to be transferred.
+// ByteCount fix (not RA-specific; ps2sdk master has the same bug): a WRITE_ANDX request's 16-bit
+// ByteCount covers its padding byte and the data, so one request carries at most 65534 bytes. A
+// 65535-byte request wrapped ByteCount to 0.
+#define CLIENT_MAX_WRITE_SIZE  (CLIENT_MAX_XFER_SIZE - 1)
 
 static int main_socket = -1;
 
@@ -1158,7 +1162,7 @@ int smb_WriteAndX(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
     // status (Samba does; caught above) or with success and a Count of zero, and a server may store
     // less than it was sent. So return the server's Count: smb_WriteFile() sends the rest from there,
     // and on a zero or a failure returns what earlier requests stored. It asks for at most
-    // CLIENT_MAX_XFER_SIZE (65535) bytes, so the 16-bit Count holds the whole answer and CountHigh is
+    // CLIENT_MAX_WRITE_SIZE (65534) bytes, so the 16-bit Count holds the whole answer and CountHigh is
     // not read. A reply shorter than the six-word response (45 bytes), a WordCount under 6, or a Count
     // over what was sent is a failed write.
     if (r < (int)sizeof(WriteAndXResponse_t) || WRsp->smbWordcount < 6 || WRsp->Count > nbytes)
@@ -1180,7 +1184,7 @@ int smb_WriteFile(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
     while (remaining > 0) {
         int result, toWrite;
 
-        toWrite = remaining > CLIENT_MAX_XFER_SIZE ? CLIENT_MAX_XFER_SIZE : remaining;
+        toWrite = remaining > CLIENT_MAX_WRITE_SIZE ? CLIENT_MAX_WRITE_SIZE : remaining;
 
         result = smb_WriteAndX(UID, TID, FID, pos, ptr, toWrite);
         if (result <= 0) // the server stored what earlier requests sent, and no more

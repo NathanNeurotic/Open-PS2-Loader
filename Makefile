@@ -1070,8 +1070,12 @@ $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 # failed write, instead of a write reported as complete. Samba, Windows (per MS-CIFS) and the
 # PS2-Servers servers answer a full disk with an error status, which ps2sdk's copy already failed.
 #
+# The "ByteCount fix", which ps2sdk lacks too: a WRITE_ANDX request's 16-bit ByteCount covers one
+# padding byte and the data, so smb_WriteFile now sends at most 65534 bytes per request; ps2sdk's
+# 65535-byte requests went out with a ByteCount of 0.
+#
 # The source is ps2sdk master's iop/network/smbman -- verified on 2026-10-27 by diffing every file
-# against ps2dev/ps2sdk master: smb.c (+52/-7: the two marked fixes), smb.h (+4, RA fix) and auth.c
+# against ps2dev/ps2sdk master: smb.c (+57/-8: the three marked fixes), smb.h (+4, RA fix) and auth.c
 # (+6/-1, an unmarked password-buffer bound from 14cd9ff3) differ, the rest is byte-identical, and
 # only the module Makefile is ours, so vendoring drops no upstream behaviour. Both new status
 # constants decode under this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT

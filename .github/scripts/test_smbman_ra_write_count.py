@@ -60,7 +60,8 @@ fio = text(FIO)
 
 wire = (''.join(define(smb_h, name, SMB_H) for name in
                 ('SMB_MAGIC', 'SMB_FLAGS2_32BIT_STATUS', 'SMB_COM_WRITE_ANDX', 'SMB_COM_NONE', 'STATUS_SUCCESS'))
-        + ''.join(define(smb, name, SMB) for name in ('ZERO_PKT_ALIGNED', 'CLIENT_MAX_XFER_SIZE'))
+        + ''.join(define(smb, name, SMB) for name in ('ZERO_PKT_ALIGNED', 'CLIENT_MAX_XFER_SIZE',
+                                                      'CLIENT_MAX_WRITE_SIZE'))
         + ''.join(struct(smb_h, name, SMB_H, '__attribute__((packed)) ') for name in
                   ('SMBHeader_t', 'WriteAndXRequest_t', 'WriteAndXResponse_t'))
         + define(fio, 'SMB_NAME_MAX', FIO) + struct(fio, 'FHANDLE', FIO, ''))
@@ -148,13 +149,13 @@ static int GetSMBServerReply(int shdrlen, void *spayload, int rhdrlen)
     int asked = WR->DataLengthLow | (WR->DataLengthHigh << 16);
 
     /* The request itself: one padding byte after the parameter block, data right behind it, write-through,
-       and ByteCount covering padding and data whenever that fits its 16 bits. */
+       and ByteCount covering padding and data, which needs at most 65534 bytes of data. */
     if (shdrlen != (int)sizeof(WriteAndXRequest_t) + 1 || rhdrlen != 0 || spayload == NULL ||
         session_length != (u32)(shdrlen + asked) || WR->smbH.Magic != SMB_MAGIC ||
         !(WR->smbH.Flags2 & SMB_FLAGS2_32BIT_STATUS) || WR->smbH.Cmd != SMB_COM_WRITE_ANDX ||
         WR->smbWordcount != 14 || WR->smbAndxCmd != SMB_COM_NONE || WR->smbH.UID != UID || WR->smbH.TID != TID ||
         WR->FID != fid || WR->WriteMode != 0x0001 || WR->DataOffset != sizeof(WriteAndXRequest_t) + 1 ||
-        (asked + 1 <= 0xFFFF && WR->ByteCount != asked + 1))
+        asked + 1 > 0xFFFF || WR->ByteCount != asked + 1)
         bad_request++;
     if (calls < 4) {
         call_off[calls] = (s64)WR->OffsetLow | ((s64)WR->OffsetHigh << 32);
@@ -335,7 +336,7 @@ WANT = [
     'reply-45-bytes ret=512 calls=1',
     'transport-error ret=-5 calls=1',
     'chunks ret=70000 calls=2',
-    'chunks-at 65535@0 from 0, 4465@65535 from 65535',
+    'chunks-at 65534@0 from 0, 4466@65534 from 65534',
     'write-saved ret=512 calls=1 position=1512 filesize=1512 locks=1/1',
     'write-full-share ret=0 calls=1 position=1000 filesize=1000 locks=1/1',
     'write-half-then-full-share ret=256 calls=2 position=1256 filesize=1256 locks=1/1',

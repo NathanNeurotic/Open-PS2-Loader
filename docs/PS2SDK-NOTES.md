@@ -24,7 +24,7 @@ Each entry gives its evidence:
 
 | Module | ps2sdk source | Our copy | Still in master | Fixed in master since our copy | Our own choices |
 | --- | --- | --- | --- | --- | --- |
-| [smbman](#smbman) | `iop/network/smbman` | [`modules/network/smbman-ra`](../modules/network/smbman-ra/) | 3 | 0 | 1 |
+| [smbman](#smbman) | `iop/network/smbman` | [`modules/network/smbman-ra`](../modules/network/smbman-ra/) | 4 | 0 | 1 |
 | [usbd (usbd_mini)](#usbd-usbd_mini) | `iop/usb/usbd` | [`modules/usb/usbd-ra`](../modules/usb/usbd-ra/) | 2 | 0 | 0 |
 | [ps2ips](#ps2ips) | `iop/tcpip/tcpips` | [`modules/network/ps2ips`](../modules/network/ps2ips/) | 5 | 0 | 0 |
 | [atad (ata_bd)](#atad-ata_bd) | `iop/dev9/atad` | [`modules/hdd/atad`](../modules/hdd/atad/) | 3 | 1 | 1 |
@@ -37,16 +37,17 @@ Each entry gives its evidence:
 ps2ips and IEEE1394_bd each had one defect of our own, both fixed on 2026-10-27 and listed with the
 module. Defects we saw in modules we did not change are under [other ps2sdk modules](#other-ps2sdk-modules).
 
-The [smbman write-count fix](ps2sdk-patches/0001-smbman-a-write-is-complete-only-for-the-bytes-the-se.patch)
-is ready as a ps2sdk patch: it applies to master `329e2bb` with `git am`. For the rest, our copies are the
-reference. smbman-ra, usbd-ra, ps2ips and iLinkman diff cleanly against ps2sdk. APA, BDM and IEEE1394_bd
+The smbman [write-count](ps2sdk-patches/0001-smbman-a-write-is-complete-only-for-the-bytes-the-se.patch)
+and [write ByteCount](ps2sdk-patches/0002-smbman-send-at-most-65534-bytes-per-WRITE_ANDX-reque.patch)
+fixes are ready as ps2sdk patches: they apply in that order to master `329e2bb` with `git am`. For the
+rest, our copies are the reference. smbman-ra, usbd-ra, ps2ips and iLinkman diff cleanly against ps2sdk. APA, BDM and IEEE1394_bd
 were reformatted with clang-format in a baseline commit that each `ORIGIN.txt` describes, so diff them
 against that commit. atad was added already reformatted and changed (`bcac683b`), so diff it against its
 pin with whitespace ignored (`diff -w`), or follow its `/* FORK */` markers.
 
 ## smbman
 
-Our copy is ps2sdk's `iop/network/smbman` with three changes. ps2sdk has not changed those sources since
+Our copy is ps2sdk's `iop/network/smbman` with four changes. ps2sdk has not changed those sources since
 `d44e0128` (2024-12-12). Every flavour embeds our copy; before 2026-10-27 only the RetroAchievements
 flavour did. Only the menu loads it; in-game SMB access uses OPL's own driver in
 `modules/iopcore/cdvdman`.
@@ -72,6 +73,22 @@ flavour did. Only the menu loads it; in-game SMB access uses OPL's own driver in
   [`test_smbman_ra_write_count.py`](../.github/scripts/test_smbman_ra_write_count.py). It fails on master's
   `smb.c` and passes with the patch. Not tested on hardware or against a live server that sends a short
   Count.
+
+### A 65535-byte write request says it carries no data
+
+**Still in master.**
+
+- **Where:** `smb.c`. `smb_WriteAndX()` sets `WR->ByteCount = (u16)nbytes + padding`, and
+  `smb_WriteFile()` sends up to `CLIENT_MAX_XFER_SIZE` (65535) bytes per request.
+- **What goes wrong:** ByteCount is 16 bits and counts the one padding byte as well as the data, so a
+  65535-byte request goes out with a ByteCount of 0.
+- **Who hits it:** IOP callers writing 65535 bytes or more in one call; EE fileXio callers only after
+  raising the RW buffer to at least that size. How servers treat a ByteCount of 0 was not checked.
+- **Our change:** send at most 65534 bytes per request (`CLIENT_MAX_WRITE_SIZE`). Reads keep 65535.
+- **Evidence:** host test
+  [`test_smbman_ra_write_count.py`](../.github/scripts/test_smbman_ra_write_count.py) now requires a
+  ByteCount of data plus one on every request and fails with the 65535-byte chunk. Not tested on
+  hardware or against a live server.
 
 ### A file another session still holds cannot be opened, even to read
 
@@ -117,10 +134,6 @@ violation could go to ps2sdk on its own; the read-only limit is OPL's choice.
 
 ### Seen in smbman, not changed here
 
-- `WR->ByteCount = (u16)nbytes + padding;` wraps to 0 for a 65535-byte chunk, the largest that
-  `smb_WriteFile()` sends. IOP callers writing 65535 bytes or more reach it; EE fileXio callers only after
-  raising the RW buffer to at least that size. Sending at most 65534 bytes per chunk avoids it. How
-  servers treat a ByteCount of 0 was not checked. (Source, plus a compiled check of the arithmetic.)
 - `STATUS_OBJECT_NAME_NOT_FOUND` is defined but never used, so opening a missing file returns `-EIO`, not
   `-ENOENT`. OPL works around it in its EE code. (Source.)
 - `smb_write()`'s check `!(mode & O_RDWR) && !(mode & O_WRONLY)` never rejects a read-only handle. It is
