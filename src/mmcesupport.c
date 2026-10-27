@@ -1238,6 +1238,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // argument -- a use-after-free read. Copy startup onto this stack frame like mmcePartname.
         char mmceStartup[GAME_STARTUP_MAX + 1];
         snprintf(mmceStartup, sizeof(mmceStartup), "%s", game->startup);
+        // sbPrepare above resolved the OPL core's modes; a title default can be limited to one core.
+        compatmask = sbGetCompatModes(configSet, 1);
         // Neutrino bypasses OPL's mcemu, so the VMC fds opened above go unused on this path --
         // close them instead of leaking until the IOP reset (B3). Closed BEFORE the GameID push
         // below (Beta-2947 hardware report): the 0x8 switch physically re-mounts the card, and

@@ -800,17 +800,26 @@ int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset)
 // game has no saved $Compatibility key, and every reader goes through sbGetCompatModes() -- the launch
 // paths and the per-game screen alike -- so the screen always shows what will actually launch. Keep each
 // entry evidence-backed: it changes launches for everyone who never opened that game's settings.
+// `cores` says which loader core the default applies to, for fixes known good on one core only.
+#define TITLE_CORE_OPL      0x1
+#define TITLE_CORE_NEUTRINO 0x2
+#define TITLE_CORE_ALL      (TITLE_CORE_OPL | TITLE_CORE_NEUTRINO)
 static const struct
 {
     const char *startup;
     int compatModes;
+    int cores;
 } sbTitleCompatDefaults[] = {
-    {"SLES_511.14", COMPAT_MODE_1}, // Pro Evolution Soccer 2 (Europe): streamed audio breaks without Accurate Reads (upstream OPL #1686)
-    {"SLUS_217.23", COMPAT_MODE_6}, // Fatal Fury: Battle Archives Volume 2 (USA): black screen with IGR's VBLANK_END handler (upstream OPL #1762, #984)
+    {"SLES_511.14", COMPAT_MODE_1, TITLE_CORE_ALL}, // Pro Evolution Soccer 2 (Europe): streamed audio breaks without Accurate Reads (upstream OPL #1686)
+    {"SLUS_210.41", COMPAT_MODE_1, TITLE_CORE_ALL}, // Shadow Hearts: Covenant (USA) disc 1: black screens / lock-ups on area changes and save loads (PCSX2 #7139: Mode 1 fixes it under OPL)
+    {"SLUS_210.44", COMPAT_MODE_1, TITLE_CORE_ALL}, // Shadow Hearts: Covenant (USA) disc 2: same engine and streaming as disc 1
+    {"SLUS_201.51", COMPAT_MODE_2, TITLE_CORE_OPL}, // Klonoa 2 (USA): gameplay micro-stutter on the OPL core, fixed by Synchronous reads (PSX-Place "Klonoa 2 & OPL"); smooth on Neutrino, so left alone there
+    {"SLUS_217.23", COMPAT_MODE_6, TITLE_CORE_ALL}, // Fatal Fury: Battle Archives Volume 2 (USA): black screen with IGR's VBLANK_END handler (upstream OPL #1762, #984)
 };
 
-int sbTitleCompatDefault(config_set_t *configSet)
+int sbTitleCompatDefault(config_set_t *configSet, int neutrino)
 {
+    int core = neutrino ? TITLE_CORE_NEUTRINO : TITLE_CORE_OPL;
     const char *startup = NULL;
     unsigned int i;
 
@@ -819,20 +828,20 @@ int sbTitleCompatDefault(config_set_t *configSet)
 
     for (i = 0; i < sizeof(sbTitleCompatDefaults) / sizeof(sbTitleCompatDefaults[0]); i++) {
         if (!strcmp(startup, sbTitleCompatDefaults[i].startup))
-            return sbTitleCompatDefaults[i].compatModes;
+            return (sbTitleCompatDefaults[i].cores & core) ? sbTitleCompatDefaults[i].compatModes : 0;
     }
 
     return 0;
 }
 
-int sbGetCompatModes(config_set_t *configSet)
+int sbGetCompatModes(config_set_t *configSet, int neutrino)
 {
     int compatModes = 0;
 
     // A saved key wins even when it is 0: the per-game screen saves an explicit 0 for a title that has a
     // default, which is the only way to turn that default off.
     if (configSet != NULL && !configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatModes))
-        compatModes = sbTitleCompatDefault(configSet);
+        compatModes = sbTitleCompatDefault(configSet, neutrino);
 
     return compatModes;
 }
@@ -933,7 +942,7 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
     int i;
     struct cdvdman_settings_common *settings;
 
-    int compatmask = sbGetCompatModes(configSet);
+    int compatmask = sbGetCompatModes(configSet, 0); // OPL core: sbPrepare patches its CDVDMAN
 
     char gameid[5];
     configGetDiscIDBinary(configSet, gameid);

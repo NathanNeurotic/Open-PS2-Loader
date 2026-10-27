@@ -63,9 +63,10 @@ int sbLoadImage(const char *path, const char *file);
 void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD); // #System/#Media/#DiscType identity stamp
 
 // Compatibility modes for a game: its saved $Compatibility key, else a known title default. Every reader of
-// the modes (launch paths and the per-game screen) must use sbGetCompatModes so they agree.
-int sbTitleCompatDefault(config_set_t *configSet);
-int sbGetCompatModes(config_set_t *configSet);
+// the modes (launch paths and the per-game screen) must use sbGetCompatModes so they agree. A title default
+// can be limited to one core, so pass neutrino=1 for a Neutrino launch and 0 for the OPL core.
+int sbTitleCompatDefault(config_set_t *configSet, int neutrino);
+int sbGetCompatModes(config_set_t *configSet, int neutrino);
 
 void sbEnsureIgrUsbDrivers(int compatmask);
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex);

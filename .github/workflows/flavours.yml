@@ -212,6 +212,12 @@ jobs:
         run: python3 .github/scripts/test_auto_create_vmc.py
       - name: Check Neutrino VMC budget recovery and #831 compat defaults
         run: python3 .github/scripts/test_issues_830_831.py
+      - name: Check per-title compat defaults and per-core routing
+        run: python3 .github/scripts/test_title_compat_defaults.py
+      - name: Check menu rumble is off by default
+        run: python3 .github/scripts/test_rumble_default.py
+      - name: Check network-share art bypasses the directory index
+        run: python3 .github/scripts/test_artindex_network.py
 
   release-notes-tests:
     runs-on: ubuntu-24.04
