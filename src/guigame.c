@@ -1404,6 +1404,17 @@ static void guiGameSaveGSMGlobalConfig(config_set_t *configGame)
     configSetInt(configGame, CONFIG_ITEM_GSMFIELDFIX, GSMFIELDFix);
 }
 
+// The core the compatibility dialog's Loader row selects, resolving "Default" to the global core.
+static int guiGameDialogCoreIsNeutrino(int neverNeutrino)
+{
+    int coreChoice = 0;
+
+    diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreChoice);
+    if (neverNeutrino)
+        return 0;
+    return (coreChoice == 1) || (coreChoice == 2 && gDefaultCoreLoader == 1);
+}
+
 static void guiGameSetCoreAwareState(void)
 {
     int coreChoice = 0, neutrino = 0, neutrinoVideo = 0;
@@ -1591,12 +1602,13 @@ static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
             configRemoveKey(configSet, CONFIG_ITEM_DMA);
     }
 
-    if (compatMode != 0)
-        result = configSetInt(configSet, CONFIG_ITEM_COMPAT, compatMode);
-    else if (sbTitleCompatDefault(configSet) != 0) // "none" must be saved explicitly, or the title default comes back
-        result = configSetInt(configSet, CONFIG_ITEM_COMPAT, 0);
-    else
+    // The screen showed the title default for the chosen core. Saving that unchanged keeps following the
+    // defaults (a default limited to one core must not become a saved value that applies to both); anything
+    // else is saved, including an explicit 0 ("none"), or the title default would come back.
+    if (compatMode == sbTitleCompatDefault(configSet, guiGameDialogCoreIsNeutrino(coreNeverNeutrino)))
         configRemoveKey(configSet, CONFIG_ITEM_COMPAT);
+    else
+        result = configSetInt(configSet, CONFIG_ITEM_COMPAT, compatMode);
 
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreLoader);
     if (coreLoader == 2) // "Default" -> drop the per-game key so the game follows gDefaultCoreLoader
@@ -2219,15 +2231,17 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     } else
         diaSetInt(diaCompatConfig, COMPAT_DMA, 0);
 
-    compatMode = sbGetCompatModes(configSet); // includes a title default, so the screen matches what launches
-    for (i = 0; i < COMPAT_MODE_COUNT; ++i)
-        diaSetInt(diaCompatConfig, COMPAT_MODE_BASE + i, (compatMode & (1 << i)) > 0 ? 1 : 0);
-
     // COMPAT_LOADER index == the stored $CoreLoader value when present (0=<OPL>, 1=Neutrino); a missing
     // key maps to index 2 "Default" so the game defers its core to the global gDefaultCoreLoader.
     if (!configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader))
         coreLoader = 2;
     diaSetInt(diaCompatConfig, COMPAT_LOADER, coreLoader);
+
+    // Includes a title default for the selected core, so the screen matches what launches.
+    // coreNeverNeutrino belongs to the last dialog, so work out the sources that only boot the OPL core here.
+    compatMode = sbGetCompatModes(configSet, guiGameDialogCoreIsNeutrino(support != NULL && (libViewActive(support->mode) == LIB_VIEW_PS1 || support->mode == ETH_MODE)));
+    for (i = 0; i < COMPAT_MODE_COUNT; ++i)
+        diaSetInt(diaCompatConfig, COMPAT_MODE_BASE + i, (compatMode & (1 << i)) > 0 ? 1 : 0);
 
     guiGameLoadGSMConfig(configSet, configGame);
 

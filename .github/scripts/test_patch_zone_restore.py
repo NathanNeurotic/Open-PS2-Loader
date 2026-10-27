@@ -71,7 +71,7 @@ struct UIItem;
 static int gOSDLanguageSource, gOSDLanguageEnable, gOSDLanguageValue, gOSDTVAspectRatio, gOSDVideOutput;
 static void *gAutoLaunchGame, *gAutoLaunchBDMGame;
 static int answer;
-static int sbGetCompatModes(config_set_t *c) { (void)c; return COMPAT_MODE_1; }
+static int sbGetCompatModes(config_set_t *c, int neutrino) { (void)c; (void)neutrino; return COMPAT_MODE_1; }
 static void configGetDiscIDBinary(config_set_t *c, void *dst) { (void)c; memcpy(dst, "SLUS2", 5); }
 static void InitGSMConfig(config_set_t *c) { (void)c; }
 static void InitCheatsConfig(config_set_t *c) { (void)c; }

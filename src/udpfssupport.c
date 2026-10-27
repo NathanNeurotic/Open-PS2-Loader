@@ -836,6 +836,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index);
     if (compatmask < 0)
         return;
+    compatmask = sbGetCompatModes(configSet, 1); // UDPFS only launches Neutrino, and a title default can differ per core
 
     if ((result = sbLoadCheats(udpfsPrefix, game->startup, configSet)) < 0) {
         // #265: let the user back out instead of sitting through the whole load. The helper does

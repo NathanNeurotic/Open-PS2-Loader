@@ -5022,7 +5022,8 @@ static void setDefaults(void)
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;
-    gEnableRumble = 1;
+    // Menu rumble starts off too (#1070); Controller Settings turns it on, and a saved choice still wins.
+    gEnableRumble = 0;
     gEnableBootSND = 0;
     gEnableBGM = 0;
     gSFXVolume = 90;
