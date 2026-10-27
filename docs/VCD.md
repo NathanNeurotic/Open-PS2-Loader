@@ -446,7 +446,7 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 7. **iLink returns to wLaunchELF?** Inspect the card after the attempt. A successful RiptOPL equip
    leaves `mc?:/POPSTARTER/bdma_config.txt` containing exactly `ilink`, plus `usbd.irx` (48,500 bytes;
    SHA-256 `5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369`) and `usbhdfsd.irx`
-   (27,145 bytes; SHA-256 `5B7DE8D1FF749E8CA2AD8EF0C705CE76F5799D1C2DCEDF5393DBF4CD7A58E6C8`). Missing or different files
+   (27,145 bytes; SHA-256 `1A9C1BAAF1DD020E35B75082B630F325B90E884819C743DDD5E1F27F106EFCB6`). Missing or different files
    put the defect on RiptOPL's external-equip side; exact files narrow it to POPSTARTER/BDMA runtime
    reinitialization after the handoff.
 8. **UDPFS shows Ember but no VCDs?** Select **UDPFS Files**, check server `POPS/*.VCD`

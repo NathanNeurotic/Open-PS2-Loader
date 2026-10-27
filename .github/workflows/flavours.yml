@@ -73,6 +73,8 @@ jobs:
         run: python3 .github/scripts/test_vmc_write_result.py
       - name: Check IGR and power-off let an in-flight VMC save finish, bounded
         run: python3 .github/scripts/test_igr_vmc_drain.py
+      - name: Check docs/VCD.md documents the shipped i.LINK usbhdfsd.irx size and hash
+        run: python3 .github/scripts/test_vcd_doc_ilink_hash.py
       - name: Check the in-game freeze report stays in its flavour and cannot hang IGR
         run: python3 .github/scripts/test_ingame_freeze_diag.py
       - name: Check the in-game freeze report text
