@@ -212,6 +212,8 @@ jobs:
         run: python3 .github/scripts/test_auto_create_vmc.py
       - name: Check Neutrino VMC budget recovery and #831 compat defaults
         run: python3 .github/scripts/test_issues_830_831.py
+      - name: Check Shadow Hearts Covenant compat defaults
+        run: python3 .github/scripts/test_title_compat_shadow_hearts.py
 
   release-notes-tests:
     runs-on: ubuntu-24.04
