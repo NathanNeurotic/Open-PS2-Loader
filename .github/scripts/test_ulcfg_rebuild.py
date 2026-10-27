@@ -10,7 +10,8 @@ temporary folder, with fopen, fwrite, fclose and rename failures injected. It ch
 
 - a rebuild writes every USBLD entry (not the deleted one, not ISO rows) through ul.cfg.new, leaving none;
 - a failed open, write or close leaves ul.cfg byte for byte as it was, and no ul.cfg.new;
-- a driver that refuses to rename onto an existing file still gets the new list;
+- a driver that refuses to rename onto an existing file still gets the new list, and a ul.cfg it can neither
+  replace nor remove (read-only) keeps the old list, with any rename put back;
 - when both renames fail, ul.cfg is written directly; when that fails too, ul.cfg.new keeps the full list
   and a rename keeps the new name it lists;
 - a rename whose second part fails puts the first part back and keeps the old name and ul.cfg;
@@ -54,8 +55,10 @@ typedef unsigned int u32;
 static char sbBrowseSub[FOLDER_SUB_MAX + 1];
 static u32 USBA_crc32(const char *s) { u32 h = 0; while (*s) h = h * 31 + (u8)*s++; return h; }
 @TYPES@
-static int failOpenNew, failWrite, failClose, refuseOverwrite, failRenameAt = -1, failRenameAlso = -1, renames, writes;
-static FILE *fakeFopen(const char *p, const char *m) { return failOpenNew && strstr(p, ".new") ? NULL : fopen(p, m); }
+static int failOpenNew, failWrite, failClose, refuseOverwrite, failUnlinkCfg, failRenameAt = -1, failRenameAlso = -1, renames, writes;
+static int isCfg(const char *p) { size_t n = strlen(p); return n >= 6 && !strcmp(p + n - 6, "ul.cfg"); }
+/* failUnlinkCfg models a read-only ul.cfg: it can be read, but not removed or opened for writing. */
+static FILE *fakeFopen(const char *p, const char *m) { return (failOpenNew && strstr(p, ".new")) || (failUnlinkCfg && isCfg(p) && m[0] == 'w') ? NULL : fopen(p, m); }
 static size_t fakeFwrite(const void *p, size_t s, size_t n, FILE *f) { writes++; return failWrite && --failWrite == 0 ? 0 : fwrite(p, s, n, f); }
 static int fakeFclose(FILE *f) { int r = fclose(f); return failClose ? -1 : r; }
 static int fakeRename(const char *a, const char *b)
@@ -66,11 +69,14 @@ static int fakeRename(const char *a, const char *b)
         return -1;
     return rename(a, b);
 }
+static int fakeUnlink(const char *p) { return failUnlinkCfg && isCfg(p) ? -1 : unlink(p); }
 #define fopen fakeFopen
+#define unlink fakeUnlink
 #define fwrite fakeFwrite
 #define fclose fakeFclose
 #define rename fakeRename
 @SPAN@
+#undef unlink
 #undef rename
 #undef fclose
 #undef fwrite
@@ -94,7 +100,7 @@ static void names(const char *file, char *out)
         strncat(out, e[i].name, UL_GAME_NAME_MAX); strcat(out, ",");
     }
 }
-static void reset(void) { failOpenNew = failWrite = failClose = refuseOverwrite = renames = writes = 0; failRenameAt = failRenameAlso = -1; }
+static void reset(void) { failOpenNew = failWrite = failClose = refuseOverwrite = failUnlinkCfg = renames = writes = 0; failRenameAt = failRenameAlso = -1; }
 int main(int argc, char **argv)
 {
     (void)argc;
@@ -126,13 +132,20 @@ int main(int argc, char **argv)
     names("ul.cfg", got);
     CHECK(!strcmp(got, "Alpha,Gamma,") && fileSize("ul.cfg.new") < 0, "a driver without rename-over gets the new list");
     CHECK(renames == 2 && writes == 2, "a driver without rename-over gets ul.cfg.new renamed, not a second write");
+    n0 = readFile("ul.cfg", before, sizeof(before));
+    reset(); refuseOverwrite = 1; failUnlinkCfg = 1; /* a read-only ul.cfg */
+    CHECK(sbRebuildULCfg(&list, dir, 4, -1) == -1, "a ul.cfg that cannot be replaced or removed returns -1");
+    n1 = readFile("ul.cfg", after, sizeof(after));
+    CHECK(n0 == n1 && !memcmp(before, after, n0) && fileSize("ul.cfg.new") < 0, "a ul.cfg that cannot be replaced or removed is kept and no ul.cfg.new is left");
+    reset();
+    CHECK(sbRebuildULCfg(&list, dir, 4, -1) == 0, "the list is restored");
 
     reset(); failRenameAt = 0; failRenameAlso = 1;
     CHECK(sbRebuildULCfg(&list, dir, 4, -1) == 0, "with both renames failing, the direct write still succeeds");
     names("ul.cfg", got);
     CHECK(!strcmp(got, list3) && fileSize("ul.cfg.new") < 0, "the direct write holds the new list and ul.cfg.new is removed");
 
-    reset(); failRenameAt = 0; failRenameAlso = 1; failWrite = 4; /* three staged entries, then the direct write fails */
+    reset(); failRenameAt = 0; failRenameAlso = 1; failWrite = 4; /* two staged entries, then the direct write's second entry fails */
     CHECK(sbRebuildULCfg(&list, dir, 4, 3) == 1, "with renames and the direct write failing, the result is 1");
     names("ul.cfg.new", got);
     CHECK(!strcmp(got, "Alpha,Beta,"), "ul.cfg.new keeps the full new list");
@@ -150,6 +163,25 @@ int main(int argc, char **argv)
     }
     names("ul.cfg", got);
     CHECK(!strcmp(got, list3), "a failed part rename leaves ul.cfg alone");
+
+    partName(other, &games[0], "Omega", 1); touch(other); /* another file already holds the second part's new name */
+    reset(); failRenameAt = 1;
+    sbRename(&list, dir, "/", 4, 0, (char *)"Omega");
+    CHECK(fileSize(other) == 1, "the rollback touches only the parts it renamed");
+    for (int part = 0; part < 2; part++) {
+        partName(path, &games[0], "Alpha", part);
+        CHECK(fileSize(path) == 1, "after a failed part rename every part is back under the old name");
+    }
+    unlink(other);
+
+    reset(); refuseOverwrite = 1; failUnlinkCfg = 1; /* parts rename; ul.cfg cannot be replaced or removed */
+    sbRename(&list, dir, "/", 4, 0, (char *)"Omega");
+    names("ul.cfg", got);
+    CHECK(strcmp(games[0].name, "Alpha") == 0 && !strcmp(got, list3), "a ul.cfg that keeps the old list keeps the old name");
+    for (int part = 0; part < 2; part++) {
+        partName(path, &games[0], "Alpha", part);
+        CHECK(fileSize(path) == 1, "a ul.cfg that keeps the old list gets the parts put back");
+    }
 
     reset(); failWrite = 1; /* parts rename, then the ul.cfg write fails */
     sbRename(&list, dir, "/", 4, 0, (char *)"Omega");

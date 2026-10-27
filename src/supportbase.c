@@ -1104,9 +1104,10 @@ static int sbWriteULCfg(const char *path, base_game_info_t **list, int gamecount
 // ul.cfg lists every USBLD game on the device, so it is never truncated in place (#1068): the new list
 // goes to ul.cfg.new and replaces ul.cfg only after every entry and the close succeeded. A failed write
 // (a full device, a drive or share dropping out) leaves ul.cfg as it was: -1. A driver that refuses to
-// rename onto an existing file gets the old list removed first; if that rename fails too, ul.cfg is
-// written directly, as before. 0 = ul.cfg holds the new list; 1 = only ul.cfg.new does (rename it on a
-// PC). The menu shows no error; failures are logged.
+// rename onto an existing file gets the old list removed first. If the old list cannot be removed (a
+// read-only ul.cfg), it still stands: -1. If the second rename fails too, ul.cfg is written directly, as
+// before. 0 = ul.cfg holds the new list; 1 = only ul.cfg.new does (rename it on a PC before the next UL
+// delete or rename, which rewrites ul.cfg.new). The menu shows no error; failures are logged.
 static int sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID)
 {
     char path[256], staged[264];
@@ -1120,7 +1121,15 @@ static int sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamec
     }
     if (rename(staged, path) == 0)
         return 0;
-    unlink(path);
+    if (unlink(path) != 0) {
+        FILE *old = fopen(path, "rb");
+        if (old != NULL) {
+            fclose(old);
+            unlink(staged);
+            LOG("sbRebuildULCfg: %s cannot be replaced or removed; left as it was\n", path);
+            return -1;
+        }
+    }
     if (rename(staged, path) == 0)
         return 0;
     if (sbWriteULCfg(path, list, gamecount, excludeID) == 0) {
@@ -1210,7 +1219,7 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
         memset(game->name, 0, UL_GAME_NAME_MAX + 1);
         memcpy(game->name, newname, UL_GAME_NAME_MAX);
         if (sbRebuildULCfg(list, prefix, gamecount, -1) >= 0)
-            return; // 1: the old ul.cfg is gone and ul.cfg.new lists the new name, so keep it
+            return; // 1: the old ul.cfg was removed and ul.cfg.new lists the new name, so keep it
 
         memcpy(game->name, oldname, sizeof(oldname));
     }
