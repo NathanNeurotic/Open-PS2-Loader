@@ -361,7 +361,8 @@ code: they fix bugs every flavour has, so every flavour embeds them. PR CI also 
 
 Both are ps2sdk sources vendored with a marked change, the way `modules/network/ps2ips` already is,
 and both are selected by `USBD_MINI_IRX` / `SMBMAN_IRX` at the top of the Makefile. Both began in this
-flavour; every flavour now embeds both.
+flavour; every flavour now embeds both. [Notes for ps2sdk](PS2SDK-NOTES.md) lists the ps2sdk side of
+both, and of every other SDK module the fork replaces.
 
 | Module | Why | Diff from ps2sdk |
 |---|---|---|

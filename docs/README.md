@@ -39,6 +39,8 @@ Use the references below for implementation details, exact limits and contributo
 - [Interface, folders and audio](INTERFACE.md), [theme authoring](THEME_ENGINE.md), [languages](LANGUAGES.md) and [Unicode game titles](UNICODE-GAME-TITLES.md).
 - [Per-game parental locks](PARENTAL-LOCK.md) and [autolaunch/global settings](AUTOLAUNCH-GLOBAL-SETTINGS.md).
 - [SIO2MAN compatibility](SIO2MAN-COMPATIBILITY.md) for contributors investigating VMC/pad hooks.
+- [Notes for ps2sdk](PS2SDK-NOTES.md): the ps2sdk defects behind every SDK module the fork builds or
+  patches itself, and whether ps2sdk master still has them.
 
 ## Documentation maintenance and history
 

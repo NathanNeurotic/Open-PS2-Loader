@@ -4,7 +4,8 @@
 # RPC buffer before the request's ee_addr and intr_data fields have been
 # read, so both DMA transfers go to EE address 0 and UDP receive on the
 # EE never works. The source is a copy of ps2sdk iop/tcpip/tcpips with
-# the changes marked "RA fix". Candidate for upstreaming to ps2sdk.
+# the changes marked "RA fix" and an unmarked gethostbyname fix; see
+# docs/PS2SDK-NOTES.md#ps2ips for all five and for the EE-side fix ps2sdk needs.
 IOP_BIN  = ps2ips.irx
 IOP_OBJS = ps2ips.o imports.o
 

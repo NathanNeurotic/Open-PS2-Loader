@@ -788,8 +788,9 @@ $(EE_ASM_DIR)isofs.c: modules/isofs/isofs.irx | $(EE_ASM_DIR)
 #
 # Hardware-checked by Zack, 2026-09-10: no noticeable USB regressions on the promoted build.
 #
-# The source here is ps2sdk iop/usb/usbd as of 314d87e7 (2024-04-01), the last state before the
-# rewrite -- verified byte-identical to that tree, every file, with ONLY the Makefile ours
+# The source here is ps2sdk iop/usb/usbd as of 314d87e7 (2024-04-01): FreeUsbd, from before the
+# rewrite (three small header commits sit between it and the rewrite's parent, 2dc6b32f) -- verified
+# byte-identical to that tree, every file, with ONLY the Makefile ours
 # (exports.o first for srxfixup, -DMINI_DRIVER, no gp switching). Do not reformat it: the whole
 # value of this vendoring is that it still diffs cleanly against ps2sdk.
 modules/usb/usbd-ra/usbd_mini.irx: $(wildcard modules/usb/usbd-ra/src/*.c) $(wildcard modules/usb/usbd-ra/src/*.h) $(wildcard modules/usb/usbd-ra/include/*.h) modules/usb/usbd-ra/src/imports.lst modules/usb/usbd-ra/src/exports.tab modules/usb/usbd-ra/Makefile
@@ -1014,11 +1015,12 @@ $(EE_ASM_DIR)smap.c: $(PS2SDK)/iop/irx/smap.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)netman.c: $(PS2SDK)/iop/irx/netman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-# FORK-VENDORED ps2ips (modules/network/ps2ips): the ps2sdk prebuilt has four defects in the
-# EE<->IOP socket bridge, and the first one corrupts EE memory in any build that opens a socket.
+# FORK-VENDORED ps2ips (modules/network/ps2ips): the ps2sdk prebuilt has five defects in the
+# EE<->IOP socket bridge, and the first one corrupts EE memory on every receive that returns data.
+# docs/PS2SDK-NOTES.md#ps2ips has the full account, including the TCP bytes our workaround drops.
 #
-#   * do_recvfrom DMAs the whole 144-byte rests_pkt into the EE's _intr_data[32], which is 128
-#     bytes. In the LINKED OPL the next object in .bss is __ps2ipc_fdman_ops_socket -- the table of
+#   * do_recv and do_recvfrom DMA the whole 144-byte rests_pkt into the EE's _intr_data[32], which is
+#     128 bytes. In the LINKED OPL the next object in .bss is __ps2ipc_fdman_ops_socket -- the table of
 #     function pointers behind every EE socket call -- and bytes 128..143 are exactly its getfd /
 #     getfilename / close / read entries. Overwriting them makes close() stop calling the IOP, so
 #     the lwIP socket leaks and the UDP PCB pool runs dry: roughly ONE network operation per boot.
@@ -1026,10 +1028,13 @@ $(EE_ASM_DIR)netman.c: $(PS2SDK)/iop/irx/netman.irx | $(EE_ASM_DIR)
 #     intr_data are read, so both DMA transfers target EE address 0 -- EE-side UDP receive has
 #     never worked.
 #   * fromlen is passed uninitialised, so the sender address comes back zeroed.
-#   * lwip_buffer is BUFF_SIZE + 32 where a receive at offset 64 needs BUFF_SIZE + 64.
+#   * lwip_buffer is BUFF_SIZE + 32 where a receive at offset 64 needs BUFF_SIZE + 64 (a send of
+#     1 KB overruns it the same way).
+#   * do_gethostbyname copies the h_addr_list[0] pointer instead of the address it points to.
 #
-# The source is current ps2sdk master with the four spots marked "RA fix" -- verified by diffing
-# against ps2dev/ps2sdk master: 6 hunks, and every removed line is one of the defects above, so
+# The source is current ps2sdk master with the first four spots marked "RA fix" and the DNS fix
+# unmarked -- verified by diffing against ps2dev/ps2sdk master: 7 hunks, and every removed line is
+# one of the defects above, so
 # vendoring drops no upstream behaviour. It keeps the ps2ips.irx name and the same export table, so
 # nbns, httpclient and everything else on the EE socket API bind exactly as before.
 #

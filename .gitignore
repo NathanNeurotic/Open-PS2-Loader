@@ -36,6 +36,8 @@ DETAILED_CHANGELOG
 !.clang-format
 !.clang-format-ignore
 !modules/debug/*.irx
+# Patches written for ps2sdk and published with docs/PS2SDK-NOTES.md. `*.patch` above would skip them.
+!docs/ps2sdk-patches/*.patch
 # Ember's core is a SHIPPED PAYLOAD, not a build product. Both `*.elf` and `*.ELF` above would
 # swallow it -- the lowercase rule matches on any filesystem, and on a case-insensitive checkout
 # (Windows, core.ignorecase=true) the uppercase one does too. `git add` then skips it silently and

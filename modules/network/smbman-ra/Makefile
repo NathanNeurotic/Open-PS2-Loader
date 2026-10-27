@@ -10,7 +10,7 @@
 # marked "Write-count fix" (a write is complete only for the bytes the
 # server's WRITE_ANDX Count says it stored), and an unmarked bound on the
 # password buffer in auth.c (this repo's 14cd9ff3). Only this Makefile is
-# ours. All three are candidates for upstreaming to ps2sdk.
+# ours. docs/PS2SDK-NOTES.md#smbman records all three for ps2sdk.
 IOP_BIN  = smbman.irx
 IOP_OBJS = smbman.o smb_fio.o smb.o poll.o auth.o des.o md4.o imports.o
 
