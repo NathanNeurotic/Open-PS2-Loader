@@ -75,6 +75,9 @@ int main(void) {
  GIF_D2_CHCR=0;GSMSourceGSRegs.dispfb1=(10ull<<9)|(2ull<<15);
  for(unsigned f=14;f<24;f++) { GIF_D2_CHCR=0;RA_OverlayOnVblank(f); }
  assert(GIF_D2_QWC==966);
+ /* torn_event_keeps_card (#1062): a torn copy skips that event, not the running card's frame. */
+ event->seq=100;event->commit=100;event->kind=0xFE;race_mode=2;GIF_D2_CHCR=0;GIF_D2_QWC=0;
+ RA_OverlayOnVblank(24);assert(ra_ovl_running && GIF_D2_QWC==966 && ra_ovl_seen!=100);
  RA_OverlayOnVblank(214);assert(!ra_ovl_running);
  event->seq=2;event->commit=2;event->kind=RA_EVENT_RESET;RA_OverlayOnVblank(215);assert(resets==1);
  RA_OverlayOnVblank(216);assert(resets==1);
@@ -164,6 +167,9 @@ int main(void) {
  e->seq=9;e->commit=9;e->kind=RA_EVENT_RESET;race_mode=3;
  RA_PulseOnVblank(72);assert(resets==3 && ra_ovl_seen==8);
  RA_PulseOnVblank(73);assert(resets==3 && ra_ovl_seen==10 && ra_ovl_start==73);
+ /* torn_event_keeps_flash (#1062): the running flash still steps in a torn frame. */
+ e->seq=11;e->commit=11;e->kind=RA_EVENT_RESET;race_mode=2;GS_PMODE=0;
+ RA_PulseOnVblank(74);assert(ra_ovl_running && ra_ovl_seen==10 && GS_PMODE!=0);
  puts("PASS: production pulse ignores unknown/torn events, restarts unlocks and preserves reset");
 }
 """

@@ -26,6 +26,9 @@ int raNetNicBusy(void);
    not loaded yet. Menu-side RA actions use this: raising SMB first would claim
    the one NIC and leave UDPFS/UDPBD unable to load until the next boot. */
 int raNetNicReserved(void);
+/* Non-blocking TCP read that never loses bytes to ps2ips' tail truncation (#1062).
+   chunk must be 64-byte aligned. Returns bytes read, 0 on close, -1 when nothing waits. */
+int raNetTcpRecv(int sock, void *chunk, int want);
 int raNetUdpfsNotLoaded(void); /* a UDPFS transport is selected but not loaded yet */
 
 /* Xerabora-mode achievement browser. raNetXeraboraIdentify finds the

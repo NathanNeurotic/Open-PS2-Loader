@@ -388,7 +388,7 @@ EE_CFLAGS += -MMD -MP
 EE_OBJS += $(FRONTEND_OBJS) $(GFX_OBJS) $(AUDIO_OBJS) $(MISC_OBJS) $(EECORE_OBJS) $(IOP_OBJS)
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
-# mbedTLS 3.6.7 (third_party/mbedtls, used under Apache-2.0) and the six CA roots it trusts:
+# mbedTLS 3.6.7 (third_party/mbedtls, used under Apache-2.0) and the five CA roots it trusts:
 # TLS for the RA edition's HTTPS game-ID lookup (ORBIT parity). RA builds only -- the standard
 # and Korium ELFs must not contain it (checked in CI and by test_mbedtls_vendor.py).
 ifeq ($(RETROACHIEVEMENTS),1)
@@ -396,7 +396,7 @@ ifeq ($(RETROACHIEVEMENTS),1)
   EE_INCS += -I$(MBEDTLS_DIR)/include -I$(MBEDTLS_DIR)
   EE_CFLAGS += -DMBEDTLS_CONFIG_FILE=\"riptopl_mbedtls_config.h\"
   MBEDTLS_OBJS = $(patsubst $(MBEDTLS_DIR)/library/%.c,$(EE_OBJS_DIR)mbedtls/%.o,$(wildcard $(MBEDTLS_DIR)/library/*.c))
-  RATLS_ROOTS = gtsr1 gtsr2 gtsr3 gtsr4 isrgrootx1 isrgrootx2
+  RATLS_ROOTS = gtsr1 gtsr3 gtsr4 isrgrootx1 isrgrootx2
   EE_OBJS += $(MBEDTLS_OBJS) $(RATLS_ROOTS:%=$(EE_OBJS_DIR)ratls_root_%.o)
 endif
 EE_DEPS = $(patsubst %.o,%.d,$(filter %.o,$(EE_OBJS)))

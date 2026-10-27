@@ -93,7 +93,10 @@ static const char *headerValue(const char *buf, int bodyAt, const char *name)
 }
 
 /* De-chunks the body in place. Returns the new body length, or -1 if malformed/incomplete. */
-static int dechunk(char *body, int len)
+/* Walks the chunk headers. With write set, the data is packed down in place and its length returned.
+ * Without it nothing is written, and 1 means the terminating chunk and the trailer's blank line have
+ * arrived, 0 that more is needed. -1 means malformed (or, when writing, cut short). */
+static int walkChunks(char *body, int len, int write)
 {
     int in = 0, out = 0;
 
@@ -105,22 +108,37 @@ static int dechunk(char *body, int len)
         for (eol = in; eol + 1 < len && !(body[eol] == '\r' && body[eol + 1] == '\n'); eol++)
             ;
         if (eol + 1 >= len)
-            return -1;
+            return write ? -1 : 0;
         size = strtol(body + in, &end, 16);
-        if (end == body + in || size < 0)
+        if (end == body + in || end > body + eol || size < 0)
             return -1;
         in = eol + 2;
-        if (size == 0)
-            return out;
-        if (size > len - in - 2 || body[in + size] != '\r' || body[in + size + 1] != '\n')
+        if (size == 0) {
+            if (write)
+                return out;
+            for (;;) { /* optional trailer lines, then the blank line */
+                for (eol = in; eol + 1 < len && !(body[eol] == '\r' && body[eol + 1] == '\n'); eol++)
+                    ;
+                if (eol + 1 >= len)
+                    return 0;
+                if (eol == in)
+                    return 1;
+                in = eol + 2;
+            }
+        }
+        if (size > len - in - 2)
+            return write ? -1 : 0;
+        if (body[in + size] != '\r' || body[in + size + 1] != '\n')
             return -1;
-        memmove(body + out, body + in, (size_t)size);
+        if (write)
+            memmove(body + out, body + in, (size_t)size);
         out += (int)size;
         in += (int)size + 2;
     }
 }
 
-/* Whether everything has arrived: by Content-Length, or the chunked terminator. */
+/* Whether everything has arrived: by Content-Length, or by walking the chunks to the terminator
+ * (a suffix test is fooled by chunk data that itself ends in "0\r\n", #1062). */
 static int responseComplete(const char *buf, int len)
 {
     int bodyAt = headerEnd(buf, len);
@@ -131,7 +149,7 @@ static int responseComplete(const char *buf, int len)
     if ((value = headerValue(buf, bodyAt, "Content-Length")) != NULL)
         return len - bodyAt >= atoi(value);
     if ((value = headerValue(buf, bodyAt, "Transfer-Encoding")) != NULL && !strncmp(value, "chunked", 7))
-        return len - bodyAt >= 5 && !memcmp(buf + len - 5, "0\r\n\r\n", 5);
+        return walkChunks((char *)buf + bodyAt, len - bodyAt, 0) == 1;
     return 0; /* delimited by the server closing */
 }
 
@@ -143,7 +161,10 @@ static int finishResponse(char *buf, int len, int *length)
     if (bodyAt < 0 || sscanf(buf, "HTTP/%*d.%*d %d", &status) != 1 || status != 200)
         return RATLS_ERR_HTTP;
     if ((value = headerValue(buf, bodyAt, "Transfer-Encoding")) != NULL && !strncmp(value, "chunked", 7)) {
-        int body = dechunk(buf + bodyAt, len - bodyAt);
+        int body;
+        if (walkChunks(buf + bodyAt, len - bodyAt, 0) != 1)
+            return RATLS_ERR_HTTP; /* closed before the terminator's blank line */
+        body = walkChunks(buf + bodyAt, len - bodyAt, 1);
         if (body < 0)
             return RATLS_ERR_HTTP;
         len = bodyAt + body;

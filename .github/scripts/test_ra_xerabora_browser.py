@@ -185,6 +185,12 @@ int main(void)
     idRc = 1; assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
     assert(p.state == ACH_UNSUPPORTED);
     idRc = -2; p = run('G', 0, 0, "0"); assert(p.state == ACH_OFFLINE); idRc = 0;
+    /* xera_identify_codes (#1062): still identifying is a retry, a held NIC says so. */
+    idRc = -7; achievementsForget(); p = run('G', 0, 0, "0"); assert(p.state == ACH_ERROR);
+    idRc = -8; achievementsForget(); p = run('G', 0, 0, "0"); assert(p.state == ACH_NET_BUSY);
+    idRc = -7; assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+    assert(p.state == ACH_ERROR);
+    idRc = 0;
     achievementsForget(); httpFail = 1; p = run('G', 0, 0, "0"); assert(p.state == ACH_OFFLINE); httpFail = 0;
     /* gameid_parse: retroachievements.org's {"Success":true,"GameID":N}. */
     assert(achievementsParseGameId("{\"Success\":true,\"GameID\":2791}", (int)strlen("{\"Success\":true,\"GameID\":2791}")) == 2791);
@@ -262,6 +268,8 @@ network = (root / "src/ranet.c").read_text(encoding="utf-8")
 a = network.index("#define RA_HTTP_MS")
 b = network.index("\n}", network.index("int raNetHttpGet(", a)) + 2
 http = network[a:b]
+t = network.index("int raNetTcpRecv(")
+http = network[t:network.index("\n}", t) + 2] + "\n" + http
 http_harness = r"""
 #include <assert.h>
 #include <stdio.h>
@@ -270,6 +278,7 @@ typedef unsigned int u32;
 #define AF_INET 2
 #define SOCK_STREAM 1
 #define RA_MSG_DONTWAIT 0x08
+#define RA_MSG_PEEK 0x01
 #define RA_POLL_MS 25
 #define CLOCKS_PER_SEC 1000
 typedef long clock_t;
@@ -282,22 +291,34 @@ static int raNetNicReserved(void) { return nic; }
 static int socket(int a, int b, int c) { (void)a; (void)b; (void)c; return 5; }
 static int connect(int s, struct sockaddr *a, int l) { (void)s; (void)a; (void)l; return 0; }
 static int send(int s, const char *b, int n, int f) { (void)s; (void)f; assert(!strncmp(b, "GET /library HTTP/1.0\r\nHost: 192.168.1.2\r\n", 41)); sent++; return n; }
+static int lost;
+/* Like ps2ips' do_recv into a 64-byte-aligned buffer: a tail past the last whole
+   64-byte block that is longer than RESTS_EBUF_MAX (48) is cut from the returned
+   length after lwIP has consumed it (#1062). A peek consumes nothing. */
 static int recv(int s, char *b, int n, int f)
 {
     const char *part;
+    int left, take, tail;
     (void)s;
-    assert(f == RA_MSG_DONTWAIT && ((size_t)b & 63) == 0 && n <= 960);
+    assert((f & ~RA_MSG_PEEK) == RA_MSG_DONTWAIT && ((size_t)b & 63) == 0 && n <= 960);
     part = script[scriptPos];
     if (part == NULL)
         return -1;          /* nothing yet */
     if (!*part)
         return 0;           /* closed */
     /* Like a real recv: never more than n; the rest of a part comes next call. */
-    int left = (int)strlen(part) - scriptOff, take = left < n ? left : n;
+    left = (int)strlen(part) - scriptOff, take = left < n ? left : n;
+    tail = take > 64 ? take % 64 : 0;
+    if (f & RA_MSG_PEEK)
+        return tail > 48 ? take - (tail - 48) : take;
     memcpy(b, part + scriptOff, take);
     scriptOff += take;
     if (scriptOff == (int)strlen(part))
         scriptPos++, scriptOff = 0;
+    if (tail > 48) {
+        lost += tail - 48;
+        take -= tail - 48;
+    }
     return take;
 }
 static void disconnect(int s) { (void)s; closes++; }
@@ -325,7 +346,27 @@ int main(void)
     assert(get(buf, 64, &len) < 0); /* larger than the buffer */
     nic = 1; assert(get(buf, sizeof(buf), &len) < 0); nic = 0;
     assert(closes == 4);
-    puts("PASS: raNetHttpGet status, body offset, deadline, oversize and NIC guard");
+    /* tcp_tail_not_lost: reads that would end in a 49-63 byte tail keep every byte (#1062). */
+    {
+        static char doc[1200], head[114], out[2048];
+        int i;
+        i = snprintf(doc, sizeof(doc), "HTTP/1.0 200 OK\r\n\r\n");
+        for (; i < 1100; i++)
+            doc[i] = 'a' + i % 26;
+        doc[i] = 0;
+        memcpy(head, doc, 113);
+        head[113] = 0;
+        script[0] = doc; script[1] = ""; script[2] = NULL;
+        lost = 0;
+        body = get(out, sizeof(out), &len);
+        assert(body > 0 && lost == 0 && len == 1100 - body && !strcmp(out, doc));
+        /* Odd part sizes as well: 1100 split into a 113-byte head and the rest. */
+        script[0] = head; script[1] = doc + 113; script[2] = ""; script[3] = NULL;
+        lost = 0;
+        body = get(out, sizeof(out), &len);
+        assert(body > 0 && lost == 0 && len == 1100 - body && !strcmp(out, doc));
+    }
+    puts("PASS: raNetHttpGet status, body offset, deadline, oversize, NIC guard and ps2ips tail loss");
     return 0;
 }
 """
@@ -342,6 +383,12 @@ menu = (root / "src/menusys.c").read_text(encoding="utf-8")
 assert "achievementsClockUnset() ? _STR_XERA_SET_CLOCK : _STR_XERA_NOT_PLAYED" in menu
 unsupported = menu[menu.index("page.state == ACH_UNSUPPORTED ?"):menu.index("page.state == ACH_NOT_PLAYED")]
 assert "SET_CLOCK" not in unsupported, "an unsupported game is not a clock problem"
+# #1062: a held NIC is named as such, discovery takes only a full "RAO1 OK ", and the
+# link test's RA_TEST_NO_ANSWER2 is a format string everywhere.
+assert "page.state == ACH_NET_BUSY    ? _l(_STR_RA_NET_BUSY)" in menu
+assert 'strncmp(g_rx, "RAO1 OK ", 8) == 0) {\n        raNetRememberPeer(g_raReplyIP);' in network
+assert 'strncmp(g_rx, "RAO1", 4)' not in network
+assert '"%s", _l(_STR_RA_TEST_NO_ANSWER2)' not in network
 base_yml = (root / "lng_tmpl/_base.yml").read_text(encoding="utf-8")
 clock_text = base_yml[base_yml.index("- label: XERA_SET_CLOCK"):]
 clock_text = clock_text[:clock_text.index("\n\n") if "\n\n" in clock_text else len(clock_text)]

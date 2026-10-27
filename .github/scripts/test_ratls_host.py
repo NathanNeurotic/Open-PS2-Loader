@@ -5,7 +5,7 @@ portable TLS + HTTP code (src/ratls.c) with the vendored mbedTLS and RiptOPL's c
 drives it (tests/ratls/host_main.c) against local Python TLS servers using a throwaway test CA:
 full GETs on TLS 1.3 and TLS 1.2, chunked and close-delimited bodies, refusal of oversize bodies,
 wrong host names, expired and untrusted certificates, an unset clock (no connection at all), a
-stalled server, a 404, plus the six real anchors, the RTC conversion and DRBG reseeding.
+stalled server, a 404, plus the five real anchors, the RTC conversion and DRBG reseeding.
 """
 import concurrent.futures
 import os
@@ -95,7 +95,7 @@ def make_pki(d):
 class Server:
     """One-connection TLS (or silent TCP) server answering with a scripted HTTP response."""
 
-    def __init__(self, d, cert="leaf", version=None, response=b"", tls=True):
+    def __init__(self, d, cert="leaf", version=None, response=b"", tls=True, parts=None, hold=0.0):
         self.sock = socket.socket()
         self.sock.bind(("127.0.0.1", 0))
         self.sock.listen(1)
@@ -104,6 +104,8 @@ class Server:
         self.accepts = 0
         self.request = b""
         self.response = response
+        self.parts = parts  # sent one by one with a pause, so the client sees each on its own
+        self.hold = hold  # seconds to keep the connection open after the response
         self.tls = tls
         self.ctx = None
         if tls:
@@ -135,7 +137,11 @@ class Server:
                     if not chunk:
                         return
                     self.request += chunk
-                tls.sendall(self.response)
+                for part in self.parts or [self.response]:
+                    tls.sendall(part)
+                    if self.parts:
+                        time.sleep(0.5)
+                time.sleep(self.hold)
                 try:
                     tls.unwrap()
                 except (ssl.SSLError, OSError):
@@ -188,6 +194,29 @@ def main():
         s.finish()
         check("chunked_body", rc > 0 and body == json_body, f"rc={rc} body={body!r}")
 
+        # #1062: chunk data ending in "0\r\n" plus its own CRLF must not pass for the terminator.
+        head = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+        s = Server(d, version="1.3", parts=[head + b"5\r\nab0\r\n\r\n", b"3\r\nxyz\r\n0\r\n\r\n"])
+        rc, body = get(exe, s.port, d)
+        s.finish()
+        check("chunk_ending_in_zero_crlf", rc > 0 and body == b"ab0\r\nxyz", f"rc={rc} body={body!r}")
+
+        # Closed after "0\r\n" but before the blank line: never passed off as a whole body.
+        s = Server(d, version="1.3", response=head + b"3\r\nxyz\r\n0\r\n")
+        rc, body = get(exe, s.port, d)
+        s.finish()
+        check("chunked_closed_before_blank_line", rc < 0, f"rc={rc} body={body!r}")
+
+        # A whole response ends the read without waiting for the server to close.
+        for name, resp in (("length", http(json_body)), ("chunked", chunked)):
+            s = Server(d, version="1.3", response=resp, hold=4.0)
+            t0 = time.monotonic()
+            rc, body = get(exe, s.port, d)
+            took = time.monotonic() - t0
+            s.finish()
+            check(f"complete_without_close_{name}", rc > 0 and body == json_body and took < 3.0,
+                  f"rc={rc} took={took:.1f}s body={body!r}")
+
         s = Server(d, version="1.3", response=b"HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n" + json_body)
         rc, body = get(exe, s.port, d)
         s.finish()
@@ -234,7 +263,7 @@ def main():
 
         roots = sorted((ROOT / "third_party/ca-roots").glob("*.der"))
         out = subprocess.run([str(exe), "anchors", *map(str, roots)], capture_output=True, text=True).stdout
-        check("anchors_parse", len(roots) == 6 and "anchors bad=0" in out, out.strip())
+        check("anchors_parse", len(roots) == 5 and "anchors bad=0" in out, out.strip())
 
         # ps2sdk's ps2time() (ee/rpc/cdvd/src/scmd.c) reads the RTC as JST: UTC = RTC - 9 h.
         out = subprocess.run([str(exe), "rtc", "2026", "10", "12", "9", "0", "0"], capture_output=True, text=True).stdout
@@ -249,7 +278,7 @@ def main():
     if failures:
         print(f"{len(failures)} failure(s)")
         sys.exit(1)
-    print("PASS: ratls host tests (15 checks)")
+    print("PASS: ratls host tests (19 checks)")
 
 
 if __name__ == "__main__":
