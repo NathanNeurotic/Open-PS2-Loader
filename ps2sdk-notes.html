@@ -665,7 +665,8 @@ failures. Several of the <code>scsi.c</code> defects are also in <code>iop/usb/u
 version of the test, because the current one needs functions only our copy has. "Source" on an entry means
 the ps2sdk side was only read; our side is host-tested unless stated.</p>
 <h3 id="ieee1394_bd">IEEE1394_bd</h3>
-<p>All ten are <strong>still in master</strong>.</p>
+<p>All ten ps2sdk defects below are <strong>still in master</strong>. The entries headed "Our defect" and "Our choice"
+are about our copy, not ps2sdk.</p>
 <h4 id="after-an-iop-reset-the-drive-may-never-attach">After an IOP reset the drive may never attach</h4>
 <p>The driver never logs out, so a new instance after an IOP reset can find the drive still holding the old
 exclusive login; SBP-2 keeps it for about 1 s after the bus reset, longer on some bridges.
