@@ -34,8 +34,8 @@ Each entry gives its evidence:
 | [IEEE1394_bd](#ieee1394_bd) | `iop/iLink/IEEE1394_bd` | [`modules/ilink/IEEE1394_bd`](../modules/ilink/IEEE1394_bd/) | 10 | 0 | 1 |
 | [iLinkman](#ilinkman) | `iop/iLink/iLinkman` | [`modules/ilink/iLinkman`](../modules/ilink/iLinkman/) | 11 | 0 | 0 |
 
-ps2ips and IEEE1394_bd each also have one defect of our own, listed with the module. Defects we saw in
-modules we did not change are under [other ps2sdk modules](#other-ps2sdk-modules).
+ps2ips also has one defect of our own, and IEEE1394_bd had one that is fixed; both are listed with the
+module. Defects we saw in modules we did not change are under [other ps2sdk modules](#other-ps2sdk-modules).
 
 The [smbman write-count fix](ps2sdk-patches/0001-smbman-a-write-is-complete-only-for-the-bytes-the-se.patch)
 is ready as a ps2sdk patch: it applies to master `329e2bb` with `git am`. For the rest, our copies are the
@@ -694,19 +694,24 @@ command. (Source.)
 `ProcessStatus()` computes `(data[0] >> 16) & 0xF` on a `u8`, which is always 0 and is then forced to 1,
 so the real sense key is always lost. It also requires a status length of 1, so a bridge that returns a
 longer status block for a successful command fails it, and after 16 retries the read or write returns
-`-EIO`. Both date from the 2018 import, and `IEEE1394_disk` has the same code. Our copy tries to decode
-the sense key and accept a longer GOOD status, but reads the wrong bytes; see the next entry. (Source.)
+`-EIO`. Both date from the 2018 import, and `IEEE1394_disk` has the same code. Our copy decodes the sense
+key and accepts a longer GOOD status. Our first attempt read the wrong bytes; see the next entry. (Source;
+our side is host-tested.)
 
-#### Our defect: the status decode reads the wrong bytes
+#### Our defect, fixed: the status decode read the wrong bytes
 
 Like everything the target writes, the status quadlets are stored in host order. The driver reads the
 status header, `ORB_low` and the login response without swapping and byte-swaps only data-phase payload,
 and ps2sdk's own wait loop, which listed games on hardware, could not end if the header were in wire
-order. So in our `ProcessStatus()`, `data[1] & 0xf` is the low nibble of the ASC, and the GOOD check
-reads the ASCQ: a CHECK CONDITION whose ASCQ is 0, such as an unrecovered read error (ASC 0x11, ASCQ
-0x00), passes as success. `sbp2StatusReady()` also tests that byte for 0xff. The decode should read the
-third status quadlet as a number (sense key `(q >> 16) & 0xF`, format `q >> 30`, status
-`(q >> 24) & 0x3F`). Not fixed yet. (Source; no hardware dump of a CHECK CONDITION status exists.)
+order. Our first decode indexed the third status quadlet as bytes in wire order, so `data[1] & 0xf` was
+the low nibble of the ASC and the GOOD check read the ASCQ: a CHECK CONDITION whose ASCQ is 0, such as an
+unrecovered read error (ASC 0x11, ASCQ 0x00), passed as success. `sbp2StatusReady()` tested the same byte
+for 0xff, so a real ASCQ of 0xff looked like a status that had not arrived. Since 2026-10-27 both our
+copies read that quadlet as a number: format `q >> 30`, status `(q >> 24) & 0x3F`, sense key
+`(q >> 16) & 0xF`. An all-ones quadlet marks a status not yet written; a target would have to send the
+vendor-specific format 3 with every bit set to match it. Host test (`test_ilink_sbp2_completion.py`: 6
+failures on each copy's old decode). No hardware dump of a CHECK CONDITION status exists, so the
+host-order premise rests on the source.
 
 #### Disk capacity is one sector short
 

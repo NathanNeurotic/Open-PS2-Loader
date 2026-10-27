@@ -3,6 +3,8 @@
 Both drivers are compiled against a target/clock simulator. Only the bus, clock
 and kernel mutex are substituted. Missing completions must return within their
 budget without exposing caller memory or reusing remotely accessible storage.
+The simulated target stores status quadlets in host order, as iLinkman does, so
+the first detail quadlet is sfmt:2 status:6 | V M E I sense key:4 | ASC | ASCQ.
 """
 from pathlib import Path
 import argparse
@@ -39,7 +41,9 @@ static unsigned long long now_us, due_us, delay_us;
 static unsigned int result_status, foreign_status, captured;
 static int suppress_reply, pointer_error, reset_error, submitted, notified, generation;
 static int failures, held, reset_calls, reset_value,polls,partial_status;
-static unsigned int sam_status,sense_key;
+static u32 detail;
+#define DETAIL(sfmt,sam,key,asc,ascq) (((u32)(sfmt)<<30)|((u32)(sam)<<24)|((u32)(key)<<16)|((u32)(asc)<<8)|(u32)(ascq))
+static void set_detail(struct SBP2Device *dev,u32 value) { memcpy((void *)dev->statusFIFO.data,&value,4); }
 static unsigned char published_data[8];
 #define CHECK(c,msg) do { if(!(c)) { printf("FAIL: %s\n",msg);failures++; } } while(0)
 static void GetSystemTime(iop_sys_clock_t *c) { c->lo=now_us; c->hi=now_us>>32; }
@@ -59,10 +63,8 @@ static void deliver(void) {
         u32 word=0x11223344;
         memcpy(writeBuffer,&word,4);memcpy(writeBuffer+4,&word,4);
     }
-    if(((result_status>>24)&7)>1) {
-        target->statusFIFO.data[0]=sam_status;
-        target->statusFIFO.data[1]=sense_key;
-    }
+    if(((result_status>>24)&7)>1)
+        set_detail(target,detail);
     target->statusFIFO.ORB_low=(u32)target_orb;
     target->statusFIFO.status=result_status;
     notified=1;
@@ -108,7 +110,7 @@ static void reset_case(void) {
     memset(&command,0,sizeof(command));memset(storage,0xa5,sizeof(storage));memset(caller,0xcc,sizeof(caller));
     now_us=due_us=0;delay_us=500;result_status=(1u<<30)|(1u<<24);foreign_status=0;
     suppress_reply=pointer_error=reset_error=submitted=notified=reset_calls=held=0;generation=1;
-    polls=partial_status=sam_status=sense_key=0;memset(published_data,0,sizeof(published_data));
+    polls=partial_status=0;detail=0;memset(published_data,0,sizeof(published_data));
     target=NULL;target_orb=NULL;device.IsConnected=1;device.generation=1;device.ORB_size=8;
     device.scsi.priv=&device;device.scsi.timeout_us=2000;device.ManagementAgent_low=0xf0004000;
     other.scsi.priv=&other;other.IsConnected=1;other.generation=1;other.scsi.timeout_us=2000;
@@ -164,19 +166,29 @@ int main(void) {
     }
     reset_case();result_status=(1u<<30)|(1u<<24)|1;
     CHECK(queue(4,0)<0 && command.pending,"nonzero ORB high address cannot match IOP request");
-    reset_case();result_status=(1u<<30)|(2u<<24)|(2u<<16);device.statusFIFO.data[1]=5;
+    reset_case();result_status=(1u<<30)|(2u<<24)|(2u<<16);
     CHECK(queue(4,0)==-1 && !command.pending,"failed matching completion retires storage and reports error");
-    device.statusFIFO.data[1]=5;
-    CHECK(ProcessStatus(&device,&command.cdb)==-5,"SCSI sense key comes from byte one rather than an impossible u8 shift");
+    set_detail(&device,DETAIL(0,2,5,0x24,0x00));
+    CHECK(ProcessStatus(&device,&command.cdb)==-5,"SCSI sense key comes from bits 16-19 of the detail quadlet");
 
     reset_case();result_status=(1u<<30)|(2u<<24);partial_status=1;
     CHECK(queue(4,0)==0 && notified && now_us>=500,
           "extended SCSI GOOD status succeeds after its status data arrives");
-    reset_case();result_status=(1u<<30)|(2u<<24);sam_status=2;sense_key=2;
+    reset_case();result_status=(1u<<30)|(2u<<24);detail=DETAIL(0,2,2,0x04,0x01);
     CHECK(queue(4,0)==-2 && !command.pending && caller[0]==0xcc,
           "extended CHECK CONDITION reports sense without copying invalid read data");
-    reset_case();result_status=(1u<<30)|(2u<<24);sam_status=0x80;
+    reset_case();result_status=(1u<<30)|(2u<<24);detail=DETAIL(0,2,3,0x11,0x00);
+    CHECK(queue(4,0)==-3 && !command.pending && caller[0]==0xcc,
+          "a CHECK CONDITION whose ASCQ is 0 (unrecovered read error) is not GOOD");
+    reset_case();result_status=(1u<<30)|(2u<<24);detail=DETAIL(0,2,6,0x29,0x00);
+    CHECK(queue(4,0)==-6 && !command.pending,"a UNIT ATTENTION after a bus reset reports sense key 6");
+    reset_case();result_status=(1u<<30)|(2u<<24);detail=DETAIL(0,2,4,0x44,0xff);
+    CHECK(queue(4,0)==-4 && !command.pending && now_us<2000,
+          "an ASCQ of 0xff does not look like a status that has not arrived");
+    reset_case();result_status=(1u<<30)|(2u<<24);detail=DETAIL(2,0,0,0,0);
     CHECK(queue(4,0)<0 && !command.pending,"reserved extended status format is refused");
+    reset_case();result_status=(1u<<30)|(2u<<24);detail=DETAIL(1,0,0,0,0);
+    CHECK(queue(4,0)==0 && !command.pending,"a deferred-format GOOD status succeeds");
     reset_case();result_status|=1u<<27;
     CHECK(queue(4,0)<0 && device.fetchAgentNeedsReset && !command.pending,
           "DEAD status retires completed request and remembers agent recovery");

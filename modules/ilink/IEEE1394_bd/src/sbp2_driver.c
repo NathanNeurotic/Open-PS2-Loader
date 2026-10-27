@@ -164,13 +164,14 @@ static int sbp2StatusReady(struct SBP2Device *dev, const void *orb)
     u32 status = dev->statusFIFO.status;
     return RESP_SRC(status) <= 1 && RESP_LEN(status) >= 1 &&
            (status & 0xffff) == 0 && dev->statusFIFO.ORB_low == (u32)orb &&
-           (orb != &command.cdb || RESP_LEN(status) == 1 || dev->statusFIFO.data[0] != 0xff);
+           (orb != &command.cdb || RESP_LEN(status) == 1 || dev->statusFIFO.data[0] != STATUS_UNWRITTEN);
 }
 
 static int ProcessStatus(struct SBP2Device *dev, const void *orb)
 {
     u32 status = dev->statusFIFO.status;
-    int sense = dev->statusFIFO.data[1] & 0xf;
+    u32 detail = RESP_LEN(status) > 1 ? dev->statusFIFO.data[0] : 0;
+    int sense = STATUS_SENSE_KEY(detail);
     if (sense == 0)
         sense = 1;
     if ((RESP_SBP_STATUS(status) == 0 || RESP_SBP_STATUS(status) == 0x0b) &&
@@ -179,8 +180,7 @@ static int ProcessStatus(struct SBP2Device *dev, const void *orb)
             return 0;
         /* A command may include a valid SCSI GOOD status block. Extended
          * status is not inherently an error; format 0/1 carries SAM status. */
-        if (orb == &command.cdb && (dev->statusFIFO.data[0] >> 6) <= 1 &&
-            (dev->statusFIFO.data[0] & 0x3f) == 0)
+        if (orb == &command.cdb && STATUS_SFMT(detail) <= 1 && STATUS_SAM(detail) == 0)
             return 0;
     }
     return -sense;
@@ -221,7 +221,7 @@ static int sbp2PublishCommand(struct SBP2Device *dev, u32 budget_us)
     int result;
     memset((void *)&dev->statusFIFO, 0, sizeof(dev->statusFIFO));
     // Wait for the first extended-status quadlet as well as its header.
-    dev->statusFIFO.data[0] = 0xff;
+    dev->statusFIFO.data[0] = STATUS_UNWRITTEN;
     command.pointer.low = (u32)command.orb;
     command.pointer.high = 0;
     command.pointer.NodeID = dev->InitiatorNodeID;

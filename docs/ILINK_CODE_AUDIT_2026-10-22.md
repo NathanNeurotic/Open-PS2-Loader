@@ -206,8 +206,11 @@ latency remain console checks.
   Status quadlets are stored in host order, so in `ProcessStatus()`
   `data[1] & 0xf` is the low nibble of the ASC, and the GOOD check reads the
   ASCQ. A CHECK CONDITION whose ASCQ is 0 passes as success, and
-  `sbp2StatusReady()` tests the same byte. Found from source, not fixed yet; see
-  [Notes for ps2sdk](PS2SDK-NOTES.md#our-defect-the-status-decode-reads-the-wrong-bytes).
+  `sbp2StatusReady()` tests the same byte. Found from source and fixed the same
+  day in both driver copies; the rebuilt POPStarter driver is 27,129 bytes, SHA-256
+  `e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917`, built in the
+  pinned image that CI rebuilds it in; not tested on a console. See
+  [Notes for ps2sdk](PS2SDK-NOTES.md#our-defect-fixed-the-status-decode-read-the-wrong-bytes).
 
 The old local C++ RiptOPL tree has the same reversed POPStarter direction and
 the manager defects above. A report of an older C++ build working therefore
@@ -235,7 +238,7 @@ proves a launch bug: the existing binding and argv checks cover those paths.
   required checks. All new fixtures run in the flavour workflow.
 - Local target compilation and pinned CI builds establish buildability and
   binary provenance. They do not establish gameplay or explain a white screen.
-- The current one-pass POPStarter driver is reproduced by
+- The one-pass POPStarter driver before the 2026-10-27 status fix is reproduced by
   [pinned CI run 39910301683](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/39910301683),
   source head `9fc75831abb25a0d8d262d9b7d6601478e3b5fe3`.
   All three shipped `usbhdfsd.irx.ilink` copies are 27,145 bytes, SHA-256

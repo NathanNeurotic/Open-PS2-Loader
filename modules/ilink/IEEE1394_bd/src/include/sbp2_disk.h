@@ -65,11 +65,20 @@
 #define RESP_RESP(v)       (((v) >> 28) & 0x03)
 #define RESP_SRC(v)        (((v) >> 30) & 0x03)
 
+/* RiptOPL: iLinkman stores every quadlet the target writes in host order, the status block's
+ * included, so read its first detail quadlet as a number: sfmt:2 status:6 | V M E I sense key:4 |
+ * ASC:8 | ASCQ:8. Indexing it as bytes in wire order read the ASCQ as the status and the ASC as
+ * the sense key, and a CHECK CONDITION whose ASCQ was 0 passed as GOOD. */
+#define STATUS_SFMT(v)      (((v) >> 30) & 0x03)
+#define STATUS_SAM(v)       (((v) >> 24) & 0x3F)
+#define STATUS_SENSE_KEY(v) (((v) >> 16) & 0x0F)
+#define STATUS_UNWRITTEN    0xFFFFFFFF
+
 struct sbp2_status
 {
     u32 status;
     u32 ORB_low;
-    u8 data[24];
+    u32 data[6];
 } __attribute__((packed));
 
 struct sbp2_pointer
