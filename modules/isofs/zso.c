@@ -40,6 +40,7 @@ void ziso_init(ZISO_header *header, u32 first_block)
   Taken from ARK-4's Inferno 2 ISO Driver.
   Tailored for OPL.
   It's made to work with 2048 block size (matching DVD sector size) and LZ4 compression (ZSO).
+  Returns the sectors decoded (fewer near the end of the image), or -1 when a device read failed.
 */
 int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 {
@@ -62,7 +63,7 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
         if (read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0) <= 0) {
             ziso_idx_start_block = -1; // a failed read leaves the cache invalid, never half-trusted
-            return 0;
+            return -1;
         }
         ziso_idx_start_block = lsn;
     }
@@ -75,7 +76,7 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     // there should be no overflow or overrun, as long as compressed data is smaller, and it should be
     u8 *c_buff = addr + (count * 2048) - compressed_size;
     if (read_raw_data(c_buff, compressed_size, o_start, ziso_align) != (int)compressed_size)
-        return 0; // a short or failed read must not be decompressed as if it were the image
+        return -1; // a short or failed read must not be decompressed as if it were the image
 
     // process each sector
     for (unsigned int i = 0; i < count; i++) {

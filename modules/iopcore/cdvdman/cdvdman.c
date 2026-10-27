@@ -318,7 +318,13 @@ int DeviceReadSectorsCached(u64 lsn, void *buffer, unsigned int sectors)
 {
     if (sectors < MAX_SECTOR_CACHE) { // if MAX_SECTOR_CACHE is 0 then it will act as disabled and passthrough
         if (cur_sector == 0xffffffffffffffff || lsn < cur_sector || (lsn + sectors) - cur_sector > MAX_SECTOR_CACHE) {
-            DeviceReadSectors(lsn, sector_cache, MAX_SECTOR_CACHE);
+            if (DeviceReadSectors(lsn, sector_cache, MAX_SECTOR_CACHE) != SCECdErNO) {
+                // Nothing in a failed window can be served, now or on a later hit. The window is wider
+                // than the request, so near the end of the image it can fail on sectors past the end
+                // alone: read just the requested sectors and return what that read reports.
+                cur_sector = 0xffffffffffffffff;
+                return DeviceReadSectors(lsn, buffer, sectors);
+            }
             cur_sector = lsn;
         }
         int pos = lsn - cur_sector;
@@ -381,7 +387,11 @@ int read_raw_data(u8 *addr, u32 size, u32 offset, u32 shift)
 
 int DeviceReadSectorsCompressed(u64 lsn, void *addr, unsigned int count)
 {
-    return (ziso_read_sector(addr, (u32)lsn, count) == count) ? SCECdErNO : SCECdErEOM;
+    int r = ziso_read_sector(addr, (u32)lsn, count);
+
+    if (r < 0)
+        return SCECdErREAD; // a device read failed: a read error the game can retry, not end of media
+    return ((unsigned int)r == count) ? SCECdErNO : SCECdErEOM;
 }
 
 static int probed = 0;
