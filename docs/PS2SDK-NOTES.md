@@ -641,7 +641,8 @@ the ps2sdk side was only read; our side is host-tested unless stated.
 
 ### IEEE1394_bd
 
-All ten are **still in master**.
+All ten ps2sdk defects below are **still in master**. The entries headed "Our defect" and "Our choice"
+are about our copy, not ps2sdk.
 
 #### After an IOP reset the drive may never attach
 

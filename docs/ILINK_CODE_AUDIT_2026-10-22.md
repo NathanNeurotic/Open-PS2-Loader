@@ -118,7 +118,8 @@ FifthFox's enclosure encountered.
     command. `scsi_connect` returns failure to device configuration; failed setup
     releases its transaction context. Sense buffers are initialized before
     REQUEST SENSE, and status sense keys use byte 1 rather than shifting an
-    8-bit byte by 16. Valid extended SCSI GOOD status is accepted; an extended
+    8-bit byte by 16 (corrected on 2026-10-27: byte 1 is the wrong byte; see
+    Remaining limits). Valid extended SCSI GOOD status is accepted; an extended
     block is not automatically an error. Its first status quadlet must arrive
     before it can complete the command. A completed DEAD status marks the command
     agent for reset before SCSI retries; otherwise the stopped agent would never
@@ -201,6 +202,12 @@ latency remain console checks.
   verification. Host simulation checks the software contracts, not the chip.
 - Native BDM still requires 512-byte logical sectors at its mount layer. The
   transfer geometry repairs do not establish end-to-end native 4K-sector support.
+- Correction, 2026-10-27: the status decode in item 12 reads the wrong bytes.
+  Status quadlets are stored in host order, so in `ProcessStatus()`
+  `data[1] & 0xf` is the low nibble of the ASC, and the GOOD check reads the
+  ASCQ. A CHECK CONDITION whose ASCQ is 0 passes as success, and
+  `sbp2StatusReady()` tests the same byte. Found from source, not fixed yet; see
+  [Notes for ps2sdk](PS2SDK-NOTES.md#our-defect-the-status-decode-reads-the-wrong-bytes).
 
 The old local C++ RiptOPL tree has the same reversed POPStarter direction and
 the manager defects above. A report of an older C++ build working therefore
