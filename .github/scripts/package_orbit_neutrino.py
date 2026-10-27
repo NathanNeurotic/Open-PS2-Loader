@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage the pinned, unmodified ORBIT Neutrino runtime for the RA package only."""
+"""Stage the pinned ORBIT Neutrino runtime for the RA package only (RiptOPL i.LINK pair kept)."""
 import argparse
 import hashlib
 import json
@@ -10,6 +10,10 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 PIN = ROOT / "third_party/orbit-neutrino/release.json"
+# The standard kit replaces this matched pair with RiptOPL's builds (#1018: the stock driver loses its
+# i.LINK login after an IOP reset). The RA kit starts from that kit, so its neutrino/ already holds
+# them; keep them over ORBIT's stock copies (#1065).
+ILINK_MODULES = ("modules/iLinkman.irx", "modules/IEEE1394_bd_mini.irx")
 
 
 def stage(archive: Path, destination: Path, pin: dict) -> None:
@@ -29,7 +33,7 @@ def stage(archive: Path, destination: Path, pin: dict) -> None:
             if relative in payload:
                 raise ValueError("duplicate ORBIT runtime entry")
             payload[relative] = source.read(entry)
-        for name in ("neutrino.elf", "modules/ee_core.elf", "modules/raagent.irx",
+        for name in ("neutrino.elf", "modules/ee_core.elf", "modules/raagent.irx", *ILINK_MODULES,
                      "config/system.toml", "config/bsd-udpfs.toml", "LICENSE"):
             if not payload.get(name):
                 raise ValueError(f"missing ORBIT runtime entry: {name}")
@@ -40,6 +44,12 @@ def stage(archive: Path, destination: Path, pin: dict) -> None:
     if not extra.is_file():
         raise ValueError("missing required config/bsd-udpfsbd.toml before ORBIT staging")
     udpfsbd = extra.read_bytes()
+    ilink = {}
+    for name in ILINK_MODULES:
+        ours = destination / name
+        if not ours.is_file() or not ours.stat().st_size:
+            raise ValueError(f"missing RiptOPL i.LINK module {name} before ORBIT staging")
+        ilink[name] = ours.read_bytes()
     if destination.exists():
         shutil.rmtree(destination)
     for name, data in payload.items():
@@ -47,6 +57,8 @@ def stage(archive: Path, destination: Path, pin: dict) -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
     extra.write_bytes(udpfsbd)
+    for name, data in ilink.items():
+        (destination / name).write_bytes(data)
     (destination / "ORBIT-RA.json").write_text(json.dumps(pin, indent=2) + "\n", encoding="utf-8")
     (destination / "ORBIT-RA.txt").write_text(
         "RiptOPL ORBIT RA handoff v1\n"
@@ -60,7 +72,8 @@ def stage(archive: Path, destination: Path, pin: dict) -> None:
         "THIS neutrino/ FOLDER BELONGS TO THE RIPTOPL RETROACHIEVEMENTS EDITION.\n"
         "\n"
         f"It is ORBIT's RA-Neutrino {pin['tag']}: Neutrino v1.8.0 with the achievement agent\n"
-        "(raagent.irx), unmodified from the pinned release. It is NOT the standard RiptOPL\n"
+        "(raagent.irx). Only modules/iLinkman.irx and modules/IEEE1394_bd_mini.irx are replaced,\n"
+        "by RiptOPL's i.LINK drivers, as in the standard kit. It is NOT the standard RiptOPL\n"
         "Neutrino. Do not mix the two kits' neutrino/ folders: keep this one with the RA\n"
         "loader (APPS/APP_RIPTOPL-RA) and the standard one with the standard loader.\n"
         "\n"

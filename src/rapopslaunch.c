@@ -41,7 +41,7 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     if (!slotFree)
         return -1; /* FAT does not enforce O_EXCL: refuse the user-owned slot explicitly. */
     if (snprintf(path, sizeof(path), "%sPOPS/MODULE_9.IRX", root) >= (int)sizeof(path))
-        return -1;
+        return 0; /* Nowhere to install it: launch untracked, nothing was written. */
     irx = malloc(size_rapops_irx);
     if (!irx)
         return 0; /* Optional telemetry: low memory must not block the game. */
@@ -75,8 +75,10 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     cfg->bytes = GetWatchBytes();
     cfg->node_count = GetNodeCount();
     if (!cfg->count || cfg->count > RA_WATCH_MAX || cfg->node_count > RA_NODE_MAX ||
-        cfg->bytes + cfg->node_count * RA_NODE_PAIR_BYTES > RA_SNAP_MAX_BYTES)
+        cfg->bytes + cfg->node_count * RA_NODE_PAIR_BYTES > RA_SNAP_MAX_BYTES) {
+        result = 0; /* A list too big for the module: untracked, like a stale one (#1065). */
         goto done;
+    }
     memcpy(cfg->list, GetWatchList(), cfg->count * sizeof(unsigned int));
     if (cfg->node_count)
         memcpy(cfg->nodes, GetNodeList(), cfg->node_count * sizeof(struct ra_node));
