@@ -2,6 +2,8 @@
 """Regenerate the GitHub Pages files that are derived from other files.
 
   retroachievements.html   its <main class="content"> body, rendered from docs/RETROACHIEVEMENTS.md
+  any --md-page PAGE       likewise, from the Markdown file named with it (ps2sdk-notes.html from
+                           docs/PS2SDK-NOTES.md)
   data/search-index.json   the site search index, rebuilt from the pages themselves
 
 Both used to be maintained by hand and drifted: the 2026-09-24 documentation audit found the RA page
@@ -11,11 +13,17 @@ picks up a gh-pages merge), so edit the sources, not these two outputs.
 
 Usage, from a rebuild/main checkout with gh-pages checked out somewhere else:
 
-  python3 .github/scripts/site_sync.py --site ../gh-pages --ra-md docs/RETROACHIEVEMENTS.md
-  python3 .github/scripts/site_sync.py --site ../gh-pages --ra-md docs/RETROACHIEVEMENTS.md --check
+  python3 .github/scripts/site_sync.py --site ../gh-pages --ra-md docs/RETROACHIEVEMENTS.md \
+      --md-page docs/PS2SDK-NOTES.md=ps2sdk-notes.html
+  python3 .github/scripts/site_sync.py --site ../gh-pages --ra-md docs/RETROACHIEVEMENTS.md \
+      --md-page docs/PS2SDK-NOTES.md=ps2sdk-notes.html --check
 
---check writes nothing and exits 1 when either file is out of date. Needs beautifulsoup4 and
+--check writes nothing and exits 1 when any file is out of date. Needs beautifulsoup4 and
 markdown-it-py (docs-sync.yml pins the versions).
+
+An --md-page page keeps its own head, sidebar and footer; only <main class="content"> is replaced, so
+the page has to exist on gh-pages first. Until it does, it is skipped with a note rather than failing
+the run, so the source change and the gh-pages change can land in either order.
 
 Search index rules (they match how the hand-built index was laid out, so curated entries survive):
   * one entry per page and one per h2/h3 inside <main> that has an id, plus any other anchor the
@@ -44,6 +52,7 @@ from bs4 import BeautifulSoup, Comment, NavigableString, Tag
 from markdown_it import MarkdownIt
 
 REPO_BLOB = "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/"
+REPO_ROOT = Path(__file__).resolve().parents[2]
 INDEX = Path("data") / "search-index.json"
 RA_PAGE = "retroachievements.html"
 MAIN_OPEN = '<main class="content">'
@@ -109,6 +118,16 @@ def render_markdown(markdown: str, doc_dir: str = "docs/") -> str:
             callout.append(rest.extract())
         quote.replace_with(callout)
     return str(soup).strip()
+
+
+def doc_dir_of(source: Path) -> str:
+    """The repository directory a Markdown file's relative links start from: its own directory, when it
+    is inside the checkout that holds this script; docs/ otherwise."""
+    try:
+        parent = source.resolve().relative_to(REPO_ROOT).parent.as_posix()
+    except ValueError:
+        return "docs/"
+    return "" if parent == "." else parent + "/"
 
 
 def replace_main(page_html: str, body: str) -> str:
@@ -334,8 +353,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--site", required=True, type=Path, help="gh-pages checkout")
     parser.add_argument("--ra-md", type=Path, help="docs/RETROACHIEVEMENTS.md to render into " + RA_PAGE)
+    parser.add_argument("--md-page", action="append", default=[], metavar="MD=PAGE",
+                        help="render the Markdown file MD into the site page PAGE (repeatable)")
     parser.add_argument("--check", action="store_true", help="write nothing; exit 1 if out of date")
     args = parser.parse_args(argv)
+    md_pages = []
+    for spec in args.md_page:
+        source, sep, name = spec.partition("=")
+        if not sep or not source or not name.endswith(".html") or "/" in name or name == RA_PAGE:
+            parser.error(f"--md-page wants SOURCE.md=PAGE.html (a top-level page other than {RA_PAGE}), got {spec!r}")
+        md_pages.append((Path(source), name))
 
     stale, pending = [], {}
     for name in ("index.html", "releases.html"):
@@ -349,13 +376,17 @@ def main(argv: list[str] | None = None) -> int:
             pending[name] = after
             if not args.check:
                 page.write_text(after, encoding="utf-8")
-    if args.ra_md is not None:
-        page = args.site / RA_PAGE
+    rendered = [(args.ra_md, RA_PAGE)] if args.ra_md is not None else []
+    for source, name in rendered + md_pages:
+        page = args.site / name
+        if name != RA_PAGE and not page.exists():
+            print(f"skipped: {name} is not on the site yet, so {source} has nowhere to go")
+            continue
         before = page.read_text(encoding="utf-8")
-        after = replace_main(before, render_markdown(args.ra_md.read_text(encoding="utf-8")))
+        after = replace_main(before, render_markdown(source.read_text(encoding="utf-8"), doc_dir_of(source)))
         if after != before:
-            stale.append(RA_PAGE)
-            pending[RA_PAGE] = after
+            stale.append(name)
+            pending[name] = after
             if not args.check:
                 page.write_text(after, encoding="utf-8")
 

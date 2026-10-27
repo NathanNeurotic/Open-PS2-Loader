@@ -78,6 +78,18 @@ the folder alone does not make CHD or CSO playable.
 **UDPBD:** exports block-device contents. Select a supported disk/filesystem
 layout for Neutrino; it is not the same service as UDPFS virtual ISO streaming.
 
+## Renaming or deleting a UL game
+
+Renaming or deleting a UL game from the menu renames or removes its parts and
+rewrites `ul.cfg` at the device root. The new list is written to `ul.cfg.new`
+first, and `ul.cfg` is replaced only when that file is complete, so a drive or
+share that drops out mid-write leaves the previous `ul.cfg` in place. If a part
+cannot be renamed, or `ul.cfg` keeps the old list, a rename puts the parts it
+already renamed back under the old name. The menu shows no message when either
+fails; the debug log does. A `ul.cfg.new` left at the root holds the newer list
+when `ul.cfg` is missing or short: rename it to `ul.cfg` on a PC before you
+delete or rename another UL game, because that rewrites `ul.cfg.new`.
+
 ## PS1 images use separate cores
 
 POPSTARTER uses `.VCD` images. Ember uses game folders and CUE-based disc

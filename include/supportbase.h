@@ -77,7 +77,6 @@ void sbUnprepare(void *pCommon);
 // that game silently ran without its VMC. The slot is found once, while the image is pristine, and the
 // position is reused from then on. cache is two ints per image, both -2 until searched.
 int sbMcemuSlotWord(const void *irx, int size, int slot, int *cache);
-void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID);
 void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, const char *sep, int part);
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);
 void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id, char *newname);

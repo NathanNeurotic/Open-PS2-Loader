@@ -76,6 +76,17 @@ signalling. Packet bounds cover the complete RAM/CROM span and refused packets
 are drained. CROM/API fixes and the source/host/target/console evidence boundaries
 are listed in `../../../docs/ILINK_CODE_AUDIT_2026-10-22.md`.
 
+## SCSI status decode (2026-10-27)
+
+iLinkman stores every quadlet the target writes in host order, the status block's
+included. The October 22 decode indexed the first detail quadlet as bytes in wire
+order, so it read the ASCQ as the SCSI status and the ASC's low nibble as the sense
+key: a CHECK CONDITION whose ASCQ was 0, such as an unrecovered read error, passed
+as GOOD, and an ASCQ of 0xff looked like a status that had not arrived. Both driver
+copies now read the quadlet as a number (`STATUS_SFMT`, `STATUS_SAM` and
+`STATUS_SENSE_KEY` in `sbp2_disk.h`) and mark an unwritten status with all ones.
+Host-tested by `test_ilink_sbp2_completion.py`; not tested on a console.
+
 ## Building
 The checked-in binaries are built in the iLink driver pin (ps2dev, 2026-08-13; not the release `PS2DEVPINNED` digest), which reproduces both the pre-#1018 build (21609 bytes) and the current one byte for byte:
 ```bash

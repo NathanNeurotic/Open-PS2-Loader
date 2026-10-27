@@ -15,9 +15,10 @@ block after a failure, and device-smb.c turns an error, a short result or a fail
 It also pins that every function in smb.c that waits on smb_io_sema signals it before each return, and
 that smb_Close() never waits on it (oplShutdown() calls it with the semaphore already held).
 
-smb_WriteAndX() used to return the requested count for any success status. A full file system answers
-WRITE_ANDX with a success status and a Count of zero (MS-CIFS 2.2.4.43.2), so an unwritten VMC page was
-reported as saved. A third harness runs the real smb_WriteAndX() against scripted server replies and
+smb_WriteAndX() used to return the requested count for any success status. MS-CIFS 2.2.4.43.2 lets a
+server answer a write to a full disk with a success status and a Count of zero (Samba sends an error
+status instead, which already failed), and a server may store less than it was sent, so against such a
+server an unwritten VMC page was reported as saved. A third harness runs the real smb_WriteAndX() against scripted server replies and
 checks that it returns the server's Count, that smb_WriteFile() sends the rest of the data from the right
 place in the buffer after a short Count and fails on a zero one, and that a truncated reply, a short
 WordCount or a Count over the request fails.
@@ -392,8 +393,8 @@ MAPPING_WANT = [
 
 
 # The real smb_WriteAndX() parsing a scripted server's WRITE_ANDX reply, under the real smb_WriteFile()
-# and the real mcemu DeviceWritePage(). A success status with a smaller Count is how a full file system
-# answers (MS-CIFS 2.2.4.43.2): the page was not stored, so it must not be reported as saved.
+# and the real mcemu DeviceWritePage(). A success status with a smaller Count is one way a server may
+# answer a full disk (MS-CIFS 2.2.4.43.2): the page was not stored, so it must not be reported as saved.
 WRITE_REPLY = COMMON + r'''
 @WIRE@
 

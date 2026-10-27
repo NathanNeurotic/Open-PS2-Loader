@@ -28,6 +28,9 @@ UPSTREAM_LAYOUT_LINKS = {
         "../LICENSE", "docs/README_CONFIG.txt", "docs/THIRD_PARTY_NOTICES.md", "licenses/",
     },
 }
+# Every website page carries this banner between the top bar and the layout, outside
+# <main class="content">, so site_sync.py's page renders keep it.
+LEGACY_NOTICE = "legacy-notice"
 
 
 def document(path):
@@ -55,6 +58,8 @@ def audit(source, site):
         label = ("site/" + path.name) if site and path.parent == site else path.relative_to(source).as_posix()
         if path.suffix == ".html":
             errors += [f"{label}: duplicate id {key}" for key, count in Counter(anchors).items() if count > 1]
+            if LEGACY_NOTICE not in anchors:
+                errors.append(f"{label}: missing the #{LEGACY_NOTICE} banner after the top bar")
         for url in links:
             if url in UPSTREAM_LAYOUT_LINKS.get(label, set()):
                 upstream.append({"document": label, "upstream_relative_link": url})

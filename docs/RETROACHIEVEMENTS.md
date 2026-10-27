@@ -238,8 +238,8 @@ a sharing violation, so "check game support" could only report that it could not
 while the game still *booted* off it, because the in-play open uses the older command, which the same
 server grants in compatibility mode.
 
-This flavour now carries its own `smbman` (`modules/network/smbman-ra`) that tries NT create first
-and falls back to the legacy open **only** when the server says the file is held, and **only for a
+OPL now carries its own `smbman` (`modules/network/smbman-ra`, first in this flavour and now in every
+flavour) that tries NT create first and falls back to the legacy open **only** when the server says the file is held, and **only for a
 read** — reaching past another handle to write is not something worth asking for. If both are
 refused, the hash log names the image as held instead of saying nothing. hacan359 confirmed this on
 hardware on 2026-09-10: two images held open by earlier runs hashed anyway, and the hashes matched
@@ -353,17 +353,20 @@ It is deliberately *not* an entry in `RIPTOPL-VARIANTS-*.zip`: that archive is a
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
 diagnostic bundle rather than installable payload. The default build is unaffected by all of this — every RA source file and
 every call site is behind `#ifdef RETROACHIEVEMENTS`, and that is checked by comparing the two builds'
-symbol tables, loader core and embedded IOP modules. PR CI also builds the pinned
+symbol tables, loader core and embedded IOP modules. The two IOP modules in the next section are not RA
+code: they fix bugs every flavour has, so every flavour embeds them. PR CI also builds the pinned
 **OFFICIALROLLING-RA** flavour and records the RA flag in its build manifest.
 
-### Two IOP modules this flavour builds instead of taking from the SDK
+### Two IOP modules OPL builds instead of taking from the SDK
 
 Both are ps2sdk sources vendored with a marked change, the way `modules/network/ps2ips` already is,
-and both are selected by `USBD_MINI_IRX` / `SMBMAN_IRX` at the top of the Makefile.
+and both are selected by `USBD_MINI_IRX` / `SMBMAN_IRX` at the top of the Makefile. Both began in this
+flavour; every flavour now embeds both. [Notes for ps2sdk](PS2SDK-NOTES.md) lists the ps2sdk side of
+both, and of every other SDK module the fork replaces.
 
 | Module | Why | Diff from ps2sdk |
 |---|---|---|
-| `modules/network/smbman-ra` | the held-image fix above | `smb.c` (35 lines) and `smb.h` (4); every other file byte-identical to ps2sdk master |
+| `modules/network/smbman-ra` | the held-image fix above; also a write now counts only the bytes the server's WRITE_ANDX Count says it stored, where ps2sdk's smbman takes any success status as the whole write. That matters on a server that answers a full disk, or a partial write, with success and a short or zero Count, which MS-CIFS allows; Samba, Windows (per MS-CIFS) and PS2-Servers answer a full disk with an error status, which both copies already fail. A write request also carries at most 65,534 bytes, so its 16-bit ByteCount no longer wraps to 0 | `smb.c` (+57/−8: the three fixes), `smb.h` (+4) and `auth.c` (+6/−1: an unmarked password-buffer bound); every other source file byte-identical to ps2sdk master, checked 2026-10-27; only the Makefile is ours |
 | `modules/usb/usbd-ra` | see below | **nothing** — byte-identical to ps2sdk `iop/usb/usbd` at `314d87e7` (2024-04-01); only the Makefile is ours |
 
 **The usbd swap is not a RetroAchievements feature.** ps2sdk rewrote its USB host driver on

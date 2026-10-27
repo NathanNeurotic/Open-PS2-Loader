@@ -1,4 +1,4 @@
-# Our smbman.irx, replacing the stock one from ps2sdk.
+# Our smbman.irx, replacing the stock one from ps2sdk in every flavour.
 #
 # ps2sdk opens a file with NT_CREATE_ANDX only. A server that still holds
 # the file for a session that is gone -- what a console leaves behind
@@ -6,8 +6,13 @@
 # share mode it asks for, so the image can no longer be hashed although
 # the game still boots off it: in-game OPL opens the old way, in
 # compatibility mode, which the same server grants. The source is a copy
-# of ps2sdk iop/network/smbman with the changes marked "RA fix".
-# Candidate for upstreaming to ps2sdk.
+# of ps2sdk iop/network/smbman with the changes marked "RA fix", one
+# marked "Write-count fix" (a write is complete only for the bytes the
+# server's WRITE_ANDX Count says it stored), one marked "ByteCount fix" (a
+# write request carries at most 65534 bytes, so its 16-bit ByteCount does
+# not wrap), and an unmarked bound on the password buffer in auth.c (this
+# repo's 14cd9ff3). Only this Makefile is ours. docs/PS2SDK-NOTES.md#smbman
+# records all four for ps2sdk.
 IOP_BIN  = smbman.irx
 IOP_OBJS = smbman.o smb_fio.o smb.o poll.o auth.o des.o md4.o imports.o
 
