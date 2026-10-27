@@ -688,7 +688,9 @@ int smb_ReadFile(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, int nbyt
         result = smb_ReadAndX(FID, offsetlow, offsethigh, ptr, toRead);
         if (result <= 0) {
             SIGNALIOSEMA(smb_io_sema);
-            return result;
+            // Zero bytes means the read reached the end of the file (MS-CIFS 3.3.5.36). Return the
+            // bytes read before it as a short count; callers that need all nbytes compare with nbytes.
+            return (result == 0) ? nbytes - remaining : result;
         }
 
         //Check for and handle overflow.

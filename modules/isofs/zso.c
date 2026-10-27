@@ -8,6 +8,8 @@
 // block offset cache, reduces IO access
 u32 *ziso_idx_cache = NULL;
 int ziso_idx_start_block = -1;
+// entries the last index read returned; only these hold offsets
+static u32 ziso_idx_entries = 0;
 
 // header data that we need for the reader
 u32 ziso_align;
@@ -60,8 +62,12 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
     }
 
     // refresh index table if needed
-    if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ZISO_IDX_MAX_ENTRIES - 1) {
-        if (read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0) <= 0) {
+    if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ziso_idx_entries - 1) {
+        int r = read_raw_data((u8 *)ziso_idx_cache, ZISO_IDX_MAX_ENTRIES * sizeof(u32), lsn * 4 + sizeof(ZISO_header), 0);
+        // A file-backed read can come back short, and the rest of the cache still holds the previous
+        // window's offsets. Keep only the entries read, and fail unless they cover this request.
+        ziso_idx_entries = (r > 0) ? (u32)r / sizeof(u32) : 0;
+        if (ziso_idx_entries < count + 1) {
             ziso_idx_start_block = -1; // a failed read leaves the cache invalid, never half-trusted
             return -1;
         }

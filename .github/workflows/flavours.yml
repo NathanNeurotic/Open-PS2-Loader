@@ -73,7 +73,7 @@ jobs:
         run: python3 .github/scripts/test_vmc_write_result.py
       - name: Check IGR and power-off let an in-flight VMC save finish, bounded
         run: python3 .github/scripts/test_igr_vmc_drain.py
-      - name: Check a failed ZSO device read is a read error, including through the in-game sector cache
+      - name: Check a failed ZSO device read is a read error, through the sector cache too, and an SMB image's last sector reads
         run: python3 .github/scripts/test_zso_read_errors.py
       - name: Check docs/VCD.md documents the shipped i.LINK usbhdfsd.irx size and hash
         run: python3 .github/scripts/test_vcd_doc_ilink_hash.py

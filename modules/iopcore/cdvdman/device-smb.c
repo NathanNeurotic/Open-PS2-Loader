@@ -138,10 +138,17 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
             } else
                 esc_flag = 1;
 
-            if (smb_ReadCD(offslsn, sectors_to_read, &p[r], i) <= 0) {
+            // A ZSO file seldom ends on a sector boundary, so the read of its last sector stops at the
+            // end of the file. Pad that sector with zeros, as a block device returns a whole sector.
+            // Any larger shortfall is a failed read.
+            int want = (int)(sectors_to_read * 2048);
+            int got = smb_ReadCD(offslsn, sectors_to_read, &p[r], i);
+            if (got < 0 || got <= want - 2048) {
                 rv = SCECdErREAD;
                 break;
             }
+            if (got < want)
+                memset(&p[r + got], 0, want - got);
 
             r += sectors_to_read * 2048;
             offslsn += sectors_to_read;

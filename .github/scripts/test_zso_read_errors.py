@@ -6,13 +6,23 @@ HDD and SMB, so most in-game ZSO data reads went through it and a read error rea
 garbage sectors. ziso_read_sector() also returned 0 for a failed read, which
 DeviceReadSectorsCompressed reported as end of media (SCECdErEOM) instead of a read error.
 
+A ZSO file seldom ends on a sector boundary. Over SMB the read of its last sector stops at the end
+of the file, and smb_ReadFile reported that as a failed read, so once failed window fills were no
+longer ignored the end of a ZSO image could not be read over SMB. smb_ReadFile now returns the
+short count and the SMB sector reader pads that last sector with zeros, as a block device does.
+
 Compiles the real ziso_init/ziso_read_sector, the real LZ4 decoder, and either the in-game reader
 (DeviceReadSectorsCached, read_raw_data, DeviceReadSectorsCompressed from cdvdman.c) or the menu
 reader (ReadHDDSectors, longLseek, read_raw_data from src/zso.c) against an in-memory ZSO image
-with injected device failures. Checks: persistent and one-shot failures are errors; a later read
-after a failure returns the right data (no poisoned index or sector cache is kept); a cache window
-that runs past the end of the image still serves the sectors inside it; a tiny image whose index
-read ends at EOF still decodes.
+with injected device failures. The in-game reader runs over two devices: a block device that reads
+whole sectors (like BDM), and SMB, built from the real smb_ReadFile/smb_ReadCD (smb.c) and
+DeviceReadSectors (device-smb.c) over a server that sends what the file holds and zero bytes at its
+end. Checks: persistent and one-shot failures are errors, through the sector cache too; a later
+read after a failure returns the right data (no poisoned index or sector cache is kept, including
+an older valid window); a cache window that runs past the end of the image still serves the
+sectors inside it; the last, partial sector of an SMB file reads; a split SMB image reads up to
+and across a part boundary; an index read too short for the request is a failed read; a tiny
+image whose index read ends at EOF still decodes.
 """
 from pathlib import Path
 import re
@@ -35,6 +45,8 @@ def function(text, pattern, what):
 
 
 cdvdman = read('modules/iopcore/cdvdman/cdvdman.c')
+smb = read('modules/iopcore/cdvdman/smb.c')
+device_smb = read('modules/iopcore/cdvdman/device-smb.c')
 menu = read('src/zso.c')
 cache_statics = '\n'.join(re.findall(r'^static u(?:8|64) (?:MAX_SECTOR_CACHE|\*sector_cache|cur_sector) = [^;]+;',
                                      cdvdman, re.M))
@@ -43,6 +55,9 @@ if cache_statics.count(';') != 3:
 INGAME = '\n\n'.join(function(cdvdman, pattern, 'cdvdman.c ' + pattern) for pattern in (
     r'^int DeviceReadSectorsCached\([^;{]*\)\s*\{', r'^int read_raw_data\([^;{]*\)\s*\{',
     r'^int DeviceReadSectorsCompressed\([^;{]*\)\s*\{'))
+SMB = '\n\n'.join([function(smb, pattern, 'smb.c ' + pattern) for pattern in (
+    r'^int smb_ReadFile\([^;{]*\)\s*\{', r'^int smb_ReadCD\([^;{]*\)\s*\{')] +
+    [function(device_smb, r'^int DeviceReadSectors\([^;{]*\)\s*\{', 'device-smb.c DeviceReadSectors')])
 MENU = '\n\n'.join(function(menu, pattern, 'src/zso.c ' + pattern) for pattern in (
     r'^static \w+ ReadHDDSectors\([^;{]*\)\s*\{', r'^static void longLseek\([^;{]*\)\s*\{',
     r'^int read_raw_data\([^;{]*\)\s*\{'))
@@ -107,22 +122,15 @@ static int matches(const u8 *buf, u32 first, u32 count, int zeros)
 }
 '''
 
-INGAME_MAIN = r'''
-#define SCECdErNO 0x00
-#define SCECdErREAD 0x30
-#define SCECdErTRMOPN 0x31
-#define SCECdErEOM 0x32
-@CACHE_STATICS@
-
-/* The device: whole 2048-byte sectors of the image file. Like bd_defrag, a read that runs past the
-   file's last sector fills what it can and then fails. inject > 0 fails (and poisons) that many calls. */
-static int inject, calls;
+BLOCK_DEVICE = r'''
+/* A block device: whole 2048-byte sectors of the image file. Like bd_defrag, a read that runs past
+   the file's last sector fills what it can and then fails. inject > 0 fails (and poisons) that many calls. */
+static int inject;
 int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
 {
     u32 physical = (imageSize + 2047) / 2048;
     u8 *out = buffer;
 
-    calls++;
     if (inject > 0) {
         inject--;
         memset(buffer, 0xEE, sectors * 2048);
@@ -135,6 +143,62 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     }
     return SCECdErNO;
 }
+'''
+
+SMB_DEVICE = r'''
+#define SMB_DEVICE 1
+#define CLIENT_MAX_RECV_SIZE 8192
+#define WAITIOSEMA(x) ((void)(x))
+#define SIGNALIOSEMA(x) ((void)(x))
+static int smb_io_sema;
+static struct { struct { int NumParts; } common; u16 FIDs[4]; } cdvdman_settings = {{1}, {0}};
+
+/* The server answers SMB1 READ_ANDX from the file: what it holds from the offset, up to the request,
+   and zero bytes at or past its end (MS-CIFS 3.3.5.36). File 0 is the ZSO image; files 1 and 2 are
+   the 1 GiB parts of a split image, generated rather than stored. inject > 0 fails (and poisons)
+   that many calls. */
+#define PART_BYTES (0x80000ull * 2048)
+static int inject;
+static u8 partByte(u16 FID, u64 off) { return (u8)(FID * 13 + (off >> 11) * 7 + off); }
+static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, int nbytes)
+{
+    u64 off = ((u64)offsethigh << 32) | offsetlow;
+    u64 size = FID == 0 ? imageSize : PART_BYTES;
+    u8 *out = readbuf;
+
+    if (inject > 0) {
+        inject--;
+        memset(readbuf, 0xEE, nbytes);
+        return -5;
+    }
+    if (off >= size)
+        return 0;
+    if ((u64)nbytes > size - off)
+        nbytes = (int)(size - off);
+    for (int i = 0; i < nbytes; i++)
+        out[i] = FID == 0 ? image[off + i] : partByte(FID, off + i);
+    return nbytes;
+}
+
+@SMB@
+
+static int partMatches(const u8 *buf, u16 FID, u32 lsn, u32 sectors)
+{
+    for (u64 i = 0; i < sectors * 2048ull; i++)
+        if (buf[i] != partByte(FID, lsn * 2048ull + i))
+            return 0;
+    return 1;
+}
+'''
+
+INGAME_MAIN = r'''
+#define SCECdErNO 0x00
+#define SCECdErREAD 0x30
+#define SCECdErTRMOPN 0x31
+#define SCECdErEOM 0x32
+@CACHE_STATICS@
+
+@DEVICE@
 
 @FUNCTIONS@
 
@@ -153,6 +217,7 @@ int main(void)
 {
     const u32 blocks = 40;
     buildImage(blocks, 0);
+    assert(imageSize % 2048); /* the image ends inside its last sector, as most ZSO files do */
 
     for (int cached = 0; cached < 2; cached++) {
         cacheOn(cached ? 8 : 0);
@@ -189,10 +254,15 @@ int main(void)
         CHECK(DeviceReadSectorsCompressed(9, buf, 1) == SCECdErNO && matches(buf, 9, 1, 0),
               "the retry after a failed index read returns the right sector");
 
-        /* One-shot failure of the data read while the index is cached. */
+        /* Persistent failure of the data read while the index is cached: through the cache when it is on. */
         CHECK(DeviceReadSectorsCompressed(10, buf, 1) == SCECdErNO, "index cached");
         cur_sector = 0xffffffffffffffff;
-        calls = 0;
+        inject = 1000;
+        CHECK(DeviceReadSectorsCompressed(11, buf, 1) == SCECdErREAD, "a failing device must report SCECdErREAD for a data read");
+        inject = 0;
+
+        /* One-shot failure of the data read while the index is cached. */
+        cur_sector = 0xffffffffffffffff;
         inject = 1;
         int r = DeviceReadSectorsCompressed(11, buf, 1);
         if (cached) {
@@ -206,7 +276,41 @@ int main(void)
             CHECK(DeviceReadSectorsCompressed(11, buf, 1) == SCECdErNO && matches(buf, 11, 1, 0),
                   "uncached: the retry returns the right sector");
         }
+
+        /* A valid window, then a tail read whose window fill fails past the end of the image and
+           overwrites part of the cache: a later read inside the old window must not be served from it. */
+        cur_sector = 0xffffffffffffffff;
+        CHECK(DeviceReadSectorsCompressed(20, buf, 1) == SCECdErNO && matches(buf, 20, 1, 0), "a window at sector 20");
+        CHECK(DeviceReadSectorsCompressed(blocks - 2, buf, 1) == SCECdErNO && matches(buf, blocks - 2, 1, 0),
+              "a tail read after it");
+        memset(buf, 0, sizeof(buf));
+        CHECK(DeviceReadSectorsCompressed(21, buf, 1) == SCECdErNO && matches(buf, 21, 1, 0),
+              "a window overwritten by a failed fill is never served again");
     }
+
+#ifdef SMB_DEVICE
+    /* The ZSO file ends inside its last sector: that sector reads, padded with zeros (image[] is zero
+       past imageSize). A read that starts at the end of the file, or runs a whole sector past it, fails. */
+    u32 last = imageSize / 2048;
+    memset(buf, 0xAA, sizeof(buf));
+    CHECK(DeviceReadSectors(last, buf, 1) == SCECdErNO && !memcmp(buf, image + last * 2048, 2048),
+          "SMB: the last, partial sector of the file reads, padded with zeros");
+    CHECK(DeviceReadSectors(last + 1, buf, 1) == SCECdErREAD, "SMB: a sector past the end of the file fails");
+    CHECK(DeviceReadSectors(last - 1, buf, 3) == SCECdErREAD, "SMB: a read a whole sector past the end of the file fails");
+    inject = 1;
+    CHECK(DeviceReadSectors(0, buf, 1) == SCECdErREAD, "SMB: a failed READ_ANDX fails the read");
+    inject = 0;
+
+    /* A split (ul.*) image in two 1 GiB parts: a read that ends exactly at the part boundary, and one that crosses it. */
+    cdvdman_settings.common.NumParts = 2;
+    cdvdman_settings.FIDs[0] = 1;
+    cdvdman_settings.FIDs[1] = 2;
+    CHECK(DeviceReadSectors(0x7FFF8, buf, 8) == SCECdErNO && partMatches(buf, 1, 0x7FFF8, 8),
+          "SMB split image: a read that ends exactly at a part boundary");
+    CHECK(DeviceReadSectors(0x7FFF8, buf, 16) == SCECdErNO && partMatches(buf, 1, 0x7FFF8, 8) && partMatches(buf + 8 * 2048, 2, 0, 8),
+          "SMB split image: a read across a part boundary");
+#endif
+
     if (failures)
         return 1;
     puts("in-game ZSO reader: device errors are reported, caches recover, tail reads still work");
@@ -220,9 +324,9 @@ u32 probed_lba = 0;
 #define HDD_BASE 1000
 
 /* HDD: 512-byte sectors of the image starting at HDD_BASE. inject > 0 fails that many calls;
-   failAt > 0 fails exactly the failAt-th call. */
+   failAt > 0 fails exactly the failAt-th call. fileShort > 0 cuts the next read() to that many bytes. */
 static int inject, failAt, hddCalls, fileFail;
-static u32 filePos;
+static u32 filePos, fileShort;
 static int hddReadSectors(u32 lba, u32 nsectors, void *buf)
 {
     assert(nsectors == 1 && lba >= HDD_BASE);
@@ -252,6 +356,9 @@ static int read(int fd, void *out, unsigned int bytes)
         return -1;
     u32 left = filePos < imageSize ? imageSize - filePos : 0;
     u32 n = bytes < left ? bytes : left;
+    if (fileShort && n > fileShort)
+        n = fileShort;
+    fileShort = 0;
     memcpy(out, image + filePos, n);
     filePos += n;
     return (int)n;
@@ -292,6 +399,20 @@ int main(void)
     fileFail = 0;
     CHECK(ziso_read_sector(buf, 16, 1) == 1 && matches(buf, 16, 1, 0), "file: the retry returns the right sector");
 
+    /* A short index read(): only the entries it returned are used, never what an earlier window left
+       in the rest of the cache. */
+    ziso_idx_start_block = -1;
+    fileShort = 4; /* one entry; a sector needs two */
+    CHECK(ziso_read_sector(buf, 16, 1) == -1, "file: an index read too short for the request is a failed read");
+    CHECK(ziso_read_sector(buf, 16, 1) == 1 && matches(buf, 16, 1, 0), "file: the retry reads a whole index");
+    ziso_idx_start_block = -1;
+    CHECK(ziso_read_sector(buf, 15, 1) == 1 && matches(buf, 15, 1, 0), "file: an index window at sector 15");
+    ziso_idx_start_block = -1;
+    fileShort = 8; /* exactly the two entries sector 16 needs; the rest still holds the window at 15 */
+    CHECK(ziso_read_sector(buf, 16, 1) == 1 && matches(buf, 16, 1, 0), "file: a short index read that covers the request decodes");
+    memset(buf, 0xAA, sizeof(buf));
+    CHECK(ziso_read_sector(buf, 17, 1) == 1 && matches(buf, 17, 1, 0), "file: the next sector re-reads the index past the short read");
+
     /* A tiny compressed image: the index read ends early at EOF but holds every entry needed. */
     buildImage(3, 1);
     memset(buf, 0xAA, sizeof(buf));
@@ -301,7 +422,7 @@ int main(void)
 
     if (failures)
         return 1;
-    puts("menu ZSO reader: HDD and file read errors are reported, retries recover, tiny images decode");
+    puts("menu ZSO reader: HDD and file read errors are reported, retries recover, short index reads are not trusted");
     return 0;
 }
 '''
@@ -313,9 +434,12 @@ with tempfile.TemporaryDirectory() as temp:
     lz4 = temp / 'lz4.o'
     subprocess.run(['gcc', '-std=gnu99', '-O1', '-w', '-I', str(temp), '-c', str(ROOT / 'modules/isofs/lz4.c'),
                     '-o', str(lz4)], check=True)
-    for name, program in (('ingame', INGAME_MAIN.replace('@CACHE_STATICS@', cache_statics).replace('@FUNCTIONS@', INGAME)),
+    ingame = INGAME_MAIN.replace('@CACHE_STATICS@', cache_statics).replace('@FUNCTIONS@', INGAME)
+    for name, program in (('ingame, block device', ingame.replace('@DEVICE@', BLOCK_DEVICE)),
+                          ('ingame, SMB', ingame.replace('@DEVICE@', SMB_DEVICE.replace('@SMB@', SMB))),
                           ('menu', MENU_MAIN.replace('@FUNCTIONS@', MENU))):
-        c, exe = temp / (name + '.c'), temp / (name + '.exe')
+        stem = re.sub(r'\W+', '_', name)
+        c, exe = temp / (stem + '.c'), temp / (stem + '.exe')
         c.write_text(COMMON + program)
         subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-sign-compare',
                         '-Wno-pointer-to-int-cast', '-Wno-int-to-pointer-cast', '-Wno-unused-function', '-Wno-unused-parameter',
