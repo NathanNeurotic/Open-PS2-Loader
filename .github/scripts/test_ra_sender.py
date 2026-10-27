@@ -48,7 +48,7 @@ static int ra_err, ra_sent_any, ra_rx_in_game = 1;
 static unsigned rx_backlog;
 static u32 ra_disc_us;
 static unsigned packets, failed_packet, advance_packet, busy, drains, polls, heartbeats;
-static u32 ra_hb_rx, ra_hb_rau, ra_ee_event = 1;
+static u32 ra_hb_rx, ra_hb_rau, ra_ee_event = 1, ra_dst_ip;
 static struct ra_event ra_event;
 typedef struct { void *src, *dest; int size, attr; } SifDmaTransfer_t;
 static unsigned events, control_acks;
@@ -217,7 +217,7 @@ int main(void) {
 }
 '''
 program = (prefix + constants + '\n' + fields + '\n' +
-           '\n'.join(function(n) for n in ('ra_fmt', 'ra_fmt_err', 'ra_copy',
+           '\n'.join(function(n) for n in ('ra_from_pc', 'ra_fmt', 'ra_fmt_err', 'ra_copy',
                                          'ra_send_one', 'ra_snap_pending', 'ra_thread',
                                          'ra_dec_at', 'ra_fmt_hex8', 'ra_handle_pc')) + stubs)
 with tempfile.TemporaryDirectory(prefix='ra-sender-') as work:
