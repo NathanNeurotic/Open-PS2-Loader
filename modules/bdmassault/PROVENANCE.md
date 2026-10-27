@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 27145 | 1a9c1baaf1dd020e35b75082b630f325b90e884819c743ddd5e1f27f106efcb6 |
+| usbhdfsd.irx.ilink | 27129 | e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917 |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
@@ -73,6 +73,12 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   `1aa2539ae4b00cab965ae5ddfa0f6834de28973d`). It has the same byte length as the preceding
   generation-recovery build (SHA-256 `5b7de8d1ff749e8ca2ad8ef0c705ce76f5799d1c2dcedf5393dbf4cd7a58e6c8`);
   use the hash, not size alone, to distinguish those two builds. Console acceptance is pending.
+  The October 27 status-decode fix reads the SBP-2 status detail as the host-order quadlet
+  iLinkman stores, so a CHECK CONDITION whose ASCQ is 0 no longer passes as GOOD. It was built
+  in the pinned image below and is 27129 bytes, sha256
+  `e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917`; the 27145-byte binary it
+  replaces was sha256 `1a9c1baaf1dd020e35b75082b630f325b90e884819c743ddd5e1f27f106efcb6`.
+  Console acceptance is pending.
   **Rebuilt from source:** the bytes above are the output of `make` in that directory inside
   `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11` (the
   iLink driver pin from 2026-08-13, not the release `PS2DEVPINNED` digest), which also reproduces

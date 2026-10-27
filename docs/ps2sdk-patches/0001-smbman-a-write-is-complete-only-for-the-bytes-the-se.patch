@@ -1,0 +1,72 @@
+From f7446937c314e366006489c1aa55a917b64d2823 Mon Sep 17 00:00:00 2001
+From: NathanNeurotic <109461996+NathanNeurotic@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 06:52:01 +0000
+Subject: [PATCH] smbman: a write is complete only for the bytes the server
+ says it wrote
+
+smb_WriteAndX() returned the requested byte count for every reply with a
+success status, without reading the response's Count field. MS-CIFS
+2.2.4.43.2 lets a server answer a write to a full disk with
+STATUS_SUCCESS and a Count of zero (the EFBIG and NOSPC rows of its
+error table), and a server may store fewer bytes than it was sent and
+say so in Count. Against such a server a write cut short was reported to
+the caller as complete.
+
+Return the server's Count instead. smb_WriteFile() already advances by
+the returned value, so a short Count now sends the rest from the right
+buffer position and file offset. A zero Count or a failed request ends
+the write. smb_WriteFile() then returns the bytes that earlier requests
+of the same call stored, so the caller's file position matches what the
+server holds; when there were none it returns 0 or the error, as
+before. A reply shorter than the six-word WRITE_ANDX response, a
+WordCount under 6, or a Count larger than the request is a failed write
+(-EIO). CountHigh is not read: smb_WriteFile() never asks for more than
+CLIENT_MAX_XFER_SIZE (65535) bytes in one request.
+
+Servers that report a full disk with an error status, as Samba does,
+still fail the write with -EIO; a call whose earlier requests stored
+data now reports those bytes first, and the next call gets the error.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01RwNwRWSWvoz4YfK5AEj37D
+---
+ iop/network/smbman/src/smb.c | 16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/iop/network/smbman/src/smb.c b/iop/network/smbman/src/smb.c
+index 4d201bd98..efb3ae306 100644
+--- a/iop/network/smbman/src/smb.c
++++ b/iop/network/smbman/src/smb.c
+@@ -1119,7 +1119,17 @@ int smb_WriteAndX(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
+     if ((WRsp->smbH.Eclass | (WRsp->smbH.Ecode << 16)) != STATUS_SUCCESS)
+         return -EIO;
+ 
+-    return nbytes;
++    // A success status does not mean every byte was written. MS-CIFS 2.2.4.43.2 lets a server
++    // report a full disk with an error status (caught above) or with success and a Count of zero,
++    // and a server may store less than it was sent. So return the server's Count: smb_WriteFile()
++    // sends the rest from there, and on a zero or a failure returns what earlier requests stored.
++    // It asks for at most CLIENT_MAX_XFER_SIZE (65535) bytes, so the 16-bit Count holds the whole
++    // answer and CountHigh is not read. A reply shorter than the six-word response (45 bytes), a
++    // WordCount under 6, or a Count over what was sent is a failed write.
++    if (r < (int)sizeof(WriteAndXResponse_t) || WRsp->smbWordcount < 6 || WRsp->Count > nbytes)
++        return -EIO;
++
++    return WRsp->Count;
+ }
+ 
+ int smb_WriteFile(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int nbytes)
+@@ -1138,8 +1148,8 @@ int smb_WriteFile(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
+         toWrite = remaining > CLIENT_MAX_XFER_SIZE ? CLIENT_MAX_XFER_SIZE : remaining;
+ 
+         result = smb_WriteAndX(UID, TID, FID, pos, ptr, toWrite);
+-        if (result <= 0)
+-            return result;
++        if (result <= 0) // the server stored what earlier requests sent, and no more
++            return remaining < nbytes ? nbytes - remaining : result;
+ 
+         pos += result;
+         ptr += result;
+-- 
+2.43.0
+

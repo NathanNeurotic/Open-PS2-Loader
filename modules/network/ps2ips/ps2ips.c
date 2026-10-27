@@ -54,13 +54,26 @@ IRX_ID(MODNAME, 1, 1);
 
    The EE-side buffer size lives in libps2ips and cannot be changed from
    here, so the rule is: never transfer more than RESTS_DMA_MAX bytes into
-   intr_data. The tail buffer then has RESTS_EBUF_MAX usable bytes; a
-   longer unaligned tail is truncated and the shorter length reported -- a
-   visible, harmless loss instead of memory corruption. The RA protocol
-   never reaches that case: the PC pads every reply to a multiple of 64
-   and the EE receives into 64-aligned buffers, so erest is 0. */
+   intr_data. The tail buffer then has RESTS_EBUF_MAX usable bytes, so a
+   receive must end where its unaligned tail fits. do_recv and
+   do_recvfrom peek first and then take only that much (rests_fit): a TCP
+   stream keeps the rest for the next call, and a UDP datagram is cut
+   short as if the caller's buffer were smaller. Until 2026-10-27 they
+   took everything and lowered the returned length afterwards, so a TCP
+   stream silently lost up to 15 bytes. */
 #define RESTS_DMA_MAX	128
 #define RESTS_EBUF_MAX	(RESTS_DMA_MAX - 16 - 64) /* header + sbuffer */
+
+/* RA fix: the most of len bytes received at ee_addr whose unaligned tail
+   fits in RESTS_EBUF_MAX. A receive of 64 bytes or fewer has no tail. */
+static int rests_fit(void *ee_addr, int len)
+{
+	int erest = ((int)ee_addr + len) & 0x3F;
+
+	if(len > 64 && erest > RESTS_EBUF_MAX)
+		len -= erest - RESTS_EBUF_MAX;
+	return len;
+}
 
 static SifRpcDataQueue_t ps2ips_queue;
 static SifRpcServerData_t ps2ips_server;
@@ -167,7 +180,17 @@ static void do_recv( void * rpcBuffer, int size )
 	recvlen = MIN(BUFF_SIZE, recv_pkt->length);
 
 	// Do actual TCP recv
-	rlen = recv(recv_pkt->socket, lwip_buffer + s_offset, recvlen, recv_pkt->flags);
+	/* RA fix: peek, then take only what the rests packet can return (see
+	   RESTS_DMA_MAX). The second call finds the peeked data still queued,
+	   so it returns exactly what it asks for. */
+	rlen = recv(recv_pkt->socket, lwip_buffer + s_offset, recvlen, recv_pkt->flags | MSG_PEEK);
+	if(rlen > 0)
+		rlen = recv(recv_pkt->socket, lwip_buffer + s_offset, rests_fit(recv_pkt->ee_addr, rlen), recv_pkt->flags);
+	else if(rlen == 0 && !(recv_pkt->flags & MSG_PEEK))
+		/* The peek left an empty UDP datagram (or one a 0-byte request does
+		   not take) queued: consume it, or the socket returns 0 forever.
+		   On TCP this finds the same end of stream; the result stays 0. */
+		recv(recv_pkt->socket, lwip_buffer + s_offset, 0, recv_pkt->flags | MSG_DONTWAIT);
 
 	if(rlen <= 0) goto recv_end;
 	if(rlen <= 64) srest = rlen;
@@ -212,7 +235,7 @@ static void do_recv( void * rpcBuffer, int size )
 	}
 
 	// Fill rest of rests structure, dma back
-	if(erest > RESTS_EBUF_MAX) /* RA fix: see RESTS_DMA_MAX */
+	if(erest > RESTS_EBUF_MAX) /* RA fix: unreachable after rests_fit; keeps intr_data safe */
 	{
 		rlen -= erest - RESTS_EBUF_MAX;
 		erest = RESTS_EBUF_MAX;
@@ -251,7 +274,8 @@ static void do_recvfrom( void * rpcBuffer, int size )
 	   copies the sockaddr into ret_pkt->sockaddr (bytes 4..19) and only
 	   then reads recv_pkt->ee_addr (12..15) and intr_data (16..19), which
 	   that copy has already overwritten with the zero tail of a
-	   sockaddr_in. Both DMA transfers then target EE address 0, so UDP
+	   sockaddr_in. The rests packet then goes to EE address 0, and the
+	   data of a datagram over 64 bytes to an address below 64, so UDP
 	   receive on the EE never worked through this module. The TCP path
 	   in do_recv has no sockaddr copy and is unaffected. The fix reads
 	   the request fields into locals before anything is written to the
@@ -285,7 +309,12 @@ static void do_recvfrom( void * rpcBuffer, int size )
 	recvlen = MIN(BUFF_SIZE, recv_pkt->length);
 
 	// Do actual UDP recvfrom
-	rlen = recvfrom(recv_pkt->socket, lwip_buffer + s_offset, recvlen, recv_pkt->flags, &sockaddr, &fromlen);
+	/* RA fix: as in do_recv. */
+	rlen = recvfrom(recv_pkt->socket, lwip_buffer + s_offset, recvlen, recv_pkt->flags | MSG_PEEK, &sockaddr, &fromlen);
+	if(rlen > 0)
+		rlen = recvfrom(recv_pkt->socket, lwip_buffer + s_offset, rests_fit(ee_addr, rlen), recv_pkt->flags, &sockaddr, &fromlen);
+	else if(rlen == 0 && !(recv_pkt->flags & MSG_PEEK))
+		recvfrom(recv_pkt->socket, lwip_buffer + s_offset, 0, recv_pkt->flags | MSG_DONTWAIT, &sockaddr, &fromlen); // as in do_recv
 
 	if(rlen <= 0) goto recv_end;
 	if(rlen <= 64) srest = rlen;
@@ -333,7 +362,7 @@ static void do_recvfrom( void * rpcBuffer, int size )
 	}
 
 	// Fill rest of rests structure, dma back
-	if(erest > RESTS_EBUF_MAX) /* RA fix: see RESTS_DMA_MAX */
+	if(erest > RESTS_EBUF_MAX) /* RA fix: unreachable after rests_fit; keeps intr_data safe */
 	{
 		rlen -= erest - RESTS_EBUF_MAX;
 		erest = RESTS_EBUF_MAX;

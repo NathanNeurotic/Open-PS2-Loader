@@ -74,7 +74,9 @@ and the manager recovery corrections. No physical-console acceptance yet.
    required. Do not infer target quiescence from a missing pointer ACK or reset.
    Warm-up passes the remaining elapsed budget to commands; setup propagates
    warm-up failure and frees failed contexts. Reset a completed DEAD command
-   agent before retrying, initialize reset data, and decode sense byte 1.
+   agent before retrying, and initialize reset data. Decode the first status
+   detail quadlet as the host-order number iLinkman stores (STATUS_SFMT,
+   STATUS_SAM, STATUS_SENSE_KEY); all ones marks a status not yet written.
    See docs/ILINK_CODE_AUDIT_2026-10-22.md for tests and hardware limits.
 
 RE-VENDOR: fetch the files above from the new pin, clang-format 12, then re-apply LOCAL CHANGES and

@@ -265,16 +265,19 @@ else
 endif
 
 # ---- Which prebuilt IOP modules the loader embeds -------------------------------------------
-# Two of ps2sdk's shipped .irx files are replaced by fork-built ones (see the rules further down
-# for the full account of each). Both defaults below are the stock ps2sdk prebuilt, and the RA
-# branch swaps in ours.
+# Two of ps2sdk's shipped .irx files are replaced by fork-built ones in every flavour (see the
+# rules further down for the full account of each). Both started in the RA flavour, hence the
+# "-ra" directory names; neither is RetroAchievements code.
 #
 # THE USBD SWAP IS FORK-WIDE, ON PURPOSE. It fixes a bug present in every build this fork ships
 # -- and in official OPL too -- so it is deliberately NOT gated: a CD-era game run off a USB
 # stick loses its pad AND its sound at the game's first IOP reboot with ps2sdk's post-2024-09-04
 # driver, whatever flavour you built. See the rule further down for the whole account.
+#
+# SO IS THE SMBMAN SWAP: ps2sdk's smbman reports a write as complete whenever the server answers
+# with a success status, whatever byte count the server says it stored. See the rule further down.
 USBD_MINI_IRX = modules/usb/usbd-ra/usbd_mini.irx
-SMBMAN_IRX    = $(PS2SDK)/iop/irx/smbman.irx
+SMBMAN_IRX    = modules/network/smbman-ra/smbman.irx
 
 # RetroAchievements flavour. Everything the feature adds hangs off this one switch, on BOTH sides
 # of the EE/ee_core split -- the define reaches the menu build directly and ee_core through
@@ -283,7 +286,6 @@ SMBMAN_IRX    = $(PS2SDK)/iop/irx/smbman.irx
 ifeq ($(RETROACHIEVEMENTS),1)
   EE_CFLAGS += -DRETROACHIEVEMENTS
   EECORE_EXTRA_FLAGS += RETROACHIEVEMENTS=1
-  SMBMAN_IRX = modules/network/smbman-ra/smbman.irx
   # md5 (vendored, zlib licence): the game hash the PC client keys achievements on.
   # rawatch: the watch list the menu hands to ee_core, loaded from <device>RA/.
   # rahash:  the image hash RetroAchievements keys a game on, taken by walking
@@ -786,8 +788,9 @@ $(EE_ASM_DIR)isofs.c: modules/isofs/isofs.irx | $(EE_ASM_DIR)
 #
 # Hardware-checked by Zack, 2026-09-10: no noticeable USB regressions on the promoted build.
 #
-# The source here is ps2sdk iop/usb/usbd as of 314d87e7 (2024-04-01), the last state before the
-# rewrite -- verified byte-identical to that tree, every file, with ONLY the Makefile ours
+# The source here is ps2sdk iop/usb/usbd as of 314d87e7 (2024-04-01): FreeUsbd, from before the
+# rewrite (three small header commits sit between it and the rewrite's parent, 2dc6b32f) -- verified
+# byte-identical to that tree, every file, with ONLY the Makefile ours
 # (exports.o first for srxfixup, -DMINI_DRIVER, no gp switching). Do not reformat it: the whole
 # value of this vendoring is that it still diffs cleanly against ps2sdk.
 modules/usb/usbd-ra/usbd_mini.irx: $(wildcard modules/usb/usbd-ra/src/*.c) $(wildcard modules/usb/usbd-ra/src/*.h) $(wildcard modules/usb/usbd-ra/include/*.h) modules/usb/usbd-ra/src/imports.lst modules/usb/usbd-ra/src/exports.tab modules/usb/usbd-ra/Makefile
@@ -1012,22 +1015,27 @@ $(EE_ASM_DIR)smap.c: $(PS2SDK)/iop/irx/smap.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)netman.c: $(PS2SDK)/iop/irx/netman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-# FORK-VENDORED ps2ips (modules/network/ps2ips): the ps2sdk prebuilt has four defects in the
-# EE<->IOP socket bridge, and the first one corrupts EE memory in any build that opens a socket.
+# FORK-VENDORED ps2ips (modules/network/ps2ips): the ps2sdk prebuilt has five defects in the
+# EE<->IOP socket bridge, and the first one corrupts EE memory on every TCP receive that returns data.
+# docs/PS2SDK-NOTES.md#ps2ips has the full account, including what our workaround still costs UDP.
 #
-#   * do_recvfrom DMAs the whole 144-byte rests_pkt into the EE's _intr_data[32], which is 128
-#     bytes. In the LINKED OPL the next object in .bss is __ps2ipc_fdman_ops_socket -- the table of
-#     function pointers behind every EE socket call -- and bytes 128..143 are exactly its getfd /
-#     getfilename / close / read entries. Overwriting them makes close() stop calling the IOP, so
-#     the lwIP socket leaks and the UDP PCB pool runs dry: roughly ONE network operation per boot.
+#   * do_recv DMAs the whole 144-byte rests_pkt into the EE's _intr_data[32], which is 128 bytes
+#     (do_recvfrom would too, once the next defect is fixed). In the LINKED OPL the next object in
+#     .bss is __ps2ipc_fdman_ops_socket -- the table of function pointers behind every EE socket call
+#     -- and bytes 128..143 are exactly its getfd / getfilename / close / read entries. Overwriting
+#     them makes close() stop calling the IOP, so the lwIP socket leaks and the UDP PCB pool runs dry:
+#     roughly ONE network operation per boot.
 #   * the reply sockaddr is written into the shared RPC buffer BEFORE the request's ee_addr and
-#     intr_data are read, so both DMA transfers target EE address 0 -- EE-side UDP receive has
-#     never worked.
+#     intr_data are read, so the rests packet goes to EE address 0 and the data to an address below
+#     64 -- EE-side UDP receive has never worked.
 #   * fromlen is passed uninitialised, so the sender address comes back zeroed.
-#   * lwip_buffer is BUFF_SIZE + 32 where a receive at offset 64 needs BUFF_SIZE + 64.
+#   * lwip_buffer is BUFF_SIZE + 32 where a receive at offset 64 needs BUFF_SIZE + 64 (a send of
+#     more than 992 bytes from an aligned buffer overruns it the same way).
+#   * do_gethostbyname copies the h_addr_list[0] pointer instead of the address it points to.
 #
-# The source is current ps2sdk master with the four spots marked "RA fix" -- verified by diffing
-# against ps2dev/ps2sdk master: 6 hunks, and every removed line is one of the defects above, so
+# The source is current ps2sdk master with the first four spots marked "RA fix" and the DNS fix
+# unmarked -- verified by diffing against ps2dev/ps2sdk master: 8 hunks, and every removed line is
+# one of the defects above or the receive calls the first one's workaround changes, so
 # vendoring drops no upstream behaviour. It keeps the ps2ips.irx name and the same export table, so
 # nbns, httpclient and everything else on the EE socket API bind exactly as before.
 #
@@ -1039,7 +1047,8 @@ modules/network/ps2ips/ps2ips.irx: $(wildcard modules/network/ps2ips/*.c) $(wild
 $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-# FORK-BUILT smbman (modules/network/smbman-ra) -- RA-only, see SMBMAN_IRX above.
+# FORK-BUILT smbman (modules/network/smbman-ra) -- every flavour, see SMBMAN_IRX above. It began
+# as RA-only (the held-image fix) and took over from ps2sdk's copy for the write-count fix.
 #
 # A console that ran a game off a share and was switched off leaves the image OPEN on the server:
 # OPL logs off from nothing, the session dies with the console, and a cheap server never reaps it.
@@ -1051,13 +1060,27 @@ $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 # So: try NT create first, and fall back to the legacy open only when the server says the file is
 # held, and only for a read. A write/create/truncate still returns -EBUSY -- reaching past someone
 # else's handle to write is not ours to ask for -- and rahash turns that -EBUSY into a menu message
-# naming the held image instead of a silent failure.
+# naming the held image instead of a silent failure. Outside RA the same fallback lets the menu
+# read a held file (a cheat file, say) that ps2sdk's smbman fails with -EIO.
 #
-# The source is ps2sdk master's iop/network/smbman with the changes marked "RA fix" -- verified by
-# diffing every file against ps2dev/ps2sdk: only smb.c (35 lines) and smb.h (4) differ, the rest is
-# byte-identical, so vendoring drops no upstream behaviour. Both new status constants decode under
-# this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT STATUS_SHARING_VIOLATION, 0x00200001
-# is the same refusal in the DOS class (ERRDOS=0x01, ERRbadshare=32). Do not reformat it.
+# The "Write-count fix", which ps2sdk lacks: ps2sdk's smb_WriteAndX returns the byte count it ASKED
+# to write whenever the reply status is success. It now returns the server's WRITE_ANDX Count, so a
+# server that stores less than asked -- MS-CIFS 2.2.4.43.2 allows success with Count 0 for a full
+# disk, and ksmbd's SMB1 code (read, not run) returns a short Count -- gets the rest resent, or a
+# failed write, instead of a write reported as complete. Samba, Windows (per MS-CIFS) and the
+# PS2-Servers servers answer a full disk with an error status, which ps2sdk's copy already failed.
+#
+# The "ByteCount fix", which ps2sdk lacks too: a WRITE_ANDX request's 16-bit ByteCount covers one
+# padding byte and the data, so smb_WriteFile now sends at most 65534 bytes per request; ps2sdk's
+# 65535-byte requests went out with a ByteCount of 0.
+#
+# The source is ps2sdk master's iop/network/smbman -- verified on 2026-10-27 by diffing every file
+# against ps2dev/ps2sdk master: smb.c (+57/-8: the three marked fixes), smb.h (+4, RA fix) and auth.c
+# (+6/-1, an unmarked password-buffer bound from 14cd9ff3) differ, the rest is byte-identical, and
+# only the module Makefile is ours, so vendoring drops no upstream behaviour. Both new status
+# constants decode under this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT
+# STATUS_SHARING_VIOLATION, 0x00200001 is the same refusal in the DOS class (ERRDOS=0x01,
+# ERRbadshare=32). Do not reformat it.
 modules/network/smbman-ra/smbman.irx: $(wildcard modules/network/smbman-ra/*.c) $(wildcard modules/network/smbman-ra/*.h) modules/network/smbman-ra/imports.lst modules/network/smbman-ra/Makefile
 	$(MAKE) -C modules/network/smbman-ra rebuild
 

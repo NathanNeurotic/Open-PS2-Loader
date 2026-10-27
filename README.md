@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> **This is the legacy version of RiptOPL.** We have moved over to ps2build's **C++ Edition** at
+> **[NathanNeurotic/RiptOPL](https://github.com/NathanNeurotic/RiptOPL)**,
+> where new development now happens.
+
 
 <p align="center"><img alt="RiptOPL" src="docs/assets/riptopl.png" /></p>
 
@@ -7,7 +12,7 @@
 
 > **Our daughter project: [RIPPS2](https://github.com/akilluminati47/RIPPS2) by Akilluminati47.** A RiptOPL-derived PS2 frontend with a downloadable ELF and a [web demo](https://akilluminati47.github.io/RIPPS2/). Use [its releases](https://github.com/akilluminati47/RIPPS2/releases) for current builds and its own compatibility notes.
 
-> **Planned collaboration: ps2build C++ edition.** A ps2build C++ edition is planned in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**.
+> **ps2build C++ Edition.** The [C++ Edition](https://github.com/NathanNeurotic/RiptOPL), built with ps2build in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**, is now the main line of RiptOPL.
 
 ## Interface languages
 

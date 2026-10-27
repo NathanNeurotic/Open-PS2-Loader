@@ -6,7 +6,8 @@
 # 10.09.2026, with the official OPL release as much as with this fork. The
 # source here is ps2sdk iop/usb/usbd as of 314d87e7 (01.04.2024), untouched;
 # built with today's toolchain it plays. Only this Makefile is ours:
-# exports.o first for srxfixup, and no gp switching, as in today's module.
+# exports.o first for srxfixup, and no gp switching (USE_GP_REGISTER=0).
+# docs/PS2SDK-NOTES.md#usbd-usbd_mini has the ps2sdk side (issue #908).
 # lab/smb-hang in the control repo has the whole account.
 IOP_BIN  = usbd_mini.irx
 IOP_OBJS = exports.o hcd.o hub.o interface.o mem.o usbd.o usbio.o driver.o  imports.o
