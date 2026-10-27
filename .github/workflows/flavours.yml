@@ -8,11 +8,12 @@ name: build-flavours
 # The digest-pinned PS2DEVPINNED/OFFICIALPINNED flavours were dropped from per-PR CI: they doubled
 # the build matrix without catching anything the rolling pair did not. They still exist where
 # reproducibility is the point -- the rolling/RA release workflows publish pinned assets, and the
-# iLink driver job below rebuilds against the PS2DEVPINNED digest because it checks exact bytes.
+# iLink driver job below builds in its own older ps2dev pin (2026-08-13) because it checks exact bytes.
+# That pin is not PS2DEVPINNED: PS2DEVPINNED is the digest the release workflows build with.
 #
 # Rolling means the toolchain moves without us changing anything (issue #382). When a build or a
-# console result regresses, rebuild the SAME commit with the PS2DEVPINNED digest (see README.md)
-# before blaming the source -- a pinned release asset may come from a different commit.
+# console result regresses, rebuild the SAME commit in the PS2DEVPINNED image (README.md has the
+# command) before blaming the source -- a pinned release asset may come from a different commit.
 #
 # ⚠ EVERY BUG REPORT MUST NAME ITS FLAVOUR. Each artifact carries BUILD-MANIFEST.txt recording the
 # image, the resolved digest where known, the compiler version and the source commit -- so a report
@@ -450,9 +451,9 @@ jobs:
           "$RUNNER_TEMP/site-sync/bin/python" .github/scripts/test_site_sync.py
 
   # POPS/usbhdfsd.irx.ilink is a checked-in binary built from modules/bdmassault/ilink_bd_assault.
-  # Rebuild it with that module's own Makefile in the PS2DEVPINNED container and require the bytes
-  # to match every checked-in copy, so the shipped driver is always the output of the committed
-  # source (#1018). This container reproduces both the pre-#1018 binary and the current one exactly.
+  # Rebuild it with that module's own Makefile in the iLink driver pin (ps2dev, 2026-08-13; not the
+  # release PS2DEVPINNED digest) and require the bytes to match every checked-in copy, so the shipped
+  # driver is always the output of the committed source (#1018). This container reproduces both the pre-#1018 binary and the current one exactly.
   # A source change therefore needs the rebuilt binary in the same PR: take it from this job's
   # artifact, or build it locally in the same image.
   popstarter-ilink-driver:
@@ -481,7 +482,7 @@ jobs:
           {
             echo "Source head: ${{ github.event.pull_request.head.sha || github.sha }}"
             echo "Checkout: $GITHUB_SHA"
-            echo "Toolchain: PS2DEVPINNED (2026-08-13)"
+            echo "Toolchain: ps2dev iLink driver pin (2026-08-13), not the release PS2DEVPINNED"
             mipsel-none-elf-gcc --version | head -1
             sha256sum build/ilink-recovery/*.irx build/ilink-recovery/*.ilink
           } > build/ilink-recovery/BUILD-MANIFEST.txt

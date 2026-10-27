@@ -75,8 +75,8 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   use the hash, not size alone, to distinguish those two builds. Console acceptance is pending.
   **Rebuilt from source:** the bytes above are the output of `make` in that directory inside
   `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11` (the
-  PS2DEVPINNED container), which also reproduces the 21609-byte build from its source exactly. CI
-  (`popstarter-ilink-driver` in `.github/workflows/flavours.yml`) rebuilds it on every PR and fails
+  iLink driver pin from 2026-08-13, not the release `PS2DEVPINNED` digest), which also reproduces
+  the 21609-byte build from its source exactly. CI (`popstarter-ilink-driver` in `.github/workflows/flavours.yml`) rebuilds it on every PR and fails
   unless `modules/bdmassault/`, `POPS/` and the `Example/` kit all carry exactly that output.
 
 ## License

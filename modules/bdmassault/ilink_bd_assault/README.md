@@ -77,7 +77,7 @@ are drained. CROM/API fixes and the source/host/target/console evidence boundari
 are listed in `../../../docs/ILINK_CODE_AUDIT_2026-10-22.md`.
 
 ## Building
-The checked-in binaries are built in the PS2DEVPINNED container, which reproduces both the pre-#1018 build (21609 bytes) and the current one byte for byte:
+The checked-in binaries are built in the iLink driver pin (ps2dev, 2026-08-13; not the release `PS2DEVPINNED` digest), which reproduces both the pre-#1018 build (21609 bytes) and the current one byte for byte:
 ```bash
 docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11 sh -c "apk add --no-cache make && make clean && make"
 ```
