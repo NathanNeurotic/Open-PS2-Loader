@@ -1175,16 +1175,21 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
 // main page only needs the metadata-derived badges (#DiscType/#Media/#Format), never #Size.
 // The info screen flips this on via menuRequestInfoSize() so #Size still resolves on demand;
 // game->sizeMB is cached after the first resolve, so later scrolls show the size for free.
+// Owned by the thread that enabled it: menuLoadConfig runs itemGetConfig on the GUI thread while the
+// IO worker may be inside an info-size resolve, and a global flag let the launch path take that
+// worker's stat/mount work too -- including the shared pfs1: scratch mount for HDD PP. rows.
 static int sbConfigStatSize = 0;
+static int sbConfigStatSizeThread = -1;
 
 void sbSetConfigStatSize(int enable)
 {
+    sbConfigStatSizeThread = enable ? GetThreadId() : -1;
     sbConfigStatSize = enable;
 }
 
 int sbConfigStatSizeEnabled(void)
 {
-    return sbConfigStatSize;
+    return sbConfigStatSize && sbConfigStatSizeThread == GetThreadId();
 }
 
 // Info-screen #Size for a PS1 row (sbPopulateConfig never stats one: its prefix is the OPL config
@@ -1197,7 +1202,7 @@ void sbResolvePs1Size(base_game_info_t *game, const char *ps1Root, config_set_t 
     struct stat st;
     int len;
 
-    if (!sbConfigStatSize || game == NULL || ps1Root == NULL || config == NULL || game->sizeMB != 0)
+    if (!sbConfigStatSizeEnabled() || game == NULL || ps1Root == NULL || config == NULL || game->sizeMB != 0)
         return;
 
     if (!strcasecmp(game->extension, ".VCD")) {
@@ -1321,7 +1326,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     else
         subseg[0] = '\0';
 
-    if (sbConfigStatSize && !isPs1 && game->sizeMB == 0) {
+    if (sbConfigStatSizeEnabled() && !isPs1 && game->sizeMB == 0) {
         char gamepath[256];
 
         if (game->format == GAME_FORMAT_ISO) {
