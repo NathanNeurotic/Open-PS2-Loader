@@ -65,8 +65,9 @@ flavour did. Only the menu loads it; in-game SMB access uses OPL's own driver in
   (run against a full disk) answer with an error status instead, which smbman already turns into `-EIO`.
 - **Our change:** return the server's Count. A reply shorter than 45 bytes, a WordCount under 6, or a
   Count larger than the request is a failed write. `smb_WriteFile()` already sends the rest after a short
-  Count. On a zero Count it now returns the bytes that earlier requests of the same call stored, instead
-  of 0, so the caller's file position stays true.
+  Count. When a later request of the same call gets a zero Count or fails, it now returns the bytes the
+  earlier requests stored, instead of 0 or the error, so the caller's file position stays true; the next
+  call gets the zero Count or the error.
 - **Evidence:** host test
   [`test_smbman_ra_write_count.py`](../.github/scripts/test_smbman_ra_write_count.py). It fails on master's
   `smb.c` and passes with the patch. Not tested on hardware or against a live server that sends a short

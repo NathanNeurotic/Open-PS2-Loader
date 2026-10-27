@@ -9,11 +9,11 @@ PS2-Servers servers answer a full disk with an error status instead, which was a
 This compiles the real smb_WriteAndX() and smb_WriteFile() from smb.c, and the real smb_write() from
 smb_fio.c, against scripted server replies, and checks: smb_WriteAndX() builds the WRITE_ANDX request
 it should and returns the server's Count; smb_WriteFile() sends the rest of the data from the right place
-in the buffer and at the right 64-bit offset after a short Count, and on a zero one returns the bytes
-earlier chunks of the same call stored, or 0 when there were none; a reply shorter than
-the six-word response, a WordCount under 6 or a Count over the request fails, while a 45-byte reply with
-six words is enough; and smb_write() hands the EE 0 or -EIO for a failed write with the file position and
-size untouched, and otherwise advances them by the bytes written.
+in the buffer and at the right 64-bit offset after a short Count, and on a zero Count or a failure returns
+the bytes earlier chunks of the same call stored (0 or the error when there were none); a reply shorter
+than the six-word response, a WordCount under 6 or a Count over the request fails, while a 45-byte reply
+with six words is enough; and smb_write() hands the EE 0 or -EIO for a failed write with the file position
+and size untouched, and otherwise advances them by the bytes written.
 This is a host regression check, not a console test.
 """
 from pathlib import Path
@@ -227,6 +227,8 @@ int main(void)
     static const reply_t zero[] = {{REPLY_LEN, STATUS_SUCCESS, 6, 0, 0}};
     static const reply_t half_rest[] = {{REPLY_LEN, STATUS_SUCCESS, 6, 256, 0}, {REPLY_LEN, STATUS_SUCCESS, 6, ASKED, 0}};
     static const reply_t half_zero[] = {{REPLY_LEN, STATUS_SUCCESS, 6, 256, 0}, {REPLY_LEN, STATUS_SUCCESS, 6, 0, 0}};
+    static const reply_t some_zero[] = {{REPLY_LEN, STATUS_SUCCESS, 6, 100, 0}, {REPLY_LEN, STATUS_SUCCESS, 6, 0, 0}};
+    static const reply_t half_full[] = {{REPLY_LEN, STATUS_SUCCESS, 6, 256, 0}, {35, 0xC000007F, 0, 0, 0}};
     static const reply_t over[] = {{REPLY_LEN, STATUS_SUCCESS, 6, 600, 0}};
     static const reply_t high[] = {{REPLY_LEN, STATUS_SUCCESS, 6, ASKED, 1}};
     static const reply_t disk_full[] = {{35, 0xC000007F, 0, 0, 0}};
@@ -251,6 +253,10 @@ int main(void)
     report_at("count-half-past-4g-at");
     reset(2, half_zero);
     report("count-half-then-zero", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
+    reset(2, some_zero); /* not half, so the bytes stored differ from the bytes left */
+    report("count-100-then-zero", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
+    reset(2, half_full);
+    report("count-half-then-disk-full", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
     reset(1, over);
     report("count-over-asked", smb_WriteFile(UID, TID, 0x10, 1000, buf, 512));
     reset(1, high);
@@ -288,6 +294,8 @@ int main(void)
     report_file("write-full-share", smb_write(&file, buf, 512));
     reset(2, half_zero);
     report_file("write-half-then-full-share", smb_write(&file, buf, 512));
+    reset(2, half_full);
+    report_file("write-half-then-disk-full", smb_write(&file, buf, 512));
     reset(2, half_rest);
     report_file("write-half-then-rest", smb_write(&file, buf, 512));
     report_at("write-half-then-rest-at");
@@ -312,6 +320,8 @@ WANT = [
     'count-half-past-4g ret=512 calls=2',
     'count-half-past-4g-at 512@4294967040 from 0, 256@4294967296 from 256',
     'count-half-then-zero ret=256 calls=2',
+    'count-100-then-zero ret=100 calls=2',
+    'count-half-then-disk-full ret=256 calls=2',
     'count-over-asked ret=-5 calls=1',
     'count-high-ignored ret=512 calls=1',
     'count-high-ignored-andx ret=512',
@@ -329,6 +339,7 @@ WANT = [
     'write-saved ret=512 calls=1 position=1512 filesize=1512 locks=1/1',
     'write-full-share ret=0 calls=1 position=1000 filesize=1000 locks=1/1',
     'write-half-then-full-share ret=256 calls=2 position=1256 filesize=1256 locks=1/1',
+    'write-half-then-disk-full ret=256 calls=2 position=1256 filesize=1256 locks=1/1',
     'write-half-then-rest ret=512 calls=2 position=1512 filesize=1512 locks=1/1',
     'write-half-then-rest-at 512@1000 from 0, 256@1256 from 256',
     'write-inside-file ret=512 calls=2 position=512 filesize=1000 locks=1/1',

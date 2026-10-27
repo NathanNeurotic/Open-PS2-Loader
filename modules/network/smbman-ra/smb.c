@@ -1156,10 +1156,11 @@ int smb_WriteAndX(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
     // Write-count fix (not RA-specific; ps2sdk master has the same bug): a success status does not
     // mean every byte was written. MS-CIFS 2.2.4.43.2 lets a server report a full disk with an error
     // status (Samba does; caught above) or with success and a Count of zero, and a server may store
-    // less than it was sent. So return the server's Count: smb_WriteFile() sends the rest from there
-    // and stops on a zero. It asks for at most CLIENT_MAX_XFER_SIZE (65535) bytes, so the 16-bit
-    // Count holds the whole answer and CountHigh is not read. A reply shorter than the six-word
-    // response (45 bytes), a WordCount under 6, or a Count over what was sent is a failed write.
+    // less than it was sent. So return the server's Count: smb_WriteFile() sends the rest from there,
+    // and on a zero or a failure returns what earlier requests stored. It asks for at most
+    // CLIENT_MAX_XFER_SIZE (65535) bytes, so the 16-bit Count holds the whole answer and CountHigh is
+    // not read. A reply shorter than the six-word response (45 bytes), a WordCount under 6, or a Count
+    // over what was sent is a failed write.
     if (r < (int)sizeof(WriteAndXResponse_t) || WRsp->smbWordcount < 6 || WRsp->Count > nbytes)
         return -EIO;
 
@@ -1182,10 +1183,8 @@ int smb_WriteFile(int UID, int TID, int FID, s64 fileoffset, void *writebuf, int
         toWrite = remaining > CLIENT_MAX_XFER_SIZE ? CLIENT_MAX_XFER_SIZE : remaining;
 
         result = smb_WriteAndX(UID, TID, FID, pos, ptr, toWrite);
-        if (result == 0 && remaining < nbytes)
-            return nbytes - remaining; // the server stored what earlier requests sent, and no more
-        if (result <= 0)
-            return result;
+        if (result <= 0) // the server stored what earlier requests sent, and no more
+            return remaining < nbytes ? nbytes - remaining : result;
 
         pos += result;
         ptr += result;

@@ -1071,7 +1071,7 @@ $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 # PS2-Servers servers answer a full disk with an error status, which ps2sdk's copy already failed.
 #
 # The source is ps2sdk master's iop/network/smbman -- verified on 2026-10-27 by diffing every file
-# against ps2dev/ps2sdk master: smb.c (+48/-5: the two marked fixes), smb.h (+4, RA fix) and auth.c
+# against ps2dev/ps2sdk master: smb.c (+52/-7: the two marked fixes), smb.h (+4, RA fix) and auth.c
 # (+6/-1, an unmarked password-buffer bound from 14cd9ff3) differ, the rest is byte-identical, and
 # only the module Makefile is ours, so vendoring drops no upstream behaviour. Both new status
 # constants decode under this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT
