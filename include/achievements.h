@@ -7,7 +7,8 @@ enum { ACH_IDLE,
        ACH_OFFLINE,
        ACH_ERROR,
        ACH_UNSUPPORTED,
-       ACH_NOT_PLAYED }; /* Xerabora: known to RetroAchievements, not yet in the account library */
+       ACH_NOT_PLAYED, /* Xerabora: known to RetroAchievements, not yet in the account library */
+       ACH_NET_BUSY }; /* Xerabora: a UDP transport holds the NIC */
 typedef struct
 {
     int id, total, earned, hardcore, points;

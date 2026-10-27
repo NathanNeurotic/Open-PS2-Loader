@@ -12,7 +12,7 @@
 */
 
 #include "include/ratls.h"
-#include "include/ranet.h" /* raNetNicReserved */
+#include "include/ranet.h" /* raNetNicReserved, raNetTcpRecv */
 
 #include <ps2ips.h>
 #include <netdb.h>
@@ -26,14 +26,13 @@
 #include "mbedtls/platform_time.h"
 #include "mbedtls/ssl.h"
 
-#define RATLS_DEADLINE_MS  8000 /* the same budget as the xeRAbora HTTP fetch (RA_HTTP_MS) */
-#define RATLS_MSG_DONTWAIT 0x08 /* lwIP MSG_DONTWAIT, forwarded per call over SIF RPC */
-#define RATLS_POLL_MS      25
-#define RATLS_MIN_YEAR     2025 /* an earlier RTC is unset: fail closed */
+#define RATLS_DEADLINE_MS 8000 /* the same budget as the xeRAbora HTTP fetch (RA_HTTP_MS) */
+#define RATLS_POLL_MS     25
+#define RATLS_MIN_YEAR    2025 /* an earlier RTC is unset: fail closed */
 
-extern unsigned char ratls_root_gtsr1[], ratls_root_gtsr2[], ratls_root_gtsr3[], ratls_root_gtsr4[];
+extern unsigned char ratls_root_gtsr1[], ratls_root_gtsr3[], ratls_root_gtsr4[];
 extern unsigned char ratls_root_isrgrootx1[], ratls_root_isrgrootx2[];
-extern unsigned int size_ratls_root_gtsr1, size_ratls_root_gtsr2, size_ratls_root_gtsr3, size_ratls_root_gtsr4;
+extern unsigned int size_ratls_root_gtsr1, size_ratls_root_gtsr3, size_ratls_root_gtsr4;
 extern unsigned int size_ratls_root_isrgrootx1, size_ratls_root_isrgrootx2;
 
 static int bcd(unsigned char v)
@@ -130,7 +129,7 @@ static int bioRecv(void *ctx, unsigned char *buf, size_t len)
         int got;
         if (ratlsExpired(bio->start))
             return MBEDTLS_ERR_SSL_TIMEOUT;
-        got = recv(bio->sock, chunk, len < sizeof(chunk) ? len : sizeof(chunk), RATLS_MSG_DONTWAIT);
+        got = raNetTcpRecv(bio->sock, chunk, len < sizeof(chunk) ? (int)len : (int)sizeof(chunk));
         if (got == 0)
             return 0; /* closed */
         if (got > 0) {
@@ -143,7 +142,7 @@ static int bioRecv(void *ctx, unsigned char *buf, size_t len)
 
 int raHttpsGet(const char *host, const char *path, char *buf, int max, int *length)
 {
-    static ratls_anchor_t anchors[6];
+    static ratls_anchor_t anchors[5];
     struct sockaddr_in to;
     struct hostent *he;
     ratls_bio_t bio;
@@ -160,16 +159,14 @@ int raHttpsGet(const char *host, const char *path, char *buf, int max, int *leng
 
     anchors[0].der = ratls_root_gtsr1;
     anchors[0].len = size_ratls_root_gtsr1;
-    anchors[1].der = ratls_root_gtsr2;
-    anchors[1].len = size_ratls_root_gtsr2;
-    anchors[2].der = ratls_root_gtsr3;
-    anchors[2].len = size_ratls_root_gtsr3;
-    anchors[3].der = ratls_root_gtsr4;
-    anchors[3].len = size_ratls_root_gtsr4;
-    anchors[4].der = ratls_root_isrgrootx1;
-    anchors[4].len = size_ratls_root_isrgrootx1;
-    anchors[5].der = ratls_root_isrgrootx2;
-    anchors[5].len = size_ratls_root_isrgrootx2;
+    anchors[1].der = ratls_root_gtsr3;
+    anchors[1].len = size_ratls_root_gtsr3;
+    anchors[2].der = ratls_root_gtsr4;
+    anchors[2].len = size_ratls_root_gtsr4;
+    anchors[3].der = ratls_root_isrgrootx1;
+    anchors[3].len = size_ratls_root_isrgrootx1;
+    anchors[4].der = ratls_root_isrgrootx2;
+    anchors[4].len = size_ratls_root_isrgrootx2;
 
     he = gethostbyname(host);
     if (he == NULL || he->h_addr_list == NULL || he->h_addr_list[0] == NULL)
@@ -196,7 +193,7 @@ int raHttpsGet(const char *host, const char *path, char *buf, int max, int *leng
     io.ctx = &bio;
     io.now_utc = ratlsNow;
 
-    rc = raTlsRequest(&io, host, path, "RiptOPL/" OPL_VERSION, anchors, 6, buf, max, length);
+    rc = raTlsRequest(&io, host, path, "RiptOPL/" OPL_VERSION, anchors, 5, buf, max, length);
     disconnect(bio.sock);
     return rc;
 }

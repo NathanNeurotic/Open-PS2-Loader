@@ -396,7 +396,7 @@ ifeq ($(RETROACHIEVEMENTS),1)
   EE_INCS += -I$(MBEDTLS_DIR)/include -I$(MBEDTLS_DIR)
   EE_CFLAGS += -DMBEDTLS_CONFIG_FILE=\"riptopl_mbedtls_config.h\"
   MBEDTLS_OBJS = $(patsubst $(MBEDTLS_DIR)/library/%.c,$(EE_OBJS_DIR)mbedtls/%.o,$(wildcard $(MBEDTLS_DIR)/library/*.c))
-  RATLS_ROOTS = gtsr1 gtsr2 gtsr3 gtsr4 isrgrootx1 isrgrootx2
+  RATLS_ROOTS = gtsr1 gtsr3 gtsr4 isrgrootx1 isrgrootx2
   EE_OBJS += $(MBEDTLS_OBJS) $(RATLS_ROOTS:%=$(EE_OBJS_DIR)ratls_root_%.o)
 endif
 EE_DEPS = $(patsubst %.o,%.d,$(filter %.o,$(EE_OBJS)))

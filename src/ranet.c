@@ -132,6 +132,25 @@
    as an unknown flag and block. (The in-game SMSTCPIP stack defines 0x40;
    it serves ee_core's raudp, not this menu path.) */
 #define RA_MSG_DONTWAIT 0x08
+#define RA_MSG_PEEK     0x01 /* lwIP's value, forwarded the same way */
+
+/* ps2ips returns a read's unaligned tail through a 48-byte buffer and shortens
+   the length when the tail is longer, after lwIP has already consumed those
+   bytes (#1062). UDP replies are padded to 64 bytes, but a TCP read that ends
+   in a 49-63 byte tail loses data. So peek at what is waiting, then take only
+   whole 64-byte blocks, or all of it when it is 64 bytes or less (that fits the
+   64-byte head buffer). chunk must be 64-byte aligned. Returns what was read,
+   0 when the peer closed, or -1 when nothing is waiting. */
+int raNetTcpRecv(int sock, void *chunk, int want)
+{
+    int avail = recv(sock, chunk, want, RA_MSG_PEEK | RA_MSG_DONTWAIT);
+
+    if (avail <= 0)
+        return avail == 0 ? 0 : -1;
+    if (avail > 64)
+        avail &= ~63;
+    return recv(sock, chunk, avail, RA_MSG_DONTWAIT);
+}
 
 /* Alignment is mandatory: rule 1 in the header. */
 static char g_rx[2048] __attribute__((aligned(64)));
@@ -929,7 +948,7 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
         !configured_ra_target(&to, RA_PORT)) {
         close_pc_link(sock);
         snprintf(line1, sz1, "%s", _l(_STR_RA_TEST_NO_ANSWER));
-        snprintf(line2, sz2, "%s", _l(_STR_RA_TEST_NO_ANSWER2));
+        snprintf(line2, sz2, _l(_STR_RA_TEST_NO_ANSWER2), myaddr);
         return 0;
     }
     if (gRAMode == RA_MODE_CADUCEUS) {
@@ -1031,7 +1050,8 @@ static u32 xerabora_host(int sock, const char *myaddr)
         return ip;
     broadcast_target(&to);
     snprintf(req, sizeof(req), "RAP1%s", myaddr);
-    if (ask(sock, &to, req, g_rx, sizeof(g_rx)) > 0 && strncmp(g_rx, "RAO1", 4) == 0) {
+    /* Only a full "RAO1 OK " is xeRAbora, as in raNetTestLink (#1062). */
+    if (ask(sock, &to, req, g_rx, sizeof(g_rx)) >= 8 && strncmp(g_rx, "RAO1 OK ", 8) == 0) {
         raNetRememberPeer(g_raReplyIP);
         return g_raReplyIP;
     }
@@ -1124,7 +1144,7 @@ int raNetHttpGet(unsigned int host, int port, const char *path, char *buf, int m
     start = clock();
     while (len < max - 1 && (clock_t)(clock() - start) < (clock_t)RA_HTTP_MS * (CLOCKS_PER_SEC / 1000)) {
         int room = max - 1 - len;
-        got = recv(sock, chunk, room < (int)sizeof(chunk) ? room : (int)sizeof(chunk), RA_MSG_DONTWAIT);
+        got = raNetTcpRecv(sock, chunk, room < (int)sizeof(chunk) ? room : (int)sizeof(chunk));
         if (got == 0) {
             closed = 1; /* the PC closed: complete */
             break;
