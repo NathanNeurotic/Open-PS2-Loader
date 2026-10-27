@@ -1,10 +1,19 @@
-# BDM-UDPFS Assault credits and provenance
+# UDPFS Assault credits and provenance
 
-The adjacent `usbd.irx.udpfs` / `usbhdfsd.irx.udpfs` pair and IP config examples are from
-**Okeanos (Okeanos86)**, [BDM-UDPFS Assault Alpha](https://github.com/Okeanos86/BDMAssault/releases/tag/Alpha).
-They are included unchanged. The original project is **israpps’ BDM Assault**; POPSTARTER is
-by **krHACKen**. Further upstream credits and license notices are preserved in this folder.
+The adjacent usbd.irx.udpfs / usbhdfsd.irx.udpfs pair is the unmodified
+[UDPFS Assault 1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0)
+network read/write release by Okeanos86. It replaces both the Alpha and USB-first
+fallback drivers. All mass: requests, including VMC writes, use the server.
 
-See [the POPS UDPFS setup guide](../../docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault).
-The upstream README and config guide are preserved verbatim for reference; their relative
-links refer to the original archive layout. The full AFL license texts are in this folder.
+PROVENANCE.json records the verified archive and module SHA-256 hashes. NETWORK/
+preserves the complete upstream README, configuration guide, licenses and notices.
+The top-level reference documents mirror that same network release. No source
+rebuild of these upstream binaries is claimed.
+
+Optional IPCONFIG.DAT and UDPFSCONFIG.DAT come from the game device's POPS folder
+and populate missing MC SYS-CONF files. Existing MC files are preserved.
+See [RiptOPL setup](../../docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault).
+
+Credits: Okeanos, israpps' BDM Assault, krHACKen's POPSTARTER, Neutrino/UDPFS/UDPRDMA,
+pcm720's udpfsd, Gageformer's Ember, and PS2SDK contributors. Complete notices and
+licensing remain in the supplied upstream documents.

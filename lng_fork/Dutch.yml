@@ -670,8 +670,8 @@ translations:
   FAV_REMOVED: Verwijderd uit Favoriete games
   FAV_REMOVE_FAILED: Kon niet verwijderen uit Favoriete games
   POPS_UDPFS_SETTINGS: POPS UDPFS-netwerkinstellingen
-  POPS_UDPFS_DISCOVERY: Slaat op in elke POPS-map op USB. Server 0.0.0.0 gebruikt detectie.
-  POPS_UDPFS_NOT_READY: POPS UDPFS heeft overeenkomende geldige IPCONFIG.DAT en UDPFSCONFIG.DAT nodig in elke POPS-map op USB. Stel ze in bij POPS-netwerkinstellingen.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = detectie"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS heeft het driverpaar .udpfs nodig, geïnstalleerd op de geheugenkaart. Zet het er handmatig op of zet BDMA Toepassen bij starten aan."
   HINT_POPS_UDPFS_IP: Vast PS2-IP dat de POPS UDPFS-driver gebruikt na zijn IOP-reset.
   POPS_UDPFS_ALL_USB_FOLDERS: Alle POPS-mappen op USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ongeldig)'

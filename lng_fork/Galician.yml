@@ -533,8 +533,8 @@ translations:
   FAV_REMOVED: Quitado de Xogos favoritos
   FAV_REMOVE_FAILED: Non se puido quitar de Xogos favoritos
   POPS_UDPFS_SETTINGS: Configuración de rede UDPFS de POPS
-  POPS_UDPFS_DISCOVERY: Garda en cada cartafol POPS de USB. O servidor 0.0.0.0 usa o descubrimento.
-  POPS_UDPFS_NOT_READY: POPS UDPFS precisa IPCONFIG.DAT e UDPFSCONFIG.DAT válidos e coincidentes en cada cartafol POPS de USB. Configúreos en Configuración de rede de POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = detección"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS precisa o par de controladores .udpfs instalado na tarxeta de memoria. Prepáreo a man ou active Aplicar BDMA de VCD ao iniciar."
   HINT_POPS_UDPFS_IP: IP estática da PS2 que usa o controlador UDPFS de POPS tras o seu reinicio do IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Todos os cartafoles POPS de USB
   POPS_UDPFS_INVALID_SUFFIX: ' (non válido)'

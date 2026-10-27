@@ -683,8 +683,8 @@ translations:
   FAV_REMOVED: ເອົາອອກ ຈາກເກມທີ່ມັກ ແລ້ວ
   FAV_REMOVE_FAILED: ເອົາອອກ ຈາກເກມທີ່ມັກ ບໍ່ໄດ້
   POPS_UDPFS_SETTINGS: ການຕັ້ງຄ່າເຄືອຂ່າຍ POPS UDPFS
-  POPS_UDPFS_DISCOVERY: ບັນທຶກໃສ່ ທຸກໂຟນເດີ POPS ເທິງ USB. ເຊີບເວີ 0.0.0.0 ໃຊ້ການຄົ້ນຫາ.
-  POPS_UDPFS_NOT_READY: POPS UDPFS ຕ້ອງການ IPCONFIG.DAT ແລະ UDPFSCONFIG.DAT ທີ່ຖືກຕ້ອງ ແລະ ກົງກັນ ໃນທຸກໂຟນເດີ POPS ເທິງ USB. ຕັ້ງພວກມັນ ໃນການຕັ້ງຄ່າເຄືອຂ່າຍ POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = ຄົ້ນຫາ"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS ຕ້ອງການຄູ່ໄດຣເວີ .udpfs ຕິດຕັ້ງ ເທິງເມມໂມຣີກາດ. ກຽມມັນເອງ ຫຼື ເປີດ ໃຊ້ VCD BDMA ຕອນເລີ່ມ."
   HINT_POPS_UDPFS_IP: IP ຄົງທີ່ ຂອງ PS2 ທີ່ໄດຣເວີ POPS UDPFS ໃຊ້ ຫຼັງ IOP reset ຂອງມັນ.
   POPS_UDPFS_ALL_USB_FOLDERS: ທຸກໂຟນເດີ POPS ເທິງ USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ບໍ່ຖືກຕ້ອງ)'

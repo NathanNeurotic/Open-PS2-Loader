@@ -606,8 +606,8 @@ translations:
   FAV_REMOVED: Удалено из «Избранных игр»
   FAV_REMOVE_FAILED: Не удалось удалить из «Избранных игр»
   POPS_UDPFS_SETTINGS: Настройки сети UDPFS для POPS
-  POPS_UDPFS_DISCOVERY: Сохраняется в каждую папку POPS на USB. Сервер 0.0.0.0 использует автопоиск.
-  POPS_UDPFS_NOT_READY: POPS UDPFS нужны согласованные корректные IPCONFIG.DAT и UDPFSCONFIG.DAT в каждой папке POPS на USB. Настройте их в «Настройках сети POPS».
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = обнаружение"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS нужна пара драйверов .udpfs на карте памяти. Установите её вручную или включите «BDMA: применять при запуске»."
   HINT_POPS_UDPFS_IP: Статический IP PS2, который драйвер UDPFS для POPS использует после перезапуска IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Все папки POPS на USB
   POPS_UDPFS_INVALID_SUFFIX: ' (неверно)'

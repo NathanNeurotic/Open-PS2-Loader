@@ -627,8 +627,8 @@ translations:
   FAV_REMOVED: U hoq nga Lojërat e preferuara
   FAV_REMOVE_FAILED: Nuk u hoq dot nga Lojërat e preferuara
   POPS_UDPFS_SETTINGS: Cilësimet e rrjetit UDPFS të POPS
-  POPS_UDPFS_DISCOVERY: Ruan në çdo dosje POPS në USB. Serveri 0.0.0.0 përdor zbulimin.
-  POPS_UDPFS_NOT_READY: POPS UDPFS ka nevojë për IPCONFIG.DAT dhe UDPFSCONFIG.DAT të vlefshëm dhe të përputhur në çdo dosje POPS në USB. Konfiguroji te Cilësimet e rrjetit të POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = zbulim"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS ka nevojë që çifti i drajverëve .udpfs të jetë i instaluar në kartën e memories. Përgatite me dorë ose ndiz Zbato BDMA të VCD në nisje."
   HINT_POPS_UDPFS_IP: IP statike e PS2 që përdor drajveri POPS UDPFS pas rinisjes së tij të IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Të gjitha dosjet POPS në USB
   POPS_UDPFS_INVALID_SUFFIX: ' (e pavlefshme)'

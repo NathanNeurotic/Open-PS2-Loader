@@ -622,8 +622,8 @@ translations:
   FAV_REMOVED: Fjernet fra Stjernemarkerede spil
   FAV_REMOVE_FAILED: Kunne ikke fjerne fra Stjernemarkerede spil
   POPS_UDPFS_SETTINGS: Netværksindstillinger for POPS UDPFS
-  POPS_UDPFS_DISCOVERY: Gemmer i hver POPS-mappe på USB. Serveren 0.0.0.0 bruger registrering.
-  POPS_UDPFS_NOT_READY: POPS UDPFS kræver matchende gyldige IPCONFIG.DAT og UDPFSCONFIG.DAT i hver POPS-mappe på USB. Konfigurer dem i netværksindstillingerne for POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = registrering"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS kræver driverparret .udpfs installeret på memorykortet. Læg det på manuelt, eller slå BDMA Anvend ved start til."
   HINT_POPS_UDPFS_IP: Statisk PS2-IP, som POPS UDPFS-driveren bruger efter sin IOP-nulstilling.
   POPS_UDPFS_ALL_USB_FOLDERS: Alle POPS-mapper på USB
   POPS_UDPFS_INVALID_SUFFIX: ' (ugyldig)'

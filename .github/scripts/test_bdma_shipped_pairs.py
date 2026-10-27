@@ -63,7 +63,7 @@ int main(void) {
     cardExists=0;assert(!vcdBdmaEnvironmentValid(1)&&!vcdBdmaManualPairMatches(1));
     assert(!vcdBdmaEnvironmentValid(-1)&&!vcdBdmaEnvironmentValid(7));
     assert(!vcdBdmaManualPairMatches(0)&&!vcdBdmaManualPairMatches(7));
-    puts("BDMA: all six shipped pairs accepted; stale iLink and wrong family/marker/missing/truncated pairs refused");
+    puts("BDMA: all six shipped pairs accepted; wrong family/marker/missing/truncated pairs refused");
 }
 '''.replace('@TABLE@', table).replace('@FUNCTIONS@', '\n'.join(function(s) for s in
     ['int vcdBdmaEnvironmentValid(', 'static int vcdBdmaManualPairMatches('])).replace(

@@ -659,8 +659,8 @@ translations:
   FAV_REMOVED: Eliminat din Jocuri favorite
   FAV_REMOVE_FAILED: Nu s-a putut elimina din Jocuri favorite
   POPS_UDPFS_SETTINGS: Setări de rețea POPS UDPFS
-  POPS_UDPFS_DISCOVERY: Salvează în fiecare folder POPS de pe USB. Serverul 0.0.0.0 folosește descoperirea.
-  POPS_UDPFS_NOT_READY: POPS UDPFS are nevoie de IPCONFIG.DAT și UDPFSCONFIG.DAT valide și potrivite în fiecare folder POPS de pe USB. Configurează-le în Setări de rețea POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = descoperire"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS are nevoie de perechea de drivere .udpfs instalată pe cardul de memorie. Instaleaz-o manual sau pornește BDMA Aplică la lansare."
   HINT_POPS_UDPFS_IP: IP-ul static al PS2 folosit de driverul POPS UDPFS după resetarea IOP.
   POPS_UDPFS_ALL_USB_FOLDERS: Toate folderele POPS de pe USB
   POPS_UDPFS_INVALID_SUFFIX: ' (invalid)'

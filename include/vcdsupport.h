@@ -170,7 +170,7 @@ enum {
     VCD_BDMA_MMCE,      // MMCE exFAT
     VCD_BDMA_ATA,       // internal ATA HDD exFAT (BDMAssault)
     VCD_BDMA_ILINK,     // iLink / IEEE 1394 (appended so persisted mode values stay stable)
-    VCD_BDMA_UDPFS,     // POPSTARTER USB driver with read-only UDPFS VCD fallback
+    VCD_BDMA_UDPFS,     // UDPFS serves all mass: files, including VMC writes
     VCD_BDMA_MODE_COUNT
 };
 // "BDMA SOURCE": which device holds the user-provided variant files in its POPS/ folder. The equip
@@ -260,8 +260,7 @@ int vcdReadPopstarterNet(vcd_popsnet_t *out);
 // only the pair this release ships is installed (-5 when that folder holds another release's).
 int vcdEquipBdmaFromPops(const char *popsDir, int mode, char *diag, int diagSize);
 
-// Interim BDM-UDPFS Assault configuration: the IRXs may come from any POPS source,
-// but this release reads these two DAT files only from USB mass:/POPS/ after reset.
+// UDPFS Assault reads optional DAT files from mc0:/SYS-CONF/, then mc1:/SYS-CONF/.
 typedef struct
 {
     int ps2Ip[4], mask[4], gateway[4], server[4]; // server 0.0.0.0 = broadcast discovery
@@ -271,7 +270,8 @@ typedef struct
 int vcdReadPopsUdpfsNet(vcd_pops_udpfs_t *out);
 int vcdPopsUdpfsNetValid(const vcd_pops_udpfs_t *cfg);
 int vcdWritePopsUdpfsNet(const vcd_pops_udpfs_t *cfg);
-int vcdPreparePopsUdpfsLaunch(char *usbRoot, int rootSize);
+// Copy optional game-device POPS/*.DAT only when absent from both cards.
+int vcdInstallPopsUdpfsNet(const char *popsDir);
 
 typedef enum {
     VCD_POPSNET_SMB_IMPORT_OK = 0,

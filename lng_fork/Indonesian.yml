@@ -631,8 +631,8 @@ translations:
   FAV_REMOVED: Dihapus dari Game Berbintang
   FAV_REMOVE_FAILED: Tidak bisa menghapus dari Game Berbintang
   POPS_UDPFS_SETTINGS: Pengaturan Jaringan POPS UDPFS
-  POPS_UDPFS_DISCOVERY: Menyimpan ke setiap folder POPS di USB. Server 0.0.0.0 memakai penemuan otomatis.
-  POPS_UDPFS_NOT_READY: POPS UDPFS butuh IPCONFIG.DAT dan UDPFSCONFIG.DAT yang valid dan cocok di setiap folder POPS di USB. Atur di Pengaturan Jaringan POPS.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = penemuan"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS butuh pasangan driver .udpfs terpasang di kartu memori. Pasang manual atau nyalakan BDMA Terapkan saat Peluncuran."
   HINT_POPS_UDPFS_IP: IP statis PS2 yang dipakai driver POPS UDPFS setelah reset IOP-nya.
   POPS_UDPFS_ALL_USB_FOLDERS: Semua folder POPS di USB
   POPS_UDPFS_INVALID_SUFFIX: ' (tidak valid)'

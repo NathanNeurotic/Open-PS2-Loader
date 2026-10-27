@@ -606,8 +606,8 @@ translations:
   FAV_REMOVED: 즐겨찾기 게임에서 뺐습니다
   FAV_REMOVE_FAILED: 즐겨찾기 게임에서 뺄 수 없음
   POPS_UDPFS_SETTINGS: POPS UDPFS 네트워크 설정
-  POPS_UDPFS_DISCOVERY: 모든 USB의 POPS 폴더에 저장합니다. 서버 0.0.0.0은 자동 검색을 씁니다.
-  POPS_UDPFS_NOT_READY: POPS UDPFS에는 모든 USB의 POPS 폴더에 서로 맞는 올바른 IPCONFIG.DAT와 UDPFSCONFIG.DAT가 필요합니다. POPS 네트워크 설정에서 설정하세요.
+  POPS_UDPFS_DISCOVERY: "mc?:/SYS-CONF/ | 0.0.0.0 = 자동 검색"
+  POPS_UDPFS_NOT_READY: "POPS UDPFS에는 메모리 카드에 .udpfs 드라이버 쌍이 설치되어 있어야 합니다. 직접 넣거나 BDMA 실행 시 적용을 켜세요."
   HINT_POPS_UDPFS_IP: POPS UDPFS 드라이버가 IOP 리셋 뒤에 쓰는 PS2 고정 IP.
   POPS_UDPFS_ALL_USB_FOLDERS: 모든 USB의 POPS 폴더
   POPS_UDPFS_INVALID_SUFFIX: ' (잘못됨)'

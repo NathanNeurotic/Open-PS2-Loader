@@ -232,7 +232,7 @@ struct UIItem diaNetConfig[] = {
 // leave the fields blank with the notice visible; only an explicit edit or the Import button
 // changes them, and only an actual change is written back on OK (see guiShowPopsNetConfig).
 
-// UDPFS Alpha runtime configuration on USB POPS/, separate from MC SMB files.
+// UDPFS Assault runtime configuration on MC SYS-CONF/, separate from MC SMB files.
 struct UIItem diaPopsUdpfsConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_POPS_UDPFS_SETTINGS}}},
     {UI_SPLITTER},
