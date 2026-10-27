@@ -945,6 +945,14 @@ static u32 ra_dec_at(const char *s, int max)
     return v;
 }
 
+/* Only the PC this console discovered may end the game or announce an
+   unlock; any other host on the LAN could otherwise forge both. ip is
+   the IPv4 source address in wire order. */
+static int ra_from_pc(const u8 *ip)
+{
+    return ((u32)ip[0] | (u32)ip[1] << 8 | (u32)ip[2] << 16 | (u32)ip[3] << 24) == ra_dst_ip;
+}
+
 /* One message from the PC, whichever road it came in on. */
 static void ra_handle_pc(char *rx, int got)
 {
@@ -1062,7 +1070,7 @@ static void ra_poll_pc(void)
 
     got = lwip_recvfrom(ra_sock, NULL, 0, rx, sizeof(rx) - 1, MSG_DONTWAIT,
                         (struct sockaddr *)&from, &fromlen);
-    if (got < 5)
+    if (got < 5 || !ra_from_pc((const u8 *)&from.sin_addr.s_addr))
         return;
     rx[got] = '\0';
 
@@ -1123,7 +1131,7 @@ static void ra_drain_rx(void)
             if (ra_rxfrm[12] == 0x08 && ra_rxfrm[13] == 0x00 &&
                 ra_rxfrm[14] == 0x45 && ra_rxfrm[23] == 17 &&
                 ra_rxfrm[36] == (RA_SRC_PORT >> 8) &&
-                ra_rxfrm[37] == (RA_SRC_PORT & 0xFF)) {
+                ra_rxfrm[37] == (RA_SRC_PORT & 0xFF) && ra_from_pc(&ra_rxfrm[26])) {
                 up = (((int)ra_rxfrm[38] << 8) | ra_rxfrm[39]) - RA_UDP_HLEN;
                 if (up > 0 && RA_HDR_LEN + up <= len && RA_HDR_LEN + up < (int)sizeof(ra_rxfrm)) {
                     char *pay = (char *)&ra_rxfrm[RA_HDR_LEN];
@@ -1204,11 +1212,11 @@ static void ra_thread(void *arg)
             idle = 0;
         }
         if (!ra_rx_in_game && iter % RA_IDLE_TICKS == 0) {
-            char notice[129];
-            int length = SMAPReadNotice(notice, 128);
-            if (length > 0) {
+            char notice[133]; /* the sender's address, then the datagram */
+            int length = SMAPReadNotice(notice, 132);
+            if (length > 4 && ra_from_pc((const u8 *)notice)) {
                 notice[length] = 0;
-                ra_handle_pc(notice, length);
+                ra_handle_pc(notice + 4, length - 4);
             }
         }
         if (ra_rx_in_game && iter % RA_IDLE_TICKS == 0) {

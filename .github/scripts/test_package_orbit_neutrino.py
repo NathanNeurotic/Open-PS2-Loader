@@ -22,12 +22,15 @@ class PackageTests(unittest.TestCase):
         (self.destination / "stock").write_bytes(b"preserve on failure")
         (self.destination / "config").mkdir()
         (self.destination / "config/bsd-udpfsbd.toml").write_bytes(b"private block transport")
+        (self.destination / "modules").mkdir()
+        for name in packer.ILINK_MODULES:
+            (self.destination / name).write_bytes(b"RiptOPL " + name.encode())
         self.pin = json.loads(packer.PIN.read_text())
 
     def archive(self, missing=None, extra=None, loader=b"ELF -ra=<file>"):
         archive = self.root / "runtime.zip"
         files = {name: b"payload" for name in (
-            "neutrino.elf", "modules/ee_core.elf", "modules/raagent.irx",
+            "neutrino.elf", "modules/ee_core.elf", "modules/raagent.irx", *packer.ILINK_MODULES,
             "config/system.toml", "config/bsd-udpfs.toml", "LICENSE")}
         files["neutrino.elf"] = loader
         files.pop(missing, None)
@@ -56,6 +59,22 @@ class PackageTests(unittest.TestCase):
         self.assertIn("NOT the standard RiptOPL", label)
         self.assertIn("Neutrino v1.8.0", label)
 
+    def test_keeps_riptopl_ilink_drivers_over_orbit_stock(self):
+        # #1065: the RA kit must not fall back to the stock i.LINK pair that loses its login (#1018).
+        packer.stage(self.archive(), self.destination, self.pin)
+        for name in packer.ILINK_MODULES:
+            self.assertEqual((self.destination / name).read_bytes(), b"RiptOPL " + name.encode())
+        self.assertEqual((self.destination / "modules/raagent.irx").read_bytes(), b"payload")
+
+    def test_missing_riptopl_ilink_driver_refuses_before_mutation(self):
+        for name in packer.ILINK_MODULES:
+            data = (self.destination / name).read_bytes()
+            (self.destination / name).unlink()
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "i.LINK"):
+                packer.stage(self.archive(), self.destination, self.pin)
+            self.assertTrue((self.destination / "stock").exists())
+            (self.destination / name).write_bytes(data)
+
     def test_missing_private_config_refuses_before_mutation(self):
         (self.destination / "config/bsd-udpfsbd.toml").unlink()
         with self.assertRaisesRegex(ValueError, "missing required"):
@@ -70,7 +89,8 @@ class PackageTests(unittest.TestCase):
         self.assertTrue((self.destination / "stock").exists())
 
     def test_invalid_runtime_or_path_preserves_existing_install(self):
-        for kwargs in ({"missing": "modules/raagent.irx"}, {"loader": b"stock"},
+        for kwargs in ({"missing": "modules/raagent.irx"}, {"missing": "modules/IEEE1394_bd_mini.irx"},
+                       {"missing": "modules/iLinkman.irx"}, {"loader": b"stock"},
                        {"extra": "ORBIT-test/neutrino/../escape"},
                        {"extra": "/absolute"}, {"extra": "bad\\windows"},
                        {"extra": "ORBIT-test/neutrino/LICENSE"}):

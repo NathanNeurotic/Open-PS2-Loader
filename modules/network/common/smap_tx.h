@@ -18,6 +18,10 @@
 int SMAPSendPacket(const void *data, unsigned int length);
 #define I_SMAPSendPacket DECLARE_IMPORT(4, SMAPSendPacket)
 
+/* While the game streams its disc over SMB or HTTP the driver owns RX:
+   it copies one waiting RA datagram (UDP to port 18195) aside, and this
+   hands it out once, after the sender's 4-byte IPv4 address so raudp can
+   check who sent it. Returns the total length, or 0. */
 int SMAPReadNotice(void *out, unsigned int capacity);
 #define I_SMAPReadNotice DECLARE_IMPORT(5, SMAPReadNotice)
 

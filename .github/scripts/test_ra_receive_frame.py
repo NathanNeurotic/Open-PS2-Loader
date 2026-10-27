@@ -5,8 +5,10 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 source = (root / 'modules/network/raudp/raudp.c').read_text(encoding='utf-8')
-start = source.index('static void ra_drain_rx(void)')
-function = source[start:source.index('\n}', start) + 2]
+function = ''
+for name in ('static int ra_from_pc(', 'static void ra_drain_rx(void)'):
+    start = source.index(name)
+    function += source[start:source.index('\n}', start) + 2] + '\n'
 program = r'''
 #include <assert.h>
 #include <stdint.h>
@@ -35,6 +37,7 @@ static u16 regs16[1];
 static u8 incoming[256], ra_rxfrm[256];
 static unsigned offset, calls;
 static int ra_rx_bdi, received;
+static u32 ra_dst_ip; /* 0.0.0.0: the frames below come from the discovered PC */
 static smap_bd_t rx_bd[1];
 static u32 read_word(void) {
     u32 word;
@@ -77,7 +80,9 @@ int main(void) {
     frame(256, 214, 0); /* no space for the parser's NUL terminator */
     frame(255, 213, 1);
     frame(60, 65527, 0);
-    puts("PASS: raw RA notices reject truncated frames and stale tails; complete/padded frames pass");
+    ra_dst_ip = 0x0901A8C0; /* 192.168.1.9 discovered; the frame comes from 0.0.0.0 */
+    frame(74, 32, 0);
+    puts("PASS: raw RA notices reject truncated frames, stale tails and other senders; complete/padded frames pass");
 }
 '''.replace('@FUNCTION@', function)
 with tempfile.TemporaryDirectory(prefix='ra-receive-') as work:

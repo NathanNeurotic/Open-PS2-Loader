@@ -78,11 +78,11 @@ static int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     snprintf(msgText, sizeof(msgText), "%s", text);
     return addAccept ? msgAnswer : 0;
 }
-static int lastWarning, loads, refuses, lastArgc;
+static int lastWarning, raWarnings, loads, refuses, lastArgc;
 static char lastArgs[14][256];
 static int bdmGetLoadedNetProtocol(void) { return 0; }
 static int convertCompatmaskToModes(int mask) { return mask; }
-static const char *_l(int id) { lastWarning = id; return ""; }
+static const char *_l(int id) { lastWarning = id; raWarnings += id == _STR_RA_NEUTRINO_UNTRACKED; return ""; }
 static void guiWarning(const char *msg, int secs) { (void)msg; (void)secs; }
 static void launchDiagRefuse(int reason) { (void)reason; refuses++; }
 static void launchDiagMark(int stage) { (void)stage; }
@@ -303,16 +303,29 @@ int main(void)
         snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", fill);
         snprintf(sysNeutrinoRAArg, sizeof(sysNeutrinoRAArg), "-ra=mass0:/neutrino/config/ript-ra.wl");
         snprintf(sysNeutrinoRAStartup, sizeof(sysNeutrinoRAStartup), "SLUS_123.45");
-        lastWarning = 0;
+        raWarnings = 0;
         int pre = sysNeutrinoArgsPreflight("usb", "mass0:/DVD/a.iso", "SLUS_123.45", 0, 0,
                                            "mass0:/neutrino/neutrino.elf", "", 0, 0, 0, 0, NULL);
-        if (pre != 0 || lastWarning != _STR_RA_NEUTRINO_UNTRACKED || sysNeutrinoRAArg[0] != '\0') {
-            printf("FAIL RA overflow must launch untracked: result=%d warning=%d ra=%s\n", pre, lastWarning, sysNeutrinoRAArg);
+        if (pre != 0 || raWarnings != 1 || sysNeutrinoRAArg[0] != '\0') {
+            printf("FAIL RA overflow must launch untracked: result=%d warnings=%d ra=%s\n", pre, raWarnings, sysNeutrinoRAArg);
             failures++;
         }
         sysRunNeutrinoLaunch("usb", "mass0:/DVD/a.iso", "SLUS_123.45", 0, 0, "mass0:/neutrino/neutrino.elf", "", 0, 0, 0, 0, NULL, 0);
         for (int i = 0; i < lastArgc; i++)
             if (!strncmp(lastArgs[i], "-ra=", 4) || !strcmp(lastArgs[i], "-cfg=ript-ra")) failures++;
+    }
+
+    /* Over budget without them too: refused with the overflow warning alone, not "launching untracked" (#1065). */
+    snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", many);
+    snprintf(sysNeutrinoRAArg, sizeof(sysNeutrinoRAArg), "-ra=mass0:/neutrino/config/ript-ra.wl");
+    snprintf(sysNeutrinoRAStartup, sizeof(sysNeutrinoRAStartup), "SLUS_123.45");
+    raWarnings = 0;
+    lastWarning = 0;
+    if (sysNeutrinoArgsPreflight("usb", "mass0:/DVD/a.iso", "SLUS_123.45", 0, 0,
+                                 "mass0:/neutrino/neutrino.elf", "", 0, 0, 0, 0, NULL) != -1 ||
+        raWarnings != 0 || lastWarning != _STR_NEUTRINO_LAUNCH_ARGS_OVERFLOW) {
+        printf("FAIL an argv over budget without RA must not claim an untracked launch (warnings=%d)\n", raWarnings);
+        failures++;
     }
     gNeutrinoArgs[0] = 0;
 #endif
