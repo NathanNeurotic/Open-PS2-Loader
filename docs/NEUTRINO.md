@@ -15,11 +15,12 @@ The RiptOPL release package
 bundles the upstream development pre-release selected at publish time (falling back to the upstream latest release when no pre-release is listed); a failed download or incomplete extraction fails packaging, under Neutrino's
 **AFL-3.0** licence. We add one file to that folder — `config/bsd-udpfsbd.toml`, because
 Neutrino ships `udpfs_bd.irx` without a matching `-bsd` token and RiptOPL launches UDPFS as
-`-bsd=udpfsbd` — and replace one module: `modules/IEEE1394_bd_mini.irx`, the i.LINK driver, is
-RiptOPL's build of the same ps2sdk driver (`modules/ilink/IEEE1394_bd`, see its `ORIGIN.txt`). The
-stock driver gives up logging in to an i.LINK drive before the drive lets go of the login held
-across an IOP reset, so i.LINK games never started (#1018). Nothing else of rickgaiser's is altered
-or removed.
+`-bsd=udpfsbd` — and replace the i.LINK pair: `modules/IEEE1394_bd_mini.irx` and its manager
+`modules/iLinkman.irx` are RiptOPL's builds of the same ps2sdk modules (`modules/ilink/IEEE1394_bd` and
+`modules/ilink/iLinkman`, see their `ORIGIN.txt`). The stock driver gives up logging in to an i.LINK
+drive before the drive lets go of the login held across an IOP reset, so i.LINK games never started
+(#1018); the manager carries the transmit-cancel, alarm and receive-FIFO fixes. The RetroAchievements
+kit's ORBIT runtime gets the same pair (#1065). Nothing else of rickgaiser's is altered or removed.
 
 Neutrino is deliberately **UI-agnostic**: it has no interface of its own, and that is exactly what
 makes a front-end like this one possible. RiptOPL is one of several — **[LUNA](https://github.com/dnunezx/LUNA)**
