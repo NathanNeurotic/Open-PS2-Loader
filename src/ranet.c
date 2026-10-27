@@ -137,18 +137,20 @@
 /* ps2ips returns a read's unaligned tail through a 48-byte buffer and shortens
    the length when the tail is longer, after lwIP has already consumed those
    bytes (#1062). UDP replies are padded to 64 bytes, but a TCP read that ends
-   in a 49-63 byte tail loses data. So peek at what is waiting, then take only
-   whole 64-byte blocks, or all of it when it is 64 bytes or less (that fits the
-   64-byte head buffer). chunk must be 64-byte aligned. Returns what was read,
-   0 when the peer closed, or -1 when nothing is waiting. */
+   in a 49-63 byte tail loses data. So peek at what is waiting and shorten the
+   read until its tail fits those 48 bytes; the rest comes on the next call.
+   A read over 64 bytes thus still lands mostly by direct DMA: only 64 bytes or
+   less waiting goes through the small-packet path (as any short TCP read did
+   before). chunk must be 64-byte aligned. Returns what was read, 0 when the
+   peer closed, or -1 when nothing is waiting. */
 int raNetTcpRecv(int sock, void *chunk, int want)
 {
     int avail = recv(sock, chunk, want, RA_MSG_PEEK | RA_MSG_DONTWAIT);
 
     if (avail <= 0)
         return avail == 0 ? 0 : -1;
-    if (avail > 64)
-        avail &= ~63;
+    if (avail > 64 && avail % 64 > 48)
+        avail -= avail % 64 - 48;
     return recv(sock, chunk, avail, RA_MSG_DONTWAIT);
 }
 

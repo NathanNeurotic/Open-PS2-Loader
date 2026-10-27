@@ -5,7 +5,7 @@
   the menu's network stack (ps2ips), a BIO that reads with lwIP's per-call
   non-blocking flag under an overall deadline (fcntl O_NONBLOCK has no effect
   on this stack, see ranet.c), the console clock as UTC, an entropy source,
-  mbedtls_ms_time(), and the six embedded roots (third_party/ca-roots, turned
+  mbedtls_ms_time(), and the five embedded roots (third_party/ca-roots, turned
   into ratls_root_<name>.c by the Makefile).
 
   Runs on the I/O worker. Refuses while a UDP transport owns the NIC.

@@ -348,20 +348,23 @@ int main(void)
     assert(closes == 4);
     /* tcp_tail_not_lost: reads that would end in a 49-63 byte tail keep every byte (#1062). */
     {
-        static char doc[1200], out[2048];
+        static char doc[1200], head[114], out[2048];
         int i;
         i = snprintf(doc, sizeof(doc), "HTTP/1.0 200 OK\r\n\r\n");
         for (; i < 1100; i++)
             doc[i] = 'a' + i % 26;
         doc[i] = 0;
+        memcpy(head, doc, 113);
+        head[113] = 0;
         script[0] = doc; script[1] = ""; script[2] = NULL;
         lost = 0;
         body = get(out, sizeof(out), &len);
         assert(body > 0 && lost == 0 && len == 1100 - body && !strcmp(out, doc));
         /* Odd part sizes as well: 1100 split into a 113-byte head and the rest. */
-        script[0] = "HTTP/1.0 200 OK\r\n\r\n0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123"; script[1] = doc + 113; script[2] = ""; script[3] = NULL;
+        script[0] = head; script[1] = doc + 113; script[2] = ""; script[3] = NULL;
         lost = 0;
-        assert(get(out, sizeof(out), &len) > 0 && lost == 0);
+        body = get(out, sizeof(out), &len);
+        assert(body > 0 && lost == 0 && len == 1100 - body && !strcmp(out, doc));
     }
     puts("PASS: raNetHttpGet status, body offset, deadline, oversize, NIC guard and ps2ips tail loss");
     return 0;

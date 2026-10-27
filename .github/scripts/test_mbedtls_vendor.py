@@ -51,7 +51,7 @@ for number, line in enumerate(lines, 1):
         assert any(stack), f"Makefile:{number} outside a RETROACHIEVEMENTS=1 block: {stripped}"
 assert hits >= 4, "the RA-only mbedTLS build rules are missing"
 
-# Six pinned roots, nothing else.
+# Five pinned roots, nothing else.
 assert sorted(p.name for p in ROOTS.glob("*.der")) == sorted(PINNED)
 roots_readme = (ROOTS / "README.md").read_text(encoding="utf-8")
 for name, expected in PINNED.items():

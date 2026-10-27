@@ -161,7 +161,10 @@ static int finishResponse(char *buf, int len, int *length)
     if (bodyAt < 0 || sscanf(buf, "HTTP/%*d.%*d %d", &status) != 1 || status != 200)
         return RATLS_ERR_HTTP;
     if ((value = headerValue(buf, bodyAt, "Transfer-Encoding")) != NULL && !strncmp(value, "chunked", 7)) {
-        int body = walkChunks(buf + bodyAt, len - bodyAt, 1);
+        int body;
+        if (walkChunks(buf + bodyAt, len - bodyAt, 0) != 1)
+            return RATLS_ERR_HTTP; /* closed before the terminator's blank line */
+        body = walkChunks(buf + bodyAt, len - bodyAt, 1);
         if (body < 0)
             return RATLS_ERR_HTTP;
         len = bodyAt + body;

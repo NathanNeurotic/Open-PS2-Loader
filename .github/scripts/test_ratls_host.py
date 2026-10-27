@@ -5,7 +5,7 @@ portable TLS + HTTP code (src/ratls.c) with the vendored mbedTLS and RiptOPL's c
 drives it (tests/ratls/host_main.c) against local Python TLS servers using a throwaway test CA:
 full GETs on TLS 1.3 and TLS 1.2, chunked and close-delimited bodies, refusal of oversize bodies,
 wrong host names, expired and untrusted certificates, an unset clock (no connection at all), a
-stalled server, a 404, plus the six real anchors, the RTC conversion and DRBG reseeding.
+stalled server, a 404, plus the five real anchors, the RTC conversion and DRBG reseeding.
 """
 import concurrent.futures
 import os
@@ -201,6 +201,12 @@ def main():
         s.finish()
         check("chunk_ending_in_zero_crlf", rc > 0 and body == b"ab0\r\nxyz", f"rc={rc} body={body!r}")
 
+        # Closed after "0\r\n" but before the blank line: never passed off as a whole body.
+        s = Server(d, version="1.3", response=head + b"3\r\nxyz\r\n0\r\n")
+        rc, body = get(exe, s.port, d)
+        s.finish()
+        check("chunked_closed_before_blank_line", rc < 0, f"rc={rc} body={body!r}")
+
         # A whole response ends the read without waiting for the server to close.
         for name, resp in (("length", http(json_body)), ("chunked", chunked)):
             s = Server(d, version="1.3", response=resp, hold=4.0)
@@ -272,7 +278,7 @@ def main():
     if failures:
         print(f"{len(failures)} failure(s)")
         sys.exit(1)
-    print("PASS: ratls host tests (18 checks)")
+    print("PASS: ratls host tests (19 checks)")
 
 
 if __name__ == "__main__":

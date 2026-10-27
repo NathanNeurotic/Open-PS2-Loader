@@ -388,7 +388,7 @@ EE_CFLAGS += -MMD -MP
 EE_OBJS += $(FRONTEND_OBJS) $(GFX_OBJS) $(AUDIO_OBJS) $(MISC_OBJS) $(EECORE_OBJS) $(IOP_OBJS)
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
-# mbedTLS 3.6.7 (third_party/mbedtls, used under Apache-2.0) and the six CA roots it trusts:
+# mbedTLS 3.6.7 (third_party/mbedtls, used under Apache-2.0) and the five CA roots it trusts:
 # TLS for the RA edition's HTTPS game-ID lookup (ORBIT parity). RA builds only -- the standard
 # and Korium ELFs must not contain it (checked in CI and by test_mbedtls_vendor.py).
 ifeq ($(RETROACHIEVEMENTS),1)

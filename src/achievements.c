@@ -434,7 +434,8 @@ static int xeraState(int fetched)
 }
 
 /* A failed raNetXeraboraIdentify: -7 is the PC still identifying the image (retry),
-   -8 a UDP transport holding the NIC; only the rest mean the PC is not reachable (#1062). */
+   -8 not Xerabora mode or a reserved NIC (a UDP transport holds it); only the rest mean
+   the PC is not reachable (#1062). */
 static int xeraIdentifyState(int rc)
 {
     return rc == -7 ? ACH_ERROR : rc == -8 ? ACH_NET_BUSY :
