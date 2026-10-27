@@ -59,7 +59,7 @@ The `RIPTOPL-LANGS` ZIP contains translated `.lng` files and matching fonts such
 | Name displays garbage rather than boxes | Verify the original filename bytes are valid UTF-8. This feature is not Shift-JIS transcoding. |
 | Some Kanji work, others do not | Check font glyph coverage and the fixed atlas budget; consider a more appropriate font subset. |
 | Font works with one installation but not another | Check which directory holds the active `settings_riptopl.cfg`. It can change with your boot/install location. |
-| A custom CFG `Title` doesn't change the game-list name | Expected in the current version; see [issue #918](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918). |
+| A custom CFG `Title` doesn't change the game-list name | Turn on **Settings → Interface → Show CFG Titles in Game Lists**; it is off by default. |
 
 ### Development and testing
 
