@@ -268,7 +268,9 @@ flavour's TCP readers in `src/ranet.c` and `src/ratls_ps2.c`. Since 2026-10-27 o
 from the first queued buffer and leaves it queued, so the second receive returns exactly what it asks
 for and the rest waits for the next call. A receive therefore returns at most that first buffer, usually
 one TCP segment, which `recv()` allows. A UDP datagram with such a tail still arrives up to 15 bytes
-short, as if the caller's buffer were smaller, because a datagram cannot be continued. Host test
+short, as if the caller's buffer were smaller, because a datagram cannot be continued. A peek that
+returns 0 is followed by a non-blocking 0-byte receive, so an empty UDP datagram is consumed instead of
+being returned forever (found by review the same day, before release). Host test
 (`test_ps2ips_recv_tail.py`: 8 failures on the old code); lwIP's peek is modelled from its 2.2.1 source,
 not run.
 

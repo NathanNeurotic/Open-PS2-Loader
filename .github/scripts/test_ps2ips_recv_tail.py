@@ -6,7 +6,7 @@ so a TCP stream silently lost up to 15 bytes. It now peeks, then takes only what
 
 do_recv and do_recvfrom are compiled from modules/network/ps2ips/ps2ips.c against a simulated lwIP 2.2
 socket (MSG_PEEK returns at most the first queued buffer, as lwip_recv_tcp does; a plain receive drains
-queued buffers up to its length), simulated SIF DMA into EE memory with the IOP's 32-bit rests layout, and
+queued buffers up to its length; UDP datagrams, empty ones included, are kept whole until received), simulated SIF DMA into EE memory with the IOP's 32-bit rests layout, and
 the EE's recv_intr. Pass another ps2ips.c to check it instead.
 """
 import subprocess
@@ -96,20 +96,23 @@ static void recv_intr(void)
 #define QMAX 4096
 static u8 q[1 << 16];
 static int seg_end[QMAX], nseg, qhead, qtail, udp, calls;
-static void queue_bytes(const u8 *p, int n) { memcpy(q + qtail, p, n); qtail += n; seg_end[nseg++] = qtail; }
+static int dlen[QMAX], dhead, dcount; /* UDP datagram lengths, empty ones included, as lwIP queues them */
+static void queue_bytes(const u8 *p, int n) { memcpy(q + qtail, p, n); qtail += n; seg_end[nseg++] = qtail; dlen[dcount++] = n; }
 static int first_seg_end(void) { for(int i = 0; i < nseg; i++) if(seg_end[i] > qhead) return seg_end[i]; return qhead; }
 static int recv_common(void *mem, int len, unsigned int flags)
 {
     calls++;
-    if(qhead == qtail) return (flags & MSG_DONTWAIT) ? -1 : 0;
-    int end = first_seg_end();
     int n;
     if(udp) {
-        n = end - qhead < len ? end - qhead : len;
+        if(dhead == dcount) return (flags & MSG_DONTWAIT) ? -1 : 0;
+        n = dlen[dhead] < len ? dlen[dhead] : len;
         memcpy(mem, q + qhead, n);
-        if(!(flags & MSG_PEEK)) qhead = end; /* the rest of the datagram is dropped */
+        /* A peek leaves the datagram (lwIP keeps it in lastdata); a receive drops what it did not take. */
+        if(!(flags & MSG_PEEK)) qhead += dlen[dhead++];
         return n;
     }
+    if(qhead == qtail) return (flags & MSG_DONTWAIT) ? -1 : 0;
+    int end = first_seg_end();
     if(flags & MSG_PEEK) /* lwip_recv_tcp peeks the first buffer only */
         n = end - qhead < len ? end - qhead : len;
     else
@@ -153,7 +156,7 @@ static int ee_recv(int from, int addr, int len, int flags)
 }
 
 static u8 pattern(int i) { return (u8)(i * 131 + (i >> 8) * 7 + 1); }
-static void reset(int is_udp) { nseg = qhead = qtail = calls = 0; udp = is_udp; }
+static void reset(int is_udp) { nseg = qhead = qtail = calls = dhead = dcount = 0; udp = is_udp; }
 
 /* A TCP stream read through every buffer misalignment and several request lengths arrives whole. */
 static void tcp_stream(int from, const int *segs, int nsegs, int total)
@@ -226,6 +229,24 @@ int main(void)
     CHECK(r == 112 && memcmp(ee + BUF_BASE + 64, data, 112) == 0, "a 113-byte datagram with a 49-byte tail returned %d", r);
     r = ee_recv(1, BUF_BASE + 64, 1024, 0);
     CHECK(r == 50 && memcmp(ee + BUF_BASE + 64, data + 113, 50) == 0 && qhead == qtail, "the next datagram returned %d", r);
+
+    /* An empty datagram is returned as 0 and consumed, so the next one still arrives; a 0-byte request
+       drops the datagram, as a plain receive does. */
+    for(int from = 0; from < 2; from++) {
+        reset(1);
+        queue_bytes(data, 0);
+        queue_bytes(data, 20);
+        queue_bytes(data + 20, 30);
+        queue_bytes(data + 50, 40);
+        r = ee_recv(from, BUF_BASE + 64, 1024, MSG_DONTWAIT);
+        CHECK(r == 0, "an empty datagram returned %d", r);
+        r = ee_recv(from, BUF_BASE + 64, 1024, MSG_DONTWAIT);
+        CHECK(r == 20 && memcmp(ee + BUF_BASE + 64, data, 20) == 0, "the datagram after an empty one returned %d", r);
+        r = ee_recv(from, BUF_BASE + 64, 0, MSG_DONTWAIT);
+        CHECK(r == 0, "a 0-byte request returned %d", r);
+        r = ee_recv(from, BUF_BASE + 64, 1024, MSG_DONTWAIT);
+        CHECK(r == 40 && memcmp(ee + BUF_BASE + 64, data + 50, 40) == 0 && dhead == dcount, "after a 0-byte request the next receive returned %d", r);
+    }
 
     if(fails) { printf("%d failure(s)\n", fails); return 1; }
     puts("ok");

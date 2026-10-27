@@ -186,6 +186,11 @@ static void do_recv( void * rpcBuffer, int size )
 	rlen = recv(recv_pkt->socket, lwip_buffer + s_offset, recvlen, recv_pkt->flags | MSG_PEEK);
 	if(rlen > 0)
 		rlen = recv(recv_pkt->socket, lwip_buffer + s_offset, rests_fit(recv_pkt->ee_addr, rlen), recv_pkt->flags);
+	else if(rlen == 0 && !(recv_pkt->flags & MSG_PEEK))
+		/* The peek left an empty UDP datagram (or one a 0-byte request does
+		   not take) queued: consume it, or the socket returns 0 forever.
+		   On TCP this finds the same end of stream; the result stays 0. */
+		recv(recv_pkt->socket, lwip_buffer + s_offset, 0, recv_pkt->flags | MSG_DONTWAIT);
 
 	if(rlen <= 0) goto recv_end;
 	if(rlen <= 64) srest = rlen;
@@ -308,6 +313,8 @@ static void do_recvfrom( void * rpcBuffer, int size )
 	rlen = recvfrom(recv_pkt->socket, lwip_buffer + s_offset, recvlen, recv_pkt->flags | MSG_PEEK, &sockaddr, &fromlen);
 	if(rlen > 0)
 		rlen = recvfrom(recv_pkt->socket, lwip_buffer + s_offset, rests_fit(ee_addr, rlen), recv_pkt->flags, &sockaddr, &fromlen);
+	else if(rlen == 0 && !(recv_pkt->flags & MSG_PEEK))
+		recvfrom(recv_pkt->socket, lwip_buffer + s_offset, 0, recv_pkt->flags | MSG_DONTWAIT, &sockaddr, &fromlen); // as in do_recv
 
 	if(rlen <= 0) goto recv_end;
 	if(rlen <= 64) srest = rlen;
