@@ -18,8 +18,9 @@ that smb_Close() never waits on it (oplShutdown() calls it with the semaphore al
 smb_WriteAndX() used to return the requested count for any success status. A full file system answers
 WRITE_ANDX with a success status and a Count of zero (MS-CIFS 2.2.4.43.2), so an unwritten VMC page was
 reported as saved. A third harness runs the real smb_WriteAndX() against scripted server replies and
-checks that it returns the server's Count, that smb_WriteFile() writes the rest after a short Count and
-fails on a zero one, and that a truncated reply, a short WordCount or a Count over the request fails.
+checks that it returns the server's Count, that smb_WriteFile() sends the rest of the data from the right
+place in the buffer after a short Count and fails on a zero one, and that a truncated reply, a short
+WordCount or a Count over the request fails.
 This is a host regression check, not a console test.
 """
 from pathlib import Path
@@ -459,6 +460,8 @@ static reply_t replies[4];
 static int nreplies, calls, bad_request;
 static u32 call_off[4];
 static int call_len[4];
+static long call_from[4]; /* where in buf each request's data starts */
+static char buf[70000];
 
 static int GetSMBServerReply(int shdrlen, void *spayload, int rhdrlen)
 {
@@ -474,6 +477,7 @@ static int GetSMBServerReply(int shdrlen, void *spayload, int rhdrlen)
     if (calls < 4) {
         call_off[calls] = WR->OffsetLow;
         call_len[calls] = asked;
+        call_from[calls] = (long)((char *)spayload - buf);
     }
     if (calls < nreplies)
         want = replies[calls];
@@ -519,8 +523,6 @@ int smb_OpenAndX(char *filename, u16 *FID, int Write)
 
 @VMC_PAGES@
 
-static char buf[70000];
-
 static void reset(int n, const reply_t *r)
 {
     int i;
@@ -550,6 +552,8 @@ int main(void)
     static const reply_t high[] = {{REPLY_LEN, STATUS_SUCCESS, 6, ASKED, 1}};
     static const reply_t disk_full[] = {{35, 0xC000007F, 0, 0, 0}};
     static const reply_t truncated[] = {{35, STATUS_SUCCESS, 6, 0, 0}};
+    static const reply_t half_count[] = {{38, STATUS_SUCCESS, 6, 0, 0}};
+    static const reply_t no_reserved[] = {{44, STATUS_SUCCESS, 6, 0, 0}};
     static const reply_t few_words[] = {{REPLY_LEN, STATUS_SUCCESS, 2, ASKED, 0}};
     static const reply_t lost[] = {{-2, STATUS_SUCCESS, 6, ASKED, 0}};
 
@@ -559,7 +563,8 @@ int main(void)
     report("count-zero", smb_WriteFile(0x10, 1000, 0, buf, 512));
     reset(2, half_rest);
     report("count-half-then-rest", smb_WriteFile(0x10, 1000, 0, buf, 512));
-    printf("count-half-then-rest-at %d@%u %d@%u\n", call_len[0], call_off[0], call_len[1], call_off[1]);
+    printf("count-half-then-rest-at %d@%u from %ld, %d@%u from %ld\n", call_len[0], call_off[0], call_from[0],
+           call_len[1], call_off[1], call_from[1]);
     reset(2, half_zero);
     report("count-half-then-zero", smb_WriteFile(0x10, 1000, 0, buf, 512));
     reset(1, over);
@@ -575,13 +580,18 @@ int main(void)
     /* FID 512 lands where the reply's Count goes: a truncated reply must not read it as Count. */
     reset(1, truncated);
     report("reply-truncated", smb_WriteFile(512, 1000, 0, buf, 512));
+    reset(1, half_count); /* ends inside Count: its high byte is still the request FID's */
+    report("reply-ends-in-count", smb_WriteFile(512, 1000, 0, buf, 512));
+    reset(1, no_reserved); /* Count 0 arrived, the last parameter word did not */
+    report("reply-44-bytes", smb_WriteFile(0x10, 1000, 0, buf, 512));
     reset(1, few_words);
     report("reply-wordcount-2", smb_WriteFile(0x10, 1000, 0, buf, 512));
     reset(1, lost);
     report("transport-error", smb_WriteFile(0x10, 1000, 0, buf, 512));
     reset(0, NULL);
     report("chunks", smb_WriteFile(0x10, 0, 0, buf, 70000));
-    printf("chunks-at %d@%u %d@%u\n", call_len[0], call_off[0], call_len[1], call_off[1]);
+    printf("chunks-at %d@%u from %ld, %d@%u from %ld\n", call_len[0], call_off[0], call_from[0], call_len[1],
+           call_off[1], call_from[1]);
 
     reset(0, NULL);
     report("vmc-page-saved", DeviceWritePage(0, buf, 3));
@@ -591,6 +601,8 @@ int main(void)
     report("vmc-page-half-then-full-share", DeviceWritePage(0, buf, 3));
     reset(2, half_rest);
     report("vmc-page-half-then-rest", DeviceWritePage(0, buf, 3));
+    printf("vmc-page-half-then-rest-at %d@%u from %ld, %d@%u from %ld\n", call_len[0], call_off[0], call_from[0],
+           call_len[1], call_off[1], call_from[1]);
 
     printf("bad-request %d\n", bad_request);
     return 0;
@@ -601,7 +613,7 @@ WRITE_REPLY_WANT = [
     'full ret=512 calls=1 held=0 blocked=0 extra=0',
     'count-zero ret=0 calls=1 held=0 blocked=0 extra=0',
     'count-half-then-rest ret=512 calls=2 held=0 blocked=0 extra=0',
-    'count-half-then-rest-at 512@1000 256@1256',
+    'count-half-then-rest-at 512@1000 from 0, 256@1256 from 256',
     'count-half-then-zero ret=0 calls=2 held=0 blocked=0 extra=0',
     'count-over-asked ret=-5 calls=1 held=0 blocked=0 extra=0',
     'count-high-ignored ret=512 calls=1 held=0 blocked=0 extra=0',
@@ -609,14 +621,17 @@ WRITE_REPLY_WANT = [
     'count-half-andx ret=256',
     'status-disk-full ret=-5 calls=1 held=0 blocked=0 extra=0',
     'reply-truncated ret=-5 calls=1 held=0 blocked=0 extra=0',
+    'reply-ends-in-count ret=-5 calls=1 held=0 blocked=0 extra=0',
+    'reply-44-bytes ret=-5 calls=1 held=0 blocked=0 extra=0',
     'reply-wordcount-2 ret=-5 calls=1 held=0 blocked=0 extra=0',
     'transport-error ret=-5 calls=1 held=0 blocked=0 extra=0',
     'chunks ret=70000 calls=2 held=0 blocked=0 extra=0',
-    'chunks-at 65535@0 4465@65535',
+    'chunks-at 65535@0 from 0, 4465@65535 from 65535',
     'vmc-page-saved ret=1 calls=1 held=0 blocked=0 extra=0',
     'vmc-page-full-share ret=0 calls=1 held=0 blocked=0 extra=0',
     'vmc-page-half-then-full-share ret=0 calls=2 held=0 blocked=0 extra=0',
     'vmc-page-half-then-rest ret=1 calls=2 held=0 blocked=0 extra=0',
+    'vmc-page-half-then-rest-at 512@1536 from 0, 256@1792 from 256',
     'bad-request 0',
 ]
 

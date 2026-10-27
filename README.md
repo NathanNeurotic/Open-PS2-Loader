@@ -543,19 +543,24 @@ Makefile targets retain their names and output locations.
 
 Use one of the toolchain images in [the CI workflow](.github/workflows/flavours.yml). Both pinned
 and rolling SDK images are supported; the latest SDK is not required. For a reproducible baseline,
-use the `PS2DEVPINNED` image: the digest that `build-rolling-pinned` in
+use the `PS2DEVPINNED` image: the 2026-07-28 ps2dev pin that `build-rolling-pinned` in
 [rolling-release.yml](.github/workflows/rolling-release.yml) builds every `-PS2DEVPINNED` release
-asset with. The image carries the toolchain only, so the command first installs the host tools the
-CI build job installs. From the repository root with Docker available:
+asset with. The image carries the toolchain only. The command below repeats that job's steps: it
+installs the same host packages, replaces the SDK's `mmceman.irx` and `bdmfs_fatfs.irx` with the
+patched builds every release embeds (both scripts download from GitHub), and runs the same serial
+`make`. From the repository root with Docker available:
 
 ```sh
-docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:c64ae69c9817865ed98ff054e4ae5360b9e280ed952c97946bca95d9d35be995 \
-  sh -c 'apk add --no-cache bash make git zip unzip tar gzip xz python3 py3-pip py3-yaml gmp mpfr4 mpc1 gawk coreutils findutils grep sed diffutils &&
-         git config --global --add safe.directory /src && make -j4'
+docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:c64ae69c9817865ed98ff054e4ae5360b9e280ed952c97946bca95d9d35be995 sh -c '
+  apk add --no-cache bash make git zip unzip tar gzip xz python3 py3-pip py3-yaml gmp mpfr4 mpc1 perl cmake pkgconf coreutils findutils grep sed gawk diffutils &&
+  git config --global --add safe.directory "*" &&
+  sh .github/scripts/install_coherent_mmce.sh &&
+  python3 .github/scripts/install_safe_bdmfs.py &&
+  make clean && make LOCALVERSION=PS2DEVPINNED release'
 ```
 
-The iLink driver job (`popstarter-ilink-driver` in flavours.yml) builds in a different, older
-ps2dev pin from 2026-08-13 (`sha256:8fba50ec…`), because it must reproduce the checked-in
+The iLink driver job (`popstarter-ilink-driver` in flavours.yml) builds in a different ps2dev pin,
+taken 2026-08-13 (`sha256:8fba50ec…`), because it must reproduce the checked-in
 `usbhdfsd.irx.ilink` bytes exactly (see `modules/bdmassault/PROVENANCE.md`). That pin is not
 `PS2DEVPINNED`; do not compare its builds with `-PS2DEVPINNED` release assets.
 

@@ -8,8 +8,8 @@ name: build-flavours
 # The digest-pinned PS2DEVPINNED/OFFICIALPINNED flavours were dropped from per-PR CI: they doubled
 # the build matrix without catching anything the rolling pair did not. They still exist where
 # reproducibility is the point -- the rolling/RA release workflows publish pinned assets, and the
-# iLink driver job below builds in its own older ps2dev pin (2026-08-13) because it checks exact bytes.
-# That pin is not PS2DEVPINNED: PS2DEVPINNED is the digest the release workflows build with.
+# iLink driver job below builds in its own ps2dev pin (taken 2026-08-13) because it checks exact bytes.
+# That pin is not PS2DEVPINNED: PS2DEVPINNED is the 2026-07-28 digest the release workflows build with.
 #
 # Rolling means the toolchain moves without us changing anything (issue #382). When a build or a
 # console result regresses, rebuild the SAME commit in the PS2DEVPINNED image (README.md has the
@@ -517,7 +517,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v6
         with:
-          name: ilink-recovery-modules-PS2DEVPINNED
+          name: ilink-recovery-modules-ilink-driver-pin
           path: build/ilink-recovery/
           if-no-files-found: ignore
 
