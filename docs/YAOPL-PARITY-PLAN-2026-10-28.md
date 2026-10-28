@@ -1,0 +1,64 @@
+# YAOPL → RiptOPL parity and compatibility-hardening plan (legacy C)
+
+> **Status:** reviewable implementation checklist for another coding agent; no runtime fix is implemented by this planning PR.
+> **Audit baseline:** 2026-10-28. Re-compare current default branches before editing: they are moving. A checked box means **implemented AND tested**, not merely coded.
+> **Credit:** belomaxorka — [YAOPL](https://github.com/yaopl/yaopl). Preserve original provenance and reference originating YAOPL commits in implementation PRs.
+
+YAOPL master: https://github.com/yaopl/yaopl (audited at `3ea3a521a0e9`); changelog: https://github.com/yaopl/yaopl/blob/master/CHANGELOG.md; regression corpus: https://github.com/yaopl/yaopl/tree/master/labs/host-repro; YAOPL author: https://github.com/belomaxorka.
+
+## Goals and non-goals
+- Harvest proven game-compatibility and safety wins, **not** rewrite this fork into YAOPL.
+- Keep all RiptOPL-specific OPL/Neutrino/POPStarter/Ember, RetroAchievements, MMCE, MX4SIO, PC-CARD, UDPFS/UDPBD, iLink, BDM and UI behavior. Neither identical source files nor a green cross-compiler build establish game compatibility.
+- Preserve legacy device-prefix semantics by default and existing network transport/driver selection. Never normalize network paths or force SDK SIO2MAN indiscriminately.
+- Do not modify games, save images, or memory-card files as a side effect of a validation test. Back up VMC and real cards before hardware work.
+
+## Implementation order — proven source-level gaps
+
+### P0: memory safety and parser correctness (small isolated changes)
+- [ ] **YA-01 OSD history executable filename bounds.** In `src/OSDHistory.c`, `GetBootFilename()` copies into 17 bytes without always clamping at 16. Follow [YAOPL 80c5558d](https://github.com/yaopl/yaopl/commit/80c5558d); test long `$AltStartup`, no separator, `;1`, exact 16 chars, and empty name. Never remove existing history behavior.
+- [ ] **YA-02 ISO9660 directory record and name validation.** In `modules/isofs/isofs.c`, empty-name records with nonzero length can fail to advance `tocPos`; signed record-length advancement is unsafe. Adapt [ff498c19](https://github.com/yaopl/yaopl/commit/ff498c19), [af5b52b7](https://github.com/yaopl/yaopl/commit/af5b52b7), and assess [bfe726f5](https://github.com/yaopl/yaopl/commit/bfe726f5) / [a2ff76fc](https://github.com/yaopl/yaopl/commit/a2ff76fc). Include zero-length, truncated, oversized, empty-name, nested-directory and long-filename cases. Check UI-side ISO scanner separately.
+- [ ] **YA-03 ZSO validation and robust slicing.** In `modules/isofs/zso.c`, reject `align > 11` and `block_size != 2048` at init; enforce monotonic offsets and compressed-size bounds before pointer subtraction/decompression; slice reads larger than the index cache. Sources: [0253f98b](https://github.com/yaopl/yaopl/commit/0253f98b), [9ad4afeb](https://github.com/yaopl/yaopl/commit/9ad4afeb), [147e2493](https://github.com/yaopl/yaopl/commit/147e2493), [4baf5921](https://github.com/yaopl/yaopl/commit/4baf5921). **Retain RiptOPL's better existing partial-index/short-read error checks.** Review the changed `ziso_init()` return contract at each call site, including `src/util.c`. Verify valid ZSO and uncompressed ISO from multiple transports.
+- [ ] **YA-04 Font terminator safety.** In `src/fntsys.c`, `fntFitString()` can overwrite the final `\0` with a newline and iterate beyond it. Adapt [a4c0830f](https://github.com/yaopl/yaopl/commit/a4c0830f). Test narrow width, oversized final word, no whitespace and multi-byte UTF-8; also verify that rendering doesn't modify saved per-game CFG strings ([0f16d591](https://github.com/yaopl/yaopl/commit/0f16d591)).
+- [ ] **YA-05 Full cheat-table semantics.** In `src/cheatman.c`, the current `MAX_CODES` guard prevents OOB writes but can append later code lines to the preceding cheat once full. Stop or discard overflow cleanly, as [YAOPL 44a003bd](https://github.com/yaopl/yaopl/commit/44a003bd); keep RiptOPL's existing bounded `make_code()`, final-line, hook-capacity and duplicate-name fixes. Assert prior cheat content unchanged.
+
+### P1: game compatibility / input / network reliability
+- [ ] **YA-06 DualShock 2 game handoff.** In `src/pad.c`, `unloadPad` currently closes ports without leaving pad digital, unlocked and pressure mode exited. Adapt [c56a91b6](https://github.com/yaopl/yaopl/commit/c56a91b6) with bounded idle waits and a fallback if unavailable. Preserve rumble flush and keep-IOP launches; test Gran Turismo 4, DS2, digital-only pads and IGR.
+- [ ] **YA-07 DS3/DS4 USB PADEMU buffer ownership.** In `modules/pademu/ds34usb.c`, startup/control/LED and asynchronous input reports share buffers. Examine [1ef5b49c](https://github.com/yaopl/yaopl/commit/1ef5b49c), [4b1106e4](https://github.com/yaopl/yaopl/commit/4b1106e4), [c4a82e95](https://github.com/yaopl/yaopl/commit/c4a82e95); use isolated, lifetime-safe report buffers and test both pads/ports, disconnect/reconnect, delayed replies, LED and rumble.
+- [ ] **YA-08 UDPBD bounded read requests.** Our `modules/network/smap_udpbd/src/udpbd.h` allows 512 sectors / 256 KiB whereas YAOPL caps to 16 KiB ([12cc6fb5](https://github.com/yaopl/yaopl/commit/12cc6fb5)). Compare protocols and hardware behavior; cap or adapt dynamically **without breaking throughput/retries**, and benchmark sustained reads. Review ATA/DEV9 initialization ordering ([2a79d23b](https://github.com/yaopl/yaopl/commit/2a79d23b)), USB-host shutdown ([15eee615](https://github.com/yaopl/yaopl/commit/15eee615)), and initial-link retry ([68de38f8](https://github.com/yaopl/yaopl/commit/68de38f8)). Our reconnect watchdog and SMB/UDPFS NIC interlocks already exist: preserve them.
+- [ ] **YA-09 MMCE Game ID switch settling.** In `src/mmcesupport.c`, transient negative busy statuses may end the wait after consecutive failures while an SD2PSX switches cards; YAOPL continues its bounded polling ([19578cc6](https://github.com/yaopl/yaopl/commit/19578cc6)). Compare with RiptOPL's more advanced tri-state, per-slot, Neutrino and user-START logic. Test fast/no-switch, 0.5–7.5s silence, unsupported status, dual slots, MX4SIO contention, VMC mask, timeout and START bypass. Never wait forever or regress no-MMCE boot.
+- [ ] **YA-10 Legacy-only `SYSTEM.CNF` guard.** In `src/ps2cnf.c`, `BOOT2` without `=` returns NULL, but the code only checks `-1`; port the null check from [YAOPL 43781768](https://github.com/yaopl/yaopl/commit/43781768). Cover EOF/missing token and valid BOOT2 lines.
+- [ ] **YA-11 Per-game PADEMU button remap.** Integrate safe/opt-in pressure-preserving DS3/DS4 L2/R2 ↔ Square/Cross and L2/R2 ↔ L1/R1 from [eb1a6c96](https://github.com/yaopl/yaopl/commit/eb1a6c96) and [ae8540cb](https://github.com/yaopl/yaopl/commit/ae8540cb). Wire settings storage, per-game load/serialize, macro ABI and the IOP remap in `modules/pademu/padmacro.c`; default OFF, physical DS2 unaffected. Track additional branch [fix/pademu-remap-igr](https://github.com/yaopl/yaopl/tree/fix/pademu-remap-igr) separately (not yet master at audit).
+
+### P2: presentation, localization and ongoing verification
+- [ ] **YA-12 Adaptive BDM index graphics**: use number and position of visible devices, retain legacy `Index_<mode>` graphics ([f84b227d](https://github.com/yaopl/yaopl/commit/f84b227d)), in `src/themes.c` and theme assets; no phantom dots when only one device is visible.
+- [ ] **YA-13 MMCE icon presentation**: compare dynamic page bar behavior with [5776873f](https://github.com/yaopl/yaopl/commit/5776873f); only change if the RiptOPL theme actually exhibits the jump.
+- [ ] **YA-14 Localization & release checks**: verify Russian/Persian/Cebuano strings, inclusion of Vietnamese/final entry, all RiptOPL-specific strings, and optional translation completeness documentation against [yaopl-lang](https://github.com/yaopl/yaopl-lang). Compare toolchain digest pinning and SHA256/release metadata without replacing RiptOPL's own ps2build release contract.
+
+## Verify-only queue — NOT established as missing, no automatic imports
+For every item, first write a failing host test or reproducible hardware case. If equivalent, mark **already covered** with evidence instead of modifying code:
+- [ ] ZSO unaligned BDM reads on MX4SIO; CDVDMAN media-size/out-of-bounds handling; Ratchet & Clank SMB/Korean/Japanese patches.
+- [ ] VMC cross-game aborted launch slot invalidation, split UL total fragment budget, duplicate slot errors, VMC Modify-size confirmation, save-card write failure/contiguity reporting.
+- [ ] NBD exit → reload/refresh → launch; ATA-ready/DEV9 ordering; USB `usbd_mini` pre-rewrite compatibility (Crash Bandicoot: Wrath of Cortex).
+- [ ] Read errors/device removal in file-buffer, config, theme, language, art and sound paths; config save error display, `conf_opl.cfg` non-truncating write-access probes, BGM format-string safety.
+- [ ] Theme missing-texture state, `GameCountText` length, missing `ItemsList`, scroll speed after dialogs, 29-second pad repeat wrap, UTF-8 and text rendering changes.
+- [ ] Compile/test [YAOPL's host reproductions](https://github.com/yaopl/yaopl/tree/master/labs/host-repro); port only missing cases. Review new YAOPL master changes after `3ea3a521` and [fix/udpbd-game-config](https://github.com/yaopl/yaopl/tree/fix/udpbd-game-config). The diverged experimental SMB/VMC/disc-semaphore branches require rebasing/retesting, **not** unreviewed copying.
+
+## Explicitly *already covered* in RiptOPL (don't duplicate)
+- [x] LBA48 zero-sector/65536 transfer fix; 2340-byte CDVD read bounds; PS2 logo exact 48-sector read.
+- [x] OPL-core UDPBD support; MMCE support; partial `ul.cfg` handling; short ISO filename guard; unsigned-byte USBA CRC.
+- [x] Cheat table *memory* bounds, cheat code digit buffer, no-LF cheat line bounds, duplicate-name selection (but see YA-05 semantics).
+- [x] VGA/GSM mode-index bounds and safe default; gray/gray-alpha PNG; default theme `ItemsList` recovery; game-count label sizing.
+- [x] VMC creation error semaphore safety: RiptOPL releases the abort lock **before** I/O and checks seek errors; do not replace with YAOPL's narrower patch.
+- [x] CWD-first language discovery, short filename guards; conditional SDK SIO2MAN packing for necessary consumers; VBLANK-sampled IGR (including RA hooks). Do NOT replace RiptOPL's RA-sensitive IGR with a general upstream variant.
+- [ ] Legacy `SYSTEM.CNF` missing-`=` guard is **not** covered (YA-10 above).
+
+## Review/implementation contract for the next agent
+1. Establish baseline head SHA and tests; label each box **missing**, **partial**, **equivalent**, **invalid finding**, or **blocked on hardware**. Re-check YAOPL commit provenance, license and changed files. Record exact target paths.
+2. Implement in **small, independently revertible commits** (ideally one YA task per PR/commit). Each change includes host regression test(s), a debug/log strategy where needed, release note and credit: `belomaxorka / YAOPL` plus source commit URL. Do not duplicate imported code without proper license/provenance.
+3. Before code review run existing build/test workflows for this legacy C edition; test **all** build flavors, especially RetroAchievements. Distinguish **compiles** from **hardware validated**. Do not claim full hardware parity based on PCSX2 or sanitizer tests.
+4. Hardware matrix: PS2 fat/slim; USB single and dual; MX4SIO/MMCE alone and together (two memory-card slots); iLink, APA, exFAT, SMB, UDPBD, UDPFS, PC-CARD where supported; official DS2 and DS3/DS4 PADEMU; IGR on/off/Mode 6; Neutrino vs native core; PS1 cores smoke test if shared transport/IOP logic changed. Confirm no new boot hangs, lost pads, corrupted saves, art regressions or cross-device stalls.
+5. Backward compatibility: keep existing CFG settings/default values and per-game overrides; avoid device-prefix semantic regressions and avoid silent long blocking waits. If a source change differs by edition, explain why explicitly.
+6. Keep this plan PR open for tracking until implemented and confirmed, or split into task PRs that reference it. On each successful implementation update the checkbox with PR, commit and test evidence. Never mark a candidate complete solely because code was cherry-picked.
+
+## Attribution
+Thank **[belomaxorka](https://github.com/belomaxorka)** and **[YAOPL](https://github.com/yaopl/yaopl)** for the compatibility investigations, backend fixes and host reproductions. Existing README/CREDITS and Applications/About acknowledgments are tracked separately; this plan neither changes those credits nor falsely claims that unmerged YAOPL patches are already in RiptOPL.
