@@ -112,6 +112,8 @@ int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *
 // spending the full recovery budget before defaults are shown. Explicit custom paths and save-time
 // re-resolution use bdmResolveBootDir() above.
 int bdmResolveBootDirBootstrap(char *bootDir, int bootDirSize, const char *elfName, int *ioBdmType);
+// The one slot other than literalSlot holding the booted ELF, or -1 when none or several do.
+int bdmPickBootElfSlot(int literalSlot, int slotCount, int (*elfAt)(int slot, void *ctx), void *ctx);
 
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void); // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
