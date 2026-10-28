@@ -24,6 +24,16 @@ An older plan can disagree with newer source. A README-only release announcement
 implementation evidence than a source diff. A new fork's name does not prove the named feature
 exists. A count of commits includes merges, tests and shared fixes; it is not a feature count.
 
+## October 28 status
+
+[Fork-gap status: 2026-10-28](FORK-GAP-STATUS-2026-10-28.md) supersedes the status of the table
+below. In short: the RIPPS2 audit of build 119 (`95299389`) credits **akilluminati47** for its
+findings, and the owner agreed a port plan (PRs A to H) on 2026-10-28 in which every port lands in
+both this repository and [RiptOPL](https://github.com/NathanNeurotic/RiptOPL). The MMCE busy wait
+and RIPPS2's artwork aliases are in that plan (PRs A and B); external-Neutrino option detection is
+not scheduled. The pad fixes and the `imgdrv` rename were declined, as were disc ripping, the CD
+player and every HDD partition change. No port PR is open yet, and nothing is tested on hardware.
+
 ## October 25 candidate triage
 
 | Candidate | Practical next work | Main regression risk |
