@@ -202,9 +202,8 @@ jobs:
           git add retroachievements.html data/search-index.json index.html releases.html
           # site_sync.py skips an --md-page whose page is not on gh-pages yet; `git add` of a missing
           # file would fail the step instead.
-          for page in ps2sdk-notes.html library.html; do
-            if [ -e "$page" ]; then git add "$page"; fi
-          done
+          if [ -e ps2sdk-notes.html ]; then git add ps2sdk-notes.html; fi
+          if [ -e library.html ]; then git add library.html; fi
           if git diff --cached --quiet; then
             echo "Search index and Markdown-built pages already up to date."
             exit 0
