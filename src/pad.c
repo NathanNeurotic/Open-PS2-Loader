@@ -6,6 +6,7 @@
 
 #include "include/opl.h"
 #include "include/pad.h"
+#include "include/diaglog.h" // the hardware log, DIAG.TXT (RIPPS2 build 115)
 #include "include/ioman.h"
 #include <libpad.h>
 #include <timer.h>
@@ -45,6 +46,7 @@ struct pad_data_t
     int actuators;
     int actAligned; // padSetActAlign confirmed; see padRumbleRealign()
     int needsInit;  // reconnect-edge re-init pending; runs once the verified-idle gate opens (see readPads)
+    int readOk;     // the last native read delivered a sample (padGetRightStick trusts no older one)
 };
 
 /// milliseconds between the last two polls (see padPollElapsedMs)
@@ -76,6 +78,27 @@ void padGetFaultCounters(u32 *maxNotReady, u32 *maxReadyEmpty)
 
 static unsigned short pad_count;
 static struct pad_data_t pad_data[MAX_PADS];
+
+// The right stick of the first pad that reads in analog mode, -128..127 each way (0, 0 inside the dead zone, or when
+// no pad has a fresh analog sample). Dialogs slide a long page with it. From RIPPS2 builds 89 and 115 (akilluminati47):
+// a pad still being re-checked (FINDCTP1) sends analog data too, and a missed read's old sample would keep tilting.
+void padGetRightStick(int *x, int *y)
+{
+    int i;
+    *x = 0;
+    *y = 0;
+    for (i = 0; i < pad_count && i < MAX_PADS; i++) {
+        struct pad_data_t *pad = &pad_data[i];
+        if ((pad->state != PAD_STATE_STABLE && pad->state != PAD_STATE_FINDCTP1) || (pad->buttons.mode >> 4) != 0x07 || !pad->readOk)
+            continue;
+        int sh = (int)pad->buttons.rjoy_h - 128, sv = (int)pad->buttons.rjoy_v - 128;
+        if (sh * sh + sv * sv > 24 * 24) {
+            *x = sh;
+            *y = sv;
+        }
+        return;
+    }
+}
 
 void padGetActuatorDiag(int *act0, int *aligned0, int *act1, int *aligned1)
 {
@@ -389,6 +412,7 @@ static int readPad(struct pad_data_t *pad, int *pollClean)
     if ((pad->state == PAD_STATE_STABLE) || (pad->state == PAD_STATE_FINDCTP1)) {
         // pad is connected. Read pad button information.
         ret = padRead(pad->port, pad->slot, &pad->buttons); // port, slot, buttons
+        pad->readOk = ret != 0;
 
         if (ret != 0) {
             newpdata = 0xffff ^ pad->buttons.btns;
@@ -448,6 +472,8 @@ static int readPad(struct pad_data_t *pad, int *pollClean)
         if (gPadNotReadyRun > gPadMaxNotReadyRun)
             gPadMaxNotReadyRun = gPadNotReadyRun;
     } else {
+        if (gPadNotReadyRun >= 4) // a press spans 4-6 frames, so a run this long can swallow one
+            diagLog("pad: %u polls in a row could not be read", (unsigned)gPadNotReadyRun);
         gPadNotReadyRun = 0;
         if (newpdata == 0x0) {
             gPadEmptyRun++;

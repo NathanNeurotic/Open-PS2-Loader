@@ -141,7 +141,7 @@ gui_strings:
 - label: ERROR_LOADING_ID
   string: Error while loading the Game ID.
 - label: AUTOSORT
-  string: Sort Games Alphabetically
+  string: Sort Games
 - label: ERR_LOADING_LANGFILE
   string: Error loading the language file.
 - label: DEBUG
@@ -1518,7 +1518,7 @@ gui_strings:
 - label: HINT_NOTIFICATIONS
   string: "Brief notices when a config, theme or language file loads."
 - label: HINT_AUTOSORT
-  string: "Sorts game lists A to Z. Off keeps the order they were found."
+  string: "A to Z sorts game lists by title. Last played puts the last 10 games played first, newest first, with the rest A to Z beneath. Off keeps the order they were found."
 - label: HINT_AUTOREFRESH
   string: "Adds games from newly connected devices without a manual refresh."
 - label: HINT_COVERART
@@ -1912,6 +1912,85 @@ gui_strings:
 - label: HINT_VMC_REBUILD
   string: "Copies this card into one unbroken file the native core can use. The old card is kept as a .bak file."
 
+- comment: VMC dialog button (RIPPS2) that opens the list of saves inside the card, and that dialog's title.
+  label: VMC_SAVES
+  string: Saves
+
+- label: HINT_VMC_SAVES
+  string: "The saves on this card. Copy them to a folder on the drive, copy saves back in, or delete one."
+
+- comment: VMC Saves dialog row, the saves on the card.
+  label: VMC_ON_CARD
+  string: On the card
+
+- label: HINT_VMC_ON_CARD
+  string: "Pick a save on the card with Up and Down, then Copy out or Delete."
+
+- comment: VMC Saves dialog row, the card's free space.
+  label: VMC_FREE
+  string: Free
+
+- comment: VMC Saves dialog row, the save folders next to the card.
+  label: VMC_IN_FOLDER
+  string: In the folder
+
+- label: HINT_VMC_IN_FOLDER
+  string: "Pick a save folder with Up and Down, then Copy in."
+
+- comment: VMC Saves dialog row, the folder that holds the copied-out saves.
+  label: VMC_FOLDER
+  string: Folder
+
+- comment: VMC Saves dialog button, copies the picked save from the card into the folder.
+  label: VMC_EXPORT
+  string: Copy out
+
+- label: HINT_VMC_EXPORT
+  string: "Copies the picked save into the folder, as a save folder of its own. The card is not changed."
+
+- comment: VMC Saves dialog button, copies the picked save folder into the card.
+  label: VMC_IMPORT
+  string: Copy in
+
+- label: HINT_VMC_IMPORT
+  string: "Copies the picked save folder onto the card."
+
+- label: HINT_VMC_SAVE_DELETE
+  string: "Deletes the picked save from the card."
+
+- comment: VMC Saves dialog. 1st %s is the save's folder name, 2nd the folder it was copied to.
+  label: VMC_SAVE_EXPORTED
+  string: "%s was copied to %s."
+
+- comment: VMC Saves dialog. %s is the save's folder name.
+  label: VMC_SAVE_IMPORTED
+  string: "%s was copied onto the card."
+
+- comment: VMC Saves dialog. %s is the save's folder name.
+  label: VMC_SAVE_DELETE_CONFIRM
+  string: "Delete %s from this card? This cannot be undone."
+
+- label: VMC_SAVES_ERR_NOT_CARD
+  string: "This file is not a PS2 memory card image this can read."
+
+- label: VMC_SAVES_ERR_READ_ONLY
+  string: "This card image has ECC data (a PCSX2 card). Its saves can be copied out, but it cannot be changed here."
+
+- label: VMC_SAVES_ERR_NO_ROOM
+  string: "There is not enough free space on the card for this save."
+
+- label: VMC_SAVES_ERR_EXISTS
+  string: "A save with that name is already there."
+
+- label: VMC_SAVES_ERR_TOO_BIG
+  string: "This save is too big for a memory card, has more than 64 files, or has a name longer than 32 characters."
+
+- label: VMC_SAVES_ERR_WRITE
+  string: "The save could not be written. Is the drive full or write-protected?"
+
+- label: VMC_SAVES_ERR_READ
+  string: "The card image could not be read, or its tables are damaged."
+
 - label: VMC_FILE_NEEDS_REBUILD
   string: "Too fragmented for the native core"
 
@@ -1955,6 +2034,16 @@ gui_strings:
   string: "Font Size"
 - label: HINT_FONT_SIZE
   string: "Size of standard menu text. Theme fonts with other point sizes keep their original size."
+- label: GLYPH_SET
+  string: Button Glyphs
+- label: HINT_GLYPH_SET
+  string: "The button pictures in hints. Theme uses the theme's own (or its glyph_set key); the others replace them on every theme."
+- label: GLYPHS_BUILTIN
+  string: Built-in
+- label: GLYPHS_STANDARD
+  string: Standard
+- label: GLYPHS_WHITE
+  string: White
 
 - label: RA_BADGE_POS
   string: RA mark in game list
@@ -1967,3 +2056,173 @@ gui_strings:
 
 - label: HINT_RA_BADGE_SUFFIX
   string: "Prefix puts \"RA \" before the name. Suffix puts \" [RA]\" after it. Both keep alphabetical order."
+
+- comment: Shown while an MMCE (SD2PSX) loads or creates the game's memory card after a Game ID switch. %d is seconds waited.
+  label: MMCE_GAMEID_CARD_WAIT
+  string: "The MMCE is getting this game's memory card ready (%d s). The game starts when it is done; START starts it now."
+
+- comment: Asked before a POPSTARTER (PS1) launch when Sony's POPS files are missing. 1st %s is the missing files, then the device root and the POPS folder name.
+  label: POPS_FILES_MISSING
+  string: "POPSTARTER needs Sony's POPS files and these are missing: %s (in %s%s). Without them the game shows a black screen. Launch anyway?"
+
+- comment: Asked before a POPSTARTER (PS1) launch when this drive lacks Sony's POPS files and another drive has them (RIPPS2 RIPPOPS). 1st %s is the folder they were found in, 2nd the files to copy, then the device root and the POPS folder name.
+  label: POPS_COPY_OFFER
+  string: "Sony's POPS files are in %s. Copy %s to %s%s and launch?"
+
+- comment: Shown while one POPS file is copied before a PS1 launch. %s is the file name.
+  label: POPS_COPYING
+  string: Copying %s...
+
+- comment: A POPS file could not be copied before a PS1 launch. 1st %s is the file, then the device root and the POPS folder name.
+  label: POPS_COPY_FAILED
+  string: "%s could not be copied to %s%s. Is the drive full or write-protected?"
+
+- comment: Sort Games choice (Settings, Interface). Sorts game lists by title.
+  label: SORT_AZ
+  string: A to Z
+
+- comment: Sort Games choice. The last 10 games played lead the list, newest first.
+  label: SORT_LAST_PLAYED
+  string: Last played
+
+- comment: Toast when L3 on the Favorites tab lands on the recently played list.
+  label: VIEW_RECENT
+  string: Showing recently played
+
+- comment: Start menu item that moves the cursor to a random game on the current page.
+  label: RANDOM_GAME
+  string: Random Game
+
+- comment: Shown when Random Game finds nothing to pick on the current page.
+  label: RANDOM_GAME_NONE
+  string: No games on this page to pick from.
+
+- comment: Tab name of the one list of every game (the Favorites page while All Games List is on).
+  label: ALL_GAMES
+  string: All Games
+
+- comment: Game Sources setting that turns the All Games page on.
+  label: ALL_GAMES_LIST
+  string: All Games List
+
+- label: HINT_ALL_GAMES
+  string: "One page lists the games of every started device, PS2, PS1 and apps together. Device tabs step aside once their games are on it. A game on two devices shows each device's name. L3 cycles All, PS2, PS1, Apps, Favorites and Recent."
+
+- comment: Toast when L3 on the All Games page lands on every game.
+  label: VIEW_ALL_GAMES
+  string: Showing all games
+
+- comment: Toast when L3 on the All Games page lands on the favorites.
+  label: VIEW_FAVORITES
+  string: Showing favorites
+
+- comment: Game menu item that takes a game off every list (RIPPS2 Hide Game).
+  label: HIDE_GAME
+  string: Hide Game
+
+- comment: Game menu item on a hidden game listed by Show Hidden Games.
+  label: UNHIDE_GAME
+  string: Show Game Again
+
+- comment: Asked before a game is hidden. %s is the game's name.
+  label: HIDE_GAME_CONFIRM
+  string: "Hide %s? It leaves every list, All Games and Favorites too. Settings > Game Sources > Show Hidden Games lists it again."
+
+- comment: Toast after a game is hidden. %s is the game's name.
+  label: GAME_HIDDEN
+  string: "Hidden: %s"
+
+- comment: Toast after a hidden game is shown again. %s is the game's name.
+  label: GAME_UNHIDDEN
+  string: "Shown again: %s"
+
+- comment: The hidden list (hidden.txt on the game's device) could not be written.
+  label: HIDDEN_SAVE_FAILED
+  string: The hidden list could not be written to the game's device. Is it write-protected?
+
+- comment: The game's device keeps no hidden list (the network catalogue).
+  label: HIDDEN_NO_LIST
+  string: This device cannot keep a hidden list.
+
+- comment: Game Sources setting that lists hidden games anyway.
+  label: SHOW_HIDDEN_GAMES
+  string: Show Hidden Games
+
+- label: HINT_SHOW_HIDDEN_GAMES
+  string: "Lists the games hidden with Hide Game, so one can be shown again from its menu. Each device keeps its own hidden.txt."
+
+- comment: First of the two questions before a game is deleted. %s is the game's name, then the numbers of files that go.
+  label: DELETE_GAME_PLAN
+  string: "Delete %s? Goes: %d game file(s), %d settings file(s), %d art image(s) and %d cheat file(s). Kept: its VMC saves."
+
+- comment: Added to DELETE_GAME_PLAN when another copy of the game on the same device keeps its settings, art and cheats.
+  label: DELETE_GAME_SHARED
+  string: Another copy of this game is on this device, so its settings, art and cheats stay.
+
+- comment: Second question before a game is deleted. %s is the game's name.
+  label: DELETE_GAME_LAST_CHECK
+  string: "Last check: %s is deleted for good and cannot be brought back. Delete it?"
+
+- comment: Toast after a game is deleted. %s is the game's name.
+  label: GAME_DELETED
+  string: "Deleted: %s"
+
+- comment: The game was deleted but some of its settings, art or cheat files could not be. %s is the game's name.
+  label: GAME_DELETED_PARTLY
+  string: "Deleted %s, but some of its settings, art or cheat files could not be removed."
+
+- comment: The game's files could not be deleted. %s is the game's name.
+  label: GAME_DELETE_FAILED
+  string: "%s could not be deleted. Is the device write-protected?"
+
+- comment: Main menu item and page title for the drive status page (RIPPS2 build 114).
+  label: DRIVE_STATUS
+  string: Drive Status
+
+- comment: Shown while Drive Status asks each drive about itself.
+  label: DRIVE_STATUS_SCANNING
+  string: Looking at the drives...
+
+- comment: Drive Status, after a drive's name. 1st %s free space, 2nd %s total size, 3rd %s format (exFAT, FAT32), 4th %s cluster size.
+  label: DRIVE_STATUS_SPACE
+  string: "%s free of %s (%s, %s clusters)"
+
+- comment: Drive Status, a BDM drive whose driver is the internal HDD formatted exFAT.
+  label: DRIVE_STATUS_EXFAT_HDD
+  string: internal HDD (exFAT)
+
+- comment: Drive Status, a BDM drive whose driver did not say what it is.
+  label: DRIVE_STATUS_UNKNOWN
+  string: a drive of unknown kind
+
+- comment: Drive Status, the internal HDD with APA partitions. 1st %s free space, 2nd %s total size.
+  label: DRIVE_STATUS_HDD
+  string: "Internal HDD (APA): %s free of %s"
+
+- comment: Drive Status, a PS2 memory card. %d the slot (1 or 2), then its free space in KB.
+  label: DRIVE_STATUS_MC
+  string: "Memory card %d: %d KB free"
+
+- comment: Drive Status when no drive is started yet.
+  label: DRIVE_STATUS_NONE
+  string: No drive is started yet. Start one from its page, or set it to Auto in Settings.
+
+- comment: Drive Status, last line. %s is the folder the settings are read from and saved to.
+  label: DRIVE_STATUS_SETTINGS
+  string: "Settings: %s"
+
+- comment: Drive Status button that writes the hardware log to DIAG.TXT.
+  label: SAVE_DIAGNOSTICS
+  string: Save Diagnostics
+
+- comment: Hint for the Save Diagnostics button.
+  label: HINT_SAVE_DIAGNOSTICS
+  string: Writes what OPL noted about the pads, the drives, MMCE cards and the last launches to DIAG.TXT in the settings folder. Send it with a bug report.
+
+- comment: After Save Diagnostics. %s is the file's path.
+  label: DIAG_SAVED
+  string: "The diagnostics are in %s."
+
+- comment: Save Diagnostics could not write the file. %s is the file's path.
+  label: DIAG_SAVE_FAILED
+  string: "The diagnostics could not be written to %s. Is the device write-protected?"

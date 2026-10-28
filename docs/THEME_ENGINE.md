@@ -241,6 +241,8 @@ Colors are 8-bit-per-channel hex; alpha is fixed internally.
 | `font1` … `font15` | font file path | Extra fonts; each defaults to `default_font` if not set. |
 | `default_font_size` | int (px) | Size for the default font. |
 | `font1_size` … `font15_size` | int (px) | Per-font sizes. |
+| `default_font_weight` | 100–900 | Draws the default font heavier. A variable font follows its `wght` axis within its range. A static font, or a weight past a variable font's range, has its outlines grown in code (about 1 px at 18 px for every 300 units). Omit the key for the font's own weight. *From RIPPS2 build 114.* |
+| `font1_weight` … `font15_weight` | 100–900 | The same, per font. |
 
 Reference a font from an element with `font=N` (0 = default). Use `font1=builtin` to force the
 embedded font for a slot.
@@ -253,6 +255,27 @@ embedded font for a slot.
 | `use_default` | 0/1 | Use OPL's embedded default assets for anything the theme omits. |
 | `use_real_height` | 0/1 | Lay out against the real screen height instead of 480. |
 | `use_settings_bg` | 0/1 | Load the theme's `settings_bg.png` behind the settings menus. |
+
+### Button hints and glyphs
+
+These keys come from RIPPS2 (akilluminati47, build 90). A theme that sets none of them draws the hint bar
+exactly as before.
+
+| Key | Value | Meaning |
+|---|---|---|
+| `glyph_set` | `theme` / `builtin` / `standard` / `white` | The button pictures every hint draws. `theme` (the default) uses the theme's own glyph PNGs, with the built-in ones filling gaps when `use_default=1`. `builtin` uses the built-in glyphs. `standard` and `white` are two sets built into the ELF, drawn from RIPPS2's Adapt and Grunge themes. **Settings → Interface → Button Glyphs** overrides this on every theme; its **Theme** choice follows this key. |
+| `hints_hide` | hint list | Hints the theme leaves off the bar, e.g. `hints_hide=star,view`. |
+| `hints_order` | hint list | These hints come first, in this order. The rest follow in the order the page adds them. Example: `hints_order=run,info,menu`. |
+| `hints_labels` | 0/1 | `0` draws the glyphs alone, without the labels. `1` (the default) draws a glyph and its label. |
+| `hints_layout` | `row` / `column` | `column` draws one hint a line, down from the `HintText` element's `x`/`y`. A column that would run off the bottom ends on the last line instead. `row` is the default. |
+| `hints_spacing` | int, 12–96 (default 28) | The line pitch of a column. |
+
+A hint list names hints by what they do: `menu`, `run`, `info`, `options`, `refresh`, `star` (Favourite) and
+`view` (the L3 view toggle). Their buttons work too: `start`, `select`, `r3`, `l3`, `cross`, `circle`, `square`
+and `triangle`. Separate the names with commas or spaces. Unknown names are skipped, and a name given twice keeps its
+first place.
+
+The glyph slots a set replaces are cross, circle, square, triangle, start, select, L1, R1, L3, R3, left and right.
 
 ---
 

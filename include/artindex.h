@@ -47,6 +47,12 @@ void artIndexSetOwnerThread(int threadId);
  */
 int artIndexMayExist(const char *fullPath);
 
+/* RIPPS2 build 115 (akilluminati47): a picture by its path WITHOUT extension ("mass0:ART/SLUS_123.45_COV"),
+ * in any letter case and as .png, .jpg or .jpeg (a .png wins). 1 = found, and out holds the name the device
+ * lists, which is what PFS needs since it minds letter case; 0 = definitely none (the listing was complete);
+ * -1 = don't know (no listing, names not kept, wrong thread, SMB/UDPFS): probe the device as before. */
+int artIndexFindPicture(const char *stemPath, char *out, int outSize);
+
 /* Drop every cached listing. Call wherever the "art may have appeared" epoch is bumped -- a device
  * generation change or a deliberate settings apply -- so a stick with new art on it is picked up.
  * Cheap, and safe from any thread. */

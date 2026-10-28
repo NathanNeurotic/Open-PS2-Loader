@@ -21,6 +21,7 @@
 #include "include/ds34common.h"
 #include "include/vmc_groups.h"
 #include "include/vmcrebuild.h"
+#include "include/vmcsaves.h"
 
 #ifdef PADEMU
 #include <libds34bt.h>
@@ -172,6 +173,8 @@ static int guiGameRefreshVMCConfig(item_list_t *support, char *name)
 
         diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_MODIFY));
         diaSetVisible(diaVMC, VMC_BUTTON_DELETE, 1);
+        diaSetVisible(diaVMC, VMC_BUTTON_SAVES, 1);
+        diaSetEnabled(diaVMC, VMC_BUTTON_SAVES, 1);
         if (gEnableWrite) {
             diaSetEnabled(diaVMC, VMC_SIZE, 1);
             diaSetEnabled(diaVMC, VMC_BUTTON_CREATE, 1);
@@ -189,6 +192,8 @@ static int guiGameRefreshVMCConfig(item_list_t *support, char *name)
         diaSetEnabled(diaVMC, VMC_SIZE, 1);
         diaSetEnabled(diaVMC, VMC_BUTTON_CREATE, 1);
         diaSetVisible(diaVMC, VMC_BUTTON_DELETE, 0);
+        diaSetVisible(diaVMC, VMC_BUTTON_SAVES, 0);
+        diaSetEnabled(diaVMC, VMC_BUTTON_SAVES, 0);
     }
 
     return size;
@@ -290,6 +295,138 @@ static int guiGameCreateVMC(item_list_t *support, char *name, int size, int core
     if (support->itemCreateVMC != NULL)
         return support->itemCreateVMC(support, name, size, core != 1);
     return support->itemCheckVMC(support, name, size);
+}
+
+// VMC > Saves (RIPPS2 builds 98-115, akilluminati47): the saves on the card beside the save folders in
+// <the card's folder>SAVES/, copied either way, or deleted off the card. vmcsaves.c does the card.
+#define VMCSAVES_SHOWN 64
+
+static vmc_save_t vmcSavesCard[VMCSAVES_SHOWN], vmcSavesFolder[VMCSAVES_SHOWN];
+static const char *vmcSavesCardItems[VMCSAVES_SHOWN + 1], *vmcSavesFolderItems[VMCSAVES_SHOWN + 1];
+static int vmcSavesCardCount, vmcSavesFolderCount;
+
+static int guiGameVMCSavesErrorText(void)
+{
+    switch (vmcSavesError()) {
+        case VMCSAVES_ERR_NOT_CARD:
+            return _STR_VMC_SAVES_ERR_NOT_CARD;
+        case VMCSAVES_ERR_READ_ONLY:
+            return _STR_VMC_SAVES_ERR_READ_ONLY;
+        case VMCSAVES_ERR_NO_ROOM:
+            return _STR_VMC_SAVES_ERR_NO_ROOM;
+        case VMCSAVES_ERR_EXISTS:
+            return _STR_VMC_SAVES_ERR_EXISTS;
+        case VMCSAVES_ERR_TOO_BIG:
+        case VMCSAVES_ERR_NAME:
+            return _STR_VMC_SAVES_ERR_TOO_BIG;
+        case VMCSAVES_ERR_WRITE:
+            return _STR_VMC_SAVES_ERR_WRITE;
+        default:
+            return _STR_VMC_SAVES_ERR_READ;
+    }
+}
+
+// A list's row: the save's title, or its folder name when it has none
+static void guiGameVMCSavesItems(vmc_save_t *saves, int count, const char **items)
+{
+    int i;
+
+    for (i = 0; i < count; i++)
+        items[i] = saves[i].title[0] != '\0' ? saves[i].title : saves[i].name;
+    items[count] = NULL;
+}
+
+static void guiGameRefreshVMCSaves(const char *card, const char *folder, int cardWritable)
+{
+    static char freeText[32];
+    unsigned int freeKb = 0;
+    int cur;
+
+    vmcSavesCardCount = vmcSavesList(card, vmcSavesCard, VMCSAVES_SHOWN, &freeKb);
+    if (vmcSavesCardCount < 0)
+        vmcSavesCardCount = 0;
+    vmcSavesFolderCount = vmcSavesListFolder(folder, vmcSavesFolder, VMCSAVES_SHOWN);
+    guiGameVMCSavesItems(vmcSavesCard, vmcSavesCardCount, vmcSavesCardItems);
+    guiGameVMCSavesItems(vmcSavesFolder, vmcSavesFolderCount, vmcSavesFolderItems);
+    diaSetEnum(diaVMCSaves, VMCSAVES_CARD, vmcSavesCardItems);
+    diaSetEnum(diaVMCSaves, VMCSAVES_FOLDER, vmcSavesFolderItems);
+    if (diaGetInt(diaVMCSaves, VMCSAVES_CARD, &cur) && cur >= vmcSavesCardCount)
+        diaSetInt(diaVMCSaves, VMCSAVES_CARD, 0);
+    if (diaGetInt(diaVMCSaves, VMCSAVES_FOLDER, &cur) && cur >= vmcSavesFolderCount)
+        diaSetInt(diaVMCSaves, VMCSAVES_FOLDER, 0);
+    snprintf(freeText, sizeof(freeText), "%u KB", freeKb);
+    diaSetLabel(diaVMCSaves, VMCSAVES_FREE, freeText);
+    // copying out writes to the drive; copying in and deleting write to the card
+    diaSetEnabled(diaVMCSaves, VMCSAVES_EXPORT, gEnableWrite && vmcSavesCardCount > 0);
+    diaSetEnabled(diaVMCSaves, VMCSAVES_IMPORT, cardWritable && vmcSavesFolderCount > 0);
+    diaSetEnabled(diaVMCSaves, VMCSAVES_DELETE, cardWritable && vmcSavesCardCount > 0);
+}
+
+// pfs0: is write-back: what an action wrote (the card, or a save copied out beside it) is only in PFS's RAM
+// cache until it is synced, so commit it before the dialog moves on
+static void guiGameVMCSavesSync(const char *path)
+{
+    char device[16];
+    const char *colon = strchr(path, ':');
+
+    if (strncmp(path, "pfs", 3) || colon == NULL || (size_t)(colon - path) + 1 >= sizeof(device))
+        return;
+    memcpy(device, path, colon - path + 1);
+    device[colon - path + 1] = '\0';
+    if (fileXioSync(device, 0) < 0)
+        LOG("VMC saves: sync of %s failed\n", device);
+}
+
+static void guiGameShowVMCSaves(const char *card)
+{
+    static char folder[256];
+    char msg[256];
+    const char *slash = strrchr(card, '/');
+    int probe, cardWritable, result = -1, pick, r;
+
+    if (slash == NULL || (unsigned int)snprintf(folder, sizeof(folder), "%.*sSAVES/", (int)(slash - card + 1), card) >= sizeof(folder))
+        return;
+    probe = vmcSavesProbe(card);
+    if (probe == 0) {
+        guiMsgBox(_l(guiGameVMCSavesErrorText()), 0, diaVMC);
+        return;
+    }
+    cardWritable = probe == 1 && gEnableWrite; // 2: an image with ECC, read only here
+    diaSetLabel(diaVMCSaves, VMCSAVES_PATH, folder);
+    diaSetInt(diaVMCSaves, VMCSAVES_CARD, 0);
+    diaSetInt(diaVMCSaves, VMCSAVES_FOLDER, 0);
+    guiGameRefreshVMCSaves(card, folder, cardWritable);
+    if (probe == 2)
+        guiMsgBox(_l(_STR_VMC_SAVES_ERR_READ_ONLY), 0, diaVMCSaves);
+
+    while ((result = diaExecuteDialog(diaVMCSaves, result, 1, NULL)) > UIID_BTN_CANCEL) {
+        if (result == VMCSAVES_EXPORT && diaGetInt(diaVMCSaves, VMCSAVES_CARD, &pick) && pick < vmcSavesCardCount) {
+            r = vmcSavesExport(card, vmcSavesCard[pick].name, folder);
+            guiGameVMCSavesSync(folder);
+            if (r == 1) {
+                snprintf(msg, sizeof(msg), _l(_STR_VMC_SAVE_EXPORTED), vmcSavesCard[pick].name, folder);
+                guiMsgBox(msg, 0, diaVMCSaves);
+            } else
+                guiMsgBox(_l(guiGameVMCSavesErrorText()), 0, diaVMCSaves);
+        } else if (result == VMCSAVES_IMPORT && diaGetInt(diaVMCSaves, VMCSAVES_FOLDER, &pick) && pick < vmcSavesFolderCount) {
+            r = vmcSavesImport(folder, vmcSavesFolder[pick].name, card);
+            guiGameVMCSavesSync(card);
+            if (r == 1) {
+                snprintf(msg, sizeof(msg), _l(_STR_VMC_SAVE_IMPORTED), vmcSavesFolder[pick].name);
+                guiMsgBox(msg, 0, diaVMCSaves);
+            } else
+                guiMsgBox(_l(guiGameVMCSavesErrorText()), 0, diaVMCSaves);
+        } else if (result == VMCSAVES_DELETE && diaGetInt(diaVMCSaves, VMCSAVES_CARD, &pick) && pick < vmcSavesCardCount) {
+            snprintf(msg, sizeof(msg), _l(_STR_VMC_SAVE_DELETE_CONFIRM), vmcSavesCard[pick].name);
+            if (guiMsgBox(msg, 1, diaVMCSaves)) {
+                r = vmcSavesDelete(card, vmcSavesCard[pick].name);
+                guiGameVMCSavesSync(card);
+                if (!r)
+                    guiMsgBox(_l(guiGameVMCSavesErrorText()), 0, diaVMCSaves);
+            }
+        }
+        guiGameRefreshVMCSaves(card, folder, cardWritable);
+    }
 }
 
 static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *configSet, char *VMCName, int slot, int validate)
@@ -404,6 +541,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                     diaSetEnabled(diaVMC, VMC_SIZE, 0);
                     diaSetEnabled(diaVMC, VMC_BUTTON_DELETE, 0);
                     diaSetEnabled(diaVMC, VMC_BUTTON_REBUILD, 0);
+                    diaSetEnabled(diaVMC, VMC_BUTTON_SAVES, 0);
                     diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_ABORT));
                     diaSetEnabled(diaVMC, VMC_BUTTON_CREATE, 1);
                     vmc_operation = OPERATION_CREATING;
@@ -411,6 +549,10 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                 } else
                     guiMsgBox(_l(guiGameVMCRebuildMessage(started)), 0, diaVMC);
             }
+        } else if (result == VMC_BUTTON_SAVES && vmc_operation == OPERATION_CREATE) {
+            char card[256];
+            if (guiGameVMCCardPath(id, support, vmc, card, sizeof(card)))
+                guiGameShowVMCSaves(card);
         } else if (result == VMC_BUTTON_DELETE && vmc_operation == OPERATION_CREATE) {
             if (guiMsgBox(_l(_STR_DELETE_WARNING), 1, diaVMC)) {
                 support->itemCheckVMC(support, vmc, -1);

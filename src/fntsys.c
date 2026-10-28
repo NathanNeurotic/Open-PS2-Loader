@@ -11,12 +11,71 @@
 #include "include/utf8.h"
 #include "include/util.h"
 #include "include/atlas.h"
+#include "include/textshape.h"
 
 #include <sys/types.h>
 #include <time.h> // clock(): fntRenderStringFit's scroll timing
 #include <ft2build.h>
 
 #include FT_FREETYPE_H
+#include FT_MODULE_H
+#include FT_MULTIPLE_MASTERS_H // a variable face's weight
+#include FT_TRUETYPE_TABLES_H  // a face's own weight (OS/2)
+#include FT_OUTLINE_H          // a static face drawn heavier
+
+// FT_Init_FreeType and FT_Done_FreeType sit in ftinit.c beside the table of every module the library was
+// built with, so calling either links all of them (Type 1, CID, PCF, BDF, PFR, Windows FNT, SDF, SVG...).
+// Fonts here are TrueType and OpenType (.ttf/.otf), so register only what those need.
+// Ported from RIPPS2 build 114 (akilluminati47/RIPPS2, fntsys.c fntNewLibrary).
+extern const FT_Module_Class autofit_module_class;
+extern const FT_Module_Class tt_driver_class;
+extern const FT_Module_Class cff_driver_class;
+extern const FT_Module_Class psaux_module_class; // CFF needs psaux, psnames and pshinter
+extern const FT_Module_Class psnames_module_class;
+extern const FT_Module_Class pshinter_module_class;
+extern const FT_Module_Class sfnt_module_class;
+extern const FT_Module_Class ft_smooth_renderer_class;
+FT_Memory FT_New_Memory(void);         // ftsystem.c, as FT_Init_FreeType uses it
+void FT_Done_Memory(FT_Memory memory); // and as FT_Done_FreeType frees it
+
+static FT_Memory fntMemory; // FT_LibraryRec is opaque outside FreeType, so remember it for fntDoneLibrary
+
+static FT_Error fntNewLibrary(FT_Library *library)
+{
+    static const FT_Module_Class *const modules[] = {
+        &autofit_module_class, &tt_driver_class, &cff_driver_class, &psaux_module_class,
+        &psnames_module_class, &pshinter_module_class, &sfnt_module_class, &ft_smooth_renderer_class};
+    FT_Memory memory = FT_New_Memory();
+    FT_Error error;
+    unsigned int i;
+
+    if (memory == NULL)
+        return FT_Err_Out_Of_Memory;
+    if ((error = FT_New_Library(memory, library)) != 0) {
+        FT_Done_Memory(memory);
+        return error;
+    }
+    for (i = 0; i < sizeof(modules) / sizeof(modules[0]); i++) {
+        if ((error = FT_Add_Module(*library, modules[i])) != 0) {
+            FT_Done_Library(*library);
+            *library = NULL; // fntEnd must not free it again
+            FT_Done_Memory(memory);
+            return error;
+        }
+    }
+    // No FT_Set_Default_Properties: it is in ftinit.c too, and only reads a FREETYPE_PROPERTIES
+    // environment variable a PS2 never has.
+    fntMemory = memory;
+    return 0;
+}
+
+static void fntDoneLibrary(FT_Library library)
+{
+    FT_Done_Library(library);
+    if (fntMemory != NULL)
+        FT_Done_Memory(fntMemory);
+    fntMemory = NULL;
+}
 
 extern void *poeveticanew_raw;
 extern int size_poeveticanew_raw;
@@ -73,6 +132,9 @@ typedef struct
     int isValid;
 
     int fontSize;
+
+    /// the weight a theme asked for (100 to 900; 0 the face's own), and how much the outlines grow to reach it
+    int weight, embolden;
 
     /// Texture atlases (default to NULL)
     atlas_t *atlases[ATLAS_MAX];
@@ -231,6 +293,68 @@ static void fntDestroyCLUT()
     fontClut.Clut = NULL;
 }
 
+// A face drawn at a weight (RIPPS2 build 114, akilluminati47). A variable face (a wght axis) takes it as designed,
+// within its range; a face asked to be heavier than it can be (a static face, or past a variable one's range) has its
+// outlines grown in code, about 1 px at 18 px for 300 weight units.
+static int fntFaceOwnWeight(FT_Face face)
+{
+    TT_OS2 *os2 = face != NULL ? (TT_OS2 *)FT_Get_Sfnt_Table(face, FT_SFNT_OS2) : NULL;
+    return os2 != NULL && os2->usWeightClass >= 100 && os2->usWeightClass <= 1000 ? os2->usWeightClass : 400;
+}
+
+static int fntFaceSetWeight(FT_Library library, FT_Face face, int weight) // the weight the face now draws at
+{
+    FT_MM_Var *mm = NULL;
+    FT_Fixed coords[8];
+    unsigned i, n;
+    int drawn = fntFaceOwnWeight(face);
+
+    if (face == NULL || !FT_HAS_MULTIPLE_MASTERS(face) || FT_Get_MM_Var(face, &mm) != 0)
+        return drawn;
+    n = mm->num_axis < 8 ? mm->num_axis : 8;
+    for (i = 0; i < n; i++) {
+        coords[i] = mm->axis[i].def;
+        if (mm->axis[i].tag == FT_MAKE_TAG('w', 'g', 'h', 't')) {
+            FT_Fixed w = weight > 0 ? (FT_Fixed)weight << 16 : mm->axis[i].def;
+            if (w < mm->axis[i].minimum)
+                w = mm->axis[i].minimum;
+            if (w > mm->axis[i].maximum)
+                w = mm->axis[i].maximum;
+            coords[i] = w;
+            drawn = (int)(w >> 16);
+        }
+    }
+    if (FT_Set_Var_Design_Coordinates(face, n, coords) != 0)
+        drawn = fntFaceOwnWeight(face);
+    FT_Done_MM_Var(library, mm);
+    return drawn;
+}
+
+// How far a glyph's outline grows, in 26.6 units at 18 px, to draw `weight` on a face that draws `drawn`
+static int fntEmboldenFor(int weight, int drawn)
+{
+    int e = weight > drawn ? (weight - drawn) * 64 / 300 : 0;
+    return e > 96 ? 96 : e;
+}
+
+// Load and render one glyph, grown by `embolden` (fntEmboldenFor) when it is above 0
+static int fntLoadGlyph(FT_Face face, uint32_t gid, int embolden)
+{
+    int error;
+
+    if (embolden <= 0)
+        return FT_Load_Char(face, gid, FT_LOAD_RENDER);
+    error = FT_Load_Char(face, gid, FT_LOAD_DEFAULT);
+    if (!error && face->glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+        FT_Pos s = (FT_Pos)embolden * (face->size != NULL ? face->size->metrics.y_ppem : 18) / 18;
+        FT_Outline_EmboldenXY(&face->glyph->outline, s, s / 2);
+        face->glyph->advance.x += s;
+    }
+    if (!error)
+        error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+    return error;
+}
+
 static void fntInitSlot(font_t *font)
 {
     font->face = NULL;
@@ -239,6 +363,7 @@ static void fntInitSlot(font_t *font)
     font->dataPtr = NULL;
     font->isValid = 0;
     font->fontSize = 0;
+    font->weight = font->embolden = 0;
 
     int aid = 0;
     for (; aid < ATLAS_MAX; ++aid)
@@ -318,7 +443,7 @@ static int fntLoadSlotLocked(font_t *font, void *buffer, int bufferSize, int own
 void fntInit()
 {
     LOG("FNTSYS Init\n");
-    int error = FT_Init_FreeType(&font_library);
+    int error = fntNewLibrary(&font_library);
     if (error) {
         // just report over the ps2link
         LOG("FNTSYS Freetype init failed with %x!\n", error);
@@ -367,6 +492,21 @@ int fntLoadFile(char *path, int fontSize)
 
 // Keep this font independent of language and theme switching. Missing optional
 // font files are harmless: fntLoadFile leaves the current default untouched.
+// Draw a theme's font at a weight, 100 to 900 (0: the face's own). Its cached glyphs go, so the next frame redraws them.
+void fntSetWeight(int id, int weight)
+{
+    if (id <= FNT_DEFAULT || id >= FNT_MAX_COUNT)
+        return;
+    fntLock();
+    font_t *font = &fonts[id];
+    if (font->isValid && font->face != NULL && font->weight != weight) {
+        font->weight = weight;
+        font->embolden = fntEmboldenFor(weight, fntFaceSetWeight(font_library, font->face, weight));
+        fntCacheFlush(font);
+    }
+    fntUnlock();
+}
+
 int fntLoadFallback(char *path)
 {
     if (path == NULL)
@@ -421,7 +561,7 @@ void fntEnd()
     fntUnlock();
 
     // deinit freetype system
-    FT_Done_FreeType(font_library);
+    fntDoneLibrary(font_library);
 
     DeleteSema(gFontSemaId);
 
@@ -508,7 +648,7 @@ static fnt_glyph_cache_entry_t *fntCacheGlyph(font_t *font, uint32_t gid)
         LOG("FNTSYS Face is NULL!\n");
     }
 
-    int error = FT_Load_Char(font->face, gid, FT_LOAD_RENDER);
+    int error = fntLoadGlyph(font->face, gid, font->embolden);
     if (error) {
         LOG("FNTSYS Error loading glyph - %d\n", error);
         return NULL;
@@ -642,6 +782,13 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
 
     quad.color = colour;
 
+    // Arabic and Persian (RIPPS2 build 104): their letters joined and each line laid out right to left, then drawn
+    // from the left like any other text. Measured above from the same joined letters, so a centred line stays centred.
+    static char shaped[2048]; // under the font lock
+    const char *visual = txtShape(string, shaped, sizeof(shaped), 1);
+    if (visual != NULL)
+        string = visual;
+
     int pen_x = x;
     int xmax = x + width;
     int ymax = y + height;
@@ -660,6 +807,8 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
     // cache glyphs and render as we go
     for (; *string; ++string) {
         if (utf8Decode(&state, &codepoint, *string)) // accumulate the codepoint value
+            continue;
+        if (txtZeroWidth(codepoint)) // the zero-width marks some translations carry draw nothing (RIPPS2 build 104)
             continue;
 
         glyph = fntCacheGlyph(font, codepoint);
@@ -720,6 +869,8 @@ static void fntRenderSubRTL(font_t *font, const char *startRTL, const char *stri
 
     for (; startRTL != string; ++startRTL) {
         if (utf8Decode(&state, &codepoint, *startRTL))
+            continue;
+        if (txtZeroWidth(codepoint))
             continue;
 
         glyph = fntCacheGlyph(font, codepoint);
@@ -786,6 +937,8 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
     // cache glyphs and render as we go
     for (; *string; ++string) {
         if (utf8Decode(&state, &codepoint, *string)) // accumulate the codepoint value
+            continue;
+        if (txtZeroWidth(codepoint)) // the zero-width marks some translations carry draw nothing (RIPPS2 build 104)
             continue;
 
         glyph = fntCacheGlyph(font, codepoint);
@@ -924,6 +1077,102 @@ int fntRenderStringFit(int id, int x, int y, short aligned, int room, const char
     return fntRenderString(id, x, y, aligned, 0, 0, buf, colour);
 }
 
+// fntWrapText's output: n bytes of src at out[*wlen], whole or not at all, so a full buffer never ends inside a character
+static int fntWrapPut(char *out, int outSize, int *wlen, const char *src, int n)
+{
+    if (*wlen + n > outSize - 1)
+        return 0;
+    memcpy(&out[*wlen], src, n);
+    *wlen += n;
+    return 1;
+}
+
+int fntWrapText(int id, const char *text, int innerW, char *out, int outSize)
+{
+    int wlen = 0, lineW = 0, lines = 1;
+    int spaceW;
+    const char *p = text;
+
+    if (out == NULL || outSize <= 0)
+        return 0;
+    out[0] = '\0';
+    if (text == NULL)
+        return 0;
+    spaceW = rmUnScaleX(fntCalcDimensions(id, " "));
+
+    while (*p) {
+        if (*p == '\n') { // an explicit newline in the source string is a hard break
+            fntWrapPut(out, outSize, &wlen, "\n", 1);
+            lines++;
+            lineW = 0;
+            p++;
+            continue;
+        }
+        if (*p == ' ') { // runs of spaces collapse; one separator goes back between words
+            p++;
+            continue;
+        }
+
+        const char *word = p;
+        while (*p && *p != ' ' && *p != '\n')
+            p++;
+        int len = (int)(p - word);
+        int noSpaces = txtNoSpaceScript(word, len);
+
+        if (!noSpaces && len < 256) {
+            char buf[256];
+            memcpy(buf, word, len);
+            buf[len] = '\0';
+            int wordW = rmUnScaleX(fntCalcDimensions(id, buf)); // the whole word, so kerning stays exact
+            if (wordW <= innerW) {
+                if (lineW > 0 && lineW + spaceW + wordW > innerW) {
+                    fntWrapPut(out, outSize, &wlen, "\n", 1);
+                    lines++;
+                    lineW = 0;
+                } else if (lineW > 0) {
+                    fntWrapPut(out, outSize, &wlen, " ", 1);
+                    lineW += spaceW;
+                }
+                fntWrapPut(out, outSize, &wlen, word, len);
+                lineW += wordW;
+                continue;
+            }
+        }
+
+        // A word wider than the line (a URL, a path) breaks between any two characters. CJK, Thai and Lao text has
+        // no spaces to break at: it goes on from where the line is, and breaks only where those scripts allow
+        // (RIPPS2 build 104), never before a closing mark or a vowel that belongs to the letter before.
+        if (lineW > 0 && noSpaces) {
+            fntWrapPut(out, outSize, &wlen, " ", 1);
+            lineW += spaceW;
+        } else if (lineW > 0) {
+            fntWrapPut(out, outSize, &wlen, "\n", 1);
+            lines++;
+            lineW = 0;
+        }
+        for (const char *q = word; q < p;) {
+            uint32_t cp;
+            char glyph[5];
+            int n = txtNext(q, &cp);
+            if (n <= 0 || q + n > p)
+                n = 1;
+            memcpy(glyph, q, n);
+            glyph[n] = '\0';
+            int glyphW = rmUnScaleX(fntCalcDimensions(id, glyph));
+            if (lineW > 0 && lineW + glyphW > innerW && (!noSpaces || q == word || txtBreakAt(word, q))) {
+                fntWrapPut(out, outSize, &wlen, "\n", 1);
+                lines++;
+                lineW = 0;
+            }
+            fntWrapPut(out, outSize, &wlen, q, n);
+            lineW += glyphW;
+            q += n;
+        }
+    }
+    out[wlen] = '\0';
+    return lines;
+}
+
 void fntFitString(int id, char *string, size_t width)
 {
     size_t cw = 0;
@@ -1001,6 +1250,13 @@ static int fntCalcDimensionsLocked(font_t *font, const char *str)
 
     if (str == NULL)
         return 0;
+#ifndef __RTL
+    // Arabic and Persian are measured as drawn, their letters joined (a joined letter is narrower)
+    static char joined[2048]; // under the font lock, like every caller of this
+    const char *shaped = txtShape(str, joined, sizeof(joined), 0);
+    if (shaped != NULL)
+        str = shaped;
+#endif
 
     uint32_t codepoint;
     uint32_t state = UTF8_ACCEPT;
@@ -1011,6 +1267,8 @@ static int fntCalcDimensionsLocked(font_t *font, const char *str)
     // cache glyphs and render as we go
     for (; *str; ++str) {
         if (utf8Decode(&state, &codepoint, *str)) // accumulate the codepoint value
+            continue;
+        if (txtZeroWidth(codepoint)) // drawn as nothing, so measured as nothing
             continue;
 
         // Could just as well only get the glyph dimensions

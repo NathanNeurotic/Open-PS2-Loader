@@ -698,3 +698,6 @@ translations:
   PCCF_UNAVAILABLE: 'CF غير متاح: يتطلب جهاز PS2 ياباني مبكراً بمنفذ PC CARD، وبطاقة متوافقة، وعدم وجود برنامج تشغيل DEV9/HDD/شبكة نشط.'
   PCCF_UNSUPPORTED_GAME: يدعم CF حالياً ألعاب PS2 الأصلية فقط. VMC على CF وتحميل PS1 وإنجازات الشبكة غير متاحة.
   HINT_ENABLE_DVR: اكتشاف تجريبي لملفات DESR DVR ISO. يتطلب تفعيل مصدر القرص الصلب؛ ويحتاج تشغيل اللعبة إلى Neutrino خارجي يدعم DVR.
+  # Filled from RIPPS2 (Akilluminati47) where Open PS2 Loader had no translation yet
+  'YES': نعم
+  'NO': لا

@@ -723,3 +723,6 @@ translations:
   PCCF_UNAVAILABLE: 'CF ໃຊ້ບໍ່ໄດ້: ຕ້ອງການ PS2 ຍີ່ປຸ່ນ ລຸ້ນທຳອິດ ທີ່ມີ PC CARD, ກາດທີ່ເຂົ້າກັນໄດ້, ແລະ ບໍ່ມີໄດຣເວີ DEV9/HDD/ເຄືອຂ່າຍ ທີ່ເຮັດວຽກ.'
   PCCF_UNSUPPORTED_GAME: ດຽວນີ້ CF ຮອງຮັບ ເກມ PS2 ແທ້ ເທົ່ານັ້ນ. CF VMC, ການໂຫຼດ PS1 ແລະ ຄວາມສຳເລັດ ຜ່ານເຄືອຂ່າຍ ໃຊ້ບໍ່ໄດ້.
   HINT_ENABLE_DVR: ການຄົ້ນຫາ ISO ຂອງ DESR DVR ແບບທົດລອງ. ຕ້ອງເປີດ ແຫຼ່ງ HDD; ການເລີ່ມເກມ ຕ້ອງການ Neutrino ພາຍນອກ ທີ່ຮອງຮັບ DVR.
+  # Filled from RIPPS2 (Akilluminati47) where Open PS2 Loader had no translation yet
+  'YES': ແມ່ນ
+  'NO': ບໍ່

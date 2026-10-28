@@ -158,6 +158,14 @@ int texLookupInternalTexId(const char *name);
 int texLoadInternal(GSTEXTURE *texture, int texId);
 int texLoadFromMemory(GSTEXTURE *texture, const void *buf, u32 size);
 int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId);
+// Game art for itemGetImage: <path> as PNG, JPG or JPEG in any letter case, then OPL Manager's name for it.
+int texDiscoverArt(GSTEXTURE *texture, const char *path);
+// A PNG or JPG game art picture already in RAM (an ART .tar member); a JPG is shrunk to a full screen when
+// background is set, to 512 on a side otherwise.
+int texLoadArtFromMemory(GSTEXTURE *texture, const void *buf, u32 size, int background);
+// OPL Manager's other name for a piece of art in an ART folder (_BG <-> _BG_00, _SCR <-> _SCR_00,
+// _SCR2 <-> _SCR_01) into out. 1 when there is one.
+int texArtAlias(const char *stem, char *out, int outSize);
 
 // Debug HUD (OE): staged-art opens that failed with errno != ENOENT on a non-MMCE device, i.e. covers
 // branded permanently absent on evidence that was not "no such file". See texStagedOpenIsAbsence.

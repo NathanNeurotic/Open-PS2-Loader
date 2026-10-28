@@ -17,6 +17,9 @@ typedef struct
 void mmceInit(item_list_t *itemList);
 item_list_t *mmceGetObject(int initOnly);
 void mmceLoadModules(void);
+// 1 once mmceman is resident (mmceN:/ can be opened without loading anything)
+int mmceModulesLoaded(void);
+void mmceIopWasReset(void); // forget the module latch after an in-menu IOP reset
 void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
 // Push the selected game's disc id to a present MMCE card (SD2PSX/MemCard PRO2) for per-game folder
 // switching. Self-probes mmce0:/mmce1: when no MMCE-tab prefix is set, so it works on ALL launch

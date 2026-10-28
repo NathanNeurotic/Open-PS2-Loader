@@ -213,7 +213,7 @@ dialog_types += re.search(r'^struct UIItem\s*\{.*?^\};', dia_header, re.M | re.S
 dialog_defines = '\n'.join(re.findall(r'^#define UI_SETTINGS_(?:SPACING_H|MIN_GAP)\s+\d+', dia, re.M))
 dialog_functions = '\n'.join(function(dia, signature) for signature in (
     'static int diaShouldBreakLine(', 'static int diaShouldBreakLineAfter(',
-    'static int diaItemHeight(', 'static int diaLayoutBottom(', 'static int diaSettingsFitGap(',
+    'static int diaItemHeight(', 'static void diaRowState(', 'static int diaRowCollapses(', 'static int diaLayoutBottom(', 'static int diaSettingsFitGap(',
 ))
 run('font_dialog', common + dialog_types + '\n' + dialog_defines + r'''
 static int screenHeight = 480;

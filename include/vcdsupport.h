@@ -321,5 +321,9 @@ void vcdPrepareRetroGemBarcode(const char *vcdPath);
 /* Shared clean-launch safety; never removes an unrecognized user module. */
 int vcdRemoveRaModule(const char *root);
 int vcdConfirmCleanLaunch(const char *root);
+/* POPSTARTER needs Sony's emulator beside the game in <root>POPS/: POPS_IOX.PAK, plus POPS.PAK or
+   POPS.ELF (with IOPRP252.IMG). Without them the launch is a black screen and then the browser, so ask
+   first, naming what is missing. Returns 1 to go on (files present, or the user launches anyway). */
+int vcdConfirmPopsFiles(const char *root);
 
 #endif

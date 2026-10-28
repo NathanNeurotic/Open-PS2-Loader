@@ -34,6 +34,9 @@ int fntLoadFile(char *path, int fontSize);
  * Call before the GUI starts; does not replace the selected font. */
 int fntLoadFallback(char *path);
 
+/** Draws a theme font at a weight, 100 to 900 (0: the face's own): a variable face as designed, a static one grown */
+void fntSetWeight(int id, int weight);
+
 /** Reloads the default font */
 int fntLoadDefault(char *path);
 
@@ -55,6 +58,11 @@ int fntRenderStringFit(int id, int x, int y, short aligned, int room, const char
  * @note A destrutive operation - modifies the given string!
  */
 void fntFitString(int id, char *string, size_t width);
+
+/** Greedy word wrap of text to innerW (unscaled) into out, '\\n' between lines; an explicit '\\n' stays a break.
+ * A word wider than the line breaks between characters, and CJK, Thai and Lao text (no spaces) breaks only where
+ * those scripts allow. Never ends inside a character when out fills. Returns the number of lines. */
+int fntWrapText(int id, const char *text, int innerW, char *out, int outSize);
 
 /** Calculates the width of the given text string
  * We can't use the height for alignment, as the horizontal center would depends of the contained text itself */

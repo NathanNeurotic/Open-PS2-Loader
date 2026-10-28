@@ -58,6 +58,7 @@ typedef struct submenu_item
     int *cache_uid;
     int favourited;
     int isFolder;
+    int lastPlayed;
 #ifdef RETROACHIEVEMENTS
     int raBadged;
     char *raText;
@@ -69,6 +70,9 @@ typedef struct submenu_list
     struct submenu_item item;
     struct submenu_list *prev, *next;
 } submenu_list_t;
+
+enum { AUTOSORT_OFF, AUTOSORT_AZ, AUTOSORT_LAST_PLAYED };
+static int gAutosort = AUTOSORT_AZ;
 
 static long comparisons;
 static int counting_strcasecmp(const char *a, const char *b)
@@ -247,6 +251,42 @@ int main(void)
 #endif
     for (int k = 0; k < 4096; k++)
         tags[k] = k;
+
+    /* Sort Games: Last played -- folders still first, then recency rank 1..10, then the rest A to Z.
+       Ranks are ignored under A to Z. */
+    {
+        static char *names[] = {"delta", "Charlie", "bravo", "alpha", "echo", "folder"};
+        static const int ranks[] = {0, 2, 0, 0, 1, 3};
+        static const char *wantLast[] = {"folder", "echo", "Charlie", "alpha", "bravo", "delta"};
+        static const char *wantAz[] = {"folder", "alpha", "bravo", "Charlie", "delta", "echo"};
+        for (int mode = AUTOSORT_AZ; mode <= AUTOSORT_LAST_PLAYED; mode++) {
+            submenu_list_t rows[6];
+            memset(rows, 0, sizeof(rows));
+            for (int k = 0; k < 6; k++) {
+                rows[k].item.text = names[k];
+                rows[k].item.text_id = -1;
+                rows[k].item.id = 2 * k;
+                rows[k].item.lastPlayed = ranks[k];
+                rows[k].item.isFolder = k == 5;
+                rows[k].prev = k ? &rows[k - 1] : NULL;
+                rows[k].next = k < 5 ? &rows[k + 1] : NULL;
+            }
+            submenu_list_t *head = &rows[0];
+            gAutosort = mode;
+            submenuSort(&head, 0);
+            const char **want = mode == AUTOSORT_LAST_PLAYED ? wantLast : wantAz;
+            int k = 0;
+            for (submenu_list_t *s = head; s; s = s->next, k++)
+                if (k >= 6 || strcmp(s->item.text, want[k])) {
+                    printf("Last played sort (mode %d): row %d wrong\n", mode, k);
+                    return 1;
+                }
+            if (k != 6 || !check_links(head, 6))
+                return 1;
+        }
+        gAutosort = AUTOSORT_AZ;
+        printf("Sort Games: Last played puts recent games first, then the rest A to Z\n");
+    }
 
     for (int iter = 0; iter < 3000; iter++) {
         int n = iter % 64;

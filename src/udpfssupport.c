@@ -134,6 +134,13 @@ static void udpfsLoadModules(void)
         sysShutdownDev9();
 }
 
+// An in-menu IOP reset unloads every module; forget the latches so the next refresh loads them again.
+// Ported from RIPPS2 build 115 (akilluminati47/RIPPS2).
+void udpfsIopWasReset(void)
+{
+    udpfsIomanModLoaded = udpfsNicClaimed = 0;
+}
+
 int udpfsGetModulesLoaded(void)
 {
     return udpfsNicClaimed; // NIC interlock must catch partial module loads
@@ -959,7 +966,7 @@ static int udpfsGetImage(item_list_t *itemList, char *folder, int isRelative, ch
         snprintf(path, sizeof(path), "%s%s/%s_%s", udpfsPrefix, imageFolder, value, suffix);
     } else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
-    int r = texDiscoverLoad(resultTex, path, -1);
+    int r = texDiscoverArt(resultTex, path);
     // ART LIVES IN THE ART FOLDER, and nowhere else. A PS1 cover is
     // ART/<name>_COV.png -- the same rule as a PS2 title -- which the texDiscoverLoad
     // above already tried. A miss is simply "no cover": there is no second directory to
