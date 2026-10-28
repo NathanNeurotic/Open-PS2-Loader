@@ -34,6 +34,9 @@ int fntLoadFile(char *path, int fontSize);
  * Call before the GUI starts; does not replace the selected font. */
 int fntLoadFallback(char *path);
 
+/** Draws a theme font at a weight, 100 to 900 (0: the face's own): a variable face as designed, a static one grown */
+void fntSetWeight(int id, int weight);
+
 /** Reloads the default font */
 int fntLoadDefault(char *path);
 

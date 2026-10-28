@@ -3774,8 +3774,17 @@ static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme
 
             int fntHandle = fntLoadFile(fullPath, fontSize);
             // Do we have a valid font? Assign the font handle to the theme font slot
-            if (fntHandle != FNT_ERROR)
+            if (fntHandle != FNT_ERROR) {
                 theme->fonts[fntID] = fntHandle;
+                // <font>_weight=100..900, the weight it is drawn at (RIPPS2 build 114, akilluminati47)
+                int weight = 0;
+                if (fntID == 0)
+                    snprintf(sizeKey, sizeof(sizeKey), "default_font_weight");
+                else
+                    snprintf(sizeKey, sizeof(sizeKey), "font%d_weight", fntID);
+                if (configGetInt(themeConfig, sizeKey, &weight) && weight >= 100 && weight <= 900)
+                    fntSetWeight(fntHandle, weight);
+            }
         }
     }
 }

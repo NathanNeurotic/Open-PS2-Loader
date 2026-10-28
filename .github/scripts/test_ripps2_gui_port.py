@@ -4,6 +4,8 @@
    controls are all hidden takes no line; a long page has a scroll bar and the right stick slides it; backing out of
    a submenu lands on the button that opened it. A remembered row that is hidden or switched off now starts on the
    first control instead of leaving the dialog at once (a fix over RIPPS2).
+2. Font weight (build 114): <font>_weight=100..900 in a theme draws that font heavier: a variable face along its wght
+   axis, a static one with its outlines grown. Checked against the host's FreeType when its headers are there.
 """
 from pathlib import Path
 import subprocess
@@ -11,6 +13,9 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 DIA = 'src/dia.c'
+FNT = 'src/fntsys.c'
+THM = 'src/themes.c'
+TTF = 'thirdparty/PoeVeticaNew.ttf'
 PAD = 'src/pad.c'
 
 
@@ -124,7 +129,67 @@ def check_wiring(dia, pad):
     print('wiring ok')
 
 
+WEIGHT_TEST = r'''
+#include <stdio.h>
+#include <stdint.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_MULTIPLE_MASTERS_H
+#include FT_TRUETYPE_TABLES_H
+#include FT_OUTLINE_H
+%(funcs)s
+
+int main(int argc, char **argv)
+{
+    FT_Library lib;
+    FT_Face face;
+    (void)argc;
+    if (FT_Init_FreeType(&lib) || FT_New_Face(lib, argv[1], 0, &face) || FT_Set_Pixel_Sizes(face, 0, 18))
+        return 2;
+    int own = fntFaceOwnWeight(face), drawn = fntFaceSetWeight(lib, face, 700);
+    int e = fntEmboldenFor(700, drawn);
+    if (fntLoadGlyph(face, 'W', 0))
+        return 3;
+    long plainAdv = face->glyph->advance.x;
+    unsigned plainW = face->glyph->bitmap.width;
+    if (fntLoadGlyph(face, 'W', e))
+        return 4;
+    printf("%%d %%d %%d %%d %%d %%d\n", own, drawn, e, fntEmboldenFor(400, 400), fntEmboldenFor(900, 100),
+           face->glyph->advance.x > plainAdv && face->glyph->bitmap.width >= plainW);
+    return 0;
+}
+'''
+
+
+def check_weight(fnt, thm):
+    funcs = '\n'.join(function(fnt, sig) for sig in (
+        'static int fntFaceOwnWeight(FT_Face face)', 'static int fntFaceSetWeight(FT_Library library, FT_Face face, int weight)',
+        'static int fntEmboldenFor(int weight, int drawn)', 'static int fntLoadGlyph(FT_Face face, uint32_t gid, int embolden)'))
+    assert 'fntLoadGlyph(font->face, gid, font->embolden)' in fnt, 'glyphs load through the weight'
+    assert 'font->weight = font->embolden = 0;' in fnt, 'a new slot starts at its own weight'
+    load = thm[thm.index('int fntHandle = fntLoadFile(fullPath, fontSize);'):][:900]
+    assert '"default_font_weight"' in load and '"font%d_weight"' in load and 'weight >= 100 && weight <= 900' in load, 'theme key'
+    inc = subprocess.run(['pkg-config', '--cflags', 'freetype2'], capture_output=True, text=True)
+    lib = subprocess.run(['pkg-config', '--libs', 'freetype2'], capture_output=True, text=True)
+    if inc.returncode or lib.returncode:
+        print('weight: wiring ok; the host has no FreeType headers, so the glyph check is SKIPPED')
+        return
+    with tempfile.TemporaryDirectory() as d:
+        src = Path(d) / 'w.c'
+        exe = Path(d) / 'w.exe'
+        src.write_text(WEIGHT_TEST % {'funcs': funcs})
+        subprocess.run(['cc', '-std=gnu99', '-Wall', '-Werror', '-Wno-unused-function'] + inc.stdout.split() + [str(src), '-o', str(exe)] + lib.stdout.split(), check=True)
+        out = subprocess.run([str(exe), str(root / TTF)], check=True, capture_output=True, text=True).stdout.split()
+    own, drawn, e, same, cap, wider = map(int, out)
+    assert 100 <= own <= 1000 and drawn == own, out  # a static face stays at its own weight
+    assert e == (700 - own) * 64 // 300 if own < 700 else e == 0, out
+    assert same == 0 and cap == 96, out  # nothing to grow at its own weight; growth is capped
+    assert wider == 1 or e == 0, 'a heavier W is wider'
+    print('weight ok')
+
+
 dia = read(DIA)
 check_rows(dia)
 check_wiring(dia, read(PAD))
+check_weight(read(FNT), read(THM))
 print('ripps2 gui port ok')
