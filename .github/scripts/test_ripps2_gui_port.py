@@ -139,6 +139,7 @@ def check_wiring(dia, pad):
     assert 'if (!cur || !diaIsControllable(cur))' in exe, 'a hidden remembered row falls back to the first control'
     i = exe.index('if (cur->type == UI_BUTTON) {')
     assert 'diaReturnRemember(ui, cur->id);' in exe[i:i + 200], 'a button remembers itself'
+    assert '(sy > 24 || sy < -24) && diaScrollRange > 0' in exe and 'diaScrollRange = maxScroll;' in ui, 'a page that fits never enters peek'
     assert 'padGetRightStick(&sx, &sy);' in exe and 'diaPeek = 0; // the view follows the cursor again' in exe, 'peek input'
     assert 'if (diaPeek && getKeyOn(guiConfirmKey()))' in exe, 'the first confirm after a peek only brings the row back'
     assert 'pad->readOk = ret != 0;' in pad, 'a failed read is never a fresh stick'

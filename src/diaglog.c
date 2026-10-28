@@ -82,9 +82,12 @@ int diagSave(const char *dir, char *path, int pathSize)
     u32 notReady = 0, empty = 0;
     int len, fd, ok, wrapped = 0;
 
+    size_t dirLen;
+
     if (dir == NULL)
-        dir = configGetDir();
-    snprintf(path, pathSize, "%sDIAG.TXT", dir);
+        dir = configGetHomePath(); // the settings folder; configGetDir() is only its device
+    dirLen = strlen(dir);
+    snprintf(path, pathSize, "%s%sDIAG.TXT", dir, dirLen == 0 || dir[dirLen - 1] == '/' || dir[dirLen - 1] == ':' ? "" : "/");
     len = diagCopy(copy, sizeof(copy), &wrapped);
     padGetFaultCounters(&notReady, &empty);
     snprintf(head, sizeof(head),
@@ -107,5 +110,5 @@ void diagSaveBeforeLaunch(void)
 
     if (!gEnableDebug || dir == NULL || !strncmp(dir, "mc", 2) || !strncmp(dir, "mmce", 4))
         return;
-    diagSave(dir, path, sizeof(path));
+    diagSave(NULL, path, sizeof(path));
 }

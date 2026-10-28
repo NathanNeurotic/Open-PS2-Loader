@@ -1193,7 +1193,8 @@ static void diaReturnRemember(struct UIItem *ui, int id)
 // page there is and where the view is. From RIPPS2 build 89 (akilluminati47).
 static int diaPeek = 0;
 static float diaPeekPos = 0.0f;
-#define DIA_PEEK_SPEED 720.0f // pixels a second at full tilt
+static int diaScrollRange = 0; // how far the page can scroll, from the last frame drawn
+#define DIA_PEEK_SPEED 720.0f  // pixels a second at full tilt
 #define DIA_BAR_W      4
 
 // A row whose controls are all hidden takes no line (RIPPS2 build 91, akilluminati47). Its label and value go,
@@ -1378,6 +1379,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int maxScroll = (contentBottom + diaScrollOffset) - visibleBottom;
     if (maxScroll < 0)
         maxScroll = 0;
+    diaScrollRange = maxScroll;
     if (diaPeek) { // the right stick holds the view where it slid it
         if (diaPeekPos > maxScroll)
             diaPeekPos = maxScroll;
@@ -1810,6 +1812,7 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
     setButtonDelay(KEY_DOWN, diaScrollDelay());
 
     diaScrollOffset = 0; // start each dialog scrolled to the top
+    diaScrollRange = 0;
     diaPeek = 0;
     clock_t peekLast = clock();
 
@@ -1860,7 +1863,7 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
                 if (dt > 0.1f)
                     dt = 0.1f;
                 padGetRightStick(&sx, &sy);
-                if (sy > 24 || sy < -24) {
+                if ((sy > 24 || sy < -24) && diaScrollRange > 0) { // a page that fits has nothing to slide
                     if (!diaPeek) {
                         diaPeek = 1;
                         diaPeekPos = (float)diaScrollOffset;

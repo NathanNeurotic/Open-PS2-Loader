@@ -142,7 +142,7 @@ static void dsScan(void)
     if (dsCount == 0 && (line = dsAdd()) != NULL)
         snprintf(line, DS_LINE_SIZE, "%s", _l(_STR_DRIVE_STATUS_NONE));
     if ((line = dsAdd()) != NULL)
-        snprintf(line, DS_LINE_SIZE, _l(_STR_DRIVE_STATUS_SETTINGS), configGetDir());
+        snprintf(line, DS_LINE_SIZE, _l(_STR_DRIVE_STATUS_SETTINGS), configGetHomePath());
 
     for (i = 0; i < DSTAT_LINES; i++) {
         diaSetLabel(diaDriveStatus, DSTAT_LINE_FIRST + i, i < dsCount ? dsLines[i] : "");

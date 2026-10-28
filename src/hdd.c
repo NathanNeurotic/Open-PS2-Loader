@@ -41,10 +41,15 @@ u32 hddGetTotalSectors(void)
 // answers
 int hddGetSpace(u32 *totalSectors, u32 *freeSectors)
 {
+    u32 freeCount = 0;
+
     if (fileXioDevctl("hdd0:", HDIOC_STATUS, NULL, 0, NULL, 0) != 0)
         return 0;
+    // HDIOC_FREESECTOR returns a status and writes the count to its output buffer (RIPPS2 read the status)
+    if (fileXioDevctl("hdd0:", HDIOC_FREESECTOR, NULL, 0, &freeCount, sizeof(freeCount)) < 0)
+        return 0;
     *totalSectors = (u32)fileXioDevctl("hdd0:", HDIOC_TOTALSECTOR, NULL, 0, NULL, 0);
-    *freeSectors = (u32)fileXioDevctl("hdd0:", HDIOC_FREESECTOR, NULL, 0, NULL, 0);
+    *freeSectors = freeCount;
     return *totalSectors > 0;
 }
 

@@ -54,7 +54,9 @@ static int intrOn = 1;
 static int DIntr(void) { int was = intrOn; intrOn = 0; return was; }
 static int EIntr(void) { intrOn = 1; return 1; }
 static char cfgDir[64] = "./";
-static char *configGetDir(void) { return cfgDir; }
+static char *configGetDir(void) { return cfgDir; } /* the settings device only */
+static char cfgHome[64] = "./OPL";
+static const char *configGetHomePath(void) { return cfgHome; } /* the settings folder */
 static void padGetFaultCounters(u32 *a, u32 *b) { *a = 7; *b = 3; }
 static int gMMCEEnableGameID = 1, gEnableDebug = 0;
 void diagLog(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
@@ -110,8 +112,9 @@ int main(void)
     assert(len == 64 && wrapped && strstr(buf, "line 1999\r\n") != NULL);
 
     /* DIAG.TXT: header, then the log */
+    /* the default is the settings folder, not its device (CodeRabbit on OPL #1084) */
     assert(diagSave(NULL, path, sizeof(path)) == 1);
-    assert(!strcmp(path, "./DIAG.TXT"));
+    assert(!strcmp(path, "./OPL/DIAG.TXT"));
     assert(slurp(path, file, sizeof(file)) > DIAG_SIZE);
     assert(!strncmp(file, "Open PS2 Loader test diagnostics, ", 34));
     assert(strstr(file, "longest run of missed pad reads: 7 polls; of empty reads: 3 polls\r\n"));
@@ -124,20 +127,24 @@ int main(void)
 
     /* before a launch: Debug off writes nothing; on, never to a card */
     diagSaveBeforeLaunch();
-    assert(slurp("./DIAG.TXT", file, sizeof(file)) < 0);
+    assert(slurp("./OPL/DIAG.TXT", file, sizeof(file)) < 0);
     gEnableDebug = 1;
-    strcpy(cfgDir, "mc0:OPL/");
+    strcpy(cfgDir, "mc0:");
+    strcpy(cfgHome, "mc0:OPL");
     diagSaveBeforeLaunch();
-    strcpy(cfgDir, "mmce0:/OPL/");
+    strcpy(cfgDir, "mmce0:");
+    strcpy(cfgHome, "mmce0:/OPL/");
     diagSaveBeforeLaunch();
     strcpy(cfgDir, "./");
+    strcpy(cfgHome, "./OPL/");
     diagSaveBeforeLaunch();
-    assert(slurp("./DIAG.TXT", file, sizeof(file)) > 0);
+    assert(slurp("./OPL/DIAG.TXT", file, sizeof(file)) > 0);
     puts("diaglog ok");
     return 0;
 }
 '''
 with tempfile.TemporaryDirectory(prefix='drive-status-') as temp:
+    (Path(temp) / 'OPL').mkdir()
     run('diaglog', log_mocks + body + log_main, temp)
     assert not (Path(temp) / 'mc0:OPL').exists() and not list(Path(temp).glob('mc*DIAG.TXT')) and not list(Path(temp).glob('mmce*'))
 print('ok   the hardware log: wrap keeps the newest lines, DIAG.TXT header, launch save only with Debug and never to a card')
@@ -177,8 +184,11 @@ print('ok   sizes, drivers and formats by name')
 # ---- 3. wiring ----
 scan = function(ds, 'static void dsScan(')
 assert 'fileXioDopen(root)' in scan and 'bdmReadDriverName(dir, driver, sizeof(driver))' in scan, 'the driver name the safe way'
-assert 'BDM_DEVCTL_VOLINFO' in scan and 'hddGetSpace(&total, &freeS)' in scan and 'HDIOC_FREESECTOR' in read('src/hdd.c') and 'mcGetInfo(' in scan and '"mmce%d:/"' in scan
+assert 'BDM_DEVCTL_VOLINFO' in scan and 'hddGetSpace(&total, &freeS)' in scan and 'HDIOC_FREESECTOR, NULL, 0, &freeCount, sizeof(freeCount)' in read('src/hdd.c') and 'mcGetInfo(' in scan and '"mmce%d:/"' in scan
 assert 'diaSetVisible(diaDriveStatus, DSTAT_LINE_FIRST + i, i < dsCount)' in scan, 'unused lines hidden'
+assert '_l(_STR_DRIVE_STATUS_SETTINGS), configGetHomePath())' in scan, 'the settings folder, not only its device'
+mmce = read('src/mmcesupport.c')
+assert mmce.count('diagSaveBeforeLaunch();') == 3, 'saved before the Game ID switch and again after its wait, on both cores'
 show = function(ds, 'void guiShowDriveStatus(')
 assert '== DSTAT_SAVE_DIAG' in show and 'diagSave(NULL, where, sizeof(where))' in show
 dialogs = read('src/dialogs.c')

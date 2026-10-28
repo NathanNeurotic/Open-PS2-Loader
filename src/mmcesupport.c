@@ -1121,6 +1121,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             // embedded; sysLaunchLoaderElf reads rom0: only).
             if (mmceSendGameID(game->startup, NULL, vmcMask))
                 mmceSettleAfterSwitch();
+            diagSaveBeforeLaunch(); // again, now with the Game ID switch and the card's wait in it
         }
     }
 
@@ -1370,6 +1371,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // just-switched card -- wait for the switched slot's fs to answer first (issue #56/#68).
         if (gameIdSwitched)
             mmceSettleAfterSwitch();
+        diagSaveBeforeLaunch(); // again, now with the Game ID switch and the card's wait in it
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).

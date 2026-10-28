@@ -181,5 +181,6 @@ everything = menu[menu.index('static int menuDeleteEverything('):]
 everything = everything[:everything.index('\n}\n')]
 assert everything.count('guiMsgBox(msg, 1, NULL) != 1') == 2, 'the delete asks twice'
 assert everything.index('_STR_DELETE_GAME_LAST_CHECK') < everything.index('support->itemDelete(support, id);') < everything.index('gmDeleteExtras(plan)')
+assert 'for (part = 0; part < game.parts && !partLeft; part++)' in everything and everything.index('if (partLeft) {') < everything.index('gmDeleteExtras(plan)'), 'every part is gone before the extras go'
 assert 'gEnableWrite' in menu[menu.index('static int menuHiddenState('):menu.index('static void menuHideGame(')]
 print('ok   wiring: hidden rows leave the page and the All Games gather; delete asks twice, parts first')
