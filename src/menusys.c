@@ -991,17 +991,27 @@ static void refreshMenuPosition(void)
 
     menu_list_t *cur = menu;
     while (cur != NULL) {
-        if (cur == selected_item && cur->item != NULL && cur->item->visible)
+        if (cur == selected_item && cur->item != NULL && menuItemShown(cur->item))
             return;
         cur = cur->next;
     }
 
-    // The retained page is no longer usable: choose the first visible page deterministically.
+    // The retained page is no longer usable. With All Games on that is usually a device tab that
+    // just stepped aside, so go to the All Games page; otherwise the first visible page.
+    if (gAllGames) {
+        for (cur = menu; cur != NULL; cur = cur->next) {
+            item_list_t *support = cur->item != NULL ? (item_list_t *)cur->item->userdata : NULL;
+            if (support != NULL && support->mode == FAV_MODE && menuItemShown(cur->item)) {
+                selected_item = cur;
+                return;
+            }
+        }
+    }
     cur = menu;
-    while (cur->item->visible == 0 && cur->next)
+    while (!menuItemShown(cur->item) && cur->next)
         cur = cur->next;
 
-    if (cur->item->visible == 0) {
+    if (!menuItemShown(cur->item)) {
         // No visible menu was found, just set the current menu to the first one in the list.
         selected_item = menu;
     } else
@@ -1057,6 +1067,34 @@ void submenuRebuildCache(submenu_list_t *submenu)
 int menuHasRegisteredItems(void)
 {
     return menu != NULL;
+}
+
+int menuItemShown(const menu_item_t *item)
+{
+    item_list_t *support;
+
+    if (item == NULL || !item->visible)
+        return 0;
+    if (!gAllGames)
+        return 1;
+    // A device still on Manual keeps its tab so it can be started; once started, its games are on
+    // the All Games page. A network share picker stays too: it lists shares, not games.
+    support = (item_list_t *)item->userdata;
+    if (support == NULL || !support->enabled)
+        return 1;
+    if (support->mode >= BDM_MODE && support->mode <= BDM_MODE_LAST)
+        return 0;
+    switch (support->mode) {
+        case HDD_MODE:
+        case MMCE_MODE:
+        case UDPFS_MODE:
+        case HTTP_MODE:
+            return 0;
+        case ETH_MODE:
+            return gPCShareName[0] == '\0';
+        default:
+            return 1;
+    }
 }
 
 static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int text_id)
@@ -1367,7 +1405,7 @@ static void menuNextH()
     // Match the async config worker's snapshot/publish lock, including traversal.
     WaitSema(menuSemaId);
     struct menu_list *next = selected_item != NULL ? selected_item->next : NULL;
-    while (next != NULL && next->item->visible == 0)
+    while (next != NULL && !menuItemShown(next->item))
         next = next->next;
 
     // If we found a valid menu transition to it.
@@ -1388,7 +1426,7 @@ static void menuPrevH()
     int moved = 0;
     WaitSema(menuSemaId);
     struct menu_list *prev = selected_item != NULL ? selected_item->prev : NULL;
-    while (prev != NULL && prev->item->visible == 0)
+    while (prev != NULL && !menuItemShown(prev->item))
         prev = prev->prev;
 
     if (prev != NULL) {
@@ -1833,7 +1871,7 @@ void menuHandleInputMenu()
         // bdmEffectiveStartMode() rather than raw gBDMStartMode: UDPBD floors the BDM start mode, so
         // a UDPBD-only rig has rows while gBDMStartMode itself is still disabled.
         int netActive = (gNetworkProtocol == NET_PROTO_SMB) ? gETHStartMode : (gNetworkProtocol == NET_PROTO_UDPFS ? gNetStartMode : 0);
-        if (gAPPStartMode || gETHStartMode || netActive || bdmEffectiveStartMode() || gHDDStartMode || gFAVStartMode || gMMCEStartMode) {
+        if (gAPPStartMode || gETHStartMode || netActive || bdmEffectiveStartMode() || gHDDStartMode || gFAVStartMode || gAllGames || gMMCEStartMode) {
             guiSwitchScreen(GUI_SCREEN_MAIN);
             refreshMenuPosition();
         }
@@ -2050,6 +2088,9 @@ static void menuNavigateDown()
 
 void menuHandleInputMain()
 {
+    // A device tab steps aside once All Games holds its games; never leave the user on it.
+    if (gAllGames && selected_item != NULL && !menuItemShown(selected_item->item))
+        refreshMenuPosition();
     item_list_t *support = selected_item != NULL && selected_item->item != NULL ? selected_item->item->userdata : NULL;
     int viewPending = support != NULL && libViewPending(support->mode);
 
@@ -2178,7 +2219,7 @@ void menuRenderGameMenu()
 
     // If the device menu that has the selected game suddenly goes invisible (device was removed), switch
     // back to the game list menu.
-    if (selected_item->item->visible == 0) {
+    if (!menuItemShown(selected_item->item)) {
         guiSwitchScreen(GUI_SCREEN_MAIN);
         return;
     }

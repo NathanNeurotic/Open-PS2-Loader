@@ -846,6 +846,27 @@ static int guiDeviceConfigUpdater(int modified)
     return 0;
 }
 
+static void guiRefreshCfgTitles(void);
+
+// All Games switched on or off (Game Sources). The device pages now read both lists or go back to
+// their own view, the Favourites tab changes name and rows, and with it on the user lands there.
+static void guiApplyAllGamesChange(void)
+{
+    opl_io_module_t *fav = oplGetModule(FAV_MODE);
+
+    if (fav != NULL && fav->support != NULL) {
+        fav->menuItem.text_id = fav->support->itemTextId(fav->support);
+        if (gAllGames) {
+            struct gui_update_t *sel = guiOpCreate(GUI_OP_SELECT_MENU);
+            if (sel != NULL) {
+                sel->menu.menu = &fav->menuItem;
+                guiDeferUpdate(sel);
+            }
+        }
+    }
+    guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
+}
+
 void guiShowDeviceConfig(void)
 {
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
@@ -865,6 +886,7 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_HDDMODE, gHDDStartMode);
     diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
     diaSetInt(diaDeviceConfig, CFG_FAVMODE, gFAVStartMode);
+    diaSetInt(diaDeviceConfig, CFG_ALLGAMES, gAllGames);
 
     // Block devices (inlined; interlocked with the APA HDD mode)
     diaSetInt(diaDeviceConfig, CFG_ENABLEUSB, gEnableUSB);
@@ -901,6 +923,8 @@ reshow_device:
         diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(diaDeviceConfig, CFG_FAVMODE, &gFAVStartMode);
+        int previousAllGames = gAllGames;
+        diaGetInt(diaDeviceConfig, CFG_ALLGAMES, &gAllGames);
 
         diaGetInt(diaDeviceConfig, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
@@ -922,6 +946,8 @@ reshow_device:
 
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
+        if (previousAllGames != gAllGames)
+            guiApplyAllGamesChange();
     }
 }
 
@@ -3034,6 +3060,7 @@ static int guiSettingsShowSources(void)
     diaSetInt(ui, CFG_HDDMODE, gHDDStartMode);
     diaSetInt(ui, CFG_APPMODE, gAPPStartMode);
     diaSetInt(ui, CFG_FAVMODE, gFAVStartMode);
+    diaSetInt(ui, CFG_ALLGAMES, gAllGames);
     diaSetInt(ui, CFG_ENABLEUSB, gEnableUSB);
     diaSetInt(ui, CFG_ENABLEILK, gEnableILK);
     diaSetInt(ui, CFG_ENABLEMX4SIO, gEnableMX4SIO);
@@ -3071,6 +3098,8 @@ reshow_sources:
         diaGetInt(ui, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(ui, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(ui, CFG_FAVMODE, &gFAVStartMode);
+        int previousAllGames = gAllGames;
+        diaGetInt(ui, CFG_ALLGAMES, &gAllGames);
         diaGetInt(ui, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(ui, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(ui, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
@@ -3085,6 +3114,8 @@ reshow_sources:
         bdmForceDeviceRefresh();
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
+        if (previousAllGames != gAllGames)
+            guiApplyAllGamesChange();
     }
 
     guiSettingsEndDialog();
@@ -3852,6 +3883,7 @@ static void guiHandleOp(struct gui_update_t *item)
             }
             result->item.isFolder = item->submenu.isFolder; // folder-browse row marker
             result->item.lastPlayed = item->submenu.lastPlayed;
+            result->item.favourited = item->submenu.favourited;
 #ifdef RETROACHIEVEMENTS
             result->item.raBadged = item->submenu.raBadged; // RA cover mark, resolved on the I/O thread
             result->item.raText = item->submenu.raText;     // transfer the snapshot to the row

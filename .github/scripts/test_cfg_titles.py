@@ -204,7 +204,7 @@ update = update[:update.index("\n}\n")]
 assert update.index("itemUpdate(mdl->support)") < update.index("cfgTitleForget(mdl->support);") < update.index("guiDeferUpdate(gup);")
 assert update.index("guiDeferUpdate(gup);") < update.index("cfgTitleRefresh(mdl->support, count);") < update.index("GUI_OP_SORT")
 assert update.index("libViewFinishPending(") < update.index("cfgTitleRefresh(mdl->support, count);")
-assert "gup->submenu.text = mdl->support->itemGetName(mdl->support, i);" in update  # identity unchanged
+assert "gup->submenu.text = mdl->support->mode == FAV_MODE ? (char *)favGetItemDisplay(i) : mdl->support->itemGetName(mdl->support, i);" in update  # identity unchanged; All Games rows draw their source tag
 menusys = (ROOT / "src/menusys.c").read_text(encoding="utf-8")
 sort = menusys[menusys.index("static int submenuSortCompare("):]
 sort = sort[:sort.index("\n}\n")]
@@ -220,10 +220,10 @@ gui = (ROOT / "src/gui.c").read_text(encoding="utf-8")
 assert gui.count("diaGetInt(diaUIConfig, UICFG_CFG_TITLES") + gui.count("diaGetInt(ui, UICFG_CFG_TITLES") == 2
 # A flip must rebuild every game list: mark the pages dirty (each NeedsUpdate consumes it) and
 # queue HTTP too, which oplQueueLibraryDeviceUpdates leaves out.
-refresh = gui[gui.index("static void guiRefreshCfgTitles(void)"):]
+refresh = gui[gui.index("static void guiRefreshCfgTitles(void)\n{"):]
 refresh = refresh[:refresh.index("\n}\n")]
 assert "libViewMarkAllDirty();" in refresh and "guiRefreshGameViews();" in refresh and "httpGetObject(0)" in refresh
-assert gui.count("guiRefreshCfgTitles();") == 2
+assert gui.count("guiRefreshCfgTitles();") == 3  # the two Interface dialogs + the All Games switch
 base = (ROOT / "lng_tmpl/_base.yml").read_text(encoding="utf-8")
 assert base.index("- label: CFG_TITLES") > base.index("- label: CAD_UDPFS_IMG")
 print("PASS: CFG titles in game lists are opt-in, display-only and read once per rebuild")

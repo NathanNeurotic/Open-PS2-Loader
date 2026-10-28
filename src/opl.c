@@ -415,7 +415,7 @@ static void itemRecordRecent(item_list_t *support, struct menu_item *curMenu, in
     char text[FAV_TEXT_MAX];
     int kind, sourceId, iconId, textId;
 
-    if (!gFAVStartMode && gAutosort != AUTOSORT_LAST_PLAYED)
+    if (!gFAVStartMode && !gAllGames && gAutosort != AUTOSORT_LAST_PLAYED)
         return;
     if (support->mode == FAV_MODE) {
         recentRecordByIndex(launchId);
@@ -607,7 +607,13 @@ static void itemExecToggleView(struct menu_item *curMenu)
     {
         int view = libViewPendingTarget(support->mode);
         int msg;
-        if (support->mode == FAV_MODE)
+        if (support->mode == FAV_MODE && gAllGames)
+            msg = (view == LIB_VIEW_ISO) ? _STR_VCD_OFF : (view == LIB_VIEW_PS1) ? _STR_VCD_ON :
+                                                      (view == LIB_VIEW_ELF)     ? _STR_VIEW_APPS :
+                                                      (view == LIB_VIEW_FAVS)    ? _STR_VIEW_FAVORITES :
+                                                      (view == LIB_VIEW_RECENT)  ? _STR_VIEW_RECENT :
+                                                                                   _STR_VIEW_ALL_GAMES;
+        else if (support->mode == FAV_MODE)
             msg = (view == LIB_VIEW_PS1) ? _STR_VIEW_PS1 : (view == LIB_VIEW_ELF) ? _STR_VIEW_ELF :
                                                        (view == LIB_VIEW_ALL)     ? _STR_VIEW_ALL :
                                                        (view == LIB_VIEW_RECENT)  ? _STR_VIEW_RECENT :
@@ -734,7 +740,18 @@ static void itemExecFav(struct menu_item *curMenu)
     if (support->mode != FAV_MODE && (it->isFolder || folderDepth(support->mode) > 0))
         return;
 
-    if (support->mode == FAV_MODE && libViewActive(FAV_MODE) == LIB_VIEW_RECENT) {
+    if (support->mode == FAV_MODE && favListsAllGames()) {
+        // All Games: R3 stars or unstars the row as a favourite, as it does on a device page.
+        int starred = favToggleByIndex(it->id);
+        if (starred < 0) {
+            guiShowToast(_l(it->favourited ? _STR_FAV_REMOVE_FAILED : _STR_FAV_SAVE_FAILED));
+            return;
+        }
+        it->favourited = starred;
+        guiShowToast(_l(starred ? _STR_FAV_SAVED : _STR_FAV_REMOVED));
+        sfxPlay(SFX_CONFIRM);
+        return; // the stars live in this list; nothing else to rebuild
+    } else if (support->mode == FAV_MODE && libViewActive(FAV_MODE) == LIB_VIEW_RECENT) {
         // The Recent stop lists recents.bin, so R3 here favourites the game instead of removing it.
         guiShowToast(_l(_STR_FAV_SAVING));
         if (!favAddByIndex(it->id)) {
@@ -906,7 +923,7 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
     else if (mode == APP_MODE)
         startMode = gAPPStartMode;
     else if (mode == FAV_MODE)
-        startMode = gFAVStartMode;
+        startMode = gAllGames ? START_MODE_AUTO : gFAVStartMode; // All Games lives on this page
     else if (mode == UDPFS_MODE)
         // UDPFS filesystem tab honours the network start row: Auto loads the udpfs IRX chain + mount at
         // boot, Manual defers it to tab-entry. Live only while its protocol is the selected one, so
@@ -1417,15 +1434,17 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
                 {
                     // Keep the source name for identity; snapshot the badge before its cache is rebuilt.
                     const char *badge = raBadgeText(mdl->support, i);
-                    gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
+                    gup->submenu.text = mdl->support->mode == FAV_MODE ? (char *)favGetItemDisplay(i) : mdl->support->itemGetName(mdl->support, i);
                     gup->submenu.raText = badge != NULL ? strdup(badge) : NULL;
                     /* Resolve the cover mark HERE, on the I/O thread that owns the badge cache,
                        and carry the answer to the renderer as a plain int. */
                     gup->submenu.raBadged = (badge != NULL);
                 }
 #else
-                gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
+                // Favourites/All Games rows draw their display text: a title on two sources names its source.
+                gup->submenu.text = mdl->support->mode == FAV_MODE ? (char *)favGetItemDisplay(i) : mdl->support->itemGetName(mdl->support, i);
 #endif
+                gup->submenu.favourited = mdl->support->mode == FAV_MODE ? favGetItemStarred(i) : 0;
                 gup->submenu.text_id = -1;
                 gup->submenu.selected = 0;
                 gup->submenu.autoStart = 0;
@@ -1531,7 +1550,7 @@ void menuDeferredUpdate(void *data)
         // against. Re-sync the FAV tab (cheap/idempotent; skipped when FAV is disabled).
         // An L3 flip still counts: favourites resolve against a device's PS1 or PS2 list
         // (favResolveStoredId), and a flip can fill one that was never scanned.
-        if (gFAVStartMode && mod->support->mode != FAV_MODE)
+        if ((gFAVStartMode || gAllGames) && mod->support->mode != FAV_MODE)
             loadFavourites();
     } else if (libViewPending(mod->support->mode)) {
         // A device can reject a scan before it consumes the view-dirty flag (for example, MMCE with
@@ -3489,6 +3508,8 @@ static void _loadConfig()
             }
             configGetInt(configOPL, CONFIG_OPL_ENABLE_USB, &gEnableUSB);
             configGetInt(configOPL, CONFIG_OPL_FAV_MODE, &gFAVStartMode);
+            configGetInt(configOPL, CONFIG_OPL_ALL_GAMES, &gAllGames);
+            gAllGames = gAllGames != 0;
             configGetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, &gApplyGameID);
             configGetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, &gDefaultGameView);
             if (gDefaultGameView < GAME_VIEW_BOTH || gDefaultGameView > GAME_VIEW_MIXED)
@@ -4108,6 +4129,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_SMB_CACHE, smbCacheSize);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_USB, gEnableUSB);
         configSetInt(configOPL, CONFIG_OPL_FAV_MODE, gFAVStartMode);
+        configSetInt(configOPL, CONFIG_OPL_ALL_GAMES, gAllGames);
         configSetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, gApplyGameID);
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
@@ -4398,7 +4420,7 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
         gDefaultDevice = MMCE_MODE;
     // Favourites is a valid startup page only while the FAV tab is enabled; otherwise a stale
     // choice would boot into a hidden tab with no way back to a visible one.
-    if (gDefaultDevice == FAV_MODE && !gFAVStartMode)
+    if (gDefaultDevice == FAV_MODE && !gFAVStartMode && !gAllGames)
         gDefaultDevice = MMCE_MODE;
     if (gDefaultDevice == MMCE_MODE && gMMCEStartMode == START_MODE_DISABLED)
         gDefaultDevice = APP_MODE;
@@ -5094,6 +5116,7 @@ static void setDefaults(void)
     gAPPStartMode = START_MODE_DISABLED;
     gMMCEStartMode = START_MODE_DISABLED;
     gFAVStartMode = START_MODE_DISABLED;
+    gAllGames = 0;
 
     gMMCESlot = 2; // Default to first Auto slot
     gMMCEIGRSlot = 3;
@@ -5297,6 +5320,9 @@ static void deferredInit(void)
             }
         }
     }
+    // All Games: the device pages step aside for the one list, so boot onto it.
+    if (gAllGames && list_support[FAV_MODE].support != NULL)
+        bootMode = FAV_MODE;
     if (list_support[bootMode].support == NULL) {
         if (list_support[MMCE_MODE].support != NULL)
             bootMode = MMCE_MODE;

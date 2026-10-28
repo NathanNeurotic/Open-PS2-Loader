@@ -13,7 +13,9 @@
 
   Favorites and APPS are deliberately independent. Favorites keeps its five-stop ring, cycling
   PS2 -> PS1 -> ELF -> All -> Recent and opening on All. Recent lists the last games launched
-  (recents.bin), newest first. APPS is either one unfiltered list (no L3) or
+  (recents.bin), newest first. With the All Games list on, the same page lists every source instead:
+  All -> PS2 -> PS1 -> APP -> Favorites -> Recent, opening on All, and the device pages read both
+  their PS2 and PS1 lists so the page can show them. APPS is either one unfiltered list (no L3) or
   Apps/PS1ELF, where [PS1]
   in an ELF's displayed title chooses the PS1ELF side. A PS1 device row still chooses its actual
   POPSTARTER/Ember core from row metadata; the display layer never changes launch semantics.
@@ -34,6 +36,7 @@ enum LIB_VIEW {
     LIB_VIEW_MIXED,   // PS2 + PS1 device rows, or every APPS row
     LIB_VIEW_PS1_ELF, // APPS rows whose displayed title contains [PS1]
     LIB_VIEW_RECENT,  // Favorites: the last games played, newest first (recents.bin)
+    LIB_VIEW_FAVS,    // All Games mode: the favourites themselves (every kind)
     LIB_VIEW_COUNT
 };
 

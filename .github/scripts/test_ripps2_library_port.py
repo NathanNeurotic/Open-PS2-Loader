@@ -160,12 +160,12 @@ ring = ring[:ring.index('} else if (mode == APP_MODE)')]
 stops = re.findall(r'\(cur == (LIB_VIEW_\w+)\) \? (LIB_VIEW_\w+)', ring)
 assert stops == [('LIB_VIEW_ISO', 'LIB_VIEW_PS1'), ('LIB_VIEW_PS1', 'LIB_VIEW_ELF'), ('LIB_VIEW_ELF', 'LIB_VIEW_ALL'),
                  ('LIB_VIEW_ALL', 'LIB_VIEW_RECENT')], stops
-assert re.search(r'if \(mode == FAV_MODE\)\n\s*return 5;', libview), 'Favourites ring must have five stops'
+assert re.search(r'if \(mode == FAV_MODE\)\n\s*return gAllGames \? 6 : 5;', libview), 'Favourites ring must have five stops'
 print('ok   Favourites L3: PS2 -> PS1 -> ELF -> All -> Recent')
 
 opl = (root / 'src/opl.c').read_text()
 record = function(opl, 'static void itemRecordRecent(')
-assert 'if (!gFAVStartMode && gAutosort != AUTOSORT_LAST_PLAYED)\n        return;' in record
+assert 'if (!gFAVStartMode && !gAllGames && gAutosort != AUTOSORT_LAST_PLAYED)\n        return;' in record
 assert 'curMenu->current->item.id != launchId' in record, 'record only the row being launched'
 select = function(opl, 'static void itemExecSelect(')
 call = 'itemRecordRecent(support, curMenu, launchId);\n                '

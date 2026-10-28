@@ -1995,3 +1995,22 @@ gui_strings:
 - comment: Shown when Random Game finds nothing to pick on the current page.
   label: RANDOM_GAME_NONE
   string: No games on this page to pick from.
+
+- comment: Tab name of the one list of every game (the Favorites page while All Games List is on).
+  label: ALL_GAMES
+  string: All Games
+
+- comment: Game Sources setting that turns the All Games page on.
+  label: ALL_GAMES_LIST
+  string: All Games List
+
+- label: HINT_ALL_GAMES
+  string: "One page lists the games of every started device, PS2, PS1 and apps together. Device tabs step aside once their games are on it. A game on two devices shows each device's name. L3 cycles All, PS2, PS1, Apps, Favorites and Recent."
+
+- comment: Toast when L3 on the All Games page lands on every game.
+  label: VIEW_ALL_GAMES
+  string: Showing all games
+
+- comment: Toast when L3 on the All Games page lands on the favorites.
+  label: VIEW_FAVORITES
+  string: Showing favorites

@@ -187,7 +187,7 @@ Our daughter project:
     Fixes and features ported from RIPPS2 (each commit names the RIPPS2 build): the IOP-reset
     module latches, the MMCE Game ID card wait, the POPS files check, the FreeType module trim, JPG
     game art with OPL Manager art names in any letter case, the recently played list, Sort Games:
-    Last played, and Random Game.
+    Last played, Random Game, and the All Games list.
 
 Planned collaboration:
 

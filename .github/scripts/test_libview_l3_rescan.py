@@ -61,6 +61,8 @@ HARNESS = r"""
 #define LIB_VIEW_PS1_ELF 4
 #define LIB_VIEW_MIXED 5
 #define LIB_VIEW_RECENT 6
+#define LIB_VIEW_FAVS 7
+static int gAllGames;
 #define _STR_VIEW_PS1 10
 #define _STR_VIEW_ELF 11
 #define _STR_VIEW_ALL 12
@@ -69,6 +71,8 @@ HARNESS = r"""
 #define _STR_VIEW_APPS 15
 #define _STR_VIEW_MIXED 16
 #define _STR_VIEW_RECENT 19
+#define _STR_VIEW_FAVORITES 20
+#define _STR_VIEW_ALL_GAMES 21
 #define _STR_VCD_ON 17
 #define _STR_VCD_OFF 18
 typedef struct { short mode; } item_list_t;

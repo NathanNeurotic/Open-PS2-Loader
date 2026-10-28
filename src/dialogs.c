@@ -506,6 +506,11 @@ struct UIItem diaDeviceConfig[] = {
     {UI_ENUM, CFG_FAVMODE, 1, 1, _STR_HINT_FAVMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ALL_GAMES_LIST}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_ALLGAMES, 1, 1, _STR_HINT_ALL_GAMES, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
     {UI_BREAK},

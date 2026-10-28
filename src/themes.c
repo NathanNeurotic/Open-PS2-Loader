@@ -2005,7 +2005,7 @@ static struct menu_list *psbbnFlowPage(struct menu_list *page, int forward)
 {
     do
         page = forward ? page->next : page->prev;
-    while (page != NULL && !page->item->visible);
+    while (page != NULL && !menuItemShown(page->item));
     return page;
 }
 
@@ -2380,19 +2380,19 @@ static void drawMenuIcon(struct menu_list *menu, struct submenu_list *item, conf
 static int findMenuNext(struct menu_list *menu)
 {
     struct menu_list *next = menu->next;
-    while (next != NULL && next->item->visible == 0)
+    while (next != NULL && !menuItemShown(next->item))
         next = next->next;
 
-    return next == NULL ? 0 : next->item->visible;
+    return next != NULL;
 }
 
 static int findMenuPrev(struct menu_list *menu)
 {
     struct menu_list *prev = menu->prev;
-    while (prev != NULL && prev->item->visible == 0)
+    while (prev != NULL && !menuItemShown(prev->item))
         prev = prev->prev;
 
-    return prev == NULL ? 0 : prev->item->visible;
+    return prev != NULL;
 }
 
 static void drawMenuText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)

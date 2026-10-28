@@ -57,6 +57,7 @@ int libViewSupported(int mode, int view)
         case LIB_VIEW_ELF:
         case LIB_VIEW_ALL:
         case LIB_VIEW_RECENT:
+        case LIB_VIEW_FAVS:
             return mode == FAV_MODE;
         case LIB_VIEW_MIXED:
             return libViewIsDeviceMode(mode) || mode == APP_MODE;
@@ -72,10 +73,10 @@ int libViewRingSize(int mode)
     if (mode < 0 || mode >= MODE_COUNT)
         return 1;
     if (mode == FAV_MODE)
-        return 5;
+        return gAllGames ? 6 : 5;
     if (mode == APP_MODE)
         return gAppsDisplay == APPS_DISPLAY_SPLIT ? 2 : 1;
-    if (!libViewIsDeviceMode(mode))
+    if (!libViewIsDeviceMode(mode) || gAllGames) // All Games: a device page shows both lists, no ring
         return 1;
     if (gDefaultGameView == GAME_VIEW_BOTH)
         return 2;
@@ -98,14 +99,18 @@ int libViewActive(int mode)
     if (mode < 0 || mode >= MODE_COUNT)
         return LIB_VIEW_ISO;
 
-    // These two pages do not inherit the ordinary-device setting.
+    // These two pages do not inherit the ordinary-device setting. The Favourites stop exists only in
+    // the All Games ring; outside it, a remembered one opens on All.
     if (mode == FAV_MODE)
-        return retainedView[mode];
+        return (!gAllGames && retainedView[mode] == LIB_VIEW_FAVS) ? LIB_VIEW_ALL : retainedView[mode];
     if (mode == APP_MODE)
         return gAppsDisplay == APPS_DISPLAY_SPLIT ? retainedView[mode] : LIB_VIEW_MIXED;
 
     if (!libViewIsDeviceMode(mode))
         return LIB_VIEW_ISO;
+    // All Games lists both shelves of every device, so every device scans both of its lists.
+    if (gAllGames)
+        return LIB_VIEW_MIXED;
 
     switch (gDefaultGameView) {
         case GAME_VIEW_ISO:
@@ -165,7 +170,15 @@ int libViewStageAdvance(int mode)
         return 0;
 
     cur = libViewActive(mode);
-    if (mode == FAV_MODE) {
+    if (mode == FAV_MODE && gAllGames) {
+        // All Games: All -> PS2 -> PS1 -> APP -> Favourites -> Recent -> All.
+        pendingView[mode] = (cur == LIB_VIEW_ALL)  ? LIB_VIEW_ISO :
+                            (cur == LIB_VIEW_ISO)  ? LIB_VIEW_PS1 :
+                            (cur == LIB_VIEW_PS1)  ? LIB_VIEW_ELF :
+                            (cur == LIB_VIEW_ELF)  ? LIB_VIEW_FAVS :
+                            (cur == LIB_VIEW_FAVS) ? LIB_VIEW_RECENT :
+                                                     LIB_VIEW_ALL;
+    } else if (mode == FAV_MODE) {
         // Explicit order: PS2 -> PS1 -> ELF -> All -> Recent -> PS2. The final arm is the fallback for
         // any value outside the ring (a hand-edited remembered position).
         pendingView[mode] = (cur == LIB_VIEW_ISO) ? LIB_VIEW_PS1 :
@@ -262,7 +275,7 @@ void libViewMarkAllDirty(void)
 
   Both rings are per-mode arrays, so the obvious encoding -- a config key per mode -- would be
   thirty keys for one idea the user thinks of as "where I left that page". Instead each ring is one
-  fixed-width string, ONE CHARACTER PER MODE, indexed by the IO_MODES enum: '0'..'6' is a LIB_VIEW_*
+  fixed-width string, ONE CHARACTER PER MODE, indexed by the IO_MODES enum: '0'..'7' is a LIB_VIEW_*
   value, '-' means nothing is remembered for that mode and the compiled default stands. The BDM
   characters are the exception: they are per device type (see LIB_VIEW_ENTRIES).
 

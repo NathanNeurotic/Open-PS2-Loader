@@ -72,6 +72,16 @@ int removeFavouriteByIdAndText(int mode, int id, const char *text, int kind);
 // Remove the favourite at FAV-list index favIndex (R3 on Favourites). Returns 1 only if saved.
 int favRemoveByIndex(int favIndex);
 
+// All Games: whether the Favourites page's current stop lists every source (not favourites.bin).
+int favListsAllGames(void);
+// The row text to draw: the name, or "name (source)" when two sources hold the same title.
+const char *favGetItemDisplay(int id);
+// 1 when an All Games row is also a favourite (its star).
+int favGetItemStarred(int id);
+// R3 on an All Games row: add or remove it as a favourite. Returns the new star, or -1 when the
+// favourites could not be saved.
+int favToggleByIndex(int favIndex);
+
 // Cheap/idempotent: clears the FAV list + schedules its single deferred rebuild.
 void loadFavourites(void);
 
