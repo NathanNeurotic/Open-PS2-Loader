@@ -331,6 +331,7 @@ enum UI_ITEMS {
     CFG_HDDOPLPART,
     GENERAL_GSM_DEFAULTS_BUTTON,
     LAUNCH_GSM_DEFAULTS_BUTTON,
+    UICFG_THEME_VIEW,
     UICFG_FONT_SIZE, // #757: Interface page Font Size enum (FONT_SIZE_*)
     UICFG_GLYPH_SET, // Interface page Button Glyphs enum (GLYPH_SET_*)
 
