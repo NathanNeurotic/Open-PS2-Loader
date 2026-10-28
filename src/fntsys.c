@@ -1159,7 +1159,7 @@ int fntWrapText(int id, const char *text, int innerW, char *out, int outSize)
             memcpy(glyph, q, n);
             glyph[n] = '\0';
             int glyphW = rmUnScaleX(fntCalcDimensions(id, glyph));
-            if (lineW > 0 && lineW + glyphW > innerW && (!noSpaces || txtBreakAt(word, q))) {
+            if (lineW > 0 && lineW + glyphW > innerW && (!noSpaces || q == word || txtBreakAt(word, q))) {
                 fntWrapPut(out, outSize, &wlen, "\n", 1);
                 lines++;
                 lineW = 0;

@@ -1952,7 +1952,10 @@ void menuHandleInputMenu()
                 guiMsgBox(_l(_STR_DISC_LAUNCH_ERR), 0, NULL);
         } else if (id == MENU_RANDOM_GAME) {
             refreshMenuPosition();
-            if (menuRandomGame())
+            guiLock(); // the IO worker replaces a device's list under this lock; the pick walks it twice
+            int picked = menuRandomGame();
+            guiUnlock();
+            if (picked)
                 guiSwitchScreen(GUI_SCREEN_MAIN);
             else
                 guiMsgBox(_l(_STR_RANDOM_GAME_NONE), 0, NULL);

@@ -152,6 +152,7 @@ with tempfile.TemporaryDirectory(prefix='ripps2-library-') as temp:
                         '-fsanitize=address,undefined', str(src), '-o', str(exe)], check=True)
         subprocess.run([str(exe)], check=True)
 print('ok   recents.bin: newest first, last 10, one row per game, unreadable file kept')
+assert 'guiLock(); // the IO worker replaces a device\'s list under this lock; the pick walks it twice\n            int picked = menuRandomGame();\n            guiUnlock();' in menusys, 'Random Game picks under guiLock'
 print('ok   Random Game: games only, every game reachable, empty page reported')
 
 libview = (root / 'src/libview.c').read_text()

@@ -878,7 +878,7 @@ static void diaDrawHint(int text_id)
 
                 // a CJK, Thai or Lao run breaks only where those scripts allow (not before a closing mark, nor a
                 // vowel or tone mark of the letter before); a URL or path anywhere
-                if (lineW > 0 && lineW + glyphW > innerW && (!noSpaces || txtBreakAt(wordStart, q))) {
+                if (lineW > 0 && lineW + glyphW > innerW && (!noSpaces || q == wordStart || txtBreakAt(wordStart, q))) {
                     if (lines >= maxLines || wlen >= wrappedSize - 1) {
                         truncated = 1;
                         break;

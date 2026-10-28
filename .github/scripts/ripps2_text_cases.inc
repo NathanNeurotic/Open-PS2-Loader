@@ -49,6 +49,7 @@ int main(void)
 
     /* no right-to-left letters: drawn as they are */
     assert(txtShape("abc 123", out, sizeof(out), 1) == NULL);
+    assert(txtShape("\xef\xbb\xbfHi!", out, sizeof(out), 1) == NULL); /* a BOM is not a right-to-left letter */
     assert(txtShape("\xd9\xa1\xd9\xa2", out, sizeof(out), 1) == NULL); /* Arabic digits read as numbers */
 
     /* salam: seen initial, lam-alef ligature after a joining letter, meem alone after the alef */
@@ -144,6 +145,7 @@ int main(void)
     wrapExpect("\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\xe3\x80\x82", 60, 256, /* never before the full stop: it stays on the line */
                "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\xe3\x80\x82", 1);
     wrapExpect("OK \xe6\x97\xa5\xe6\x9c\xac", 1000, 256, "OK \xe6\x97\xa5\xe6\x9c\xac", 1); /* CJK goes on after a Latin word */
+    wrapExpect("OK \xe6\x97\xa5\xe6\x9c\xac", 40, 256, "OK \n\xe6\x97\xa5\xe6\x9c\xac", 2);   /* ...and may start the next line */
     wrapExpect("\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e", 1000, 6, "\xe6\x97\xa5", 1);          /* a full buffer never cuts a character */
     {
         char out[8];

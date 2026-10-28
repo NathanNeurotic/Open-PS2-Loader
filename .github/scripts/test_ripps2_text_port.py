@@ -76,6 +76,6 @@ gui = (root / 'src/gui.c').read_text()
 assert 'return fntWrapText(gTheme->fonts[0], text, innerW, out, outSize);' in function(gui, 'static int guiWrapText(')
 dia = function((root / 'src/dia.c').read_text(), 'static void diaDrawHint(')
 assert 'noSpaces = txtNoSpaceScript(wordStart, wordLen);' in dia and 'if (wordLen < 256 && !noSpaces)' in dia
-assert '(!noSpaces || txtBreakAt(wordStart, q))' in dia, 'the hint box breaks CJK only where the script allows'
+assert '(!noSpaces || q == wordStart || txtBreakAt(wordStart, q))' in dia, 'the hint box breaks CJK only where the script allows'
 assert 'textshape.o' in (root / 'Makefile').read_text()
 print('ok   the font system shapes and measures right-to-left text; the hint and message boxes break CJK text')

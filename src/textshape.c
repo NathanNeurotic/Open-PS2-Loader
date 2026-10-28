@@ -283,7 +283,7 @@ int txtRtlChar(uint32_t c)
 {
     if ((c >= 0x0660 && c <= 0x0669) || (c >= 0x06F0 && c <= 0x06F9)) // the Arabic and Persian digits read as numbers
         return 0;
-    return (c >= 0x0590 && c <= 0x08FF) || (c >= 0xFB1D && c <= 0xFDFF) || (c >= 0xFE70 && c <= 0xFEFF);
+    return (c >= 0x0590 && c <= 0x08FF) || (c >= 0xFB1D && c <= 0xFDFF) || (c >= 0xFE70 && c <= 0xFEFC); // not U+FEFD..FEFF (the BOM)
 }
 
 // Takes its direction from the letters round it: spaces, punctuation and symbols
