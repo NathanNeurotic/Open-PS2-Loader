@@ -10,8 +10,7 @@ another device.
 | Menu aspect ratio | 4:3; Widescreen off | Settings → Interface |
 | Menu video mode | Auto; regional interlaced output | Settings → Interface |
 | Theme | Built-in `<OPL>` | Settings → Interface → Theme |
-| Coverflow | Available as the optional built-in `<Coverflow>` theme | Settings → Interface → Theme |
-| PSBBN Flow | Available as the optional built-in `<PSBBN Flow>` theme | Settings → Interface → Theme |
+| Theme View | Default (List for `<OPL>`); Coverflow and PSBBN Flow are optional views | Settings → Interface → Theme View, or hold L3 |
 | Cover and disc artwork | On | Settings → Interface → Artwork Settings |
 | Notifications | On | Settings → Interface |
 | PS2 logo | On | Settings → Game Launching |
@@ -29,13 +28,13 @@ USB can still find its own files. This is a boot-path exception to the disabled
 storage defaults, not a different display preset.
 
 To use the previous widescreen/carousel presentation, select **Widescreen: On**
-and **Theme: `<Coverflow>`** under **Settings → Interface**, apply the changes,
+and **Theme View: Coverflow** under **Settings → Interface** (theme `<OPL>`), apply the changes,
 then save. Coverflow works in both 4:3 and 16:9; selecting it does not enable
 widescreen. A theme supplied with a separate package may have a different name.
 
-For the PSBBN Definitive Project Game Collection look, choose **Theme: `<PSBBN Flow>`** in the same picker,
+For the PSBBN Definitive Project Game Collection look, choose **Theme View: PSBBN Flow** on the same page,
 then apply and save. It also supports 4:3 and 16:9 without changing the aspect setting.
-Both flow themes use Left/Right to browse covers and Up/Down to change sources; R3 remains Favorite.
+Both flow views use Left/Right to browse covers and Up/Down to change sources; R3 remains Favorite.
 See [PSBBN Flow](THEME_ENGINE.md#psbbn-flow) for artwork and authoring details.
 
 Existing `settings_riptopl.cfg` values override these defaults. The legacy

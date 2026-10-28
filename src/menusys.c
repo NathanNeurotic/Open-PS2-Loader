@@ -36,6 +36,7 @@
 #include "include/drivestatus.h"  // Drive Status (RIPPS2 build 114)
 #include "include/diaglog.h"      // the hardware log, DIAG.TXT (RIPPS2 build 115)
 #include <assert.h>
+#include <time.h> // clock(): hold L3 to switch theme views
 #include <delaythread.h>
 #include <time.h> // clock() -- Random Game seed
 
@@ -2215,6 +2216,40 @@ static void menuNavigateDown()
         menuNextV();
 }
 
+// L3 on the main page: a tap advances the page's library-view ring, as before. When the theme offers
+// more than one view (multi-view themes, docs/MULTI-VIEW-THEMES-PLAN.md), holding L3 switches to the
+// next view instead, so the tap acts on release.
+#define MENU_VIEW_HOLD_MS 500
+static clock_t menuL3Down;
+static int menuL3State; // 0 idle, 1 held (tap so far), 2 hold already handled
+
+static int menuL3HoldReached(void)
+{
+    return (u32)clock() - (u32)menuL3Down >= (u32)MENU_VIEW_HOLD_MS * (CLOCKS_PER_SEC / 1000);
+}
+
+static void menuL3Tap(int viewPending)
+{
+    if (!viewPending && selected_item->item->toggleView)
+        selected_item->item->toggleView(selected_item->item);
+}
+
+static void menuHandleViewHold(int viewPending)
+{
+    if (menuL3State == 0)
+        return;
+    if (!getKeyPressed(KEY_L3)) {
+        // A release after the hold time (say, on another screen) is not a tap.
+        if (menuL3State == 1 && !menuL3HoldReached())
+            menuL3Tap(viewPending);
+        menuL3State = 0;
+    } else if (menuL3State == 1 && menuL3HoldReached()) {
+        menuL3State = 2;
+        if (!viewPending)
+            thmCycleView();
+    }
+}
+
 void menuHandleInputMain()
 {
     // A device tab steps aside once All Games holds its games; never leave the user on it.
@@ -2261,10 +2296,14 @@ void menuHandleInputMain()
     } else if (getKeyOn(KEY_R3)) { // toggle favourite
         if (!viewPending && selected_item->item->fav)
             selected_item->item->fav(selected_item->item);
-    } else if (getKeyOn(KEY_L3)) { // advance the current page's library-view ring
-        if (!viewPending && selected_item->item->toggleView)
-            selected_item->item->toggleView(selected_item->item);
+    } else if (getKeyOn(KEY_L3)) { // advance the current page's library-view ring; hold = next theme view
+        if (gTheme->viewMask & (gTheme->viewMask - 1)) {
+            menuL3Down = clock();
+            menuL3State = 1;
+        } else
+            menuL3Tap(viewPending);
     }
+    menuHandleViewHold(viewPending);
 
     // Last Played Auto Start
     if (gRememberLastPlayed && gAutoStartLastPlayed > 0 && RemainSecs < 0 && DisableCron == 0 && !viewPending) {

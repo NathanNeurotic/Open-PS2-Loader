@@ -8,17 +8,21 @@ value token, and built-in asset name the engine understands, including this fork
 - A theme is a folder in the `THM` directory containing a **`conf_theme.cfg`** plus its
   image/font assets.
 - Anything not supplied by the theme falls back to OPL's embedded defaults.
-- OPL ships three built-in themes you can study as references: `<OPL>`, `<Coverflow>`,
-  and `<PSBBN Flow>`.
+- OPL ships the built-in `<OPL>` theme with three views you can study as references: List
+  (`misc/conf_theme_OPL.cfg`), Coverflow (`misc/theme_coverflow.cfg`) and PSBBN Flow
+  (`misc/theme_psbbn_flow.cfg`). Configurations that saved the former `<Coverflow>` or
+  `<PSBBN Flow>` themes load `<OPL>` with that view. A theme of your own can offer several views
+  too: see [Views](#views-multi-view-themes--this-fork).
 
-A fresh configuration starts with `<OPL>`, a 4:3 menu and Auto video mode.
-Select `<Coverflow>` or `<PSBBN Flow>` and, if wanted, Widescreen under **Settings → Interface**,
-then apply and save. Saved theme and display choices remain in effect after an
+A fresh configuration starts with `<OPL>` in the List view, a 4:3 menu and Auto video mode.
+Select the Coverflow or PSBBN Flow view under **Settings → Interface → Theme View** (or hold L3 on
+the main page) and, if wanted, Widescreen under **Settings → Interface**, then apply and save. Saved theme and display choices remain in effect after an
 ELF update. See [Fresh-start defaults](DEFAULTS.md).
 
 ## PSBBN Flow
 
-Select **`<PSBBN Flow>`** under **Settings → Interface → Theme**, then apply and save.
+With the `<OPL>` theme, select **PSBBN Flow** under **Settings → Interface → Theme View** (or hold L3 on the
+main page until it appears), then apply and save.
 It recreates the Game Collection of CosmicScale's
 [PSBBN Definitive Project](https://github.com/CosmicScale/PSBBN-Definitive-Project): black header
 and button-hint bands with thin rules, a blue star-field nebula between them, the page list where
@@ -214,6 +218,66 @@ reflections start together.
 The parser reads blocks **in order starting from 0 and stops at the first gap.** If you define
 `main0`, `main1`, `main3` (skipping `main2`), then `main3` is **never read**. When you remove
 a block, **renumber** the ones after it so there are no holes.
+
+### Views (multi-view themes) — *this fork*
+
+One `conf_theme.cfg` can describe several **views** of the main and info pages: `list`, `coverflow`,
+`psbbn` and `grid` (Grid is reserved; it has no element yet). The user picks a view under
+**Settings → Interface → Theme View**, or holds **L3** for half a second on the main page to switch to
+the next view the theme offers (a tap on L3 still cycles the library view). Idea and design:
+KrahJohlito.
+
+The unprefixed blocks are the **base**. A block named `<view>.<block>` replaces that block in that
+view only, and every block a view does not declare is inherited from the base:
+
+```ini
+views=list,coverflow           # the views this theme offers
+default_view=list              # used until the user picks one
+
+main2:                         # base (List): a cover panel
+	type=ItemCover
+	default=cover
+
+coverflow.main2:               # Coverflow: the carousel replaces block 2
+	type=Coverflow
+	default=cover
+	reflection=1
+coverflow.appsMain2:           # families work inside a view too
+	type=Coverflow
+	default=coverapp
+coverflow.main1_enabled=0      # hide a base block in this view only
+coverflow.main9:               # or add blocks after the base list's last block (here main8)
+	type=StaticText
+	value=Coverflow
+coverflow.coverflow_cover_offset=12   # a theme-wide key for this view only
+```
+
+**How a block is chosen.** For slot `N` of a family in view `V`, the first block present wins:
+`V.<family>N`, then `V.` + each step of that family's fallback chain (for example `V.mainN`), then
+the base chain (`<family>N`, …, `mainN`). So `coverflow.main2` also replaces `appsMain2` in Coverflow
+unless the theme adds `coverflow.appsMain2`. A view block replaces the **whole** base block; it does
+not merge single keys from it, so a view that changes `type` gets no stale keys. `_enabled=0` counts
+as present, which is how a view hides a base block. The [contiguous numbering
+rule](#-contiguous-numbering-rule) applies to the merged list: the view's list ends at the first slot
+where neither the view nor the base has a block.
+
+| Key | Value | Meaning |
+|---|---|---|
+| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: the theme's own view (from its base blocks: a `PSBBNFlow` element = psbbn, a `Coverflow` element = coverflow, else list) plus every view it declares a `<view>.` key for. |
+| `default_view` | a view name | The view used until the user picks one, and when the user's pick is not offered. Absent (or naming a view the theme does not offer): the theme's own view if `views=` offers it, else the first offered view in the order list, coverflow, psbbn, grid. |
+| `<view>.inherit` | `0` | That view never falls back to the base blocks: it brings its whole main and info layout. Use it when a view shares little with the base, instead of a long list of `<view>.mainN_enabled=0` lines. |
+| `<view>.<global key>` | as the key | Overrides `use_default`, `use_real_height`, `coverflow_cover_offset` and the colour keys in that view. |
+
+- Make the base the List view. Stock OPL and other forks ignore the prefixed blocks, so they still load
+  the theme as a list.
+- The user's Theme View choice is one setting for every theme (saved as `theme_view=`). A theme that
+  does not offer it shows its `default_view`.
+- Only the active view is built. Switching views reloads the theme, so it costs no extra memory.
+- Names stay within 47 characters. The longest prefixed key,
+  `coverflow.favsVcdMain12_reflection_offset`, is 41.
+- The built-in `<OPL>` theme offers List, Coverflow and PSBBN Flow as views. Each still lives in its own
+  file (`misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg`, `misc/theme_psbbn_flow.cfg`), which are
+  good references for a view's blocks.
 
 ---
 
@@ -585,7 +649,7 @@ You can point `default=`/`overlay=` at any of OPL's embedded textures (no file n
 - **Buttons:** `cross`, `circle`, `triangle`, `square`, `left`, `right`, `select`, `start`, `L3`, `R3`, `fav_mark`
 - **Loading frames:** `load0` … `load7`
 - **Boot logo:** `logo`, `logo0` … `logo6`
-- **Backgrounds:** `incebtion` (default theme bg), `ip`, `psbbn_bg` (`<PSBBN Flow>` nebula, 8-bit 160×120, filtered up)
+- **Backgrounds:** `incebtion` (default theme bg), `ip`, `psbbn_bg` (PSBBN Flow view nebula, 8-bit 160×120, filtered up)
 - **Format icons:** `ELF`, `HDL`, `ISO`, `ZSO`, `UL`
 - **Media icons:** `APP`, `CD`, `DVD`
 - **Aspect / scan / vmode / rating** sets as listed in §6.
@@ -616,7 +680,7 @@ SIO2 bus quiet — those covers still load on selection, as before.
 | `reflection` | `1` to draw the mirrored reflection below each cover (alpha-faded). |
 | `x`, `y`, `width`, `height` | Position and per-cover size. `width`/`height` should match your case art's pixel size so the overlay corners line up. `y` is the vertical **center of a cover of this element's own shape**. On a mixed shelf (Favorites *All*, a Mixed device page) a cover of another shape stands on that cover's **bottom edge**, so every cover rests on one baseline and the reflections line up. On a single-kind page every cover is this shape, so `y` is simply each cover's center. |
 
-A minimal example (this fork's `<Coverflow>` theme uses values like these):
+A minimal example (the built-in Coverflow view uses values like these):
 
 ```ini
 main2:
@@ -750,8 +814,8 @@ main19:
 	height=52
 ```
 
-The `<OPL>` and `<Coverflow>` built-ins place one: `<OPL>` above the cover and `<Coverflow>` under the centre cover, and
-both between the two screenshots of the info page. The built-in `<PSBBN Flow>` layout does not
+The built-in List and Coverflow views place one: List above the cover and Coverflow under the centre cover, and
+both between the two screenshots of the info page. The built-in PSBBN Flow view does not
 place a SaveIcon; custom PSBBN Flow themes can add the element.
 
 ---
@@ -766,5 +830,5 @@ place a SaveIcon; custom PSBBN Flow themes can add the element.
 - Negative `x`/`y` and `POS_MID`/`DIM_INF` let you anchor to edges/center without hardcoding
   resolution-specific numbers.
 
-For a complete, working reference, open the bundled `<OPL>`, `<Coverflow>` and `<PSBBN Flow>` themes and the
+For a complete, working reference, open the bundled `<OPL>` theme's List, Coverflow and PSBBN Flow views and the
 `misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg` and `misc/theme_psbbn_flow.cfg` sources in the repository.
