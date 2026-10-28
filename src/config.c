@@ -931,8 +931,8 @@ static void cfgWriteLibconfigLine(file_buffer_t *fileBuffer, const char *indent,
 {
     // Sized for the WORST case, because snprintf TRUNCATES rather than overflows and a truncated line
     // loses its closing quote+semicolon -- which corrupts the file for wOPL and for us alike (Gemini
-    // review of #184). Worst case: indent(2) + key(CONFIG_KEY_NAME_LEN-1 = 31) + ` = "` (4) +
-    // every one of the value's 255 chars escaped (510) + `";\n` (3) + NUL = 551. A plain 512 was short.
+    // review of #184). Worst case: indent(2) + key(CONFIG_KEY_NAME_LEN-1 = 47) + ` = "` (4) +
+    // every one of the value's 255 chars escaped (510) + `";\n` (3) + NUL = 567. A plain 512 was short.
     char line[CONFIG_KEY_NAME_LEN + CONFIG_KEY_VALUE_LEN * 2 + 16];
 
     if (cfgValueIsBareScalar(val)) {
