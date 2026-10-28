@@ -687,10 +687,18 @@ wOPL (historical; its public repository is unavailable), [OPL DB](https://github
 [nhddl](https://github.com/pcm720/nhddl),
 [hacan359's RetroAchievements OPL](https://github.com/hacan359/Open-PS2-Loader/pull/1),
 [Modulo-R1](https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2),
-[PS2-Launcher](https://github.com/Irfanlesnar/PS2-Launcher), and
-[official OPL](https://github.com/ps2homebrew/Open-PS2-Loader).
+[PS2-Launcher](https://github.com/Irfanlesnar/PS2-Launcher),
+[official OPL](https://github.com/ps2homebrew/Open-PS2-Loader), and
+[YAOPL by belomaxorka](https://github.com/yaopl/yaopl).
 
 With special and sincere thanks to:
+
+- **[belomaxorka](https://github.com/belomaxorka)** — for building
+  **[YAOPL (Yet Another Open PS2 Loader)](https://github.com/yaopl/yaopl)** and
+  contributing extensive backend compatibility, reliability, and safety fixes
+  throughout the OPL ecosystem. His work on controller handoff, MMCE, UDPBD/USB,
+  ISO/ZSO parsing, game loading, and reproducible regression cases is an
+  important reference for RiptOPL development. Thank you for sharing this work.
 
 - **KrahJohlito** — the legend, and the single biggest influence on this fork. Creator of
   **uOPL (Unofficial Open PS2 Loader)** and its continuation
