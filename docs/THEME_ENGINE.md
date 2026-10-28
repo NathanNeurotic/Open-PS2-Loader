@@ -231,7 +231,7 @@ The unprefixed blocks are the **base**. A block named `<view>.<block>` replaces 
 view only, and every block a view does not declare is inherited from the base:
 
 ```ini
-views=list,coverflow           # the views this theme offers, in L3 order
+views=list,coverflow           # the views this theme offers
 default_view=list              # used until the user picks one
 
 main2:                         # base (List): a cover panel
@@ -263,8 +263,8 @@ where neither the view nor the base has a block.
 
 | Key | Value | Meaning |
 |---|---|---|
-| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers, in L3 order. Absent: the theme's own view (from its base blocks: a `PSBBNFlow` element = psbbn, a `Coverflow` element = coverflow, else list) plus every view it declares a `<view>.` key for. |
-| `default_view` | a view name | The view used until the user picks one, and when the user's pick is not offered. Absent: the theme's own view. |
+| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: the theme's own view (from its base blocks: a `PSBBNFlow` element = psbbn, a `Coverflow` element = coverflow, else list) plus every view it declares a `<view>.` key for. |
+| `default_view` | a view name | The view used until the user picks one, and when the user's pick is not offered. Absent (or naming a view the theme does not offer): the theme's own view if `views=` offers it, else the first offered view in the order list, coverflow, psbbn, grid. |
 | `<view>.inherit` | `0` | That view never falls back to the base blocks: it brings its whole main and info layout. Use it when a view shares little with the base, instead of a long list of `<view>.mainN_enabled=0` lines. |
 | `<view>.<global key>` | as the key | Overrides `use_default`, `use_real_height`, `coverflow_cover_offset` and the colour keys in that view. |
 

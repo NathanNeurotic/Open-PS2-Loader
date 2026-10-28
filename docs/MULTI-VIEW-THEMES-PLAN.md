@@ -80,7 +80,7 @@ base count and the view's own count.
 
 ### Declared views
 
-- `views=` lists the views the theme supports, in ring order. Absent: the theme supports only its
+- `views=` lists the views the theme supports (L3 cycles them in the fixed order list, coverflow, psbbn, grid). Absent: the theme supports only its
   native view (detected from its base blocks: `PSBBNFlow` = psbbn, `Coverflow` = coverflow, else list),
   plus any view it declares blocks for.
 - `default_view=` is the view used when the user has not chosen one. Absent: the native view.

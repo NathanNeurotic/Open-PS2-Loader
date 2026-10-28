@@ -22,7 +22,7 @@ enum ThemeView {
 #define THM_VIEW_BLOCK_NAME_LEN 40
 
 // Theme keys.
-#define THM_VIEW_KEY_VIEWS   "views"        // views=list,coverflow -- the views the theme supports, in ring order
+#define THM_VIEW_KEY_VIEWS   "views"        // views=list,coverflow -- the views the theme supports (L3 order is fixed)
 #define THM_VIEW_KEY_DEFAULT "default_view" // default_view=coverflow -- used until the user picks one
 
 const char *thmViewName(int view);
