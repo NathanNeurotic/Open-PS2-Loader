@@ -78,23 +78,17 @@
   <main class="content">
 <span id="coverflow"></span>
 <h1>Coverflow &amp; PSBBN Flow</h1>
-<p class="lead">Coverflow is RiptOPL's optional built-in centered carousel theme — centered cover art with an alpha-faded
+<p class="lead">Coverflow is RiptOPL's optional built-in centered carousel view — centered cover art with an alpha-faded
 reflection, animated scrolling between titles, and aspect-correct cover frames in both 4:3
-and widescreen. It is a <b>built-in theme</b>: no theme files to copy. Choose it in the Theme picker; fresh settings use <code>&lt;OPL&gt;</code>.
+and widescreen. It is a <b>view of the built-in <code>&lt;OPL&gt;</code> theme</b>: no theme files to copy. Pick it under <b>Settings → Interface → Theme View</b>, or hold <b>L3</b> for half a second on the main page; fresh settings use the List view.
 For the Collection-style perspective fan, see <a href="#psbbn-flow">PSBBN Flow</a> below.</p>
 
-<div class="callout info"><div class="h">Built-in, not a THM folder theme</div>
-<code>&lt;Coverflow&gt;</code> is compiled into RiptOPL and appears in the theme list alongside
-any custom <code>THM/</code> themes you add. You can switch to a different theme in
-<b>Interface → Theme</b> and switch back at any time. The <b>Coverflow Settings</b>
-button in <b>Interface</b> tunes <code>Coverflow</code> elements; PSBBN Flow has its own fixed presentation.
-Fresh configurations start with <code>&lt;OPL&gt;</code>, a 4:3 menu and Auto video mode.
-Choose <code>&lt;Coverflow&gt;</code> under <b>Settings → Interface → Theme</b>, apply and save.
-Widescreen is a separate choice; Coverflow also works in 4:3. Existing saved settings take precedence.
+<div class="callout info"><div class="h">A view of &lt;OPL&gt;, not a THM folder theme</div>
+Coverflow, PSBBN Flow and the List are three <a href="themes.html#views">views</a> of the built-in <code>&lt;OPL&gt;</code> theme. Pick one under <b>Settings → Interface → Theme View</b>, apply and save, or hold <b>L3</b> for half a second on the main page to step to the next one. The theme list shows <code>&lt;OPL&gt;</code> and any custom <code>THM/</code> themes; a disk theme offers the views its author declared. A configuration that saved the former <code>&lt;Coverflow&gt;</code> or <code>&lt;PSBBN Flow&gt;</code> theme loads <code>&lt;OPL&gt;</code> with that view. The <b>Coverflow Settings</b> button in <b>Interface</b> tunes <code>Coverflow</code> elements; PSBBN Flow has its own fixed presentation. Fresh configurations start with <code>&lt;OPL&gt;</code> in the List view, a 4:3 menu and Auto video mode. Widescreen is a separate choice; Coverflow also works in 4:3. Existing saved settings take precedence. Views arrived in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1092">#1092</a>; NOT TESTED on hardware.
 </div>
 
 <h2 id="how-it-works">How Coverflow works</h2>
-<p>When the <code>&lt;Coverflow&gt;</code> theme is active, the game list view shows a row of
+<p>When the Coverflow view is active, the game list view shows a row of
 cover-art images centred on the screen. The currently selected title sits at the centre; side
 covers fan out to the left and right. Below each cover a mirrored, alpha-faded reflection is
 drawn automatically. Scrolling left or right slides the entire carousel with a smooth animation;
@@ -133,9 +127,9 @@ share one baseline and their reflections start together. See
 <h2 id="psbbn-flow">PSBBN Flow</h2>
 <div class="callout info"><div class="h">Build availability</div>
 PSBBN Flow is built in to current releases (added by <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">PR #977</a>).
-Builds from before that change list only <code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> as built-ins.</div>
-<p>Select <b>Settings → Interface → Theme → <code>&lt;PSBBN Flow&gt;</code></b>, apply and save.
-The theme adapts <b>dnunezx / darkladark</b>'s LUNA Collection display from
+Builds from before that change list only <code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> as built-ins. Since <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1092">#1092</a> it is a view of <code>&lt;OPL&gt;</code>, picked under Theme View, not a separate theme.</div>
+<p>Select <b>Settings → Interface → Theme View → PSBBN Flow</b> (theme <code>&lt;OPL&gt;</code>), apply and save, or hold <b>L3</b> for half a second on the main page until it appears.
+The view adapts <b>dnunezx / darkladark</b>'s LUNA Collection display from
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733">#733</a>, which #977 supersedes:
 a large focal cover on the right, a diminishing tail of up to six neighbors on the left,
 an outgoing foreground cover, a blue frame/footer and a 25-frame cubic glide.</p>
@@ -245,7 +239,7 @@ the underlying keys and their value ranges:</p>
 <p>The <code>coverflow_cover_offset</code> key is a <b>theme-level global property</b> — it lives
 inside the theme's <code>conf_theme.cfg</code>, not in <code>settings_riptopl.cfg</code>. It shifts
 the entire carousel left or right (range −1024 to 1024, default 0). The built-in
-<code>&lt;Coverflow&gt;</code> theme sets it to <code>0</code>. If you author a custom theme and
+Coverflow view sets it to <code>0</code>. If you author a custom theme and
 need to reposition the carousel horizontally, set this in your <code>conf_theme.cfg</code> — it does
 not appear in the Coverflow Settings menu.</p>
 </details>
