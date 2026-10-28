@@ -3856,14 +3856,20 @@ static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme
 */
 #define GLYPH_PNG(set, n)                           \
     extern unsigned char glyph_##set##_##n##_png[]; \
-    extern unsigned int size_glyph_##set##_##n##_png;
-#define GLYPH_SET_PNGS(set)                                                                                \
-    GLYPH_PNG(set, cross)                                                                                  \
-    GLYPH_PNG(set, circle)                                                                                 \
-    GLYPH_PNG(set, square)                                                                                 \
-    GLYPH_PNG(set, triangle) GLYPH_PNG(set, start)                                                         \
-        GLYPH_PNG(set, select) GLYPH_PNG(set, L1) GLYPH_PNG(set, R1) GLYPH_PNG(set, L3) GLYPH_PNG(set, R3) \
-            GLYPH_PNG(set, left) GLYPH_PNG(set, right)
+    extern unsigned int size_glyph_##set##_##n##_png
+#define GLYPH_SET_PNGS(set)   \
+    GLYPH_PNG(set, cross);    \
+    GLYPH_PNG(set, circle);   \
+    GLYPH_PNG(set, square);   \
+    GLYPH_PNG(set, triangle); \
+    GLYPH_PNG(set, start);    \
+    GLYPH_PNG(set, select);   \
+    GLYPH_PNG(set, L1);       \
+    GLYPH_PNG(set, R1);       \
+    GLYPH_PNG(set, L3);       \
+    GLYPH_PNG(set, R3);       \
+    GLYPH_PNG(set, left);     \
+    GLYPH_PNG(set, right);
 GLYPH_SET_PNGS(standard)
 GLYPH_SET_PNGS(white)
 
