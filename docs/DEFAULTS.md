@@ -21,6 +21,10 @@ another device.
 | Confirm button | Circle; configurable | Settings → General & System |
 | Remember last played | Off | Settings → General & System |
 | Automatic VMC creation | Off | Settings → Game Launching |
+| All Games List | Off | Settings → Game Sources |
+| Show Hidden Games | Off | Settings → Game Sources |
+| Sort Games | A to Z (an out-of-range saved value also reads as A to Z) | Settings → Interface |
+| Button Glyphs | Theme (the theme's own glyphs, or its `glyph_set` key) | Settings → Interface |
 | GameID barcode | PS1 half On, PS2 half Off (shown as *On (PS1 only)*) | Settings → Interface |
 
 The boot device can be enabled during discovery so that a loader started from

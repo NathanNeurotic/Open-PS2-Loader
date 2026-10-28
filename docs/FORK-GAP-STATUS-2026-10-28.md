@@ -90,16 +90,19 @@ credit to akilluminati47 in its commits.
 **Rule for these ports:** each one lands in both RiptOPL and Open-PS2-Loader. An item that
 cannot be ported to one of them gets an issue instead.
 
-### Backend fixes RIPPS2 has and both RiptOPL repositories lack
+### Backend fixes from RIPPS2
 
-| Item | Where the gap is | Status | Plan |
+Status as of the merge of RiptOPL #99 (`09ea7d83`) and Open-PS2-Loader #1084 (`fcafb991`) on
+2026-10-28. Shipped means merged in both; none of it is tested on hardware.
+
+| Item | Where the gap was | Status | Where |
 | --- | --- | --- | --- |
-| Clear the BDM "module loaded" flags after an IOP reset (after the NBD server stops, iLink, MX4SIO, HDD-BDM, PC CARD CF and UDPBD otherwise never reload until reboot) | RiptOPL `src/sources/bdmsupport.cpp` flags are never cleared; same in the C `bdmsupport.c` | MISSING | PR A |
-| mmceman upstream fix `21dbc0a` "don't block mc1 (2nd port)" | Both pin `db3e93f0`; RiptOPL ships its own `mmceman_fork` | MISSING | PR A: port the hunk into the fork, keep the pin |
-| MMCE Game ID: wait to see "busy" before waiting for "not busy", with a longer budget and a skip | RiptOPL `src/sources/mmcesupport.cpp` polls 15 x 200 ms (about 3 s) and stops at the first not-busy read | MISSING (the link to the Burnout 3 hang is RIPPS2's report, not verified here) | PR A, with a visible skip; needs MMCE hardware before merge |
-| FreeType built with only the modules the fonts need | RiptOPL `fntsys.cpp` links every module | MISSING | PR A |
-| POPS file sets (`POPS_IOX.PAK` + `POPS.PAK`, or `POPS.ELF` + `IOPRP252.IMG`) and a warning when files are missing | Neither name is in RiptOPL's source; it may reach POPS another way | UNKNOWN | PR A: missing-files warning |
-| Ogg pages whose serial has the top bit set (refused by the PS2 Vorbis library) | `bgm.cpp` has no workaround; ps2build's libogg may not have the problem | UNKNOWN | PR A only if it reproduces |
+| Clear the BDM "module loaded" flags after an IOP reset (after the NBD server stops, iLink, MX4SIO, HDD-BDM, PC CARD CF and UDPBD otherwise never reload until reboot) | RiptOPL `src/sources/bdmsupport.cpp` flags were never cleared; same in the C `bdmsupport.c` | SHIPPED (BDM, HDD, MMCE and UDPFS latches) | RiptOPL #99, OPL #1084 |
+| mmceman upstream fix `21dbc0a` "don't block mc1 (2nd port)" | Both pinned `db3e93f0`; RiptOPL ships its own `mmceman_fork` | SHIPPED: pin moved to `de28936f`, only `sio2man_hook.c` changed | RiptOPL #99, OPL #1084 |
+| MMCE Game ID: wait to see "busy" before waiting for "not busy", with a longer budget and a skip | RiptOPL `src/sources/mmcesupport.cpp` polled 15 x 200 ms (about 3 s) and stopped at the first not-busy read | SHIPPED: up to 2 s to see busy, then an on-screen wait (START skips, 180 s cap). The Burnout 3 link is RIPPS2's report, not verified here | RiptOPL #99, OPL #1084 |
+| FreeType built with only the modules the fonts need | RiptOPL `fntsys.cpp` linked every module | SHIPPED: TrueType and CFF only (about 120 KB smaller unpacked) | RiptOPL #99, OPL #1084 |
+| POPS file sets (`POPS_IOX.PAK` + `POPS.PAK`, or `POPS.ELF` + `IOPRP252.IMG`) and a warning when files are missing | Neither name was in RiptOPL's source | SHIPPED: a launch asks first when the files are missing, and offers to copy them from another started drive | RiptOPL #99, OPL #1084 |
+| Ogg pages whose serial has the top bit set (refused by the PS2 Vorbis library) | `bgm.cpp` has no workaround | NOT NEEDED: upstream libogg 1.3.5 and libvorbis 1.3.7 (what ps2build ships) decode such a file | Checked in RiptOPL #99; not ported |
 | Neutrino options read from the `neutrino.elf` actually installed | `sysNeutrinoPreflight` does not check the version | MISSING | Not scheduled |
 | IGR exit path checked before use, else Browser | ee_core loads only rom0 SIO2MAN/MCMAN and USB before the exit path, so MMCE and HDD exit paths cannot work | PARTIAL | Not scheduled |
 | exFAT lost clusters when two files grow at once (RIPPS2's claim against the ps2sdk driver) | Not investigated; RiptOPL ships its own bdmfs FatFs fork | UNKNOWN | Reproduce on a PC image first |
@@ -110,22 +113,25 @@ Already PRESENT, no action: the ps2ips receive tail (#1064), the exFAT HDD devic
 boot, ee_core `gc-sections`, and the single-shape save icon. RiptOPL's hires HD drawing is sharper than RIPPS2's
 single-pass 640-wide drawing; that difference is intentional.
 
-### Feature port plan (in progress)
+### Feature port (shipped)
 
-Agreed with the owner on 2026-10-28. Each PR lands in both repositories. This table is the plan,
-not shipped work: PR A is open as [RiptOPL#99](https://github.com/NathanNeurotic/RiptOPL/pull/99) (not merged; the Open-PS2-Loader side is not open
-yet), and B to H have no PR yet.
+Agreed with the owner on 2026-10-28. Groups A to H all landed in one PR per repository, both
+merged on 2026-10-28: [RiptOPL#99](https://github.com/NathanNeurotic/RiptOPL/pull/99) (`09ea7d83`)
+and [Open-PS2-Loader#1084](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084)
+(`fcafb991`), plus the translations in
+[Open-PS2-Loader-lang#2](https://github.com/NathanNeurotic/Open-PS2-Loader-lang/pull/2). Host tests
+only: NOT TESTED on hardware.
 
-| PR | Scope |
-| --- | --- |
-| A | Backend fixes above, plus the POPS missing-files warning |
-| B | Art: JPG covers, OPL Manager art names (`_BG_00`, `_SCR_00`, `_SCR_01`), case-insensitive names on PFS |
-| C | One unified library setting: hides the device icons, L3 cycles All/PS2/PS1/APP, duplicates tagged by device, sort by last played, Recents (last 10), Random Game in the start menu under Launch Disc |
-| D | `hidden.txt` to hide games, and a full delete of a game's parts, CFG, art and cheats (no APA partition delete) |
-| E | Right-to-left (Arabic, Persian) shaping and CJK/Lao line breaking; akilluminati47's translations offered to the language repository |
-| F | STATUS page for drives and a `DIAG.TXT` boot report |
-| G | Smaller GUI items (scroll bar, dimmed disabled rows, glyph sets and similar) |
-| H | Offer to copy a PS1 game into POPS format, and a minimal manager that shows a VMC as a folder |
+| Group | Scope | User docs |
+| --- | --- | --- |
+| A | Backend fixes above, plus the POPS missing-files question | [Launch diagnostics](LAUNCH-DIAGNOSTICS.md), [PS1](VCD.md) |
+| B | Art: JPG and JPEG, OPL Manager names (`_BG_00`, `_SCR_00`, `_SCR_01`), any letter case in listed `ART` folders | [Game library](GAME-LIBRARY.md#game-art-jpg-any-letter-case-and-opl-manager-names) |
+| C | All Games List (device tabs step aside, L3 cycles All/PS2/PS1/Apps/Favourites/Recent, duplicates tagged by device), Sort Games: Last played, Recent (last 10), Random Game in the Start menu | [Game library](GAME-LIBRARY.md) |
+| D | `hidden.txt` and Hide Game; Delete removes a game's parts, CFG, art and cheats (no APA partition delete) | [Game library](GAME-LIBRARY.md#hide-game) |
+| E | Arabic and Persian shaping, right-to-left lines, CJK/Thai/Lao line breaks; 13 missing translations from akilluminati47's language files | [Languages](LANGUAGES.md#right-to-left-and-cjk-text) |
+| F | Drive Status page and `DIAG.TXT` | [Launch diagnostics](LAUNCH-DIAGNOSTICS.md#drive-status-and-diagtxt) |
+| G | Dimmed switched-off rows, scroll bar, right-stick peek, return to the opening button, button glyph sets, `<font>_weight` | [Controls](CONTROLS.md), [Interface](INTERFACE.md#button-glyphs), [Theme engine](THEME_ENGINE.md) |
+| H | Offer to copy Sony's POPS files from another drive; a Saves page that treats a VMC like a folder | [PS1](VCD.md#sonys-pops-files), [VMC](VMC.md#saves-on-a-card) |
 
 ### Not taken
 
@@ -157,7 +163,7 @@ Everything above. The open console checks, in priority order:
    #1018), in this order: native, Neutrino, POPStarter.
 7. UDPFS covers on the first connect ([RiptOPL#81](https://github.com/NathanNeurotic/RiptOPL/issues/81),
    was #1036), Neutrino core, OPL Manager art.
-8. Each RIPPS2 port as it lands. The MMCE Game ID wait and mmceman `21dbc0a` need an SD2PSX with
+8. The RIPPS2 port (RiptOPL #99, Open-PS2-Loader #1084): every group A to H above. The MMCE Game ID wait and mmceman `21dbc0a` need an SD2PSX with
    sd2psXtd firmware (8 MB card, Burnout 3) and an MMCE in slot 1 with a normal card in slot 2.
 
 ## 5. Ecosystem head check

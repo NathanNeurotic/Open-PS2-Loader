@@ -80,6 +80,7 @@ SITE_GROUPS = {
         ("controls", "Controls", "Controls"),
         ("coverflow", "Coverflow", "Coverflow"),
         ("favourites", "Favorites", "Favorites"),
+        ("library", "Game-Library", "Game library: All Games, Recent, Hide and Delete"),
         ("themes", "Themes", "Theme engine"),
         ("languages", "Languages", "Languages"),
         ("unicode-titles", "Unicode-Game-Titles", "Japanese / Unicode game titles"),
@@ -104,6 +105,7 @@ DOCS = {
     "docs/EXFAT.md": ("EXFAT-Reference", "exFAT and APA-Jail reference"),
     "docs/PC-CARD-CF.md": ("PC-CARD-CF-Reference", "PC CARD CF implementation reference"),
     "docs/DESR-DVR.md": ("DESR-DVR-Reference", "DESR DVR implementation reference"),
+    "docs/GAME-LIBRARY.md": ("Game-Library-Reference", "Game library reference"),
     "docs/PARENTAL-LOCK.md": ("Parental-Lock", "Per-game parental lock"),
     "docs/SIO2MAN-COMPATIBILITY.md": ("SIO2MAN-Compatibility", "SIO2MAN hook compatibility"),
     "docs/DEFAULTS.md": ("Fresh-Start-Defaults", "Fresh-start defaults and saved settings"),
@@ -139,6 +141,7 @@ PAIRS = {
     "Settings": "docs/INTERFACE.md", "Releases": "ROLLING_RELEASE.md",
     "Project-Overview": "README.md", "Internal-HDD": "docs/APA-SAFETY.md",
     "Unicode-Game-Titles": "docs/UNICODE-GAME-TITLES.md",
+    "Game-Library": "docs/GAME-LIBRARY.md",
 }
 SITE_MAP = {name + ".html": page for group in SITE_GROUPS.values() for name, page, _ in group}
 

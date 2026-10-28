@@ -168,6 +168,22 @@ English definition before changing a translation: even correctly parsed
 strings can have stale feature descriptions. Review particularly UTF-8 glyphs,
 right-to-left rendering, and placeholders in each language on PS2 hardware.
 
+## Right-to-left and CJK text
+
+Ported from RIPPS2 build 104 by akilluminati47 (`src/textshape.c`). NOT TESTED on hardware.
+
+- **Arabic and Persian** letters are joined into their presentation forms (lam-alef as one
+  letter), and each line is laid out right to left. Latin words and numbers keep their own order,
+  and brackets are turned round. Centred Arabic stays centred, and zero-width marks draw nothing.
+  The forms table is RIPPS2's, generated from Unicode 16.0.0.
+- **CJK, Thai and Lao** lines may break between letters, but never before closing punctuation or
+  before a vowel that belongs to the letter in front of it.
+- The settings hint box breaks CJK, Thai and Lao text where the script allows. Message boxes do too,
+  break an over-wide word anywhere, and never cut a character in half.
+
+A translation needs no markup for any of this: write the text in logical order, as typed. The
+language still needs a font that has the glyphs.
+
 ## Installing and selecting language files
 
 From the release matching your ELF, download `RIPTOPL-LANGS-*.zip` and
