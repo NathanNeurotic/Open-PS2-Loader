@@ -275,19 +275,29 @@ You will see them in the selection menu but cannot toggle them off.</div>
 
 <h2 id="neutrino">Cheats with the Neutrino core</h2>
 <p>A game set to the Neutrino core uses the same <code>.cht</code> file, the same settings and the same
-selection menu. At launch RiptOPL writes the enabled codes to <code>riptopl-cheats.toml</code> where Neutrino
-reads its configs &mdash; its <code>config/</code> folder, the Neutrino folder itself for a flat install, or a
-<code>-cwd=</code> you forward &mdash; and adds <code>-cfg=riptopl-cheats</code> to the launch. The file is
-rewritten every time and is safe to delete.</p>
+selection menu. At launch, RiptOPL writes the enabled codes to <code>config/riptopl-cheats.toml</code> (or flat
+<code>riptopl-cheats.toml</code>, or your forwarded <code>-cwd=</code>) and adds <code>-cfg=riptopl-cheats</code> to the launch.
+The file is rewritten on every launch with cheats on and is safe to delete.</p>
+<p>Requirements for cheats to apply under Neutrino:</p>
 <ul class="checklist">
-<li>No enabled codes means no file and no <code>-cfg</code>.</li>
-<li>A <code>-cfg=</code> of your own still loads: Neutrino keeps only its last <code>-cfg</code>, which is ours, and
-ours names yours in its <code>depends</code>.</li>
-<li>If the folder will not take the file (a read-only share, a full card), RiptOPL asks before launching
-without cheats. Auto Loading launches without them.</li>
-<li>The <b>PS2RD Cheat Image</b> (<code>.img</code>) is OPL-core only and is greyed for a Neutrino game.</li>
-<li><b>Show Launch Arguments</b> (see <a href="neutrino.html#show-args">Neutrino Core</a>) shows the
-<code>-cfg</code> before you launch.</li>
+<li><b>Neutrino runtime version:</b> Cheats require the post-v1.8.0 development build (<code>v1.8.0-61-g7be8de2</code> or newer)
+bundled in standard RiptOPL rolling-release downloads. Official standalone Neutrino <code>v1.8.0</code> predates cheat support
+in its <code>ee_core.elf</code>. If you use an external <code>v1.8.0</code> install or the RetroAchievements (RA) edition (which pins
+ORBIT <code>v1.0.2</code> based on <code>v1.8.0</code>), codes do not apply.</li>
+<li><b>Mastercode (<code>90xxxxxx</code>) hook:</b> Neutrino's PS2RD engine hooks into <code>SetupThread</code> through a
+<code>90xxxxxx</code> code. The <code>.cht</code> file must contain a valid <code>90</code> mastercode. Files with only an
+<code>F0xxxxxx</code> code or raw memory writes (<code>20xxxxxx</code>) lack a hook target. In that case, <code>ee_core</code> skips hook
+installation and cheats do not execute.</li>
+<li><b>Cheat toggle:</b> Cheats must be toggled On in Game Settings or Global Settings.</li>
+<li><b>User <code>-cfg</code> forwarding:</b> A custom <code>-cfg=</code> passed in your Neutrino arguments continues to load.
+Neutrino keeps the final <code>-cfg</code> (RiptOPL's), and RiptOPL chains yours via <code>depends</code>.</li>
+<li><b>No enabled codes:</b> no file is written and no <code>-cfg</code> is added.</li>
+<li><b>Read-only storage:</b> If RiptOPL cannot write <code>riptopl-cheats.toml</code> (such as a read-only share or full card),
+it prompts before launching without cheats. Autolaunches proceed without cheats.</li>
+<li><b>Cheat images:</b> The binary <b>PS2RD Cheat Image</b> (<code>.img</code>) is an OPL-core-only feature and is greyed for a
+Neutrino game.</li>
+<li><b>Show Launch Arguments:</b> Enable <b>Show Launch Arguments</b> (see <a href="neutrino.html#show-args">Neutrino Core</a>)
+to verify that <code>-cfg=riptopl-cheats</code> appears in the launch arguments.</li>
 </ul>
 
 <h2 id="ps2rd-image">PS2RD Cheat Image (.img)</h2>
@@ -315,7 +325,7 @@ have OPL load and apply the <code>.img</code> file when the game next launches.<
       the game still boots.</li>
   <li>The image is limited to 4 KB (1 024 32-bit words). Larger files are truncated to that
       limit.</li>
-  <li>Like text cheats, the image patch does not apply when the game's Loader Core is set to
+  <li>Unlike text cheats, the binary image patch does not apply when the game's Loader Core is set to
       Neutrino.</li>
 </ul>
 
