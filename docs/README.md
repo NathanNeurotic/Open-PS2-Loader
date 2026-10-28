@@ -49,7 +49,9 @@ changes, and how to regenerate search and wiki content. The [October audit](DOCU
 records the reviewed revisions, corrections, link evidence and remaining validation limits.
 
 [Fork collaboration](FORK-COLLABORATION.md) explains candidate triage and evidence boundaries;
-the [October 25 audit](DOCUMENTATION-AUDIT-2026-10-25.md) records the current refresh.
+the [October 25 audit](DOCUMENTATION-AUDIT-2026-10-25.md) records the last full refresh.
+[Fork-gap status: 2026-10-28](FORK-GAP-STATUS-2026-10-28.md) is the current summary: parity with
+RiptOPL, fixes landed in both editions, the RIPPS2 audit and port plan, and the open hardware checks.
 
 Integration plans, dated audits, community-report handoffs and `docs/superpowers/` are engineering
 history. Their old DONE/pending states, branches and package names describe that baseline;
