@@ -178,12 +178,15 @@ others:
 | [OdysseyLauncher](https://github.com/GeekRhapsody/OdysseyLauncher) | [`bc1b8593` to `ac21ee45`](https://github.com/GeekRhapsody/OdysseyLauncher/compare/bc1b85931871a65b6948764d00cd5182e2e873b8...ac21ee45ef77f96f7eadd42468988237192dbb50) | v0.20.0, 3D console models; desktop frontend. |
 | [PS2SP](https://github.com/johnson-cooper/PS2SP) | [`cb040e79` to `7f6fb2d4`](https://github.com/johnson-cooper/PS2SP/compare/cb040e79dfd467aa99252575c9d6fd97684116de...7f6fb2d404abcf8cd12e709e3b0441f011adea48) | Catalogue automation; not a loader feature. |
 
-New register record **YA2**. `modules/iopcore/cdvdman/atad.c` counts the sectors of one LBA48
-command in a 16-bit `len` (line 675). A request of 65,536 sectors or more stores 0, advances by
-nothing and repeats forever while holding the ATA semaphore. RiptOPL and Open-PS2-Loader both
-have it. YAOPL `e09f548` and [ps2sdk PR 913](https://github.com/ps2dev/ps2sdk/pull/913) fix it by
+New register record **YA2**. `modules/iopcore/cdvdman/atad.c` counted the sectors of one LBA48
+command in a 16-bit `len` (line 675). A request of 65,536 sectors or more stored 0, advanced by
+nothing and repeated forever while holding the ATA semaphore. RiptOPL and Open-PS2-Loader both
+had it. YAOPL `e09f548` and [ps2sdk PR 913](https://github.com/ps2dev/ps2sdk/pull/913) fix it by
 counting each command in a 32-bit chunk. No known caller sends a request that large, so this is
 hardening. Source review only; not tested on hardware.
+
+**Fixed 2026-10-28** in both editions with the same 32-bit chunk, credited to YAOPL and ps2sdk:
+RiptOPL [#105](https://github.com/NathanNeurotic/RiptOPL/pull/105) and Open-PS2-Loader [#1087](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1087). Not tested on hardware.
 
 Sources: the parity switch-readiness report and final sweep (2026-10-27), the fix cross-check
 (2026-10-28), the RIPPS2 audit (2026-10-28) and the ecosystem head check (2026-10-28), rechecked
