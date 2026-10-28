@@ -49,6 +49,7 @@
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
     <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
@@ -291,6 +292,19 @@ keys cover art and per-game config off that PS1 ID — so covers load from your 
 folder exactly as they do for PS2 games. Any other <code>*.VCD</code> filename is still listed and
 launched; it just won't auto-match art by ID.
 </div>
+
+<h3 id="pops-files">Sony's POPS files</h3>
+<p>POPSTARTER also needs Sony's PS1 emulator in the same <code>POPS</code> folder: <code>POPS_IOX.PAK</code>, plus
+either <code>POPS.PAK</code> or <code>POPS.ELF</code> with <code>IOPRP252.IMG</code>. They come from your own
+console's software, so RiptOPL cannot make them. Without them the game is a black screen, then the browser.</p>
+<p>Before a PS1 launch from USB, MX4SIO, iLink, an exFAT HDD or MMCE, RiptOPL checks for them:</p>
+<ul>
+<li><b>Another started drive has a full set</b>: RiptOPL offers to copy them over. It looks at the other BDM
+drives, both MMCE cards and the internal HDD's <code>__common/POPS</code> (read only). Only the missing files are
+copied, nothing already there is overwritten, and a copy that fails part way is removed.</li>
+<li><b>No full set, or you decline</b>: RiptOPL names what is missing and asks whether to launch anyway.</li>
+</ul>
+<p>From RIPPS2 builds 85, 89 and 115 by akilluminati47. NOT TESTED on hardware.</p>
 
 <h2 id="pops-udpfs">POPS UDPFS with BDM-UDPFS Assault</h2>
 <p><a href="https://github.com/Okeanos86/BDMAssault/releases/tag/Alpha">Okeanos's BDM-UDPFS Assault</a>

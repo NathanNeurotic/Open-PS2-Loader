@@ -49,6 +49,7 @@
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
     <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
@@ -174,6 +175,20 @@ requires restarting RiptOPL.</div>
 <tr><td><b>OSD Settings</b> (Triangle on a game, or Settings → Language → OSD Defaults)</td><td>The language, TV aspect and video mode <b>handed to the game at launch</b> — it changes what the <em>game</em> sees, not what RiptOPL shows. It does not change the menu language or the console's saved OSDSYS settings. OPL core only; not available under Neutrino. See <a href="per-game-settings.html">Per-game Settings</a>.</td></tr>
 </tbody>
 </table>
+
+<h2 id="rtl-cjk">Arabic, Persian, CJK, Thai and Lao text</h2>
+<p>Ported from RIPPS2 build 104 by akilluminati47. NOT TESTED on hardware.</p>
+<ul>
+<li><b>Arabic and Persian</b> letters are joined into their connected forms (lam-alef as one letter), and each
+line is laid out right to left. Latin words and numbers keep their own order, and brackets are turned round.
+Centred Arabic stays centred.</li>
+<li><b>CJK, Thai and Lao</b> lines may break between letters, but never before closing punctuation or before a
+vowel that belongs to the letter in front of it.</li>
+<li>Setting hints and message boxes wrap with these rules, break an over-wide word anywhere, and never cut a
+character in half.</li>
+</ul>
+<p>Translators write the text in logical order, as typed; no markup is needed. The language still needs a font
+that has the glyphs.</p>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 

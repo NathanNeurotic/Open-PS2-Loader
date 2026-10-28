@@ -49,6 +49,7 @@
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
     <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
@@ -143,6 +144,8 @@ sizes are on <a href="#general-settings">General &amp; System</a>.</p>
 <tr><td>&nbsp;&nbsp;&nbsp;Protocol</td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Indented under Network Connectivity. The same setting as <a href="#network-settings">Network &rarr; Protocol</a>: changing it on either page changes both. Greyed while Connectivity is <em>Off</em>; the protocol you chose is kept and comes back when you turn Connectivity on again. <em>Access</em> (Files / IMG) stays on the Network page.</td></tr>
 <tr><td>Applications Page Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Apps tab. See <a href="apps.html">Apps</a>.</td></tr>
 <tr><td>Favorites Page Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Favorites tab. <em>Off</em> hides the tab. See <a href="favourites.html">Favorites</a>.</td></tr>
+<tr><td>All Games List</td><td>Off / On</td><td>Off by default. The Favorites page becomes <b>All Games</b>: one list of every started device's PS2 games, PS1 games and apps. Device tabs whose games are on it step aside; a title on two devices shows each device's name. L3 cycles All, PS2, PS1, Apps, Favorites and Recent. Works with Favorites Page Start Mode Off. See <a href="library.html">Game Library</a>.</td></tr>
+<tr><td>Show Hidden Games</td><td>Off / On</td><td>Off by default. Lists the games hidden with <b>Hide Game</b>, so one can be shown again from its game menu. Each device keeps its own <code>hidden.txt</code>. See <a href="library.html#hide-game">Game Library</a>.</td></tr>
 </tbody>
 </table>
 
@@ -338,12 +341,13 @@ settings or saving the whole configuration.</div>
 <tr><td>Video Mode</td><td>Auto / PAL / NTSC / &hellip;</td><td>Output mode for the <b>menu</b>. <em>Auto</em> follows the console. The two <em>FLICKER-FREE</em> entries at the end of the list send the same 480i/576i signal but read both fields from the same lines, so thin lines and font edges stop strobing on a CRT &mdash; at the cost of half the vertical detail. After a change, <b>hold</b> Accept to keep the new mode; a tap does nothing, and Back or 10 seconds restores the old one (see <a href="controls.html#keep-video-mode">Keeping a new video mode</a>). Games use GSM instead; see <a href="gsm.html">GSM Video Modes</a>.</td></tr>
 <tr><td>Theme</td><td><em>built-in and installed themes</em></td><td>A fresh configuration starts with <code>&lt;OPL&gt;</code>. Select the optional <code>&lt;Coverflow&gt;</code> carousel or <code>&lt;PSBBN Flow&gt;</code> perspective fan here, then apply and save. Both use Left/Right to browse covers and keep R3 as Favorite. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>. Saved theme choices override the default. External themes are read from <code>THM/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
 <tr><td>Font Size</td><td>Small / Default / Large</td><td>Standard menu text at 15 / 17 / 19 pixels, with matching list and dialog spacing. Theme fonts with other point sizes keep their own size.</td></tr>
+<tr><td>Button Glyphs</td><td>Theme / Built-in / Standard / White</td><td>The button pictures in the hint bar. <em>Theme</em> (the default) uses the theme's own glyphs, or the set its <code>glyph_set</code> key names; the others replace them on every theme. Standard and White come from RIPPS2 by akilluminati47. See <a href="themes.html#hint-glyphs">Theme Engine</a>.</td></tr>
 <tr><td>Coverflow Settings</td><td>[sub-screen]</td><td>See <a href="#coverflow-settings">Coverflow Settings</a>.</td></tr>
 <tr><td>Artwork Settings</td><td>[sub-screen]</td><td>See <a href="#artwork-settings">Artwork Settings</a>.</td></tr>
 <tr><td>Colors</td><td>[sub-screen]</td><td>See <a href="#colors-settings">Colors</a>.</td></tr>
 <tr><td>VCD Games List Settings</td><td>[sub-screen]</td><td>How the PS1 list is shown. See <a href="#vcd-list-settings">VCD Games List Settings</a>.</td></tr>
 <tr><td>Notifications</td><td>Off / On</td><td>Brief on-screen notices when a config, theme or language file loads, or a partition mounts. On by default.</td></tr>
-<tr><td>Sort Games Alphabetically</td><td>Off / On</td><td>Sorts game lists by title. Off lists games in the order they are found. On by default.</td></tr>
+<tr><td>Sort Games</td><td>Off / A to Z / Last played</td><td><em>A to Z</em> (the default) sorts game lists by title. <em>Last played</em> puts the last 10 games played first, newest first, with the rest A to Z beneath. <em>Off</em> keeps the order they were found. Replaces Sort Games Alphabetically; an old On reads as A to Z. See <a href="library.html#recent-games-and-sort-games">Game Library</a>.</td></tr>
 <tr><td>Automatic Refresh</td><td>Off / On</td><td>Re-scans for newly connected devices and adds their games without a manual refresh. Off by default.</td></tr>
 <tr><td>Widescreen</td><td>Off / On</td><td>Draws the menu for a 16:9 screen when On. Fresh configurations start Off (4:3); saved choices override this. Selecting either flow theme does not enable widescreen.</td></tr>
 <tr><td>H-POS</td><td>&minus;300&ndash;300</td><td>Horizontal screen offset.</td></tr>

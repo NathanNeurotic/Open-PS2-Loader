@@ -49,6 +49,7 @@
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
     <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
@@ -205,6 +206,26 @@ request on the HDD). No room stops the job at once with <i>Not enough unbroken f
 If power is lost between the two renames, <code>VMC/&lt;name&gt;.bak</code> holds the card. Host tests cover every failure
 step on BDM and PFS; <b>the rebuild has NOT been run on hardware.</b> See the
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VMC.md#rebuilding-a-card-the-native-core-cannot-map">rebuild reference</a>.</p>
+
+<h2 id="saves">Saves on a card</h2>
+<p>The per-game VMC dialog has a <b>Saves</b> button for a card that exists. It opens a page that treats the
+card like a folder. From RIPPS2 builds 98 to 115 by akilluminati47; NOT TESTED on hardware.</p>
+<ul>
+<li><b>On the card</b> lists the saves by their titles, read from each save's <code>icon.sys</code>; <b>Free</b>
+shows the card's free space.</li>
+<li><b>In the folder</b> lists the save folders in <code>SAVES/</code>, beside the card (for example
+<code>mass0:/VMC/SAVES/</code>).</li>
+<li><b>Copy out</b> copies the picked save into <code>SAVES/&lt;save folder&gt;/</code>. <b>Copy in</b> copies a
+folder from <code>SAVES/</code> onto the card as a new save; one that does not fit is refused before anything is
+written. Neither ever overwrites a save or folder of the same name.</li>
+<li><b>Delete</b> removes the picked save from the card after you confirm it.</li>
+</ul>
+<p><code>SAVES/</code> is shared by every card in that <code>VMC</code> folder, so this is also how a save moves
+between cards. The card is edited in place; its size and place on the drive never change, so a card the native
+core can map stays mappable. Copy in writes the data, then the allocation table, then the entry that makes the
+save appear; Delete hides the entry before it frees the space. A card with ECC data, such as a PCSX2
+<code>.ps2</code> file, can be listed and copied out but is never changed. With writes disabled, only listing is
+offered.</p>
 
 <h2 id="access-errors">Access errors at launch</h2>
 <p>If a VMC file cannot be opened at game launch — for example, because the file is missing or the drive is not ready — OPL shows:</p>
