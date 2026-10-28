@@ -689,3 +689,6 @@ translations:
   PCCF_UNAVAILABLE: 'Không dùng được CF: cần PS2 Nhật đời đầu có PC CARD, thẻ tương thích, và không có trình điều khiển DEV9/HDD/mạng nào đang chạy.'
   PCCF_UNSUPPORTED_GAME: Hiện CF chỉ hỗ trợ trò chơi PS2 gốc. VMC trên CF, nạp PS1 và thành tích qua mạng không dùng được.
   HINT_ENABLE_DVR: Tìm ISO DESR DVR thử nghiệm. Cần bật nguồn HDD; chạy trò chơi cần Neutrino bên ngoài có hỗ trợ DVR.
+  # Filled from RIPPS2 (Akilluminati47) where Open PS2 Loader had no translation yet
+  'YES': Có
+  'NO': Không
