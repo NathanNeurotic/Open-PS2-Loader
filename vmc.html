@@ -166,7 +166,7 @@ If you change the <b>Size</b> of an existing VMC image and press <b>Modify</b>, 
 </div>
 
 <h2 id="creation-process">How image creation works</h2>
-<p>When you create a new image, OPL loads the <code>genvmc</code> IOP module and hands it the target path and size. The module formats the image in the background, writing a valid PS2 Memory Card superblock and cluster structure. The Progress bar updates live while this happens. Duration depends on the device and allocation. Native BDM creation first reserves its allocation, writes every cluster, then synchronizes and verifies the extent and final close. Only the incomplete file created by that job is removed on failure or cancellation. Host/image tests do not establish console save/reboot acceptance. See the <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VMC.md">creation and recovery reference</a>.</p>
+<p>When you create a new image, OPL loads the <code>genvmc</code> IOP module and hands it the target path and size. The module formats the image in the background, writing a valid PS2 Memory Card superblock and cluster structure. The Progress bar updates live while this happens. Duration depends on the device and allocation. Native BDM creation first reserves its allocation, writes every cluster, then synchronizes and verifies the extent and final close; a new card on the internal HDD (APA/PFS) asks PFS for all of its space before formatting. Only the incomplete file created by that job is removed on failure or cancellation. Host/image tests do not establish console save/reboot acceptance. See the <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VMC.md">creation and recovery reference</a>.</p>
 <p>Once the progress bar reaches 100% the button label changes to <b>OK</b>. Pressing OK confirms the new or updated VMC and returns you to the VMC slot picker.</p>
 
 <h2 id="creation-recovery">Recover from a failed VMC creation</h2>
@@ -175,7 +175,7 @@ If you change the <b>Size</b> of an existing VMC image and press <b>Modify</b>, 
 <p>Report the card size, selected game core, filesystem, exact error and stage, and whether the same unchanged card works after a full restart. For Neutrino, record a fragment-budget or file-open failure separately from a native single-fragment warning. See <a href="troubleshooting.html#report-details">the bug-report checklist</a>; include VMC and PADEMU state.</p>
 
 <h2 id="fragmentation">Creation errors and fragmentation warnings</h2>
-<p>New native OPL cards on FAT32/exFAT BDM storage request a single contiguous reservation before formatting. A bundled driver without the versioned capability, unsupported sector size or insufficient contiguous space fails explicitly. Other core/source creation paths can allocate incrementally. Existing cards are preserved and never relocated by this request.</p>
+<p>New native OPL cards on FAT32/exFAT BDM storage request a single contiguous reservation before formatting. A bundled driver without the versioned capability, unsupported sector size or insufficient contiguous space fails explicitly. A new APA/PFS card asks for every zone in one request, best effort. Other core/source creation paths can allocate incrementally. Existing cards are preserved and never relocated by this request; to repair one, use <a href="#rebuild">Rebuild</a>.</p>
 <p>For the native OPL core on FAT32/exFAT BDM storage, VMC writes use a contiguous sector range. RiptOPL checks the layout before enabling the card. Prompts distinguish confirmed fragmentation, out-of-range disk addresses, unavailable mapping queries and native PFS block-table limits. Accepting a rejected-card prompt uses the physical card in the named slot; declining returns to the menu. Do not bypass this check.</p>
 <pre>VMC %s file is fragmented. Continue with Memory Card in slot %d?</pre>
 <p>On MMCE, unsupported filesystem queries previously produced a false creation-time fragmentation warning. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/877">PR #877</a> distinguishes unsupported queries from a definite layout result. It does not establish that USB or internal exFAT reports have the same cause.</p>
@@ -183,6 +183,28 @@ If you change the <b>Size</b> of an existing VMC image and press <b>Modify</b>, 
 <p><b>APA/PFS HDD:</b> the native HDD VMC driver has its own bounded inode/block mapping. It can also display a fragmentation warning when that mapping cannot be obtained; APA is not exempt from allocation limits. Internal exFAT HDD uses the BDM path instead.</p>
 <p><b>Neutrino:</b> its BDM mapping can use multiple extents, with a shared 64-fragment budget across the game and memory-card files in the bundled runtime. If the combined count exceeds 64, RiptOPL reports that count and offers to skip the named VMC for the physical card. Even a contiguous card may exceed a budget already consumed by the game. A native OPL contiguity warning and a Neutrino fragment-budget failure are different checks. Record the selected core and the exact point where the error appears.</p>
 <p>For a creation failure, record the error text/code, whether progress completed, whether the file remains, PS2 model, RiptOPL version, loader/device, FAT32/exFAT/APA filesystem, changed settings, VMC and PADEMU state. Include whether the same card works after a retry or only until reboot. See <a href="troubleshooting.html#vmc-errors">VMC troubleshooting</a>.</p>
+
+<h2 id="rebuild">Rebuild a card the native core cannot map</h2>
+<p>A card that already holds saves but is too fragmented for the native core (on BDM: more than one extent; on the HDD: a
+PFS map longer than native mcemu holds) is skipped at launch. The per-game VMC dialog shows it as <b>Too fragmented for
+the native core</b> and offers a <b>Rebuild</b> button. It appears only for a valid 8/16/32/64 MB card on a BDM
+(FAT32/exFAT) or HDD source whose game uses the native core, and only when the layout check gives a definite answer;
+Neutrino maps cards its own way, and other sources cannot say how a card lies.</p>
+<p>After you confirm, Rebuild:</p>
+<ol>
+<li>refuses to start if <code>VMC/&lt;name&gt;.bak</code> or <code>VMC/&lt;name&gt;.new</code> already exists. Either may hold
+saves, so neither is overwritten; move it away on a PC and try again;</li>
+<li>creates <code>VMC/&lt;name&gt;.new</code> with the same reservation a new card gets (one extent on BDM, every zone in one
+request on the HDD). No room stops the job at once with <i>Not enough unbroken free space</i>, and nothing changes;</li>
+<li>copies every byte of the card, reads both back and compares them, and runs the launch's own layout check on the copy;</li>
+<li>only then swaps them: the card becomes <code>VMC/&lt;name&gt;.bak</code> and the copy becomes <code>VMC/&lt;name&gt;.bin</code>.</li>
+</ol>
+<p>The card is only ever opened read-only, and the loader never deletes the card or the backup: delete
+<code>VMC/&lt;name&gt;.bak</code> on a PC once the rebuilt card's saves check out. If a rename cannot be undone, both
+<code>.bak</code> and <code>.new</code> are kept and the dialog says so; rename one of them back to <code>.bin</code> on a PC.
+If power is lost between the two renames, <code>VMC/&lt;name&gt;.bak</code> holds the card. Host tests cover every failure
+step on BDM and PFS; <b>the rebuild has NOT been run on hardware.</b> See the
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VMC.md#rebuilding-a-card-the-native-core-cannot-map">rebuild reference</a>.</p>
 
 <h2 id="access-errors">Access errors at launch</h2>
 <p>If a VMC file cannot be opened at game launch — for example, because the file is missing or the drive is not ready — OPL shows:</p>
