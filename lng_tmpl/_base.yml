@@ -141,7 +141,7 @@ gui_strings:
 - label: ERROR_LOADING_ID
   string: Error while loading the Game ID.
 - label: AUTOSORT
-  string: Sort Games Alphabetically
+  string: Sort Games
 - label: ERR_LOADING_LANGFILE
   string: Error loading the language file.
 - label: DEBUG
@@ -1518,7 +1518,7 @@ gui_strings:
 - label: HINT_NOTIFICATIONS
   string: "Brief notices when a config, theme or language file loads."
 - label: HINT_AUTOSORT
-  string: "Sorts game lists A to Z. Off keeps the order they were found."
+  string: "A to Z sorts game lists by title. Last played puts the last 10 games played first, newest first, with the rest A to Z beneath. Off keeps the order they were found."
 - label: HINT_AUTOREFRESH
   string: "Adds games from newly connected devices without a manual refresh."
 - label: HINT_COVERART
@@ -1975,3 +1975,23 @@ gui_strings:
 - comment: Asked before a POPSTARTER (PS1) launch when Sony's POPS files are missing. 1st %s is the missing files, then the device root and the POPS folder name.
   label: POPS_FILES_MISSING
   string: "POPSTARTER needs Sony's POPS files and these are missing: %s (in %s%s). Without them the game shows a black screen. Launch anyway?"
+
+- comment: Sort Games choice (Settings, Interface). Sorts game lists by title.
+  label: SORT_AZ
+  string: A to Z
+
+- comment: Sort Games choice. The last 10 games played lead the list, newest first.
+  label: SORT_LAST_PLAYED
+  string: Last played
+
+- comment: Toast when L3 on the Favorites tab lands on the recently played list.
+  label: VIEW_RECENT
+  string: Showing recently played
+
+- comment: Start menu item that moves the cursor to a random game on the current page.
+  label: RANDOM_GAME
+  string: Random Game
+
+- comment: Shown when Random Game finds nothing to pick on the current page.
+  label: RANDOM_GAME_NONE
+  string: No games on this page to pick from.

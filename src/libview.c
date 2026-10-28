@@ -56,6 +56,7 @@ int libViewSupported(int mode, int view)
             return libViewIsDeviceMode(mode) || mode == FAV_MODE;
         case LIB_VIEW_ELF:
         case LIB_VIEW_ALL:
+        case LIB_VIEW_RECENT:
             return mode == FAV_MODE;
         case LIB_VIEW_MIXED:
             return libViewIsDeviceMode(mode) || mode == APP_MODE;
@@ -71,7 +72,7 @@ int libViewRingSize(int mode)
     if (mode < 0 || mode >= MODE_COUNT)
         return 1;
     if (mode == FAV_MODE)
-        return 4;
+        return 5;
     if (mode == APP_MODE)
         return gAppsDisplay == APPS_DISPLAY_SPLIT ? 2 : 1;
     if (!libViewIsDeviceMode(mode))
@@ -165,11 +166,12 @@ int libViewStageAdvance(int mode)
 
     cur = libViewActive(mode);
     if (mode == FAV_MODE) {
-        // Explicit order: PS2 -> PS1 -> ELF -> All -> PS2. The final arm is the fallback for any
-        // value outside the ring (a hand-edited remembered position), and lands on the default.
+        // Explicit order: PS2 -> PS1 -> ELF -> All -> Recent -> PS2. The final arm is the fallback for
+        // any value outside the ring (a hand-edited remembered position).
         pendingView[mode] = (cur == LIB_VIEW_ISO) ? LIB_VIEW_PS1 :
                             (cur == LIB_VIEW_PS1) ? LIB_VIEW_ELF :
                             (cur == LIB_VIEW_ELF) ? LIB_VIEW_ALL :
+                            (cur == LIB_VIEW_ALL) ? LIB_VIEW_RECENT :
                                                     LIB_VIEW_ISO;
     } else if (mode == APP_MODE) {
         pendingView[mode] = cur == LIB_VIEW_PS1_ELF ? LIB_VIEW_ISO : LIB_VIEW_PS1_ELF;
@@ -260,7 +262,7 @@ void libViewMarkAllDirty(void)
 
   Both rings are per-mode arrays, so the obvious encoding -- a config key per mode -- would be
   thirty keys for one idea the user thinks of as "where I left that page". Instead each ring is one
-  fixed-width string, ONE CHARACTER PER MODE, indexed by the IO_MODES enum: '0'..'5' is a LIB_VIEW_*
+  fixed-width string, ONE CHARACTER PER MODE, indexed by the IO_MODES enum: '0'..'6' is a LIB_VIEW_*
   value, '-' means nothing is remembered for that mode and the compiled default stands. The BDM
   characters are the exception: they are per device type (see LIB_VIEW_ENTRIES).
 

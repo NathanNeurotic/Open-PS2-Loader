@@ -34,6 +34,7 @@
 #include "include/bdmsupport.h"   // bdmSupportIsUDPBD() -- UDPBD games are Neutrino-only
 #include <assert.h>
 #include <delaythread.h>
+#include <time.h> // clock() -- Random Game seed
 
 enum MENU_IDs {
     MENU_SETTINGS = 0,
@@ -46,6 +47,7 @@ enum MENU_IDs {
     MENU_POWER_OFF,
     MENU_LAUNCH_PS2_DISC,
     MENU_MMCE,
+    MENU_RANDOM_GAME,
 #ifdef RETROACHIEVEMENTS
     MENU_RA_DISC_CHECK,
     MENU_RA_ACHIEVEMENTS,
@@ -719,6 +721,7 @@ static void menuInitMainMenu(void)
 
     // initialize the menu
     submenuAppendItem(&mainMenu, -1, NULL, MENU_LAUNCH_PS2_DISC, _STR_LAUNCH_PS2_DISC);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_RANDOM_GAME, _STR_RANDOM_GAME);
 #ifdef RETROACHIEVEMENTS
     submenuAppendItem(&mainMenu, -1, _l(gRAMode == RA_MODE_CADUCEUS ? _STR_CAD_ACHIEVEMENTS : _STR_XERA_ACHIEVEMENTS), MENU_RA_ACHIEVEMENTS, -1);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_CHECK, _STR_RA_DISC_CHECK);
@@ -1072,6 +1075,7 @@ static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int tex
     it->item.cache_uid = NULL;
     it->item.favourited = 0;
     it->item.isFolder = 0;
+    it->item.lastPlayed = 0;
 #ifdef RETROACHIEVEMENTS
     it->item.raBadged = 0;
     it->item.raText = NULL;
@@ -1234,6 +1238,13 @@ static int submenuSortCompare(submenu_list_t *a, submenu_list_t *b, item_list_t 
     if (a->item.isFolder != b->item.isFolder)
         return a->item.isFolder ? -1 : 1;
 
+    // Last played: the recent games lead, newest first; everything else follows A to Z.
+    if (gAutosort == AUTOSORT_LAST_PLAYED && !a->item.isFolder && a->item.lastPlayed != b->item.lastPlayed) {
+        if (a->item.lastPlayed == 0 || b->item.lastPlayed == 0)
+            return a->item.lastPlayed == 0 ? 1 : -1;
+        return a->item.lastPlayed - b->item.lastPlayed;
+    }
+
     txt1 = a->item.text_id >= 0 ? _l(a->item.text_id) : a->item.text;
     txt2 = b->item.text_id >= 0 ? _l(b->item.text_id) : b->item.text;
     if (!a->item.isFolder) {
@@ -1390,6 +1401,36 @@ static void menuPrevH()
     SignalSema(menuSemaId);
     if (moved)
         sfxPlay(SFX_CURSOR);
+}
+
+// Random Game (RIPPS2 build 115, akilluminati47): put the cursor on a random game of the page the
+// user paused on. It never launches; X does that, after the user has seen what came up.
+static int menuRandomGame(void)
+{
+    static unsigned int seed;
+    submenu_list_t *cur;
+    int count = 0, pick;
+
+    if (selected_item == NULL || selected_item->item == NULL || !selected_item->item->visible)
+        return 0;
+    for (cur = selected_item->item->submenu; cur != NULL; cur = cur->next)
+        if (!cur->item.isFolder)
+            count++;
+    if (count == 0)
+        return 0;
+
+    // xorshift, stirred with the clock on every pick so each boot gives a different run.
+    seed ^= (unsigned int)clock() * 2654435761u + 1;
+    seed ^= seed << 13;
+    seed ^= seed >> 17;
+    seed ^= seed << 5;
+    pick = (int)(seed % (unsigned int)count);
+    for (cur = selected_item->item->submenu; cur != NULL; cur = cur->next)
+        if (!cur->item.isFolder && pick-- == 0)
+            break;
+    selected_item->item->current = cur;
+    selected_item->item->pagestart = cur;
+    return 1;
 }
 
 static void menuFirstPage()
@@ -1757,6 +1798,12 @@ void menuHandleInputMenu()
             int discResult = sysLaunchDisc(&guiRenderProbeFrame); // success never returns; <0 -> stay in OPL
             if (discResult < 0 && discResult != SYS_DISC_CANCELLED)
                 guiMsgBox(_l(_STR_DISC_LAUNCH_ERR), 0, NULL);
+        } else if (id == MENU_RANDOM_GAME) {
+            refreshMenuPosition();
+            if (menuRandomGame())
+                guiSwitchScreen(GUI_SCREEN_MAIN);
+            else
+                guiMsgBox(_l(_STR_RANDOM_GAME_NONE), 0, NULL);
         } else if (id == MENU_SETTINGS) {
             if (menuCheckParentalLock() == 0)
                 guiShowSettings();

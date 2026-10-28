@@ -1155,6 +1155,8 @@ reshow_ui:
     guiUnlock();
     diaSetEnum(diaUIConfig, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
     diaSetInt(diaUIConfig, UICFG_THEME, thmGetGuiValue());
+    const char *sortNames[] = {_l(_STR_OFF), _l(_STR_SORT_AZ), _l(_STR_SORT_LAST_PLAYED), NULL};
+    diaSetEnum(diaUIConfig, UICFG_AUTOSORT, sortNames);
     diaSetInt(diaUIConfig, UICFG_AUTOSORT, gAutosort);
     diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
@@ -1199,13 +1201,15 @@ reshow_ui:
 
     if (ret) {
         diaGetInt(diaUIConfig, UICFG_THEME, &themeID);
+        int previousSort = gAutosort;
         diaGetInt(diaUIConfig, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         int previousCfgTitles = gCfgTitlesInLists;
         diaGetInt(diaUIConfig, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-        int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
+        // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
+        int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
@@ -1225,7 +1229,7 @@ reshow_ui:
             // uses the new VCD view, without racing the theme/menu bookkeeping above.
             guiRefreshGameViews();
         }
-        if (appsViewChanged)
+        if (appsViewChanged || (cfgTitlesChanged && previousSort != gAutosort))
             guiRefreshAppsView();
         sfxInit(0);
 
@@ -3143,6 +3147,7 @@ static int guiSettingsShowInterface(void)
     int gameViewChanged = 0;
     int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
+    int previousSort = gAutosort;
 
     if (ui == NULL)
         return 0;
@@ -3160,6 +3165,8 @@ static int guiSettingsShowInterface(void)
     guiSetAppsViewPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
+    const char *sortNames[] = {_l(_STR_OFF), _l(_STR_SORT_AZ), _l(_STR_SORT_LAST_PLAYED), NULL};
+    diaSetEnum(ui, UICFG_AUTOSORT, sortNames);
     diaSetInt(ui, UICFG_AUTOSORT, gAutosort);
     diaSetInt(ui, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
@@ -3208,6 +3215,7 @@ reshow_interface:
     padRumbleFlush();
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, UICFG_THEME, &themeID);
+        previousSort = gAutosort;
         diaGetInt(ui, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
@@ -3215,7 +3223,8 @@ reshow_interface:
         {
             int previousCfgTitles = gCfgTitlesInLists;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
+            // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
+            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
@@ -3241,7 +3250,7 @@ reshow_interface:
         } else if (gameViewChanged) {
             guiRefreshGameViews();
         }
-        if (appsViewChanged)
+        if (appsViewChanged || (cfgTitlesChanged && previousSort != gAutosort))
             guiRefreshAppsView();
         sfxInit(0);
         if (gEnableBGM && !isBgmPlaying())
@@ -3842,6 +3851,7 @@ static void guiHandleOp(struct gui_update_t *item)
                 break;
             }
             result->item.isFolder = item->submenu.isFolder; // folder-browse row marker
+            result->item.lastPlayed = item->submenu.lastPlayed;
 #ifdef RETROACHIEVEMENTS
             result->item.raBadged = item->submenu.raBadged; // RA cover mark, resolved on the I/O thread
             result->item.raText = item->submenu.raText;     // transfer the snapshot to the row

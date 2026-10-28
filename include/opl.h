@@ -330,6 +330,13 @@ extern int gNetProtocolPick;
 // UDPFS-specific Access preference: Files(0) or IMG(1). UDPBD must never change it.
 extern int gUdpfsAccessMode;
 
+// Sort Games: Off, A to Z, or Last played (the last RECENT_MAX_ITEMS games first, newest first).
+enum AUTOSORT_MODES {
+    AUTOSORT_OFF = 0,
+    AUTOSORT_AZ,
+    AUTOSORT_LAST_PLAYED,
+    AUTOSORT_COUNT
+};
 extern int gAutosort;
 extern int gAutoRefresh;
 extern int gEnableNotifications;

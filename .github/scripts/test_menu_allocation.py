@@ -48,7 +48,7 @@ typedef struct submenu_item {
     char *text;
     int text_id, id;
     int *cache_id, *cache_uid;
-    int favourited, isFolder;
+    int favourited, isFolder, lastPlayed;
 } submenu_item_t;
 typedef struct submenu_list {
     struct submenu_list *prev, *next;

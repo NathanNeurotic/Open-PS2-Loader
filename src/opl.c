@@ -403,6 +403,41 @@ static void itemInitSupport(item_list_t *support)
     ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
 }
 
+
+static int itemFavKind(item_list_t *support, int id, const char *text);
+
+// Recently played (RIPPS2): note the game about to launch in recents.bin, which feeds the Favourites
+// Recent stop and Sort Games: Last played. Written only when one of those can show it, so a user
+// with neither never gets the extra write. A row that does not resolve cleanly is skipped rather
+// than recorded under the wrong name or core; the launch itself is never held up by this.
+static void itemRecordRecent(item_list_t *support, struct menu_item *curMenu, int launchId)
+{
+    char text[FAV_TEXT_MAX];
+    int kind, sourceId, iconId, textId;
+
+    if (!gFAVStartMode && gAutosort != AUTOSORT_LAST_PLAYED)
+        return;
+    if (support->mode == FAV_MODE) {
+        recentRecordByIndex(launchId);
+        return;
+    }
+    // The row may have been replaced since the launch id was settled; copy it under the lock and
+    // record nothing unless it is still the row being launched.
+    guiLock();
+    if (curMenu->current == NULL || curMenu->current->item.id != launchId || curMenu->current->item.text == NULL) {
+        guiUnlock();
+        return;
+    }
+    snprintf(text, sizeof(text), "%s", curMenu->current->item.text);
+    iconId = curMenu->current->item.icon_id;
+    textId = curMenu->current->item.text_id;
+    guiUnlock();
+    kind = itemFavKind(support, launchId, text);
+    sourceId = libListSourceId(support, launchId);
+    if (kind < 0 || sourceId < 0)
+        return;
+    recentRecord(support->mode, sourceId, iconId, textId, text, kind);
+}
 static void itemExecSelect(struct menu_item *curMenu)
 {
 #ifdef RETROACHIEVEMENTS
@@ -482,6 +517,7 @@ static void itemExecSelect(struct menu_item *curMenu)
                 int launchView = support->itemGetView != NULL ? support->itemGetView(support, launchId) : libListViewActive(support);
                 if (launchView != LIB_VIEW_PS1)
                     guiShowGameID(gameIdStartup);
+                itemRecordRecent(support, curMenu, launchId);
                 support->itemLaunch(support, launchId, configSet);
             }
         } else {
@@ -574,6 +610,7 @@ static void itemExecToggleView(struct menu_item *curMenu)
         if (support->mode == FAV_MODE)
             msg = (view == LIB_VIEW_PS1) ? _STR_VIEW_PS1 : (view == LIB_VIEW_ELF) ? _STR_VIEW_ELF :
                                                        (view == LIB_VIEW_ALL)     ? _STR_VIEW_ALL :
+                                                       (view == LIB_VIEW_RECENT)  ? _STR_VIEW_RECENT :
                                                                                     _STR_VIEW_PS2;
         else if (support->mode == APP_MODE)
             msg = view == LIB_VIEW_PS1_ELF ? _STR_VIEW_PS1_ELF : _STR_VIEW_APPS;
@@ -697,7 +734,15 @@ static void itemExecFav(struct menu_item *curMenu)
     if (support->mode != FAV_MODE && (it->isFolder || folderDepth(support->mode) > 0))
         return;
 
-    if (support->mode == FAV_MODE) {
+    if (support->mode == FAV_MODE && libViewActive(FAV_MODE) == LIB_VIEW_RECENT) {
+        // The Recent stop lists recents.bin, so R3 here favourites the game instead of removing it.
+        guiShowToast(_l(_STR_FAV_SAVING));
+        if (!favAddByIndex(it->id)) {
+            guiShowToast(_l(_STR_FAV_SAVE_FAILED));
+            return;
+        }
+        guiShowToast(_l(_STR_FAV_SAVED));
+    } else if (support->mode == FAV_MODE) {
         if (!favRemoveByIndex(it->id)) {
             guiShowToast(_l(_STR_FAV_REMOVE_FAILED));
             return;
@@ -1385,6 +1430,7 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
                 gup->submenu.selected = 0;
                 gup->submenu.autoStart = 0;
                 gup->submenu.isFolder = isFolderRow;
+                gup->submenu.lastPlayed = (gAutosort == AUTOSORT_LAST_PLAYED && !isFolderRow) ? recentRankForRow(mdl->support, i, gup->submenu.text) : 0;
 
                 // Neither auto-select targets a folder row (no startup). The remembered cursor
                 // wins over last-played: it is where the user actually was. Only the persisted
@@ -1421,7 +1467,8 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     // Favorites, art and launching key on.
     cfgTitleRefresh(mdl->support, count);
 
-    if (gAutosort) {
+    // The Favourites Recent stop is already newest first; sorting it would undo that.
+    if (gAutosort && !(mdl->support->mode == FAV_MODE && libViewActive(FAV_MODE) == LIB_VIEW_RECENT)) {
         gup = guiOpCreate(GUI_OP_SORT);
         if (gup) { // OOM: an unsorted list beats dereferencing NULL, same as the append loop above
             gup->menu.menu = &mdl->menuItem;
@@ -3399,6 +3446,8 @@ static void _loadConfig()
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetStrCopy(configOPL, CONFIG_OPL_CUSTOM_SETTINGS_PATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
             configGetInt(configOPL, CONFIG_OPL_AUTO_SORT, &gAutosort);
+            if (gAutosort < AUTOSORT_OFF || gAutosort >= AUTOSORT_COUNT)
+                gAutosort = AUTOSORT_AZ; // older builds stored any non-zero as "on"
             configGetInt(configOPL, CONFIG_OPL_AUTO_REFRESH, &gAutoRefresh);
             configGetInt(configOPL, CONFIG_OPL_DEFAULT_DEVICE, &gDefaultDevice);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_WRITE, &gEnableWrite);
