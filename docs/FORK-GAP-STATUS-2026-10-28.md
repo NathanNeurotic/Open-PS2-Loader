@@ -111,8 +111,9 @@ single-pass 640-wide drawing; that difference is intentional.
 
 ### Feature port plan (in progress)
 
-Agreed with the owner on 2026-10-28. Each PR lands in both repositories. As of this page, no port
-PR has been opened; this table is the plan, not shipped work.
+Agreed with the owner on 2026-10-28. Each PR lands in both repositories. This table is the plan,
+not shipped work: PR A is open as [RiptOPL#99](https://github.com/NathanNeurotic/RiptOPL/pull/99) (not merged; the Open-PS2-Loader side is not open
+yet), and B to H have no PR yet.
 
 | PR | Scope |
 | --- | --- |

@@ -32,7 +32,7 @@ findings, and the owner agreed a port plan (PRs A to H) on 2026-10-28 in which e
 both this repository and [RiptOPL](https://github.com/NathanNeurotic/RiptOPL). The MMCE busy wait
 and RIPPS2's artwork aliases are in that plan (PRs A and B); external-Neutrino option detection is
 not scheduled. The pad fixes and the `imgdrv` rename were declined, as were disc ripping, the CD
-player and every HDD partition change. No port PR is open yet, and nothing is tested on hardware.
+player and every HDD partition change. PR A is open as [RiptOPL#99](https://github.com/NathanNeurotic/RiptOPL/pull/99) (not merged); nothing is tested on hardware.
 
 ## October 25 candidate triage
 
