@@ -49,6 +49,7 @@
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
     <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
@@ -113,6 +114,11 @@ The NBD server exports the drive as <b>read-only</b> when the <b>Write Operation
     <p>Disconnect the client first, then dismiss the "NBD Server running…" message box on the PS2. RiptOPL will display <em>"NBD Server unloading…"</em> and then return to the normal menu.</p>
   </div>
 </div>
+
+<div class="callout info"><div class="h">Drives come back after the server stops</div>
+Stopping the server resets the IOP. Before, USB, iLink, MX4SIO, the exFAT HDD, PC CARD CF, UDPBD, the APA HDD,
+MMCE and UDPFS then stayed unloaded until a reboot. Their modules now load again when their pages are used.
+From RIPPS2 by akilluminati47; NOT TESTED on hardware.</div>
 
 <div class="callout info"><div class="h">Audio is suspended while the server runs</div>
 RiptOPL mutes the audio library while the NBD server is active and restores it when the server is dismissed. This is expected behaviour.

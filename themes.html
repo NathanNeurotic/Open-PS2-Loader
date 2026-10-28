@@ -49,6 +49,7 @@
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
     <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
@@ -225,6 +226,8 @@ sharing its cover cache. Give it a fourth and it gets its own.</details>
 <tr><td><code>font1</code> … <code>font15</code></td><td>font file path</td><td>Extra fonts; each defaults to <code>default_font</code> if not set.</td></tr>
 <tr><td><code>default_font_size</code></td><td>int (px)</td><td>Size for the default font (defaults to the system default if ≤ 0).</td></tr>
 <tr><td><code>font1_size</code> … <code>font15_size</code></td><td>int (px)</td><td>Per-font sizes.</td></tr>
+<tr><td><code>default_font_weight</code></td><td>100–900</td><td>Draws the default font heavier. A variable font follows its <code>wght</code> axis within its range. A static font, or a weight past a variable font's range, has its outlines grown in code (about 1 px at 18 px for every 300 units). Omit the key for the font's own weight. From RIPPS2 build 114.</td></tr>
+<tr><td><code>font1_weight</code> … <code>font15_weight</code></td><td>100–900</td><td>The same, per font.</td></tr>
 </tbody>
 </table>
 <p>Reference a font from an element with <code>font=N</code> (0 = default). <code>font1=builtin</code> is
@@ -243,6 +246,27 @@ all, since font loading is skipped for buffer-loaded built-in themes).</p>
 <tr><td><code>coverflow_cover_offset</code></td><td>int (clamped −1024…1024, default 0)</td><td>Horizontal nudge for the Coverflow carousel (see §9).</td></tr>
 </tbody>
 </table>
+<h3 id="hint-glyphs">Button hints and glyphs</h3>
+<p>These keys come from RIPPS2 (akilluminati47, build 90). A theme that sets none of them draws the hint bar
+exactly as before. NOT TESTED on hardware.</p>
+<table data-sortable>
+<thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>glyph_set</code></td><td><code>theme</code> / <code>builtin</code> / <code>standard</code> / <code>white</code></td><td>The button pictures every hint draws. <code>theme</code> (the default) uses the theme's own glyph PNGs, with the built-in ones filling gaps when <code>use_default=1</code>. <code>builtin</code> uses the built-in glyphs. <code>standard</code> and <code>white</code> are two sets built into the ELF, drawn from RIPPS2's Adapt and Grunge themes. <b>Settings → Interface → Button Glyphs</b> overrides this on every theme; its <b>Theme</b> choice follows this key.</td></tr>
+<tr><td><code>hints_hide</code></td><td>hint list</td><td>Hints the theme leaves off the bar, e.g. <code>hints_hide=star,view</code>.</td></tr>
+<tr><td><code>hints_order</code></td><td>hint list</td><td>These hints come first, in this order. The rest follow in the order the page adds them. Example: <code>hints_order=run,info,menu</code>.</td></tr>
+<tr><td><code>hints_labels</code></td><td>0 / 1</td><td><code>0</code> draws the glyphs alone, without the labels. <code>1</code> (the default) draws a glyph and its label.</td></tr>
+<tr><td><code>hints_layout</code></td><td><code>row</code> / <code>column</code></td><td><code>column</code> draws one hint a line, down from the <code>HintText</code> element's <code>x</code>/<code>y</code>. A column that would run off the bottom ends on the last line instead. <code>row</code> is the default.</td></tr>
+<tr><td><code>hints_spacing</code></td><td>int, 12–96 (default 28)</td><td>The line pitch of a column.</td></tr>
+</tbody>
+</table>
+<p>A hint list names hints by what they do: <code>menu</code>, <code>run</code>, <code>info</code>, <code>options</code>,
+<code>refresh</code>, <code>star</code> (Favorite) and <code>view</code> (the L3 view toggle). Their buttons work too:
+<code>start</code>, <code>select</code>, <code>r3</code>, <code>l3</code>, <code>cross</code>, <code>circle</code>,
+<code>square</code> and <code>triangle</code>. Separate the names with commas or spaces. Unknown names are skipped,
+and a name given twice keeps its first place. The glyph slots a set replaces are cross, circle, square, triangle,
+start, select, L1, R1, L3, R3, left and right.</p>
+
 <div class="callout info"><div class="h">i Tinting the plasma</div>The plasma background is a gradient
 between two colours: <code>plasma_blend_color</code> is the <b>low</b> end and <code>bg_color</code> the
 <b>high</b> end. A key the theme leaves out follows <b>Settings → Colors</b>, whose RiptOPL defaults are

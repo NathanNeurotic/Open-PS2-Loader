@@ -49,6 +49,7 @@
     <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
     <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
     <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
     <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
     <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
     <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
@@ -98,8 +99,8 @@ are given below.</div>
 <tr><td><b>L1 / R1</b></td><td>Previous / next page of the list; both wrap around at the ends</td></tr>
 <tr><td><b>L2</b></td><td>Jump to the first page</td></tr>
 <tr><td><b>R2</b></td><td>Jump to the last page</td></tr>
-<tr><td><b>L3</b></td><td>Cycle this page's library view (PS2 / PS1 / Both / …)</td></tr>
-<tr><td><b>R3</b></td><td>Star or un-star the selected title as a Favorite</td></tr>
+<tr><td><b>L3</b></td><td>Cycle this page's library view (PS2 / PS1 / Both / …; All, PS2, PS1, Apps, Favorites and Recent on All Games)</td></tr>
+<tr><td><b>R3</b></td><td>Star or un-star the selected title as a Favorite (also on All Games and Recent rows)</td></tr>
 <tr><td><b>Start</b></td><td>Open the main menu</td></tr>
 <tr><td><b>Select</b></td><td>Refresh the current device list</td></tr>
 </tbody>
@@ -130,7 +131,12 @@ Folder rows have no settings screen, so Triangle does nothing on them.</p>
 size field is intentionally left blank rather than computed.</p>
 
 <p><b>R3</b> does nothing when Favorites is disabled — it never writes silently. On the
-<a href="favourites.html">Favorites</a> page itself, R3 removes the selected entry.</p>
+<a href="favourites.html">Favorites</a> page itself, R3 removes the selected entry. On the All Games page R3
+stars or unstars the row in place, and on a Recent row it adds the game to Favorites; see
+<a href="library.html">Game Library</a>.</p>
+<p><b>Start</b> opens the main menu, which also holds <b>Random Game</b> (moves the cursor to a random game on
+this page; Cross launches it) and <b>Drive Status</b> (free space on every started drive, and <b>Save
+Diagnostics</b>; see <a href="launch-diagnostics.html#drive-status-and-diagtxt">Launch Diagnostics</a>).</p>
 
 <p><b>Select / Refresh</b> is also the retry for a device page that failed to populate — a network share that
 was not up when RiptOPL started, for example. A USB, MX4SIO, iLink, UDPBD or BDM HDD page whose <code>CD</code>
@@ -167,6 +173,11 @@ behind it; press Select on that page to scan it again. See
 <div class="callout info"><div class="h">Why Up/Down does two different things</div>
 It moves the cursor when nothing is being edited, and changes a setting once a control is active. That is
 one control state, not two different bindings.</div>
+<p>A row that cannot be changed right now is drawn at half strength, label included, and a row whose controls
+are all hidden takes no line. A page too long for the screen shows a scroll bar. The <b>right stick</b> slides
+the page to look further down without moving the cursor; the D-pad or the first confirm brings the cursor back
+into view. Backing out of a submenu lands on the button that opened it. From RIPPS2 by akilluminati47;
+NOT TESTED on hardware.</p>
 
 <h3 id="settings-screens">Settings screens</h3>
 <div class="callout info"><div class="h">Settings follow the Select Button setting</div>

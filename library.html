@@ -1,0 +1,234 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game Library · RiptOPL Docs</title>
+<meta name="description" content="All Games list, Recent games, Sort Games, Random Game, Hide Game, full game delete and JPG art.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="legacy-notice" id="legacy-notice" role="note"><b>This is the legacy version of RiptOPL.</b> We have moved over to ps2build's C++ Edition at <a href="https://github.com/NathanNeurotic/RiptOPL">NathanNeurotic/RiptOPL</a>, where new development now happens.</div>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="game-formats.html"><span class="icon icon-zso"></span>Game Image Formats</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html" class="active"><span class="icon icon-apps"></span>Game Library</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="ps2sdk-notes.html"><span class="icon icon-book"></span>Notes for ps2sdk</a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="launch-diagnostics.html"><span class="icon icon-troubleshoot"></span>Launch diagnostics</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1 id="game-library-all-games-recents-hiding-deleting-and-art">Game library: All Games, recents, hiding, deleting and art</h1>
+<p>These library features came from <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> by
+<strong>akilluminati47</strong> (builds 95 to 118) and landed in RiptOPL #99 and Open-PS2-Loader #1084 on
+2026-10-28. Both editions behave the same way. They have passed host tests only and are
+<strong>NOT TESTED on hardware</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Where</th>
+<th>Saved as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All Games list</td>
+<td>Settings → Game Sources → <strong>All Games List</strong></td>
+<td><code>all_games</code> (Off)</td>
+</tr>
+<tr>
+<td>Show hidden games</td>
+<td>Settings → Game Sources → <strong>Show Hidden Games</strong></td>
+<td><code>show_hidden</code> (Off)</td>
+</tr>
+<tr>
+<td>Sort order</td>
+<td>Settings → Interface → <strong>Sort Games</strong>: Off, A to Z, Last played</td>
+<td><code>autosort</code></td>
+</tr>
+<tr>
+<td>Random game</td>
+<td>Start menu → <strong>Random Game</strong>, under Launch PS2 Disc</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td>Recent games</td>
+<td>Favourites page, the fifth L3 stop</td>
+<td><code>recents.bin</code></td>
+</tr>
+<tr>
+<td>Hide a game</td>
+<td>Game menu → <strong>Hide Game</strong> / <strong>Show Game Again</strong></td>
+<td><code>hidden.txt</code> on the game's device</td>
+</tr>
+<tr>
+<td>Delete a game and its files</td>
+<td>Game menu → <strong>Delete</strong></td>
+<td>nothing</td>
+</tr>
+</tbody>
+</table>
+<h2 id="all-games-list">All Games list</h2>
+<p>With <strong>All Games List</strong> on, the Favourites page becomes <strong>All Games</strong>: one list of the PS2 games,
+PS1 games and apps of every device that is started. Device tabs whose games are on it step aside.
+Tabs for devices set to Manual, and the network share picker, stay so those can still be started.
+When the same title is on two devices, each row shows its device's name. The menu opens on this
+page when the setting is on.</p>
+<p>L3 on All Games cycles <strong>All</strong>, <strong>PS2</strong>, <strong>PS1</strong>, <strong>Apps</strong>, <strong>Favourites</strong> and <strong>Recent</strong>. R3 stars
+or unstars a row in place, and starred rows draw the favourite star. If the star cannot be saved,
+the old state stays and a message says so. Favourites Page Start Mode can stay Off: All Games
+does not need it.</p>
+<h2 id="recent-games-and-sort-games">Recent games and Sort Games</h2>
+<p><code>recents.bin</code> sits beside <code>favourites.bin</code> in the shared OPL folder and uses the same record
+format. It keeps the last 10 games launched, newest first, one row per game; the BDM slots count
+as one device. A launch writes it only when the Favourites page is on (or All Games is on) or
+Sort Games is <strong>Last played</strong>, so anyone else sees no new write at launch.</p>
+<p>The Favourites L3 ring gains a fifth stop after All: <strong>Recent</strong>. It keeps play order and draws no
+stars. R3 on a Recent row adds the game to Favourites.</p>
+<p><strong>Sort Games</strong> replaces the old Sort Games Alphabetically switch:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Off</td>
+<td>The order the device listed them</td>
+</tr>
+<tr>
+<td>A to Z</td>
+<td>By title</td>
+</tr>
+<tr>
+<td>Last played</td>
+<td>The last 10 games played first, newest first, then the rest A to Z</td>
+</tr>
+</tbody>
+</table>
+<p>The rank is worked out when each row is built, so sorting never reads the memory card. Changing
+the setting rebuilds the lists. An out-of-range saved value reads as A to Z.</p>
+<h2 id="random-game">Random Game</h2>
+<p><strong>Random Game</strong> in the Start menu moves the cursor to a random game on the page you are on. It
+never picks a folder or a hidden game. Press Cross to launch it. A page with no games says so.</p>
+<h2 id="hide-game">Hide Game</h2>
+<p><strong>Hide Game</strong> in the game menu of a PS2 or PS1 row (on any page except Apps) takes the game off
+its device's page, All Games, Favourites, Recent and Random Game, after one question. A hidden
+game is not gathered either, so it never adds a device name to its other copies.</p>
+<p>Each device keeps its own <code>hidden.txt</code> in its OPL folder, beside <code>CFG/</code> and <code>ART/</code>. Each line is
+<code>0</code> (PS2) or <code>1</code> (PS1), a tab, and the game's name. A line with no number is a PS2 game, and a
+line that starts with <code>#</code> is a comment, so the file can be edited on a PC. The HTTP catalogue
+keeps no list. A list that cannot be written changes nothing, and a message says so.</p>
+<p>To bring a game back, turn on <strong>Settings → Game Sources → Show Hidden Games</strong>, open the game's
+menu and choose <strong>Show Game Again</strong>.</p>
+<h2 id="delete-a-game-and-everything-that-goes-with-it">Delete a game and everything that goes with it</h2>
+<p>On USB and other BDM drives, MMCE and SMB, <strong>Delete</strong> on a PS2 game now removes the game and the
+files that belong to it. It asks twice:</p>
+<ol>
+<li>What goes, by count: game files, settings files, art images and cheat files. What stays: its
+VMC saves. If another copy of the game on the same device uses the same settings, art and
+cheats, the question says so and those stay.</li>
+<li>A last check, because a delete cannot be undone.</li>
+</ol>
+<p>The game's parts go through the device's own delete, which also rebuilds <code>ul.cfg</code> for a USBLD
+game. Every part must be gone before anything else is removed; if one is left, nothing else
+goes and a message says so. Then the game's CFG, its art (any letter case; PNG, JPG and JPEG;
+OPL Manager names too) and its cheats go, and so does its line in <code>hidden.txt</code>.</p>
+<p>Delete is still refused on a starred game and on the Favourites page: unstar it first. The APA
+HDD page offers no delete, because that would change the partition table.</p>
+<h2 id="game-art-jpg-any-letter-case-and-opl-manager-names">Game art: JPG, any letter case and OPL Manager names</h2>
+<ul>
+<li>Art can be <code>.png</code>, <code>.jpg</code> or <code>.jpeg</code>. A JPG saved with a <code>.png</code> name loads too, because the
+decoder reads the file's bytes, not its name. JPGs are shrunk while they decode: backgrounds to
+720 x 512, other art to 512 on the longer side.</li>
+<li>In an <code>ART</code> folder that the loader lists, file names match in any letter case:
+<code>Slus_123.45_cov.JPG</code> is found for <code>SLUS_123.45_COV</code>. This matters on the APA HDD, whose PFS
+minds case. SMB, UDPFS and unlisted folders still try <code>&lt;name&gt;.png</code>, then <code>.jpg</code>, then <code>.jpeg</code>.</li>
+<li>OPL Manager's names <code>_BG_00</code>, <code>_SCR_00</code> and <code>_SCR_01</code> are tried when <code>_BG</code>, <code>_SCR</code> and <code>_SCR2</code>
+are missing, and the other way round, in <code>ART</code> folders and in the <code>ART</code> .tar. The .tar also
+reads JPG members.</li>
+<li>Theme images still load only as <code>&lt;path&gt;.png</code>.</li>
+</ul>
+<p>JPG support adds about 84 KB to the packed ELF.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="https://nathanneurotic.github.io/Open-PS2-Loader/favourites.html">Favorites</a> for <code>favourites.bin</code> and the L3 shelves.</li>
+<li><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/DEFAULTS.md">Fresh-start defaults</a> for every setting's starting value.</li>
+<li><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/FORK-GAP-STATUS-2026-10-28.md">Fork-gap status</a> for the rest of the RIPPS2 port.</li>
+</ul>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>
