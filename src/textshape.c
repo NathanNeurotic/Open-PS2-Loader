@@ -1,0 +1,451 @@
+/*
+  Licenced under Academic Free License version 3.0
+  Review OpenUsbLd README & LICENSE files for further details.
+
+  Arabic/Persian shaping and right-to-left layout, and CJK/Thai/Lao line breaks: ported from akilluminati47/RIPPS2
+  build 104 (credit Akilluminati47).
+*/
+
+#include <stddef.h>
+#include "include/textshape.h"
+#include "include/utf8.h"
+
+int txtNext(const char *s, uint32_t *cp)
+{
+    uint32_t state = UTF8_ACCEPT, c = 0;
+    int n = 0;
+
+    *cp = 0;
+    while (s[n] != '\0') {
+        utf8Decode(&state, &c, s[n++]);
+        if (state == UTF8_ACCEPT) {
+            *cp = c;
+            return n;
+        }
+        if (state == UTF8_REJECT) { // a broken sequence: its first byte alone
+            *cp = (uint8_t)s[0];
+            return 1;
+        }
+    }
+    if (n > 0) // cut short at the end
+        *cp = (uint8_t)s[0];
+    return n > 0 ? 1 : 0;
+}
+
+int txtPut(char *out, int at, int size, uint32_t c)
+{
+    char b[4];
+    int n, i;
+
+    if (c < 0x80) {
+        b[0] = (char)c;
+        n = 1;
+    } else if (c < 0x800) {
+        b[0] = (char)(0xC0 | (c >> 6));
+        b[1] = (char)(0x80 | (c & 0x3F));
+        n = 2;
+    } else if (c < 0x10000) {
+        b[0] = (char)(0xE0 | (c >> 12));
+        b[1] = (char)(0x80 | ((c >> 6) & 0x3F));
+        b[2] = (char)(0x80 | (c & 0x3F));
+        n = 3;
+    } else {
+        b[0] = (char)(0xF0 | (c >> 18));
+        b[1] = (char)(0x80 | ((c >> 12) & 0x3F));
+        b[2] = (char)(0x80 | ((c >> 6) & 0x3F));
+        b[3] = (char)(0x80 | (c & 0x3F));
+        n = 4;
+    }
+    if (at + n > size - 1)
+        return -1;
+    for (i = 0; i < n; i++)
+        out[at + i] = b[i];
+    return at + n;
+}
+
+int txtZeroWidth(uint32_t c)
+{
+    return (c >= 0x200B && c <= 0x200F) || c == 0xFEFF;
+}
+
+// ---- Line breaks in text with no spaces between words (RIPPS2 build 104) ----
+
+static uint32_t txtDecodeAt(const char *s)
+{
+    uint32_t c;
+    return txtNext(s, &c) > 0 ? c : 0;
+}
+
+// CJK ideographs, kana, hangul and the full-width forms
+static int txtWide(uint32_t c)
+{
+    return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xAC00 && c <= 0xD7AF) || (c >= 0xF900 && c <= 0xFAFF) ||
+           (c >= 0xFF00 && c <= 0xFFEF) || (c >= 0x20000 && c <= 0x2FFFF);
+}
+
+// Thai and Lao write no spaces between words either; a line breaks between letters, but never before a vowel or
+// tone mark that belongs to the letter before it, nor after a vowel written ahead of its letter
+static int txtSea(uint32_t c)
+{
+    return c >= 0x0E00 && c <= 0x0EFF;
+}
+
+static int txtSeaNoBefore(uint32_t c)
+{
+    return (c >= 0x0E30 && c <= 0x0E3A) || c == 0x0E45 || (c >= 0x0E47 && c <= 0x0E4E) || (c >= 0x0EB0 && c <= 0x0EBC) ||
+           (c >= 0x0EC6 && c <= 0x0ECE);
+}
+
+static int txtSeaNoAfter(uint32_t c)
+{
+    return (c >= 0x0E40 && c <= 0x0E44) || (c >= 0x0EC0 && c <= 0x0EC4);
+}
+
+int txtNoSpaceScript(const char *s, int len)
+{
+    int at = 0;
+
+    while (at < len && s[at] != '\0') {
+        uint32_t c;
+        int n = txtNext(s + at, &c);
+        if (n <= 0)
+            break;
+        if (txtWide(c) || txtSea(c))
+            return 1;
+        at += n;
+    }
+    return 0;
+}
+
+int txtBreakAt(const char *start, const char *s)
+{
+    // never before closing punctuation or the long-vowel mark, never after an opening bracket
+    static const uint16_t noBefore[] = {0x3001, 0x3002, 0xFF0C, 0xFF0E, 0xFF01, 0xFF1F, 0xFF09, 0x300D, 0x300F, 0x3011, 0x30FC, 0xFF1A, 0xFF1B, 0x30FB, 0};
+    static const uint16_t noAfter[] = {0x300C, 0x300E, 0x3010, 0xFF08, 0};
+    const char *p;
+    uint32_t here, before;
+    int i;
+
+    if (s <= start || *s == '\0' || ((uint8_t)*s & 0xC0) == 0x80) // never inside a character
+        return 0;
+    p = s - 1;
+    while (p > start && ((uint8_t)*p & 0xC0) == 0x80)
+        p--;
+    here = txtDecodeAt(s);
+    before = txtDecodeAt(p);
+    if (txtSea(here) || txtSea(before)) // Thai and Lao: between letters, keeping each mark and vowel with its letter
+        return !(txtSea(here) && txtSeaNoBefore(here)) && !(txtSea(before) && txtSeaNoAfter(before));
+    if (!txtWide(here) && !txtWide(before))
+        return 0;
+    for (i = 0; noBefore[i]; i++)
+        if (here == noBefore[i])
+            return 0;
+    for (i = 0; noAfter[i]; i++)
+        if (before == noAfter[i])
+            return 0;
+    return 1;
+}
+
+// ---- Arabic and Persian: joined, and right to left (RIPPS2 build 104) ----
+//
+// Text is drawn from the left, one glyph after another, with no shaping engine. A string with right-to-left letters
+// is turned into what that drawing needs: each Arabic letter becomes the presentation form its neighbours call for
+// (isolated, final, initial, medial; lam with alef as one ligature), then each line is laid out right to left. The
+// language font has to carry the presentation forms (RIPPS2's language pack ships a DejaVu Sans cut that does).
+
+// GENERATED by ps2-pillars elf/lang/make_arabic_forms.py (Unicode 16.0.0): base, isolated, final, initial, medial
+static const uint16_t txtArab[][5] = {
+    {0x0621, 0xFE80, 0x0000, 0x0000, 0x0000}, // ARABIC LETTER HAMZA
+    {0x0622, 0xFE81, 0xFE82, 0x0000, 0x0000}, // ARABIC LETTER ALEF WITH MADDA ABOVE
+    {0x0623, 0xFE83, 0xFE84, 0x0000, 0x0000}, // ARABIC LETTER ALEF WITH HAMZA ABOVE
+    {0x0624, 0xFE85, 0xFE86, 0x0000, 0x0000}, // ARABIC LETTER WAW WITH HAMZA ABOVE
+    {0x0625, 0xFE87, 0xFE88, 0x0000, 0x0000}, // ARABIC LETTER ALEF WITH HAMZA BELOW
+    {0x0626, 0xFE89, 0xFE8A, 0xFE8B, 0xFE8C}, // ARABIC LETTER YEH WITH HAMZA ABOVE
+    {0x0627, 0xFE8D, 0xFE8E, 0x0000, 0x0000}, // ARABIC LETTER ALEF
+    {0x0628, 0xFE8F, 0xFE90, 0xFE91, 0xFE92}, // ARABIC LETTER BEH
+    {0x0629, 0xFE93, 0xFE94, 0x0000, 0x0000}, // ARABIC LETTER TEH MARBUTA
+    {0x062A, 0xFE95, 0xFE96, 0xFE97, 0xFE98}, // ARABIC LETTER TEH
+    {0x062B, 0xFE99, 0xFE9A, 0xFE9B, 0xFE9C}, // ARABIC LETTER THEH
+    {0x062C, 0xFE9D, 0xFE9E, 0xFE9F, 0xFEA0}, // ARABIC LETTER JEEM
+    {0x062D, 0xFEA1, 0xFEA2, 0xFEA3, 0xFEA4}, // ARABIC LETTER HAH
+    {0x062E, 0xFEA5, 0xFEA6, 0xFEA7, 0xFEA8}, // ARABIC LETTER KHAH
+    {0x062F, 0xFEA9, 0xFEAA, 0x0000, 0x0000}, // ARABIC LETTER DAL
+    {0x0630, 0xFEAB, 0xFEAC, 0x0000, 0x0000}, // ARABIC LETTER THAL
+    {0x0631, 0xFEAD, 0xFEAE, 0x0000, 0x0000}, // ARABIC LETTER REH
+    {0x0632, 0xFEAF, 0xFEB0, 0x0000, 0x0000}, // ARABIC LETTER ZAIN
+    {0x0633, 0xFEB1, 0xFEB2, 0xFEB3, 0xFEB4}, // ARABIC LETTER SEEN
+    {0x0634, 0xFEB5, 0xFEB6, 0xFEB7, 0xFEB8}, // ARABIC LETTER SHEEN
+    {0x0635, 0xFEB9, 0xFEBA, 0xFEBB, 0xFEBC}, // ARABIC LETTER SAD
+    {0x0636, 0xFEBD, 0xFEBE, 0xFEBF, 0xFEC0}, // ARABIC LETTER DAD
+    {0x0637, 0xFEC1, 0xFEC2, 0xFEC3, 0xFEC4}, // ARABIC LETTER TAH
+    {0x0638, 0xFEC5, 0xFEC6, 0xFEC7, 0xFEC8}, // ARABIC LETTER ZAH
+    {0x0639, 0xFEC9, 0xFECA, 0xFECB, 0xFECC}, // ARABIC LETTER AIN
+    {0x063A, 0xFECD, 0xFECE, 0xFECF, 0xFED0}, // ARABIC LETTER GHAIN
+    {0x0641, 0xFED1, 0xFED2, 0xFED3, 0xFED4}, // ARABIC LETTER FEH
+    {0x0642, 0xFED5, 0xFED6, 0xFED7, 0xFED8}, // ARABIC LETTER QAF
+    {0x0643, 0xFED9, 0xFEDA, 0xFEDB, 0xFEDC}, // ARABIC LETTER KAF
+    {0x0644, 0xFEDD, 0xFEDE, 0xFEDF, 0xFEE0}, // ARABIC LETTER LAM
+    {0x0645, 0xFEE1, 0xFEE2, 0xFEE3, 0xFEE4}, // ARABIC LETTER MEEM
+    {0x0646, 0xFEE5, 0xFEE6, 0xFEE7, 0xFEE8}, // ARABIC LETTER NOON
+    {0x0647, 0xFEE9, 0xFEEA, 0xFEEB, 0xFEEC}, // ARABIC LETTER HEH
+    {0x0648, 0xFEED, 0xFEEE, 0x0000, 0x0000}, // ARABIC LETTER WAW
+    {0x0649, 0xFEEF, 0xFEF0, 0xFBE8, 0xFBE9}, // ARABIC LETTER ALEF MAKSURA
+    {0x064A, 0xFEF1, 0xFEF2, 0xFEF3, 0xFEF4}, // ARABIC LETTER YEH
+    {0x0671, 0xFB50, 0xFB51, 0x0000, 0x0000}, // ARABIC LETTER ALEF WASLA
+    {0x0677, 0xFBDD, 0x0000, 0x0000, 0x0000}, // ARABIC LETTER U WITH HAMZA ABOVE
+    {0x0679, 0xFB66, 0xFB67, 0xFB68, 0xFB69}, // ARABIC LETTER TTEH
+    {0x067A, 0xFB5E, 0xFB5F, 0xFB60, 0xFB61}, // ARABIC LETTER TTEHEH
+    {0x067B, 0xFB52, 0xFB53, 0xFB54, 0xFB55}, // ARABIC LETTER BEEH
+    {0x067E, 0xFB56, 0xFB57, 0xFB58, 0xFB59}, // ARABIC LETTER PEH
+    {0x067F, 0xFB62, 0xFB63, 0xFB64, 0xFB65}, // ARABIC LETTER TEHEH
+    {0x0680, 0xFB5A, 0xFB5B, 0xFB5C, 0xFB5D}, // ARABIC LETTER BEHEH
+    {0x0683, 0xFB76, 0xFB77, 0xFB78, 0xFB79}, // ARABIC LETTER NYEH
+    {0x0684, 0xFB72, 0xFB73, 0xFB74, 0xFB75}, // ARABIC LETTER DYEH
+    {0x0686, 0xFB7A, 0xFB7B, 0xFB7C, 0xFB7D}, // ARABIC LETTER TCHEH
+    {0x0687, 0xFB7E, 0xFB7F, 0xFB80, 0xFB81}, // ARABIC LETTER TCHEHEH
+    {0x0688, 0xFB88, 0xFB89, 0x0000, 0x0000}, // ARABIC LETTER DDAL
+    {0x068C, 0xFB84, 0xFB85, 0x0000, 0x0000}, // ARABIC LETTER DAHAL
+    {0x068D, 0xFB82, 0xFB83, 0x0000, 0x0000}, // ARABIC LETTER DDAHAL
+    {0x068E, 0xFB86, 0xFB87, 0x0000, 0x0000}, // ARABIC LETTER DUL
+    {0x0691, 0xFB8C, 0xFB8D, 0x0000, 0x0000}, // ARABIC LETTER RREH
+    {0x0698, 0xFB8A, 0xFB8B, 0x0000, 0x0000}, // ARABIC LETTER JEH
+    {0x06A4, 0xFB6A, 0xFB6B, 0xFB6C, 0xFB6D}, // ARABIC LETTER VEH
+    {0x06A6, 0xFB6E, 0xFB6F, 0xFB70, 0xFB71}, // ARABIC LETTER PEHEH
+    {0x06A9, 0xFB8E, 0xFB8F, 0xFB90, 0xFB91}, // ARABIC LETTER KEHEH
+    {0x06AD, 0xFBD3, 0xFBD4, 0xFBD5, 0xFBD6}, // ARABIC LETTER NG
+    {0x06AF, 0xFB92, 0xFB93, 0xFB94, 0xFB95}, // ARABIC LETTER GAF
+    {0x06B1, 0xFB9A, 0xFB9B, 0xFB9C, 0xFB9D}, // ARABIC LETTER NGOEH
+    {0x06B3, 0xFB96, 0xFB97, 0xFB98, 0xFB99}, // ARABIC LETTER GUEH
+    {0x06BA, 0xFB9E, 0xFB9F, 0x0000, 0x0000}, // ARABIC LETTER NOON GHUNNA
+    {0x06BB, 0xFBA0, 0xFBA1, 0xFBA2, 0xFBA3}, // ARABIC LETTER RNOON
+    {0x06BE, 0xFBAA, 0xFBAB, 0xFBAC, 0xFBAD}, // ARABIC LETTER HEH DOACHASHMEE
+    {0x06C0, 0xFBA4, 0xFBA5, 0x0000, 0x0000}, // ARABIC LETTER HEH WITH YEH ABOVE
+    {0x06C1, 0xFBA6, 0xFBA7, 0xFBA8, 0xFBA9}, // ARABIC LETTER HEH GOAL
+    {0x06C5, 0xFBE0, 0xFBE1, 0x0000, 0x0000}, // ARABIC LETTER KIRGHIZ OE
+    {0x06C6, 0xFBD9, 0xFBDA, 0x0000, 0x0000}, // ARABIC LETTER OE
+    {0x06C7, 0xFBD7, 0xFBD8, 0x0000, 0x0000}, // ARABIC LETTER U
+    {0x06C8, 0xFBDB, 0xFBDC, 0x0000, 0x0000}, // ARABIC LETTER YU
+    {0x06C9, 0xFBE2, 0xFBE3, 0x0000, 0x0000}, // ARABIC LETTER KIRGHIZ YU
+    {0x06CB, 0xFBDE, 0xFBDF, 0x0000, 0x0000}, // ARABIC LETTER VE
+    {0x06CC, 0xFBFC, 0xFBFD, 0xFBFE, 0xFBFF}, // ARABIC LETTER FARSI YEH
+    {0x06D0, 0xFBE4, 0xFBE5, 0xFBE6, 0xFBE7}, // ARABIC LETTER E
+    {0x06D2, 0xFBAE, 0xFBAF, 0x0000, 0x0000}, // ARABIC LETTER YEH BARREE
+    {0x06D3, 0xFBB0, 0xFBB1, 0x0000, 0x0000}, // ARABIC LETTER YEH BARREE WITH HAMZA ABOVE
+};
+// GENERATED END
+
+static const uint16_t txtLamAlef[4][3] = { // the alef after a lam: the ligature alone, and after a letter that joins it
+    {0x0622, 0xFEF5, 0xFEF6},
+    {0x0623, 0xFEF7, 0xFEF8},
+    {0x0625, 0xFEF9, 0xFEFA},
+    {0x0627, 0xFEFB, 0xFEFC}};
+
+#define TXT_RTL_MAX 1024 // characters in one string; a longer one is drawn as it is
+static uint32_t txtRtlIn[TXT_RTL_MAX], txtRtlOut[TXT_RTL_MAX];
+static uint8_t txtRtlDir[TXT_RTL_MAX]; // a line's directions: 1 right to left, 0 left to right, 2 neutral (resolved below)
+
+static const uint16_t *txtArabForms(uint32_t c)
+{
+    int lo = 0, hi = (int)(sizeof(txtArab) / sizeof(txtArab[0])) - 1;
+
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (txtArab[mid][0] == c)
+            return txtArab[mid];
+        if (txtArab[mid][0] < c)
+            lo = mid + 1;
+        else
+            hi = mid - 1;
+    }
+    return NULL;
+}
+
+// A vowel mark or the like, drawn over or under its letter: joining passes over it
+static int txtArabMark(uint32_t c)
+{
+    return (c >= 0x0610 && c <= 0x061A) || (c >= 0x064B && c <= 0x065F) || c == 0x0670 || (c >= 0x06D6 && c <= 0x06DC) ||
+           (c >= 0x06DF && c <= 0x06E4) || c == 0x06E7 || c == 0x06E8 || (c >= 0x06EA && c <= 0x06ED);
+}
+
+static int txtJoinsNext(uint32_t c) // joins the letter after it: a dual-joining letter, or the tatweel
+{
+    const uint16_t *f = txtArabForms(c);
+    return c == 0x0640 || (f != NULL && f[3] != 0);
+}
+
+static int txtJoinsPrev(uint32_t c) // joins the letter before it
+{
+    const uint16_t *f = txtArabForms(c);
+    return c == 0x0640 || (f != NULL && f[2] != 0);
+}
+
+int txtRtlChar(uint32_t c)
+{
+    if ((c >= 0x0660 && c <= 0x0669) || (c >= 0x06F0 && c <= 0x06F9)) // the Arabic and Persian digits read as numbers
+        return 0;
+    return (c >= 0x0590 && c <= 0x08FF) || (c >= 0xFB1D && c <= 0xFDFF) || (c >= 0xFE70 && c <= 0xFEFF);
+}
+
+// Takes its direction from the letters round it: spaces, punctuation and symbols
+static int txtNeutral(uint32_t c)
+{
+    if (c < 0x80)
+        return !((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+    return (c >= 0xA0 && c <= 0xBF) || c == 0xD7 || c == 0xF7 || (c >= 0x2000 && c <= 0x206F);
+}
+
+static int txtDigit(uint32_t c)
+{
+    return (c >= '0' && c <= '9') || (c >= 0x0660 && c <= 0x0669) || (c >= 0x06F0 && c <= 0x06F9);
+}
+
+static uint32_t txtMirror(uint32_t c)
+{
+    static const uint32_t pairs[] = {'(', ')', '[', ']', '{', '}', '<', '>', 0xAB, 0xBB, 0};
+    int i;
+
+    for (i = 0; pairs[i]; i += 2) {
+        if (c == pairs[i])
+            return pairs[i + 1];
+        if (c == pairs[i + 1])
+            return pairs[i];
+    }
+    return c;
+}
+
+static void txtRtlReverse(int a, int b) // txtRtlOut and txtRtlDir [a, b) backwards
+{
+    for (b--; a < b; a++, b--) {
+        uint32_t c = txtRtlOut[a];
+        uint8_t d = txtRtlDir[a];
+        txtRtlOut[a] = txtRtlOut[b];
+        txtRtlDir[a] = txtRtlDir[b];
+        txtRtlOut[b] = c;
+        txtRtlDir[b] = d;
+    }
+}
+
+// One line [s, e) of txtRtlOut, laid out right to left: the line reads from the right, a run of Latin letters and
+// numbers keeps its own order inside it, a neutral between two of those goes with them (else with the line), and a
+// bracket on the right-to-left side turns round
+static void txtRtlLine(int s, int e)
+{
+    int i, j;
+    uint8_t d;
+
+    for (i = s; i < e; i++)
+        txtRtlDir[i] = txtRtlChar(txtRtlOut[i]) ? 1 : (txtNeutral(txtRtlOut[i]) ? 2 : 0);
+    for (i = s; i < e; i++) { // a number keeps its signs: 50% (by a digit), 1.5, 12:00, 3/4 (between two digits)
+        uint32_t c = txtRtlOut[i];
+        int before = i > s && txtDigit(txtRtlOut[i - 1]), after = i + 1 < e && txtDigit(txtRtlOut[i + 1]);
+        if (txtRtlDir[i] == 2 && ((c == '%' && (before || after)) ||
+                                  ((c == '.' || c == ',' || c == ':' || c == '/' || c == '+' || c == '-') && before && after)))
+            txtRtlDir[i] = 0; // a full stop after "PRO2" ends the sentence: it stays with the line
+    }
+    for (i = s; i < e;) {
+        if (txtRtlDir[i] != 2) {
+            i++;
+            continue;
+        }
+        for (j = i; j < e && txtRtlDir[j] == 2; j++)
+            ;
+        d = (i > s && txtRtlDir[i - 1] == 0 && j < e && txtRtlDir[j] == 0) ? 0 : 1;
+        for (; i < j; i++)
+            txtRtlDir[i] = d;
+    }
+    for (i = s; i < e; i++)
+        if (txtRtlDir[i] == 1)
+            txtRtlOut[i] = txtMirror(txtRtlOut[i]);
+    // a letter keeps its marks after it, where they are drawn back over it: turned here, put right by the turn below
+    for (i = s; i < e; i++) {
+        for (j = i + 1; j < e && txtArabMark(txtRtlOut[j]); j++)
+            ;
+        if (j > i + 1)
+            txtRtlReverse(i, j);
+        i = j - 1;
+    }
+    txtRtlReverse(s, e);
+    for (i = s; i < e;) { // each left-to-right run forwards again
+        if (txtRtlDir[i] != 0) {
+            i++;
+            continue;
+        }
+        for (j = i; j < e && txtRtlDir[j] == 0; j++)
+            ;
+        txtRtlReverse(i, j);
+        i = j;
+    }
+}
+
+const char *txtShape(const char *in, char *out, int size, int reorder)
+{
+    int n = 0, m = 0, i, j, k, a, at = 0, any = 0, prev, next;
+    uint32_t c, form;
+    const uint16_t *f;
+    const char *s;
+
+    if (in == NULL || out == NULL || size <= 0)
+        return NULL;
+    for (s = in; *s;) {
+        int b = txtNext(s, &c);
+        if (b <= 0)
+            break;
+        if (n == TXT_RTL_MAX)
+            return NULL;
+        any |= txtRtlChar(c);
+        txtRtlIn[n++] = c;
+        s += b;
+    }
+    if (!any)
+        return NULL;
+
+    // 1. joined, in reading order. ZWNJ (Persian) stops a join and goes; ZWJ goes too.
+    for (i = 0; i < n; i++) {
+        c = txtRtlIn[i];
+        if (c == 0x200C || c == 0x200D)
+            continue;
+        f = txtArabForms(c);
+        if (f == NULL) {
+            txtRtlOut[m++] = c;
+            continue;
+        }
+        for (j = i - 1; j >= 0 && txtArabMark(txtRtlIn[j]); j--)
+            ;
+        prev = j >= 0 && f[2] != 0 && txtJoinsNext(txtRtlIn[j]);
+        for (k = i + 1; k < n && txtArabMark(txtRtlIn[k]); k++)
+            ;
+        if (c == 0x0644 && k == i + 1 && k < n) {
+            for (a = 0; a < 4; a++)
+                if (txtRtlIn[k] == txtLamAlef[a][0])
+                    break;
+            if (a < 4) {
+                txtRtlOut[m++] = prev ? txtLamAlef[a][2] : txtLamAlef[a][1];
+                i = k; // the alef is in it
+                continue;
+            }
+        }
+        next = k < n && f[3] != 0 && txtJoinsPrev(txtRtlIn[k]);
+        form = prev && next ? f[4] : (prev ? f[2] : (next ? f[3] : f[1]));
+        txtRtlOut[m++] = form ? form : c;
+    }
+
+    // 2. each line right to left
+    if (reorder) {
+        for (i = 0; i < m;) {
+            int e, rtl = 0;
+            for (e = i; e < m && txtRtlOut[e] != '\n'; e++)
+                rtl |= txtRtlChar(txtRtlOut[e]);
+            if (rtl)
+                txtRtlLine(i, e);
+            i = e + 1;
+        }
+    }
+
+    for (i = 0; i < m; i++) {
+        at = txtPut(out, at, size, txtRtlOut[i]);
+        if (at < 0)
+            return NULL;
+    }
+    out[at] = '\0';
+    return out;
+}

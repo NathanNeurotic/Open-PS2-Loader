@@ -11,6 +11,7 @@
 #include "include/utf8.h"
 #include "include/util.h"
 #include "include/atlas.h"
+#include "include/textshape.h"
 
 #include <sys/types.h>
 #include <time.h> // clock(): fntRenderStringFit's scroll timing
@@ -697,6 +698,13 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
 
     quad.color = colour;
 
+    // Arabic and Persian (RIPPS2 build 104): their letters joined and each line laid out right to left, then drawn
+    // from the left like any other text. Measured above from the same joined letters, so a centred line stays centred.
+    static char shaped[2048]; // under the font lock
+    const char *visual = txtShape(string, shaped, sizeof(shaped), 1);
+    if (visual != NULL)
+        string = visual;
+
     int pen_x = x;
     int xmax = x + width;
     int ymax = y + height;
@@ -715,6 +723,8 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
     // cache glyphs and render as we go
     for (; *string; ++string) {
         if (utf8Decode(&state, &codepoint, *string)) // accumulate the codepoint value
+            continue;
+        if (txtZeroWidth(codepoint)) // the zero-width marks some translations carry draw nothing (RIPPS2 build 104)
             continue;
 
         glyph = fntCacheGlyph(font, codepoint);
@@ -775,6 +785,8 @@ static void fntRenderSubRTL(font_t *font, const char *startRTL, const char *stri
 
     for (; startRTL != string; ++startRTL) {
         if (utf8Decode(&state, &codepoint, *startRTL))
+            continue;
+        if (txtZeroWidth(codepoint))
             continue;
 
         glyph = fntCacheGlyph(font, codepoint);
@@ -841,6 +853,8 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
     // cache glyphs and render as we go
     for (; *string; ++string) {
         if (utf8Decode(&state, &codepoint, *string)) // accumulate the codepoint value
+            continue;
+        if (txtZeroWidth(codepoint)) // the zero-width marks some translations carry draw nothing (RIPPS2 build 104)
             continue;
 
         glyph = fntCacheGlyph(font, codepoint);
@@ -979,6 +993,102 @@ int fntRenderStringFit(int id, int x, int y, short aligned, int room, const char
     return fntRenderString(id, x, y, aligned, 0, 0, buf, colour);
 }
 
+// fntWrapText's output: n bytes of src at out[*wlen], whole or not at all, so a full buffer never ends inside a character
+static int fntWrapPut(char *out, int outSize, int *wlen, const char *src, int n)
+{
+    if (*wlen + n > outSize - 1)
+        return 0;
+    memcpy(&out[*wlen], src, n);
+    *wlen += n;
+    return 1;
+}
+
+int fntWrapText(int id, const char *text, int innerW, char *out, int outSize)
+{
+    int wlen = 0, lineW = 0, lines = 1;
+    int spaceW;
+    const char *p = text;
+
+    if (out == NULL || outSize <= 0)
+        return 0;
+    out[0] = '\0';
+    if (text == NULL)
+        return 0;
+    spaceW = rmUnScaleX(fntCalcDimensions(id, " "));
+
+    while (*p) {
+        if (*p == '\n') { // an explicit newline in the source string is a hard break
+            fntWrapPut(out, outSize, &wlen, "\n", 1);
+            lines++;
+            lineW = 0;
+            p++;
+            continue;
+        }
+        if (*p == ' ') { // runs of spaces collapse; one separator goes back between words
+            p++;
+            continue;
+        }
+
+        const char *word = p;
+        while (*p && *p != ' ' && *p != '\n')
+            p++;
+        int len = (int)(p - word);
+        int noSpaces = txtNoSpaceScript(word, len);
+
+        if (!noSpaces && len < 256) {
+            char buf[256];
+            memcpy(buf, word, len);
+            buf[len] = '\0';
+            int wordW = rmUnScaleX(fntCalcDimensions(id, buf)); // the whole word, so kerning stays exact
+            if (wordW <= innerW) {
+                if (lineW > 0 && lineW + spaceW + wordW > innerW) {
+                    fntWrapPut(out, outSize, &wlen, "\n", 1);
+                    lines++;
+                    lineW = 0;
+                } else if (lineW > 0) {
+                    fntWrapPut(out, outSize, &wlen, " ", 1);
+                    lineW += spaceW;
+                }
+                fntWrapPut(out, outSize, &wlen, word, len);
+                lineW += wordW;
+                continue;
+            }
+        }
+
+        // A word wider than the line (a URL, a path) breaks between any two characters. CJK, Thai and Lao text has
+        // no spaces to break at: it goes on from where the line is, and breaks only where those scripts allow
+        // (RIPPS2 build 104), never before a closing mark or a vowel that belongs to the letter before.
+        if (lineW > 0 && noSpaces) {
+            fntWrapPut(out, outSize, &wlen, " ", 1);
+            lineW += spaceW;
+        } else if (lineW > 0) {
+            fntWrapPut(out, outSize, &wlen, "\n", 1);
+            lines++;
+            lineW = 0;
+        }
+        for (const char *q = word; q < p;) {
+            uint32_t cp;
+            char glyph[5];
+            int n = txtNext(q, &cp);
+            if (n <= 0 || q + n > p)
+                n = 1;
+            memcpy(glyph, q, n);
+            glyph[n] = '\0';
+            int glyphW = rmUnScaleX(fntCalcDimensions(id, glyph));
+            if (lineW > 0 && lineW + glyphW > innerW && (!noSpaces || txtBreakAt(word, q))) {
+                fntWrapPut(out, outSize, &wlen, "\n", 1);
+                lines++;
+                lineW = 0;
+            }
+            fntWrapPut(out, outSize, &wlen, q, n);
+            lineW += glyphW;
+            q += n;
+        }
+    }
+    out[wlen] = '\0';
+    return lines;
+}
+
 void fntFitString(int id, char *string, size_t width)
 {
     size_t cw = 0;
@@ -1056,6 +1166,13 @@ static int fntCalcDimensionsLocked(font_t *font, const char *str)
 
     if (str == NULL)
         return 0;
+#ifndef __RTL
+    // Arabic and Persian are measured as drawn, their letters joined (a joined letter is narrower)
+    static char joined[2048]; // under the font lock, like every caller of this
+    const char *shaped = txtShape(str, joined, sizeof(joined), 0);
+    if (shaped != NULL)
+        str = shaped;
+#endif
 
     uint32_t codepoint;
     uint32_t state = UTF8_ACCEPT;
@@ -1066,6 +1183,8 @@ static int fntCalcDimensionsLocked(font_t *font, const char *str)
     // cache glyphs and render as we go
     for (; *str; ++str) {
         if (utf8Decode(&state, &codepoint, *str)) // accumulate the codepoint value
+            continue;
+        if (txtZeroWidth(codepoint)) // drawn as nothing, so measured as nothing
             continue;
 
         // Could just as well only get the glyph dimensions

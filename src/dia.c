@@ -11,6 +11,7 @@
 #include "include/pad.h"
 #include "include/renderman.h"
 #include "include/fntsys.h"
+#include "include/textshape.h"
 #include "include/themes.h"
 #include "include/util.h"
 #include "include/sound.h"
@@ -769,6 +770,7 @@ static void diaDrawHint(int text_id)
         const char *wordStart;
         int wordLen;
         int wordW;
+        int noSpaces;
 
         // Explicit line breaks in translated strings remain line breaks.
         if (*p == '\r' || *p == '\n') {
@@ -799,9 +801,10 @@ static void diaDrawHint(int text_id)
         while (*p != '\0' && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n')
             p++;
         wordLen = (int)(p - wordStart);
+        noSpaces = txtNoSpaceScript(wordStart, wordLen);
 
         // Normal words use the font's complete-string measurement so kerning/spacing stays exact.
-        if (wordLen < 256) {
+        if (wordLen < 256 && !noSpaces) {
             char word[256];
 
             memcpy(word, wordStart, wordLen);
@@ -840,8 +843,16 @@ static void diaDrawHint(int text_id)
 
         // An over-wide token (URL, path, hash, malformed translation, etc.) has no whitespace where
         // ordinary word wrapping can break it. Split only that token, and only at UTF-8 character
-        // boundaries, so it cannot escape the box or corrupt localized text.
-        if (lineW > 0) {
+        // boundaries, so it cannot escape the box or corrupt localized text. CJK, Thai and Lao text (RIPPS2
+        // build 104) goes on from where the line is, after the space it had, and breaks between its letters below.
+        if (lineW > 0 && noSpaces) {
+            if (wlen >= wrappedSize - 1) {
+                truncated = 1;
+                break;
+            }
+            wrapped[wlen++] = ' ';
+            lineW += spaceW;
+        } else if (lineW > 0) {
             if (lines >= maxLines || wlen >= wrappedSize - 1) {
                 truncated = 1;
                 break;
@@ -864,7 +875,9 @@ static void diaDrawHint(int text_id)
                     charBytes = 1;
                 glyphW = diaHintGlyphWidth(q, charBytes);
 
-                if (lineW > 0 && lineW + glyphW > innerW) {
+                // a CJK, Thai or Lao run breaks only where those scripts allow (not before a closing mark, nor a
+                // vowel or tone mark of the letter before); a URL or path anywhere
+                if (lineW > 0 && lineW + glyphW > innerW && (!noSpaces || txtBreakAt(wordStart, q))) {
                     if (lines >= maxLines || wlen >= wrappedSize - 1) {
                         truncated = 1;
                         break;

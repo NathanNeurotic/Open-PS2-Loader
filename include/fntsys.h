@@ -56,6 +56,11 @@ int fntRenderStringFit(int id, int x, int y, short aligned, int room, const char
  */
 void fntFitString(int id, char *string, size_t width);
 
+/** Greedy word wrap of text to innerW (unscaled) into out, '\\n' between lines; an explicit '\\n' stays a break.
+ * A word wider than the line breaks between characters, and CJK, Thai and Lao text (no spaces) breaks only where
+ * those scripts allow. Never ends inside a character when out fills. Returns the number of lines. */
+int fntWrapText(int id, const char *text, int innerW, char *out, int outSize);
+
 /** Calculates the width of the given text string
  * We can't use the height for alignment, as the horizontal center would depends of the contained text itself */
 int fntCalcDimensions(int id, const char *str);
