@@ -687,7 +687,7 @@ wOPL (historical; its public repository is unavailable), [OPL DB](https://github
 [nhddl](https://github.com/pcm720/nhddl),
 [hacan359's RetroAchievements OPL](https://github.com/hacan359/Open-PS2-Loader/pull/1),
 [Modulo-R1](https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2),
-[PS2-Launcher](https://github.com/Irfanlesnar/PS2-Launcher), and
+[PS2-Launcher](https://github.com/Irfanlesnar/PS2-Launcher),
 [official OPL](https://github.com/ps2homebrew/Open-PS2-Loader), and
 [YAOPL by belomaxorka](https://github.com/yaopl/yaopl).
 
