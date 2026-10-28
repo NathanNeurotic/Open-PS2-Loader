@@ -44,6 +44,35 @@ First reproduce with a known complete card and record firmware/device state. A r
 comparison is more useful than repeatedly recreating cards. For POPStarter and Ember, follow
 [PS1 core and device restrictions](VCD.md) rather than applying PS2-core options.
 
+### MMCE Game ID: waiting for the card
+
+With Game ID on, sd2psXtd starts the card switch a moment after it is asked, so a launch could
+read "not busy" before the switch began and start the game mid-switch (RIPPS2's report: Burnout 3
+hung). The launch now waits up to 2 seconds to see the card go busy, then shows
+*The MMCE is getting this game's memory card ready (N s)* until it is done, up to 180 seconds.
+**START** launches at once. A failed busy query never counts as ready; three in a row end the wait
+unconfirmed, and the launch goes ahead. Ported from RIPPS2 by akilluminati47. NOT TESTED on
+hardware: it needs an SD2PSX with sd2psXtd firmware.
+
+## Drive Status and DIAG.TXT
+
+**Drive Status** in the main menu (above About) lists, without changing anything:
+
+- each started BDM drive by its driver (USB, MX4SIO, iLink, internal HDD exFAT and so on), with
+  free space, size, format and cluster size;
+- the APA HDD's free space;
+- MMCE cards, and each memory card's free KB;
+- the folder settings are read from and saved to.
+
+The loader keeps a 16 KB log in RAM of pad reads long enough to swallow a press, the MMCE Game ID
+switch and its wait, each launch, the boot, and failed settings saves. **Save Diagnostics** on the
+Drive Status page writes it to `DIAG.TXT` in the settings folder. Attach that file to a bug report
+with the steps above. With **Debug** on, an MMCE launch saves `DIAG.TXT` before the game starts
+and again after the Game ID wait, never to a memory card or an MMCE card.
+
+Drive Status and the log are ported from RIPPS2 builds 114 and 115 by akilluminati47. NOT TESTED
+on hardware.
+
 ## A useful controlled comparison
 
 1. Preserve the working build, configuration and saves. Select one console, device and game image.
@@ -62,7 +91,8 @@ confirms the affected setup, unless the maintainer explicitly decides otherwise.
 
 The [fork-gap report](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html)
 tracks source mechanisms, release descriptions, development work and design alternatives.
-RIPPS2 Build 115's Trust Cache, Recent Games, artwork aliases and MMCE coordination are reviewed
-as that project's work; this guide does not claim those settings exist in RiptOPL.
+RIPPS2's Recent Games, artwork aliases, MMCE Game ID wait, Drive Status and DIAG.TXT were ported
+on 2026-10-28 (Open-PS2-Loader #1084, RiptOPL #99) with credit to akilluminati47; see
+[Game library](GAME-LIBRARY.md) and the sections above. RIPPS2's Trust Cache was not ported.
 See [collaboration review practice](FORK-COLLABORATION.md) for how candidates become small,
 credited changes with appropriate checks.
