@@ -30,6 +30,9 @@ installed package, actual game core, transport and failing stage before changing
 Our [fork collaboration review](docs/FORK-COLLABORATION.md) and
 [current comparison](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html)
 track shared improvements and candidates from RIPPS2 and other projects with their evidence limits.
+The [October 28 fork-gap status](docs/FORK-GAP-STATUS-2026-10-28.md) records parity with the C++
+edition, the fixes that landed in both, akilluminati47's RIPPS2 findings and port plan, and what is
+still not tested on hardware.
 
 For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves. For build flavours, app placement, Browser/OSDSYS and launch-failure reports, see [Setup questions](docs/SETUP-QUESTIONS.md).
 
