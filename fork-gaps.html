@@ -87,6 +87,7 @@
 </div>
 <nav aria-label="Fork feature gaps shortcuts" class="fork-gap-nav">
 <a href="#at-a-glance">Search feature IDs</a>
+<a href="#oct28-status">October 28 status</a>
 <a href="#oct24-delta">October 25 findings</a>
 <a href="#consolidated-missing">Consolidated capability/design list</a>
 <a href="#oct19-delta">Historical October 19 findings</a>
@@ -99,7 +100,7 @@
 <a href="#audit-method">Audit methodology</a>
 <a href="#notes">Retired IDs</a>
 </nav>
-<p class="lead">Features, fixes and companion workflows found across PS2 loaders, forks and tools, together with implemented work, historic proposals and design alternatives. Original entries were source-compared at the date recorded for each audit; <b>subsequent merges can change whether a gap remains open. The October 25 reconciliation and RIPPS2 branch review supersede older status wording.</b> Project links and evidence are preserved for reproducibility.</p>
+<p class="lead">Features, fixes and companion workflows found across PS2 loaders, forks and tools, together with implemented work, historic proposals and design alternatives. Original entries were source-compared at the date recorded for each audit; <b>subsequent merges can change whether a gap remains open. The October 28 status (parity with RiptOPL, fixes in both editions, the RIPPS2 audit) supersedes older status wording; the October 25 reconciliation remains the latest full register.</b> Project links and evidence are preserved for reproducibility.</p>
 <div class="callout info"><div class="h">A tracking list, not a roadmap</div>
 An entry documents a source-specific capability absent from RiptOPL or its PS2-Servers companion, with optional design choices and experimental features separately labelled. An entry does not promise a port.
 Broad source comparison dated <b>2026-10-08 UTC</b> (2026-10-07 Pacific); RA merge reconciled on <b>2026-10-08 Pacific</b> against
@@ -109,6 +110,53 @@ and reconciles already implemented RiptOPL features. Existing historical rows re
 See <a href="#audit-revisions">revision and validation scope</a> and <a href="#notes">retired IDs</a>.
 The October 25 sweep supersedes earlier status statements; see the dated findings and consolidated list. The October 15 supplement added PS2CF and other derivatives. The October 19 focused pass updates shipped states and checks LUNA, PSXCore, PADEMU and PC tools. The broad October 8 baseline is otherwise preserved. <a href="#pc-card-cf">New sections begin at PS2CF</a>. Stable IDs are never reassigned. Tools and developer APIs are distinguished from game-loading features; source, emulator and console evidence are separate.
 </div>
+<section aria-labelledby="oct28-status" class="fork-gap-section"><h2 id="oct28-status">Current status — October 28, 2026</h2>
+<p>Pinned: RiptOPL <a href="https://github.com/NathanNeurotic/RiptOPL/commit/4dab9cc0c79f1393f1f70ba80b954463e06a2803"><code>rebuild/main@4dab9cc0</code></a>, Open-PS2-Loader (legacy) <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/94e82f2b2795fc8faf5ff87dce8e39d63030e073"><code>rebuild/main@94e82f2b</code></a>, <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> <code>95299389</code> (build 119). The full record, with file references, is <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/FORK-GAP-STATUS-2026-10-28.md">Fork-gap status: 2026-10-28</a>. The ecosystem register below keeps its October 25 statuses; this section supersedes them where they differ. New development is in <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a>, the C++ edition.</p>
+<div class="callout amber"><div class="h">Not tested on hardware</div>Everything in this section comes from source review, host tests and CI builds. None of it has a real-console result yet.</div>
+<h3>RiptOPL and the legacy edition</h3>
+<p>The parity port is merged: RiptOPL <a href="https://github.com/NathanNeurotic/RiptOPL/pull/77">#77</a> (2026-10-27) reached parity with Open-PS2-Loader <code>38ea46a</code>, and <a href="https://github.com/NathanNeurotic/RiptOPL/pull/78">#78</a> added the matching site pages. The final sweep against <code>4cfde79c</code> found three Korium-only items on the Korium skin branch (Players badges, Background Art off on a fresh Korium install, the Korium app placeholder); all three were ported inside #77 and are present at <code>4dab9cc0</code>. Open issues moved to RiptOPL: #1018 to <a href="https://github.com/NathanNeurotic/RiptOPL/issues/86">RiptOPL#86</a>, #1036 to #81, #525 to #79, #433 to #80, #987 to #87, #972 to #88, #763 to #82, #690 to #83, #611 to #84, #331 to #85.</p>
+<h3>Fixes merged on October 27 and 28</h3>
+<p>A cross-check of every PR merged since October 26 found each fix in both repositories, after three follow-ups.</p>
+<table>
+<thead><tr><th>Fix</th><th>Open-PS2-Loader</th><th>RiptOPL</th></tr></thead>
+<tbody>
+<tr><td>Settings save on an empty USB slot: save to the booted ELF's slot, name the real error instead of "error 12"</td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1077">#1077</a></td><td><a href="https://github.com/NathanNeurotic/RiptOPL/pull/94">#94</a></td></tr>
+<tr><td>Skip MX4SIO on a <code>host:</code> boot (hung the boot screen under PCSX2), with its test in CI</td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1080">#1080</a></td><td><a href="https://github.com/NathanNeurotic/RiptOPL/pull/95">#95</a>, <a href="https://github.com/NathanNeurotic/RiptOPL/pull/96">#96</a></td></tr>
+<tr><td>Neutrino kits replace the i.LINK manager too; no untracked warning after a declined preview</td><td>already present</td><td><a href="https://github.com/NathanNeurotic/RiptOPL/pull/90">#90</a></td></tr>
+<tr><td>RA handoff marker and overflow, RA kit i.LINK pair, RA sender check, compat default core, credits (#1065, #1069, #1071, #1072)</td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1075">#1075</a></td><td>in #77</td></tr>
+<tr><td>Site page errors (#1073); cheats page Neutrino runtime and mastercode</td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1076">#1076</a>, <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1078">#1078</a></td><td><a href="https://github.com/NathanNeurotic/RiptOPL/pull/91">#91</a>, <a href="https://github.com/NathanNeurotic/RiptOPL/pull/97">#97</a></td></tr>
+<tr><td>One tap moving two rows on the first press after boot</td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1074">#1074</a></td><td>in #77</td></tr>
+<tr><td>smbman write count, i.LINK status decode, ps2ips receive tail, <code>ul.cfg</code> safe rewrite; per-core compat defaults, rumble off, UDPFS art</td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1064">#1064</a>, <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1066">#1066</a></td><td>in #77</td></tr>
+</tbody>
+</table>
+<h3>RIPPS2 audit (findings by akilluminati47)</h3>
+<p>The findings are <a href="https://github.com/akilluminati47">akilluminati47</a>'s, read from RIPPS2's source and changelog and checked against our code. RIPPS2 is a patch stack on the legacy C tree, so each item is a port by hand, credited to akilluminati47 in its commits. <b>Every port lands in both RiptOPL and Open-PS2-Loader</b>; an item that cannot be ported to one of them gets an issue instead.</p>
+<table>
+<thead><tr><th>Item</th><th>Status in both</th><th>Plan</th></tr></thead>
+<tbody>
+<tr><td>Clear the BDM "module loaded" flags after an IOP reset (NBD stop)</td><td>MISSING</td><td>PR A</td></tr>
+<tr><td>mmceman upstream <code>21dbc0a</code> "don't block mc1"</td><td>MISSING</td><td>PR A (hunk into the fork; pin kept)</td></tr>
+<tr><td>MMCE Game ID: see busy before waiting for not-busy; longer budget with a skip</td><td>MISSING</td><td>PR A; needs MMCE hardware before merge</td></tr>
+<tr><td>FreeType built with only the modules the fonts need</td><td>MISSING</td><td>PR A</td></tr>
+<tr><td>POPS missing-files warning</td><td>UNKNOWN</td><td>PR A</td></tr>
+<tr><td>Ogg serial top-bit workaround</td><td>UNKNOWN</td><td>PR A only if it reproduces</td></tr>
+<tr><td>Neutrino options read from the installed <code>neutrino.elf</code>; IGR exit-path check</td><td>MISSING / PARTIAL</td><td>Not scheduled</td></tr>
+<tr><td>exFAT lost clusters with two growing files (RIPPS2's claim)</td><td>UNKNOWN</td><td>Reproduce on a PC image first</td></tr>
+<tr><td>Pad missed-read hold, pad idle gate, analog re-request; <code>imgdrv</code> <code>host</code> to <code>iprp</code></td><td>INTENTIONAL DIFFERENCE</td><td>Owner decision: not planned</td></tr>
+</tbody>
+</table>
+<p>Feature plan, agreed 2026-10-28 and in progress (no port PR is open yet): <b>B</b> JPG art, OPL Manager art names, case-insensitive PFS names; <b>C</b> one unified library setting with All/PS2/PS1/APP on L3, device-tagged duplicates, last-played sort, Recents and Random Game; <b>D</b> <code>hidden.txt</code> and full delete without APA partition delete; <b>E</b> right-to-left and CJK/Lao text, with akilluminati47's translations offered to the language repository; <b>F</b> STATUS page and <code>DIAG.TXT</code>; <b>G</b> smaller GUI items; <b>H</b> POPS copy offer and a minimal VMC-as-folder manager.</p>
+<p>Not taken: disc ripping, the CD player, every HDD partition change (relaxed APA fence, BOOT LOCK, BIBLE MBR write) and the Planet N fonts. Ports keep green the RiptOPL tests RIPPS2 breaks on purpose (<code>apa_table_safety</code>, <code>psbbn_flow</code>, <code>igr_polling</code> and others).</p>
+<h3>Open hardware checks</h3>
+<ol>
+<li>The parity port's 14-row matrix (kits, USB/HDD/network launches, USBLD, VMC saves, RA kits, variant packages, POPS VCD).</li>
+<li>Korium: <code>Players=2</code> badge; fresh install starts with Background Art off.</li>
+<li>Settings save on an empty USB slot; MX4SIO skip on a PCSX2 <code>host:</code> boot with a real MX4SIO boot unchanged; one row per tap on the first press.</li>
+<li>i.LINK after reset (<a href="https://github.com/NathanNeurotic/RiptOPL/issues/86">RiptOPL#86</a>): native, then Neutrino, then POPStarter.</li>
+<li>UDPFS covers on the first connect (<a href="https://github.com/NathanNeurotic/RiptOPL/issues/81">RiptOPL#81</a>).</li>
+<li>Each RIPPS2 port as it lands; the MMCE items need an SD2PSX with sd2psXtd firmware.</li>
+</ol>
+</section>
 <section aria-labelledby="oct24-delta" class="fork-gap-section"><span id="oct21-delta"></span><h2 id="oct24-delta">Current reconciliation — October 25, 2026</h2><h3>Fork gap refresh — October 25, 2026</h3>
 <p>Baseline RiptOPL <code>55261de1381ae70ecfdfb2054f9cafbcfcd586cf</code>. Rechecked 128 tracked repository identities / 126 canonical repositories: seven changed, 121 unchanged, zero unavailable. All 128 release feeds were checked. Six newly created upstream forks were also compared; this is a bounded discovery sweep, not a claim to enumerate every PS2 project.</p>
 <p>The register now contains <strong>258 stable records</strong> and <strong>118 capability/design families</strong>. New records: RI34, RI35, RI36, RI37, RI38, RI39, RI40, YA1, NV1, LU40. Five new families cover runtime negotiation, MMCE firmware coordination, artwork interoperability, recent-library navigation and experimental in-game volume. Correctness investigations remain separate from feature families. Earlier IDs, historical dossiers and H11's closed source-parity disposition are preserved.</p>
@@ -889,6 +937,7 @@ Seven CA-series and seven CO-series source-attributed gaps are now listed, inclu
 <tr><td><code>DB2</code></td><td><b>Wireless discovery and Secure Simple Pairing UI</b></td><td>Scans nearby pads and pairs DS4/DualSense using a GUI <code>Search</code> action and saved link keys without requiring prior USB pairing. Actual hardware confirmation is limited to the stated DualSense/adapter; DS4 discovery, other dongles and multiple wireless controllers need validation. Never overwrite existing paired-key storage without migration.</td><td><a href="https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/include/btkeys.h">btkeys.h</a> · <a href="https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/src/dialogs.c">pairing UI</a></td></tr>
 </tbody></table>
 <h2 id="ripps2">RIPPS2 — current collaboration deep dive</h2><h3>RIPPS2 collaboration review — October 25, 2026</h3>
+<p><b>Update, October 28:</b> the build 119 audit, its port plan and the owner's decisions are in <a href="#oct28-status">October 28 status</a>. Where the two differ, that section is current.</p>
 <p>RIPPS2 and RiptOPL share ancestry and exchange work. This review looks for useful mechanisms in both directions and preserves author credit. A difference is not automatically a defect, a finished feature or an instruction to port it.</p>
 <h3>Exact revisions and reconstruction</h3>
 <ul>
