@@ -8,8 +8,8 @@ Two settings change what you read below, so check them first if the tables do no
   **Cross = confirm, Circle = back** as a reference layout. Fresh RiptOPL settings use
   **Circle to confirm**; saved preferences override that. Swap the two in these tables when
   Circle is selected, including on Settings screens, and follow the on-screen hints.
-* **Coverflow and PSBBN Flow** (*Settings → Interface → Theme*) rotate the navigation axis on the game list. Both layouts
-  are given below.
+* **Coverflow, PSBBN Flow and Grid** (*Settings → Interface → Theme View*, or hold L3) change the navigation on
+  the game list. The layouts are given below.
 
 ---
 
@@ -26,25 +26,26 @@ Two settings change what you read below, so check them first if the tables do no
 | **L1 / R1** | Previous / next page of the list; both wrap around at the ends |
 | **L2** | Jump to the first page |
 | **R2** | Jump to the last page |
-| **L3** | Tap: cycle this page's library view (PS2 / PS1 / Both / …; All, PS2, PS1, Apps, Favourites and Recent on All Games). Hold it for half a second to switch to the next [theme view](THEME_ENGINE.md#views-multi-view-themes--this-fork) (List, Coverflow, PSBBN Flow) when the theme offers more than one; the tap then acts on release. |
+| **L3** | Tap: cycle this page's library view (PS2 / PS1 / Both / …; All, PS2, PS1, Apps, Favourites and Recent on All Games). Hold it for half a second to switch to the next [theme view](THEME_ENGINE.md#views-multi-view-themes--this-fork) (List, Coverflow, PSBBN Flow, Grid) when the theme offers more than one; the tap then acts on release. |
 | **R3** | Star or un-star the selected title as a Favorite (also on All Games and Recent rows) |
 | **Start** | Open the main menu |
 | **Select** | Refresh the current device list |
 
 <a id="with-coverflow-enabled"></a>
 
-### With Coverflow or PSBBN Flow selected
+### With Coverflow, PSBBN Flow or Grid selected
 
-Both flow themes rotate the two navigation axes on the game list — **and only there**. The info screen and
+The flow views rotate the two navigation axes on the game list, and Grid moves by rows and columns —
+**only there**. The info screen and
 every menu keep the standard layout.
 
-| Button | List theme, such as `<OPL>` | Coverflow / PSBBN Flow |
-|---|---|---|
-| **Up / Down** | Move through the list | Switch device page |
-| **Left / Right** | Switch device page | Move through the carousel |
+| Button | List view, such as `<OPL>` | Coverflow / PSBBN Flow | Grid |
+|---|---|---|---|
+| **Up / Down** | Move through the list | Switch device page | Move one row, keeping the column; on the top or bottom row, switch device page |
+| **Left / Right** | Switch device page | Move through the carousel | Move one cover |
 
-Every other button is unchanged, including **R3 = toggle Favorite**. PSBBN Flow is selected in the
-Theme picker; R3 does not switch displays. See [PSBBN Flow](THEME_ENGINE.md#psbbn-flow).
+Every other button is unchanged, including **R3 = toggle Favorite**. PSBBN Flow and Grid are picked under
+Theme View; R3 does not switch displays. See [PSBBN Flow](THEME_ENGINE.md#psbbn-flow).
 
 ### Notes on individual buttons
 

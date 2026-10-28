@@ -37,7 +37,7 @@ separate settings. A configuration that saved the former `<Coverflow>` or `<PSBB
 Both flow views rotate navigation on the main game list: Left/Right browse covers and Up/Down
 change sources. R3 remains Favorite, and info/settings screens keep their normal controls.
 **Coverflow Settings** tunes the `Coverflow` renderer; PSBBN Flow uses its fixed layout and
-25-frame glide. All three built-ins share the editable palette, artwork and audio settings.
+25-frame glide. All four views share the editable palette, artwork and audio settings.
 See [Controls](CONTROLS.md), [Fresh-start defaults](DEFAULTS.md), and the
 [Theme Engine reference](THEME_ENGINE.md#psbbn-flow).
 
@@ -177,7 +177,7 @@ eight:
 | `bd_connect.adp` | A block device is connected |
 | `bd_disconnect.adp` | A block device is removed |
 
-All three built-in themes use effects embedded in the ELF and read nothing from the card. A disk theme
+The built-in `<OPL>` theme uses, in every view, effects embedded in the ELF and read nothing from the card. A disk theme
 supplying only some of the eight falls back to the built-in sound for the rest.
 
 Confirm, cancel, message and transition never wait for each other: a new one stops the one still
