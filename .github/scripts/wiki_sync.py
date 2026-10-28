@@ -328,7 +328,11 @@ def link(label, page):
 
 
 def home():
-    text = f"""![RiptOPL]({SITE}assets/riptopl.png)
+    text = f"""> [!IMPORTANT]
+> **This is the legacy version of RiptOPL.** We have moved over to ps2build's **C++ Edition** at
+> **[NathanNeurotic/RiptOPL](https://github.com/NathanNeurotic/RiptOPL)**, where new development now happens.
+
+![RiptOPL]({SITE}assets/riptopl.png)
 
 # RiptOPL Wiki
 
