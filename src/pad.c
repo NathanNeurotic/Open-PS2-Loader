@@ -6,6 +6,7 @@
 
 #include "include/opl.h"
 #include "include/pad.h"
+#include "include/diaglog.h" // the hardware log, DIAG.TXT (RIPPS2 build 115)
 #include "include/ioman.h"
 #include <libpad.h>
 #include <timer.h>
@@ -448,6 +449,8 @@ static int readPad(struct pad_data_t *pad, int *pollClean)
         if (gPadNotReadyRun > gPadMaxNotReadyRun)
             gPadMaxNotReadyRun = gPadNotReadyRun;
     } else {
+        if (gPadNotReadyRun >= 4) // a press spans 4-6 frames, so a run this long can swallow one
+            diagLog("pad: %u polls in a row could not be read", (unsigned)gPadNotReadyRun);
         gPadNotReadyRun = 0;
         if (newpdata == 0x0) {
             gPadEmptyRun++;

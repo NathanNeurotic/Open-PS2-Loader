@@ -2073,3 +2073,55 @@ gui_strings:
 - comment: The game's files could not be deleted. %s is the game's name.
   label: GAME_DELETE_FAILED
   string: "%s could not be deleted. Is the device write-protected?"
+
+- comment: Main menu item and page title for the drive status page (RIPPS2 build 114).
+  label: DRIVE_STATUS
+  string: Drive Status
+
+- comment: Shown while Drive Status asks each drive about itself.
+  label: DRIVE_STATUS_SCANNING
+  string: Looking at the drives...
+
+- comment: Drive Status, after a drive's name. 1st %s free space, 2nd %s total size, 3rd %s format (exFAT, FAT32), 4th %s cluster size.
+  label: DRIVE_STATUS_SPACE
+  string: "%s free of %s (%s, %s clusters)"
+
+- comment: Drive Status, a BDM drive whose driver is the internal HDD formatted exFAT.
+  label: DRIVE_STATUS_EXFAT_HDD
+  string: internal HDD (exFAT)
+
+- comment: Drive Status, a BDM drive whose driver did not say what it is.
+  label: DRIVE_STATUS_UNKNOWN
+  string: a drive of unknown kind
+
+- comment: Drive Status, the internal HDD with APA partitions. 1st %s free space, 2nd %s total size.
+  label: DRIVE_STATUS_HDD
+  string: "Internal HDD (APA): %s free of %s"
+
+- comment: Drive Status, a PS2 memory card. %d the slot (1 or 2), then its free space in KB.
+  label: DRIVE_STATUS_MC
+  string: "Memory card %d: %d KB free"
+
+- comment: Drive Status when no drive is started yet.
+  label: DRIVE_STATUS_NONE
+  string: No drive is started yet. Start one from its page, or set it to Auto in Settings.
+
+- comment: Drive Status, last line. %s is the folder the settings are read from and saved to.
+  label: DRIVE_STATUS_SETTINGS
+  string: "Settings: %s"
+
+- comment: Drive Status button that writes the hardware log to DIAG.TXT.
+  label: SAVE_DIAGNOSTICS
+  string: Save Diagnostics
+
+- comment: Hint for the Save Diagnostics button.
+  label: HINT_SAVE_DIAGNOSTICS
+  string: Writes what OPL noted about the pads, the drives, MMCE cards and the last launches to DIAG.TXT in the settings folder. Send it with a bug report.
+
+- comment: After Save Diagnostics. %s is the file's path.
+  label: DIAG_SAVED
+  string: "The diagnostics are in %s."
+
+- comment: Save Diagnostics could not write the file. %s is the file's path.
+  label: DIAG_SAVE_FAILED
+  string: "The diagnostics could not be written to %s. Is the device write-protected?"

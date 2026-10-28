@@ -85,6 +85,7 @@ typedef enum {
 
 int hddCheck(void);
 u32 hddGetTotalSectors(void);
+int hddGetSpace(u32 *totalSectors, u32 *freeSectors); // Drive Status: 0 when no formatted APA drive answers
 int hddIs48bit(void);
 int hddSetTransferMode(int type, int mode);
 void hddSetIdleTimeout(int timeout);

@@ -121,6 +121,7 @@ mmce_program = r'''
 #include <stdio.h>
 #include <string.h>
 #define LOG(...) ((void)0)
+#define diagLog(...) ((void)0)
 #define KEY_START 1
 #define _STR_MMCE_GAMEID_CARD_WAIT 0
 ''' + defines + r'''

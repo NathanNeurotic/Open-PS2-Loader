@@ -37,6 +37,18 @@ u32 hddGetTotalSectors(void)
 }
 
 //-------------------------------------------------------------------------
+// Drive Status (RIPPS2 build 114, akilluminati47): the APA drive's free and total sectors; 0 when no formatted drive
+// answers
+int hddGetSpace(u32 *totalSectors, u32 *freeSectors)
+{
+    if (fileXioDevctl("hdd0:", HDIOC_STATUS, NULL, 0, NULL, 0) != 0)
+        return 0;
+    *totalSectors = (u32)fileXioDevctl("hdd0:", HDIOC_TOTALSECTOR, NULL, 0, NULL, 0);
+    *freeSectors = (u32)fileXioDevctl("hdd0:", HDIOC_FREESECTOR, NULL, 0, NULL, 0);
+    return *totalSectors > 0;
+}
+
+//-------------------------------------------------------------------------
 int hddIs48bit(void)
 {
     return fileXioDevctl("xhdd0:", ATA_DEVCTL_IS_48BIT, NULL, 0, NULL, 0);

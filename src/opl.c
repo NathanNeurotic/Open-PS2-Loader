@@ -10,6 +10,7 @@
 #endif
 #include "include/ioman.h"
 #include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)
+#include "include/diaglog.h"    // the hardware log, DIAG.TXT (RIPPS2 build 115)
 #include "include/gui.h"
 #include "include/guigame.h"
 #include "include/renderman.h"
@@ -4540,6 +4541,7 @@ int saveConfig(int types, int showUI)
             else {
                 const char *failedPath = gLastSaveTarget[0] != '\0' ? gLastSaveTarget : configGetDir();
                 snprintf(notification, sizeof(notification), _l(_STR_ERROR_SAVING_SETTINGS_TO), failedPath, gLastSaveErrno);
+                diagLog("settings: not saved to %s, error %d", failedPath, gLastSaveErrno);
             }
             guiMsgBox(notification, 0, NULL);
         }
@@ -5907,6 +5909,7 @@ int main(int argc, char *argv[])
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &deferredInit);
 
     guiIntroLoop();
+    diagLog("boot: the menu is up; settings from %s", configGetDir());
 
     // No writable config home? Say so NOW, not after the user has changed settings and lost them.
     // The '?' only survives configGetDir() when the home fell all the way back to the "mc?:OPL"
