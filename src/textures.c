@@ -7,6 +7,9 @@
 #include <errno.h>         // errno/ENOENT in the staging-arm open classifier (transitively via opl.h, but be explicit)
 #include <kernel.h>
 #include <png.h>
+#include <jpeglib.h>
+#include <setjmp.h>
+#include <strings.h> // strcasecmp, strncasecmp
 
 extern void *load0_png;
 extern void *load1_png;
@@ -1068,6 +1071,250 @@ int texLoadFromMemory(GSTEXTURE *texture, const void *buf, u32 size)
     return texLoadAll(texture, NULL, -1, buf, size);
 }
 
+// ---- JPG game art (ported from RIPPS2 builds 95/115/118 by akilluminati47) ----
+// Old OPL art packs and OPL Manager downloads are JPG. A JPG is read whole and decoded to 24-bit RGB, shrunk to
+// fit the box its kind is shown in: libjpeg's own 1/2, 1/4 or 1/8 first, then plain sampling for the rest. The
+// kind is told by what the file holds, not by its name, so a JPG saved as .png loads too.
+#define TEX_ART_MAX_W 512 // covers, discs, screenshots, logos
+#define TEX_ART_MAX_H 512
+#define TEX_BG_MAX_W  720 // a background fills the screen
+#define TEX_BG_MAX_H  512
+
+typedef struct
+{
+    struct jpeg_error_mgr pub;
+    jmp_buf jmp;
+} TexJpgError;
+
+static void texJpgFail(j_common_ptr info)
+{
+    longjmp(((TexJpgError *)info->err)->jmp, 1);
+}
+
+static void texJpgQuiet(j_common_ptr info)
+{
+    (void)info; // libjpeg's warnings go to stderr otherwise
+}
+
+static int texIsJpg(const void *buf, u32 size)
+{
+    const u8 *b = (const u8 *)buf;
+    return size >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF;
+}
+
+static int texLoadJpgMemory(GSTEXTURE *texture, const void *buf, u32 size, int maxW, int maxH)
+{
+    struct jpeg_decompress_struct info;
+    TexJpgError err;
+    JSAMPLE *volatile row = NULL;
+    int outW, outH;
+
+    if (!texIsJpg(buf, size))
+        return ERR_SET_JMP;
+
+    texPrepare(texture);
+    memset(&info, 0, sizeof(info));
+    info.err = jpeg_std_error(&err.pub);
+    err.pub.error_exit = &texJpgFail;
+    err.pub.output_message = &texJpgQuiet;
+    if (setjmp(err.jmp)) {
+        int aborted = texLoadAbortRequested();
+        jpeg_destroy_decompress(&info);
+        free((void *)row);
+        texFree(texture);
+        return aborted ? ERR_LOAD_ABORTED : ERR_SET_JMP;
+    }
+    jpeg_create_decompress(&info);
+    jpeg_mem_src(&info, (unsigned char *)buf, size);
+    jpeg_read_header(&info, TRUE);
+    info.out_color_space = JCS_RGB;
+    // The size it ends up at, then libjpeg's largest 1/2^n that still covers it (never decode smaller than shown)
+    unsigned int fitW = info.image_width, fitH = info.image_height;
+    if (fitW > (unsigned int)maxW) {
+        fitH = fitH * maxW / fitW;
+        fitW = maxW;
+    }
+    if (fitH > (unsigned int)maxH) {
+        fitW = fitW * maxH / fitH;
+        fitH = maxH;
+    }
+    info.scale_num = 1;
+    info.scale_denom = 1;
+    while (info.scale_denom < 8 && info.image_width / (info.scale_denom * 2) >= fitW && info.image_height / (info.scale_denom * 2) >= fitH)
+        info.scale_denom *= 2;
+    jpeg_start_decompress(&info);
+    if (info.output_components != 3 || info.output_width == 0 || info.output_height == 0)
+        longjmp(err.jmp, 1);
+
+    int srcW = (int)info.output_width, srcH = (int)info.output_height;
+    outW = srcW;
+    outH = srcH;
+    if (outW > maxW) {
+        outH = outH * maxW / outW;
+        outW = maxW;
+    }
+    if (outH > maxH) {
+        outW = outW * maxH / outH;
+        outH = maxH;
+    }
+    if (outW < 1)
+        outW = 1;
+    if (outH < 1)
+        outH = 1;
+
+    texture->Width = outW;
+    texture->Height = outH;
+    texture->PSM = GS_PSM_CT24;
+    if (texSizeValidate(outW, outH, GS_PSM_CT24) < 0)
+        longjmp(err.jmp, 1);
+    texture->Mem = (u32 *)(memalign(128, gsKit_texture_size_ee(outW, outH, GS_PSM_CT24)));
+    row = (JSAMPLE *)(malloc((size_t)srcW * 3));
+    if (texture->Mem == NULL || row == NULL)
+        longjmp(err.jmp, 1);
+
+    u8 *dst = (u8 *)texture->Mem;
+    int y = 0;
+    while (info.output_scanline < info.output_height) {
+        int srcY = (int)info.output_scanline;
+        JSAMPROW r = (JSAMPROW)row;
+        if (jpeg_read_scanlines(&info, &r, 1) != 1 || ((srcY & 15) == 0 && texLoadAbortRequested()))
+            longjmp(err.jmp, 1);
+        // outH <= srcH, so each kept row is a different source row, in order
+        while (y < outH && (y * srcH) / outH == srcY) {
+            u8 *out = dst + (size_t)y * outW * 3;
+            if (outW == srcW) {
+                memcpy(out, (const void *)row, (size_t)srcW * 3);
+            } else {
+                for (int x = 0; x < outW; x++)
+                    memcpy(out + x * 3, (const u8 *)row + ((x * srcW) / outW) * 3, 3);
+            }
+            y++;
+        }
+    }
+    jpeg_finish_decompress(&info);
+    jpeg_destroy_decompress(&info);
+    free((void *)row);
+    return 0;
+}
+
+// A whole art file read into RAM and decoded as a JPG. pngResult is what the PNG loader made of the same file
+// (or ERR_SET_JMP when it was never tried); it is returned unchanged when the file is not a JPG either.
+static int texLoadJpgFile(GSTEXTURE *texture, const char *filePath, int maxW, int maxH, int pngResult)
+{
+    void *buffer = NULL;
+    u32 size = 0;
+    int fd, result;
+
+    if (texLoadAbortRequested())
+        return ERR_LOAD_ABORTED;
+    errno = 0;
+    fd = open(filePath, O_RDONLY, 0);
+    if (fd < 0)
+        return texStagedOpenIsAbsence(filePath, errno) ? ERR_BAD_FILE : ERR_FILE_IO;
+    result = texStageExternalFileIntoMemory(fd, &buffer, &size, !strncmp(filePath, "mmce", 4));
+    close(fd);
+    if (result < 0)
+        return result;
+    result = texIsJpg(buffer, size) ? texLoadJpgMemory(texture, buffer, size, maxW, maxH) : pngResult;
+    free(buffer);
+    return result;
+}
+
+// A background is <key>_BG, or OPL Manager's <key>_BG_00 to _BG_06; everything else is shown smaller.
+static int texArtIsBackground(const char *stemEnd, const char *start)
+{
+    if (stemEnd - start >= 3 && !strncasecmp(stemEnd - 3, "_BG", 3))
+        return 1;
+    return stemEnd - start >= 6 && !strncasecmp(stemEnd - 6, "_BG_0", 5);
+}
+
+// A PNG or JPG game art picture already in RAM (an ART .tar member). background picks the box a JPG is shrunk to.
+int texLoadArtFromMemory(GSTEXTURE *texture, const void *buf, u32 size, int background)
+{
+    int result = texLoadAll(texture, NULL, -1, buf, size);
+    if (result >= 0 || result == ERR_LOAD_ABORTED || !texIsJpg(buf, size))
+        return result;
+    return texLoadJpgMemory(texture, buf, size, background ? TEX_BG_MAX_W : TEX_ART_MAX_W, background ? TEX_BG_MAX_H : TEX_ART_MAX_H);
+}
+
+// One art file, whatever it holds: a .png through the PNG loader, then (if that loader refuses its bytes) as a JPG;
+// a .jpg/.jpeg straight to the JPG decoder. Absent and transient results are never retried as another format.
+static int texLoadArtFile(GSTEXTURE *texture, const char *filePath)
+{
+    const char *dot = strrchr(filePath, '.');
+    const char *slash = strrchr(filePath, '/');
+    int result = ERR_SET_JMP;
+
+    if (dot != NULL && slash != NULL && dot < slash)
+        dot = NULL; // a dot in a folder name is not an extension
+    int bg = texArtIsBackground(dot != NULL ? dot : filePath + strlen(filePath), filePath);
+
+    if (dot == NULL || !strcasecmp(dot, ".png")) {
+        result = texLoad(texture, filePath);
+        if (result >= 0 || result == ERR_BAD_FILE || result == ERR_FILE_IO || result == ERR_LOAD_ABORTED)
+            return result;
+        LOG("texLoadArtFile: %s is not a PNG (%d), trying it as a JPG\n", filePath, result);
+    }
+    return texLoadJpgFile(texture, filePath, bg ? TEX_BG_MAX_W : TEX_ART_MAX_W, bg ? TEX_BG_MAX_H : TEX_ART_MAX_H, result);
+}
+
+// One art name without extension. Where the art worker holds the folder's listing, one look in RAM finds it in any
+// letter case as .png, .jpg or .jpeg and opens it by the name the device lists (PFS minds case). Without a listing
+// (SMB, UDPFS, a folder too big to index) <stem>.png and then <stem>.jpg are tried on the device.
+static int texFindArt(GSTEXTURE *texture, const char *stem)
+{
+    static const char *const ext[] = {"png", "jpg"};
+    char filePath[256];
+    int result = ERR_BAD_FILE;
+    int found = artIndexFindPicture(stem, filePath, sizeof(filePath));
+
+    if (found == 0) {
+        LOG("texDiscoverLoad: '%s' absent per directory index (no device access)\n", stem);
+        return ERR_BAD_FILE;
+    }
+    if (found == 1)
+        return texLoadArtFile(texture, filePath);
+
+    for (unsigned int i = 0; i < sizeof(ext) / sizeof(ext[0]); i++) {
+        if (snprintf(filePath, sizeof(filePath), "%s.%s", stem, ext[i]) >= (int)sizeof(filePath))
+            return ERR_BAD_FILE;
+        if (!artIndexMayExist(filePath))
+            continue;
+        result = texLoadArtFile(texture, filePath);
+        if (result != ERR_BAD_FILE || texLoadAbortRequested())
+            return result;
+    }
+    return ERR_BAD_FILE;
+}
+
+// OPL Manager names a background <key>_BG_00 and the screenshots <key>_SCR_00 and <key>_SCR_01, where OPL themes ask
+// for _BG, _SCR and _SCR2. For a path in an ART folder, the other name of the same piece into out; 0 if it has none.
+int texArtAlias(const char *stem, char *out, int outSize)
+{
+    static const char *const swap[][2] = {{"BG", "BG_00"}, {"SCR", "SCR_00"}, {"SCR2", "SCR_01"}};
+    const char *base = strrchr(stem, '/');
+    const char *back = strrchr(stem, '\\');
+
+    if (back != NULL && (base == NULL || back > base))
+        base = back;
+    // only in an ART folder: theme files keep their one name
+    if (base == NULL || base - stem < 3 || strncasecmp(base - 3, "ART", 3) != 0 ||
+        (base - stem > 3 && base[-4] != '/' && base[-4] != '\\' && base[-4] != ':'))
+        return 0;
+    base++;
+    size_t baseLen = strlen(base);
+    for (unsigned int i = 0; i < sizeof(swap) / sizeof(swap[0]); i++) {
+        for (int k = 0; k < 2; k++) {
+            size_t kindLen = strlen(swap[i][k]);
+            if (baseLen > kindLen + 1 && base[baseLen - kindLen - 1] == '_' && !strcmp(&base[baseLen - kindLen], swap[i][k])) {
+                int keep = (int)(base - stem + baseLen - kindLen);
+                return snprintf(out, outSize, "%.*s%s", keep, stem, swap[i][!k]) < outSize;
+            }
+        }
+    }
+    return 0;
+}
+
 int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId)
 {
     char filePath[256];
@@ -1076,10 +1323,18 @@ int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId)
 
     LOG("texDiscoverLoad(%s)\n", path);
 
-    if (texId != -1)
-        snprintf(filePath, sizeof(filePath), "%s%s.%s", path, internalDefault[texId].name, "png");
-    else
-        snprintf(filePath, sizeof(filePath), "%s.%s", path, "png");
+    if (texId == -1) {
+        // Game art (RIPPS2 build 115): the name asked for, as PNG or JPG in any letter case, then OPL Manager's
+        // name for the same piece. A picture found, an abort or a transient failure ends the search.
+        result = texFindArt(texture, path);
+        if (result != ERR_BAD_FILE || texLoadAbortRequested())
+            return (result >= 0) ? 0 : result;
+        if (texArtAlias(path, filePath, sizeof(filePath)))
+            result = texFindArt(texture, filePath);
+        return (result >= 0) ? 0 : result;
+    }
+
+    snprintf(filePath, sizeof(filePath), "%s%s.%s", path, internalDefault[texId].name, "png");
 
     // ASK RAM BEFORE ASKING THE DEVICE. This is the single choke point every loose-file texture goes
     // through -- all six itemGetImage implementations, the VCD POPS fallback, and the theme loader --
