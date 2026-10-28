@@ -19,6 +19,7 @@
 #include "include/lang.h"
 #include "include/themes.h"
 #include "include/favsupport.h" // gFAVStartMode -- Favourites Start Mode row
+#include "include/gamemanage.h" // Hide Game and Delete everything (RIPPS2)
 #include "include/pad.h"
 #include "include/sound.h" // sfxGetPlayDiag/sfxGetDropDiag -- SFX RPC cost + silent-drop counters for the debug HUD
 #include "include/util.h"
@@ -290,6 +291,7 @@ void guiUnlock(void)
 void guiStartFrame(void)
 {
     guiLock();
+    thmGlyphSetRefresh(); // a glyph set picked in Settings, swapped between frames on the GUI thread
     rmStartFrame();
     guiFrameId++;
 }
@@ -846,6 +848,27 @@ static int guiDeviceConfigUpdater(int modified)
     return 0;
 }
 
+static void guiRefreshCfgTitles(void);
+
+// All Games switched on or off (Game Sources). The device pages now read both lists or go back to
+// their own view, the Favourites tab changes name and rows, and with it on the user lands there.
+static void guiApplyAllGamesChange(void)
+{
+    opl_io_module_t *fav = oplGetModule(FAV_MODE);
+
+    if (fav != NULL && fav->support != NULL) {
+        fav->menuItem.text_id = fav->support->itemTextId(fav->support);
+        if (gAllGames) {
+            struct gui_update_t *sel = guiOpCreate(GUI_OP_SELECT_MENU);
+            if (sel != NULL) {
+                sel->menu.menu = &fav->menuItem;
+                guiDeferUpdate(sel);
+            }
+        }
+    }
+    guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
+}
+
 void guiShowDeviceConfig(void)
 {
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
@@ -865,6 +888,8 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_HDDMODE, gHDDStartMode);
     diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
     diaSetInt(diaDeviceConfig, CFG_FAVMODE, gFAVStartMode);
+    diaSetInt(diaDeviceConfig, CFG_ALLGAMES, gAllGames);
+    diaSetInt(diaDeviceConfig, CFG_SHOWHIDDEN, gShowHidden);
 
     // Block devices (inlined; interlocked with the APA HDD mode)
     diaSetInt(diaDeviceConfig, CFG_ENABLEUSB, gEnableUSB);
@@ -901,6 +926,9 @@ reshow_device:
         diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(diaDeviceConfig, CFG_FAVMODE, &gFAVStartMode);
+        int previousAllGames = gAllGames, previousShowHidden = gShowHidden;
+        diaGetInt(diaDeviceConfig, CFG_ALLGAMES, &gAllGames);
+        diaGetInt(diaDeviceConfig, CFG_SHOWHIDDEN, &gShowHidden);
 
         diaGetInt(diaDeviceConfig, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
@@ -922,6 +950,10 @@ reshow_device:
 
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
+        if (previousAllGames != gAllGames)
+            guiApplyAllGamesChange();
+        else if (previousShowHidden != gShowHidden)
+            guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
     }
 }
 
@@ -1188,6 +1220,8 @@ reshow_ui:
     guiUnlock();
     diaSetEnum(diaUIConfig, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
     diaSetInt(diaUIConfig, UICFG_THEME, thmGetGuiValue());
+    const char *sortNames[] = {_l(_STR_OFF), _l(_STR_SORT_AZ), _l(_STR_SORT_LAST_PLAYED), NULL};
+    diaSetEnum(diaUIConfig, UICFG_AUTOSORT, sortNames);
     diaSetInt(diaUIConfig, UICFG_AUTOSORT, gAutosort);
     diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
@@ -1202,6 +1236,9 @@ reshow_ui:
     const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
     diaSetEnum(diaUIConfig, UICFG_FONT_SIZE, fontSizeNames);
     diaSetInt(diaUIConfig, UICFG_FONT_SIZE, gFontSize);
+    const char *glyphSetNames[] = {_l(_STR_THEME), _l(_STR_GLYPHS_BUILTIN), _l(_STR_GLYPHS_STANDARD), _l(_STR_GLYPHS_WHITE), NULL};
+    diaSetEnum(diaUIConfig, UICFG_GLYPH_SET, glyphSetNames);
+    diaSetInt(diaUIConfig, UICFG_GLYPH_SET, gGlyphSet);
 
     int ret = diaExecuteDialog(diaUIConfig, -1, 1, NULL);
 
@@ -1233,18 +1270,21 @@ reshow_ui:
 
     if (ret) {
         diaGetInt(diaUIConfig, UICFG_THEME, &themeID);
+        int previousSort = gAutosort;
         diaGetInt(diaUIConfig, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         int previousCfgTitles = gCfgTitlesInLists;
         diaGetInt(diaUIConfig, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-        int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
+        // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
+        int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         int themeViewRequest = guiReadThemeViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
         diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
+        diaGetInt(diaUIConfig, UICFG_GLYPH_SET, &gGlyphSet);
 
         if (previousTheme != themeID && isBgmPlaying())
             bgmStop();
@@ -1262,7 +1302,7 @@ reshow_ui:
             // uses the new VCD view, without racing the theme/menu bookkeeping above.
             guiRefreshGameViews();
         }
-        if (appsViewChanged)
+        if (appsViewChanged || (cfgTitlesChanged && previousSort != gAutosort))
             guiRefreshAppsView();
         sfxInit(0);
 
@@ -3067,6 +3107,8 @@ static int guiSettingsShowSources(void)
     diaSetInt(ui, CFG_HDDMODE, gHDDStartMode);
     diaSetInt(ui, CFG_APPMODE, gAPPStartMode);
     diaSetInt(ui, CFG_FAVMODE, gFAVStartMode);
+    diaSetInt(ui, CFG_ALLGAMES, gAllGames);
+    diaSetInt(ui, CFG_SHOWHIDDEN, gShowHidden);
     diaSetInt(ui, CFG_ENABLEUSB, gEnableUSB);
     diaSetInt(ui, CFG_ENABLEILK, gEnableILK);
     diaSetInt(ui, CFG_ENABLEMX4SIO, gEnableMX4SIO);
@@ -3104,6 +3146,9 @@ reshow_sources:
         diaGetInt(ui, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(ui, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(ui, CFG_FAVMODE, &gFAVStartMode);
+        int previousAllGames = gAllGames, previousShowHidden = gShowHidden;
+        diaGetInt(ui, CFG_ALLGAMES, &gAllGames);
+        diaGetInt(ui, CFG_SHOWHIDDEN, &gShowHidden);
         diaGetInt(ui, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(ui, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(ui, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
@@ -3118,6 +3163,10 @@ reshow_sources:
         bdmForceDeviceRefresh();
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
+        if (previousAllGames != gAllGames)
+            guiApplyAllGamesChange();
+        else if (previousShowHidden != gShowHidden)
+            guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
     }
 
     guiSettingsEndDialog();
@@ -3158,6 +3207,8 @@ static int guiSettingsDisplayUpdater(int modified)
         gFontSize = temp;
         guiUpdateScreenScale();
     }
+    if (diaGetInt(guiSettingsActiveDialog, UICFG_GLYPH_SET, &temp))
+        gGlyphSet = temp; // the next frame swaps the glyphs (thmGlyphSetRefresh)
     return 0;
 }
 
@@ -3181,6 +3232,7 @@ static int guiSettingsShowInterface(void)
     int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
     int themeViewRequest = gThemeViewRequest;
+    int previousSort = gAutosort;
 
     if (ui == NULL)
         return 0;
@@ -3199,6 +3251,8 @@ static int guiSettingsShowInterface(void)
     guiSetThemeViewPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
+    const char *sortNames[] = {_l(_STR_OFF), _l(_STR_SORT_AZ), _l(_STR_SORT_LAST_PLAYED), NULL};
+    diaSetEnum(ui, UICFG_AUTOSORT, sortNames);
     diaSetInt(ui, UICFG_AUTOSORT, gAutosort);
     diaSetInt(ui, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
@@ -3212,6 +3266,9 @@ static int guiSettingsShowInterface(void)
     const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
     diaSetEnum(ui, UICFG_FONT_SIZE, fontSizeNames);
     diaSetInt(ui, UICFG_FONT_SIZE, gFontSize);
+    const char *glyphSetNames[] = {_l(_STR_THEME), _l(_STR_GLYPHS_BUILTIN), _l(_STR_GLYPHS_STANDARD), _l(_STR_GLYPHS_WHITE), NULL};
+    diaSetEnum(ui, UICFG_GLYPH_SET, glyphSetNames);
+    diaSetInt(ui, UICFG_GLYPH_SET, gGlyphSet);
     diaSetInt(ui, UICFG_XOFF, gXOff);
     diaSetInt(ui, UICFG_YOFF, gYOff);
     diaSetInt(ui, UICFG_OVERSCAN, gOverscan);
@@ -3247,6 +3304,7 @@ reshow_interface:
     padRumbleFlush();
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, UICFG_THEME, &themeID);
+        previousSort = gAutosort;
         diaGetInt(ui, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
@@ -3254,7 +3312,8 @@ reshow_interface:
         {
             int previousCfgTitles = gCfgTitlesInLists;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
+            // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
+            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
@@ -3262,6 +3321,7 @@ reshow_interface:
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);
         diaGetInt(ui, UICFG_FONT_SIZE, &gFontSize);
+        diaGetInt(ui, UICFG_GLYPH_SET, &gGlyphSet);
         diaGetInt(ui, UICFG_XOFF, &gXOff);
         diaGetInt(ui, UICFG_YOFF, &gYOff);
         diaGetInt(ui, UICFG_OVERSCAN, &gOverscan);
@@ -3283,7 +3343,7 @@ reshow_interface:
         } else if (gameViewChanged) {
             guiRefreshGameViews();
         }
-        if (appsViewChanged)
+        if (appsViewChanged || (cfgTitlesChanged && previousSort != gAutosort))
             guiRefreshAppsView();
         sfxInit(0);
         if (gEnableBGM && !isBgmPlaying())
@@ -3884,6 +3944,8 @@ static void guiHandleOp(struct gui_update_t *item)
                 break;
             }
             result->item.isFolder = item->submenu.isFolder; // folder-browse row marker
+            result->item.lastPlayed = item->submenu.lastPlayed;
+            result->item.favourited = item->submenu.favourited;
 #ifdef RETROACHIEVEMENTS
             result->item.raBadged = item->submenu.raBadged; // RA cover mark, resolved on the I/O thread
             result->item.raText = item->submenu.raText;     // transfer the snapshot to the row
@@ -4867,57 +4929,10 @@ void guiUpdateScreenScale(void)
 // fntRenderString does NOT wrap: it lays a string on ONE line and CLIPS at the window edge (only an
 // explicit '\n' starts a new line), so a long message ran off BOTH screen edges and was unreadable
 // -- reported on the 1080p warning, which is simply the longest string we ship.
-// NOTE: src/dia.c carries the same algorithm inline for its hint box. Deliberately not merged here:
-// that copy is entangled with the hint box's own geometry (it needs the line count to size the box
-// before rendering), and this is a message-box fix, not a refactor of a working path.
+// fntWrapText does the work; src/dia.c keeps its own loop for the hint box (line cap and ellipsis).
 static int guiWrapText(const char *text, int innerW, char *out, int outSize)
 {
-    int wlen = 0, lineW = 0, lines = 1;
-    int spaceW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], " "));
-    const char *p = text;
-
-    if (out == NULL || outSize <= 0)
-        return 0;
-
-    while (*p) {
-        while (*p == ' ') // collapse runs of spaces; we re-insert our own single separators
-            p++;
-        if (!*p)
-            break;
-
-        // An explicit newline in the source string is honoured as a hard break.
-        if (*p == '\n') {
-            if (wlen < outSize - 1)
-                out[wlen++] = '\n';
-            lines++;
-            lineW = 0;
-            p++;
-            continue;
-        }
-
-        char word[96];
-        int k = 0;
-        while (*p && *p != ' ' && *p != '\n' && k < (int)sizeof(word) - 1)
-            word[k++] = *p++;
-        word[k] = '\0';
-        int wordW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], word));
-
-        if (lineW > 0 && (lineW + spaceW + wordW) > innerW) { // does not fit -> break the line
-            if (wlen < outSize - 1)
-                out[wlen++] = '\n';
-            lines++;
-            lineW = 0;
-        } else if (lineW > 0) { // same line -> re-insert the separating space
-            if (wlen < outSize - 1)
-                out[wlen++] = ' ';
-            lineW += spaceW;
-        }
-        for (int i = 0; i < k && wlen < outSize - 1; i++)
-            out[wlen++] = word[i];
-        lineW += wordW;
-    }
-    out[wlen] = '\0';
-    return lines;
+    return fntWrapText(gTheme->fonts[0], text, innerW, out, outSize);
 }
 
 // 1 once the interactive menu is up; 0 on the autolaunch path, where miniInit never runs thmInit.

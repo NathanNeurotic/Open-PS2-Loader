@@ -30,6 +30,7 @@
 #include "include/util.h"
 #include "include/pad.h"
 #include "include/system.h"
+#include "include/diaglog.h" // the hardware log, DIAG.TXT (RIPPS2 build 115)
 #ifdef RETROACHIEVEMENTS
 #include "include/discsupport.h"
 #endif
@@ -2480,6 +2481,8 @@ int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *s
 
 void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
 {
+    diagLog("launch: Neutrino %s, %s %s (%s)", neutrinoPath != NULL ? neutrinoPath : "?", driver != NULL ? driver : "?",
+            path != NULL ? path : "?", startup != NULL ? startup : "?");
     sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 0);
 }
 
@@ -2498,6 +2501,7 @@ void sysLaunchPopstarter(const char *popstarterElf, const char *selector)
     char *argv[1];
     argv[0] = (char *)selector;
     LOG("[POPS] elf=%s argv0=%s\n", popstarterElf, selector);
+    diagLog("launch: POPSTARTER %s, %s", popstarterElf, selector);
 
     // Every POPSTARTER route depends on the selector remaining target argv[0]. The stock SDK
     // partition loader replaces it with the ELF load path; use the argv-preserving loader
@@ -2539,6 +2543,7 @@ void sysLaunchEmber(const char *emberElf, const char *gameFolder)
         argv[argc++] = (char *)gameFolder;
 
     LOG("[EMBER] elf=%s game=%s\n", emberElf, (argc > 1) ? argv[1] : "(none)");
+    diagLog("launch: Ember %s, game %s", emberElf, (argc > 1) ? argv[1] : "(none)");
 
     // The kernel argv budget (15 strings / 256-byte pool, counting the child loader's own argv[0])
     // is enforced inside sysLoadELFKeepIOP, which refuses rather than truncating. Callers keep the
@@ -2558,6 +2563,8 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     void *pdata;
     int argc, i;
     char ElfPath[32];
+
+    diagLog("launch: OPL core, %s, %s, logo %d, compat 0x%x", mode_str, filename, EnablePS2Logo, compatflags);
     char *argv[4];
     void *eeloadCopy, *initUserMemory;
     struct GsmConfig_t gsm_config;

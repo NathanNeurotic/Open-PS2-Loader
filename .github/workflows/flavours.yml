@@ -48,6 +48,24 @@ jobs:
         run: python3 .github/scripts/test_apa_table_safety.py
       - name: Check the APA recovery tool against synthetic damaged disks
         run: python3 .github/scripts/test_apa_recover.py
+      - name: Check the RIPPS2 backend port (POPS files check, IOP-reset latches, FreeType trim, MMCE Game ID wait)
+        run: python3 .github/scripts/test_ripps2_backend_port.py
+      - name: Check the RIPPS2 art port (any-case art index, OPL Manager names, JPG decode)
+        run: python3 .github/scripts/test_ripps2_art_port.py
+      - name: Check the RIPPS2 library port (recents, Favourites Recent stop, Random Game)
+        run: python3 .github/scripts/test_ripps2_library_port.py
+      - name: Check the RIPPS2 All Games list (gathering, duplicate tags, stars, tabs, L3 ring)
+        run: python3 .github/scripts/test_ripps2_all_games.py
+      - name: Check the RIPPS2 Hide Game and Delete everything (hidden.txt, rows, files that go)
+        run: python3 .github/scripts/test_ripps2_game_manage.py
+      - name: Check the RIPPS2 right-to-left and CJK text (Arabic joining, line order, CJK/Thai breaks, wrap)
+        run: python3 .github/scripts/test_ripps2_text_port.py
+      - name: Check the RIPPS2 Drive Status page and DIAG.TXT (hardware log, free-space devctl, log sites)
+        run: python3 .github/scripts/test_ripps2_drive_status.py
+      - name: Check the RIPPS2 GUI port (dimmed and collapsed rows, scroll bar, right-stick peek, return to opener)
+        run: python3 .github/scripts/test_ripps2_gui_port.py
+      - name: Check the RIPPS2 VMC Saves port (list, copy out, copy in, delete; checked by an independent card reader)
+        run: python3 .github/scripts/test_ripps2_vmc_saves.py
       - name: Check Apps launch paths and argument limits before teardown
         run: python3 .github/scripts/test_app_launch_args.py
       - name: Check Auto Loading settings discovery and APA+exFAT hybrid detection

@@ -57,3 +57,35 @@ Rebuild asks for confirmation, then:
 The card itself is only ever opened read-only. On any failure or cancellation before the swap, only the `.new` file this rebuild created is removed, and the card is left as it was. Not enough unbroken free space is reported as such, with nothing changed. If the second rename fails, the first is undone. If a rename cannot be undone, both `.bak` (the old card) and `.new` (the verified copy) are kept and the dialog says so; rename one of them back to `.bin` on a PC. On the HDD, if PFS cannot commit the swap, the dialog says the change was not confirmed instead of reporting success. A copy is removed only while the card is confirmed under its own name. The loader never deletes the card or the backup: delete `VMC/<name>.bak` on a PC once the rebuilt card's saves check out. If power is lost between the two renames, `VMC/<name>.bak` holds the card.
 
 Host tests run genvmc's real request, worker, copy and verify code and the loader's real start, layout check and swap over an in-memory filesystem with a fault at every step: reservation refusal, card read error, short copy write, copy reading back different, failed close, driver layout failure, a copy whose layout fails or cannot be checked, each rename failing or reporting failure after it happened, a `.bak` or `.new` already present or appearing during the job, an unreadable folder, and an abort during the copy and during the verify, on both BDM and PFS. A second test writes a card interleaved with other files on disposable FAT32 and exFAT images (pinned FatFs, the shipped fragment walker and allocation patch), confirms the launch check calls it fragmented, gets "not enough unbroken free space" with nothing changed while no 8 MiB run is free, then rebuilds it to one extent with identical bytes and the old card kept as `.bak` across a remount. None of this establishes real-console behaviour; the rebuild has not been run on hardware.
+
+## Saves on a card
+
+*(From RIPPS2 builds 98 to 115, akilluminati47. NOT TESTED on hardware yet.)*
+
+The per-game VMC dialog has a **Saves** button for a card that exists. It opens a page that treats the card like a
+folder:
+
+- **On the card** lists the saves on the card by their titles, read from each save's `icon.sys`. A save without
+  one is listed by its folder name. **Free** shows the card's free space.
+- **In the folder** lists the save folders in `SAVES/`, beside the card (for example `mass0:/VMC/SAVES/`).
+- **Copy out** copies the picked save into `SAVES/<save folder>/` as plain files. The card is not changed. A
+  folder of that name already in `SAVES/` is never overwritten.
+- **Copy in** copies the picked folder from `SAVES/` onto the card as a new save. A save of that name already on
+  the card is never overwritten. A save that does not fit is refused before anything is written.
+- **Delete** removes the picked save from the card after you confirm it.
+
+Because `SAVES/` is shared by every card in that `VMC` folder, this is also how to move a save from one card to
+another.
+
+The card file is edited in place. Its size and its place on the drive never change, so a card the native core
+can map stays mappable. The order of writes is chosen so an interrupted change can only leave unused space
+marked as used, never a save that points at freed space:
+
+- **Copy in** writes the save's data and its folder first, then the card's allocation table, and only then
+  the entry that makes the save appear.
+- **Delete** hides the save's entry first, and only then frees its space.
+
+On the internal HDD each action is synced before the page reports it done.
+
+A card image with ECC data, such as a PCSX2 `.ps2` file, can be listed and copied out, but it is never
+changed here. With writes disabled in Settings, only listing is offered.

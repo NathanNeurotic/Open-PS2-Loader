@@ -55,6 +55,41 @@ def stage(sdk_source, replacement):
     main.write_text(entry, encoding='utf-8')
 
 
+# Ported from RIPPS2 build 114 (akilluminati47/RIPPS2): a volume's free and total KB, cluster bytes and format,
+# for Drive Status (include/vmc_alloc.h, BDM_DEVCTL_VOLINFO)
+BDM_VOLINFO = '''        case BDM_DEVCTL_VOLINFO: {
+            int vol = fs_driver_resolve_volume(fd->device->name, fd->unit);
+            char root[3] = {0, ':', 0};
+            DWORD nclst = 0;
+            FATFS *vfs = NULL;
+            unsigned long long cb, kb, tkb;
+            unsigned int *o = (unsigned int *)buf;
+            if (vol < 0 || vol > 9 || buf == NULL || buflen < 16) {
+                ret = -EINVAL;
+                break;
+            }
+            root[0] = (char)('0' + vol);
+            if (f_getfree(root, &nclst, &vfs) != FR_OK || vfs == NULL) {
+                ret = -EIO;
+                break;
+            }
+#if FF_MAX_SS != FF_MIN_SS
+            cb = (unsigned long long)vfs->csize * vfs->ssize;
+#else
+            cb = (unsigned long long)vfs->csize * FF_MAX_SS;
+#endif
+            kb = (unsigned long long)nclst * cb / 1024;
+            tkb = (unsigned long long)(vfs->n_fatent - 2) * cb / 1024;
+            o[0] = kb > 0xFFFFFFFFULL ? 0xFFFFFFFFu : (unsigned int)kb;
+            o[1] = tkb > 0xFFFFFFFFULL ? 0xFFFFFFFFu : (unsigned int)tkb;
+            o[2] = (unsigned int)cb;
+            o[3] = vfs->fs_type;
+            ret = 0;
+            break;
+        }
+'''
+
+
 def stage_allocation(sdk_source, repo):
     driver = sdk_source / 'iop/fs/bdmfs_fatfs/src/fs_driver.c'
     source = driver.read_text(encoding='utf-8')
@@ -76,7 +111,7 @@ def stage_allocation(sdk_source, repo):
     source = source[:index] + cases + source[index:]
     start = source.index('static int fs_devctl(')
     index = source.index('        case USBMASS_DEVCTL_STOP_UNIT:', start)
-    source = source[:index] + '        case VMC_ALLOC_CAPS:\n            ret = VMC_ALLOC_V1;\n            break;\n' + source[index:]
+    source = source[:index] + '        case VMC_ALLOC_CAPS:\n            ret = VMC_ALLOC_V1;\n            break;\n' + BDM_VOLINFO + source[index:]
     source = '#include "vmc_alloc.h"\n' + source
     driver.write_text(source, encoding='utf-8')
     shutil.copyfile(repo / 'include/vmc_alloc.h', driver.with_name('vmc_alloc.h'))

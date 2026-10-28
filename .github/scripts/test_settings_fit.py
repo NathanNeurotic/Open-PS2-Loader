@@ -124,6 +124,8 @@ functions = ''.join(function_text(dia_c, 'src/dia.c', sig) for sig in (
     'static int diaShouldBreakLine(',
     'static int diaShouldBreakLineAfter(',
     'static int diaItemHeight(',
+    'static void diaRowState(',
+    'static int diaRowCollapses(',
     'static int diaLayoutBottom(',
     'static int diaSettingsFitGap(',
 ))

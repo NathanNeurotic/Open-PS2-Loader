@@ -167,9 +167,9 @@ static struct dirent *readdir(DIR *dir)
     return &returnedEntry;
 }
 static int closedir(DIR *dir) { (void)dir; return 0; }
-static int texDiscoverLoad(GSTEXTURE *tex, const char *path, int id)
+static int texDiscoverArt(GSTEXTURE *tex, const char *path)
 {
-    (void)tex; (void)id;
+    (void)tex;
     imageCalls++;
     snprintf(imagePath, sizeof(imagePath), "%s", path);
     return 0;
@@ -359,10 +359,16 @@ struct dirent { char d_name[128]; };
 #define ART_INDEX_DIR_MAX 192
 #define ART_INDEX_MAX_ENTRIES 4096
 #define ART_INDEX_SLOTS 3
+#define ART_INDEX_NAMES_MAX (128 * 1024)
+typedef struct { unsigned int hash; int name; } art_index_pic_t;
 typedef struct {
     char dir[ART_INDEX_DIR_MAX];
     unsigned int *hashes;
-    int count, valid;
+    int count;
+    art_index_pic_t *pics;
+    int picCount;
+    char *names;
+    int valid;
 } art_index_dir_t;
 static art_index_dir_t gArtIndex[ART_INDEX_SLOTS];
 static int gArtIndexNext;
@@ -382,15 +388,26 @@ static struct dirent *readdir(DIR *dir)
         errno = EIO;
     return NULL;
 }
-static unsigned int artIndexHash(const char *name)
+static unsigned int artIndexHashN(const char *name, size_t n)
 {
     unsigned int hash = 2166136261u;
-    while (*name) {
+    while (n-- > 0 && *name) {
         unsigned char c = (unsigned char)*name++;
         if (c >= 'a' && c <= 'z') c -= 32;
         hash = (hash ^ c) * 16777619u;
     }
     return hash;
+}
+static unsigned int artIndexHash(const char *name) { return artIndexHashN(name, (size_t)-1); }
+static int artIndexPictureExt(const char *name)
+{
+    const char *dot = strrchr(name, '.');
+    return (dot != NULL && dot != name && !strcmp(dot, ".png")) ? (int)(dot - name) : -1;
+}
+static int artIndexPicCmp(const void *a, const void *b)
+{
+    unsigned int left = ((const art_index_pic_t *)a)->hash, right = ((const art_index_pic_t *)b)->hash;
+    return (left > right) - (left < right);
 }
 static int artIndexCmp(const void *a, const void *b)
 {
@@ -408,7 +425,7 @@ int main(void)
     }
     failRead = 0;
     art_index_dir_t *second = artIndexBuild("udpfs:/ART");
-    if (!second->valid || !second->hashes || second->count != 1) {
+    if (!second->valid || !second->hashes || second->count != 1 || second->picCount != 1 || !second->names) {
         fputs("Complete index was not published\n", stderr);
         return 1;
     }

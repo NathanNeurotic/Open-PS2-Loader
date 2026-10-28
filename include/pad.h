@@ -65,6 +65,7 @@ void padRumbleFlush(void);
  * the press never reached freepad). Whichever grows when an input is lost names the fault's half.
  */
 void padGetFaultCounters(u32 *maxNotReady, u32 *maxReadyEmpty);
+void padGetRightStick(int *x, int *y); // -128..127 each way; 0, 0 in the dead zone or with no fresh analog sample
 
 /** Debug HUD: reports detected actuators and alignment status for pad 0 and pad 1. */
 void padGetActuatorDiag(int *act0, int *aligned0, int *act1, int *aligned1);

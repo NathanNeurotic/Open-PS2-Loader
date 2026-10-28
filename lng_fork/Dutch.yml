@@ -708,3 +708,6 @@ translations:
   PCCF_UNAVAILABLE: 'CF niet beschikbaar: vereist een vroege Japanse PS2 met PC CARD, een compatibele kaart en geen actieve DEV9-, HDD- of netwerkdriver.'
   PCCF_UNSUPPORTED_GAME: CF ondersteunt nu alleen echte PS2-games. CF-VMC, PS1 laden en netwerkprestaties zijn niet beschikbaar.
   HINT_ENABLE_DVR: Experimentele detectie van DESR DVR-ISO's. Vereist dat de HDD-bron aan staat; games starten vereist een externe Neutrino met DVR-ondersteuning.
+  # Filled from RIPPS2 (Akilluminati47) where Open PS2 Loader had no translation yet
+  'YES': Ja
+  'NO': Nee

@@ -224,6 +224,22 @@ resolver selects. RiptOPL never chooses a build for you and never rewrites that 
 > an exFAT device or an SMB share — those games appear under the **USB/MX4SIO/MMCE** or **SMB** VCD
 > views, not the internal-HDD one.
 
+### Sony's POPS files
+
+POPSTARTER also needs Sony's PS1 emulator in the same `POPS` folder: `POPS_IOX.PAK`, plus either
+`POPS.PAK` or `POPS.ELF` with `IOPRP252.IMG`. They come from your own console's software and are in
+no PS2 ROM, so OPL cannot make them. Without them the game is a black screen, then the browser.
+
+Before a PS1 launch from USB, MX4SIO, iLink, an exFAT HDD or MMCE, OPL checks for them. *(From RIPPS2 builds 85, 89
+and 115, akilluminati47.)*
+
+- **Another started drive has a full set.** OPL offers to copy them over. It looks at the drives it
+  has already started: other BDM drives, both MMCE cards, and the internal HDD's `__common/POPS`
+  (read only). Only the files this drive lacks are copied, and nothing already there is overwritten.
+  A copy that fails part way is removed, and you are told which file failed.
+- **No full set anywhere, or you decline the copy.** OPL names what is missing and asks whether to
+  launch anyway, since POPSTARTER may find them somewhere OPL does not look.
+
 VCD per-game config and art use the VCD **filename without `.VCD`** as their identity. They
 otherwise follow the same layout and suffix rules as PS2 games on that device:
 

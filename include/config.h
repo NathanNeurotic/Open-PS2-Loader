@@ -112,6 +112,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_ART_DELAY                  "art_delay"
 #define CONFIG_OPL_WIDESCREEN                 "wide_screen"
 #define CONFIG_OPL_FONT_SIZE                  "font_size" // FONT_SIZE_* (fntsys.h); absent = Default
+#define CONFIG_OPL_GLYPH_SET                  "glyph_set" // GLYPH_SET_* (themes.h); absent = the theme's
 #define CONFIG_OPL_DEFAULT_GAME_VIEW          "default_game_view"
 #define CONFIG_OPL_APPS_DISPLAY               "apps_display"
 #define CONFIG_OPL_GAME_TYPE_LABELS           "game_type_labels"    // show [PS1]/[PS2] prefixes in game lists; default off
@@ -176,6 +177,8 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_ETH_MODE             "eth_mode"
 #define CONFIG_OPL_APP_MODE             "app_mode"
 #define CONFIG_OPL_FAV_MODE             "fav_mode"
+#define CONFIG_OPL_ALL_GAMES            "all_games"
+#define CONFIG_OPL_SHOW_HIDDEN          "show_hidden"
 #define CONFIG_OPL_MMCE_MODE            "mmce_mode"
 #define CONFIG_OPL_BDM_CACHE            "bdm_cache"
 #define CONFIG_OPL_HDD_CACHE            "hdd_cache"

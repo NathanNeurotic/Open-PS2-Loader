@@ -34,7 +34,9 @@
 # Pin is an immutable SHA (the "latest" tag is force-moved upstream). Bump deliberately.
 set -eu
 
-MMCE_PIN="${MMCE_PIN:-db3e93f0fdbcf882f88da110cbd9b7db188ec17a}" # ps2-mmce 'latest' @ 2026-06-15 (has cccc366 sio2man fix)
+# de28936f = db3e93f0 + 21dbc0a "fix: don't block mc1 (2nd port)" (only sio2man_hook.c changes: PORT_NR
+# off, so a memory card in slot 2 is not blocked while mmceman is resident). Picked up via RIPPS2's audit.
+MMCE_PIN="${MMCE_PIN:-de28936fdf45fe445554cfa0b8f058b05fa8212f}" # ps2-mmce @ 2026-07-26 (has cccc366 sio2man fix)
 MMCE_REPO="https://github.com/ps2-mmce/mmceman"
 
 : "${PS2SDK:?PS2SDK must be set (run inside the ps2dev toolchain container)}"
