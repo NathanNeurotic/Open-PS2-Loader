@@ -692,6 +692,8 @@ wOPL (historical; its public repository is unavailable), [OPL DB](https://github
 
 With special and sincere thanks to:
 
+- **[belomaxorka](https://github.com/belomaxorka)** — developer of **[YAOPL](https://github.com/yaopl/yaopl)**, whose detailed compatibility research, backend reliability fixes and reproducible regression work across ISO/ZSO, USB/PADEMU, controllers, MMCE and UDPBD are invaluable to OPL and RiptOPL's parity efforts. Thank you for your contributions to the PS2 homebrew community.
+
 - **KrahJohlito** — the legend, and the single biggest influence on this fork. Creator of
   **uOPL (Unofficial Open PS2 Loader)** and its continuation
   **wOPL** (historical; its public repository is unavailable), where the modern OPL experience was
