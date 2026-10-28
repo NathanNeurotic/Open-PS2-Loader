@@ -2239,7 +2239,30 @@ static void drawGrid(struct menu_list *menu, struct submenu_list *item, config_s
 
 static void initGrid(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
 {
-    mutable_image_t *image = initMutableImage(themePath, themeConfig, theme, name, elem->type, "COV", COVER_CACHE_SLOTS, NULL, NULL);
+    // The first Grid block sets the shape for the whole theme: navigation needs one column count.
+    char key[64];
+    int rows = GRID_DEFAULT_ROWS, columns = GRID_DEFAULT_COLUMNS, spacing = GRID_DEFAULT_SPACING;
+    if (theme->grid != NULL) {
+        rows = theme->gridRows;
+        columns = theme->gridColumns;
+    } else {
+        snprintf(key, sizeof(key), "%s_rows", name);
+        configGetInt(themeConfig, key, &rows);
+        snprintf(key, sizeof(key), "%s_columns", name);
+        configGetInt(themeConfig, key, &columns);
+        snprintf(key, sizeof(key), "%s_spacing", name);
+        configGetInt(themeConfig, key, &spacing);
+        gridClamp(&rows, &columns);
+    }
+
+    // Every visible cell needs its own cover slot, or the covers on screen evict each other on every
+    // frame. A theme's <name>_count may ask for more slots, never for fewer than the grid shows.
+    int cells = rows * columns, count = COVER_CACHE_SLOTS > cells ? COVER_CACHE_SLOTS : cells;
+    snprintf(key, sizeof(key), "%s_count", name);
+    if (configGetInt(themeConfig, key, &count) && count < cells)
+        configSetInt(themeConfig, key, cells);
+
+    mutable_image_t *image = initMutableImage(themePath, themeConfig, theme, name, elem->type, "COV", count, NULL, NULL);
     elem->extended = image;
     elem->endElem = &endMutableImage;
     if (image == NULL || image->cache == NULL) {
@@ -2249,17 +2272,6 @@ static void initGrid(const char *themePath, config_set_t *themeConfig, theme_t *
     elem->drawElem = &drawGrid;
     if (theme->grid != NULL)
         return;
-
-    // The first Grid block sets the shape for the whole theme: navigation needs one column count.
-    char key[64];
-    int rows = GRID_DEFAULT_ROWS, columns = GRID_DEFAULT_COLUMNS, spacing = GRID_DEFAULT_SPACING;
-    snprintf(key, sizeof(key), "%s_rows", name);
-    configGetInt(themeConfig, key, &rows);
-    snprintf(key, sizeof(key), "%s_columns", name);
-    configGetInt(themeConfig, key, &columns);
-    snprintf(key, sizeof(key), "%s_spacing", name);
-    configGetInt(themeConfig, key, &spacing);
-    gridClamp(&rows, &columns);
     theme->grid = elem;
     theme->gridRows = rows;
     theme->gridColumns = columns;
