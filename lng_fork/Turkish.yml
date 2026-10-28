@@ -649,3 +649,5 @@ translations:
   PCCF_UNAVAILABLE: 'CF kullanılamıyor: erken bir Japon PC CARD PS2, uyumlu bir kart ve etkin olmayan DEV9/HDD/ağ sürücüsü gerekir.'
   PCCF_UNSUPPORTED_GAME: CF şu anda yalnızca yerel PS2 oyunlarını destekler. CF VMC, PS1 yükleme ve ağ başarımları kullanılamaz.
   HINT_ENABLE_DVR: Deneysel DESR DVR ISO keşfi. HDD kaynağının açık olmasını gerektirir; oyun başlatmak için harici DVR destekli Neutrino gerekir.
+  THEME_VIEW: "Tema görünümü"
+  HINT_THEME_VIEW: "Temanın oyunlarınızı gösterme biçimi: List, Coverflow, PSBBN Flow veya Grid. Değiştirmek için ana sayfada L3'e basılı tutun. Bu görünümü olmayan temalar varsayılan görünümlerini kullanır."

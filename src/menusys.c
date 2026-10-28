@@ -28,6 +28,7 @@
 #include "include/sound.h"
 #include "include/favsupport.h"   // gFAVStartMode -- the Favourites tab counts as "something to show"
 #include "include/gamemanage.h"   // Hide Game and Delete everything (RIPPS2)
+#include "include/grid.h"         // gridRowStep -- Up/Down in the Grid view
 #include "include/folderbrowse.h" // menuFolderResetLeaving -- leave a device page at its folder root
 #include "include/vcdsupport.h"   // VCD launches never use Neutrino
 #include "include/libview.h"      // libViewActive / libListViewActive -- which list this page shows
@@ -2184,9 +2185,46 @@ void menuRenderMain(void)
 // Coverflow rotates the nav axis on the MAIN screen only: Left/Right step through the
 // carousel (a vertical list move) while Up/Down switch device menus. Non-coverflow themes
 // behave exactly as before. The info screen is intentionally NOT rotated (menuHandleInputInfo).
+// The Grid view moves the same way, except that Up/Down step one row of covers and leave for the
+// previous/next device menu only from the top/bottom row.
+static void menuGridRow(int dir)
+{
+    submenu_list_t *cur = selected_item->item->current, *walk;
+    int count = 0, index = 0;
+    for (walk = selected_item->item->submenu; walk != NULL; walk = walk->next) {
+        if (walk == cur)
+            index = count;
+        count++;
+    }
+    int target = cur != NULL ? gridRowStep(count, index, gTheme->gridColumns, dir) : -1;
+    if (target < 0) {
+        if (dir < 0)
+            menuPrevH();
+        else
+            menuNextH();
+        return;
+    }
+    for (walk = selected_item->item->submenu; target > 0 && walk != NULL; target--)
+        walk = walk->next;
+    if (walk == NULL)
+        return;
+    selected_item->item->current = walk;
+    selected_item->item->pagestart = walk; // the grid's items list shows the selected title
+    sfxPlay(SFX_CURSOR);
+}
+
+// Whether the page on screen draws a Grid. A theme can mix views per family (a Coverflow games page and
+// a Grid apps page), so this follows the family the page draws, not the theme-wide gTheme->grid.
+static int menuPageIsGrid(void)
+{
+    if (gTheme->grid == NULL || selected_item == NULL || selected_item->item == NULL)
+        return 0;
+    return menuGetMainElems((item_list_t *)selected_item->item->userdata)->hasGrid;
+}
+
 static void menuNavigateLeft()
 {
-    if (gTheme->coverflow)
+    if (gTheme->coverflow || menuPageIsGrid())
         menuPrevV();
     else
         menuPrevH();
@@ -2194,7 +2232,7 @@ static void menuNavigateLeft()
 
 static void menuNavigateRight()
 {
-    if (gTheme->coverflow)
+    if (gTheme->coverflow || menuPageIsGrid())
         menuNextV();
     else
         menuNextH();
@@ -2202,7 +2240,9 @@ static void menuNavigateRight()
 
 static void menuNavigateUp()
 {
-    if (gTheme->coverflow)
+    if (menuPageIsGrid())
+        menuGridRow(-1);
+    else if (gTheme->coverflow)
         menuPrevH();
     else
         menuPrevV();
@@ -2210,7 +2250,9 @@ static void menuNavigateUp()
 
 static void menuNavigateDown()
 {
-    if (gTheme->coverflow)
+    if (menuPageIsGrid())
+        menuGridRow(1);
+    else if (gTheme->coverflow)
         menuNextH();
     else
         menuNextV();

@@ -40,7 +40,7 @@ int thmViewBlockPresent(config_set_t *themeConfig, const char *name);
 // What a loaded theme offers, worked out once per load.
 typedef struct
 {
-    int native;              // the view the base blocks draw (PSBBNFlow / Coverflow element, else List)
+    int native;              // the view the base blocks draw (PSBBNFlow / Coverflow / Grid element, else List)
     unsigned int mask;       // views the user can pick: bit (1 << THM_VIEW_*)
     unsigned int blocksMask; // views the theme declares at least one "<view>." key for
     unsigned int ownMask;    // views with <view>.inherit=0: their blocks do not fall back to the base

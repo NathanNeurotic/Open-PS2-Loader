@@ -711,3 +711,5 @@ translations:
   # Filled from RIPPS2 (Akilluminati47) where Open PS2 Loader had no translation yet
   'YES': Ja
   'NO': Nee
+  THEME_VIEW: "Themaweergave"
+  HINT_THEME_VIEW: "Hoe het thema je games toont: List, Coverflow, PSBBN Flow of Grid. Houd L3 ingedrukt op de hoofdpagina om te wisselen. Thema's zonder die weergave gebruiken hun standaardweergave."

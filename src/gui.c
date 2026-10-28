@@ -1118,10 +1118,9 @@ static int guiReadAppsViewPicker(struct UIItem *ui)
     return 1;
 }
 
-// Theme View picker: 0 = the theme's default view, then THM_VIEW_LIST, _COVERFLOW, _PSBBN. Grid joins the
-// list with its element (docs/MULTI-VIEW-THEMES-PLAN.md step 6). A theme that does not offer the picked
-// view shows its default one; the choice is kept for the themes that do.
-#define GUI_THEME_VIEW_PICKS 3
+// Theme View picker: 0 = the theme's default view, then THM_VIEW_LIST, _COVERFLOW, _PSBBN, _GRID. A theme
+// that does not offer the picked view shows its default one; the choice is kept for the themes that do.
+#define GUI_THEME_VIEW_PICKS 4
 
 static int sThemeViewPickerShown; // the value guiSetThemeViewPicker put on the picker
 
@@ -1132,7 +1131,8 @@ static void guiSetThemeViewPicker(struct UIItem *ui)
     names[1] = "List";
     names[2] = "Coverflow";
     names[3] = "PSBBN Flow";
-    names[4] = NULL;
+    names[4] = "Grid";
+    names[5] = NULL;
     diaSetEnum(ui, UICFG_THEME_VIEW, names);
     sThemeViewPickerShown = (gThemeViewRequest >= 0 && gThemeViewRequest < GUI_THEME_VIEW_PICKS) ? gThemeViewRequest + 1 : 0;
     diaSetInt(ui, UICFG_THEME_VIEW, sThemeViewPickerShown);
@@ -1140,7 +1140,7 @@ static void guiSetThemeViewPicker(struct UIItem *ui)
 
 // The view request the picker asks for. The caller hands it to thmSetView after applyConfig without
 // storing it first, so an abandoned reload keeps the request of the view still on screen. An untouched
-// picker keeps the current request, including one it cannot show (Grid, picked with L3).
+// picker keeps the current request.
 static int guiReadThemeViewPicker(struct UIItem *ui)
 {
     int picker = 0;

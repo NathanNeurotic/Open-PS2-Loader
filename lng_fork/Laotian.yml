@@ -726,3 +726,5 @@ translations:
   # Filled from RIPPS2 (Akilluminati47) where Open PS2 Loader had no translation yet
   'YES': ແມ່ນ
   'NO': ບໍ່
+  THEME_VIEW: "ມຸມມອງທີມ"
+  HINT_THEME_VIEW: "ວິທີທີ່ທີມສະແດງເກມຂອງທ່ານ: List, Coverflow, PSBBN Flow ຫຼື Grid. ກົດ L3 ຄ້າງໄວ້ໃນໜ້າຫຼັກເພື່ອສະຫຼັບ. ທີມທີ່ບໍ່ມີມຸມມອງນັ້ນຈະໃຊ້ມຸມມອງເລີ່ມຕົ້ນຂອງມັນ."

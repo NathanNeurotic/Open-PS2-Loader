@@ -81,6 +81,8 @@ static int thmViewNative(config_set_t *themeConfig)
             return THM_VIEW_PSBBN;
         if (strcmp(type, "Coverflow") == 0)
             return THM_VIEW_COVERFLOW;
+        if (strcmp(type, "Grid") == 0)
+            return THM_VIEW_GRID;
     }
     return THM_VIEW_LIST;
 }
