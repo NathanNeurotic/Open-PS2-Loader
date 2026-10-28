@@ -2963,13 +2963,16 @@ int vcdConfirmPopsFiles(const char *root)
     if (root == NULL || root[0] == '\0')
         return 1;
     have = vcdPopsHave(root);
-    if ((have & VCD_POPS_IOX) && (have & (VCD_POPS_ELF | VCD_POPS_PAK)))
+    int emulator = (have & VCD_POPS_PAK) || ((have & VCD_POPS_ELF) && (have & VCD_POPS_IMG));
+    if ((have & VCD_POPS_IOX) && emulator)
         return 1;
 
     missing[0] = '\0';
     if (!(have & VCD_POPS_IOX))
         snprintf(missing, sizeof(missing), "POPS_IOX.PAK");
-    if (!(have & (VCD_POPS_ELF | VCD_POPS_PAK)))
+    if (!emulator && (have & VCD_POPS_ELF)) // POPS.ELF is there; only its IOPRP252.IMG is not
+        snprintf(missing + strlen(missing), sizeof(missing) - strlen(missing), "%sIOPRP252.IMG", missing[0] ? ", " : "");
+    else if (!emulator)
         snprintf(missing + strlen(missing), sizeof(missing) - strlen(missing), "%sPOPS.PAK / POPS.ELF%s",
                  missing[0] ? ", " : "", (have & VCD_POPS_IMG) ? "" : " + IOPRP252.IMG");
     LOG("VCD: POPS files missing in %s%s: %s\n", root, POPS_FOLDER, missing);

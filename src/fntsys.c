@@ -54,6 +54,7 @@ static FT_Error fntNewLibrary(FT_Library *library)
     for (i = 0; i < sizeof(modules) / sizeof(modules[0]); i++) {
         if ((error = FT_Add_Module(*library, modules[i])) != 0) {
             FT_Done_Library(*library);
+            *library = NULL; // fntEnd must not free it again
             FT_Done_Memory(memory);
             return error;
         }

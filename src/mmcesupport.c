@@ -92,8 +92,8 @@ static unsigned char mmceEverResolved = 0;
 // otherwise the game boots while the card is still mounting and freezes at its MC check (issue #50,
 // cross-device path). A prior change had collapsed the per-poll gap to a sub-ms nopdelay(), which
 // gutted the wait so it returned in well under a second; a real sleep restores it.
-#define MMCE_GAMEID_WAIT_TICKS    15           // max polls of the card-switch busy bit
-#define MMCE_GAMEID_POLL_US       (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
+#define MMCE_GAMEID_WAIT_TICKS     15           // max polls of the card-switch busy bit
+#define MMCE_GAMEID_POLL_US        (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
 // sd2psXtd starts the switch on a LATER pass of its main loop, not while it answers the 0x8 send, so a
 // poll straight after the send reads "not busy" before the switch has begun and the game boots while
 // the card is still loading (or creating) its per-game card from the SD the game streams from -- the
@@ -101,13 +101,14 @@ static unsigned char mmceEverResolved = 0;
 // slot already holds this game's card, or Game ID is off on the device), and is then waited out on
 // screen: loading an 8 MB card takes ~9 s, creating a new one longer. START launches at once.
 // Ported from RIPPS2 build 115 (akilluminati47/RIPPS2, mmcesupport.c).
-#define MMCE_GAMEID_START_MS      2000 // how long a sent Game ID may take to start the switch
-#define MMCE_GAMEID_START_POLL_MS 50   // poll interval while waiting for the switch to start
-#define MMCE_CARD_READY_MAX_S     180  // the longest the launch waits for the game's card
-#define MMCE_CARD_READY_POLL_US   (250 * 1000)
+#define MMCE_GAMEID_START_MS       2000 // how long a sent Game ID may take to start the switch
+#define MMCE_GAMEID_START_POLL_MS  50   // poll interval while waiting for the switch to start
+#define MMCE_GAMEID_QUERY_FAILURES 3    // failed busy queries in a row that end the wait (unconfirmed)
+#define MMCE_CARD_READY_MAX_S      180  // the longest the launch waits for the game's card
+#define MMCE_CARD_READY_POLL_US    (250 * 1000)
 /* The MMCE worker checks its abort flag between 32 KB staged reads. A
  * 500 ms wait gives a slow card time to reach the next safe checkpoint. */
-#define MMCE_ART_ABORT_WAIT_TICKS 500
+#define MMCE_ART_ABORT_WAIT_TICKS  500
 
 // forward declaration
 static item_list_t mmceGameList;
@@ -125,7 +126,8 @@ static int mmceModLoaded = 0;          // latched by mmceLoadModules; read by mm
 static char mmceGameIdTarget[8] = {0}; // last device a GameID 0x8 switch was SENT to (mmceGameIdSettle polls it)
 
 // Waits, on screen, while the card reports busy after a Game ID switch. Returns 1 when it is ready or the
-// user pressed START, 0 when it was still busy at MMCE_CARD_READY_MAX_S (the launch goes ahead anyway).
+// user pressed START, 0 when it was still busy at MMCE_CARD_READY_MAX_S, -1 when the busy query failed
+// before the card reported ready (unconfirmed). The launch goes ahead in every case.
 static int mmceWaitCardReady(const char *device)
 {
     char line[256];
@@ -145,6 +147,10 @@ static int mmceWaitCardReady(const char *device)
         snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), seconds);
         guiRenderTextScreen(line);
         DelayThread(MMCE_CARD_READY_POLL_US);
+    }
+    if (status < 0) {
+        LOG("MMCE: the card's busy query failed during the wait; not confirmed\n");
+        return -1;
     }
     return 1;
 }
@@ -229,13 +235,26 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
     // gate, batch S7) must poll the SAME device, not a guess.
     snprintf(mmceGameIdTarget, sizeof(mmceGameIdTarget), "%s", mmceDevice);
 
+    int queryFailures = 0;
     for (int waited = 0; waited < MMCE_GAMEID_START_MS; waited += MMCE_GAMEID_START_POLL_MS) {
         int status = fileXioDevctl(mmceDevice, 0x2, NULL, 0, NULL, 0);
-        if (status < 0)
-            break; // busy-bit query unsupported/failed -> don't block the launch
+        if (status < 0) {
+            // A failed busy query says nothing about the switch. Retry a few times; a run of failures
+            // (the firmware has no busy query) ends the wait unconfirmed so the launch is not held.
+            if (++queryFailures >= MMCE_GAMEID_QUERY_FAILURES) {
+                LOG("MMCE GameID switch: busy query failed %d times; launching unconfirmed\n", queryFailures);
+                return -1;
+            }
+            DelayThread(MMCE_GAMEID_START_POLL_MS * 1000);
+            continue;
+        }
+        queryFailures = 0;
         if (status & 1) {
             LOG("MMCE GameID %s: the card started switching after %d ms\n", startup, waited);
-            if (!mmceWaitCardReady(mmceDevice))
+            int ready = mmceWaitCardReady(mmceDevice);
+            if (ready < 0)
+                return -1; // the query failed mid-wait: unconfirmed
+            if (ready == 0)
                 break; // still busy at the cap: launched anyway, not settled
             LOG("Set MMCE GameID to: %s\n", startup);
             return 1; // card finished switching (settle CONFIRMED, or the user pressed START)
