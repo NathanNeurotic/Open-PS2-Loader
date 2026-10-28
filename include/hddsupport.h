@@ -117,6 +117,7 @@ int hddLoadModules(void);
 // Pure residency check: unlike hddLoadModulesReady(), never tries to load the ATA
 // stack. Both checks are non-acquiring once the modules are resident (one DEV9 owner).
 int hddModulesAreLoaded(void);
+void hddIopWasReset(void); // forget the module latches after an in-menu IOP reset
 // 1 for an APA+MBR hybrid ("APA-Jail", e.g. PSBBN Definitive): valid APA header plus a FAT/exFAT MBR
 // partition beyond the APA reserved area. Read-only two-sector probe; needs the ATA stack loaded.
 int hddIsApaMbrHybrid(void);

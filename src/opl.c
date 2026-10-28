@@ -4678,6 +4678,12 @@ void handleLwnbdSrv()
 static void reset(void)
 {
     sysReset(SYS_LOAD_MC_MODULES | SYS_LOAD_USB_MODULES | SYS_LOAD_ISOFS_MODULE);
+    // The IOP lost every module; the sources' own "loaded" latches must forget them too, or the
+    // next initAllSupport skips loading them (NBD server stop left iLink/MX4SIO/HDD/UDPBD dead).
+    bdmIopWasReset();
+    hddIopWasReset();
+    mmceIopWasReset();
+    udpfsIopWasReset();
 
     mcInit(MC_TYPE_XMC);
 }

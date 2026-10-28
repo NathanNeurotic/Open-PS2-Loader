@@ -2931,6 +2931,52 @@ void vcdPrepareRetroGemBarcode(const char *vcdPath)
     }
 }
 
+/* Ported from RIPPS2 builds 85 and 115 (akilluminati47/RIPPS2, vcdsupport.c vcdConfirmPopsFiles). */
+static const char *const vcdPopsFiles[] = {"POPS_IOX.PAK", "POPS.ELF", "POPS.PAK", "IOPRP252.IMG"};
+#define VCD_POPS_IOX 1
+#define VCD_POPS_ELF 2
+#define VCD_POPS_PAK 4
+#define VCD_POPS_IMG 8
+
+static int vcdPopsHave(const char *root)
+{
+    char path[256];
+    int k, fd, have = 0;
+
+    for (k = 0; k < 4; k++) {
+        if (snprintf(path, sizeof(path), "%s%s%c%s", root, POPS_FOLDER, vcdSep(root), vcdPopsFiles[k]) >= (int)sizeof(path))
+            continue;
+        fd = open(path, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            have |= 1 << k;
+        }
+    }
+    return have;
+}
+
+int vcdConfirmPopsFiles(const char *root)
+{
+    char missing[64], msg[512];
+    int have;
+
+    if (root == NULL || root[0] == '\0')
+        return 1;
+    have = vcdPopsHave(root);
+    if ((have & VCD_POPS_IOX) && (have & (VCD_POPS_ELF | VCD_POPS_PAK)))
+        return 1;
+
+    missing[0] = '\0';
+    if (!(have & VCD_POPS_IOX))
+        snprintf(missing, sizeof(missing), "POPS_IOX.PAK");
+    if (!(have & (VCD_POPS_ELF | VCD_POPS_PAK)))
+        snprintf(missing + strlen(missing), sizeof(missing) - strlen(missing), "%sPOPS.PAK / POPS.ELF%s",
+                 missing[0] ? ", " : "", (have & VCD_POPS_IMG) ? "" : " + IOPRP252.IMG");
+    LOG("VCD: POPS files missing in %s%s: %s\n", root, POPS_FOLDER, missing);
+    snprintf(msg, sizeof(msg), _l(_STR_POPS_FILES_MISSING), missing, root, POPS_FOLDER);
+    return guiMsgBox(msg, 1, NULL);
+}
+
 /* Shared launch hygiene: recognize only the module installed by RiptOPL. */
 static int vcdRaModuleStatus(const char *root, int removeOwned)
 {

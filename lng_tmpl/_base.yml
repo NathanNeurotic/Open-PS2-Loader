@@ -1967,3 +1967,11 @@ gui_strings:
 
 - label: HINT_RA_BADGE_SUFFIX
   string: "Prefix puts \"RA \" before the name. Suffix puts \" [RA]\" after it. Both keep alphabetical order."
+
+- comment: Shown while an MMCE (SD2PSX) loads or creates the game's memory card after a Game ID switch. %d is seconds waited.
+  label: MMCE_GAMEID_CARD_WAIT
+  string: "The MMCE is getting this game's memory card ready (%d s). The game starts when it is done; START starts it now."
+
+- comment: Asked before a POPSTARTER (PS1) launch when Sony's POPS files are missing. 1st %s is the missing files, then the device root and the POPS folder name.
+  label: POPS_FILES_MISSING
+  string: "POPSTARTER needs Sony's POPS files and these are missing: %s (in %s%s). Without them the game shows a black screen. Launch anyway?"

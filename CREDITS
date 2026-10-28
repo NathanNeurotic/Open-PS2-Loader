@@ -184,6 +184,8 @@ Our daughter project:
     Web-theme beta: https://akilluminati47.github.io/RIPPS2/
     PS2-inspired front end; the custom OPL theme and RIPPS2.elf are planned next.
     The project is still alpha.
+    Fixes ported from RIPPS2 (each commit names the RIPPS2 build): the IOP-reset module
+    latches, the MMCE Game ID card wait, the POPS files check and the FreeType module trim.
 
 Planned collaboration:
 

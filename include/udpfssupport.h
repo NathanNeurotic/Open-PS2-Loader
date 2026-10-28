@@ -7,6 +7,7 @@
 #define UDPFS_MODE_UPDATE_DELAY 300
 
 void udpfsInit(item_list_t *itemList); // Init the udpfs: network-filesystem device (loads the UDPFS ioman IRX chain).
+void udpfsIopWasReset(void);           // forget the module latches after an in-menu IOP reset
 int udpfsGetModulesLoaded(void);       // 1 if the UDPFS ioman NIC stack is loaded (SMB/UDPBD must not load on top).
 // GUI thread (menu frame hook): show a notice a background UDPFS scan queued, e.g. an IP conflict.
 void udpfsShowPendingNotice(void);

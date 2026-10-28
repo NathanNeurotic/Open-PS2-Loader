@@ -134,6 +134,13 @@ static void udpfsLoadModules(void)
         sysShutdownDev9();
 }
 
+// An in-menu IOP reset unloads every module; forget the latches so the next refresh loads them again.
+// Ported from RIPPS2 build 115 (akilluminati47/RIPPS2).
+void udpfsIopWasReset(void)
+{
+    udpfsIomanModLoaded = udpfsNicClaimed = 0;
+}
+
 int udpfsGetModulesLoaded(void)
 {
     return udpfsNicClaimed; // NIC interlock must catch partial module loads

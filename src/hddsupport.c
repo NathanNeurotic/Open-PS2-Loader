@@ -789,6 +789,14 @@ int hddDiagLoadModulesReady(void)
     return result;
 }
 
+// An in-menu IOP reset unloads every module; forget the latches so the next refresh loads them again.
+// Ported from RIPPS2 build 115 (akilluminati47/RIPPS2).
+void hddIopWasReset(void)
+{
+    hddModulesLoaded = hddModulesLoadCount = hddSupportModulesLoaded = 0;
+    hddDvrDrvLoaded = hddDvrDriverTried = hddDvrDriverReady = 0;
+}
+
 int hddModulesAreLoaded(void)
 {
     return hddModulesLoaded != 0;

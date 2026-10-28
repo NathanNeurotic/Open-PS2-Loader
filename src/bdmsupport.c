@@ -689,6 +689,19 @@ static int bdmDiagLoadOptionalModuleArgs(const char *stage, const char *name, vo
 }
 
 // Exposed for ethsupport's NIC mutual-exclusion: UDPBD and the SMB stack both own the SMAP adapter.
+// An in-menu IOP reset (reset(), e.g. after the NBD server stops) unloads every module, but these
+// latches kept reading "loaded", so iLink, MX4SIO, ATA, PCCF and UDPBD were never loaded again until
+// a reboot. sysReset clears its own module table; reset() calls this for ours.
+// Ported from RIPPS2 build 115 (akilluminati47/RIPPS2, bdmIopWasReset).
+void bdmIopWasReset(void)
+{
+    if (pccfModLoaded)
+        pccfProbeGeneration++; // CF only retries on an explicit probe; a reset that unloaded it is one
+    iUSBModLoaded = iLinkModLoaded = iLinkManModLoaded = ieee1394ModLoaded = mx4sioModLoaded = 0;
+    pccfModLoaded = hddModLoaded = udpbdModLoaded = udpbdNicClaimed = 0;
+    udpbdLoadedProtocol = -1;
+}
+
 int bdmIsUDPBDLoaded(void)
 {
     return udpbdNicClaimed; // protect NIC from another backend even after a partial load
@@ -2026,6 +2039,8 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
         guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf);
         return;
     }
+    if (!vcdConfirmPopsFiles(vcdPrefix)) // before the card is prepared: a missing emulator is a black screen
+        return;
     // vcdBuildSelector emits the BARE POPSTARTER label ("mass:/POPS/XX.<name>.ELF"), NOT this live
     // unit-numbered mount -- POPSTARTER remounts under "mass:" after its own IOP reset (see the function).
     vcdBuildSelector(vcdPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
