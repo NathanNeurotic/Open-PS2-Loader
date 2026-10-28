@@ -1385,6 +1385,48 @@ struct UIItem diaVMC[] = {
     {UI_BUTTON, VMC_BUTTON_DELETE, 1, 1, _STR_HINT_VMC_DELETE, 0, 0, {.label = {NULL, _STR_DELETE}}},
     {UI_SPACER},
     {UI_BUTTON, VMC_BUTTON_REBUILD, 0, 0, _STR_HINT_VMC_REBUILD, 0, 0, {.label = {NULL, _STR_VMC_REBUILD}}},
+    {UI_SPACER},
+    {UI_BUTTON, VMC_BUTTON_SAVES, 0, 0, _STR_HINT_VMC_SAVES, 0, 0, {.label = {NULL, _STR_VMC_SAVES}}},
+    {UI_BREAK},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
+// Per-Game Game Settings > VMC Menu > Saves (RIPPS2, akilluminati47): the card's saves beside a folder of saves
+struct UIItem diaVMCSaves[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VMC_SAVES}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_ON_CARD}}},
+    {UI_SPACER},
+    {UI_ENUM, VMCSAVES_CARD, 1, 1, _STR_HINT_VMC_ON_CARD, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_FREE}}},
+    {UI_SPACER},
+    {UI_LABEL, VMCSAVES_FREE, 0, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_IN_FOLDER}}},
+    {UI_SPACER},
+    {UI_ENUM, VMCSAVES_FOLDER, 1, 1, _STR_HINT_VMC_IN_FOLDER, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_FOLDER}}},
+    {UI_SPACER},
+    {UI_LABEL, VMCSAVES_PATH, 0, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+
+    {UI_BREAK},
+
+    // buttons
+    {UI_BUTTON, VMCSAVES_EXPORT, 1, 1, _STR_HINT_VMC_EXPORT, 0, 0, {.label = {NULL, _STR_VMC_EXPORT}}},
+    {UI_SPACER},
+    {UI_BUTTON, VMCSAVES_IMPORT, 1, 1, _STR_HINT_VMC_IMPORT, 0, 0, {.label = {NULL, _STR_VMC_IMPORT}}},
+    {UI_SPACER},
+    {UI_BUTTON, VMCSAVES_DELETE, 1, 1, _STR_HINT_VMC_SAVE_DELETE, 0, 0, {.label = {NULL, _STR_DELETE}}},
     {UI_BREAK},
 
     // end of dialog

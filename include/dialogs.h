@@ -288,6 +288,15 @@ enum UI_ITEMS {
     VMC_PROGRESS,
     VMC_REFRESH,
     VMC_BUTTON_REBUILD,
+    VMC_BUTTON_SAVES,
+
+    VMCSAVES_CARD,
+    VMCSAVES_FREE,
+    VMCSAVES_FOLDER,
+    VMCSAVES_PATH,
+    VMCSAVES_EXPORT,
+    VMCSAVES_IMPORT,
+    VMCSAVES_DELETE,
 
     OSD_LANGUAGE_SOURCE,
     OSD_LANGUAGE_ENABLE,
@@ -401,6 +410,7 @@ extern struct UIItem diaConfig[];
 extern struct UIItem diaAbout[];
 extern struct UIItem diaDriveStatus[];
 extern struct UIItem diaVMC[];
+extern struct UIItem diaVMCSaves[];
 
 extern struct UIItem diaOSDConfig[];
 extern struct UIItem diaCoverflowConfig[];

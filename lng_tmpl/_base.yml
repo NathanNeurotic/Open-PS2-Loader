@@ -1912,6 +1912,85 @@ gui_strings:
 - label: HINT_VMC_REBUILD
   string: "Copies this card into one unbroken file the native core can use. The old card is kept as a .bak file."
 
+- comment: VMC dialog button (RIPPS2) that opens the list of saves inside the card, and that dialog's title.
+  label: VMC_SAVES
+  string: Saves
+
+- label: HINT_VMC_SAVES
+  string: "The saves on this card. Copy them to a folder on the drive, copy saves back in, or delete one."
+
+- comment: VMC Saves dialog row, the saves on the card.
+  label: VMC_ON_CARD
+  string: On the card
+
+- label: HINT_VMC_ON_CARD
+  string: "Pick a save on the card with Up and Down, then Copy out or Delete."
+
+- comment: VMC Saves dialog row, the card's free space.
+  label: VMC_FREE
+  string: Free
+
+- comment: VMC Saves dialog row, the save folders next to the card.
+  label: VMC_IN_FOLDER
+  string: In the folder
+
+- label: HINT_VMC_IN_FOLDER
+  string: "Pick a save folder with Up and Down, then Copy in."
+
+- comment: VMC Saves dialog row, the folder that holds the copied-out saves.
+  label: VMC_FOLDER
+  string: Folder
+
+- comment: VMC Saves dialog button, copies the picked save from the card into the folder.
+  label: VMC_EXPORT
+  string: Copy out
+
+- label: HINT_VMC_EXPORT
+  string: "Copies the picked save into the folder, as a save folder of its own. The card is not changed."
+
+- comment: VMC Saves dialog button, copies the picked save folder into the card.
+  label: VMC_IMPORT
+  string: Copy in
+
+- label: HINT_VMC_IMPORT
+  string: "Copies the picked save folder onto the card."
+
+- label: HINT_VMC_SAVE_DELETE
+  string: "Deletes the picked save from the card."
+
+- comment: VMC Saves dialog. 1st %s is the save's folder name, 2nd the folder it was copied to.
+  label: VMC_SAVE_EXPORTED
+  string: "%s was copied to %s."
+
+- comment: VMC Saves dialog. %s is the save's folder name.
+  label: VMC_SAVE_IMPORTED
+  string: "%s was copied onto the card."
+
+- comment: VMC Saves dialog. %s is the save's folder name.
+  label: VMC_SAVE_DELETE_CONFIRM
+  string: "Delete %s from this card? This cannot be undone."
+
+- label: VMC_SAVES_ERR_NOT_CARD
+  string: "This file is not a PS2 memory card image this can read."
+
+- label: VMC_SAVES_ERR_READ_ONLY
+  string: "This card image has ECC data (a PCSX2 card). Its saves can be copied out, but it cannot be changed here."
+
+- label: VMC_SAVES_ERR_NO_ROOM
+  string: "There is not enough free space on the card for this save."
+
+- label: VMC_SAVES_ERR_EXISTS
+  string: "A save with that name is already there."
+
+- label: VMC_SAVES_ERR_TOO_BIG
+  string: "This save is too big for a memory card, has more than 64 files, or has a name longer than 32 characters."
+
+- label: VMC_SAVES_ERR_WRITE
+  string: "The save could not be written. Is the drive full or write-protected?"
+
+- label: VMC_SAVES_ERR_READ
+  string: "The card image could not be read, or its tables are damaged."
+
 - label: VMC_FILE_NEEDS_REBUILD
   string: "Too fragmented for the native core"
 
