@@ -1115,7 +1115,7 @@ static int bdmShouldQueueModuleLoad(void)
         return 1;
     if (gEnableILK && !iLinkModLoaded)
         return 1;
-    if (gEnableMX4SIO && !mx4sioModLoaded)
+    if (gEnableMX4SIO && !mx4sioModLoaded && !oplBootDirIsHostFs())
         return 1;
     if (gEnablePCCF && !pccfModLoaded && pccfAttemptGeneration != pccfProbeGeneration)
         return 1;
@@ -1208,7 +1208,10 @@ static void bdmLoadBlockDeviceModules(void)
         iLinkModLoaded = iLinkManModLoaded && ieee1394ModLoaded;
     }
 
-    if (gEnableMX4SIO && !mx4sioModLoaded) {
+    // MX4SIO is not loaded on a host: boot. host: means PCSX2 (or ps2client), and under PCSX2
+    // mx4sio_bd's start-up probe never returns: it spins on an SIO2 status bit that PCSX2 does not set
+    // for a receive-only transfer, so the boot screen hangs forever.
+    if (gEnableMX4SIO && !mx4sioModLoaded && !oplBootDirIsHostFs()) {
         // Load MX4SIO Block Device drivers
         if (bdmDiagLoadOptionalModule("MX4SIO", "MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)
             mx4sioModLoaded = 1;
@@ -3428,7 +3431,8 @@ static int bdmEnsureTransportLoaded(int bdmType)
                 iUSBModLoaded = 1;
             return iUSBModLoaded;
         case BDM_TYPE_SDC:
-            if (!mx4sioModLoaded && bdmLoadOptionalModule("MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)
+            // Not on a host: boot; see the MX4SIO gate in bdmLoadBlockDeviceModules.
+            if (!mx4sioModLoaded && !oplBootDirIsHostFs() && bdmLoadOptionalModule("MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)
                 mx4sioModLoaded = 1;
             return mx4sioModLoaded;
         case BDM_TYPE_ILINK:

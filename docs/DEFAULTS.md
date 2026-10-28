@@ -22,7 +22,7 @@ another device.
 | Confirm button | Circle; configurable | Settings → General & System |
 | Remember last played | Off | Settings → General & System |
 | Automatic VMC creation | Off | Settings → Game Launching |
-| GameID barcode | Off | Settings → Interface |
+| GameID barcode | PS1 half On, PS2 half Off (shown as *On (PS1 only)*) | Settings → Interface |
 
 The boot device can be enabled during discovery so that a loader started from
 USB can still find its own files. This is a boot-path exception to the disabled
