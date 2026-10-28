@@ -223,7 +223,7 @@ assert gui.count("diaGetInt(diaUIConfig, UICFG_CFG_TITLES") + gui.count("diaGetI
 refresh = gui[gui.index("static void guiRefreshCfgTitles(void)\n{"):]
 refresh = refresh[:refresh.index("\n}\n")]
 assert "libViewMarkAllDirty();" in refresh and "guiRefreshGameViews();" in refresh and "httpGetObject(0)" in refresh
-assert gui.count("guiRefreshCfgTitles();") == 3  # the two Interface dialogs + the All Games switch
+assert gui.count("guiRefreshCfgTitles();") == 5  # the two Interface dialogs, the All Games switch, both Show Hidden Games flips
 base = (ROOT / "lng_tmpl/_base.yml").read_text(encoding="utf-8")
 assert base.index("- label: CFG_TITLES") > base.index("- label: CAD_UDPFS_IMG")
 print("PASS: CFG titles in game lists are opt-in, display-only and read once per rebuild")

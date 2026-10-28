@@ -36,6 +36,8 @@ enum { BDM_MODE = 0, BDM_MODE1, BDM_MODE2, BDM_MODE3, BDM_MODE4, BDM_MODE5, BDM_
 #define BDM_MODE_LAST BDM_MODE7
 enum { LIB_VIEW_ISO = 0, LIB_VIEW_PS1, LIB_VIEW_ELF, LIB_VIEW_ALL };
 enum { FAV_KIND_ISO = 0, FAV_KIND_VCD, FAV_KIND_CUE, FAV_KIND_ELF };
+static int gShowHidden;
+static int hiddenHas(int mode, int ps1, const char *name) { (void)mode; (void)ps1; return !gShowHidden && !strcmp(name, "Hidden"); }
 #define ITEM_VIEW_FORCE_ISO 1
 #define ITEM_VIEW_FORCE_PS1 2
 #define GAME_FORMAT_FOLDER 9

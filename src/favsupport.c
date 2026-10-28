@@ -33,6 +33,7 @@
 #include "include/mmcesupport.h" // mmceGetPs1Root -- PS1 favourite #Size on an MMCE card
 #include "include/hddsupport.h"  // hddVcdSizeByName -- PS1 favourite #Size on the APA HDD
 #include "include/favsupport.h"
+#include "include/gamemanage.h"   // Hide Game and Delete everything (RIPPS2)
 #include "include/folderbrowse.h" // folderModeSupported -- All Games skips folder rows
 
 int gFAVStartMode;
@@ -1577,6 +1578,9 @@ static const int favAllGamesModes[] = {HDD_MODE, BDM_MODE, BDM_MODE1, BDM_MODE2,
 // Appends one row; out == NULL only counts it.
 static int favGatherAdd(fav_rec_t *out, int n, int cap, item_list_t *owner, int id, int kind, const char *name)
 {
+    // A hidden game is not gathered, so it cannot tag its other copies with a device name either.
+    if (kind != FAV_KIND_ELF && !gShowHidden && hiddenHas(owner->mode, favKindView(kind) == LIB_VIEW_PS1, name))
+        return n;
     if (out == NULL)
         return n + 1;
     if (n >= cap)

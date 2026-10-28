@@ -2014,3 +2014,62 @@ gui_strings:
 - comment: Toast when L3 on the All Games page lands on the favorites.
   label: VIEW_FAVORITES
   string: Showing favorites
+
+- comment: Game menu item that takes a game off every list (RIPPS2 Hide Game).
+  label: HIDE_GAME
+  string: Hide Game
+
+- comment: Game menu item on a hidden game listed by Show Hidden Games.
+  label: UNHIDE_GAME
+  string: Show Game Again
+
+- comment: Asked before a game is hidden. %s is the game's name.
+  label: HIDE_GAME_CONFIRM
+  string: "Hide %s? It leaves every list, All Games and Favorites too. Settings > Game Sources > Show Hidden Games lists it again."
+
+- comment: Toast after a game is hidden. %s is the game's name.
+  label: GAME_HIDDEN
+  string: "Hidden: %s"
+
+- comment: Toast after a hidden game is shown again. %s is the game's name.
+  label: GAME_UNHIDDEN
+  string: "Shown again: %s"
+
+- comment: The hidden list (hidden.txt on the game's device) could not be written.
+  label: HIDDEN_SAVE_FAILED
+  string: The hidden list could not be written to the game's device. Is it write-protected?
+
+- comment: The game's device keeps no hidden list (the network catalogue).
+  label: HIDDEN_NO_LIST
+  string: This device cannot keep a hidden list.
+
+- comment: Game Sources setting that lists hidden games anyway.
+  label: SHOW_HIDDEN_GAMES
+  string: Show Hidden Games
+
+- label: HINT_SHOW_HIDDEN_GAMES
+  string: "Lists the games hidden with Hide Game, so one can be shown again from its menu. Each device keeps its own hidden.txt."
+
+- comment: First of the two questions before a game is deleted. %s is the game's name, then the numbers of files that go.
+  label: DELETE_GAME_PLAN
+  string: "Delete %s? Goes: %d game file(s), %d settings file(s), %d art image(s) and %d cheat file(s). Kept: its VMC saves."
+
+- comment: Added to DELETE_GAME_PLAN when another copy of the game on the same device keeps its settings, art and cheats.
+  label: DELETE_GAME_SHARED
+  string: Another copy of this game is on this device, so its settings, art and cheats stay.
+
+- comment: Second question before a game is deleted. %s is the game's name.
+  label: DELETE_GAME_LAST_CHECK
+  string: "Last check: %s is deleted for good and cannot be brought back. Delete it?"
+
+- comment: Toast after a game is deleted. %s is the game's name.
+  label: GAME_DELETED
+  string: "Deleted: %s"
+
+- comment: The game was deleted but some of its settings, art or cheat files could not be. %s is the game's name.
+  label: GAME_DELETED_PARTLY
+  string: "Deleted %s, but some of its settings, art or cheat files could not be removed."
+
+- comment: The game's files could not be deleted. %s is the game's name.
+  label: GAME_DELETE_FAILED
+  string: "%s could not be deleted. Is the device write-protected?"

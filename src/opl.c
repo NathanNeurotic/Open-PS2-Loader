@@ -40,6 +40,7 @@
 #include "include/hddsupport.h"
 #include "include/appsupport.h"
 #include "include/favsupport.h"
+#include "include/gamemanage.h"   // Hide Game and Delete everything (RIPPS2)
 #include "include/folderbrowse.h" // folderDepth -- favourites suppression inside subfolders
 #include "include/mmcesupport.h"  // mmceLoadModules() -- MMCE boot branch of resolveBootDirToMass
 #include "include/tar.h"          // tarInvalidate -- re-arm the .tar probe on a settings apply
@@ -1376,6 +1377,7 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     // read the new game list
     struct gui_update_t *gup = NULL;
     int count = mdl->support->itemUpdate(mdl->support);
+    hiddenReload(mdl->support->mode); // the device's hidden list, read with its games
 
 #ifdef RETROACHIEVEMENTS
     // RA badges: recompute on every list rebuild. This runs on the I/O thread (itemUpdate
@@ -1419,6 +1421,9 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
                 }
                 // Pass 0 emits folders, pass 1 emits games (single-pass mode emits every row).
                 if (passes == 2 && ((pass == 0) != (isFolderRow != 0)))
+                    continue;
+                // Hide Game: a hidden game leaves every list until Show Hidden Games lists it again.
+                if (!isFolderRow && !gShowHidden && hiddenRow(mdl->support, i))
                     continue;
 
                 gup = guiOpCreate(GUI_OP_APPEND_MENU);
@@ -3510,6 +3515,8 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_FAV_MODE, &gFAVStartMode);
             configGetInt(configOPL, CONFIG_OPL_ALL_GAMES, &gAllGames);
             gAllGames = gAllGames != 0;
+            configGetInt(configOPL, CONFIG_OPL_SHOW_HIDDEN, &gShowHidden);
+            gShowHidden = gShowHidden != 0;
             configGetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, &gApplyGameID);
             configGetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, &gDefaultGameView);
             if (gDefaultGameView < GAME_VIEW_BOTH || gDefaultGameView > GAME_VIEW_MIXED)
@@ -4130,6 +4137,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_ENABLE_USB, gEnableUSB);
         configSetInt(configOPL, CONFIG_OPL_FAV_MODE, gFAVStartMode);
         configSetInt(configOPL, CONFIG_OPL_ALL_GAMES, gAllGames);
+        configSetInt(configOPL, CONFIG_OPL_SHOW_HIDDEN, gShowHidden);
         configSetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, gApplyGameID);
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
@@ -5117,6 +5125,7 @@ static void setDefaults(void)
     gMMCEStartMode = START_MODE_DISABLED;
     gFAVStartMode = START_MODE_DISABLED;
     gAllGames = 0;
+    gShowHidden = 0;
 
     gMMCESlot = 2; // Default to first Auto slot
     gMMCEIGRSlot = 3;
@@ -5231,6 +5240,7 @@ static void init(void)
     thmInit();
     guiInit();
     ioInit();
+    hiddenInit();
     bdmSetAutoLaunch(0);
     menuInit();
 
@@ -5380,6 +5390,7 @@ static void miniInit(int mode)
     configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd)
 
     ioInit();
+    hiddenInit();
     // Load transports to identify the requested device, but do not hold the IO
     // queue for an unrelated iLink drive. Auto Loading has its own mount retries.
     bdmSetAutoLaunch(1);

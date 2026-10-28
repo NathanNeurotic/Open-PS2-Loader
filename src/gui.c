@@ -19,6 +19,7 @@
 #include "include/lang.h"
 #include "include/themes.h"
 #include "include/favsupport.h" // gFAVStartMode -- Favourites Start Mode row
+#include "include/gamemanage.h" // Hide Game and Delete everything (RIPPS2)
 #include "include/pad.h"
 #include "include/sound.h" // sfxGetPlayDiag/sfxGetDropDiag -- SFX RPC cost + silent-drop counters for the debug HUD
 #include "include/util.h"
@@ -887,6 +888,7 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
     diaSetInt(diaDeviceConfig, CFG_FAVMODE, gFAVStartMode);
     diaSetInt(diaDeviceConfig, CFG_ALLGAMES, gAllGames);
+    diaSetInt(diaDeviceConfig, CFG_SHOWHIDDEN, gShowHidden);
 
     // Block devices (inlined; interlocked with the APA HDD mode)
     diaSetInt(diaDeviceConfig, CFG_ENABLEUSB, gEnableUSB);
@@ -923,8 +925,9 @@ reshow_device:
         diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(diaDeviceConfig, CFG_FAVMODE, &gFAVStartMode);
-        int previousAllGames = gAllGames;
+        int previousAllGames = gAllGames, previousShowHidden = gShowHidden;
         diaGetInt(diaDeviceConfig, CFG_ALLGAMES, &gAllGames);
+        diaGetInt(diaDeviceConfig, CFG_SHOWHIDDEN, &gShowHidden);
 
         diaGetInt(diaDeviceConfig, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
@@ -948,6 +951,8 @@ reshow_device:
         menuReinitMainMenu();
         if (previousAllGames != gAllGames)
             guiApplyAllGamesChange();
+        else if (previousShowHidden != gShowHidden)
+            guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
     }
 }
 
@@ -3061,6 +3066,7 @@ static int guiSettingsShowSources(void)
     diaSetInt(ui, CFG_APPMODE, gAPPStartMode);
     diaSetInt(ui, CFG_FAVMODE, gFAVStartMode);
     diaSetInt(ui, CFG_ALLGAMES, gAllGames);
+    diaSetInt(ui, CFG_SHOWHIDDEN, gShowHidden);
     diaSetInt(ui, CFG_ENABLEUSB, gEnableUSB);
     diaSetInt(ui, CFG_ENABLEILK, gEnableILK);
     diaSetInt(ui, CFG_ENABLEMX4SIO, gEnableMX4SIO);
@@ -3098,8 +3104,9 @@ reshow_sources:
         diaGetInt(ui, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(ui, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(ui, CFG_FAVMODE, &gFAVStartMode);
-        int previousAllGames = gAllGames;
+        int previousAllGames = gAllGames, previousShowHidden = gShowHidden;
         diaGetInt(ui, CFG_ALLGAMES, &gAllGames);
+        diaGetInt(ui, CFG_SHOWHIDDEN, &gShowHidden);
         diaGetInt(ui, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(ui, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(ui, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
@@ -3116,6 +3123,8 @@ reshow_sources:
         menuReinitMainMenu();
         if (previousAllGames != gAllGames)
             guiApplyAllGamesChange();
+        else if (previousShowHidden != gShowHidden)
+            guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
     }
 
     guiSettingsEndDialog();
