@@ -673,3 +673,5 @@ translations:
   PCCF_UNAVAILABLE: 'Dili magamit ang CF: kinahanglan og sayo nga Japanese PC CARD PS2, tugma nga card, ug walay aktibo nga DEV9/HDD/network driver.'
   PCCF_UNSUPPORTED_GAME: Native nga PS2 dula ra ang suportado sa CF karon. Dili magamit ang CF VMC, pag-load sa PS1 ug network achievements.
   HINT_ENABLE_DVR: Eksperimental nga pagpangita sa DESR DVR ISO. Kinahanglan naka-enable ang HDD source; kinahanglan sa paglansad sa dula ang gawas nga Neutrino nga makahimo og DVR.
+  THEME_VIEW: "Hitsura sa Tema"
+  HINT_THEME_VIEW: "Giunsa pagpakita sa tema ang imong mga dula: List, Coverflow, PSBBN Flow o Grid. Pugngi ang L3 sa main page aron mobalhin. Ang mga tema nga walay ingon niana nga hitsura mogamit sa ilang default."

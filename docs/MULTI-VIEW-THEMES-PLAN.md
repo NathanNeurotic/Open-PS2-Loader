@@ -130,7 +130,9 @@ This ships behind a setting until it has been checked against community themes i
    `theme_view=<name>` in the OPL config, and hold L3 (0.5 s) cycles the views the theme offers. A tap
    on L3 still advances the library-view ring; with a multi-view theme it acts on release. (Done.)
 5. Auto-normalised views behind a setting.
-6. `Grid` element (2D navigation; at most about 16 covers visible, `COVER_CACHE_SLOTS` is 20).
+6. `Grid` element: rows and columns of covers (theme-defined, default 3x4, at most 16 visible because
+   `COVER_CACHE_SLOTS` is 20), Left/Right one cover, Up/Down one row, leaving for the next device page
+   from the top or bottom row. Built-in `<OPL>` offers it as its fourth view. (Done.)
 7. Phase 2 resident views, only if needed.
 8. Theme-maker docs: `THEME_ENGINE.md`, site and wiki.
 9. Port to legacy Open-PS2-Loader (`src/themes.c` has the same structure). (Steps 1 to 4 done.)
@@ -146,5 +148,5 @@ return, launch a second game, change theme with a view saved, cold and warm boot
 - Remember the view per theme only, or per device page too (like the L3 ring)?
 - Auto-normalised views on by default, or opt-in?
 - Is hold-L3 reliable on testers' pads and adapters?
-- Grid shape: fixed 4x3, or theme-defined rows and columns?
+- Grid shape: theme-defined rows and columns (decided; default 3x4).
 - Can a theme force a different view for apps or PS1 pages?

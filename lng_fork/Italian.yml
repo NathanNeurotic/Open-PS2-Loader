@@ -649,3 +649,5 @@ translations:
   'ON': Attivo
   'OFF': Disattivo
   'NO': 'No'
+  THEME_VIEW: "Vista del tema"
+  HINT_THEME_VIEW: "Come il tema mostra i tuoi giochi: List, Coverflow, PSBBN Flow o Grid. Tieni premuto L3 nella pagina principale per cambiare. I temi senza quella vista usano la loro vista predefinita."

@@ -867,8 +867,8 @@ struct UIItem diaUIConfig[] = {
     {UI_ENUM, UICFG_THEME, 1, 1, _STR_HINT_THEME, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    // Multi-view themes: the look a theme draws (List, Coverflow, PSBBN Flow). Holding L3 cycles it too.
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Theme View", -1}}},
+    // Multi-view themes: the look a theme draws (List, Coverflow, PSBBN Flow, Grid). Holding L3 cycles it too.
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_THEME_VIEW}}},
     {UI_SPACER},
     {UI_ENUM, UICFG_THEME_VIEW, 1, 1, _STR_HINT_THEME_VIEW, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},

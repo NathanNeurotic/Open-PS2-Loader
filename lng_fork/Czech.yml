@@ -643,3 +643,5 @@ translations:
   PCCF_UNAVAILABLE: 'CF nedostupné: vyžaduje ranou japonskou PS2 s PC CARD, kompatibilní kartu a žádný aktivní ovladač DEV9/HDD/sítě.'
   PCCF_UNSUPPORTED_GAME: CF zatím podporuje jen nativní hry PS2. VMC na CF, načítání PS1 a síťové úspěchy nejsou dostupné.
   HINT_ENABLE_DVR: Experimentální vyhledávání ISO DESR DVR. Vyžaduje zapnutý zdroj HDD; spuštění her vyžaduje externí Neutrino s podporou DVR.
+  THEME_VIEW: "Zobrazení motivu"
+  HINT_THEME_VIEW: "Jak motiv zobrazuje vaše hry: List, Coverflow, PSBBN Flow nebo Grid. Přepnete podržením L3 na hlavní stránce. Motivy bez tohoto vzhledu použijí své výchozí zobrazení."
