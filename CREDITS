@@ -79,6 +79,7 @@ features, code, and ideas from:
   - PS2-Launcher (Irfanlesnar)      https://github.com/Irfanlesnar/PS2-Launcher
   - OPL HTTP (Docmine17)            https://github.com/Docmine17/Open-PS2-Loader-HTTP
   - official OPL                    https://github.com/ps2homebrew/Open-PS2-Loader
+  - YAOPL (belomaxorka)             https://github.com/yaopl/yaopl
 
 Bundled third-party software, shipped in the release package and NOT part of RiptOPL:
 
@@ -198,6 +199,14 @@ Planned collaboration:
     https://git.techwritescode.dev/techwritescode/PSUManager
 
 Special and sincere thanks to:
+
+  - belomaxorka (https://github.com/belomaxorka) - for YAOPL (Yet Another Open
+    PS2 Loader): https://github.com/yaopl/yaopl
+    His ongoing backend compatibility investigations, controller and MMCE work,
+    USB/UDPBD reliability fixes, ISO/ZSO and parser hardening, and reproducible
+    regression tests make the OPL ecosystem more reliable for everyone. YAOPL's
+    carefully documented fixes are an important reference for RiptOPL parity
+    work. Thank you for your sustained contributions to PS2 homebrew.
 
   - KrahJohlito - the legend, and the single biggest influence on this fork.
     Creator of uOPL (Unofficial Open PS2 Loader) and its continuation wOPL,

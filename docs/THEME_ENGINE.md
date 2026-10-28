@@ -8,9 +8,9 @@ value token, and built-in asset name the engine understands, including this fork
 - A theme is a folder in the `THM` directory containing a **`conf_theme.cfg`** plus its
   image/font assets.
 - Anything not supplied by the theme falls back to OPL's embedded defaults.
-- OPL ships the built-in `<OPL>` theme with three views you can study as references: List
-  (`misc/conf_theme_OPL.cfg`), Coverflow (`misc/theme_coverflow.cfg`) and PSBBN Flow
-  (`misc/theme_psbbn_flow.cfg`). Configurations that saved the former `<Coverflow>` or
+- OPL ships the built-in `<OPL>` theme with four views you can study as references: List
+  (`misc/conf_theme_OPL.cfg`), Coverflow (`misc/theme_coverflow.cfg`), PSBBN Flow
+  (`misc/theme_psbbn_flow.cfg`) and Grid (`misc/theme_grid.cfg`). Configurations that saved the former `<Coverflow>` or
   `<PSBBN Flow>` themes load `<OPL>` with that view. A theme of your own can offer several views
   too: see [Views](#views-multi-view-themes--this-fork).
 
@@ -326,8 +326,9 @@ where neither the view nor the base has a block.
 - Only the active view is built. Switching views reloads the theme, so it costs no extra memory.
 - Names stay within 47 characters. The longest prefixed key,
   `coverflow.favsVcdMain12_reflection_offset`, is 41.
-- The built-in `<OPL>` theme offers List, Coverflow and PSBBN Flow as views. Each still lives in its own
-  file (`misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg`, `misc/theme_psbbn_flow.cfg`), which are
+- The built-in `<OPL>` theme offers List, Coverflow, PSBBN Flow and Grid as views. Each still lives in its own
+  file (`misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg`, `misc/theme_psbbn_flow.cfg`,
+  `misc/theme_grid.cfg`), which are
   good references for a view's blocks.
 
 ---
@@ -884,5 +885,5 @@ place a SaveIcon; custom PSBBN Flow themes can add the element.
 - Negative `x`/`y` and `POS_MID`/`DIM_INF` let you anchor to edges/center without hardcoding
   resolution-specific numbers.
 
-For a complete, working reference, open the bundled `<OPL>` theme's List, Coverflow and PSBBN Flow views and the
-`misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg` and `misc/theme_psbbn_flow.cfg` sources in the repository.
+For a complete, working reference, open the bundled `<OPL>` theme's List, Coverflow, PSBBN Flow and Grid views and the
+`misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg`, `misc/theme_psbbn_flow.cfg` and `misc/theme_grid.cfg` sources in the repository.
