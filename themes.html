@@ -99,11 +99,11 @@ picker. Inside the folder, all the artwork/fonts sit alongside a single <code>co
     incebtion.png       ← background, fonts, case art, screenshots… (any names you reference)
     case.png
     myfont.ttf</pre>
-<p>RiptOPL provides three <b>built-in</b> layouts (PSBBN Flow since <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">#977</a>) you can study as references without copying any files:
-the List, the optional Coverflow carousel and the optional PSBBN Flow fan. They are the three <a href="#views">views</a> of the built-in <code>&lt;OPL&gt;</code> theme. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>.
-Their sources are <code>misc/conf_theme_OPL.cfg</code>, <code>misc/theme_coverflow.cfg</code> and
-<code>misc/theme_psbbn_flow.cfg</code> in the repository — the traditional layouts and PSBBN Flow authoring example are documented below.</p>
-<p>Fresh configurations use a 4:3 menu and Auto video mode. Pick the Coverflow or PSBBN Flow view under <b>Settings → Interface → Theme View</b> (or hold L3 on the main page)
+<p>RiptOPL provides four <b>built-in</b> layouts (PSBBN Flow since <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">#977</a>) you can study as references without copying any files:
+the List, the optional Coverflow carousel, the optional PSBBN Flow fan and the optional <a href="#grid">Grid</a>. They are the four <a href="#views">views</a> of the built-in <code>&lt;OPL&gt;</code> theme. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>.
+Their sources are <code>misc/conf_theme_OPL.cfg</code>, <code>misc/theme_coverflow.cfg</code>,
+<code>misc/theme_psbbn_flow.cfg</code> and <code>misc/theme_grid.cfg</code> in the repository — the traditional layouts and PSBBN Flow authoring example are documented below.</p>
+<p>Fresh configurations use a 4:3 menu and Auto video mode. Pick the Coverflow, PSBBN Flow or Grid view under <b>Settings → Interface → Theme View</b> (or hold L3 on the main page)
 and, if wanted, Widescreen under <b>Settings → Interface</b>, then apply and save.
 An ELF update retains saved theme and display choices. See <a href="install.html#opinionated-defaults">Fresh-start defaults</a>.</p>
 
@@ -204,7 +204,7 @@ sharing its cover cache. Give it a fourth and it gets its own.</details>
 
 <h3 id="views">Views (multi-view themes) — <em>this fork</em></h3>
 <p>One <code>conf_theme.cfg</code> can describe several <b>views</b> of the main and info pages: <code>list</code>,
-<code>coverflow</code>, <code>psbbn</code> and <code>grid</code> (Grid is reserved; it has no element yet). The user picks a view
+<code>coverflow</code>, <code>psbbn</code> and <code>grid</code>. The user picks a view
 under <b>Settings → Interface → <a href="settings.html#theme-view">Theme View</a></b>, or holds <b>L3</b> for half a second on the
 main page to switch to the next view the theme offers (a tap on L3 still cycles the library view). Idea and design:
 KrahJohlito. Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1092">#1092</a>; NOT TESTED on hardware.</p>
@@ -236,7 +236,7 @@ also replaces <code>appsMain2</code> in Coverflow unless the theme adds <code>co
 <b>whole</b> base block; it does not merge single keys from it. <code>_enabled=0</code> counts as present, which is how a view
 hides a base block. The <a href="#block-families">contiguous numbering rule</a> applies to the merged list.</p>
 <table><thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>views</code></td><td>comma list of <code>list</code>, <code>coverflow</code>, <code>psbbn</code>, <code>grid</code></td><td>The views the theme offers (a bitmask inside the loader). Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order <code>views=</code> lists them in. Absent: the theme's own view (a <code>PSBBNFlow</code> element = psbbn, a <code>Coverflow</code> element = coverflow, else list) plus every view it declares a <code>&lt;view&gt;.</code> key for.</td></tr>
+<tr><td><code>views</code></td><td>comma list of <code>list</code>, <code>coverflow</code>, <code>psbbn</code>, <code>grid</code></td><td>The views the theme offers (a bitmask inside the loader). Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order <code>views=</code> lists them in. Absent: the theme's own view (the first <code>PSBBNFlow</code>, <code>Coverflow</code> or <code>Grid</code> element among the base's contiguous <code>mainN</code> blocks gives psbbn, coverflow or grid, else list; <code>appsMain</code>, <code>vcdMain</code> and <code>favsMain</code> blocks do not count) plus every view it declares a <code>&lt;view&gt;.</code> key for.</td></tr>
 <tr><td><code>default_view</code></td><td>a view name</td><td>The view used until the user picks one, and when the user's pick is not offered. Absent, or naming a view the theme does not offer: the theme's own view if <code>views=</code> offers it, else the first offered view in the order list, coverflow, psbbn, grid.</td></tr>
 <tr><td><code>&lt;view&gt;.inherit</code></td><td><code>0</code></td><td>That view never falls back to the base blocks: it brings its whole main and info layout.</td></tr>
 <tr><td><code>&lt;view&gt;.&lt;global key&gt;</code></td><td>as the key</td><td>Overrides <code>use_default</code>, <code>use_real_height</code>, <code>coverflow_cover_offset</code> and the colour keys in that view.</td></tr>
@@ -246,8 +246,8 @@ hides a base block. The <a href="#block-families">contiguous numbering rule</a> 
 <li>The user's Theme View choice is one setting for every theme (<code>theme_view=</code>). A theme that does not offer it shows its <code>default_view</code>.</li>
 <li>Only the active view is built. Switching views reloads the theme, so it costs no extra memory.</li>
 <li>Names stay within 47 characters; the longest prefixed key, <code>coverflow.favsVcdMain12_reflection_offset</code>, is 41.</li>
-<li>The built-in <code>&lt;OPL&gt;</code> theme offers List, Coverflow and PSBBN Flow. Each still lives in its own file
-(<code>misc/conf_theme_OPL.cfg</code>, <code>misc/theme_coverflow.cfg</code>, <code>misc/theme_psbbn_flow.cfg</code>), which are good
+<li>The built-in <code>&lt;OPL&gt;</code> theme offers List, Coverflow, PSBBN Flow and Grid. Each still lives in its own file
+(<code>misc/conf_theme_OPL.cfg</code>, <code>misc/theme_coverflow.cfg</code>, <code>misc/theme_psbbn_flow.cfg</code>, <code>misc/theme_grid.cfg</code>), which are good
 references for a view's blocks.</li>
 </ul>
 <p>Full reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#views-multi-view-themes--this-fork">THEME_ENGINE.md, Views</a>.</p>
@@ -766,6 +766,47 @@ main2:
 </code></pre>
 <p>The built-in configuration adds device text, hints, a loading icon and an info-page layout.
 See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/misc/theme_psbbn_flow.cfg"><code>misc/theme_psbbn_flow.cfg</code></a> for the full example.</p>
+<h2 id="grid">The Grid element</h2>
+<p>Use <code>type=Grid</code> for the page's covers in rows and columns, the selected cover framed in the selected-text colour
+and the others dimmed. Left/Right step one cover; Up/Down step one row and keep the column (a short last row takes its last
+cover). Up on the top row and Down on the bottom row switch to the previous or next device page, as Up/Down do in Coverflow.
+The selected row stays in the middle of the grid where the list allows, and the grid never scrolls past its last row. A
+position counter (<code>12/40</code>) sits under the grid's lower right corner. Idea: KrahJohlito (multi-view themes).
+Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1097">#1097</a>; NOT TESTED on hardware.</p>
+<table><thead><tr><th>Property</th><th>Grid behaviour</th></tr></thead><tbody>
+<tr><td><code>x</code>, <code>y</code></td><td>Centre of the whole grid; default is the screen centre.</td></tr>
+<tr><td><code>width</code>, <code>height</code></td><td>One cover; default 80 × 112. In widescreen the cover and the column pitch narrow with the aspect correction.</td></tr>
+<tr><td><code>&lt;block&gt;_rows</code>, <code>&lt;block&gt;_columns</code></td><td>Grid shape, read from the theme's <b>first</b> <code>Grid</code> block only (navigation needs one column count): default 3 rows of 4, at most 6 columns and 4 rows, and never more than 16 covers (rows are dropped first).</td></tr>
+<tr><td><code>&lt;block&gt;_spacing</code></td><td>Gap between covers in pixels, from the first <code>Grid</code> block; default 16.</td></tr>
+<tr><td><code>pattern</code>, <code>default</code>, <code>count</code></td><td>Native artwork suffix (default <code>COV</code>), missing-art asset and cache capacity, as for <code>Coverflow</code>.</td></tr>
+<tr><td><code>overlay</code>, <code>overlay2</code>, overlay corners</td><td>Native frame layers, scaled with each cover. Author corners against the element's <code>width</code> / <code>height</code>.</td></tr>
+<tr><td><code>font</code></td><td>Font for the position counter.</td></tr>
+</tbody></table>
+<p>Keep a one-row <code>ItemsList</code> in the same family for the selected title. Left/Right step covers and Up/Down step rows
+on the pages whose family has a <code>Grid</code> element (a family without one, such as <code>appsMain</code> falling back to
+<code>main</code>, uses the family it falls back to); other pages keep their own navigation.</p>
+<pre>main0:
+    type=Background
+    default=incebtion
+    aligned=0
+    width=DIM_INF
+    height=DIM_INF
+main1:
+    type=Grid
+    default=cover
+    rows=3
+    columns=4
+    spacing=12
+    y=250
+    width=80
+    height=111
+main2:
+    type=ItemsList
+    y=60
+    height=24</pre>
+<p><code>rows=</code> written inside the block is the same key as <code>main1_rows</code> (the parser prefixes it). Full reference:
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#grid">THEME_ENGINE.md, Grid</a>; the built-in view is <code>misc/theme_grid.cfg</code>.</p>
+
 <h2 id="saveicon">10 · The SaveIcon element</h2>
 <p><b>This fork.</b> <code>type=SaveIcon</code> draws the selected PS2 game's own save icon — the 3D model the PS2
 browser shows — spinning, and moving too when the icon is animated. It comes from:</p>
