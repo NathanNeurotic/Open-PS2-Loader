@@ -87,11 +87,11 @@ missing a particular string, that string appears in English rather than blank. Y
 switching language.</p>
 
 <h2 id="install">Installing extra languages</h2>
-<div class="callout info"><div class="h">New discovery order starts with PR #1017</div>
-<p>Directly beside the ELF (CWD) and CWD/LNG lookup are introduced by
-<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1017">PR #1017</a>.
-They work only in builds containing that change. On older releases, use the
-traditional enabled-device <code>LNG/</code> folder or memory-card OPL directory.</p></div>
+<div class="callout info"><div class="h">Discovery order in current builds</div>
+<p>Lookup directly beside the ELF (CWD) and in CWD/LNG is in current releases (added by
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1017">PR #1017</a>).
+Builds from before that change read only the traditional enabled-device <code>LNG/</code> folder
+or memory-card OPL directory.</p></div>
 <p>The language files are published as a <b>separate release asset</b>, not inside the main package:</p>
 
 <pre>RIPTOPL-LANGS-*.zip</pre>
@@ -108,7 +108,7 @@ The legacy device <code>LNG/</code> folder is also supported.</li>
 copy that file into <strong>the same directory as the .lng</strong>.</li>
 </ol>
 
-<p>Once PR #1017 is included in the build, language lookup has a defined
+<p>Language lookup has a defined
 <strong>priority order</strong>: <b>launched ELF directory (CWD)</b> → <b>CWD/LNG/</b> →
 <b>legacy memory-card OPL and enabled-device LNG/ folders</b>. If the same
 language is installed in multiple places, only one entry is shown, and the
@@ -133,7 +133,7 @@ mass0:/LNG/
   lang_French.lng
   lang_Japanese.lng
   font_Japanese.ttf</pre>
-<p>The language registry is dynamically sized in PR #1017 rather than capped at
+<p>The language registry is dynamically sized rather than capped at
 15 external languages, so multiple installed packs no longer compete for a
 fixed fifteen-entry table.</p>
 
@@ -160,7 +160,7 @@ fonts. Serbian's is the Croatian font, because the built-in font has no <code>č
 
 <div class="callout info"><div class="h">Discovery happens as devices become available</div>
 If a device was not mounted at startup, wait for its source to initialize and
-reopen Settings. In PR #1017, CWD is retried after boot-directory resolution.
+reopen Settings. CWD is retried after boot-directory resolution.
 Copying new files into a folder already scanned in this session generally
 requires restarting RiptOPL.</div>
 

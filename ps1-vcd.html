@@ -482,11 +482,11 @@ hanging silently.</p>
 <a href="hdd.html">Internal HDD (APA &amp; exFAT)</a>.</p>
 
 <h2 id="limitations">Notes &amp; limitations</h2>
-<p><b>Ember list empty on internal exFAT or another BDM drive?</b> A reproduced scanner defect lets a
-loose file such as <code>EMBER/games/readme.txt</code> or <code>.DS_Store</code> abort the Ember scan
-on FAT32 and exFAT. Move loose files out of <code>EMBER/games/</code>, leaving the individual game
-directories there. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/999">PR #999 proposes the fix</a>;
-this does not require reformatting the disk or changing the PS2 BDM Prefix.</p>
+<p><b>Ember list empty on internal exFAT or another BDM drive?</b> Older builds let a loose file such as
+<code>EMBER/games/readme.txt</code> or <code>.DS_Store</code> abort the Ember scan on FAT32 and exFAT.
+Current builds skip loose files (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/999">#999</a>,
+checked in CI against real FAT32 and exFAT images). If you are on an older build, move loose files out of
+<code>EMBER/games/</code>; this does not require reformatting the disk or changing the PS2 BDM Prefix.</p>
 <ul class="checklist">
   <li>Ember does not provide IGR. POPSTARTER supplies its own reset behavior; neither uses
   <a href="igr.html">RiptOPL's PS2 IGR hook</a>.</li>

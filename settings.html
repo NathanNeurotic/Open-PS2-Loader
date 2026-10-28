@@ -75,7 +75,7 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
-<div class="callout info"><div class="h">Experimental hardware features</div><p>The <a href="psx-dvr.html">PSX DVR ISO reader</a> is implemented on <code>rebuild/main</code> with DESR hardware gating; a separate opt-in DVR switch is proposed in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/955">PR #955</a>. That PR also introduces <a href="pc-card-cf.html">PC CARD CompactFlash</a> for early Japanese PS2 consoles. Neither switch should be assumed to exist in the current standard release.</p></div>
+<div class="callout info"><div class="h">Experimental hardware features</div><p>The <a href="psx-dvr.html">PSX DVR ISO reader</a> (DESR hardware gating plus an opt-in switch) and <a href="pc-card-cf.html">PC CARD CompactFlash</a> for early Japanese PS2 consoles are on <code>rebuild/main</code> (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/955">PR #955</a>). Both switches default to Off and neither has been tested on real hardware.</p></div>
 <h1>Settings Reference</h1>
 <p class="lead">Every settings screen in RiptOPL, in the order the loader shows them. Each table lists the
 rows exactly as they are labelled on screen, with their values and what they do. Rows that open another
@@ -480,7 +480,7 @@ The full rules are in <a href="neutrino.html#neutrino-device">Neutrino Core</a>.
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>Scrolling Speed</td><td>Slow / Medium / Fast</td><td>List scrolling speed. Default Medium.</td></tr>
-<tr><td>Select Button</td><td>Circle / Cross</td><td>Which face button confirms. Fresh RiptOPL settings use Circle. Saved preferences override it; follow the on-screen hints.</td></tr>
+<tr><td>Select Button</td><td>Circle / Cross</td><td>Which face button confirms. The default follows the console: Circle on Japanese consoles, Cross elsewhere. Saved preferences override it; follow the on-screen hints.</td></tr>
 <tr><td>Analog X-Axis Sensitivity</td><td>Off / Low / Medium / High</td><td>How readily the left stick moves the cursor horizontally. <em>Off</em> stops the stick navigating on that axis. Default Low.</td></tr>
 <tr><td>Analog Y-Axis Sensitivity</td><td>Off / Low / Medium / High</td><td>The same for the vertical axis.</td></tr>
 <tr><td>Controller Vibration in Menus</td><td>Off / On</td><td>A short vibration when moving the cursor, confirming or going back. Needs a DualShock in analog mode. On by default.</td></tr>

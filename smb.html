@@ -253,7 +253,7 @@ If you leave the <b>Share</b> field empty, OPL asks the driver to enumerate the 
 <div class="steps">
   <div class="step">
     <h3>Copy the SMB modules to the memory card</h3>
-    <p>The release package ships the four modules inside its canonical <code>POPS/</code> folder containing the four network IRX modules POPSTARTER needs for SMB: <code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, and <code>ps2dev9.irx</code>. Copy them to <code>mc0:/POPSTARTER/</code> (or <code>mc1:/POPSTARTER/</code>). OPL checks for all four on one card before an SMB VCD launch and warns you rather than hanging if any are missing. OPL does not install them for you.</p>
+    <p>The release package ships the four modules inside its canonical <code>POPS/</code> folder containing the four network IRX modules POPSTARTER needs for SMB: <code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, and <code>ps2dev9.irx</code>. They must end up in <code>mc0:/POPSTARTER/</code> (or <code>mc1:/POPSTARTER/</code>). If the share's own <code>POPS/</code> folder holds them, an SMB VCD launch copies any that are missing to the card for you; it never replaces a file already on the card, and it refuses a copy that does not fit on the card. Otherwise copy them yourself. OPL checks for all four on one card before an SMB VCD launch and warns you rather than hanging if any are missing.</p>
   </div>
   <div class="step">
     <h3>Set up the POPSTARTER network config</h3>
