@@ -99,11 +99,11 @@ picker. Inside the folder, all the artwork/fonts sit alongside a single <code>co
     incebtion.png       ← background, fonts, case art, screenshots… (any names you reference)
     case.png
     myfont.ttf</pre>
-<p>RiptOPL provides three <b>built-in</b> themes (PSBBN Flow since <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">#977</a>) you can study as references without copying any files:
-the default <code>&lt;OPL&gt;</code> theme, optional <code>&lt;Coverflow&gt;</code> carousel and optional <code>&lt;PSBBN Flow&gt;</code> fan. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>.
+<p>RiptOPL provides three <b>built-in</b> layouts (PSBBN Flow since <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977">#977</a>) you can study as references without copying any files:
+the List, the optional Coverflow carousel and the optional PSBBN Flow fan. They are the three <a href="#views">views</a> of the built-in <code>&lt;OPL&gt;</code> theme. See <a href="coverflow.html#psbbn-flow">PSBBN Flow and build availability</a>.
 Their sources are <code>misc/conf_theme_OPL.cfg</code>, <code>misc/theme_coverflow.cfg</code> and
 <code>misc/theme_psbbn_flow.cfg</code> in the repository — the traditional layouts and PSBBN Flow authoring example are documented below.</p>
-<p>Fresh configurations use a 4:3 menu and Auto video mode. Select <code>&lt;Coverflow&gt;</code> or <code>&lt;PSBBN Flow&gt;</code>
+<p>Fresh configurations use a 4:3 menu and Auto video mode. Pick the Coverflow or PSBBN Flow view under <b>Settings → Interface → Theme View</b> (or hold L3 on the main page)
 and, if wanted, Widescreen under <b>Settings → Interface</b>, then apply and save.
 An ELF update retains saved theme and display choices. See <a href="install.html#opinionated-defaults">Fresh-start defaults</a>.</p>
 
@@ -202,6 +202,56 @@ apps list, the third the Favorites list and the fourth the PS1/VCD list — so o
 order. The PS1/VCD slot is optional: define only three lists and the PS1 view falls back to the games list,
 sharing its cover cache. Give it a fourth and it gets its own.</details>
 
+<h3 id="views">Views (multi-view themes) — <em>this fork</em></h3>
+<p>One <code>conf_theme.cfg</code> can describe several <b>views</b> of the main and info pages: <code>list</code>,
+<code>coverflow</code>, <code>psbbn</code> and <code>grid</code> (Grid is reserved; it has no element yet). The user picks a view
+under <b>Settings → Interface → <a href="settings.html#theme-view">Theme View</a></b>, or holds <b>L3</b> for half a second on the
+main page to switch to the next view the theme offers (a tap on L3 still cycles the library view). Idea and design:
+KrahJohlito. Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1092">#1092</a>; NOT TESTED on hardware.</p>
+<p>The unprefixed blocks are the <b>base</b>. A block named <code>&lt;view&gt;.&lt;block&gt;</code> replaces that block in that
+view only, and every block a view does not declare is inherited from the base:</p>
+<pre>views=list,coverflow           # the views this theme offers
+default_view=list              # used until the user picks one
+
+main2:                         # base (List): a cover panel
+	type=ItemCover
+	default=cover
+
+coverflow.main2:               # Coverflow: the carousel replaces block 2
+	type=Coverflow
+	default=cover
+	reflection=1
+coverflow.appsMain2:           # families work inside a view too
+	type=Coverflow
+	default=coverapp
+coverflow.main1_enabled=0      # hide a base block in this view only
+coverflow.main9:               # or add blocks after the base list's last block (here main8)
+	type=StaticText
+	value=Coverflow
+coverflow.coverflow_cover_offset=12   # a theme-wide key for this view only</pre>
+<p><b>How a block is chosen.</b> For slot <code>N</code> of a family in view <code>V</code>, the first block present wins:
+<code>V.&lt;family&gt;N</code>, then <code>V.</code> plus each step of that family's fallback chain (for example
+<code>V.mainN</code>), then the base chain (<code>&lt;family&gt;N</code>, …, <code>mainN</code>). So <code>coverflow.main2</code>
+also replaces <code>appsMain2</code> in Coverflow unless the theme adds <code>coverflow.appsMain2</code>. A view block replaces the
+<b>whole</b> base block; it does not merge single keys from it. <code>_enabled=0</code> counts as present, which is how a view
+hides a base block. The <a href="#block-families">contiguous numbering rule</a> applies to the merged list.</p>
+<table><thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>views</code></td><td>comma list of <code>list</code>, <code>coverflow</code>, <code>psbbn</code>, <code>grid</code></td><td>The views the theme offers (a bitmask inside the loader). Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order <code>views=</code> lists them in. Absent: the theme's own view (a <code>PSBBNFlow</code> element = psbbn, a <code>Coverflow</code> element = coverflow, else list) plus every view it declares a <code>&lt;view&gt;.</code> key for.</td></tr>
+<tr><td><code>default_view</code></td><td>a view name</td><td>The view used until the user picks one, and when the user's pick is not offered. Absent, or naming a view the theme does not offer: the theme's own view if <code>views=</code> offers it, else the first offered view in the order list, coverflow, psbbn, grid.</td></tr>
+<tr><td><code>&lt;view&gt;.inherit</code></td><td><code>0</code></td><td>That view never falls back to the base blocks: it brings its whole main and info layout.</td></tr>
+<tr><td><code>&lt;view&gt;.&lt;global key&gt;</code></td><td>as the key</td><td>Overrides <code>use_default</code>, <code>use_real_height</code>, <code>coverflow_cover_offset</code> and the colour keys in that view.</td></tr>
+</tbody></table>
+<ul>
+<li>Make the base the List view. Stock OPL and other forks ignore the prefixed blocks, so they still load the theme as a list.</li>
+<li>The user's Theme View choice is one setting for every theme (<code>theme_view=</code>). A theme that does not offer it shows its <code>default_view</code>.</li>
+<li>Only the active view is built. Switching views reloads the theme, so it costs no extra memory.</li>
+<li>Names stay within 47 characters; the longest prefixed key, <code>coverflow.favsVcdMain12_reflection_offset</code>, is 41.</li>
+<li>The built-in <code>&lt;OPL&gt;</code> theme offers List, Coverflow and PSBBN Flow. Each still lives in its own file
+(<code>misc/conf_theme_OPL.cfg</code>, <code>misc/theme_coverflow.cfg</code>, <code>misc/theme_psbbn_flow.cfg</code>), which are good
+references for a view's blocks.</li>
+</ul>
+<p>Full reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#views-multi-view-themes--this-fork">THEME_ENGINE.md, Views</a>.</p>
+
 <h2 id="global-properties">3 · Global properties</h2>
 <p>These go at the <em>top</em> of the file, outside any block.</p>
 
@@ -232,8 +282,8 @@ sharing its cover cache. Give it a fourth and it gets its own.</details>
 </table>
 <p>Reference a font from an element with <code>font=N</code> (0 = default). <code>font1=builtin</code> is
 not a real token: the parser builds the path <code>&lt;theme&gt;/builtin</code>, that file doesn't exist, so the
-load fails and the slot falls back to the embedded default font. The <code>&lt;Coverflow&gt;</code> theme relies
-on this file-not-found fallback (and for the built-in <code>&lt;Coverflow&gt;</code> the font keys aren't parsed at
+load fails and the slot falls back to the embedded default font. The built-in Coverflow view relies
+on this file-not-found fallback (and for the built-in Coverflow view the font keys aren't parsed at
 all, since font loading is skipped for buffer-loaded built-in themes).</p>
 
 <h3>Other global keys</h3>
@@ -598,7 +648,7 @@ overrides <code>favsMain2</code> should size it as its <b>PS2</b> cover and defi
 those rows. A Coverflow block in <b>any</b> family makes the whole theme a Coverflow theme (Left/Right steps
 through the list on every browse page), so do this in a theme that already uses Coverflow.</div>
 
-<p>A minimal three-family Coverflow setup (the shape the fork's <code>&lt;Coverflow&gt;</code> theme uses):</p>
+<p>A minimal three-family Coverflow setup (the shape the built-in Coverflow view uses):</p>
 <pre>main2:
     type=Coverflow
     default=cover
@@ -738,8 +788,8 @@ cover art.</p>
 	y=86
 	width=64
 	height=52</pre>
-<p>The <code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code> built-ins place one: <code>&lt;OPL&gt;</code> above the cover and <code>&lt;Coverflow&gt;</code> under the
-centre cover, and both between the two screenshots of the info page. The built-in <code>&lt;PSBBN Flow&gt;</code>
+<p>The List and Coverflow views of <code>&lt;OPL&gt;</code> place one: List above the cover and Coverflow under the
+centre cover, and both between the two screenshots of the info page. The built-in PSBBN Flow
 layout does not place a SaveIcon; custom PSBBN Flow themes can add one.</p>
 
 <p>For a PS1 row, the same element draws the card's 2D icon rather than a PS2 3D model. It reads POPSTARTER's <code>SLOT0.VMC</code>/<code>SLOT1.VMC</code> in the VCD save folder or Ember's <code>MC1.vmc</code>/<code>MC2.vmc</code> in the game folder. No icon is expected before a save exists. See <a href="ps1-vcd.html#save-icons">PS1 save icons</a>.</p>
