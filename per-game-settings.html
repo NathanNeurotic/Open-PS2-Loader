@@ -283,9 +283,10 @@ stay within the supported editor limit rather than relying on longer hand-edited
 <p>The <b>Cheat Settings</b> screen lets you enable or disable PS2RD cheat codes loaded from a
 <code>.cht</code> file in the <code>CHT/</code> folder. It works on <b>both cores</b>: OPL's built-in core applies
 the codes itself, and a Neutrino game gets them handed over in <code>riptopl-cheats.toml</code>. With the
-Neutrino core only the <b>PS2RD Cheat Image</b> row is greyed &mdash; Neutrino has no cheat-image support.</p>
+Neutrino core, only the <b>PS2RD Cheat Image</b> row is greyed because Neutrino does not support binary cheat images.</p>
 <p>In <b>Select Game Cheats</b> mode the cheats you pick are remembered for that game, by name, and are already
-ticked the next time it launches, on either core.</p>
+ticked the next time it launches, on either core. Neutrino cheat execution requires the bundled rolling release runtime
+(<code>v1.8.0-61-g7be8de2</code> or newer) and a <code>90xxxxxx</code> mastercode hook in the cheat file.</p>
 <p>For the cheat file format and a full how-to, see <a href="cheats.html">Cheats</a> and the
 <a href="https://nathanneurotic.github.io/POPSLoader/cheats.html">POPStarter cheats reference</a>.</p>
 

@@ -343,7 +343,7 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 <li><b>Compat Modes 4 (Skip Videos) and 6 (Disable IGR)</b> are greyed — these are OPL ee-core features with no Neutrino equivalent. OPL never forwards them.</li>
 <li><b>Mode 7</b> is available (Neutrino-only; see above).</li>
 <li>The <b>Configure GSM</b>, <b>Controller Emulation</b> and <b>OSD Settings</b> screens show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
-<li><b>Cheat Settings</b> works on both cores; only its <b>PS2RD Cheat Image</b> row is greyed, because Neutrino has no cheat-image support. See <a href="cheats.html#neutrino">Cheats with the Neutrino core</a>.</li>
+<li><b>Cheat Settings</b> works on both cores; only its <b>PS2RD Cheat Image</b> row is greyed, because Neutrino has no cheat-image support. Cheats require the post-v1.8.0 development Neutrino build and a 90-series mastercode hook. See <a href="cheats.html#neutrino">Cheats with the Neutrino core</a>.</li>
 <li><b>VMC</b> and the rest of <b>Game Settings</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
 <li><b>UDPBD / UDPFS games</b> have no OPL core backend, so the Loader Core selector is locked to Neutrino for them and cannot be changed.</li>
 </ul>
