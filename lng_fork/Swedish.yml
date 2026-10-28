@@ -665,3 +665,5 @@ translations:
   PCCF_UNAVAILABLE: 'CF är inte tillgängligt: kräver en tidig japansk PS2 med PC CARD, ett kompatibelt kort och ingen aktiv DEV9-, HDD- eller nätverksdrivrutin.'
   PCCF_UNSUPPORTED_GAME: CF stöder för närvarande bara inbyggda PS2-spel. VMC på CF, PS1-laddning och nätverksprestationer är inte tillgängliga.
   HINT_ENABLE_DVR: Experimentell upptäckt av DESR DVR-ISO:er. Kräver att HDD-källan är på; spelstart kräver en extern Neutrino med DVR-stöd.
+  THEME_VIEW: "Temavy"
+  HINT_THEME_VIEW: "Hur temat visar dina spel: List, Coverflow, PSBBN Flow eller Grid. Håll in L3 på huvudsidan för att byta. Teman utan den vyn använder sin standardvy."

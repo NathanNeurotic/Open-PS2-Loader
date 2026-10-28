@@ -644,3 +644,5 @@ translations:
   PCCF_UNAVAILABLE: 'CF를 쓸 수 없음: PC CARD가 있는 초기 일본판 PS2, 호환되는 카드, 그리고 활성화된 DEV9/HDD/네트워크 드라이버가 없어야 합니다.'
   PCCF_UNSUPPORTED_GAME: CF는 지금은 PS2 전용 게임만 지원합니다. CF VMC, PS1 불러오기, 네트워크 업적은 쓸 수 없습니다.
   HINT_ENABLE_DVR: 실험적인 DESR DVR ISO 검색. HDD 소스를 켜야 하며, 게임을 실행하려면 외부의 DVR 지원 Neutrino가 필요합니다.
+  THEME_VIEW: "테마 보기"
+  HINT_THEME_VIEW: "테마가 게임을 보여 주는 방식: List, Coverflow, PSBBN Flow 또는 Grid. 메인 페이지에서 L3를 길게 눌러 전환합니다. 해당 보기가 없는 테마는 기본 보기를 사용합니다."

@@ -701,3 +701,5 @@ translations:
   # Filled from RIPPS2 (Akilluminati47) where Open PS2 Loader had no translation yet
   'YES': نعم
   'NO': لا
+  THEME_VIEW: "عرض السمة"
+  HINT_THEME_VIEW: "طريقة عرض السمة لألعابك: List, Coverflow, PSBBN Flow أو Grid. اضغط مطولاً على L3 في الصفحة الرئيسية للتبديل. السمات التي لا تتضمن هذا العرض تستخدم عرضها الافتراضي."

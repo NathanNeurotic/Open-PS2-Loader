@@ -573,3 +573,5 @@ translations:
   PCCF_UNAVAILABLE: 'CF non dispoñible: require unha PS2 xaponesa temperá con PC CARD, unha tarxeta compatible e ningún controlador DEV9/HDD/rede activo.'
   PCCF_UNSUPPORTED_GAME: CF admite agora só xogos nativos de PS2. Non están dispoñibles VMC en CF, a carga de PS1 nin os logros en rede.
   HINT_ENABLE_DVR: Descubrimento experimental de ISO de DESR DVR. Require a orixe HDD activada; iniciar un xogo require un Neutrino externo compatible con DVR.
+  THEME_VIEW: "Vista do tema"
+  HINT_THEME_VIEW: "Como mostra o tema os teus xogos: List, Coverflow, PSBBN Flow ou Grid. Mantén L3 na páxina principal para cambiar. Os temas sen esa vista usan a súa vista predeterminada."

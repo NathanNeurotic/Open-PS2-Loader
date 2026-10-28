@@ -561,3 +561,5 @@ translations:
   PCCF_UNAVAILABLE: 'CF nije dostupan: potrebni su rani japanski PC CARD PS2, kompatibilna kartica i nijedan aktivan DEV9/HDD/mrežni drajver.'
   PCCF_UNSUPPORTED_GAME: CF trenutno podržava samo izvorne PS2 igre. CF VMC, učitavanje PS1 igara i mrežna dostignuća nisu dostupni.
   HINT_ENABLE_DVR: Eksperimentalno otkrivanje DESR DVR ISO datoteka. Zahteva uključen HDD izvor; pokretanje igre zahteva spoljni Neutrino koji podržava DVR.
+  THEME_VIEW: "Приказ теме"
+  HINT_THEME_VIEW: "Како тема приказује ваше игре: List, Coverflow, PSBBN Flow или Grid. Држите L3 на главној страници за промену. Теме без тог приказа користе свој подразумевани приказ."

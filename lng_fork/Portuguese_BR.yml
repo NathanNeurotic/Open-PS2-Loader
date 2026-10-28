@@ -656,3 +656,5 @@ translations:
   RA_UDPFS_LOAD_FIRST: Abra a página UDPFS uma vez para o módulo de rede dela carregar e tente de novo.
   CAD_UDPFS_IMG: 'O navegador do Caduceus precisa de SMB ou UDPFS Arquivos: o UDPFS IMG não tem pasta compartilhada para a chave dele.'
   XERA_SET_CLOCK: Ainda não está na sua biblioteca do RetroAchievements. Acerte o relógio do console nas configurações do sistema para ver a lista completa, ou jogue uma vez com conquistas.
+  THEME_VIEW: "Visualização do tema"
+  HINT_THEME_VIEW: "Como o tema mostra seus jogos: List, Coverflow, PSBBN Flow ou Grid. Segure L3 na página principal para trocar. Temas sem essa visualização usam a visualização padrão."
