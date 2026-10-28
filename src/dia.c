@@ -15,6 +15,7 @@
 #include "include/themes.h"
 #include "include/util.h"
 #include "include/sound.h"
+#include <time.h> // clock(), for the right stick's page slide
 
 // UI spacing of the dialogues (pixels between consecutive items)
 #define UI_SPACING_H          10
@@ -960,6 +961,20 @@ static int diaRenderValue(int x, int y, const char *text, u64 color, int selecte
     return fntRenderStringFit(gTheme->fonts[0], x, y, ALIGN_NONE, screenWidth - DIA_VALUE_MARGIN - x, text, color, selected);
 }
 
+// A row that cannot be changed now (a setting another one switches off) reads at half strength: its control,
+// and the label in front of it on the same line. From RIPPS2 build 108 (akilluminati47).
+static int diaRowDisabled(const struct UIItem *item)
+{
+    if (item->type >= UI_OK)
+        return item->visible && !item->enabled;
+    if (item->type != UI_LABEL)
+        return 0;
+    for (item++; item->type != UI_TERMINATOR && item->type != UI_BREAK; item++)
+        if (item->type >= UI_OK)
+            return item->visible && !item->enabled;
+    return 0;
+}
+
 static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int haveFocus, int spacingH, int *w, int *h)
 {
     // Don't draw controllable items that are not visible.
@@ -975,6 +990,8 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
         txtcol = gTheme->uiTextColor;
     else
         txtcol = gTheme->textColor;
+    if (diaRowDisabled(item)) // half the alpha
+        txtcol = (txtcol & ~(0xFFULL << 24)) | ((((txtcol >> 24) & 0xFF) / 2) << 24);
 
     // let's see what do we have here?
     switch (item->type) {
@@ -1139,6 +1156,63 @@ static struct UIItem *diaGetFirstControl(struct UIItem *ui);
 
 static int diaScrollOffset = 0;
 
+// Backing out of a submenu lands on the row that opened it (RIPPS2 build 96, akilluminati47). A page's button
+// leaves the dialog, its caller opens the submenu (a dialog of its own) and then shows the page again with no
+// focus asked for: the page remembers the button here, one entry per page, so the submenu between does not wipe it.
+#define DIA_RETURN_SLOTS 8
+static struct UIItem *diaReturnUi[DIA_RETURN_SLOTS];
+static int diaReturnId[DIA_RETURN_SLOTS];
+
+static int diaReturnSlot(struct UIItem *ui)
+{
+    int i;
+    for (i = 0; i < DIA_RETURN_SLOTS; i++)
+        if (diaReturnUi[i] == ui)
+            return i;
+    return -1;
+}
+
+static void diaReturnRemember(struct UIItem *ui, int id)
+{
+    int i = diaReturnSlot(ui);
+    if (i < 0) { // a free slot, else the oldest one goes
+        for (i = 0; i < DIA_RETURN_SLOTS && diaReturnUi[i] != NULL; i++)
+            ;
+        if (i == DIA_RETURN_SLOTS) {
+            memmove(&diaReturnUi[0], &diaReturnUi[1], sizeof(diaReturnUi[0]) * (DIA_RETURN_SLOTS - 1));
+            memmove(&diaReturnId[0], &diaReturnId[1], sizeof(diaReturnId[0]) * (DIA_RETURN_SLOTS - 1));
+            i = DIA_RETURN_SLOTS - 1;
+        }
+    }
+    diaReturnUi[i] = ui;
+    diaReturnId[i] = id;
+}
+
+// The right stick slides a long page on its own ("peek"), with no cursor sound, and leaves the cursor where it is;
+// the D-pad (or the first confirm) brings the view back to the cursor. A scroll bar on the right shows how much
+// page there is and where the view is. From RIPPS2 build 89 (akilluminati47).
+static int diaPeek = 0;
+static float diaPeekPos = 0.0f;
+#define DIA_PEEK_SPEED 720.0f // pixels a second at full tilt
+#define DIA_BAR_W      4
+
+// A row whose controls are all hidden takes no line (RIPPS2 build 91, akilluminati47). Its label and value go,
+// but its spacer and the break that ends it used to leave a blank line, the rows below floating under a gap.
+// diaRowState follows a row: hidden when something on it is hidden, shown when something drawn is; its break is
+// skipped when only the first.
+static void diaRowState(struct UIItem *ui, int *rowHidden, int *rowShown)
+{
+    if (!ui->visible && ui->type >= UI_LABEL)
+        *rowHidden = 1;
+    else if (ui->type != UI_SPACER && ui->type != UI_BREAK)
+        *rowShown = 1;
+}
+
+static int diaRowCollapses(struct UIItem *ui, int rowHidden, int rowShown)
+{
+    return ui->type == UI_BREAK && rowHidden && !rowShown;
+}
+
 void diaSetSettingsShell(struct UIItem *ui, const char *indicator)
 {
     diaSettingsShellUI = ui;
@@ -1154,11 +1228,18 @@ void diaSetSettingsContext(int enabled)
 // items exactly as diaRenderUI lays them out, with diaItemHeight standing in for diaRenderItem's *h.
 static int diaLayoutBottom(struct UIItem *ui, int spacingH, int gap, int top)
 {
-    int y = top, hmax = 0, bottom = top;
+    int y = top, hmax = 0, bottom = top, rowHidden = 0, rowShown = 0;
 
     for (; ui->type != UI_TERMINATOR; ui++) {
         int h;
 
+        if (diaRowCollapses(ui, rowHidden, rowShown)) {
+            rowHidden = rowShown = 0;
+            continue;
+        }
+        if (diaShouldBreakLine(ui))
+            rowHidden = rowShown = 0;
+        diaRowState(ui, &rowHidden, &rowShown);
         if (diaShouldBreakLine(ui)) {
             if (hmax > 0)
                 y += hmax + gap;
@@ -1211,11 +1292,22 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     // render all items (shifted up by the scroll offset for tall dialogs)
     struct UIItem *rc = ui;
     int x = x0, y = y0 - diaScrollOffset, hmax = 0;
-    int curTop = y0, curBot = y0; // rendered extent of the focused row, for cursor-follow scroll
-    int contentBottom = y0;       // lowest rendered pixel (screen-space), for the maxScroll upper clamp
+    int curTop = y0, curBot = y0;    // rendered extent of the focused row, for cursor-follow scroll
+    int contentBottom = y0;          // lowest rendered pixel (screen-space), for the maxScroll upper clamp
+    int rowHidden = 0, rowShown = 0; // a row of hidden controls takes no line (diaRowCollapses)
 
     while (rc->type != UI_TERMINATOR) {
         int w = 0, h = 0;
+
+        if (diaRowCollapses(rc, rowHidden, rowShown)) {
+            x = x0; // its spacer moved x along: the next row starts at the margin, on this same line
+            rowHidden = rowShown = 0;
+            rc++;
+            continue;
+        }
+        if (diaShouldBreakLine(rc))
+            rowHidden = rowShown = 0;
+        diaRowState(rc, &rowHidden, &rowShown);
 
         if (diaShouldBreakLine(rc)) {
             x = x0;
@@ -1242,7 +1334,9 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
         // cursor-follow clamp keeps it inside the viewport by construction), so cursor tracking is exact.
         int rowH = diaItemHeight(rc, spacingH);
         int viewBottom = gTheme->usedHeight - 40; // the same bound the scroll clamp below uses
-        if (rc != cur && (y + rowH <= y0 || y >= viewBottom)) {
+        // A row is drawn whole or not at all: the right stick slides the page by the pixel, and a row only partly
+        // in view drew over the page's header or the hints. A peek may leave the chosen row out of view too.
+        if ((rc != cur || diaPeek) && (y < y0 || y + rowH > viewBottom)) {
             w = 0;
             h = rowH;
         } else {
@@ -1277,14 +1371,20 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
 
     // Cursor-follow scroll: re-clamp the offset so the focused row stays on-screen, above the
     // bottom hint bar. Self-correcting each frame; remains 0 for dialogs that fit (no scroll).
-    if (cur != NULL) {
-        int visibleBottom = gTheme->usedHeight - 40;
-        // Upper bound: never scroll past the content's bottom. contentBottom is screen-space, so undo
-        // the current offset to get the content-space extent. Without this, when the cursor lands on
-        // the trailing OK row the offset could over-shoot and stay stuck shifted up (#48).
-        int maxScroll = (contentBottom + diaScrollOffset) - visibleBottom;
-        if (maxScroll < 0)
-            maxScroll = 0;
+    int visibleBottom = gTheme->usedHeight - 40;
+    // Upper bound: never scroll past the content's bottom. contentBottom is screen-space, so undo
+    // the current offset to get the content-space extent. Without this, when the cursor lands on
+    // the trailing OK row the offset could over-shoot and stay stuck shifted up (#48).
+    int maxScroll = (contentBottom + diaScrollOffset) - visibleBottom;
+    if (maxScroll < 0)
+        maxScroll = 0;
+    if (diaPeek) { // the right stick holds the view where it slid it
+        if (diaPeekPos > maxScroll)
+            diaPeekPos = maxScroll;
+        if (diaPeekPos < 0)
+            diaPeekPos = 0;
+        diaScrollOffset = (int)diaPeekPos;
+    } else if (cur != NULL) {
         // Only scroll when a real viewport exists; guards degenerate small-usedHeight themes
         // where visibleBottom <= y0 would let the two edge corrections fight (jitter).
         if (cur == diaGetFirstControl(ui)) {
@@ -1303,6 +1403,18 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             diaScrollOffset = maxScroll;
         if (diaScrollOffset < 0)
             diaScrollOffset = 0;
+    }
+
+    // The scroll bar, on a page that runs past the screen: a dim track, a thumb as long as the share of the page
+    // in view, where the view is
+    if (maxScroll > 0 && visibleBottom - y0 > 60) {
+        int trackH = visibleBottom - y0, contentH = trackH + maxScroll;
+        int thumbH = trackH * trackH / contentH, thumbY, barX = screenWidth - 14;
+        if (thumbH < 24)
+            thumbH = 24;
+        thumbY = y0 + (trackH - thumbH) * diaScrollOffset / maxScroll;
+        rmDrawRect(barX, y0, DIA_BAR_W, trackH, GS_SETREG_RGBAQ(0x30, 0x3C, 0x68, 0x40, 0x00));
+        rmDrawRect(barX, thumbY, DIA_BAR_W, thumbH, GS_SETREG_RGBAQ(0x70, 0x88, 0xD8, diaPeek ? 0x80 : 0x60, 0x00));
     }
 
     if ((cur != NULL) && (!haveFocus) && (cur->hintId != -1)) {
@@ -1667,10 +1779,20 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
     rmGetScreenExtents(&screenWidth, &screenHeight);
 
     struct UIItem *cur = NULL;
+    {
+        int slot = diaReturnSlot(ui); // back on the button that opened something
+        if (slot >= 0) {
+            if (uiId == -1)
+                uiId = diaReturnId[slot];
+            diaReturnUi[slot] = NULL;
+        }
+    }
     if (uiId != -1)
         cur = diaFindByID(ui, uiId);
 
-    if (!cur)
+    // a remembered (or asked-for) row that is hidden or switched off now starts on the first control instead of
+    // leaving the dialog at once
+    if (!cur || !diaIsControllable(cur))
         cur = diaGetFirstControl(ui);
 
     // what? no controllable item? Exit!
@@ -1688,6 +1810,8 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
     setButtonDelay(KEY_DOWN, diaScrollDelay());
 
     diaScrollOffset = 0; // start each dialog scrolled to the top
+    diaPeek = 0;
+    clock_t peekLast = clock();
 
     // okay, we have the first selectable item
     // we can proceed with rendering etc. etc.
@@ -1727,6 +1851,24 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
                 return DIA_RESULT_NEXT;
             }
 
+            // the right stick peeks up or down a long page, silently; the cursor stays put
+            {
+                int sx, sy;
+                clock_t now = clock();
+                float dt = (float)(now - peekLast) / CLOCKS_PER_SEC;
+                peekLast = now;
+                if (dt > 0.1f)
+                    dt = 0.1f;
+                padGetRightStick(&sx, &sy);
+                if (sy > 24 || sy < -24) {
+                    if (!diaPeek) {
+                        diaPeek = 1;
+                        diaPeekPos = (float)diaScrollOffset;
+                    }
+                    diaPeekPos += (float)sy / 127.0f * DIA_PEEK_SPEED * dt;
+                }
+            }
+
             if (getKey(KEY_LEFT)) {
                 newf = diaGetPrevControl(cur, ui);
                 if (newf == cur)
@@ -1755,6 +1897,7 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
                 // Navigation change detected
                 sfxPlay(SFX_CURSOR);
                 cur = newf;
+                diaPeek = 0; // the view follows the cursor again
             }
 
             // Circle on a Settings PAGE goes back to the Settings Index KEEPING what was changed, the
@@ -1776,12 +1919,15 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
             }
 
             // see what key events we have
-            if (getKeyOn(guiConfirmKey())) {
+            if (diaPeek && getKeyOn(guiConfirmKey())) {
+                diaPeek = 0; // after a peek the first confirm brings the cursor's row back into view
+            } else if (getKeyOn(guiConfirmKey())) {
                 haveFocus = 1;
                 sfxPlay(SFX_CONFIRM);
 
                 if (cur->type == UI_BUTTON) {
                     diaRestoreScrollSpeed();
+                    diaReturnRemember(ui, cur->id);
                     return cur->id;
                 }
 
