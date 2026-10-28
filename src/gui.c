@@ -1091,6 +1091,8 @@ static int guiReadAppsViewPicker(struct UIItem *ui)
 // view shows its default one; the choice is kept for the themes that do.
 #define GUI_THEME_VIEW_PICKS 3
 
+static int sThemeViewPickerShown; // the value guiSetThemeViewPicker put on the picker
+
 static void guiSetThemeViewPicker(struct UIItem *ui)
 {
     static const char *names[GUI_THEME_VIEW_PICKS + 2];
@@ -1100,17 +1102,21 @@ static void guiSetThemeViewPicker(struct UIItem *ui)
     names[3] = "PSBBN Flow";
     names[4] = NULL;
     diaSetEnum(ui, UICFG_THEME_VIEW, names);
-    diaSetInt(ui, UICFG_THEME_VIEW, (gThemeViewRequest >= 0 && gThemeViewRequest < GUI_THEME_VIEW_PICKS) ? gThemeViewRequest + 1 : 0);
+    sThemeViewPickerShown = (gThemeViewRequest >= 0 && gThemeViewRequest < GUI_THEME_VIEW_PICKS) ? gThemeViewRequest + 1 : 0;
+    diaSetInt(ui, UICFG_THEME_VIEW, sThemeViewPickerShown);
 }
 
-// Stores the picked view; the caller applies it with thmSetView after applyConfig. 1 when it changed.
+// The view request the picker asks for. The caller hands it to thmSetView after applyConfig without
+// storing it first, so an abandoned reload keeps the request of the view still on screen. An untouched
+// picker keeps the current request, including one it cannot show (Grid, picked with L3).
 static int guiReadThemeViewPicker(struct UIItem *ui)
 {
-    int previous = gThemeViewRequest, picker = 0;
+    int picker = 0;
 
     diaGetInt(ui, UICFG_THEME_VIEW, &picker);
-    gThemeViewRequest = (picker >= 1 && picker <= GUI_THEME_VIEW_PICKS) ? picker - 1 : -1;
-    return gThemeViewRequest != previous;
+    if (picker == sThemeViewPickerShown)
+        return gThemeViewRequest;
+    return (picker >= 1 && picker <= GUI_THEME_VIEW_PICKS) ? picker - 1 : -1;
 }
 
 static void guiRefreshGameViews(void)
@@ -1236,7 +1242,7 @@ reshow_ui:
         int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
-        int themeViewChanged = guiReadThemeViewPicker(diaUIConfig);
+        int themeViewRequest = guiReadThemeViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
         diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
 
@@ -1246,8 +1252,8 @@ reshow_ui:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
-        if (themeViewChanged)
-            thmSetView(gThemeViewRequest); // reloads only when the theme now shows a different view
+        if (themeViewRequest != gThemeViewRequest)
+            thmSetView(themeViewRequest); // reloads only when the theme now shows a different view
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
@@ -3174,7 +3180,7 @@ static int guiSettingsShowInterface(void)
     int gameViewChanged = 0;
     int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
-    int themeViewChanged = 0;
+    int themeViewRequest = gThemeViewRequest;
 
     if (ui == NULL)
         return 0;
@@ -3252,7 +3258,7 @@ reshow_interface:
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
-        themeViewChanged = guiReadThemeViewPicker(ui);
+        themeViewRequest = guiReadThemeViewPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);
         diaGetInt(ui, UICFG_FONT_SIZE, &gFontSize);
@@ -3270,8 +3276,8 @@ reshow_interface:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
-        if (themeViewChanged)
-            thmSetView(gThemeViewRequest); // reloads only when the theme now shows a different view
+        if (themeViewRequest != gThemeViewRequest)
+            thmSetView(themeViewRequest); // reloads only when the theme now shows a different view
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {

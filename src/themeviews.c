@@ -26,6 +26,17 @@ int thmViewFromName(const char *name)
     return -1;
 }
 
+// Key prefixes match exactly: the loader looks blocks up as "<lowercase view>.<key>" and config lookups are
+// case-sensitive, so "Coverflow.main2" must not count as a coverflow block.
+static int thmViewFromPrefix(const char *word)
+{
+    for (int v = 0; v < THM_VIEW_COUNT; v++) {
+        if (strcmp(word, viewNames[v]) == 0)
+            return v;
+    }
+    return -1;
+}
+
 int thmViewFromLegacyTheme(const char *themeName)
 {
     if (themeName == NULL)
@@ -112,7 +123,7 @@ void thmViewScan(config_set_t *themeConfig, thm_view_info_t *info)
             char word[16];
             memcpy(word, it->key, dot - it->key);
             word[dot - it->key] = '\0';
-            int v = thmViewFromName(word);
+            int v = thmViewFromPrefix(word);
             if (v < 0)
                 continue;
             info->blocksMask |= 1u << v;
