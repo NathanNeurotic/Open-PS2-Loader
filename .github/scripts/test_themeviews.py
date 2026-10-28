@@ -152,6 +152,10 @@ int main(void)
     thmViewScan(flow, &info);
     assert(info.native == THM_VIEW_PSBBN && info.mask == (1u << THM_VIEW_PSBBN) && info.defaultView == THM_VIEW_PSBBN);
     configFree(flow);
+    config_set_t *gridTheme = parse("main0:\n\ttype=Background\nmain1:\n\ttype=Grid\n");
+    thmViewScan(gridTheme, &info);
+    assert(info.native == THM_VIEW_GRID && info.mask == (1u << THM_VIEW_GRID));
+    configFree(gridTheme);
 
     // A multi-view theme.
     config_set_t *mv = parse("views=list, coverflow,grid\n"

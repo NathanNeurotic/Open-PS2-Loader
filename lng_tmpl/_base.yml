@@ -2057,8 +2057,13 @@ gui_strings:
 - label: HINT_RA_BADGE_SUFFIX
   string: "Prefix puts \"RA \" before the name. Suffix puts \" [RA]\" after it. Both keep alphabetical order."
 
-- label: HINT_THEME_VIEW
-  string: "How the theme draws your games: List, Coverflow or PSBBN Flow. Hold L3 on the main page to switch. Themes without that look use their default."
+- comment: Interface setting (multi-view themes) that picks how the theme draws the game pages.
+  label: THEME_VIEW
+  string: Theme View
+
+- comment: Hint of Theme View. List, Coverflow, PSBBN Flow and Grid are the choices' names, shown untranslated.
+  label: HINT_THEME_VIEW
+  string: "How the theme draws your games: List, Coverflow, PSBBN Flow or Grid. Hold L3 on the main page to switch. Themes without that look use their default."
 
 - comment: Shown while an MMCE (SD2PSX) loads or creates the game's memory card after a Game ID switch. %d is seconds waited.
   label: MMCE_GAMEID_CARD_WAIT

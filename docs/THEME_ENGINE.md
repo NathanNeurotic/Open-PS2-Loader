@@ -3,7 +3,7 @@
 This document describes the Open PS2 Loader theme format **as implemented by the parser**
 (`src/themes.c`), so you can build your own themes. It covers every block type, property,
 value token, and built-in asset name the engine understands, including this fork's
-**`Coverflow`** and **`PSBBNFlow`** render modes.
+**`Coverflow`**, **`PSBBNFlow`** and **`Grid`** render modes.
 
 - A theme is a folder in the `THM` directory containing a **`conf_theme.cfg`** plus its
   image/font assets.
@@ -114,6 +114,49 @@ The built-in configuration adds the nebula background, a header label, the one-r
 the cover, hints, a loading icon and an info-page layout.
 See [`misc/theme_psbbn_flow.cfg`](../misc/theme_psbbn_flow.cfg) for the full example.
 
+## Grid
+
+### Grid element properties
+
+Use `type=Grid` for the page's covers in rows and columns, the selected cover framed in the
+selected-text colour and the others dimmed. Left/Right step one cover; Up/Down step one row and keep
+the column (a short last row takes its last cover). Up on the top row and Down on the bottom row
+switch to the previous/next device page, as Up/Down do in Coverflow. The selected row stays in the
+middle of the grid where the list allows, and the grid never scrolls past its last row. A position
+counter (`12/40`) sits under the grid's lower right corner. Idea: KrahJohlito (multi-view themes).
+
+| Property | Grid behavior |
+| --- | --- |
+| `x`, `y` | Centre of the whole grid; default is the screen centre. |
+| `width`, `height` | One cover; default 80 x 112. In widescreen the cover and the column pitch narrow with the aspect correction. |
+| `<block>_rows`, `<block>_columns` | Grid shape, read from the theme's **first** `Grid` block only (navigation needs one column count): default 3 rows of 4, at most 6 columns and 4 rows, and never more than 16 covers (rows are dropped first). |
+| `<block>_spacing` | Gap between covers in pixels, from the first `Grid` block; default 16. |
+| `pattern`, `default`, `count` | Native artwork suffix (default `COV`), missing-art asset and cache capacity, as for `Coverflow`. |
+| `overlay`, `overlay2`, overlay corners | Native frame layers, scaled with each cover. Author corners against the element's `width` / `height`. |
+| `font` | Font for the position counter. |
+
+Keep a one-row `ItemsList` in the same family for the selected title. Adding a `Grid` element turns
+Left/Right into cover steps and Up/Down into row steps on every main browse page in that theme.
+
+```ini
+main1:
+    type=Grid
+    default=cover
+    rows=3
+    columns=4
+    spacing=12
+    y=250
+    width=80
+    height=111
+main2:
+    type=ItemsList
+    y=60
+    height=24
+```
+
+`rows=` written inside the block is the same key as `main1_rows` (the parser prefixes it). See
+[the built-in configuration](../misc/theme_grid.cfg).
+
 > Quick mental model: a theme is a flat list of **elements**, each positioned on a virtual
 > **640×480** canvas. OPL scales that canvas to the real screen, and (with `scaled=1`)
 > corrects for widescreen and the PS2's non-square pixels automatically.
@@ -222,7 +265,7 @@ a block, **renumber** the ones after it so there are no holes.
 ### Views (multi-view themes) — *this fork*
 
 One `conf_theme.cfg` can describe several **views** of the main and info pages: `list`, `coverflow`,
-`psbbn` and `grid` (Grid is reserved; it has no element yet). The user picks a view under
+`psbbn` and `grid`. The user picks a view under
 **Settings → Interface → Theme View**, or holds **L3** for half a second on the main page to switch to
 the next view the theme offers (a tap on L3 still cycles the library view). Idea and design:
 KrahJohlito.
@@ -263,7 +306,7 @@ where neither the view nor the base has a block.
 
 | Key | Value | Meaning |
 |---|---|---|
-| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: the theme's own view (from its base blocks: a `PSBBNFlow` element = psbbn, a `Coverflow` element = coverflow, else list) plus every view it declares a `<view>.` key for. |
+| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: the theme's own view (from its base blocks: a `PSBBNFlow` element = psbbn, a `Coverflow` element = coverflow, a `Grid` element = grid, else list) plus every view it declares a `<view>.` key for. |
 | `default_view` | a view name | The view used until the user picks one, and when the user's pick is not offered. Absent (or naming a view the theme does not offer): the theme's own view if `views=` offers it, else the first offered view in the order list, coverflow, psbbn, grid. |
 | `<view>.inherit` | `0` | That view never falls back to the base blocks: it brings its whole main and info layout. Use it when a view shares little with the base, instead of a long list of `<view>.mainN_enabled=0` lines. |
 | `<view>.<global key>` | as the key | Overrides `use_default`, `use_real_height`, `coverflow_cover_offset` and the colour keys in that view. |
@@ -369,7 +412,7 @@ negative numbers for right/bottom-relative placement.
 ## 4. Image & overlay properties
 
 Image-type elements (`StaticImage`, `GameImage`, `Background`, `AttributeImage`, `ItemCover`,
-`Coverflow`, `PSBBNFlow`) add:
+`Coverflow`, `PSBBNFlow`, `Grid`) add:
 
 | Property | Type | Notes |
 |---|---|---|
@@ -420,6 +463,7 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `BdmIndex` | The block-device mode indicator. |
 | `Coverflow` *(item)* | **This fork:** a cover-art carousel (see §8). |
 | `PSBBNFlow` *(item)* | **This fork:** Collection perspective fan with native cover navigation (see [PSBBN Flow](#psbbn-flow)). |
+| `Grid` *(item)* | **This fork:** the page's covers in rows and columns (see [Grid element properties](#grid-element-properties)). |
 | `SaveIcon` *(item)* | **This fork:** a PS2 game's spinning 3D save icon or a PS1 game's animated VMC icon (see §9). |
 
 Elements are drawn in the order the theme declares them, with one exception: every `ItemText` is
@@ -534,7 +578,7 @@ Rules worth knowing:
 RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
 serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know (`devices=`,
 `reflection_offset`, `overlay2`, `plasma_blend_color`, the entire `favsMain*`, `vcdMain*`,
-`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`, `PSBBNFlow`, `SaveIcon`) are skipped without
+`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`, `PSBBNFlow`, `Grid`, `SaveIcon`) are skipped without
 stopping the parse. What to expect there:
 
 - **Invisible:** all pure-key extras above — regular OPL renders the theme as if they weren't

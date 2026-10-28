@@ -195,7 +195,7 @@ AUDIO_OBJS =	boot.o cancel.o confirm.o cursor.o message.o transition.o bd_connec
 # icon_sys.o + save_icn.o are the memory-card browser save icon for the settings folder.
 # icon.sys names list.icn, copy.icn and del.icn; all three are the same artwork, so ONE blob is
 # embedded and util.c writes it out under all three names (see saveIconName in src/util.c).
-MISC_OBJS =	icon_sys.o save_icn.o icon_sys_A.o icon_sys_J.o icon_sys_C.o conf_theme_OPL.o theme_coverflow.o theme_psbbn_flow.o
+MISC_OBJS =	icon_sys.o save_icn.o icon_sys_A.o icon_sys_J.o icon_sys_C.o conf_theme_OPL.o theme_coverflow.o theme_psbbn_flow.o theme_grid.o
 
 TRANSLATIONS = Albanian Arabic Bulgarian Cebuano Croatian Czech Danish Dutch Filipino French \
 	Galician German Greek Hungarian Indonesian Italian Japanese Korean Laotian Persian Polish Portuguese \
@@ -1235,6 +1235,9 @@ $(EE_ASM_DIR)theme_coverflow.c: misc/theme_coverflow.cfg | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_cfg
 
 $(EE_ASM_DIR)theme_psbbn_flow.c: misc/theme_psbbn_flow.cfg | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_cfg
+
+$(EE_ASM_DIR)theme_grid.c: misc/theme_grid.cfg | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_cfg
 
 $(EE_ASM_DIR)boot.c: audio/boot.adp | $(EE_ASM_DIR)
