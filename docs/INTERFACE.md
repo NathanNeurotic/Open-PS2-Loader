@@ -23,12 +23,17 @@ for installing translation files and fonts.
 
 ## Theme selection
 
-**Settings → Interface → Theme.** Choose `<OPL>` for the list, `<Coverflow>` for the centered
-carousel, or `<PSBBN Flow>` for the PSBBN Definitive Project Game Collection look. Apply and save to retain
-the choice. Fresh configurations start with `<OPL>`, 4:3 and Auto video mode; theme and aspect
-are separate settings.
+**Settings → Interface → Theme** picks the theme: `<OPL>` or a disk theme from `THM/`.
+**Theme View** picks how it draws your games: **List**, **Coverflow** (the centered carousel) or
+**PSBBN Flow** (the PSBBN Definitive Project Game Collection look). `<OPL>` offers all three; a disk
+theme offers the views its author declared, and shows its default view for any other pick. **Default**
+uses the theme's own default. Holding **L3** for half a second on the main page switches to the next
+view the theme offers, without opening the settings. Apply and save to retain the choice. Fresh
+configurations start with `<OPL>` in the List view, 4:3 and Auto video mode; theme, view and aspect are
+separate settings. A configuration that saved the former `<Coverflow>` or `<PSBBN Flow>` theme loads
+`<OPL>` with that view.
 
-Both flow themes rotate navigation on the main game list: Left/Right browse covers and Up/Down
+Both flow views rotate navigation on the main game list: Left/Right browse covers and Up/Down
 change sources. R3 remains Favorite, and info/settings screens keep their normal controls.
 **Coverflow Settings** tunes the `Coverflow` renderer; PSBBN Flow uses its fixed layout and
 25-frame glide. All three built-ins share the editable palette, artwork and audio settings.
@@ -130,8 +135,8 @@ track costs no extra RAM. It looks in this order and takes the first that works:
 
 1. `<theme>/sound/bgm.ogg` — a disk theme's own music.
 2. The **Default Theme Music** path from Audio Settings.
-3. `THM/bgm.ogg` under the active settings home — **built-in themes only** (`<OPL>`,
-   `<Coverflow>` and `<PSBBN Flow>`). A disk theme never falls through to this.
+3. `THM/bgm.ogg` under the active settings home — **the built-in `<OPL>` theme only**, in
+   every view. A disk theme never falls through to this.
 
 That order is why a disk theme with its own `sound/bgm.ogg` ignores your Default Theme Music setting:
 the theme wins. To use your own track everywhere, pick a theme that ships no music of its own.
