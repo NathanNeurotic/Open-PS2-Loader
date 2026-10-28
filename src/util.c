@@ -369,6 +369,31 @@ int listDir(char *path, const char *separator, int maxElem,
     return index;
 }
 
+// bdmfs_fatfs's open hands back the negated FatFs FRESULT, not an errno (fs_driver.c `ret = -ret`,
+// upstream ps2sdk too), so a failed mass open reported FR_NOT_ENABLED -- the slot has no mounted
+// volume -- as "error 12", which reads as out of memory. Name the codes a create can meet in
+// errno terms; anything else, and every other device, is passed through unchanged.
+int bdmFatfsOpenErrno(const char *path, int err)
+{
+    if (path == NULL || strncmp(path, "mass", 4) != 0)
+        return err;
+    switch (err) {
+        case 4: // FR_NO_FILE
+        case 5: // FR_NO_PATH
+            return ENOENT;
+        case 7: // FR_DENIED: read-only file, or the directory is full
+            return EACCES;
+        case 10: // FR_WRITE_PROTECTED
+            return EROFS;
+        case 11: // FR_INVALID_DRIVE
+        case 12: // FR_NOT_ENABLED
+        case 13: // FR_NO_FILESYSTEM
+            return ENXIO;
+        default:
+            return err;
+    }
+}
+
 /* size will be the maximum line size possible */
 file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned int size)
 {
@@ -404,7 +429,7 @@ file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned
     if (truncates) {
         fd = openFile(fpath, mode);
         if (fd < 0) {
-            int savedErrno = errno != 0 ? errno : EIO;
+            int savedErrno = errno != 0 ? bdmFatfsOpenErrno(fpath, errno) : EIO;
             free(fileBuffer->buffer);
             free(fileBuffer);
             errno = savedErrno;

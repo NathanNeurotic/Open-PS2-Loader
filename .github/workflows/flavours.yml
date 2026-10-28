@@ -188,6 +188,8 @@ jobs:
         run: python3 .github/scripts/test_config_null_allocation.py
       - name: Check config saves retain files on allocation failures and propagate true I/O errors
         run: python3 .github/scripts/test_config_save_integrity.py
+      - name: Check a settings home on a never-mounted mass slot falls back to the booted ELF's slot
+        run: python3 .github/scripts/test_bdm_empty_literal_slot.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
       - name: Check optional game titles fall back without changing metadata
