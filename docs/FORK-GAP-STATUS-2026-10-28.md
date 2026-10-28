@@ -6,9 +6,10 @@
 
 This page records where the two RiptOPL repositories stand against each other, which fixes
 landed in both on October 27 and 28, what the RIPPS2 audit found, and what still has no hardware
-result. The broader ecosystem register (LUNA, YAOPL, PSXCore, wOPL and the rest) is unchanged
-since its October 25 refresh; see the
-[fork feature gaps page](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html).
+result. The full ecosystem register (LUNA, YAOPL, PSXCore, wOPL and the rest), refreshed on
+October 25 and head-checked on October 28 (section 5), is on the
+[fork feature gaps page](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html), and
+the same register is on [RiptOPL's site](https://nathanneurotic.github.io/RiptOPL/fork-gaps.html).
 
 | Tree | Ref | Commit |
 | --- | --- | --- |
@@ -159,6 +160,31 @@ Everything above. The open console checks, in priority order:
 8. Each RIPPS2 port as it lands. The MMCE Game ID wait and mmceman `21dbc0a` need an SD2PSX with
    sd2psXtd firmware (8 MB card, Burnout 3) and an MMCE in slot 1 with a normal card in slot 2.
 
+## 5. Ecosystem head check
+
+On 2026-10-28 at 06:28 UTC every repository ref from the October 25 sweep, 134 in all, was
+checked again with `git ls-remote`: 10 changed, 124 unchanged, none unavailable. The ref list is
+[`audit/2026-10-28/repository-heads.json`](https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-10-28/repository-heads.json) on the site.
+Three of the changed repositories are ours (Open-PS2-Loader, Launchstation, PS2-Servers). The
+others:
+
+| Project | Head | What changed |
+| --- | --- | --- |
+| [RIPPS2](https://github.com/akilluminati47/RIPPS2) | [`e1e3504f` to `1f356eec`](https://github.com/akilluminati47/RIPPS2/compare/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9...1f356eecfeda6e11e018ed8c03b320862455c659) | Builds 115 to 119. Up to `95299389` is covered by section 3. Newer and not yet checked against our code: 16:9 art crop (`c2b94d6`), boot sound sent by the IO worker only and media with Music off (`1f356ee`). |
+| [YAOPL](https://github.com/belomaxorka/yaopl) | [`33a2b19a` to `ac3cf25c`](https://github.com/belomaxorka/yaopl/compare/33a2b19a8afa37b50015eeb1414f575b2270ac7d...ac3cf25c6dd05570e75b2dffff44ee46dd4d6361) | UDPBD device in the OPL core (`b3ff109`), which RiptOPL already has; the LBA48 ATA fix (`e09f548`), see YA2 below; docs site, CI, changelog. |
+| [LUNA](https://github.com/dnunezx/LUNA) | [`78096fb3` to `193f1879`](https://github.com/dnunezx/LUNA/compare/78096fb32900d561b2fca7716a2d029cbce11caa...193f1879c5cecaf931f8ffa6dcb897cd981e97c6) | Crystal menus, unified PS1/PS2 memory cards, widescreen cheat fixes with a paired Neutrino handoff, manual CI builds (commit messages only). |
+| [neutrino-luna](https://github.com/dnunezx/neutrino-luna) | [`02cbf4f2` to `833344a5`](https://github.com/dnunezx/neutrino-luna/compare/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15...833344a570e3622ea315091284c8444f7e06bc88) | Long LUNA launch arguments survive PS2 startup (commit message only). |
+| [xeRAbora](https://github.com/hacan359/xerabora) | [`faf24cdd` to `41dacb12`](https://github.com/hacan359/xerabora/compare/faf24cdd4e2790868c880899bd58c8f775539d50...41dacb12f0050fe693fb99a215f171a252e32cfd) | Release 1.0.1 of the desktop companion. |
+| [OdysseyLauncher](https://github.com/GeekRhapsody/OdysseyLauncher) | [`bc1b8593` to `ac21ee45`](https://github.com/GeekRhapsody/OdysseyLauncher/compare/bc1b85931871a65b6948764d00cd5182e2e873b8...ac21ee45ef77f96f7eadd42468988237192dbb50) | v0.20.0, 3D console models; desktop frontend. |
+| [PS2SP](https://github.com/johnson-cooper/PS2SP) | [`cb040e79` to `7f6fb2d4`](https://github.com/johnson-cooper/PS2SP/compare/cb040e79dfd467aa99252575c9d6fd97684116de...7f6fb2d404abcf8cd12e709e3b0441f011adea48) | Catalogue automation; not a loader feature. |
+
+New register record **YA2**. `modules/iopcore/cdvdman/atad.c` counts the sectors of one LBA48
+command in a 16-bit `len` (line 675). A request of 65,536 sectors or more stores 0, advances by
+nothing and repeats forever while holding the ATA semaphore. RiptOPL and Open-PS2-Loader both
+have it. YAOPL `e09f548` and [ps2sdk PR 913](https://github.com/ps2dev/ps2sdk/pull/913) fix it by
+counting each command in a 32-bit chunk. No known caller sends a request that large, so this is
+hardening. Source review only; not tested on hardware.
+
 Sources: the parity switch-readiness report and final sweep (2026-10-27), the fix cross-check
-(2026-10-28) and the RIPPS2 audit (2026-10-28), rechecked against the commits in the table at the
-top.
+(2026-10-28), the RIPPS2 audit (2026-10-28) and the ecosystem head check (2026-10-28), rechecked
+against the commits in the table at the top.
