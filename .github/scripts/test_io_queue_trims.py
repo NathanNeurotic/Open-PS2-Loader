@@ -192,6 +192,8 @@ static int gEnablePCCF, pccfModLoaded;
 static unsigned int pccfAttemptGeneration, pccfProbeGeneration = 1;
 static int gEnableUSB, iUSBModLoaded, gEnableILK, iLinkModLoaded, gEnableMX4SIO, mx4sioModLoaded;
 static int gEnableBdmHDD, hddModLoaded, gEnableUDPBD, udpbdNicClaimed;
+static int hostBoot;
+static int oplBootDirIsHostFs(void) { return hostBoot; }
 static int ethGetModulesLoaded(void) { return 0; }
 static int udpfsGetModulesLoaded(void) { return 0; }
 
@@ -208,6 +210,9 @@ int main(void)
     if (bdmShouldQueueModuleLoad() != 0) { printf("FAIL USB on and loaded: no pass is needed\n"); failed = 1; }
     gEnableUSB = 0; iUSBModLoaded = 0; gEnableMX4SIO = 1;
     if (bdmShouldQueueModuleLoad() != 1) { printf("FAIL USB off must not hide an MX4SIO that still needs loading\n"); failed = 1; }
+    hostBoot = 1;
+    if (bdmShouldQueueModuleLoad() != 0) { printf("FAIL a host: (PCSX2) boot must not queue an MX4SIO load\n"); failed = 1; }
+    hostBoot = 0;
     gEnableMX4SIO = 0;
     gEnableUDPBD = 1;
     if (bdmShouldQueueModuleLoad() != 1) { printf("FAIL unloaded UDPBD needs a pass\n"); failed = 1; }

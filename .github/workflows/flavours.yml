@@ -190,6 +190,8 @@ jobs:
         run: python3 .github/scripts/test_config_save_integrity.py
       - name: Check a settings home on a never-mounted mass slot falls back to the booted ELF's slot
         run: python3 .github/scripts/test_bdm_empty_literal_slot.py
+      - name: Check that a host (PCSX2) boot never loads MX4SIO
+        run: python3 .github/scripts/test_mx4sio_host_boot.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
       - name: Check optional game titles fall back without changing metadata

@@ -2443,7 +2443,7 @@ static int bootHomeIsKnownMmce(void)
 // boot-device fast path in OPL misses -- OPL literally cannot tell where it booted from and falls
 // back to exhaustive device discovery. It is nevertheless a real readable and writable filesystem,
 // so recognise it explicitly instead of treating an emulator boot as an unknown device.
-static int oplBootDirIsHostFs(void)
+int oplBootDirIsHostFs(void)
 {
     const char *p;
 
