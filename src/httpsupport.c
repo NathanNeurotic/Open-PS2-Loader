@@ -808,7 +808,7 @@ static int httpGetImage(item_list_t *itemList, char *folder, int isRelative, cha
     else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
 
-    return texDiscoverLoad(resultTex, path, -1);
+    return texDiscoverArt(resultTex, path);
 }
 
 static void httpCleanUp(item_list_t *itemList, int exception)

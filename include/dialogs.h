@@ -48,7 +48,7 @@ enum UI_ITEMS {
     CFG_APPMODE,
     CFG_MMCEMODE,
     CFG_FAVMODE,
-    CFG_ALLGAMES, // All Games list (RIPPS2): one page for every started source
+    CFG_ALLGAMES,   // All Games list (RIPPS2): one page for every started source
     CFG_SHOWHIDDEN, // Show Hidden Games (RIPPS2 Hide Game)
     CFG_MMCEPREFIX,
     CFG_MMCESLOT,

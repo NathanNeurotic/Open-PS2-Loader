@@ -1260,10 +1260,10 @@ static int texLoadArtFile(GSTEXTURE *texture, const char *filePath)
 
 // One art name without extension. Where the art worker holds the folder's listing, one look in RAM finds it in any
 // letter case as .png, .jpg or .jpeg and opens it by the name the device lists (PFS minds case). Without a listing
-// (SMB, UDPFS, a folder too big to index) <stem>.png and then <stem>.jpg are tried on the device.
+// (SMB, UDPFS, a folder too big to index) <stem>.png, <stem>.jpg and then <stem>.jpeg are tried on the device.
 static int texFindArt(GSTEXTURE *texture, const char *stem)
 {
-    static const char *const ext[] = {"png", "jpg"};
+    static const char *const ext[] = {"png", "jpg", "jpeg"};
     char filePath[256];
     int result = ERR_BAD_FILE;
     int found = artIndexFindPicture(stem, filePath, sizeof(filePath));
@@ -1315,6 +1315,23 @@ int texArtAlias(const char *stem, char *out, int outSize)
     return 0;
 }
 
+// Game art (RIPPS2 build 115): the name asked for, as PNG or JPG in any letter case, then OPL Manager's name for the
+// same piece. A picture found, an abort or a transient failure ends the search. Only the itemGetImage callers use
+// this; theme images stay on texDiscoverLoad's single .png probe.
+int texDiscoverArt(GSTEXTURE *texture, const char *path)
+{
+    char filePath[256];
+    int result;
+
+    LOG("texDiscoverArt(%s)\n", path);
+    result = texFindArt(texture, path);
+    if (result != ERR_BAD_FILE || texLoadAbortRequested())
+        return (result >= 0) ? 0 : result;
+    if (texArtAlias(path, filePath, sizeof(filePath)))
+        result = texFindArt(texture, filePath);
+    return (result >= 0) ? 0 : result;
+}
+
 int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId)
 {
     char filePath[256];
@@ -1323,18 +1340,10 @@ int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId)
 
     LOG("texDiscoverLoad(%s)\n", path);
 
-    if (texId == -1) {
-        // Game art (RIPPS2 build 115): the name asked for, as PNG or JPG in any letter case, then OPL Manager's
-        // name for the same piece. A picture found, an abort or a transient failure ends the search.
-        result = texFindArt(texture, path);
-        if (result != ERR_BAD_FILE || texLoadAbortRequested())
-            return (result >= 0) ? 0 : result;
-        if (texArtAlias(path, filePath, sizeof(filePath)))
-            result = texFindArt(texture, filePath);
-        return (result >= 0) ? 0 : result;
-    }
-
-    snprintf(filePath, sizeof(filePath), "%s%s.%s", path, internalDefault[texId].name, "png");
+    if (texId != -1)
+        snprintf(filePath, sizeof(filePath), "%s%s.%s", path, internalDefault[texId].name, "png");
+    else
+        snprintf(filePath, sizeof(filePath), "%s.%s", path, "png");
 
     // ASK RAM BEFORE ASKING THE DEVICE. This is the single choke point every loose-file texture goes
     // through -- all six itemGetImage implementations, the VCD POPS fallback, and the theme loader --

@@ -3043,7 +3043,7 @@ static int hddGetImage(item_list_t *itemList, char *folder, int isRelative, char
         snprintf(path, sizeof(path), "%s%s/%s_%s", gHDDPrefix, folder, value, suffix);
     else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
-    return texDiscoverLoad(resultTex, path, -1);
+    return texDiscoverArt(resultTex, path);
 }
 
 static int hddGetTextId(item_list_t *itemList)

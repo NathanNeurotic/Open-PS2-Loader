@@ -4,7 +4,7 @@
    .jpg and .jpeg (a .png wins), and hands back the name the device lists (PFS minds case).
 2. texArtAlias maps OPL Manager's names (_BG_00, _SCR_00, _SCR_01) to OPL's (_BG, _SCR, _SCR2) and back,
    and only inside an ART folder.
-3. Art lookups go through texFindArt (index first, then <stem>.png and <stem>.jpg) and then the alias; the
+3. Art lookups go through texDiscoverArt -> texFindArt (index first, then <stem>.png, .jpg and .jpeg) and then the alias; the
    ART .tar tries the alias too and decodes JPG members.
 """
 from pathlib import Path
@@ -101,10 +101,16 @@ int main(void) {
     subprocess.run([str(exe)], check=True)
 print('ok   OPL Manager names: _BG <-> _BG_00, _SCR <-> _SCR_00, _SCR2 <-> _SCR_01, ART folders only')
 
-discover = function(tex, 'int texDiscoverLoad(')
+discover = function(tex, 'int texDiscoverArt(')
 assert discover.index('texFindArt(texture, path)') < discover.index('texArtAlias(path'), 'alias must come after the asked-for name'
 find = function(tex, 'static int texFindArt(')
-assert 'artIndexFindPicture(' in find and '"png", "jpg"' in find, 'texFindArt must use the index, then probe .png and .jpg'
+assert 'artIndexFindPicture(' in find and '"png", "jpg", "jpeg"' in find, 'texFindArt must use the index, then probe .png, .jpg and .jpeg'
+# Theme images keep one .png probe: only game art looks for JPGs (CodeRabbit on #1084).
+theme_load = function(tex, 'int texDiscoverLoad(')
+assert 'texFindArt(' not in theme_load and '"%s.%s", path, "png"' in theme_load, 'theme images must keep the single .png probe'
+for f in ('hddsupport.c', 'udpfssupport.c', 'bdmsupport.c', 'ethsupport.c', 'mmcesupport.c', 'appsupport.c', 'httpsupport.c'):
+    body = (root / 'src' / f).read_text()
+    assert 'texDiscoverArt(resultTex, path)' in body and 'texDiscoverLoad(resultTex, path, -1)' not in body, f + ' must load game art through texDiscoverArt'
 art_file = function(tex, 'static int texLoadArtFile(')
 for code in ('ERR_BAD_FILE', 'ERR_FILE_IO', 'ERR_LOAD_ABORTED'):
     assert code in art_file, code + ' must not be retried as a JPG'

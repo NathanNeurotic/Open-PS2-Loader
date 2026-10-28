@@ -242,4 +242,6 @@ opl = (root / 'src/opl.c').read_text()
 assert 'startMode = gAllGames ? START_MODE_AUTO : gFAVStartMode;' in opl
 assert 'if (gAllGames && list_support[FAV_MODE].support != NULL)\n        bootMode = FAV_MODE;' in opl
 assert '(gFAVStartMode || gAllGames) && mod->support->mode != FAV_MODE' in opl, 'source changes must rebuild the list'
+assert 'if (!gFAVStartMode && !gAllGames) // Favourites and All Games both off' in opl, 'R3 must work with All Games on and Favourites off'
+assert 'if (gFAVStartMode || gAllGames)\n            menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);' in opl, 'the R3 hint must show with All Games on'
 print('ok   the page starts with the setting, boots first, and follows every source refresh')

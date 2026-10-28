@@ -167,9 +167,9 @@ static struct dirent *readdir(DIR *dir)
     return &returnedEntry;
 }
 static int closedir(DIR *dir) { (void)dir; return 0; }
-static int texDiscoverLoad(GSTEXTURE *tex, const char *path, int id)
+static int texDiscoverArt(GSTEXTURE *tex, const char *path)
 {
-    (void)tex; (void)id;
+    (void)tex;
     imageCalls++;
     snprintf(imagePath, sizeof(imagePath), "%s", path);
     return 0;

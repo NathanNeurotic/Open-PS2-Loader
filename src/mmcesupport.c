@@ -435,7 +435,7 @@ static int mmceTryLoadImage(const char *prefix, char *folder, int isRelative, ch
     else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
 
-    return texDiscoverLoad(resultTex, path, -1);
+    return texDiscoverArt(resultTex, path);
 }
 
 int mmceDetectSlot(void)

@@ -357,7 +357,7 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
 
         menuAddHint(&mod->menuItem, _STR_REFRESH, SELECT_ICON);
 
-        if (gFAVStartMode)
+        if (gFAVStartMode || gAllGames)
             menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);
 
         // L3 moves the page around its ring of lists. Both and Mixed expose rings; PS2/PS1 pin an
@@ -723,7 +723,7 @@ static int itemFavKind(item_list_t *support, int id, const char *text)
 // itself R3 removes; on any source list it adds/removes by (mode, id, text).
 static void itemExecFav(struct menu_item *curMenu)
 {
-    if (!gFAVStartMode) // Favourites disabled -> R3 is a no-op (no hidden writes)
+    if (!gFAVStartMode && !gAllGames) // Favourites and All Games both off -> R3 is a no-op (no hidden writes)
         return;
 
     if (!curMenu->current)

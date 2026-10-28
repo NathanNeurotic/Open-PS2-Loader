@@ -148,6 +148,8 @@ int texLookupInternalTexId(const char *name);
 int texLoadInternal(GSTEXTURE *texture, int texId);
 int texLoadFromMemory(GSTEXTURE *texture, const void *buf, u32 size);
 int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId);
+// Game art for itemGetImage: <path> as PNG, JPG or JPEG in any letter case, then OPL Manager's name for it.
+int texDiscoverArt(GSTEXTURE *texture, const char *path);
 // A PNG or JPG game art picture already in RAM (an ART .tar member); a JPG is shrunk to a full screen when
 // background is set, to 512 on a side otherwise.
 int texLoadArtFromMemory(GSTEXTURE *texture, const void *buf, u32 size, int background);

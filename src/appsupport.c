@@ -1258,7 +1258,7 @@ static int appGetImage(item_list_t *itemList, char *folder, int isRelative, char
     if (!isRelative) {
         char path[256];
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
-        return texDiscoverLoad(resultTex, path, -1);
+        return texDiscoverArt(resultTex, path);
     }
 
     app = appLookupByStartup(value);

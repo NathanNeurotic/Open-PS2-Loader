@@ -2875,7 +2875,7 @@ static int bdmGetImage(item_list_t *itemList, char *folder, int isRelative, char
         snprintf(path, sizeof(path), "%s%s/%s_%s", pDeviceData->bdmPrefix, folder, value, suffix);
     else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
-    int r = texDiscoverLoad(resultTex, path, -1);
+    int r = texDiscoverArt(resultTex, path);
     // ART LIVES IN THE ART FOLDER, and nowhere else. A PS1 cover is
     // ART/<name>_COV.png -- the same rule as a PS2 title -- which the texDiscoverLoad
     // above already tried. A miss is simply "no cover": there is no second directory to
