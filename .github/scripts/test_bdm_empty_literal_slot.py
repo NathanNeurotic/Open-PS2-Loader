@@ -29,7 +29,7 @@ assert "elfName != NULL && elfName[0] != '\\0'" in boot
 assert 'result < 0 && knownType == BDM_TYPE_UNKNOWN &&' in boot
 assert 'bdmPickBootElfSlot(unit, MAX_BDM_DEVICES, bdmBootElfProbeAt, &probe)' in boot
 util = (ROOT / 'src/util.c').read_text()
-assert 'int savedErrno = bdmFatfsOpenErrno(fpath, errno != 0 ? errno : EIO);' in util
+assert 'int savedErrno = errno != 0 ? bdmFatfsOpenErrno(fpath, errno) : EIO;' in util
 
 production = function('src/bdmsupport.c', 'static int bdmPickBootElfSlot(')
 production += function('src/util.c', 'int bdmFatfsOpenErrno(')

@@ -429,7 +429,7 @@ file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned
     if (truncates) {
         fd = openFile(fpath, mode);
         if (fd < 0) {
-            int savedErrno = bdmFatfsOpenErrno(fpath, errno != 0 ? errno : EIO);
+            int savedErrno = errno != 0 ? bdmFatfsOpenErrno(fpath, errno) : EIO;
             free(fileBuffer->buffer);
             free(fileBuffer);
             errno = savedErrno;
