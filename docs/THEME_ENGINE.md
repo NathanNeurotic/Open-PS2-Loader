@@ -135,10 +135,18 @@ counter (`12/40`) sits under the grid's lower right corner. Idea: KrahJohlito (m
 | `overlay`, `overlay2`, overlay corners | Native frame layers, scaled with each cover. Author corners against the element's `width` / `height`. |
 | `font` | Font for the position counter. |
 
-Keep a one-row `ItemsList` in the same family for the selected title. Adding a `Grid` element turns
-Left/Right into cover steps and Up/Down into row steps on every main browse page in that theme.
+Keep a one-row `ItemsList` in the same family for the selected title. Left/Right step covers and
+Up/Down step rows on the pages whose family has a `Grid` element (a family without one, such as
+`appsMain` falling back to `main`, uses the family it falls back to); other pages keep their own
+navigation.
 
 ```ini
+main0:
+    type=Background
+    default=incebtion
+    aligned=0
+    width=DIM_INF
+    height=DIM_INF
 main1:
     type=Grid
     default=cover
@@ -306,7 +314,7 @@ where neither the view nor the base has a block.
 
 | Key | Value | Meaning |
 |---|---|---|
-| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: the theme's own view (from its base blocks: a `PSBBNFlow` element = psbbn, a `Coverflow` element = coverflow, a `Grid` element = grid, else list) plus every view it declares a `<view>.` key for. |
+| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: the theme's own view (the first `PSBBNFlow`, `Coverflow` or `Grid` element among the base's contiguous `mainN` blocks gives psbbn, coverflow or grid, else list; `appsMain`, `vcdMain` and `favsMain` blocks do not count, so a theme that only draws its apps page as a Grid lists `grid` in `views=` or declares a `grid.` block) plus every view it declares a `<view>.` key for. |
 | `default_view` | a view name | The view used until the user picks one, and when the user's pick is not offered. Absent (or naming a view the theme does not offer): the theme's own view if `views=` offers it, else the first offered view in the order list, coverflow, psbbn, grid. |
 | `<view>.inherit` | `0` | That view never falls back to the base blocks: it brings its whole main and info layout. Use it when a view shares little with the base, instead of a long list of `<view>.mainN_enabled=0` lines. |
 | `<view>.<global key>` | as the key | Overrides `use_default`, `use_real_height`, `coverflow_cover_offset` and the colour keys in that view. |

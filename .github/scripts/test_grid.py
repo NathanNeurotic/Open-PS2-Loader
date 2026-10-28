@@ -23,10 +23,13 @@ assert '(1u << THM_VIEW_GRID)' in THEMES
 assert 'theme_grid.o' in MAKEFILE and 'misc/theme_grid.cfg' in MAKEFILE
 assert 'type=Grid' in CFG and 'type=Coverflow' not in CFG
 assert 'names[4] = "Grid";' in GUI and '#define GUI_THEME_VIEW_PICKS 4' in GUI
-# Up/Down step a row in the Grid view; Left/Right step a cover as in Coverflow.
+# Up/Down step a row in the Grid view; Left/Right step a cover as in Coverflow. Both follow the family
+# the page on screen draws, so a Coverflow games page in a theme with a Grid apps page keeps its keys.
 assert 'gridRowStep(count, index, gTheme->gridColumns, dir)' in MENUSYS
-assert MENUSYS.count('if (gTheme->coverflow || gTheme->grid)') == 2
-assert MENUSYS.count('if (gTheme->grid)') == 2
+assert 'return menuGetMainElems((item_list_t *)selected_item->item->userdata)->hasGrid;' in MENUSYS
+assert MENUSYS.count('if (gTheme->coverflow || menuPageIsGrid())') == 2
+assert MENUSYS.count('if (menuPageIsGrid())') == 2
+assert 'elems->hasGrid = 1;' in THEMES
 
 program = r'''
 #include <assert.h>

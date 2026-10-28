@@ -147,6 +147,8 @@ typedef struct theme_elems
     // Set when this family contains a SaveIcon, which reads the row's per-game VMC names: the
     // per-game config is then fetched for it, but only while 3D Save Icons is switched on.
     unsigned char needsSaveIconConfig;
+    // Set when this family contains a Grid: Left/Right and Up/Down follow the grid on its pages only.
+    unsigned char hasGrid;
 } theme_elems_t;
 
 typedef struct

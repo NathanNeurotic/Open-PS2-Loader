@@ -2213,9 +2213,18 @@ static void menuGridRow(int dir)
     sfxPlay(SFX_CURSOR);
 }
 
+// Whether the page on screen draws a Grid. A theme can mix views per family (a Coverflow games page and
+// a Grid apps page), so this follows the family the page draws, not the theme-wide gTheme->grid.
+static int menuPageIsGrid(void)
+{
+    if (gTheme->grid == NULL || selected_item == NULL || selected_item->item == NULL)
+        return 0;
+    return menuGetMainElems((item_list_t *)selected_item->item->userdata)->hasGrid;
+}
+
 static void menuNavigateLeft()
 {
-    if (gTheme->coverflow || gTheme->grid)
+    if (gTheme->coverflow || menuPageIsGrid())
         menuPrevV();
     else
         menuPrevH();
@@ -2223,7 +2232,7 @@ static void menuNavigateLeft()
 
 static void menuNavigateRight()
 {
-    if (gTheme->coverflow || gTheme->grid)
+    if (gTheme->coverflow || menuPageIsGrid())
         menuNextV();
     else
         menuNextH();
@@ -2231,7 +2240,7 @@ static void menuNavigateRight()
 
 static void menuNavigateUp()
 {
-    if (gTheme->grid)
+    if (menuPageIsGrid())
         menuGridRow(-1);
     else if (gTheme->coverflow)
         menuPrevH();
@@ -2241,7 +2250,7 @@ static void menuNavigateUp()
 
 static void menuNavigateDown()
 {
-    if (gTheme->grid)
+    if (menuPageIsGrid())
         menuGridRow(1);
     else if (gTheme->coverflow)
         menuNextH();
