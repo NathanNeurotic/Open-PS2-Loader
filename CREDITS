@@ -185,6 +185,12 @@ Our daughter project:
     PS2-inspired front end that now offers a downloadable PS2 ELF; see its own
     releases and compatibility notes for current builds.
     The project is still alpha.
+    Fixes and features ported from RIPPS2 (each commit names the RIPPS2 build): the IOP-reset
+    module latches, the MMCE Game ID card wait, the POPS files check, the FreeType module trim, JPG
+    game art with OPL Manager art names in any letter case, the recently played list, Sort Games:
+    Last played, Random Game, the All Games list, Hide Game, Delete everything, Arabic and Persian
+    letter joining with right-to-left lines, CJK, Thai and Lao line breaks, and the Drive Status
+    page with DIAG.TXT.
 
 Planned collaboration:
 

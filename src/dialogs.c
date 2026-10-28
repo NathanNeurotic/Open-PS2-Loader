@@ -4,6 +4,7 @@
 #include "include/lang.h"
 #include "include/gui.h"
 #include "include/guigame.h"
+#include "include/drivestatus.h"
 
 #include <stdio.h>
 
@@ -506,6 +507,16 @@ struct UIItem diaDeviceConfig[] = {
     {UI_ENUM, CFG_FAVMODE, 1, 1, _STR_HINT_FAVMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ALL_GAMES_LIST}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_ALLGAMES, 1, 1, _STR_HINT_ALL_GAMES, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHOW_HIDDEN_GAMES}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_SHOWHIDDEN, 1, 1, _STR_HINT_SHOW_HIDDEN_GAMES, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
     {UI_BREAK},
@@ -861,6 +872,11 @@ struct UIItem diaUIConfig[] = {
     {UI_ENUM, UICFG_FONT_SIZE, 1, 1, _STR_HINT_FONT_SIZE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GLYPH_SET}}},
+    {UI_SPACER},
+    {UI_ENUM, UICFG_GLYPH_SET, 1, 1, _STR_HINT_GLYPH_SET, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     // Theme-specific presentation controls stay together.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_SETTINGS}}},
     {UI_SPACER},
@@ -886,7 +902,7 @@ struct UIItem diaUIConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_AUTOSORT}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_AUTOSORT, 1, 1, _STR_HINT_AUTOSORT, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_AUTOSORT, 1, 1, _STR_HINT_AUTOSORT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_AUTOREFRESH}}},
@@ -1369,6 +1385,48 @@ struct UIItem diaVMC[] = {
     {UI_BUTTON, VMC_BUTTON_DELETE, 1, 1, _STR_HINT_VMC_DELETE, 0, 0, {.label = {NULL, _STR_DELETE}}},
     {UI_SPACER},
     {UI_BUTTON, VMC_BUTTON_REBUILD, 0, 0, _STR_HINT_VMC_REBUILD, 0, 0, {.label = {NULL, _STR_VMC_REBUILD}}},
+    {UI_SPACER},
+    {UI_BUTTON, VMC_BUTTON_SAVES, 0, 0, _STR_HINT_VMC_SAVES, 0, 0, {.label = {NULL, _STR_VMC_SAVES}}},
+    {UI_BREAK},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
+// Per-Game Game Settings > VMC Menu > Saves (RIPPS2, akilluminati47): the card's saves beside a folder of saves
+struct UIItem diaVMCSaves[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VMC_SAVES}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_ON_CARD}}},
+    {UI_SPACER},
+    {UI_ENUM, VMCSAVES_CARD, 1, 1, _STR_HINT_VMC_ON_CARD, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_FREE}}},
+    {UI_SPACER},
+    {UI_LABEL, VMCSAVES_FREE, 0, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_IN_FOLDER}}},
+    {UI_SPACER},
+    {UI_ENUM, VMCSAVES_FOLDER, 1, 1, _STR_HINT_VMC_IN_FOLDER, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_FOLDER}}},
+    {UI_SPACER},
+    {UI_LABEL, VMCSAVES_PATH, 0, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+
+    {UI_BREAK},
+
+    // buttons
+    {UI_BUTTON, VMCSAVES_EXPORT, 1, 1, _STR_HINT_VMC_EXPORT, 0, 0, {.label = {NULL, _STR_VMC_EXPORT}}},
+    {UI_SPACER},
+    {UI_BUTTON, VMCSAVES_IMPORT, 1, 1, _STR_HINT_VMC_IMPORT, 0, 0, {.label = {NULL, _STR_VMC_IMPORT}}},
+    {UI_SPACER},
+    {UI_BUTTON, VMCSAVES_DELETE, 1, 1, _STR_HINT_VMC_SAVE_DELETE, 0, 0, {.label = {NULL, _STR_DELETE}}},
     {UI_BREAK},
 
     // end of dialog
@@ -1752,6 +1810,54 @@ struct UIItem diaPadMacroConfig[] = {
     // end of dialog
     {UI_TERMINATOR}};
 #endif
+
+// Drive Status (main menu; RIPPS2 build 114 by akilluminati47): one line per drive, set by guiShowDriveStatus; unused
+// lines are hidden and take no room
+struct UIItem diaDriveStatus[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_DRIVE_STATUS}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, DSTAT_LINE_FIRST + 0, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 1, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 2, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 3, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 4, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 5, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 6, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 7, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 8, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 9, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 10, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 11, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 12, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 13, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 14, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, DSTAT_LINE_FIRST + 15, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+
+    {UI_SPLITTER},
+    {UI_BUTTON, DSTAT_SAVE_DIAG, 1, 1, _STR_HINT_SAVE_DIAGNOSTICS, 0, 0, {.label = {NULL, _STR_SAVE_DIAGNOSTICS}}},
+    {UI_BREAK},
+
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
+    {UI_BREAK},
+
+    {UI_TERMINATOR}};
 
 // About Menu
 struct UIItem diaAbout[] = {

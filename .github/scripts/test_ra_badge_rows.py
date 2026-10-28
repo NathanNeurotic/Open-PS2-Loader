@@ -24,7 +24,7 @@ program = r'''
 #define RETROACHIEVEMENTS 1
 enum { GUI_OP_APPEND_MENU = 1 };
 typedef struct submenu_item {
-    int icon_id, text_id, id, isFolder, raBadged;
+    int icon_id, text_id, id, isFolder, lastPlayed, favourited, raBadged;
     char *text, *raText;
     int *cache_id, *cache_uid;
 } submenu_item_t;
@@ -39,7 +39,7 @@ typedef struct menu_item {
 struct gui_update_t {
     int type;
     struct { menu_item_t *menu; submenu_list_t **subMenu; } menu;
-    struct { int icon_id, id, text_id, isFolder, raBadged, selected, autoStart; char *text, *raText; } submenu;
+    struct { int icon_id, id, text_id, isFolder, lastPlayed, favourited, raBadged, selected, autoStart; char *text, *raText; } submenu;
 };
 struct gui_update_list_t {
     struct gui_update_t *item;

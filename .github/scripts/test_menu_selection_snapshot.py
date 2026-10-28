@@ -28,6 +28,7 @@ typedef struct { struct { int id; } item; } Row;
 typedef struct { int visible; item_list_t *userdata; Row *current; char *text; int text_id; } Item;
 typedef struct menu_list { Item *item; struct menu_list *next,*prev; } menu_list_t;
 static menu_list_t *selected_item, *replaceOnLock;
+static int menuItemShown(const Item *item) { return item->visible; }
 static int itemConfigId=-1, menuSemaId=1, depth, waits, signals, sounds, resets, queues;
 static unsigned int itemConfigGeneration;
 static item_list_t *itemConfigList;

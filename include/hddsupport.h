@@ -8,6 +8,9 @@
 
 // Read loose BDMA payloads from existing __common/POPS without moving the data home.
 int hddEquipPopstarterBdmaFromCommon(int mode, char *diag, int diagSize);
+// Hand visit() __common/POPS/, read only, when the HDD stack is already up (nothing is started for it).
+// Returns what visit() returned, 0 when the folder could not be reached.
+int hddVisitCommonPops(int (*visit)(const char *folder, void *arg), void *arg);
 
 #define HDL_GAME_NAME_MAX 64
 
@@ -85,6 +88,7 @@ typedef enum {
 
 int hddCheck(void);
 u32 hddGetTotalSectors(void);
+int hddGetSpace(u32 *totalSectors, u32 *freeSectors); // Drive Status: 0 when no formatted APA drive answers
 int hddIs48bit(void);
 int hddSetTransferMode(int type, int mode);
 void hddSetIdleTimeout(int timeout);
@@ -117,6 +121,7 @@ int hddLoadModules(void);
 // Pure residency check: unlike hddLoadModulesReady(), never tries to load the ATA
 // stack. Both checks are non-acquiring once the modules are resident (one DEV9 owner).
 int hddModulesAreLoaded(void);
+void hddIopWasReset(void); // forget the module latches after an in-menu IOP reset
 // 1 for an APA+MBR hybrid ("APA-Jail", e.g. PSBBN Definitive): valid APA header plus a FAT/exFAT MBR
 // partition beyond the APA reserved area. Read-only two-sector probe; needs the ATA stack loaded.
 int hddIsApaMbrHybrid(void);

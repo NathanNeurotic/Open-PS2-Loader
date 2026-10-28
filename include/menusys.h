@@ -33,6 +33,8 @@ typedef struct submenu_item
     int favourited;
     /// 1 when this row is a browsable folder, not a launchable game -- checklist item 34
     int isFolder;
+    /// Sort Games: Last played rank, 1 = newest .. RECENT_MAX_ITEMS; 0 = not recent. Resolved on the I/O thread.
+    int lastPlayed;
 #ifdef RETROACHIEVEMENTS
     /// Watch-list presence, resolved on the I/O thread. The renderer never reads the mutable
     /// badge cache, and raText owns a display snapshot independently of that cache.
@@ -110,6 +112,9 @@ void menuEnd();
 // True once the global menu list contains a registered device/mode tab; initSupport uses the FALSE
 // case to spot "user enabled the FIRST tab from the start menu" (#254).
 int menuHasRegisteredItems(void);
+// Whether a page's tab is shown: visible, and not a started device whose games the All Games list
+// holds. Navigation and the tab bar use this; `visible` itself keeps its device-present meaning.
+int menuItemShown(const struct menu_item *item);
 void menuReinitMainMenu(void);
 struct _item_list_t;
 void menuInitGameMenu(struct _item_list_t *support);

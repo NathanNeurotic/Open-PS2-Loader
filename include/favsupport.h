@@ -8,6 +8,7 @@
 #define FAV_MAX_ITEMS         512        // cap on records read from favourites.bin
 #define FAV_MAGIC             0x4641464F // 'OFAV' (little-endian on the EE)
 #define FAV_VERSION           3          // v3 widens v2's isVcd byte to a KIND (see FAV_KIND_*)
+#define RECENT_MAX_ITEMS      10         // recents.bin keeps the last ten games launched
 
 // Defined in favsupport.c; consumed by opl.c/gui.c (config load/save/default).
 extern int gFAVStartMode;
@@ -71,7 +72,28 @@ int removeFavouriteByIdAndText(int mode, int id, const char *text, int kind);
 // Remove the favourite at FAV-list index favIndex (R3 on Favourites). Returns 1 only if saved.
 int favRemoveByIndex(int favIndex);
 
+// All Games: whether the Favourites page's current stop lists every source (not favourites.bin).
+int favListsAllGames(void);
+// The row text to draw: the name, or "name (source)" when two sources hold the same title.
+const char *favGetItemDisplay(int id);
+// 1 when an All Games row is also a favourite (its star).
+int favGetItemStarred(int id);
+// R3 on an All Games row: add or remove it as a favourite. Returns the new star, or -1 when the
+// favourites could not be saved.
+int favToggleByIndex(int favIndex);
+
 // Cheap/idempotent: clears the FAV list + schedules its single deferred rebuild.
 void loadFavourites(void);
+
+// Recently played (recents.bin, beside favourites.bin; same record format, newest first).
+// recentRecord moves a launched game to the front; returns 1 when the file was written.
+int recentRecord(int mode, int id, int icon_id, int text_id, const char *text, int kind);
+// The same for the game behind a Favourites row (any stop), and R3 on a Recent row: star it.
+int recentRecordByIndex(int favIndex);
+int favAddByIndex(int favIndex);
+// 1 for the last game played .. RECENT_MAX_ITEMS, 0 when the row is not recent. IO thread
+// (list rebuild); reads recents.bin once and caches it until recentInvalidate.
+int recentRankForRow(item_list_t *support, int id, const char *text);
+void recentInvalidate(void);
 
 #endif

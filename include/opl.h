@@ -202,6 +202,9 @@ enum {
     APPS_DISPLAY_SPLIT      // Apps <-> PS1ELF via L3; [PS1] in the title selects PS1ELF
 };
 extern int gAppsDisplay;
+// All Games list (RIPPS2): the Favourites page lists every game of every started source, and the
+// device tabs whose games it holds step aside. Defined in favsupport.c; CONFIG_OPL_ALL_GAMES.
+extern int gAllGames;
 // Ember's own settings, brought into the settings.txt files Ember reads when a game launches
 // (cueApplySettings). Each one is EMBER_SETTING_UNSET until the user CHANGES it in RiptOPL: an unset
 // setting is never written or removed, so a settings.txt somebody wrote by hand keeps working.
@@ -330,6 +333,13 @@ extern int gNetProtocolPick;
 // UDPFS-specific Access preference: Files(0) or IMG(1). UDPBD must never change it.
 extern int gUdpfsAccessMode;
 
+// Sort Games: Off, A to Z, or Last played (the last RECENT_MAX_ITEMS games first, newest first).
+enum AUTOSORT_MODES {
+    AUTOSORT_OFF = 0,
+    AUTOSORT_AZ,
+    AUTOSORT_LAST_PLAYED,
+    AUTOSORT_COUNT
+};
 extern int gAutosort;
 extern int gAutoRefresh;
 extern int gEnableNotifications;
@@ -356,6 +366,7 @@ extern int gEnableDiscArt; // ItemIcon/ICO disc artwork; independent of cover ar
 extern int gEnableLogoArt; // Per-game LGO logo artwork; independent of cover/disc/background
 extern int gWideScreen;
 extern int gFontSize; // FONT_SIZE_* (fntsys.h)
+extern int gGlyphSet; // GLYPH_SET_* (themes.h); GLYPH_SET_THEME follows the theme
 extern int gVMode;    // 0 - Auto, 1 - PAL, 2 - NTSC
 extern int gXOff;
 extern int gYOff;

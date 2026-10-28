@@ -115,6 +115,7 @@ int bdmResolveBootDirBootstrap(char *bootDir, int bootDirSize, const char *elfNa
 
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void); // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
+void bdmIopWasReset(void);  // forget the module latches after an in-menu IOP reset
 // Explicit-loader helper: force the requested block-network transport (NET_BOOT_UDPBD /
 // NET_BOOT_UDPFS) up even when its game page is disabled, then wait for its massN: mount.
 int bdmEnsureNetworkSourceModules(int protocol, u32 timeoutMs);
