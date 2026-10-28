@@ -3570,6 +3570,38 @@ static int bdmReadLiteralMassIdentity(int slot, int *outType)
     return 1;
 }
 
+// The one slot other than literalSlot whose elfAt() says it holds the booted ELF; -1 when none or
+// several do, since a guess between two copies is exactly what the literal slot rule refuses.
+static int bdmPickBootElfSlot(int literalSlot, int slotCount, int (*elfAt)(int slot, void *ctx), void *ctx)
+{
+    int found = -1;
+
+    for (int slot = 0; slot < slotCount; slot++) {
+        if (slot == literalSlot || !elfAt(slot, ctx))
+            continue;
+        if (found >= 0)
+            return -1;
+        found = slot;
+    }
+    return found;
+}
+
+struct bdmBootElfProbe
+{
+    const char *tail;
+    const char *elfName;
+};
+
+static int bdmBootElfProbeAt(int slot, void *ctx)
+{
+    const struct bdmBootElfProbe *probe = ctx;
+    int type;
+
+    if (!bdmReadLiteralMassIdentity(slot, &type) || type == BDM_TYPE_UDPBD)
+        return 0;
+    return bdmBootElfPresent(slot, probe->tail, probe->elfName);
+}
+
 // Resolve an explicit massN: boot identity without treating it as an invitation to search every
 // mounted BDM device. The launcher has already named the filesystem slot; after IOP reset the only
 // work required is to let a possible transport register THAT slot, then query its own driver/device
@@ -3720,10 +3752,36 @@ static int bdmResolveBootDirWithBudget(char *bootDir, int bootDirSize, const cha
     }
 
     // A numeric massN: names one filesystem slot. Do not use the boot ELF as a reason to scan
-    // MAX_BDM_DEVICES and potentially select a different device that happens to contain it.
-    if (isMass && unit >= 0)
-        return bdmResolveLiteralMassSlot(unit, ioBdmType, initialBudgetMs, ataInitialBudgetMs,
-                                         mx4sioExtraBudgetMs, expensiveExtraBudgetMs);
+    // MAX_BDM_DEVICES and potentially select a different device that happens to contain it...
+    if (isMass && unit >= 0) {
+        int result = bdmResolveLiteralMassSlot(unit, ioBdmType, initialBudgetMs, ataInitialBudgetMs,
+                                               mx4sioExtraBudgetMs, expensiveExtraBudgetMs);
+        int unused;
+
+        // ...unless that slot never mounted at all. The launcher numbered its own devices, and in a
+        // launcher that also had an exFAT HDD or a second drive up the stick it booted from is not
+        // necessarily mass0: here. Keeping an EMPTY slot read defaults and failed every save with
+        // FatFs's FR_NOT_ENABLED, shown as "(error 12)". A stick that holds the very ELF we run from
+        // is proof, so it is taken -- but only when exactly one slot holds it, never over a slot
+        // that did mount, and only while the home is still unidentified: once boot or a save has
+        // identified the slot (knownType), a stick pulled later must fail the save visibly rather
+        // than move the settings to a second drive that carries another copy of the ELF.
+        if (result < 0 && knownType == BDM_TYPE_UNKNOWN && elfName != NULL && elfName[0] != '\0' &&
+            !bdmReadLiteralMassIdentity(unit, &unused)) {
+            const char *tail = strchr(bootDir, ':') + 1;
+            struct bdmBootElfProbe probe = {tail, elfName};
+            int slot = bdmPickBootElfSlot(unit, MAX_BDM_DEVICES, bdmBootElfProbeAt, &probe);
+            int slotType;
+
+            if (slot >= 0 && bdmReadLiteralMassIdentity(slot, &slotType)) {
+                LOG("BOOT literal mass%d: never mounted; the booted ELF is on mass%d:\n", unit, slot);
+                *ioBdmType = slotType;
+                bdmRewriteBootDir(bootDir, bootDirSize, slot, tail);
+                return 1;
+            }
+        }
+        return result;
+    }
 
     const char *tail = strchr(bootDir, ':') + 1; // "" | "/APPS" | "APPS" (bdmParseBootStem proved the ':')
     // A typed launch alias's unit digit is a scan-order hint. Bare mass: has no literal slot, so its

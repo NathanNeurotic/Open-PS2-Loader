@@ -82,7 +82,7 @@ static int fake_open(char *path, int flags)
     (void)path;
     opens++;
     if (fail_open) {
-        errno = ENXIO;
+        errno = fail_open > 1 ? fail_open : ENXIO; // > 1: the raw value the driver hands back
         return -1;
     }
     if (flags & O_TRUNC)
@@ -191,6 +191,17 @@ int main(void)
     b = openFileBuffer("mass0:/settings.cfg", O_WRONLY | O_CREAT | O_TRUNC, 0, 8);
     assert(b == NULL && errno == ENXIO && opens == 1 && old_unchanged());
 
+    // bdmfs_fatfs leaks FR_NOT_ENABLED (12) for a mass slot with no mounted volume; it must not
+    // reach the user as ENOMEM. The same 12 from a memory card is left alone.
+    reset();
+    fail_open = 12;
+    b = openFileBuffer("mass0:/settings.cfg", O_WRONLY | O_CREAT | O_TRUNC, 0, 8);
+    assert(b == NULL && errno == ENXIO && opens == 1 && old_unchanged());
+    reset();
+    fail_open = 12;
+    b = openFileBuffer("mc0:/OPL/settings.cfg", O_WRONLY | O_CREAT | O_TRUNC, 0, 8);
+    assert(b == NULL && errno == 12 && opens == 1);
+
     // Reads and non-truncating opens must fail fast without allocating
     // when the file cannot be opened (the historical read-path behavior).
     reset();
@@ -288,6 +299,7 @@ int main(void)
 
 c_code = HARNESS.replace("@STRUCT@", file_buffer_type(util_header))
 c_code = c_code.replace("@FUNCTIONS@", "\n\n".join([
+    function(util, "int bdmFatfsOpenErrno(const char *path, int err)"),
     function(util, "file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned int size)"),
     function(util, "void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)"),
     function(util, "int closeFileBuffer(file_buffer_t *fileBuffer)"),
