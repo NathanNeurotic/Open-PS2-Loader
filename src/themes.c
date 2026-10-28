@@ -17,6 +17,7 @@
 #include "include/cuesupport.h"
 #include "include/cfgtitle.h" // optional CFG Title shown for a row (#918)
 #include "include/psbbnflow.h"
+#include "include/themeviews.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rabadge.h" // RA: mark over the cover
 #endif
@@ -64,10 +65,13 @@ extern u16 size_theme_psbbn_flow_cfg;
 
 theme_t *gTheme;
 
-// Set transiently around thmLoad(NULL) to load the embedded coverflow theme instead of
-// the default OPL theme (the built-in "<Coverflow>" entry in the theme list).
-static int gLoadCoverflowBuiltin = 0;
-static int gLoadPsbbnFlowBuiltin = 0;
+// The view the user asked for (THM_VIEW_*), -1 = the theme's default. thmLoad falls back to the theme's
+// default when the theme does not offer it.
+int gThemeViewRequest = -1;
+
+// Parse-time only: the "<view>" block prefix of the view thmLoad is building, "" for the base blocks.
+static const char *thmParseViewPrefix = "";
+static int thmParseViewInherit = 1; // 0 for a <view>.inherit=0 view: no fallback to the base blocks
 
 static int screenWidth;
 static int screenHeight;
@@ -2162,7 +2166,7 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
             configGetStr(config, attributeImage->cache->suffix, (const char **)&attributeImage->currentValue);
         }
         if (attributeImage->currentValue) {
-            if (thmGetGuiValue() == 0 || thmGetGuiValue() == nThemes + 1 || thmGetGuiValue() == nThemes + 2) {
+            if (thmGetGuiValue() == 0) { // <OPL>, in any view
                 GSTEXTURE *texture = thmGetTexture(thmAttributeTexId(attributeImage));
                 if (texture && texture->Mem)
                     rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
@@ -3576,8 +3580,7 @@ static int thmFavKindDeclared(config_set_t *themeConfig, const char *prefix, int
     int j, claimsSlot;
 
     for (j = 0; j < count; j++) {
-        snprintf(name, sizeof(name), "%s%d", prefix, j);
-        if (thmBlockPresent(themeConfig, name, &claimsSlot))
+        if (thmViewResolveSlot(themeConfig, thmParseViewPrefix, thmParseViewInherit, &prefix, 1, j, name, sizeof(name)) && thmBlockPresent(themeConfig, name, &claimsSlot))
             return 1;
     }
     return 0;
@@ -3592,20 +3595,15 @@ static int thmSlotListKept(config_set_t *themeConfig, theme_elems_t *today, cons
 {
     char path[64];
     theme_element_t *e;
-    int k, c, claimsSlot, earlier = 0, kept = 0;
+    int k, claimsSlot, earlier = 0, kept = 0;
 
     for (e = today->first; e != NULL; e = e->next) {
         if (e->type == ELEM_TYPE_ITEMS_LIST && !e->deviceFilter)
             kept++;
     }
     for (k = 0; k < j; k++) {
-        for (c = 0; c < chainLen; c++) {
-            snprintf(path, sizeof(path), "%s%d", chain[c], k);
-            if (thmBlockPresent(themeConfig, path, &claimsSlot)) {
-                earlier += claimsSlot;
-                break;
-            }
-        }
+        if (thmViewResolveSlot(themeConfig, thmParseViewPrefix, thmParseViewInherit, chain, chainLen, k, path, sizeof(path)) && thmBlockPresent(themeConfig, path, &claimsSlot))
+            earlier += claimsSlot;
     }
     return earlier < kept;
 }
@@ -3618,24 +3616,34 @@ static int thmSlotListKept(config_set_t *themeConfig, theme_elems_t *today, cons
 static void addFavKindSlot(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, theme_elems_t *today, const char *prefix, int j, const char *const *chain, int chainLen)
 {
     char path[64];
-    int c, claimsSlot;
+    int claimsSlot;
 
-    snprintf(path, sizeof(path), "%s%d", prefix, j);
-    if (addGUIElem(themePath, themeConfig, theme, elems, NULL, path))
-        return;
-    for (c = 0; c < chainLen; c++) {
-        snprintf(path, sizeof(path), "%s%d", chain[c], j);
-        if (!thmBlockPresent(themeConfig, path, &claimsSlot))
-            continue;
-        if (claimsSlot && !thmSlotListKept(themeConfig, today, chain, chainLen, j))
-            return;
-        theme_element_t *before = elems->last;
+    if (thmViewResolveSlot(themeConfig, thmParseViewPrefix, thmParseViewInherit, &prefix, 1, j, path, sizeof(path))) {
         addGUIElem(themePath, themeConfig, theme, elems, NULL, path);
-        theme_element_t *e = before ? before->next : elems->first;
-        for (; e != NULL; e = e->next)
-            e->inherited = 1;
         return;
     }
+    if (!thmViewResolveSlot(themeConfig, thmParseViewPrefix, thmParseViewInherit, chain, chainLen, j, path, sizeof(path)))
+        return;
+    thmBlockPresent(themeConfig, path, &claimsSlot);
+    if (claimsSlot && !thmSlotListKept(themeConfig, today, chain, chainLen, j))
+        return;
+    theme_element_t *before = elems->last;
+    addGUIElem(themePath, themeConfig, theme, elems, NULL, path);
+    theme_element_t *e = before ? before->next : elems->first;
+    for (; e != NULL; e = e->next)
+        e->inherited = 1;
+}
+
+// Parse block j of a slot family through its fallback chain in the view being built (see
+// thmViewResolveSlot for the order). 0 when no block of the chain is present.
+static int addGUIElemSlot(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *const *chain, int chainLen, int j)
+{
+    char path[THM_VIEW_BLOCK_NAME_LEN];
+
+    if (!thmViewResolveSlot(themeConfig, thmParseViewPrefix, thmParseViewInherit, chain, chainLen, j, path, sizeof(path)))
+        return 0;
+    addGUIElem(themePath, themeConfig, theme, elems, NULL, path);
+    return 1;
 }
 
 static void freeGUIElems(theme_elems_t *elems)
@@ -4066,12 +4074,17 @@ static int thmLoad(const char *themePath)
     }
 
     config_set_t *themeConfig = NULL;
+    // The built-in <OPL> theme offers its List, Coverflow and PSBBN Flow looks as views (they were the
+    // separate <Coverflow> and <PSBBN Flow> themes). Each view is its own embedded cfg, because an edition
+    // such as Korium replaces some of them, so the view picks the buffer.
+    int builtinView = -1;
     if (!themePath) {
         // No theme specified. Prepare and load the default theme.
         themeConfig = configAlloc(0, NULL, NULL);
-        if (gLoadPsbbnFlowBuiltin)
+        builtinView = (gThemeViewRequest == THM_VIEW_COVERFLOW || gThemeViewRequest == THM_VIEW_PSBBN) ? gThemeViewRequest : THM_VIEW_LIST;
+        if (builtinView == THM_VIEW_PSBBN)
             configReadBuffer(themeConfig, &theme_psbbn_flow_cfg, size_theme_psbbn_flow_cfg);
-        else if (gLoadCoverflowBuiltin)
+        else if (builtinView == THM_VIEW_COVERFLOW)
             configReadBuffer(themeConfig, &theme_coverflow_cfg, size_theme_coverflow_cfg);
         else
             configReadBuffer(themeConfig, &conf_theme_OPL_cfg, size_conf_theme_OPL_cfg);
@@ -4081,11 +4094,28 @@ static int thmLoad(const char *themePath)
         configRead(themeConfig); // try to load the theme config file. If it does not exist, defaults will be used.
     }
 
+    // Pick the view to build (docs/MULTI-VIEW-THEMES-PLAN.md). Only that view is parsed; switching views
+    // reloads the theme. A theme that declares no "<view>." keys parses exactly as before.
+    thm_view_info_t viewInfo;
+    thmViewScan(themeConfig, &viewInfo);
+    newT->view = thmViewChoose(&viewInfo, gThemeViewRequest);
+    newT->viewMask = viewInfo.mask;
+    newT->defaultView = viewInfo.defaultView;
+    if (builtinView >= 0) {
+        newT->view = builtinView;
+        newT->viewMask = (1u << THM_VIEW_LIST) | (1u << THM_VIEW_COVERFLOW) | (1u << THM_VIEW_PSBBN);
+        newT->defaultView = THM_VIEW_LIST;
+    }
+    const char *viewPrefix = thmViewPrefix(&viewInfo, newT->view);
+    thmParseViewPrefix = viewPrefix;
+    thmParseViewInherit = thmViewInheritsBase(&viewInfo, newT->view);
+    LOG("THEMES View %s (offered mask 0x%x, native %s, prefix '%s')\n", thmViewName(newT->view), newT->viewMask, thmViewName(viewInfo.native), viewPrefix);
+
     int intValue;
-    if (configGetInt(themeConfig, "use_default", &intValue))
+    if (thmViewGetInt(themeConfig, viewPrefix, "use_default", &intValue))
         newT->useDefault = intValue;
 
-    if (configGetInt(themeConfig, "use_real_height", &intValue)) {
+    if (thmViewGetInt(themeConfig, viewPrefix, "use_real_height", &intValue)) {
         if (intValue)
             newT->usedHeight = screenHeight;
     }
@@ -4101,24 +4131,24 @@ static int thmLoad(const char *themePath)
     //
     // DISK themes are the opposite case and keep these overrides: their colours belong to the theme
     // file, which is why the picker is greyed out read-only for them (issue #537).
-    configGetColor(themeConfig, "bg_color", newT->bgColor);
+    thmViewGetColor(themeConfig, viewPrefix, "bg_color", newT->bgColor);
     // absent key leaves the thmSetColors default (settings picker value; black out of the box)
-    configGetColor(themeConfig, CONFIG_OPL_PLAS_BLEND_COLOR, newT->plasBlendColor);
+    thmViewGetColor(themeConfig, viewPrefix, CONFIG_OPL_PLAS_BLEND_COLOR, newT->plasBlendColor);
 
     unsigned char color[3];
-    if (configGetColor(themeConfig, "text_color", color))
+    if (thmViewGetColor(themeConfig, viewPrefix, "text_color", color))
         newT->textColor = GS_SETREG_RGBA(color[0], color[1], color[2], 0x80);
 
-    if (configGetColor(themeConfig, "ui_text_color", color))
+    if (thmViewGetColor(themeConfig, viewPrefix, "ui_text_color", color))
         newT->uiTextColor = GS_SETREG_RGBA(color[0], color[1], color[2], 0x80);
 
-    if (configGetColor(themeConfig, "title_color", color))
+    if (thmViewGetColor(themeConfig, viewPrefix, "title_color", color))
         newT->titleColor = GS_SETREG_RGBA(color[0], color[1], color[2], 0x80);
 
-    if (configGetColor(themeConfig, "sel_text_color", color))
+    if (thmViewGetColor(themeConfig, viewPrefix, "sel_text_color", color))
         newT->selTextColor = GS_SETREG_RGBA(color[0], color[1], color[2], 0x80);
 
-    if (configGetInt(themeConfig, "coverflow_cover_offset", &intValue)) {
+    if (thmViewGetInt(themeConfig, viewPrefix, "coverflow_cover_offset", &intValue)) {
         // clamp -- this feeds coverWidth * offset / 256 in drawCoverFlow; an
         // unbounded value from an untrusted theme .cfg would signed-overflow that
         // multiply (Codex audit, Low 1). The range is far wider than any real theme.
@@ -4134,50 +4164,39 @@ static int thmLoad(const char *themePath)
     if (themePath)
         thmLoadFonts(themeConfig, themePath, newT);
 
-    int i = 1, j;
-    snprintf(path, sizeof(path), "main0");
-    while (addGUIElem(themePath, themeConfig, newT, &newT->mainElems, NULL, path))
-        snprintf(path, sizeof(path), "main%d", i++);
+    // Every family resolves block j through its fallback chain, the active view's "<view>." blocks first
+    // (thmViewResolveSlot). The chains are the ones these families always used.
+    static const char *const mainChain[] = {"main"};
+    static const char *const appsMainChain[] = {"appsMain", "main"};
+    static const char *const favsMainChain[] = {"favsMain", "main"};
+    static const char *const vcdMainChain[] = {"vcdMain", "appsMain", "main"};
+    static const char *const infoChain[] = {"info"};
+    static const char *const appsInfoChain[] = {"appsInfo", "info"};
+    static const char *const favsInfoChain[] = {"favsInfo", "info"};
+    static const char *const vcdInfoChain[] = {"vcdInfo", "info"};
 
-    for (j = 0; j < i; j++) {
-        snprintf(path, sizeof(path), "appsMain%d", j);
+    // The base list runs until the first absent block. i ends one past the count, as it always has, so
+    // the kind loops below also try a kind block at the slot right after the last main block.
+    int i, j;
+    for (i = 0; addGUIElemSlot(themePath, themeConfig, newT, &newT->mainElems, mainChain, 1, i); i++)
+        ;
+    i++;
 
-        if (addGUIElem(themePath, themeConfig, newT, &newT->appsMainElems, NULL, path))
-            continue;
-        else {
-            snprintf(path, sizeof(path), "main%d", j);
-            addGUIElem(themePath, themeConfig, newT, &newT->appsMainElems, NULL, path);
-        }
-    }
+    for (j = 0; j < i; j++)
+        addGUIElemSlot(themePath, themeConfig, newT, &newT->appsMainElems, appsMainChain, 2, j);
 
     // Favourites family: favsMain<j> override, else fall back to main<j> (identical to appsMain).
     // Runs after appsMain so a favsMain ItemsList claims the 3rd slot (favsItemsList), and before
     // the info passes so an info ItemsList never steals it.
-    for (j = 0; j < i; j++) {
-        snprintf(path, sizeof(path), "favsMain%d", j);
-
-        if (addGUIElem(themePath, themeConfig, newT, &newT->favsMainElems, NULL, path))
-            continue;
-        else {
-            snprintf(path, sizeof(path), "main%d", j);
-            addGUIElem(themePath, themeConfig, newT, &newT->favsMainElems, NULL, path);
-        }
-    }
+    for (j = 0; j < i; j++)
+        addGUIElemSlot(themePath, themeConfig, newT, &newT->favsMainElems, favsMainChain, 2, j);
 
     // VCD/PS1 view main family: vcdMain<j> override, else fall back to appsMain<j> (the square box),
     // else main<j>. The apps fallback means a theme that defines no vcdMain still gets the square VCD
     // look it had before this family existed. An ItemsList reached via this fallback claims the 4th
     // slot (vcdItemsList) in addGUIElem, giving the VCD list its OWN cover cache (separateVcdCoverCache).
-    for (j = 0; j < i; j++) {
-        snprintf(path, sizeof(path), "vcdMain%d", j);
-        if (addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path))
-            continue;
-        snprintf(path, sizeof(path), "appsMain%d", j);
-        if (addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path))
-            continue;
-        snprintf(path, sizeof(path), "main%d", j);
-        addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path);
-    }
+    for (j = 0; j < i; j++)
+        addGUIElemSlot(themePath, themeConfig, newT, &newT->vcdMainElems, vcdMainChain, 3, j);
 
     // Favourites per-kind MAIN families -- opt-in, built only when the theme declares a block of them.
     // favsVcdMain<j> falls back along vcdMain's own chain (the Favourites PS1 view renders vcdMain today);
@@ -4185,72 +4204,45 @@ static int thmLoad(const char *themePath)
     // after the four slot families with slot claiming off, so they can never take an ItemsList slot.
     newT->parsingFavKindFamily = 1;
     if (thmFavKindDeclared(themeConfig, "favsVcdMain", i)) {
-        static const char *const vcdChain[] = {"vcdMain", "appsMain", "main"};
         for (j = 0; j < i; j++)
-            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdMainElems, &newT->vcdMainElems, "favsVcdMain", j, vcdChain, 3);
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdMainElems, &newT->vcdMainElems, "favsVcdMain", j, vcdMainChain, 3);
     }
     if (thmFavKindDeclared(themeConfig, "favsAppsMain", i)) {
-        static const char *const appsChain[] = {"favsMain", "main"};
         for (j = 0; j < i; j++)
-            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsMainElems, &newT->favsMainElems, "favsAppsMain", j, appsChain, 2);
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsMainElems, &newT->favsMainElems, "favsAppsMain", j, favsMainChain, 2);
     }
     newT->parsingFavKindFamily = 0;
 
-    i = 1;
-    snprintf(path, sizeof(path), "info0");
-    while (addGUIElem(themePath, themeConfig, newT, &newT->infoElems, NULL, path))
-        snprintf(path, sizeof(path), "info%d", i++);
+    for (i = 0; addGUIElemSlot(themePath, themeConfig, newT, &newT->infoElems, infoChain, 1, i); i++)
+        ;
+    i++;
 
-    for (j = 0; j < i; j++) {
-        snprintf(path, sizeof(path), "appsInfo%d", j);
-
-        if (addGUIElem(themePath, themeConfig, newT, &newT->appsInfoElems, NULL, path))
-            continue;
-        else {
-            snprintf(path, sizeof(path), "info%d", j);
-            addGUIElem(themePath, themeConfig, newT, &newT->appsInfoElems, NULL, path);
-        }
-    }
+    for (j = 0; j < i; j++)
+        addGUIElemSlot(themePath, themeConfig, newT, &newT->appsInfoElems, appsInfoChain, 2, j);
 
     // Favourites info family: favsInfo<j> override, else info<j> (identical to appsInfo).
-    for (j = 0; j < i; j++) {
-        snprintf(path, sizeof(path), "favsInfo%d", j);
-
-        if (addGUIElem(themePath, themeConfig, newT, &newT->favsInfoElems, NULL, path))
-            continue;
-        else {
-            snprintf(path, sizeof(path), "info%d", j);
-            addGUIElem(themePath, themeConfig, newT, &newT->favsInfoElems, NULL, path);
-        }
-    }
+    for (j = 0; j < i; j++)
+        addGUIElemSlot(themePath, themeConfig, newT, &newT->favsInfoElems, favsInfoChain, 2, j);
 
     // VCD/PS1 view info family: vcdInfo<j> override, else fall back to info<j>.
-    for (j = 0; j < i; j++) {
-        snprintf(path, sizeof(path), "vcdInfo%d", j);
-
-        if (addGUIElem(themePath, themeConfig, newT, &newT->vcdInfoElems, NULL, path))
-            continue;
-        else {
-            snprintf(path, sizeof(path), "info%d", j);
-            addGUIElem(themePath, themeConfig, newT, &newT->vcdInfoElems, NULL, path);
-        }
-    }
+    for (j = 0; j < i; j++)
+        addGUIElemSlot(themePath, themeConfig, newT, &newT->vcdInfoElems, vcdInfoChain, 2, j);
 
     // Favourites per-kind INFO families, same opt-in rule. favsVcdInfo<j> falls back like vcdInfo (a PS1
     // row's info screen uses vcdInfo today); favsAppsInfo<j> like favsInfo (an app favourite's info
     // screen uses favsInfo today).
     newT->parsingFavKindFamily = 1;
     if (thmFavKindDeclared(themeConfig, "favsVcdInfo", i)) {
-        static const char *const vcdInfoChain[] = {"vcdInfo", "info"};
         for (j = 0; j < i; j++)
             addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdInfoElems, &newT->vcdInfoElems, "favsVcdInfo", j, vcdInfoChain, 2);
     }
     if (thmFavKindDeclared(themeConfig, "favsAppsInfo", i)) {
-        static const char *const appsInfoChain[] = {"favsInfo", "info"};
         for (j = 0; j < i; j++)
-            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsInfoElems, &newT->favsInfoElems, "favsAppsInfo", j, appsInfoChain, 2);
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsInfoElems, &newT->favsInfoElems, "favsAppsInfo", j, favsInfoChain, 2);
     }
     newT->parsingFavKindFamily = 0;
+    thmParseViewPrefix = "";
+    thmParseViewInherit = 1;
 
     validateGUIElems(themePath, themeConfig, newT);
 
@@ -4420,8 +4412,9 @@ static void thmRebuildGuiNames(void)
     if (guiThemesNames)
         free(guiThemesNames);
 
-    // Default internal, disk themes, both built-in flows, then the NULL terminator.
-    guiThemesNames = (const char **)malloc((nThemes + 4) * sizeof(char **));
+    // Default internal, disk themes, then the NULL terminator. The old <Coverflow> and <PSBBN Flow>
+    // entries are views of <OPL> now (_loadConfig maps a saved name to <OPL> plus that view).
+    guiThemesNames = (const char **)malloc((nThemes + 2) * sizeof(char **));
 
     // add default internal
     guiThemesNames[0] = "<OPL>";
@@ -4430,26 +4423,18 @@ static void thmRebuildGuiNames(void)
     for (; i < nThemes; i++) {
         guiThemesNames[i + 1] = themes[i].name;
     }
-
-    // built-in coverflow theme occupies the slot right after the disk themes
-    guiThemesNames[nThemes + 1] = "<Coverflow>";
-    guiThemesNames[nThemes + 2] = "<PSBBN Flow>";
-    guiThemesNames[nThemes + 3] = NULL;
+    guiThemesNames[nThemes + 1] = NULL;
 }
 
 int thmAddElements(char *path, const char *separator, int forceRefresh)
 {
     int result, i;
 
-    // Built-in IDs follow the disk entries. Preserve the live selection as discovery appends.
-    int builtin = guiThemeID > nThemes && guiThemeID <= nThemes + 2 ? guiThemeID - nThemes : 0;
     result = listDir(path, separator, THM_MAX_FILES - nThemes, &thmReadEntry);
     nThemes += result;
     // Appends above only fill NEW themes[] slots (the published name list references old slots
     // untouched); the rebuild's free+swap is what must be serialized against the GUI's readers.
     guiLock();
-    if (builtin)
-        guiThemeID = nThemes + builtin;
     thmRebuildGuiNames();
     guiUnlock();
 
@@ -4493,10 +4478,6 @@ void thmReinit(const char *path)
     if (guiThemeID >= 1 && guiThemeID <= nThemes) {
         snprintf(activeName, sizeof(activeName), "%s", themes[guiThemeID - 1].name);
         activeOnDevice = strncmp(themes[guiThemeID - 1].filePath, path, strlen(path)) == 0;
-    } else if (guiThemeID == nThemes + 1) {
-        snprintf(activeName, sizeof(activeName), "<Coverflow>"); // built-in; its id (nThemes+1) shifts as themes are removed
-    } else if (guiThemeID == nThemes + 2) {
-        snprintf(activeName, sizeof(activeName), "<PSBBN Flow>");
     }
 
     // One guiLock section across the removal loop AND the rebuild: the frees below invalidate
@@ -4528,7 +4509,7 @@ void thmReinit(const char *path)
         if (thmLoad(NULL) == 0)
             guiThemeID = 0;
     } else if (guiThemeID != 0) {
-        // Active theme untouched (built-in coverflow, or a theme on another device): keep it. gTheme
+        // Active theme untouched (a theme on another device): keep it. gTheme
         // needs no reload -- its loaded resources are unaffected by the removed entries.
         guiThemeID = thmFindGuiID(activeName);
     }
@@ -4576,19 +4557,9 @@ void thmRefreshFontSize(void)
 
 int thmSetGuiValue(int themeID, int reload)
 {
-    if (themeID >= 0 && themeID <= nThemes + 2) {
+    if (themeID >= 0 && themeID <= nThemes) {
         if (guiThemeID != themeID || reload) {
-            int loadResult;
-            if (themeID == nThemes + 1 || themeID == nThemes + 2) {
-                // Built-in flow themes load their embedded buffer via thmLoad(NULL).
-                // Checked BEFORE the themes[themeID - 1] access below (which would be OOB).
-                gLoadCoverflowBuiltin = themeID == nThemes + 1;
-                gLoadPsbbnFlowBuiltin = themeID == nThemes + 2;
-                loadResult = thmLoad(NULL);
-                gLoadCoverflowBuiltin = 0;
-                gLoadPsbbnFlowBuiltin = 0;
-            } else
-                loadResult = thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
+            int loadResult = thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
 
             // #120: an abandoned load (wedged MMCE art worker) keeps the CURRENT theme -- do not
             // commit the new id, so the next thmAddElements/settings-apply trigger retries it.
@@ -4597,11 +4568,11 @@ int thmSetGuiValue(int themeID, int reload)
 
             guiThemeID = themeID;
             return 1;
-        } else if (guiThemeID == 0 || guiThemeID == nThemes + 1 || guiThemeID == nThemes + 2) {
+        } else if (guiThemeID == 0) {
             /* Re-apply the edited gDefault*Color values to the LIVE theme when the theme itself is
                not being reloaded -- which is the whole of what a colour edit does.
 
-               This used to fire for theme 0 alone, so the built-in Coverflow theme (id nThemes + 1)
+               It once missed the separate built-in Coverflow theme (now a view of <OPL>), which
                silently dropped every colour change: guiShowColorsConfig offers Coverflow as
                editable, wrote the new values into gDefault*Color, then called applyConfig with the
                SAME theme id and reload == 0, and landed here to be skipped. The colours were saved
@@ -4616,6 +4587,39 @@ int thmSetGuiValue(int themeID, int reload)
     return 0;
 }
 
+int thmSetView(int view)
+{
+    if (view < 0 || view >= THM_VIEW_COUNT)
+        view = -1;
+    int previous = gThemeViewRequest;
+    gThemeViewRequest = view;
+    if (gTheme == NULL)
+        return 0;
+
+    // The view the active theme would load for this request; nothing to do when it is already showing.
+    int target = (view >= 0 && (gTheme->viewMask & (1u << view))) ? view : gTheme->defaultView;
+    if (target == gTheme->view)
+        return 0;
+    if (!thmSetGuiValue(guiThemeID, 1)) {
+        gThemeViewRequest = previous; // abandoned load (#120): the old view is still on screen
+        return 0;
+    }
+    return 1;
+}
+
+int thmCycleView(void)
+{
+    if (gTheme == NULL)
+        return 0;
+    int step;
+    for (step = 1; step < THM_VIEW_COUNT; step++) {
+        int v = (gTheme->view + step) % THM_VIEW_COUNT;
+        if (gTheme->viewMask & (1u << v))
+            return thmSetView(v);
+    }
+    return 0; // the theme offers a single view
+}
+
 int thmGetGuiValue(void)
 {
     return guiThemeID;
@@ -4624,10 +4628,7 @@ int thmGetGuiValue(void)
 int thmFindGuiID(const char *theme)
 {
     if (theme) {
-        if (strcasecmp(theme, "<Coverflow>") == 0)
-            return nThemes + 1; // built-in coverflow theme
-        if (strcasecmp(theme, "<PSBBN Flow>") == 0)
-            return nThemes + 2;
+        // A saved "<Coverflow>" / "<PSBBN Flow>" matches nothing here and so loads <OPL> (id 0).
         int i = 0;
         for (; i < nThemes; i++) {
             if (strcasecmp(themes[i].name, theme) == 0)
@@ -4644,7 +4645,7 @@ const char **thmGetGuiList(void)
 
 char *thmGetFilePath(int themeID)
 {
-    // Disk themes occupy IDs 1..nThemes. The built-ins (<OPL> = 0, <Coverflow> = nThemes+1)
+    // Disk themes occupy IDs 1..nThemes. The built-in <OPL> (id 0, in any view)
     // and any out-of-range ID have no on-disk path -> return NULL so callers fall back to
     // the default/internal assets instead of indexing themes[] out of bounds.
     if (themeID <= 0 || themeID > nThemes)

@@ -1,4 +1,7 @@
-"""Exercise PSBBN geometry, native row rendering and built-in theme lifecycle."""
+"""Exercise PSBBN geometry, native row rendering and the theme catalog.
+
+PSBBN Flow and Coverflow were separate built-in themes; they are views of <OPL> now (multi-view themes), so
+the catalog lists <OPL> and the disk themes only and a saved legacy name resolves to <OPL>."""
 from pathlib import Path
 import os
 import re
@@ -265,12 +268,14 @@ registry = r'''
 #include <string.h>
 #include <strings.h>
 #define LOG(...) ((void)0)
-static int nThemes=2,guiThemeID,gLoadCoverflowBuiltin,gLoadPsbbnFlowBuiltin;
+enum {THM_VIEW_LIST, THM_VIEW_COVERFLOW, THM_VIEW_PSBBN, THM_VIEW_GRID, THM_VIEW_COUNT};
+typedef struct {int view; unsigned int viewMask; int defaultView;} theme_t;
+static int nThemes=2,guiThemeID,gThemeViewRequest=-1;
 static const char **guiThemesNames;
 typedef struct {char *name,*filePath;} theme_file_t;
 static theme_file_t themes[8];
 static int loads,loaded,colors,failLoad,locks;
-static int gTheme;
+static theme_t theme, *gTheme=&theme;
 #define THM_MAX_FILES 16
 #define CONFIG_OPL 0
 #define MODE_COUNT 0
@@ -284,46 +289,61 @@ static int listDir(char *path,const char *sep,int max,int *cb) {
 }
 static void guiLock(void) {assert(!locks);locks++;}
 static void guiUnlock(void) {assert(locks);locks--;}
+// <OPL> offers list/coverflow/psbbn and builds the requested one (else list), as thmLoad does.
 static int thmLoad(const char *path) {
- loads++;loaded=path?3:gLoadPsbbnFlowBuiltin?2:gLoadCoverflowBuiltin?1:0;
- return failLoad?-1:0;
+ loads++;loaded=path?3:0;
+ if (failLoad) return -1;
+ theme.viewMask=path?1u:7u;theme.defaultView=THM_VIEW_LIST;
+ theme.view=(!path && gThemeViewRequest>=0 && (theme.viewMask & (1u<<gThemeViewRequest)))?gThemeViewRequest:THM_VIEW_LIST;
+ return 0;
 }
-static void thmSetColors(int t) {(void)t;colors++;}
+static void thmSetColors(theme_t *t) {(void)t;colors++;}
 int thmFindGuiID(const char *theme);
+int thmSetGuiValue(int themeID, int reload);
 @FUNCTIONS@
 int main(void) {
  themes[0].name=strdup("A");themes[0].filePath=strdup("mass0:/THM/A/");
  themes[1].name=strdup("B");themes[1].filePath=strdup("mc0:/THM/B/");
  thmRebuildGuiNames();
- assert(!strcmp(guiThemesNames[3],"<Coverflow>"));
- assert(!strcmp(guiThemesNames[4],"<PSBBN Flow>") && !guiThemesNames[5]);
- assert(thmFindGuiID("<psbbn flow>")==4);
- assert(thmSetGuiValue(4,0) && loaded==2 && guiThemeID==4);
- assert(!gLoadCoverflowBuiltin && !gLoadPsbbnFlowBuiltin && !thmGetFilePath(4));
- thmSetGuiValue(4,0);assert(colors==1);
- failLoad=1;assert(!thmSetGuiValue(1,0) && guiThemeID==4);failLoad=0;
+ assert(!strcmp(guiThemesNames[0],"<OPL>") && !strcmp(guiThemesNames[1],"A") && !strcmp(guiThemesNames[2],"B") && !guiThemesNames[3]);
+ // The old built-in names are views of <OPL> now: they resolve to id 0.
+ assert(thmFindGuiID("<psbbn flow>")==0 && thmFindGuiID("<Coverflow>")==0 && thmFindGuiID("b")==2);
+ assert(thmSetGuiValue(2,0) && loaded==3 && guiThemeID==2 && thmGetFilePath(2));
+ failLoad=1;assert(!thmSetGuiValue(1,0) && guiThemeID==2);failLoad=0;
+ assert(thmSetGuiValue(0,0) && loaded==0 && !thmGetFilePath(0));
+ thmSetGuiValue(0,0);assert(colors==1); // same id, no reload: re-applies the picker palette
  int oldLoads=loads;
- thmReinit("mass0:");assert(nThemes==1 && guiThemeID==3 && loads==oldLoads);
- assert(!strcmp(guiThemesNames[guiThemeID],"<PSBBN Flow>"));
- thmReinit("mc0:");assert(nThemes==0 && guiThemeID==2 && loads==oldLoads);
- assert(thmAddElements("mass1:","/",0)==1 && guiThemeID==3 && loads==oldLoads);
- assert(!strcmp(guiThemesNames[guiThemeID],"<PSBBN Flow>"));
- thmReinit("mass1:");assert(guiThemeID==2 && loads==oldLoads);
- assert(thmSetGuiValue(1,0) && loaded==1 && !thmGetFilePath(1));
+ thmReinit("mc0:");assert(nThemes==1 && guiThemeID==0 && loads==oldLoads);
+ assert(thmSetGuiValue(1,0) && loaded==3);
  oldLoads=loads;
- assert(thmAddElements("mass1:","/",0)==1 && guiThemeID==2 && loads==oldLoads);
- assert(!strcmp(guiThemesNames[guiThemeID],"<Coverflow>"));
+ // A disk theme appearing keeps the live selection.
+ assert(thmAddElements("mass1:","/",0)==1 && guiThemeID==1 && loads==oldLoads);
+ assert(!strcmp(guiThemesNames[guiThemeID],"A") && !strcmp(guiThemesNames[2],"C") && !guiThemesNames[3]);
+ // Removing another device re-finds the active theme by name; removing its own device drops to <OPL>.
  thmReinit("mass1:");assert(guiThemeID==1 && loads==oldLoads);
- assert(!thmSetGuiValue(99,0) && guiThemeID==1);
- assert(thmSetGuiValue(0,0) && loaded==0);
+ thmReinit("mass0:");assert(nThemes==0 && guiThemeID==0 && loads==oldLoads+1 && loaded==0);
+ assert(!thmSetGuiValue(99,0) && !thmSetGuiValue(1,0) && guiThemeID==0);
+
+ // Views of <OPL>: a change reloads once, the same view does not, a failed load keeps the old request.
+ assert(theme.view==THM_VIEW_LIST);
+ oldLoads=loads;
+ assert(thmSetView(THM_VIEW_PSBBN) && theme.view==THM_VIEW_PSBBN && loads==oldLoads+1 && gThemeViewRequest==THM_VIEW_PSBBN);
+ assert(!thmSetView(THM_VIEW_PSBBN) && loads==oldLoads+1);
+ assert(thmCycleView() && theme.view==THM_VIEW_LIST); // grid is not offered, so psbbn wraps to list
+ assert(thmCycleView() && theme.view==THM_VIEW_COVERFLOW && gThemeViewRequest==THM_VIEW_COVERFLOW);
+ failLoad=1;assert(!thmSetView(THM_VIEW_LIST) && gThemeViewRequest==THM_VIEW_COVERFLOW);failLoad=0;
+ // A view the theme does not offer shows its default, and the choice is kept for themes that offer it.
+ assert(thmSetView(THM_VIEW_GRID) && theme.view==THM_VIEW_LIST && gThemeViewRequest==THM_VIEW_GRID);
+ assert(!thmSetView(-5) && gThemeViewRequest==-1 && theme.view==THM_VIEW_LIST);
+ theme.viewMask=1u;assert(!thmCycleView()); // a single-view theme has nothing to cycle
  free(guiThemesNames);
- puts("PSBBN: picker, persistence lookup, palette, failed-load rollback and disk-theme discovery/removal passed");
+ puts("Theme catalog: <OPL> + disk themes, legacy names, palette, failed-load rollback, discovery/removal and view switching passed");
 }
 '''
 functions = '\n'.join(function(s) for s in (
     'static void thmRebuildGuiNames(', 'int thmFindGuiID(', 'int thmSetGuiValue(',
     'int thmAddElements(',
-    'char *thmGetFilePath(', 'void thmReinit(',
+    'char *thmGetFilePath(', 'void thmReinit(', 'int thmSetView(', 'int thmCycleView(',
 ))
 run('psbbn_registry', registry.replace('@FUNCTIONS@', functions))
 
