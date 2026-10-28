@@ -8,6 +8,8 @@
    axis, a static one with its outlines grown. Checked against the host's FreeType when its headers are there.
 3. Glyph sets (build 90): glyph_set=theme|builtin|standard|white in a theme, and Settings > Interface > Button
    Glyphs over every theme, swap the hint glyphs between frames. Standard and White are RIPPS2's own pictures.
+4. The hint bar's theme keys (build 90): hints_hide, hints_order (a stable sort), hints_labels=0, hints_layout=column
+   and hints_spacing. A theme with none of them draws the bar as before.
 """
 from pathlib import Path
 import subprocess
@@ -24,6 +26,11 @@ GUI = 'src/gui.c'
 GLYPH_PARSE = 'int thmGlyphSetParse(const char *name)'
 GLYPH_FOR = 'int thmGlyphSetFor(int themeSet)'
 GLYPH_LOAD = 'static void thmGlyphSetLoad(theme_t *theme, int set, int onGui)'
+HINT_RANK = 'int thmHintRank(const theme_t *theme, int token)'
+DRAW_HINTS = 'static void drawHintText('
+DRAW = 'src/themes.c'
+START_FRAME = 'void guiStartFrame('
+GUI_LOCK = 'guiLock();'
 GLYPH_SETTINGS = ('configSetInt(configOPL, CONFIG_OPL_GLYPH_SET, gGlyphSet);', 'configReadGlyphSet(configOPL);',
                   'diaGetInt(ui, UICFG_GLYPH_SET, &gGlyphSet);', 'diaGetInt(diaUIConfig, UICFG_GLYPH_SET, &gGlyphSet);')
 SETTINGS_FILES = ('src/opl.c', 'src/gui.c')
@@ -231,8 +238,8 @@ def check_glyphs(thm, gui, settings_src):
     assert 'rmUnloadTexture(tex)' in load and 'texFree(tex)' in load and 'texLoadInternal(tex, glyphSlots[i])' in load
     assert 'theme->glyphPath[0] ? theme->glyphPath : NULL' in load, 'Theme loads the theme\'s own glyphs back'
     assert '"glyph_set"' in thm and 'thmGlyphSetLoad(newT, thmGlyphSetFor(newT->glyphSetDef), 0)' in thm, 'theme key'
-    start = function(gui, 'void guiStartFrame(')
-    assert start.index('guiLock()') < start.index('thmGlyphSetRefresh()'), 'the swap runs under guiLock, between frames'
+    start = function(gui, START_FRAME)
+    assert start.index(GUI_LOCK) < start.index('thmGlyphSetRefresh()'), 'the swap runs under guiLock, between frames'
     for name in GLYPH_NAMES:
         for glyph_set in ('standard', 'white'):
             png = (root / GFX / ('glyph_%s_%s.png' % (glyph_set, name))).read_bytes()
@@ -242,9 +249,61 @@ def check_glyphs(thm, gui, settings_src):
     print('glyphs ok')
 
 
+HINT_TEST = r"""
+#include <stdio.h>
+#include <string.h>
+#include <strings.h>
+enum { START_ICON = 1, SQUARE_ICON, TRIANGLE_ICON, SELECT_ICON, R3_ICON, L3_ICON, CROSS_ICON };
+enum { THM_HINT_MENU = 0, THM_HINT_RUN, THM_HINT_INFO, THM_HINT_OPTIONS, THM_HINT_REFRESH, THM_HINT_STAR, THM_HINT_VIEW, THM_HINT_COUNT };
+typedef struct theme { int hintsOrder[THM_HINT_COUNT]; int hintsOrderCount; } theme_t;
+%(code)s
+static void show(const char *list)
+{
+    int out[THM_HINT_COUNT], n = thmHintParse(list, out, THM_HINT_COUNT), i;
+    for (i = 0; i < n; i++)
+        printf("%%d", out[i]);
+    printf("|");
+}
+int main(void)
+{
+    theme_t t;
+    show("star,view");
+    show(" Run , info menu,run,bogus,triangle");
+    show("start select r3 l3 cross circle square");
+    show("");
+    show(NULL);
+    printf("\n");
+    t.hintsOrderCount = thmHintParse("info,run", t.hintsOrder, THM_HINT_COUNT);
+    printf("%%d %%d %%d %%d %%d\n", thmHintRank(&t, THM_HINT_INFO), thmHintRank(&t, THM_HINT_RUN), thmHintRank(&t, THM_HINT_MENU),
+           thmHintRank(NULL, THM_HINT_RUN), thmHintToken(CROSS_ICON) == THM_HINT_RUN && thmHintToken(L3_ICON) == THM_HINT_VIEW);
+    return 0;
+}
+"""
+
+
+def check_hints(thm, draw):
+    code = thm[thm.index('static const char *const hintKeys[THM_HINT_COUNT]'):]
+    code = code[:code.index(HINT_RANK)]
+    code += function(thm, HINT_RANK)
+    with tempfile.TemporaryDirectory() as d:
+        out = run('hints', HINT_TEST % {'code': code}, d).split('\n')
+    assert out[0] == '56|1203|045612|||', out[0]  # names and buttons, each once, unknown names skipped
+    assert out[1] == '0 1 7 7 1', out[1]  # named hints first in their order; the rest share the last rank
+    body = function(draw, DRAW_HINTS)
+    assert 'menuHintsLock();' in body and body.index('menuHintsLock();') < body.index('row[n++] = hint;') < body.index('menuHintsUnlock();')
+    assert '!(gTheme->hintsHide & (1 << thmHintToken(hint->icon_id)))' in body, 'hints_hide'
+    assert 'thmHintRank(gTheme, thmHintToken(row[j - 1]->icon_id)) > r' in body, 'a stable sort by hints_order'
+    assert 'if (gTheme->hintsColumn)' in body and 'gTheme->hintsSpacing' in body, 'hints_layout=column'
+    for key in ('"hints_hide"', '"hints_order"', '"hints_labels"', '"hints_layout"', '"hints_spacing"'):
+        assert key in thm, key
+    assert 'newT->hintsLabels = 1;' in thm and 'newT->hintsColumn = 0;' in thm, 'no keys: the bar as before'
+    print('hints ok')
+
+
 dia = read(DIA)
 check_rows(dia)
 check_wiring(dia, read(PAD))
 check_weight(read(FNT), read(THM))
 check_glyphs(read(THM), read(GUI), '\n'.join(read(f) for f in SETTINGS_FILES))
+check_hints(read(THM), read(DRAW))
 print('ripps2 gui port ok')

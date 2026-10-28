@@ -2751,6 +2751,30 @@ static void drawItemText(struct menu_list *menu, struct submenu_list *item, conf
     }
 }
 
+// One hint, its glyph and (labels) its label, as guiDrawIconAndText draws it; returns the x after it
+static int drawHintEntry(const menu_hint_item_t *hint, int labels, int font, int x, int y, u64 color)
+{
+    GSTEXTURE *iconTex;
+    if (labels)
+        return guiDrawIconAndText(hint->icon_id, hint->text_id, font, x, y, color);
+    iconTex = thmGetTexture(hint->icon_id);
+    if (iconTex == NULL || iconTex->Mem == NULL)
+        return x;
+    int w = (iconTex->Width * 20) / iconTex->Height;
+    rmDrawPixmap(iconTex, x, y + 10, ALIGN_VCENTER, w, 20, SCALING_RATIO, gDefaultCol, 0);
+    return x + rmWideScale(w);
+}
+
+// Its width, as guiAlignMenuHints measures it
+static int hintEntryWidth(const menu_hint_item_t *hint, int labels, int font)
+{
+    GSTEXTURE *iconTex = thmGetTexture(hint->icon_id);
+    int w = iconTex ? (iconTex->Width * 20) / iconTex->Height : 20;
+    if (!labels)
+        return rmWideScale(w);
+    return rmWideScale(w) + 2 + rmUnScaleX(fntCalcDimensions(font, _l(hint->text_id)));
+}
+
 static void drawHintText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     if (thmElemSkipsDevice(elem, menu->item->icon_id))
@@ -2767,14 +2791,41 @@ static void drawHintText(struct menu_list *menu, struct submenu_list *item, conf
 
     menu_hint_item_t *hint = menu->item->hints;
     if (hint) {
-        int x = elem->posX;
+        // The hints the theme keeps, in its hints_order (RIPPS2 build 90, akilluminati47): a stable sort, so the
+        // hints it does not name stay in the order the page added them, after the named ones
+        const menu_hint_item_t *row[16];
+        int n = 0, i, j, labels = gTheme->hintsLabels;
+        for (; hint != NULL && n < 16; hint = hint->next)
+            if (!(gTheme->hintsHide & (1 << thmHintToken(hint->icon_id))))
+                row[n++] = hint;
+        for (i = 1; i < n; i++) {
+            const menu_hint_item_t *k = row[i];
+            int r = thmHintRank(gTheme, thmHintToken(k->icon_id));
+            for (j = i; j > 0 && thmHintRank(gTheme, thmHintToken(row[j - 1]->icon_id)) > r; j--)
+                row[j] = row[j - 1];
+            row[j] = k;
+        }
 
-        if (elem->aligned)
-            x = guiAlignMenuHints(hint, elem->font, elem->width);
-
-        for (; hint; hint = hint->next) {
-            x = guiDrawIconAndText(hint->icon_id, hint->text_id, elem->font, x, elem->posY, elem->color);
-            x += elem->width;
+        if (gTheme->hintsColumn) {
+            // one hint a line from the element's x/y down; a column that would run off the bottom (the default hint
+            // element sits on the last line) ends on that line instead
+            int pitch = gTheme->hintsSpacing, x = elem->posX, y = elem->posY;
+            if (y + (n - 1) * pitch > gTheme->usedHeight - 20)
+                y = gTheme->usedHeight - 20 - (n - 1) * pitch;
+            if (y < 0)
+                y = 0;
+            for (i = 0; i < n; i++)
+                drawHintEntry(row[i], labels, elem->font, x, y + i * pitch, elem->color);
+        } else {
+            int x = elem->posX;
+            if (elem->aligned) { // centred, as guiAlignMenuHints places the whole list
+                int total = 0;
+                for (i = 0; i < n; i++)
+                    total += hintEntryWidth(row[i], labels, elem->font) + (i + 1 < n ? elem->width : 0);
+                x = (screenWidth - total) / 2;
+            }
+            for (i = 0; i < n; i++)
+                x = drawHintEntry(row[i], labels, elem->font, x, elem->posY, elem->color) + elem->width;
         }
     }
 
@@ -3809,7 +3860,8 @@ static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme
 #define GLYPH_SET_PNGS(set)                                                                                \
     GLYPH_PNG(set, cross)                                                                                  \
     GLYPH_PNG(set, circle)                                                                                 \
-    GLYPH_PNG(set, square) GLYPH_PNG(set, triangle) GLYPH_PNG(set, start)                                  \
+    GLYPH_PNG(set, square)                                                                                 \
+    GLYPH_PNG(set, triangle) GLYPH_PNG(set, start)                                                         \
         GLYPH_PNG(set, select) GLYPH_PNG(set, L1) GLYPH_PNG(set, R1) GLYPH_PNG(set, L3) GLYPH_PNG(set, R3) \
             GLYPH_PNG(set, left) GLYPH_PNG(set, right)
 GLYPH_SET_PNGS(standard)
@@ -3876,6 +3928,74 @@ void thmGlyphSetRefresh(void)
 {
     if (gTheme != NULL && thmGlyphSetFor(gTheme->glyphSetDef) != gTheme->glyphSetLoaded)
         thmGlyphSetLoad(gTheme, thmGlyphSetFor(gTheme->glyphSetDef), 1);
+}
+
+// The hint bar's theme keys (RIPPS2 build 90, akilluminati47). A hint is named by what it does, or by its button.
+static const char *const hintKeys[THM_HINT_COUNT] = {"menu", "run", "info", "options", "refresh", "star", "view"};
+static const struct
+{
+    const char *name;
+    int token;
+} hintAliases[] = {{"start", THM_HINT_MENU}, {"select", THM_HINT_REFRESH}, {"r3", THM_HINT_STAR}, {"l3", THM_HINT_VIEW}, {"cross", THM_HINT_RUN}, {"circle", THM_HINT_RUN}, {"square", THM_HINT_INFO}, {"triangle", THM_HINT_OPTIONS}};
+
+int thmHintToken(int iconId)
+{
+    switch (iconId) {
+        case START_ICON:
+            return THM_HINT_MENU;
+        case SQUARE_ICON:
+            return THM_HINT_INFO;
+        case TRIANGLE_ICON:
+            return THM_HINT_OPTIONS;
+        case SELECT_ICON:
+            return THM_HINT_REFRESH;
+        case R3_ICON:
+            return THM_HINT_STAR;
+        case L3_ICON:
+            return THM_HINT_VIEW;
+        default:
+            return THM_HINT_RUN; // the confirm button: Run, or Start Device
+    }
+}
+
+static int thmHintByName(const char *s, int len)
+{
+    int i;
+    for (i = 0; i < THM_HINT_COUNT; i++)
+        if ((int)strlen(hintKeys[i]) == len && !strncasecmp(s, hintKeys[i], len))
+            return i;
+    for (i = 0; i < (int)(sizeof(hintAliases) / sizeof(hintAliases[0])); i++)
+        if ((int)strlen(hintAliases[i].name) == len && !strncasecmp(s, hintAliases[i].name, len))
+            return hintAliases[i].token;
+    return -1;
+}
+
+int thmHintParse(const char *list, int *out, int max)
+{
+    int n = 0, seen = 0;
+    while (list != NULL && *list && n < max) {
+        while (*list == ',' || *list == ' ')
+            list++;
+        const char *end = list;
+        while (*end && *end != ',' && *end != ' ')
+            end++;
+        int t = thmHintByName(list, (int)(end - list));
+        if (t >= 0 && !(seen & (1 << t))) { // a name twice keeps its first place
+            seen |= 1 << t;
+            out[n++] = t;
+        }
+        list = end;
+    }
+    return n;
+}
+
+int thmHintRank(const theme_t *theme, int token)
+{
+    int i;
+    for (i = 0; theme != NULL && i < theme->hintsOrderCount; i++)
+        if (theme->hintsOrder[i] == token)
+            return i;
+    return THM_HINT_COUNT;
 }
 
 static int thmLoad(const char *themePath)
@@ -4206,6 +4326,29 @@ static int thmLoad(const char *themePath)
         snprintf(newT->glyphPath, sizeof(newT->glyphPath), "%s", themePath != NULL ? themePath : "");
         if (thmGlyphSetFor(newT->glyphSetDef) != GLYPH_SET_THEME)
             thmGlyphSetLoad(newT, thmGlyphSetFor(newT->glyphSetDef), 0); // never drawn yet: no VRAM to drop
+    }
+
+    // The hint bar (RIPPS2 build 90): hints_hide=star,view hints_order=run,info,menu hints_labels=0|1
+    // hints_layout=row|column hints_spacing=28 (12 to 96)
+    {
+        const char *v = NULL;
+        int hidden[THM_HINT_COUNT], n, k;
+        newT->hintsHide = 0;
+        newT->hintsLabels = 1;
+        newT->hintsColumn = 0;
+        newT->hintsSpacing = 28;
+        if (configGetStr(themeConfig, "hints_hide", &v) && v != NULL) {
+            n = thmHintParse(v, hidden, THM_HINT_COUNT);
+            for (k = 0; k < n; k++)
+                newT->hintsHide |= 1 << hidden[k];
+        }
+        newT->hintsOrderCount = configGetStr(themeConfig, "hints_order", &v) && v != NULL ? thmHintParse(v, newT->hintsOrder, THM_HINT_COUNT) : 0;
+        if (configGetStr(themeConfig, "hints_labels", &v) && v != NULL)
+            newT->hintsLabels = strcmp(v, "0") != 0;
+        if (configGetStr(themeConfig, "hints_layout", &v) && v != NULL)
+            newT->hintsColumn = !strcasecmp(v, "column");
+        if (configGetInt(themeConfig, "hints_spacing", &k) && k >= 12 && k <= 96)
+            newT->hintsSpacing = k;
     }
 
     // Embedded attribute glyphs (#Format/#Media/Aspect/Rating/Scan/Vmode values): BUILT-IN theme
