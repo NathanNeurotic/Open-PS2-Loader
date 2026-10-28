@@ -1955,6 +1955,16 @@ gui_strings:
   string: "Font Size"
 - label: HINT_FONT_SIZE
   string: "Size of standard menu text. Theme fonts with other point sizes keep their original size."
+- label: GLYPH_SET
+  string: Button Glyphs
+- label: HINT_GLYPH_SET
+  string: "The button pictures in hints. Theme uses the theme's own (or its glyph_set key); the others replace them on every theme."
+- label: GLYPHS_BUILTIN
+  string: Built-in
+- label: GLYPHS_STANDARD
+  string: Standard
+- label: GLYPHS_WHITE
+  string: White
 
 - label: RA_BADGE_POS
   string: RA mark in game list

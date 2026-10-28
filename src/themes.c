@@ -3797,6 +3797,87 @@ static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme
 // wedged MMCE read holding the shared fileXio channel). On -1 the current theme stays untouched;
 // callers must not commit the new theme id, so a later trigger (another device's theme scan, a
 // settings re-apply) naturally retries once the card recovers.
+/*
+  Button glyph sets (RIPPS2 build 90, akilluminati47). A set fills every glyph slot the hints draw: the theme's own
+  PNGs (OPL's where it has none and use_default allows), OPL's built-in ones, or Standard / White, built in from
+  RIPPS2's gfx/glyph_<set>_<name>.png (its make_glyph_sets.py draws Standard from the Adapt theme and White from the
+  Grunge theme, both RIPPS2's own).
+*/
+#define GLYPH_PNG(set, n)                           \
+    extern unsigned char glyph_##set##_##n##_png[]; \
+    extern unsigned int size_glyph_##set##_##n##_png;
+#define GLYPH_SET_PNGS(set)                                                                                \
+    GLYPH_PNG(set, cross)                                                                                  \
+    GLYPH_PNG(set, circle)                                                                                 \
+    GLYPH_PNG(set, square) GLYPH_PNG(set, triangle) GLYPH_PNG(set, start)                                  \
+        GLYPH_PNG(set, select) GLYPH_PNG(set, L1) GLYPH_PNG(set, R1) GLYPH_PNG(set, L3) GLYPH_PNG(set, R3) \
+            GLYPH_PNG(set, left) GLYPH_PNG(set, right)
+GLYPH_SET_PNGS(standard)
+GLYPH_SET_PNGS(white)
+
+static const int glyphSlots[] = {CROSS_ICON, CIRCLE_ICON, SQUARE_ICON, TRIANGLE_ICON, START_ICON, SELECT_ICON,
+                                 L1_ICON, R1_ICON, L3_ICON, R3_ICON, LEFT_ICON, RIGHT_ICON};
+#define GLYPH_SLOTS ((int)(sizeof(glyphSlots) / sizeof(glyphSlots[0])))
+#define GLYPH_ENTRY(set, n)                                    \
+    {                                                          \
+        glyph_##set##_##n##_png, &size_glyph_##set##_##n##_png \
+    }
+#define GLYPH_ROW(set)                                                                                           \
+    {                                                                                                            \
+        GLYPH_ENTRY(set, cross), GLYPH_ENTRY(set, circle), GLYPH_ENTRY(set, square), GLYPH_ENTRY(set, triangle), \
+            GLYPH_ENTRY(set, start), GLYPH_ENTRY(set, select), GLYPH_ENTRY(set, L1), GLYPH_ENTRY(set, R1),       \
+            GLYPH_ENTRY(set, L3), GLYPH_ENTRY(set, R3), GLYPH_ENTRY(set, left), GLYPH_ENTRY(set, right)          \
+    }
+static const struct
+{
+    const unsigned char *png;
+    const unsigned int *size;
+} glyphSetPng[2][GLYPH_SLOTS] = {GLYPH_ROW(standard), GLYPH_ROW(white)}; // [set - GLYPH_SET_STANDARD][slot]
+
+static const char *const glyphSetKeys[GLYPH_SET_COUNT] = {"theme", "builtin", "standard", "white"};
+
+int thmGlyphSetParse(const char *name)
+{
+    int i;
+    for (i = 0; name != NULL && i < GLYPH_SET_COUNT; i++)
+        if (!strcasecmp(name, glyphSetKeys[i]))
+            return i;
+    return GLYPH_SET_THEME;
+}
+
+int thmGlyphSetFor(int themeSet)
+{
+    return gGlyphSet != GLYPH_SET_THEME ? gGlyphSet : themeSet;
+}
+
+// Fill a theme's glyph slots from a set. onGui: the textures may have been drawn (VRAM copies to drop), which is
+// only ever done on the GUI thread; a theme still being built has never been drawn.
+static void thmGlyphSetLoad(theme_t *theme, int set, int onGui)
+{
+    int i;
+    for (i = 0; i < GLYPH_SLOTS; i++) {
+        GSTEXTURE *tex = &theme->textures[glyphSlots[i]];
+        if (tex->Mem != NULL) {
+            if (onGui)
+                rmUnloadTexture(tex);
+            texFree(tex);
+        }
+        if (set == GLYPH_SET_STANDARD || set == GLYPH_SET_WHITE)
+            texLoadFromMemory(tex, glyphSetPng[set - GLYPH_SET_STANDARD][i].png, *glyphSetPng[set - GLYPH_SET_STANDARD][i].size);
+        else if (set == GLYPH_SET_BUILTIN)
+            texLoadInternal(tex, glyphSlots[i]);
+        else
+            thmLoadResource(tex, glyphSlots[i], theme->glyphPath[0] ? theme->glyphPath : NULL, GS_PSM_CT32, theme->useDefault);
+    }
+    theme->glyphSetLoaded = set;
+}
+
+void thmGlyphSetRefresh(void)
+{
+    if (gTheme != NULL && thmGlyphSetFor(gTheme->glyphSetDef) != gTheme->glyphSetLoaded)
+        thmGlyphSetLoad(gTheme, thmGlyphSetFor(gTheme->glyphSetDef), 1);
+}
+
 static int thmLoad(const char *themePath)
 {
     LOG("THEMES Load theme path=%s\n", themePath);
@@ -4115,6 +4196,17 @@ static int thmLoad(const char *themePath)
     // range so the existing texture IDs and theme loading range remain stable.
     thmLoadResource(&newT->textures[L1_ICON], L1_ICON, themePath, GS_PSM_CT32, newT->useDefault);
     thmLoadResource(&newT->textures[R1_ICON], R1_ICON, themePath, GS_PSM_CT32, newT->useDefault);
+
+    // glyph_set=theme|builtin|standard|white (RIPPS2 build 90): the glyphs this theme draws. Settings > Interface >
+    // Button Glyphs overrides it.
+    {
+        const char *glyphSet = NULL;
+        newT->glyphSetDef = configGetStr(themeConfig, "glyph_set", &glyphSet) ? thmGlyphSetParse(glyphSet) : GLYPH_SET_THEME;
+        newT->glyphSetLoaded = GLYPH_SET_THEME;
+        snprintf(newT->glyphPath, sizeof(newT->glyphPath), "%s", themePath != NULL ? themePath : "");
+        if (thmGlyphSetFor(newT->glyphSetDef) != GLYPH_SET_THEME)
+            thmGlyphSetLoad(newT, thmGlyphSetFor(newT->glyphSetDef), 0); // never drawn yet: no VRAM to drop
+    }
 
     // Embedded attribute glyphs (#Format/#Media/Aspect/Rating/Scan/Vmode values): BUILT-IN theme
     // ONLY. a1ae5e5e decoded these for every theme so badges could fall back to them on disk themes

@@ -6,6 +6,8 @@
    first control instead of leaving the dialog at once (a fix over RIPPS2).
 2. Font weight (build 114): <font>_weight=100..900 in a theme draws that font heavier: a variable face along its wght
    axis, a static one with its outlines grown. Checked against the host's FreeType when its headers are there.
+3. Glyph sets (build 90): glyph_set=theme|builtin|standard|white in a theme, and Settings > Interface > Button
+   Glyphs over every theme, swap the hint glyphs between frames. Standard and White are RIPPS2's own pictures.
 """
 from pathlib import Path
 import subprocess
@@ -17,6 +19,14 @@ FNT = 'src/fntsys.c'
 THM = 'src/themes.c'
 TTF = 'thirdparty/PoeVeticaNew.ttf'
 PAD = 'src/pad.c'
+GFX = 'gfx'
+GUI = 'src/gui.c'
+GLYPH_PARSE = 'int thmGlyphSetParse(const char *name)'
+GLYPH_FOR = 'int thmGlyphSetFor(int themeSet)'
+GLYPH_LOAD = 'static void thmGlyphSetLoad(theme_t *theme, int set, int onGui)'
+GLYPH_SETTINGS = ('configSetInt(configOPL, CONFIG_OPL_GLYPH_SET, gGlyphSet);', 'configReadGlyphSet(configOPL);',
+                  'diaGetInt(ui, UICFG_GLYPH_SET, &gGlyphSet);', 'diaGetInt(diaUIConfig, UICFG_GLYPH_SET, &gGlyphSet);')
+SETTINGS_FILES = ('src/opl.c', 'src/gui.c')
 
 
 def read(rel):
@@ -188,8 +198,53 @@ def check_weight(fnt, thm):
     print('weight ok')
 
 
+GLYPH_TEST = r"""
+#include <stdio.h>
+#include <strings.h>
+enum { GLYPH_SET_THEME = 0, GLYPH_SET_BUILTIN, GLYPH_SET_STANDARD, GLYPH_SET_WHITE, GLYPH_SET_COUNT };
+static int gGlyphSet;
+%(keys)s
+%(funcs)s
+int main(void)
+{
+    printf("%%d %%d %%d %%d %%d %%d\n", thmGlyphSetParse("theme"), thmGlyphSetParse("BuiltIn"), thmGlyphSetParse("standard"),
+           thmGlyphSetParse("White"), thmGlyphSetParse("ripps2"), thmGlyphSetParse(NULL));
+    gGlyphSet = GLYPH_SET_THEME;
+    printf("%%d ", thmGlyphSetFor(GLYPH_SET_WHITE));
+    gGlyphSet = GLYPH_SET_STANDARD;
+    printf("%%d\n", thmGlyphSetFor(GLYPH_SET_WHITE));
+    return 0;
+}
+"""
+GLYPH_NAMES = ('cross', 'circle', 'square', 'triangle', 'start', 'select', 'L1', 'R1', 'L3', 'R3', 'left', 'right')
+
+
+def check_glyphs(thm, gui, settings_src):
+    keys = thm[thm.index('static const char *const glyphSetKeys[GLYPH_SET_COUNT]'):]
+    keys = keys[:keys.index(';') + 1]
+    funcs = '\n'.join(function(thm, sig) for sig in (GLYPH_PARSE, GLYPH_FOR))
+    with tempfile.TemporaryDirectory() as d:
+        out = run('glyphs', GLYPH_TEST % {'keys': keys, 'funcs': funcs}, d).split('\n')
+    assert out[0] == '0 1 2 3 0 0', out[0]  # an unknown name or none is the theme's own
+    assert out[1] == '3 2', out[1]  # Theme follows the theme's key; any other pick wins over it
+    load = function(thm, GLYPH_LOAD)
+    assert 'rmUnloadTexture(tex)' in load and 'texFree(tex)' in load and 'texLoadInternal(tex, glyphSlots[i])' in load
+    assert 'theme->glyphPath[0] ? theme->glyphPath : NULL' in load, 'Theme loads the theme\'s own glyphs back'
+    assert '"glyph_set"' in thm and 'thmGlyphSetLoad(newT, thmGlyphSetFor(newT->glyphSetDef), 0)' in thm, 'theme key'
+    start = function(gui, 'void guiStartFrame(')
+    assert start.index('guiLock()') < start.index('thmGlyphSetRefresh()'), 'the swap runs under guiLock, between frames'
+    for name in GLYPH_NAMES:
+        for glyph_set in ('standard', 'white'):
+            png = (root / GFX / ('glyph_%s_%s.png' % (glyph_set, name))).read_bytes()
+            assert png[:8] == b'\x89PNG\r\n\x1a\n', name
+    for needle in GLYPH_SETTINGS:
+        assert needle in settings_src, needle
+    print('glyphs ok')
+
+
 dia = read(DIA)
 check_rows(dia)
 check_wiring(dia, read(PAD))
 check_weight(read(FNT), read(THM))
+check_glyphs(read(THM), read(GUI), '\n'.join(read(f) for f in SETTINGS_FILES))
 print('ripps2 gui port ok')

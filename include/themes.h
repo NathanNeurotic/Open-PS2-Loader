@@ -217,7 +217,26 @@ typedef struct theme
 
     GSTEXTURE textures[TEXTURES_COUNT];
     int fonts[THM_MAX_FONTS]; //!< Storage of font handles for removal once not needed
+
+    int glyphSetDef;     // the theme's glyph_set key (GLYPH_SET_*; THEME: its own PNGs)
+    int glyphSetLoaded;  // the set its glyph textures hold now
+    char glyphPath[256]; // the theme's folder, to load its own glyphs back ("" for the built-in theme)
 } theme_t;
+
+// Button glyph sets (RIPPS2 build 90, akilluminati47): the theme's own PNGs, OPL's built-in ones, or one of two
+// sets built in from RIPPS2 (Standard, drawn from its Adapt theme; White, from its Grunge theme). The order is the
+// Interface page's and the saved setting's.
+enum {
+    GLYPH_SET_THEME = 0,
+    GLYPH_SET_BUILTIN,
+    GLYPH_SET_STANDARD,
+    GLYPH_SET_WHITE,
+    GLYPH_SET_COUNT
+};
+
+int thmGlyphSetParse(const char *name); // glyph_set=theme|builtin|standard|white; anything else is THEME
+int thmGlyphSetFor(int themeSet);       // the set drawn: the user's pick, else the theme's
+void thmGlyphSetRefresh(void);          // GUI thread, under guiLock: swap the glyphs when the pick changed
 
 extern theme_t *gTheme;
 
