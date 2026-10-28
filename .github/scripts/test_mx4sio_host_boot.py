@@ -11,7 +11,11 @@ ROOT = Path(__file__).resolve().parents[2]
 support = (ROOT / 'src/bdmsupport.c').read_text()
 
 assert support.count('&mx4sio_bd_irx') == 2, 'a new MX4SIO load site needs the host: gate'
-assert 'if (gEnableMX4SIO && !mx4sioModLoaded && !oplBootDirIsHostFs()) {' in support
+assert (
+    'if (gEnableMX4SIO && !mx4sioModLoaded && !oplBootDirIsHostFs()) {\n'
+    '        // Load MX4SIO Block Device drivers\n'
+    '        if (bdmDiagLoadOptionalModule("MX4SIO", "MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)' in support
+), 'the MX4SIO load must stay inside the host: gate'
 assert 'if (gEnableMX4SIO && !mx4sioModLoaded && !oplBootDirIsHostFs())\n        return 1;' in support
 assert 'if (!mx4sioModLoaded && !oplBootDirIsHostFs() && bdmLoadOptionalModule("MX4SIO_BD"' in support
 print('PASS: no MX4SIO load on a host: boot')
