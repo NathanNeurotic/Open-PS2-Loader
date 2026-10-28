@@ -92,6 +92,7 @@ enum CONFIG_INDEX {
 
 // OPL config keys
 #define CONFIG_OPL_THEME                      "theme"
+#define CONFIG_OPL_THEME_VIEW                 "theme_view" // list/coverflow/psbbn/grid; absent = the theme's default view
 #define CONFIG_OPL_LANGUAGE                   "language_text"
 #define CONFIG_OPL_SCROLLING                  "scrolling"
 #define CONFIG_OPL_BGCOLOR                    "bg_color"
@@ -246,7 +247,10 @@ enum CONFIG_INDEX {
 #define CONFIG_NET_HTTP_BASE_PATH     "http_base_path"
 #define CONFIG_NET_NBD_DEFAULT_EXPORT "nbd_default_export"
 
-#define CONFIG_KEY_NAME_LEN  32
+// 48, not 32: a multi-view theme prefixes blocks with a view name (coverflow.main2_type), and the
+// longest per-family theme key (favsVcdMain12_reflection_offset) already used 31 of the 31 usable bytes.
+// The longest view prefix is 10 ("coverflow."), so 41 + NUL fits. Costs 16 bytes per loaded config entry.
+#define CONFIG_KEY_NAME_LEN  48
 #define CONFIG_KEY_VALUE_LEN 256
 
 struct config_value_t

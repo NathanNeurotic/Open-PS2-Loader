@@ -196,8 +196,10 @@ jobs:
         run: python3 .github/scripts/test_theme_text_room.py
       - name: Check optional game titles fall back without changing metadata
         run: python3 .github/scripts/test_theme_metadata.py
-      - name: Check PSBBN Flow rendering and built-in theme lifecycle
+      - name: Check PSBBN Flow rendering, the theme catalog and view switching
         run: python3 .github/scripts/test_psbbn_flow.py
+      - name: Check multi-view theme resolution (views, view blocks, fallbacks, key length)
+        run: python3 .github/scripts/test_themeviews.py
       - name: Check custom theme font reads start with an unknown file size
         run: python3 .github/scripts/test_custom_font_load.py
       - name: Check font sizes preserve layout, cache and boot configuration contracts

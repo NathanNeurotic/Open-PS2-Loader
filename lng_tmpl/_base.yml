@@ -1967,3 +1967,6 @@ gui_strings:
 
 - label: HINT_RA_BADGE_SUFFIX
   string: "Prefix puts \"RA \" before the name. Suffix puts \" [RA]\" after it. Both keep alphabetical order."
+
+- label: HINT_THEME_VIEW
+  string: "How the theme draws your games: List, Coverflow or PSBBN Flow. Hold L3 on the main page to switch. Themes without that look use their default."

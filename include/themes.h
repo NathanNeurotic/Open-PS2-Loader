@@ -204,6 +204,12 @@ typedef struct theme
     theme_elems_t favsAppsInfoElems;
     int parsingFavKindFamily; // parse-time only: addGUIElem must not claim an ItemsList slot
 
+    // Multi-view themes (include/themeviews.h): the THM_VIEW_* this theme was built for, and the views it
+    // offers as a (1 << THM_VIEW_*) mask.
+    int view;
+    unsigned int viewMask;
+    int defaultView; // the view thmLoad picks when the request is -1 or not offered
+
     theme_element_t *coverflow;
     theme_element_t *psbbnFlow;
     int coverflowCoverOffset;
@@ -220,6 +226,9 @@ typedef struct theme
 } theme_t;
 
 extern theme_t *gTheme;
+
+// The view the user asked for (THM_VIEW_*), -1 = the theme's default. Applied by the next theme load.
+extern int gThemeViewRequest;
 
 extern int gCoverflowCount, gCoverflowCenterScale, gCoverflowAnimSpeed, gCoverflowDimCovers;
 void thmTriggerCoverflowAnim(int dir);
@@ -248,6 +257,11 @@ theme_element_t *thmFamilyItemsList(theme_elems_t *family, theme_element_t *fall
 // Indices are shifted in GUI, as we add the internal default theme at 0
 int thmSetGuiValue(int themeID, int reload);
 int thmGetGuiValue(void);
+// Ask for a view (THM_VIEW_*, -1 = the theme's default) and reload the active theme when that changes
+// what is shown. Returns 1 when the theme was reloaded. GUI thread, outside a frame.
+int thmSetView(int view);
+// Switch to the next view the active theme offers (hold L3). Returns 1 when the theme was reloaded.
+int thmCycleView(void);
 int thmFindGuiID(const char *theme);
 const char **thmGetGuiList(void);
 char *thmGetFilePath(int themeID);

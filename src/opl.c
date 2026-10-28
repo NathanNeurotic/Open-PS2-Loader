@@ -15,6 +15,7 @@
 #include "include/renderman.h"
 #include "include/lang.h"
 #include "include/themes.h"
+#include "include/themeviews.h"
 #include "include/textures.h"
 #include "include/fntsys.h"
 #include "include/artindex.h"
@@ -3381,8 +3382,17 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_HDD_CACHE, &hddCacheSize);
             configGetInt(configOPL, CONFIG_OPL_SMB_CACHE, &smbCacheSize);
 
-            if (configGetStr(configOPL, CONFIG_OPL_THEME, &temp))
+            int legacyView = -1;
+            if (configGetStr(configOPL, CONFIG_OPL_THEME, &temp)) {
                 themeID = thmFindGuiID(temp);
+                legacyView = thmViewFromLegacyTheme(temp); // <Coverflow>/<PSBBN Flow> -> <OPL> + that view
+            }
+
+            // Before applyConfig loads the theme, so the saved view is the one that loads. The next save
+            // writes <OPL> and theme_view=, which completes the migration of a legacy theme name.
+            gThemeViewRequest = legacyView;
+            if (configGetStr(configOPL, CONFIG_OPL_THEME_VIEW, &temp))
+                gThemeViewRequest = thmViewFromName(temp);
 
             if (configGetStr(configOPL, CONFIG_OPL_LANGUAGE, &temp))
                 langID = lngFindGuiID(temp);
@@ -3752,6 +3762,9 @@ static void _loadConfig()
                          gNetworkProtocol == NET_PROTO_UDPBD));
 
     applyConfig(themeID, langID, 0);
+    // applyConfig reloads only a CHANGED theme; the default <OPL> theme loaded at boot still shows its
+    // default view. This reloads it once when the saved view differs.
+    thmSetView(gThemeViewRequest);
 
     lscret = result;
     lscstatus = 0;
@@ -4002,6 +4015,10 @@ static void _saveConfig()
         config_set_t *configOPL = configGetByType(CONFIG_OPL);
         configSetInt(configOPL, CONFIG_OPL_SCROLLING, gScrollSpeed);
         configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
+        if (gThemeViewRequest >= 0)
+            configSetStr(configOPL, CONFIG_OPL_THEME_VIEW, thmViewName(gThemeViewRequest));
+        else
+            configRemoveKey(configOPL, CONFIG_OPL_THEME_VIEW);
         configSetStr(configOPL, CONFIG_OPL_LANGUAGE, lngGetValue());
         configSetColor(configOPL, CONFIG_OPL_BGCOLOR, gDefaultBgColor);
         configSetColor(configOPL, CONFIG_OPL_TEXTCOLOR, gDefaultTextColor);

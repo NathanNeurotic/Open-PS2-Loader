@@ -381,7 +381,7 @@ void guiCheckNotifications(int checkTheme, int checkLang)
 {
     if (gEnableNotifications) {
         if (checkTheme) {
-            // Only DISK themes have a path to announce; the built-ins (<OPL>, <Coverflow>) return NULL
+            // Only DISK themes have a path to announce; the built-in <OPL> (any view) returns NULL
             // from thmGetFilePath. The old `!= 0` test was correct only while theme IDs ran 0..nThemes;
             // this tree's themes.c adds a built-in at nThemes+1, so a saved <Coverflow> passed the test
             // and fed NULL to the "%s" in _STR_THM_NOTIFICATION on EVERY boot. Coverflow is our default.
@@ -1086,6 +1086,33 @@ static int guiReadAppsViewPicker(struct UIItem *ui)
     return 1;
 }
 
+// Theme View picker: 0 = the theme's default view, then THM_VIEW_LIST, _COVERFLOW, _PSBBN. Grid joins the
+// list with its element (docs/MULTI-VIEW-THEMES-PLAN.md step 6). A theme that does not offer the picked
+// view shows its default one; the choice is kept for the themes that do.
+#define GUI_THEME_VIEW_PICKS 3
+
+static void guiSetThemeViewPicker(struct UIItem *ui)
+{
+    static const char *names[GUI_THEME_VIEW_PICKS + 2];
+    names[0] = _l(_STR_DEFAULT);
+    names[1] = "List";
+    names[2] = "Coverflow";
+    names[3] = "PSBBN Flow";
+    names[4] = NULL;
+    diaSetEnum(ui, UICFG_THEME_VIEW, names);
+    diaSetInt(ui, UICFG_THEME_VIEW, (gThemeViewRequest >= 0 && gThemeViewRequest < GUI_THEME_VIEW_PICKS) ? gThemeViewRequest + 1 : 0);
+}
+
+// Stores the picked view; the caller applies it with thmSetView after applyConfig. 1 when it changed.
+static int guiReadThemeViewPicker(struct UIItem *ui)
+{
+    int previous = gThemeViewRequest, picker = 0;
+
+    diaGetInt(ui, UICFG_THEME_VIEW, &picker);
+    gThemeViewRequest = (picker >= 1 && picker <= GUI_THEME_VIEW_PICKS) ? picker - 1 : -1;
+    return gThemeViewRequest != previous;
+}
+
 static void guiRefreshGameViews(void)
 {
     // libViewMarkAllDirty is intentionally side-effect-free; queue the actual source rebuilds and
@@ -1163,6 +1190,7 @@ reshow_ui:
     diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL);
     guiSetGameViewPicker(diaUIConfig);
     guiSetAppsViewPicker(diaUIConfig);
+    guiSetThemeViewPicker(diaUIConfig);
     diaSetEnum(diaUIConfig, UICFG_VMODE, vmodeNames);
     diaSetInt(diaUIConfig, UICFG_VMODE, gVMode);
     const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
@@ -1208,6 +1236,7 @@ reshow_ui:
         int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
+        int themeViewChanged = guiReadThemeViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
         diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
 
@@ -1217,6 +1246,8 @@ reshow_ui:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
+        if (themeViewChanged)
+            thmSetView(gThemeViewRequest); // reloads only when the theme now shows a different view
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
@@ -2480,7 +2511,7 @@ void guiShowArtworkConfig(void)
 void guiShowColorsConfig(void)
 {
     int themeID = thmGetGuiValue();
-    int editable = (themeID == 0 || themeID == thmFindGuiID("<Coverflow>") || themeID == thmFindGuiID("<PSBBN Flow>"));
+    int editable = themeID == 0; // <OPL> in any view takes the picker's palette
 
     if (editable) {
         // Display the default theme's colours.
@@ -3143,6 +3174,7 @@ static int guiSettingsShowInterface(void)
     int gameViewChanged = 0;
     int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
+    int themeViewChanged = 0;
 
     if (ui == NULL)
         return 0;
@@ -3158,6 +3190,7 @@ static int guiSettingsShowInterface(void)
     diaSetEnum(ui, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
     guiSetGameViewPicker(ui);
     guiSetAppsViewPicker(ui);
+    guiSetThemeViewPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
     diaSetInt(ui, UICFG_AUTOSORT, gAutosort);
@@ -3219,6 +3252,7 @@ reshow_interface:
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
+        themeViewChanged = guiReadThemeViewPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);
         diaGetInt(ui, UICFG_FONT_SIZE, &gFontSize);
@@ -3236,6 +3270,8 @@ reshow_interface:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
+        if (themeViewChanged)
+            thmSetView(gThemeViewRequest); // reloads only when the theme now shows a different view
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
