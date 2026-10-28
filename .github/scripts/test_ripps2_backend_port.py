@@ -1,7 +1,9 @@
 """Backend fixes ported from RIPPS2 (akilluminati47/RIPPS2, builds 114-115).
 
 1. POPS files: vcdConfirmPopsFiles lets a launch through only when POPS_IOX.PAK and POPS.PAK, or POPS.ELF
-   with IOPRP252.IMG, are beside the game, and otherwise asks, naming what is missing.
+   with IOPRP252.IMG, are beside the game, and otherwise asks, naming what is missing. When another started
+   drive has a complete set, it first offers to copy over only the files this drive lacks (RIPPOPS, builds
+   89 and 115); a declined or failed copy falls back to the ask.
 2. IOP reset: reset() makes every source forget its "module loaded" latches, so the next initAllSupport
    loads iLink, MX4SIO, ATA, PCCF, UDPBD, HDD, MMCE and UDPFS again (they stayed dead after the NBD server).
 3. FreeType: neither FT_Init_FreeType nor FT_Done_FreeType is called; both live in ftinit.c with every
@@ -30,18 +32,63 @@ program = r'''
 #include <sys/stat.h>
 #define POPS_FOLDER "POPS"
 #define LOG(...) ((void)0)
-#define _l(x) "missing=[%s] in %s%s"
 #define _STR_POPS_FILES_MISSING 0
+#define _STR_POPS_COPY_OFFER 1
+#define _STR_POPS_COPYING 2
+#define _STR_POPS_COPY_FAILED 3
+#define MAX_BDM_DEVICES 2
+#define BDM_MODE 0
+static const char *_l(int id)
+{
+    static const char *const text[] = {"missing=[%s] in %s%s", "offer from %s: [%s] to %s%s", "copying %s", "failed %s to %s%s"};
+    return text[id];
+}
+static int offered, copied, failCopy, rendered;
+static const char *hddFolder = "SRC/POPS/";
+static int bdmSlotEverConnected(int mode) { (void)mode; return 0; } /* mass%d:/ is no host path */
+static int mmceModulesLoaded(void) { return 0; }
+static int hddVisitCommonPops(int (*visit)(const char *folder, void *arg), void *arg) { return visit(hddFolder, arg); }
+static int vcdSafeCopyFile(const char *src, const char *dst)
+{
+    char buf[16];
+    size_t n;
+    FILE *in, *out;
+    if (failCopy)
+        return -3;
+    in = fopen(src, "rb");
+    out = fopen(dst, "wb");
+    assert(in && out);
+    n = fread(buf, 1, sizeof(buf), in);
+    fwrite(buf, 1, n, out);
+    fclose(in);
+    fclose(out);
+    copied++;
+    return 0;
+}
 static char vcdSep(const char *p) { (void)p; return '/'; }
 static char last[512];
 static int answer, asked;
-static int guiMsgBox(const char *s, int confirm, void *unused) { (void)unused; asked++; snprintf(last, sizeof(last), "%s", s); return confirm ? answer : 0; }
+static int guiMsgBox(const char *s, int confirm, void *unused)
+{
+    (void)unused;
+    asked++;
+    if (!strncmp(s, "offer", 5))
+        offered++;
+    snprintf(last, sizeof(last), "%s", s);
+    return confirm ? answer : 0;
+}
+static void guiRenderTextScreen(const char *s) { (void)s; rendered++; }
 int vcdConfirmPopsFiles(const char *root);
 ''' + block + r'''
 static void put(const char *name) { char p[64]; snprintf(p, sizeof(p), "POPS/%s", name); FILE *f = fopen(p, "wb"); fputs("x", f); fclose(f); }
+static void putIn(const char *dir, const char *name, const char *text) { char p[64]; snprintf(p, sizeof(p), "%s%s", dir, name); FILE *f = fopen(p, "wb"); fputs(text, f); fclose(f); }
+static int has(const char *name, const char *text) { char p[64], got[8] = ""; snprintf(p, sizeof(p), "POPS/%s", name); FILE *f = fopen(p, "rb"); if (!f) return 0; if (!fgets(got, sizeof(got), f)) got[0] = 0; fclose(f); return !strcmp(got, text); }
+static void clearIn(const char *dir) { const char *n[] = {"POPS_IOX.PAK", "POPS.ELF", "POPS.PAK", "IOPRP252.IMG"}; char p[64]; for (int i = 0; i < 4; i++) { snprintf(p, sizeof(p), "%s%s", dir, n[i]); unlink(p); } }
 static void clear(void) { const char *n[] = {"POPS_IOX.PAK", "POPS.ELF", "POPS.PAK", "IOPRP252.IMG"}; char p[64]; for (int i = 0; i < 4; i++) { snprintf(p, sizeof(p), "POPS/%s", n[i]); unlink(p); } }
 int main(void) {
     mkdir("POPS", 0777);
+    mkdir("SRC", 0777);
+    mkdir("SRC/POPS", 0777);
     answer = 0;
     asked = 0; assert(vcdConfirmPopsFiles("") == 1 && asked == 0);             /* no root: nothing to check */
     asked = 0; assert(vcdConfirmPopsFiles("./") == 0 && asked == 1);           /* nothing there: asked, declined */
@@ -58,6 +105,34 @@ int main(void) {
     assert(strstr(last, "[IOPRP252.IMG]"));
     clear(); put("POPS.PAK");
     asked = 0; assert(vcdConfirmPopsFiles("./") == 0 && strstr(last, "[POPS_IOX.PAK]"));
+    assert(offered == 0 && copied == 0);                                        /* no source anywhere: no offer */
+
+    /* RIPPOPS: another drive has a set. Only what this drive lacks is offered and copied; nothing is overwritten */
+    clear(); put("POPS.PAK");
+    putIn("SRC/POPS/", "POPS_IOX.PAK", "y"); putIn("SRC/POPS/", "POPS.PAK", "y"); putIn("SRC/POPS/", "POPS.ELF", "y");
+    putIn("SRC/POPS/", "IOPRP252.IMG", "y");
+    answer = 1; asked = 0;
+    assert(vcdConfirmPopsFiles("./") == 1 && asked == 1 && offered == 1 && copied == 3 && rendered == 3);
+    assert(strstr(last, "offer from SRC/POPS/: [POPS_IOX.PAK, POPS.ELF, IOPRP252.IMG] to ./POPS"));
+    assert(has("POPS_IOX.PAK", "y") && has("POPS.ELF", "y") && has("IOPRP252.IMG", "y") && has("POPS.PAK", "x"));
+
+    /* declined: nothing copied, then the usual ask */
+    clear(); offered = copied = 0; answer = 0; asked = 0;
+    assert(vcdConfirmPopsFiles("./") == 0 && asked == 2 && offered == 1 && copied == 0 && strstr(last, "missing=["));
+    assert(!has("POPS_IOX.PAK", "y"));
+
+    /* a copy that fails: told, then the usual ask names what is still missing */
+    clear(); offered = 0; answer = 1; failCopy = 1; asked = 0;
+    assert(vcdConfirmPopsFiles("./") == 1 && asked == 3 && offered == 1); /* offer, failure, ask (answered launch) */
+    failCopy = 0;
+
+    /* an incomplete set elsewhere (no POPS_IOX.PAK) is no source */
+    clear(); clearIn("SRC/POPS/"); putIn("SRC/POPS/", "POPS.PAK", "y"); offered = 0; answer = 0; asked = 0;
+    assert(vcdConfirmPopsFiles("./") == 0 && asked == 1 && offered == 0);
+
+    /* this drive is never its own source */
+    clear(); put("POPS.PAK"); hddFolder = "./POPS/"; putIn("SRC/POPS/", "POPS_IOX.PAK", "y"); offered = 0; asked = 0;
+    assert(vcdConfirmPopsFiles("./") == 0 && offered == 0);
     return 0;
 }
 '''
@@ -67,7 +142,7 @@ with tempfile.TemporaryDirectory(prefix='ripps2-port-') as temp:
     exe = Path(temp) / 'pops.exe'
     subprocess.run(['cc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', str(src), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], cwd=temp, check=True)
-print('ok   POPS files: both sets pass, a missing set asks and names what is missing')
+print('ok   POPS files: both sets pass, another drive\'s set is offered and copied, a missing set asks')
 
 opl = (root / 'src/opl.c').read_text()
 body = opl[opl.index('static void reset(void)\n{'):]

@@ -521,6 +521,11 @@ void mmceIopWasReset(void)
     mmceModLoaded = 0;
 }
 
+int mmceModulesLoaded(void)
+{
+    return mmceModLoaded;
+}
+
 void mmceLoadModules(void)
 {
     // mmceman is a singleton, and this is called from several places -- mmceInit, the BDMA equip

@@ -8,6 +8,9 @@
 
 // Read loose BDMA payloads from existing __common/POPS without moving the data home.
 int hddEquipPopstarterBdmaFromCommon(int mode, char *diag, int diagSize);
+// Hand visit() __common/POPS/, read only, when the HDD stack is already up (nothing is started for it).
+// Returns what visit() returned, 0 when the folder could not be reached.
+int hddVisitCommonPops(int (*visit)(const char *folder, void *arg), void *arg);
 
 #define HDL_GAME_NAME_MAX 64
 

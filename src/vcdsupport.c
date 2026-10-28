@@ -2938,13 +2938,13 @@ static const char *const vcdPopsFiles[] = {"POPS_IOX.PAK", "POPS.ELF", "POPS.PAK
 #define VCD_POPS_PAK 4
 #define VCD_POPS_IMG 8
 
-static int vcdPopsHave(const char *root)
+static int vcdPopsHaveIn(const char *folder) // folder ends in its separator
 {
     char path[256];
     int k, fd, have = 0;
 
     for (k = 0; k < 4; k++) {
-        if (snprintf(path, sizeof(path), "%s%s%c%s", root, POPS_FOLDER, vcdSep(root), vcdPopsFiles[k]) >= (int)sizeof(path))
+        if (snprintf(path, sizeof(path), "%s%s", folder, vcdPopsFiles[k]) >= (int)sizeof(path))
             continue;
         fd = open(path, O_RDONLY);
         if (fd >= 0) {
@@ -2955,6 +2955,91 @@ static int vcdPopsHave(const char *root)
     return have;
 }
 
+static int vcdPopsHave(const char *root)
+{
+    char folder[256];
+
+    if (snprintf(folder, sizeof(folder), "%s%s%c", root, POPS_FOLDER, vcdSep(root)) >= (int)sizeof(folder))
+        return 0;
+    return vcdPopsHaveIn(folder);
+}
+
+static int vcdPopsEmulator(int have)
+{
+    return (have & VCD_POPS_PAK) || ((have & VCD_POPS_ELF) && (have & VCD_POPS_IMG));
+}
+
+/* RIPPS2 builds 89 and 115 (RIPPOPS): Sony's POPS files are in no PS2 ROM, so they cannot come from the
+   console, but a complete set the user already has on another started drive can be brought over. The
+   source is only read. Only the files this drive lacks are written, each through vcdSafeCopyFile, which
+   removes a short write. */
+typedef struct
+{
+    const char *root;
+    int have;
+    int handled; // a set was found and offered (taken or not): stop looking
+} vcd_pops_offer_t;
+
+static int vcdPopsOffer(const char *from, void *arg)
+{
+    vcd_pops_offer_t *offer = (vcd_pops_offer_t *)arg;
+    char found[64] = "", src[256], dst[256], msg[512];
+    int there, take, k;
+
+    if (!strncmp(from, offer->root, strlen(offer->root)))
+        return 0; // the drive the game is on
+    there = vcdPopsHaveIn(from);
+    if (!(there & VCD_POPS_IOX) || !vcdPopsEmulator(there))
+        return 0;
+    take = there & ~offer->have;
+    for (k = 0; k < 4; k++)
+        if (take & (1 << k))
+            snprintf(found + strlen(found), sizeof(found) - strlen(found), "%s%s", found[0] ? ", " : "", vcdPopsFiles[k]);
+    offer->handled = 1;
+    LOG("VCD: POPS files for %s%s found in %s\n", offer->root, POPS_FOLDER, from);
+    snprintf(msg, sizeof(msg), _l(_STR_POPS_COPY_OFFER), from, found, offer->root, POPS_FOLDER);
+    if (!guiMsgBox(msg, 1, NULL))
+        return 1;
+    for (k = 0; k < 4; k++) {
+        if (!(take & (1 << k)))
+            continue;
+        snprintf(src, sizeof(src), "%s%s", from, vcdPopsFiles[k]);
+        snprintf(dst, sizeof(dst), "%s%s%c%s", offer->root, POPS_FOLDER, vcdSep(offer->root), vcdPopsFiles[k]);
+        snprintf(msg, sizeof(msg), _l(_STR_POPS_COPYING), vcdPopsFiles[k]);
+        guiRenderTextScreen(msg);
+        if (vcdSafeCopyFile(src, dst) != 0) {
+            LOG("VCD: POPS copy %s -> %s failed\n", src, dst);
+            snprintf(msg, sizeof(msg), _l(_STR_POPS_COPY_FAILED), vcdPopsFiles[k], offer->root, POPS_FOLDER);
+            guiMsgBox(msg, 0, NULL);
+            return 1;
+        }
+    }
+    return 1;
+}
+
+// Every other drive OPL has already started, never one it would have to start: the BDM slots that
+// have held a drive, both MMCE cards once mmceman is in, and __common/POPS/ once the HDD stack is up.
+static void vcdPopsVisitSources(int (*visit)(const char *folder, void *arg), void *arg)
+{
+    char folder[32];
+    int i;
+
+    for (i = 0; i < MAX_BDM_DEVICES; i++) {
+        if (!bdmSlotEverConnected(BDM_MODE + i))
+            continue;
+        snprintf(folder, sizeof(folder), "mass%d:/%s/", i, POPS_FOLDER);
+        if (visit(folder, arg))
+            return;
+    }
+    if (mmceModulesLoaded())
+        for (i = 0; i < 2; i++) {
+            snprintf(folder, sizeof(folder), "mmce%d:/%s/", i, POPS_FOLDER);
+            if (visit(folder, arg))
+                return;
+        }
+    hddVisitCommonPops(visit, arg);
+}
+
 int vcdConfirmPopsFiles(const char *root)
 {
     char missing[64], msg[512];
@@ -2963,10 +3048,18 @@ int vcdConfirmPopsFiles(const char *root)
     if (root == NULL || root[0] == '\0')
         return 1;
     have = vcdPopsHave(root);
-    int emulator = (have & VCD_POPS_PAK) || ((have & VCD_POPS_ELF) && (have & VCD_POPS_IMG));
-    if ((have & VCD_POPS_IOX) && emulator)
+    if ((have & VCD_POPS_IOX) && vcdPopsEmulator(have))
         return 1;
 
+    vcd_pops_offer_t offer = {root, have, 0};
+    vcdPopsVisitSources(vcdPopsOffer, &offer);
+    if (offer.handled) { // declined, or a copy that stopped part way: look again before asking
+        have = vcdPopsHave(root);
+        if ((have & VCD_POPS_IOX) && vcdPopsEmulator(have))
+            return 1;
+    }
+
+    int emulator = vcdPopsEmulator(have);
     missing[0] = '\0';
     if (!(have & VCD_POPS_IOX))
         snprintf(missing, sizeof(missing), "POPS_IOX.PAK");

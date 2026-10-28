@@ -2149,6 +2149,23 @@ static int hddResolveHddPopstarter(char *elfOut, int elfLen)
 // disturbing pfs0: (which may itself hold the custom ELF or the normal OPL data home).
 // Best-effort, matching hddResolveHddPopstarter(): existing card files always win and a missing
 // __common payload never turns an otherwise-valid custom ELF into a launch failure.
+// RIPPS2 build 89 (RIPPOPS, akilluminati47): __common/POPS/ is where an HDD user's own POPS files are, and
+// a PS1 game on USB or MMCE can take them from there. Same mounts as the BDMA equip below.
+int hddVisitCommonPops(int (*visit)(const char *folder, void *arg), void *arg)
+{
+    int result;
+
+    if (!hddModulesAreLoaded())
+        return 0;
+    if (gHDDPrefix != NULL && hddGetLiveOplHomeSelection() == HDD_OPL_HOME_COMMON)
+        return visit("pfs0:/POPS/", arg);
+    if (fileXioMount("pfs1:", "hdd0:__common", FIO_MT_RDONLY) != 0)
+        return 0;
+    result = visit("pfs1:/POPS/", arg);
+    fileXioUmount("pfs1:");
+    return result;
+}
+
 int hddEquipPopstarterBdmaFromCommon(int mode, char *diag, int diagSize)
 {
     if (!hddLoadModulesReady())
