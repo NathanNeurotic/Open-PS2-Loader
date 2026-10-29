@@ -119,7 +119,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 
 <h2 id="rolling-assets">What the rolling release contains</h2>
 
-<p>Successful publishing runs on <code>rebuild/main</code> replace the rolling assets. Archives are organized by purpose: the normal installable package, RA development package, exact source, VARIANTS, and optional language/debug packs. Read the release notes for omitted optional flavours. Current standard kits require a usable Neutrino bundle. Korium uses the same standard asset shape with a <code>-Korium</code> suffix; preserved snapshots can retain older names.</p>
+<p>Successful publishing runs on <code>rebuild/main</code> replace the rolling assets. Archives are organized by purpose: the normal installable package, RA development package, exact source, VARIANTS, and optional language/debug packs. Read the release notes for omitted optional flavours. Current standard kits require a usable Neutrino bundle. Every ZIP name ends with the build version, so the revision number is always the last part of the name. Korium uses the same asset shape with <code>Korium</code> in front of the version (<code>RIPTOPL-Korium-&lt;version&gt;.zip</code>, <code>RIPTOPL-VARIANTS-Korium-&lt;version&gt;.zip</code>); preserved snapshots can retain older names.</p>
 
 <table data-sortable>
 <thead><tr><th>Asset</th><th>What it is</th></tr></thead>
@@ -161,7 +161,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 <tr><td><code>RIPTOPL-RA-inceBtion.ELF</code>, <code>RIPTOPL-RA-Korium.ELF</code></td><td>Theme-specific RetroAchievements updates: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-inceBtion.ELF">inceBtion ELF</a> or <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-Korium.ELF">Korium ELF</a>. Rename the selected download to <code>RIPTOPL-RA.ELF</code> when replacing <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code>. Full kits install the runtime.</td></tr>
 <tr><td><code>APP_RIPTOPL.psu</code>; RA theme saves</td><td>Standard app-only save from Rolling. The <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra">RA release</a> has <code>APP_RIPTOPL-RA-inceBtion.psu</code> and <code>APP_RIPTOPL-RA-Korium.psu</code>. Both RA saves import into <code>APP_RIPTOPL-RA</code>; copy shared folders from the matching full kit separately.</td></tr>
 <tr>
-  <td><code>RIPTOPL-&lt;version&gt;-src.zip</code></td>
+  <td><code>RIPTOPL-src-&lt;version&gt;.zip</code></td>
   <td>Source snapshot of the exact built commit — you can rebuild this precise revision later.</td>
 </tr>
 <tr>
