@@ -27,6 +27,23 @@ class WikiConversionTests(unittest.TestCase):
         for anchor in ("directory", "catalog-a", "example"):
             self.assertIn(anchor, wiki_sync.anchors_and_links(result)[0])
 
+    def test_code_example_inside_table_cell_keeps_table_and_lines(self):
+        html = '''<main class="content"><h1>Troubleshooting</h1>
+<table><thead><tr><th>Problem</th><th>Fix</th></tr></thead>
+<tbody><tr><td>Freeze</td><td>In smb.conf set
+<pre>keepalive = 0
+a|b &lt;x&gt;</pre>
+and restart Samba.</td></tr>
+<tr><td>Other</td><td>Two</td></tr></tbody></table></main>'''
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "smb.html"
+            path.write_text(html)
+            result = wiki_sync.convert_site(path, "abc123")
+        rendered = BeautifulSoup(wiki_sync.MD.render(result), "html.parser")
+        self.assertEqual(len(rendered.select("table")), 1)
+        self.assertEqual(len(rendered.select("td")), 4)
+        self.assertEqual(rendered.select_one("td pre").get_text(), "keepalive = 0\na|b <x>")
+
     def test_source_index_keeps_duplicate_headings_and_explicit_bookmarks(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp)
