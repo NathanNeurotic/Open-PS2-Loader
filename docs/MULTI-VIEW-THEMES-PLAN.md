@@ -103,7 +103,7 @@ load today. A side effect: app titles in conf_apps.cfg can now be up to 47 chara
 - Phase 1 applies a view change by reloading the theme. It costs no extra EE RAM. Phase 2 keeps every
   declared view resident for an instant switch, only if the reload is too slow on real hardware.
 
-## Auto-normalised views (later step)
+## Auto-normalised views (fallback views)
 
 For a view the theme does not declare, the loader keeps the theme's background, colours, fonts, menu icons,
 hints and info page, and swaps only the presenter, using per-view rules by element type:
@@ -113,7 +113,9 @@ hints and info page, and swaps only the presenter, using per-view rules by eleme
 - Grid: hide `ItemsList` and `ItemCover`, add `Grid`.
 - List: hide flow elements, add `ItemsList`/`ItemCover` if the theme has none.
 
-This ships behind a setting until it has been checked against community themes in PCSX2.
+Shipped on by default for every disk theme without `views=` (owner's call, 2026-10-29): see
+[THEME_ENGINE.md, Fallback views](THEME_ENGINE.md#fallback-views). Built for the active view only, from the
+built-in template cfg of that view (`thmViewSynthesize`). NOT TESTED against community themes in PCSX2 yet.
 
 ## Steps
 
