@@ -69,5 +69,13 @@ For every item, first write a failing host test or reproducible hardware case. I
 5. Backward compatibility: keep existing CFG settings/default values and per-game overrides; avoid device-prefix semantic regressions and avoid silent long blocking waits. If a source change differs by edition, explain why explicitly.
 6. Keep this plan PR open for tracking until implemented and confirmed, or split into task PRs that reference it. On each successful implementation update the checkbox with PR, commit and test evidence. Never mark a candidate complete solely because code was cherry-picked.
 
+## Implementation progress (2026-10-29)
+
+- **YA-15:** [implementation #1107](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1107) is ready for review; required CI passed. Both disc-key paths share a synchronous helper with balanced ownership instead of a post-call repair. Host tests reproduce the old leak and cover success/failure and rejected acquisitions. Hardware stop/read/launch checks remain pending.
+- **YA-16:** [implementation #1108](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1108) adds existing fragment counts and backup-first Cancel guidance, preserving native refusal, range/layout checks, slot isolation and autolaunch. Extended native VMC launch tests and strict translation checks pass. CI/review and console validation remain pending.
+- **YA-01:** [implementation #1109](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1109) bounds history filenames to 16 bytes plus NUL. The new guarded-output regression fails on the unmodified base and passes after the fix, including long names, exact fits, separators, versions and empty input. CI/review and console validation remain pending.
+
+These PRs remain separate and unmerged. No checkbox is promoted to hardware-confirmed acceptance by these host results. Remaining YA tasks are still open.
+
 ## Attribution
 Thank **[belomaxorka](https://github.com/belomaxorka)** and **[YAOPL](https://github.com/yaopl/yaopl)** for the compatibility investigations, backend fixes and host reproductions. Existing README/CREDITS and Applications/About acknowledgments are tracked separately; this plan neither changes those credits nor falsely claims that unmerged YAOPL patches are already in RiptOPL.
