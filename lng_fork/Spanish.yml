@@ -540,9 +540,9 @@ translations:
   HINT_PLASCOLOR: Color mezclado en el fondo animado.
   HINT_RESETCOLOR: Restablece los colores integrados de RiptOPL, no los del tema.
   HINT_WIDESCREEN: Dibuja el menú para un televisor 16:9.
-  HINT_XOFF: Mueve el menú a la izquierda o a la derecha de la pantalla.
-  HINT_YOFF: Mueve el menú arriba o abajo en la pantalla.
-  HINT_MENU_OVERSCAN: Encoge el menú hacia dentro si el televisor corta sus bordes.
+  HINT_XOFF: "Mueve el menú a la izquierda o a la derecha de la pantalla. Se guarda para cada modo de vídeo."
+  HINT_YOFF: "Mueve el menú arriba o abajo en la pantalla. Se guarda para cada modo de vídeo."
+  HINT_MENU_OVERSCAN: "Encoge el menú hacia dentro si el televisor corta sus bordes. Se guarda para cada modo de vídeo."
   HINT_APPLYGAMEID: Muestra un código de barras al iniciar un juego, para que los dispositivos Pixel FX, RetroGEM y PS2Digital cambien de perfil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: La ruta, el modo de vídeo y los argumentos de Neutrino para cada juego.
   HINT_OSD_DEFAULTS_BUTTON: Idioma de la consola, tamaño de pantalla y modo de vídeo que se pasan a los juegos.

@@ -534,9 +534,9 @@ translations:
   HINT_PLASCOLOR: Farve, der blandes ind i den animerede baggrund.
   HINT_RESETCOLOR: Gendanner RiptOPL's indbyggede farver, ikke temaets.
   HINT_WIDESCREEN: Tegner menuen til et 16:9-tv.
-  HINT_XOFF: Flytter menuen til venstre eller højre på skærmen.
-  HINT_YOFF: Flytter menuen op eller ned på skærmen.
-  HINT_MENU_OVERSCAN: Gør menuen mindre indad, hvis tv'et skærer kanterne af.
+  HINT_XOFF: "Flytter menuen til venstre eller højre på skærmen. Gemmes for hver videotilstand."
+  HINT_YOFF: "Flytter menuen op eller ned på skærmen. Gemmes for hver videotilstand."
+  HINT_MENU_OVERSCAN: "Gør menuen mindre indad, hvis tv'et skærer kanterne af. Gemmes for hver videotilstand."
   HINT_APPLYGAMEID: Viser en stregkode, når et spil starter, så Pixel FX-, RetroGEM- og PS2Digital-enheder skifter profil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Neutrinos sti, videotilstand og argumenter for hvert spil.
   HINT_OSD_DEFAULTS_BUTTON: Konsolsprog, skærmstørrelse og videotilstand, der gives videre til spil.

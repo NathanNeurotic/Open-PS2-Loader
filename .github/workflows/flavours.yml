@@ -242,6 +242,8 @@ jobs:
         run: python3 .github/scripts/test_vmc_preserve_existing.py
       - name: Check Create VMC on First Launch creates, reuses, skips and reports correctly
         run: python3 .github/scripts/test_auto_create_vmc.py
+      - name: Check the screen position is kept for each video mode (RIPPS2 build 124)
+        run: python3 .github/scripts/test_screen_pos_per_mode.py
       - name: Check Neutrino VMC budget recovery and #831 compat defaults
         run: python3 .github/scripts/test_issues_830_831.py
       - name: Check per-title compat defaults and per-core routing

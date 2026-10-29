@@ -523,9 +523,9 @@ translations:
   HINT_PLASCOLOR: Hareketli arka plana karışan renk.
   HINT_RESETCOLOR: Temanınkileri değil, RiptOPL'nin yerleşik renklerini geri getirir.
   HINT_WIDESCREEN: Menüyü 16:9 bir TV için çizer.
-  HINT_XOFF: Menüyü ekranda sola veya sağa kaydırır.
-  HINT_YOFF: Menüyü ekranda yukarı veya aşağı kaydırır.
-  HINT_MENU_OVERSCAN: TV kenarları kesiyorsa menüyü içe doğru küçültür.
+  HINT_XOFF: "Menüyü ekranda sola veya sağa kaydırır. Her video modu için ayrı saklanır."
+  HINT_YOFF: "Menüyü ekranda yukarı veya aşağı kaydırır. Her video modu için ayrı saklanır."
+  HINT_MENU_OVERSCAN: "TV kenarları kesiyorsa menüyü içe doğru küçültür. Her video modu için ayrı saklanır."
   HINT_APPLYGAMEID: Bir oyun başlarken bir barkod gösterir, böylece Pixel FX, RetroGEM ve PS2Digital cihazları profil değiştirir.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Her oyun için Neutrino'nun yolu, video modu ve argümanları.
   HINT_OSD_DEFAULTS_BUTTON: Oyunlara verilen konsol dili, ekran boyutu ve video modu.
