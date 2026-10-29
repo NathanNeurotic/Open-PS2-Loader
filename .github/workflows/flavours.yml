@@ -301,6 +301,7 @@ jobs:
           python3 .github/scripts/test_disc_key_semaphore.py
           python3 .github/scripts/test_history_filename_bounds.py
           python3 .github/scripts/test_font_fit_bounds.py
+          python3 .github/scripts/test_cnf_missing_equals.py
       - name: Check RA language isolation and stable string IDs
         run: python3 .github/scripts/test_ra_language_isolation.py
       - name: Check RA watch validation, persistent layout and EE sampling
