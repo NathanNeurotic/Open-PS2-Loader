@@ -16,6 +16,7 @@
   Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
 * Fragmented native BDM VMC warnings show the existing fragment count and, on Cancel, backup/recovery guidance. Native refusal and physical-card fallback are unchanged. Credit belomaxorka/YAOPL c19eed08. Hardware validation pending.
 * Reject a SYSTEM.CNF BOOT2 line without '=' instead of passing NULL to the value parser during image discovery. Matches the existing C++ guard. Credit belomaxorka/YAOPL 43781768. Hardware validation pending.
+* ISO 9660 directory walk (game list and in-game CDVDMAN): a directory record without a name no longer stops the scan (it looped forever), the record length is read as one byte (a non-zero extended-attribute byte made it step 256+ bytes or backwards), and a damaged record that is shorter than its name or runs past the sector ends that sector instead of being read past. The found file name is cut to 16 bytes and taken after either / or \ in both copies, the game list compares names within the record (odd-length names were missed), and the in-game directory read stays inside its sector. Ported from belomaxorka / YAOPL (ff498c19, af5b52b7, bfe726f5). NOT TESTED on hardware.
 
 ==== Version 0.9.3 ====
 CORE:
