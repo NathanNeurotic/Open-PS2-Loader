@@ -27,6 +27,20 @@ class WikiConversionTests(unittest.TestCase):
         for anchor in ("directory", "catalog-a", "example"):
             self.assertIn(anchor, wiki_sync.anchors_and_links(result)[0])
 
+    def test_code_block_in_table_cell_keeps_table_and_lines(self):
+        html = '''<main class="content"><h1>Server</h1>
+<table><tr><th>Symptom</th><th>Fix</th></tr>
+<tr><td>Drops</td><td>Set <pre>keepalive = 0
+socket options = a|b &lt;x&gt;</pre> and restart.</td></tr></table></main>'''
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "server.html"
+            path.write_text(html)
+            result = wiki_sync.convert_site(path, "abc123")
+        rendered = BeautifulSoup(wiki_sync.MD.render(result), "html.parser")
+        self.assertEqual(len(rendered.select("table")), 1)
+        self.assertEqual(len(rendered.select("td")), 2)
+        self.assertEqual(rendered.select_one("td pre").get_text(), "keepalive = 0\nsocket options = a|b <x>")
+
     def test_source_index_keeps_duplicate_headings_and_explicit_bookmarks(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp)

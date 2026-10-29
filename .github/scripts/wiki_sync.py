@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import hashlib
+import html
 import json
 import posixpath
 import re
@@ -214,6 +215,14 @@ class Converter(MarkdownConverter):
         if {"td", "th"} & parent_tags:
             result = result.replace("|", "\\|")
         return result
+
+    # A fenced block cannot live in a Markdown table cell, so a <pre> inside one stays inline HTML,
+    # with its line breaks kept as entities so the row stays on one line.
+    def convert_pre(self, el, text, parent_tags):
+        if {"td", "th"} & parent_tags:
+            code = html.escape(el.get_text(), quote=False).replace("|", "&#124;").replace("\n", "&#10;")
+            return "<pre>" + code + "</pre>"
+        return super().convert_pre(el, text, parent_tags)
 
     def convert_a(self, el, text, parent_tags):
         if el.get("name") and not el.get("href"):
