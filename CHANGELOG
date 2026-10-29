@@ -16,6 +16,7 @@
   Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
 * Fragmented native BDM VMC warnings show the existing fragment count and, on Cancel, backup/recovery guidance. Native refusal and physical-card fallback are unchanged. Credit belomaxorka/YAOPL c19eed08. Hardware validation pending.
 * Reject a SYSTEM.CNF BOOT2 line without '=' instead of passing NULL to the value parser during image discovery. Matches the existing C++ guard. Credit belomaxorka/YAOPL 43781768. Hardware validation pending.
+* IGR and power-off stop the USB host controller before the IOP reset, so IGR with a USB PADEMU pad (DualShock 3) or a USB device no longer hangs before the next program. Credit belomaxorka/YAOPL e72c9f48. Host-tested; hardware validation pending.
 
 ==== Version 0.9.3 ====
 CORE:
