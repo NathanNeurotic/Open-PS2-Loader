@@ -672,10 +672,14 @@ int IGR_MenuRun(u16 (*buttons)(void))
     igrm_info_t info;
     igr_cheat_t *row = NULL;
 
+#if defined(__GNUC__) && !defined(__clang__) // clang has no -Wdangling-pointer
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdangling-pointer"
+#endif
     igrmLine = lines; // only while this call runs: every page is composed and drawn inside it
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
     if (!igrmFindFrame())
         return IGR_MENU_CANNOT_DRAW;
     // the game's own transfers finish first; a VIF1 stalled on an interrupt the pause holds cannot take ours
