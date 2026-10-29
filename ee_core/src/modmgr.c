@@ -150,6 +150,23 @@ int GetOPLModInfo(int id, void **pointer, unsigned int *size)
     return result;
 }
 
+// The transports a game cannot run without. If one does not start after the reset, cdvdman waits
+// forever for a block device that never arrives: a black screen with nothing to explain it. Stop on
+// a blinking red screen instead, as an out-of-IOP-memory failure does. A module that loads but
+// declines to stay resident (bad ip=, no adapter) counts as not started.
+static int IsRequiredTransport(int id)
+{
+    return id == OPL_MODULE_ID_PCCF || id == OPL_MODULE_ID_SMAP_UDPBD || id == OPL_MODULE_ID_UDPFS_SMAP ||
+           id == OPL_MODULE_ID_UDPFS_MINISTACK || id == OPL_MODULE_ID_UDPFS_BD;
+}
+
+static void RequiredTransportFailed(void)
+{
+    DBGCOL_BLNK(1, 0x0000FF, true, MODMGR, "Game transport failed to start"); // red blinking, forever
+    while (1)
+        ;
+}
+
 int LoadOPLModule(int id, int mode, int arg_len, const char *args)
 {
     int result;
@@ -160,11 +177,8 @@ int LoadOPLModule(int id, int mode, int arg_len, const char *args)
         if (size > 0) {
             moduleStartResult = -1;
             result = LoadMemModule(mode, pointer, size, arg_len, args);
-            if (id == OPL_MODULE_ID_PCCF && (result < 0 || moduleStartResult != 0)) {
-                DBGCOL_BLNK(1, 0x0000FF, true, MODMGR, "CF transport failed to reinitialize");
-                while (1)
-                    ;
-            }
+            if (IsRequiredTransport(id) && (result < 1 || moduleStartResult != 0))
+                RequiredTransportFailed();
             if (result < 1) { // El_isra: only check for MODLOAD errors for simplicity
                 if (EnableDebug) {
                     DBGCOL(0x00FFDC, MODMGR, "IRX loading error (from MODLOAD)");
@@ -190,8 +204,11 @@ int LoadOPLModule(int id, int mode, int arg_len, const char *args)
                 DBGCOL(0xDCFF00, MODMGR, "IRX size is 0 or less");
                 delay(3);
             }
+            if (IsRequiredTransport(id))
+                RequiredTransportFailed();
         }
-    }
+    } else if (IsRequiredTransport(id))
+        RequiredTransportFailed(); // the menu did not pack it
 
     BGCOLND(0x000000);
     return result;

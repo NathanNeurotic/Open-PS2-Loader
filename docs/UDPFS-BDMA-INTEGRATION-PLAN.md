@@ -1,10 +1,11 @@
 # UDPFS BDMA integration
 
-The accepted integration uses UDPFS Assault 1.0.0 as the sole UDPFS POPSTARTER
-BDMA driver. The old Alpha and USB-first fallback are replaced, not retained as
+The accepted integration uses UDPFS Assault (TEST pre-release of 2026-10-28, which
+replaced 1.0.0 and adds BIN/CUE games) as the sole UDPFS POPSTARTER BDMA driver. The old Alpha and USB-first fallback are replaced, not retained as
 additional modes. Existing mode 6 and the .udpfs suffix/marker remain stable.
 
-- Bundle the unmodified 44,597-byte udp_fs_assault.irx and 34,508-byte companion.
+- Bundle the unmodified 51,029-byte udp_fs_assault.irx and 34,508-byte companion.
+- List POPS/*.cue and *.CUE on the UDPFS page, once per game, and launch them as VCDs.
 - Reuse the existing BDMA mode, equip, card-population and UDPFS launch flow.
 - Equip automatically from the game's POPS folder, without any USB requirement.
 - Preserve matching installed pairs and replace retired Alpha/USB-first pairs.
@@ -19,7 +20,7 @@ additional modes. Existing mode 6 and the .udpfs suffix/marker remain stable.
 
 The upstream archive hash and module hashes are in
 [PROVENANCE.json](../POPS/UDPFS-NOTICES/PROVENANCE.json). Upstream source:
-[UDPFS Assault 1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0).
+[UDPFS Assault TEST](https://github.com/Okeanos86/BDMAssault/releases/tag/UDPFS_TEST).
 
 Host checks cover all shipped pairs, upgrades from both retired UDPFS drivers,
 missing-only configuration population, write/readback/rollback failures, no-USB

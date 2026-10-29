@@ -60,6 +60,17 @@ IOP_CFLAGS += -DDEV9_DEBUG
 endif
 endif
 
+# OPL-core launch of a UDPBD / UDPFS (block) game: the BDM driver plus the real DEV9 core, so the
+# network block chain the EE core loads after the IOP reset imports dev9 and bdm from cdvdman.
+ifeq ($(USE_BDM_UDP),1)
+IOP_BIN  = bdm_udp_cdvdman.irx
+IOP_OBJS_DIR = obj.bdm_udp/
+IOP_OBJS += device-bdm.o
+IOP_CFLAGS += -DBDM_DRIVER -DUSE_BDM_UDP
+IOP_LIBS += -L$(PS2SDK)/iop/lib -lbdm
+USE_DEV9 = 1
+endif
+
 ifeq ($(USE_PCCF),1)
 IOP_BIN = pccf_cdvdman.irx
 IOP_OBJS_DIR = obj.pccf/

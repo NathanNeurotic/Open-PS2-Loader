@@ -95,6 +95,7 @@ static int bdmSupportIsUDPBD(const item_list_t *s) { (void)s; return udpbdSuppor
 static int bdmModeIsPCCF(int m) { (void)m; return 0; }
 static int bdmModeIsUDPBD(int m) { (void)m; return 0; }
 static int configGetInt(config_set_t *c, const char *k, int *v) { (void)c; (void)k; if (cfgCore < 0) return 0; *v = cfgCore; return 1; }
+static int bdmNetBlockCoreLoader(config_set_t *c) { (void)c; return cfgCore == 0 ? 0 : 1; }
 static void configGetVMC(config_set_t *c, char *v, int n, int slot) { (void)c; (void)slot; snprintf(v, n, "%s", cfgVmc); }
 static void configGetVMCDisable(config_set_t *c, int slot, int *d) { (void)c; (void)slot; *d = cfgDisabled; }
 static void configSetVMC(config_set_t *c, const char *v, int slot) { (void)c; if (slot == 0) snprintf(cfgVmc, sizeof(cfgVmc), "%s", v); }

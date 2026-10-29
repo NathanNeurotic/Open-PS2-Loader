@@ -585,7 +585,7 @@ translations:
   HINT_BDMCACHE: Cache de citire anticipată pentru USB și alte unități BDM în joc. Mai mare poate netezi redarea în flux, dar folosește mai multă memorie.
   HINT_HDDCACHE: Cache de citire anticipată pentru HDD-ul intern în joc.
   HINT_SMBCACHE: Cache de citire anticipată pentru SMB în joc.
-  HINT_CORE_LOADER: Nucleul pentru acest joc acolo unde ambele sunt acceptate. UDPFS/UDPBD doar Neutrino; SMB/HTTP doar <OPL>. Implicit urmează Lansare jocuri.
+  HINT_CORE_LOADER: Nucleul pentru acest joc acolo unde ambele sunt acceptate. UDPFS Files doar Neutrino; SMB/HTTP doar <OPL>. Implicit urmează Lansare jocuri. Pe UDPBD/UDPFS IMG, Implicit înseamnă Neutrino.
   HINT_DMA_MODE: Modul de transfer al HDD-ului intern pentru acest joc. Coboară-l dacă jocul se sacadează sau se blochează.
   HINT_DNAS_GAMEID: ID-ul discului pentru jocurile online DNAS. Încarcă de pe disc îl citește de pe discul original.
   HINT_LOAD_FROM_DISC: Citește ID-ul DNAS de pe discul original din unitate.

@@ -194,12 +194,15 @@ if load and old_pair not in load:
 
 # --- loader-core scope stays honest ---------------------------------------------------------------
 
-if ('Global default only where both cores are supported. UDPFS/UDPBD always use Neutrino; SMB/HTTP always use <OPL>.' not in lang_base or
-        'UDPFS/UDPBD are Neutrino-only; SMB/HTTP are <OPL>-only.' not in lang_base):
-    failures.append('lng_tmpl/_base.yml: loader-core hints must name the forced-core network sources')
-if ('sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support)' not in guigame_c or
-        'bdmModeIsUDPBD(sourceMode)' not in guigame_c):
-    failures.append('guigame.c: UDPFS Files and UDP block-device games must lock Loader Core to Neutrino')
+if ('UDPFS Files always uses Neutrino; SMB/HTTP always use <OPL>; UDPBD/UDPFS IMG use Neutrino unless the game picks <OPL>.' not in lang_base or
+        'UDPFS Files is Neutrino-only; SMB/HTTP are <OPL>-only. Default follows Game Launching, except on UDPBD/UDPFS IMG, where it means Neutrino.' not in lang_base):
+    failures.append('lng_tmpl/_base.yml: loader-core hints must name the forced-core network sources and the UDPBD default')
+# UDPFS Files has no OPL-core backend, so its Loader row stays locked; the UDP block device (UDPBD and
+# UDPFS IMG) boots either core and keeps the row, defaulting to Neutrino (bdmNetBlockCoreLoader).
+if ('bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode)' not in guigame_c or
+        'bdmNetBlockCoreLoader(configSet)' not in guigame_c or
+        'support->mode == UDPFS_MODE' not in guigame_c):
+    failures.append('guigame.c: UDPFS Files must lock Loader Core to Neutrino; UDP block-device games default to it')
 
 # --- optional PS1/PS2 labels ----------------------------------------------------------------------
 

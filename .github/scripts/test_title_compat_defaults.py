@@ -46,11 +46,13 @@ assert mmce.index('sbEnsureIgrUsbDrivers(compatmask);\n\n        // VMC -> neutr
 assert 'if (compatMode == sbTitleCompatDefault(configSet, compatShownNeutrino))' in src['src/guigame.c']
 assert 'compatShownNeutrino = guiGameDialogCoreIsNeutrino(support, neverNeutrino);' in src['src/guigame.c']
 
-# The screen resolves a source that boots one core only before the Loader row: UDPFS and UDPBD are always
-# Neutrino, so a core-limited default shown there matches the launch.
+# The screen resolves a source that boots one core only before the Loader row: UDPFS Files is always
+# Neutrino, and on the UDP block device "Default" means Neutrino, so a core-limited default shown
+# there matches the launch.
 gui = src['src/guigame.c']
 helper = gui[gui.index('static int guiGameDialogCoreIsNeutrino('):]
 helper = helper[:helper.index('\n}\n')]
-assert 'support->mode == UDPFS_MODE || bdmSupportIsUDPBD(support)' in helper
+assert 'support->mode == UDPFS_MODE' in helper
+assert 'if (bdmSupportIsUDPBD(support))\n        return coreChoice != 0;' in helper
 
 print('PASS: title compat defaults are evidence-backed and routed per core')

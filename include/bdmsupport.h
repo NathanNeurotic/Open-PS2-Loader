@@ -127,7 +127,9 @@ int bdmEnsureTypedSource(int bdmType, u32 timeoutMs);
 // not gNetBootProtocol, for anything DESCRIBING the live device -- the picker can change without a
 // reboot while the loaded IRX cannot.
 int bdmGetLoadedNetProtocol(void);
-int bdmSupportIsUDPBD(const item_list_t *support); // 1 if this support is the UDPBD block device (its games are Neutrino-only)
+int bdmSupportIsUDPBD(const item_list_t *support); // 1 if this support is the UDPBD block device (UDPBD or UDPFS block)
+// Core of a game on that device: 1 = Neutrino (its default), 0 = the OPL core (only its own <OPL> key).
+int bdmNetBlockCoreLoader(config_set_t *configSet);
 #ifdef RETROACHIEVEMENTS
 int bdmModeIsUSB(int mode);
 #endif

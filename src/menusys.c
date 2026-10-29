@@ -33,7 +33,7 @@
 #include "include/vcdsupport.h"   // VCD launches never use Neutrino
 #include "include/libview.h"      // libViewActive / libListViewActive -- which list this page shows
 #include "include/cfgtitle.h"     // cfgTitleDisplayName: optional CFG Title shown for a row (#918)
-#include "include/bdmsupport.h"   // bdmSupportIsUDPBD() -- UDPBD games are Neutrino-only
+#include "include/bdmsupport.h"   // bdmSupportIsUDPBD() / bdmNetBlockCoreLoader() -- UDPBD games default to Neutrino
 #include "include/drivestatus.h"  // Drive Status (RIPPS2 build 114)
 #include "include/diaglog.h"      // the hardware log, DIAG.TXT (RIPPS2 build 115)
 #include <assert.h>
@@ -2500,13 +2500,15 @@ static int gameMenuCoreIsNeutrino(void)
             int sourceMode = support->mode == FAV_MODE ? (selected_item->item->current != NULL ? favGetItemSourceMode(selected_item->item->current->item.id) : -1) : support->mode;
             if (menuSelectedRowView(support) == LIB_VIEW_PS1 || sourceMode == ETH_MODE || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
                 return 0;
-            if (sourceMode == UDPFS_MODE || bdmModeIsUDPBD(sourceMode))
-                return 1;
+            if (sourceMode == UDPFS_MODE)
+                return 1; // UDPFS Files: no OPL core backend
+            if (bdmModeIsUDPBD(sourceMode))
+                return bdmNetBlockCoreLoader(itemConfig);
         }
     }
-    // UDPBD games are Neutrino-only even while $CoreLoader is still its OPL default.
-    if (!coreLoader && selected_item != NULL && selected_item->item != NULL)
-        coreLoader = bdmSupportIsUDPBD(selected_item->item->userdata);
+    // UDPBD games default to Neutrino, not to the global core; only their own <OPL> key picks the OPL core.
+    if (selected_item != NULL && selected_item->item != NULL && bdmSupportIsUDPBD(selected_item->item->userdata))
+        coreLoader = bdmNetBlockCoreLoader(itemConfig);
     return coreLoader;
 }
 

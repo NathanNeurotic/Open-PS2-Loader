@@ -778,7 +778,7 @@ gui_strings:
 - label: HINT_BDMA_SOURCE
   string: Device whose POPS folder holds your BDMAssault driver files (usbd.irx.* / usbhdfsd.irx.*); iLink uses the .ilink suffix.
 - label: HINT_DEFAULT_CORE
-  string: Global default only where both cores are supported. UDPFS/UDPBD always use Neutrino; SMB/HTTP always use <OPL>. A per-game Loader Core choice overrides this where available.
+  string: Global default only where both cores are supported. UDPFS Files always uses Neutrino; SMB/HTTP always use <OPL>; UDPBD/UDPFS IMG use Neutrino unless the game picks <OPL>. A per-game Loader Core choice overrides this where available.
 - label: HINT_ENABLEIMAGE
   string: Apply a prebuilt PS2RD .img patch to your game.
 - label: HINT_FOLDER_NAV
@@ -1576,7 +1576,7 @@ gui_strings:
 - label: HINT_SMBCACHE
   string: "Read-ahead cache for SMB in game."
 - label: HINT_CORE_LOADER
-  string: "Core for this game where both are supported. UDPFS/UDPBD are Neutrino-only; SMB/HTTP are <OPL>-only. Default follows Game Launching."
+  string: "Core for this game where both are supported. UDPFS Files is Neutrino-only; SMB/HTTP are <OPL>-only. Default follows Game Launching, except on UDPBD/UDPFS IMG, where it means Neutrino."
 - label: HINT_DMA_MODE
   string: "Internal HDD transfer mode for this game. Lower it if the game stutters or freezes."
 - label: HINT_DNAS_GAMEID

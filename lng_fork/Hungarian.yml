@@ -540,7 +540,7 @@ translations:
   HINT_BDMCACHE: Előreolvasó gyorsítótár USB-hez és más BDM meghajtókhoz játék közben. A nagyobb simábbá teheti az adatfolyamot, de több memóriát használ.
   HINT_HDDCACHE: Előreolvasó gyorsítótár a belső HDD-hez játék közben.
   HINT_SMBCACHE: Előreolvasó gyorsítótár az SMB-hez játék közben.
-  HINT_CORE_LOADER: A játék magja ott, ahol mindkettő támogatott. Az UDPFS/UDPBD csak Neutrino; az SMB/HTTP csak <OPL>. Az alapértelmezett a Játékindítást követi.
+  HINT_CORE_LOADER: A játék magja ott, ahol mindkettő támogatott. Az UDPFS Files csak Neutrino; az SMB/HTTP csak <OPL>. Az alapértelmezett a Játékindítást követi. UDPBD/UDPFS IMG esetén az alapértelmezett a Neutrino.
   HINT_DMA_MODE: A belső HDD átviteli módja ehhez a játékhoz. Csökkentsd, ha a játék akad vagy lefagy.
   HINT_DNAS_GAMEID: Lemezazonosító DNAS online játékokhoz. A Betöltés lemezről az eredeti lemezről olvassa be.
   HINT_LOAD_FROM_DISC: A DNAS azonosítót a meghajtóban lévő eredeti lemezről olvassa be.

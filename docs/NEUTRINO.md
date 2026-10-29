@@ -157,8 +157,8 @@ paths are no longer limited to 31 characters.
 | iLink / IEEE 1394 (**FAT PS2 models only**) | ⚠️ supported and wired; the post-2692 build adds quick boot for RiptOPL's inherited-stack handoff, pending hardware retest | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; the overall iLink launch is pending retest |
 | Internal HDD (APA → HDL) | ✅ | ❌ **games boot, VMC is dropped with a warning** — Neutrino has no APA/pfs backing store to open the `.bin` from (NHDDL's HDL backend has the same no-VMC rule). The OPL core honors the same VMC normally. |
 | MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
-| UDPFS (network boot — Files or Image) | ✅ **required** — no OPL core, Neutrino only (see §4) | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail |
-| UDPBD (network boot — served disk image) | ✅ **required** — no OPL core, Neutrino only (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
+| UDPFS (network boot — Files or Image) | ✅ **required for Files** — Files has no OPL core. **Image** defaults to Neutrino and runs on `<OPL>` when the game's Loader Core says so (see §4) | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail |
+| UDPBD (network boot — served disk image) | ✅ **default** — Neutrino unless the game's Loader Core is `<OPL>` (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
 | SMB / ETH | ❌ (always launches with `<OPL>`; the core selector is locked and a stale Neutrino selection warns at launch) | n/a (OPL-core VMC works normally) |
 | USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) | n/a |
 | Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) | n/a |
@@ -321,8 +321,8 @@ reading, so an SMBv1-only server (including the bundled PS2-Servers tool) will l
 |---|---|---|---|---|
 | **Network Connectivity: Off** | — | no network device (default) | — | — |
 | **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core (not Neutrino) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
-| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Neutrino only | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
-| **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino only | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
+| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Files: Neutrino only. Image: Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
+| **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
 | **HTTP** | HTTP byte ranges | a `games.csv` catalog and ISO streams | OPL's own core | [Docmine17's server](https://github.com/Docmine17/Open-PS2-Loader-HTTP) or a server meeting the [HTTP profile](HTTP.md) |
 
 > **SMB3 is reserved, not offered.** The dialect enum has a slot for it, but packet signing isn't
@@ -394,8 +394,34 @@ effect** (OPL shows the usual restart-to-apply notice).
   when either UDP protocol is selected.
 - You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
   background (both Files and Image), so the games page appears when the server comes up — no reboot.
-- UDPFS is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns and
-  returns to the menu.
+- UDPFS **Files** is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns
+  and returns to the menu. UDPBD and UDPFS **Image** fall back to the OPL core instead (below),
+  except when the bsd toml is missing or unwritable: that still returns to the menu, as its message says.
+
+### UDPBD and UDPFS Image on the `<OPL>` core
+
+The OPL core can also run games from the UDP block device, that is UDPBD and UDPFS in Image mode
+(ported from [YAOPL](https://github.com/belomaxorka/yaopl)). Neutrino stays the default there: a game
+launches with Neutrino unless its own **Loader Core** is set to `<OPL>`; the global Game Launching
+default does not change that. When the Neutrino launch cannot start (no `neutrino.elf`, a `.zso`
+image, too many fragments), the game falls back to the OPL core instead of returning to the menu.
+A missing or unwritable bsd toml is the exception: that launch returns to the menu with its message.
+
+On the OPL core:
+
+- The game keeps the network. After the IOP reset OPL reloads the same block driver the menu used
+  (`smap_udpbd` for UDPBD; `udpfs_smap`, `udpfs_ministack` and `udpfs_bd` for UDPFS Image) and fakes
+  the game's own DEV9 and SMAP modules, as it does for SMB.
+- It uses the static PS2 IP from **Settings → Network**, like the menu.
+- There is no RetroAchievements telemetry and no in-game UDPTTY or DECI2 output: both need the SMB
+  network stack, which cannot share the adapter with the block driver.
+- PADEMU, OPL-core cheats and patches, and VMCs work as on USB. A VMC needs a server that is not
+  read-only.
+- UDPBD reads at most 32 sectors (16 KiB) per request, in the menu and in game (YAOPL `12cc6fb`).
+- If the block driver does not start after the reset (for example a bad static IP), the screen
+  blinks red and the console stops, instead of hanging on a black screen.
+
+> **Not tested on hardware yet.** Report results with the game, the server and the protocol.
 
 > **At launch, Neutrino reads its own IP from a toml, not from OPL.** When a game boots, control hands
 > to the external Neutrino, which reads the toml for the active mode — **Files** uses the stock

@@ -58,6 +58,13 @@ enum OPL_MODULE_ID {
 #endif
 
     OPL_MODULE_ID_PCCF = 60,
+
+    // Network block modules of the OPL-core UDPBD / UDPFS (block) modes. Numbered after PCCF for the
+    // reason RAUDP is appended: these IDs index the module table the EE hands over.
+    OPL_MODULE_ID_SMAP_UDPBD,
+    OPL_MODULE_ID_UDPFS_SMAP,
+    OPL_MODULE_ID_UDPFS_MINISTACK,
+    OPL_MODULE_ID_UDPFS_BD,
     OPL_MODULE_ID_COUNT
 
 };
