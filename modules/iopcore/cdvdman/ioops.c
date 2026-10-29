@@ -449,7 +449,11 @@ static int cdrom_dread(iop_file_t *f, iox_dirent_t *dirent)
             dirent->name[tocEntryPointer->filenameLength] = '\0';
         }
 
-        DPRINTF("cdrom_dread r=%d mode=%04x name=%s\n", r, (int)mode, dirent->name);
+        // No entry (r == 0) leaves the caller's name untouched, so it is printed only for an entry.
+        if (r > 0)
+            DPRINTF("cdrom_dread r=%d mode=%04x name=%s\n", r, (int)mode, dirent->name);
+        else
+            DPRINTF("cdrom_dread r=%d\n", r);
     } else
         DPRINTF("cdrom_dread r=%d\n", r);
 

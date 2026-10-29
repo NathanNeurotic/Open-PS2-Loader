@@ -2940,8 +2940,8 @@ static config_set_t *bdmGetConfig(item_list_t *itemList, int id)
             char dir[256];
             snprintf(dir, sizeof(dir), "%s", cfgDir);
             dir[strlen(dir) - 1] = '\0';
-            mkdir(dir, 0777);
-            snprintf(madeCfgDir, sizeof(madeCfgDir), "%s", cfgDir);
+            if (mkdir(dir, 0777) == 0) // a failure is tried again on the next selection
+                snprintf(madeCfgDir, sizeof(madeCfgDir), "%s", cfgDir);
         }
         useCfgDir = 1;
     }
@@ -3372,6 +3372,14 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             moduleUpdateMenu(itemList->mode, 0, 0);
         }
         pDeviceData->bdmMissCount = 0;
+        // The one thing re-read: another server may now answer in this network slot, so its
+        // read-only verdict is decided again. One small write, and only for UDPBD.
+        if (pDeviceData->bdmDeviceType == BDM_TYPE_UDPBD) {
+            if (!bdmCheckWritable(itemList->mode))
+                itemList->flags |= MODE_FLAG_READ_ONLY;
+            else
+                itemList->flags &= ~MODE_FLAG_READ_ONLY;
+        }
         LOG("bdmUpdateDeviceData: device %d reappeared intact -- restoring page, no rescan\n", itemList->mode);
         bdmLogIdentityDiagnosticLive("update-fast-reappearance", itemList, NULL);
         fileXioDclose(dir);
