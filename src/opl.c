@@ -5341,6 +5341,37 @@ static void setDefaults(void)
     RemainSecs = 0;
 }
 
+// RIPPS2 build 120 (akilluminati47): start the screen in the saved video mode. rmInit() runs before
+// the settings load, so the boot screen came up in Auto and _loadConfig()'s applyConfig() set the
+// saved mode a moment later: a second resync on a 480p or 1080i set, or through an HDMI adapter.
+// Video Mode and Widescreen are read straight from the settings file the boot folder will load, when
+// it is on a memory card (the card driver is already up; USB, the HDD and the network are not yet),
+// so rmInit() sets the user's mode once. Nothing is saved and nothing else is read: _loadConfig()
+// reads every key again as before, and the recovery combos and the START skip still decide there.
+// A missing or unreadable file leaves the defaults, which is the old behaviour.
+static void bootDisplayPeek(void)
+{
+    config_set_t *configOPL = configGetByType(CONFIG_OPL);
+    const char *path = (configOPL != NULL) ? configOPL->filename : NULL;
+    const size_t vmodeLen = sizeof(CONFIG_OPL_VMODE) - 1, wideLen = sizeof(CONFIG_OPL_WIDESCREEN) - 1;
+    char line[256];
+    FILE *fp;
+
+    if (path == NULL || strncmp(path, "mc", 2) != 0 || path[2] == '?')
+        return;
+    fp = fopen(path, "r");
+    if (fp == NULL)
+        return;
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (!strncmp(line, CONFIG_OPL_VMODE, vmodeLen) && line[vmodeLen] == '=')
+            gVMode = atoi(line + vmodeLen + 1); // out of range is clamped to Auto by rmSetMode()
+        else if (!strncmp(line, CONFIG_OPL_WIDESCREEN, wideLen) && line[wideLen] == '=')
+            gWideScreen = atoi(line + wideLen + 1) != 0;
+    }
+    fclose(fp);
+    LOG("BOOT display peek: %s vmode=%d wide=%d\n", path, gVMode, gWideScreen);
+}
+
 static void init(void)
 {
     // default variable values
@@ -5350,6 +5381,8 @@ static void init(void)
     int padStatus = 0;
     configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd), not a fixed MC default
 
+    const int defaultVMode = gVMode, defaultWideScreen = gWideScreen;
+    bootDisplayPeek(); // the saved mode before the first one is set (RIPPS2 build 120)
     rmInit();
     lngInit();
     thmInit();
@@ -5392,6 +5425,9 @@ static void init(void)
 #endif
     } else {
         LOG("--- SKIPPING OPL CONFIG LOADING\n");
+        // START skips the settings, so the mode read early by bootDisplayPeek() goes too.
+        gVMode = defaultVMode;
+        gWideScreen = defaultWideScreen;
         applyConfig(-1, -1, 0);
     }
     // _loadConfig may move the settings home away from the initial boot folder.
