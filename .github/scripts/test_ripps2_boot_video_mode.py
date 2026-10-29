@@ -8,7 +8,8 @@ This compiles bootDisplayPeek() from the app source on the host against a small 
 
 - vmode and wide_screen are read from the file, and nothing else changes;
 - a key that only starts the same way (vmode_x=) is not taken for it, and libconfig (wOPL) syntax
-  ("vmode = 4;") is read too;
+  ("vmode = 4;") is read too, and the continuation of a line longer than the read buffer is not
+  taken for a key;
 - a file that is not on a memory card, an unresolved mc?: path, or a missing file leaves the defaults;
 - init() calls it before rmInit(), and the START skip puts the defaults back before applyConfig().
 """
@@ -88,6 +89,19 @@ int main(void)
     writeFile("vmode = 4;\n  wide_screen = 1;\nvmodex = 9;\n");  /* libconfig (wOPL) syntax */
     run("mc0:/settings.cfg");
     assert(gVMode == 4 && gWideScreen == 1);
+
+    {   /* a line longer than the read buffer: its continuation is not a key of its own */
+        char text[600];
+        memset(text, 'a', 255);
+        snprintf(text + 255, sizeof(text) - 255, "vmode=7\nvmode=3\n");
+        writeFile(text);
+        run("mc0:/settings.cfg");
+        assert(gVMode == 3);
+        snprintf(text + 255, sizeof(text) - 255, "wide_screen=1\n");
+        writeFile(text);
+        run("mc0:/settings.cfg");
+        assert(gVMode == 0 && gWideScreen == 0);
+    }
 
     writeFile("vmode=5\nwide_screen=1\n");
     run("mc?:/settings.cfg");     /* unresolved card wildcard: not read */
