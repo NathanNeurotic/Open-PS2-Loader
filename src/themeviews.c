@@ -227,3 +227,54 @@ int thmViewGetColor(config_set_t *themeConfig, const char *prefix, const char *k
     }
     return configGetColor(themeConfig, key, color);
 }
+
+static int thmKeyEndsWith(const char *key, size_t len, const char *suffix)
+{
+    size_t n = strlen(suffix);
+    return len > n && strcmp(key + len - n, suffix) == 0;
+}
+
+int thmApplyDisplayLayout(config_set_t *themeConfig, int wide)
+{
+    char base[CONFIG_KEY_NAME_LEN], value[CONFIG_KEY_VALUE_LEN];
+    const size_t wsxLen = strlen(THM_LAYOUT_KEY_WSX);
+    int declared = 0;
+
+    if (themeConfig == NULL)
+        return 0;
+
+    // Two passes so the outcome does not depend on the order of the lines: <name>_wsX first, then the
+    // _sd/_hd variants, which therefore win over a _wsX for the same element. A copied key never ends in
+    // a suffix itself, so the entries appended while walking are skipped by the same tests.
+    for (int pass = 0; pass < 2; pass++) {
+        for (const struct config_value_t *it = themeConfig->head; it != NULL; it = it->next) {
+            size_t len = strlen(it->key);
+            if (pass == 0) {
+                if (!thmKeyEndsWith(it->key, len, THM_LAYOUT_KEY_WSX))
+                    continue;
+                declared = 1;
+                if (!wide)
+                    continue;
+                snprintf(base, sizeof(base), "%.*s_x", (int)(len - wsxLen), it->key);
+            } else {
+                int hd = thmKeyEndsWith(it->key, len, THM_LAYOUT_SUFFIX_HD);
+                if (!hd && !thmKeyEndsWith(it->key, len, THM_LAYOUT_SUFFIX_SD))
+                    continue;
+                declared = 1;
+                if (hd != (wide != 0))
+                    continue;
+                snprintf(base, sizeof(base), "%.*s", (int)(len - strlen(THM_LAYOUT_SUFFIX_HD)), it->key);
+            }
+            // Copy first: setStr may append to the list being walked (never moves an existing entry).
+            snprintf(value, sizeof(value), "%s", it->val);
+            configSetStr(themeConfig, base, value);
+        }
+    }
+    return declared;
+}
+
+int thmLayoutAutoFitX(int x, int screenWidth)
+{
+    int centre = screenWidth / 2;
+    return centre + (x - centre) * 3 / 4;
+}

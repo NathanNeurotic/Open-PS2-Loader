@@ -70,4 +70,25 @@ int thmViewResolveSlot(config_set_t *themeConfig, const char *prefix, int inheri
 int thmViewGetInt(config_set_t *themeConfig, const char *prefix, const char *key, int *value);
 int thmViewGetColor(config_set_t *themeConfig, const char *prefix, const char *key, unsigned char *color);
 
+// SD (4:3) and HD (16:9) layouts in one conf_theme.cfg (ideas: KrahJohlito's uOPL/wOPL wsX key and Berion's
+// _sd/_hd suffixes). Any key may carry a display-mode variant: "<key>_hd" is used while the Widescreen
+// display setting is on, "<key>_sd" while it is off, and the plain "<key>" otherwise -- so a theme without
+// them loads exactly as before. "<name>_wsX" (the uOPL/wOPL element key) is read as "<name>_x_hd" unless
+// the theme also gives that key. The chosen variants are copied over their plain keys once, right after the
+// cfg is read, so every lookup (element blocks, "<view>." keys, theme globals) sees them without changes.
+#define THM_LAYOUT_SUFFIX_SD   "_sd"
+#define THM_LAYOUT_SUFFIX_HD   "_hd"
+#define THM_LAYOUT_KEY_WSX     "_wsX"
+#define THM_LAYOUT_KEY_AUTOFIT "hd_autofit" // hd_autofit=1: keep the 4:3 layout's proportions in 16:9 (thmLayoutAutoFitX)
+
+// Apply the variants for wide (non-zero = 16:9). Returns 1 when the theme declares any _sd/_hd/_wsX key,
+// i.e. when it looks different in the other mode and must be reloaded if the Widescreen setting changes.
+int thmApplyDisplayLayout(config_set_t *themeConfig, int wide);
+
+// hd_autofit: where an x on the 640-wide 4:3 grid lands in 16:9 so the whole 4:3 composition keeps its
+// shape. Widescreen draws aspect-scaled widths at 3/4 but leaves positions alone, which opens gaps between
+// neighbours; scaling each position by the same 3/4 about the screen centre closes them exactly, whatever
+// the alignment (left edge, centre and right edge all move by the same rule).
+int thmLayoutAutoFitX(int x, int screenWidth);
+
 #endif

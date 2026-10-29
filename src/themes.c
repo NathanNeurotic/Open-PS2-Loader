@@ -75,6 +75,8 @@ int gThemeViewRequest = -1;
 // Parse-time only: the "<view>" block prefix of the view thmLoad is building, "" for the base blocks.
 static const char *thmParseViewPrefix = "";
 static int thmParseViewInherit = 1; // 0 for a <view>.inherit=0 view: no fallback to the base blocks
+// Parse-time only: hd_autofit=1 and the theme is being built for 16:9 (thmAutoFitElem).
+static int thmParseAutoFit = 0;
 
 static int screenWidth;
 static int screenHeight;
@@ -3550,6 +3552,41 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     promoteItemTextElements(&theme->favsAppsInfoElems);
 }
 
+// hd_autofit=1 in 16:9: move a 4:3-placed element so the 4:3 composition keeps its shape (thmLayoutAutoFitX).
+// Left alone: elements the theme placed for 16:9 itself (<name>_x_hd / <name>_wsX), the background and
+// anything spanning the screen, the views that lay themselves out (Coverflow, PSBBN Flow, Grid), and
+// unscaled art, which 16:9 still draws at full width so no position would keep its shape.
+static void thmAutoFitElem(config_set_t *themeConfig, theme_element_t *elem, const char *name, const char *type)
+{
+    static const int selfPlaced[] = {ELEM_TYPE_BACKGROUND, ELEM_TYPE_COVERFLOW, ELEM_TYPE_PSBBN_FLOW, ELEM_TYPE_GRID};
+    // The renderer narrows these elements' glyphs, not their boxes: narrow the box to match.
+    static const int textBoxes[] = {ELEM_TYPE_ATTRIBUTE_TEXT, ELEM_TYPE_STATIC_TEXT, ELEM_TYPE_GAME_COUNT_TEXT, ELEM_TYPE_MENU_TEXT, ELEM_TYPE_ITEMS_LIST, ELEM_TYPE_ITEM_TEXT};
+    char key[64];
+    const char *value;
+    size_t t;
+
+    if (!thmParseAutoFit || elem == NULL || type == NULL)
+        return;
+    for (t = 0; t < sizeof(selfPlaced) / sizeof(selfPlaced[0]); t++) {
+        if (!strcmp(elementsType[selfPlaced[t]], type))
+            return;
+    }
+    snprintf(key, sizeof(key), "%s_x" THM_LAYOUT_SUFFIX_HD, name);
+    if (configGetStr(themeConfig, key, &value))
+        return;
+    snprintf(key, sizeof(key), "%s" THM_LAYOUT_KEY_WSX, name);
+    if (configGetStr(themeConfig, key, &value))
+        return;
+    if (elem->scaled == SCALING_NONE || elem->width >= screenWidth)
+        return;
+
+    elem->posX = thmLayoutAutoFitX(elem->posX, screenWidth);
+    for (t = 0; t < sizeof(textBoxes) / sizeof(textBoxes[0]); t++) {
+        if (!strcmp(elementsType[textBoxes[t]], type) && elem->width > 0)
+            elem->width = elem->width * 3 / 4;
+    }
+}
+
 static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *type, const char *name)
 {
     int enabled = 1;
@@ -3687,6 +3724,7 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
             }
 
             if (elem) {
+                thmAutoFitElem(themeConfig, elem, name, type);
                 elem->family = elems;
 
                 if (!elems->first)
@@ -4258,6 +4296,11 @@ static int thmLoad(const char *themePath)
         configRead(themeConfig); // try to load the theme config file. If it does not exist, defaults will be used.
     }
 
+    // SD/HD layouts: copy the _sd or _hd variants (and uOPL/wOPL _wsX) over their plain keys before anything
+    // reads the cfg, so the rest of the load sees one layout. Themes without them are untouched.
+    newT->layoutWide = gWideScreen != 0;
+    newT->layoutDependsOnWide = thmApplyDisplayLayout(themeConfig, newT->layoutWide);
+
     // Pick the view to build (docs/MULTI-VIEW-THEMES-PLAN.md). Only that view is parsed; switching views
     // reloads the theme. A theme that declares no "<view>." keys parses exactly as before.
     thm_view_info_t viewInfo;
@@ -4274,6 +4317,13 @@ static int thmLoad(const char *themePath)
     thmParseViewPrefix = viewPrefix;
     thmParseViewInherit = thmViewInheritsBase(&viewInfo, newT->view);
     LOG("THEMES View %s (offered mask 0x%x, native %s, prefix '%s')\n", thmViewName(newT->view), newT->viewMask, thmViewName(viewInfo.native), viewPrefix);
+
+    int autoFit = 0;
+    thmViewGetInt(themeConfig, viewPrefix, THM_LAYOUT_KEY_AUTOFIT, &autoFit);
+    if (autoFit)
+        newT->layoutDependsOnWide = 1;
+    thmParseAutoFit = autoFit && newT->layoutWide;
+    LOG("THEMES Layout %s (mode variants %d, hd_autofit %d)\n", newT->layoutWide ? "16:9" : "4:3", newT->layoutDependsOnWide, autoFit);
 
     int intValue;
     if (thmViewGetInt(themeConfig, viewPrefix, "use_default", &intValue))
@@ -4407,6 +4457,7 @@ static int thmLoad(const char *themePath)
     newT->parsingFavKindFamily = 0;
     thmParseViewPrefix = "";
     thmParseViewInherit = 1;
+    thmParseAutoFit = 0;
 
     validateGUIElems(themePath, themeConfig, newT);
 
@@ -4770,6 +4821,13 @@ int thmSetView(int view)
         return 0;
     }
     return 1;
+}
+
+int thmRefreshDisplayLayout(void)
+{
+    if (gTheme == NULL || !gTheme->layoutDependsOnWide || gTheme->layoutWide == (gWideScreen != 0))
+        return 0;
+    return thmSetGuiValue(guiThemeID, 1);
 }
 
 int thmCycleView(void)
