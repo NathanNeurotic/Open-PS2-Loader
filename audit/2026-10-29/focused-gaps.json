@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-29",
+  "scope": "Focused YAOPL delta and OPL-JUMP comparison, not an ecosystem sweep",
+  "revisions": {
+    "yaopl_previous": "b0f8c2ecaa112ac89372bf40448eb9da5224ffc9",
+    "yaopl": "fc5426469c04c9a46a936c4d89fba9c80e7c9e30",
+    "opl-jump": "414674c2448533ec3d386a31d035deb3e5b31687",
+    "RiptOPL": "b4c23bdac8f983a4b4e3456d4036b8645cf95842",
+    "Open-PS2-Loader": "29826585edd960b312ba58d2f6987ac345eae3a9"
+  },
+  "records": [
+    {
+      "id": "YA-17",
+      "status": "missing mechanism; console impact unverified",
+      "feature": "USB host shutdown before IGR IOP reset",
+      "source": "https://github.com/yaopl/yaopl/commit/e72c9f485cfc1f99f33829cdccaf8c1dda4b3ef3",
+      "target": "modules/iopcore/cdvdman/cdvdman.c::oplShutdown",
+      "boundary": "Preserve existing VMC drain, USB storage and RA behavior; source review only."
+    },
+    {
+      "id": "YA-18",
+      "status": "missing coordinated policy; design required",
+      "feature": "Read-only UDPBD detection, writable CFG fallback and write/VMC suppression",
+      "source": "https://github.com/yaopl/yaopl/compare/b0f8c2ecaa112ac89372bf40448eb9da5224ffc9...fc5426469c04c9a46a936c4d89fba9c80e7c9e30",
+      "target": "BDM, Apps, settings/cache and VMC write paths",
+      "boundary": "Do not copy fixed-name truncating probe or refused-write-as-success patch alone."
+    },
+    {
+      "id": "JUMP1",
+      "status": "partial overlap; optional automatic categorization missing",
+      "feature": "Automatic Apps/PS1-shortcut classification from boot filenames",
+      "source": "https://github.com/juankyt505/OPL-JUMP/blob/414674c2448533ec3d386a31d035deb3e5b31687/src/appsupport.c",
+      "target": "Apps category filtering; explicit [PS1] tags already supported",
+      "boundary": "Prefix heuristic has false positives/omissions; never infer launch behavior from shelf category."
+    },
+    {
+      "id": "JUMP2",
+      "status": "partial overlap; optional loose-shortcut discovery missing",
+      "feature": "Index loose shortcut ELFs in source root/POPS locations",
+      "source": "https://github.com/juankyt505/OPL-JUMP/blob/414674c2448533ec3d386a31d035deb3e5b31687/src/menusys.c",
+      "target": "Apps discovery and existing unified library",
+      "boundary": "No duplicate portal/backend; bounded worker scans and source/path dedup needed."
+    }
+  ],
+  "withdrawn": {
+    "id": "YA-11",
+    "commit": "6faa44e436a50983f64b0d000b102b542b6bd0dc",
+    "disposition": "deferred local product decision; upstream removed unreleased remap"
+  },
+  "experimental": [
+    "test/udpbd-read-yield",
+    "test/udpbd-read-yield-nopadreset",
+    "test/udpbd-smap-prio",
+    "test/udpbd-smap-prio-nopadreset"
+  ],
+  "validation": {
+    "console": "not performed",
+    "jump_classifier_host_probe": {
+      "XX.Game.ELF": 1,
+      "SB.Game.ELF": 1,
+      "SLUS_203.12.PS2.ELF": 1,
+      "SCPS_100.00.PS1.ELF": 0,
+      "Tool.ELF": 0,
+      "XX.not_an_elf": 1
+    }
+  }
+}
