@@ -26,7 +26,7 @@ def digest(path):
 def standard_asset(assets):
     names = [asset["name"] for asset in assets
              if re.fullmatch(r"RIPTOPL-v?[0-9][A-Za-z0-9._+-]*\.zip", asset["name"])
-             and not asset["name"].endswith("-src.zip")]
+             and not asset["name"].endswith("-src.zip") and not asset["name"].startswith("RIPTOPL-src-")]
     if len(names) != 1:
         raise ValueError(f"expected one standard install kit, found {names}")
     return names[0]
@@ -150,7 +150,7 @@ def package(args):
                 app_name="APP_RIPTOPL-RA", elf_name="RIPTOPL-RA.ELF", ra=True))
             shutil.copyfile(main, args.output / f"RIPTOPL-RA-{theme}.ELF")
             shutil.copyfile(kit / "APP_RIPTOPL-RA.psu", args.output / f"APP_RIPTOPL-RA-{theme}.psu")
-        source = args.output / f"RIPTOPL-RetroAchievements-{args.version}-src.zip"
+        source = args.output / f"RIPTOPL-RetroAchievements-src-{args.version}.zip"
         subprocess.run(["git", "archive", "--format=zip", f"--output={source.resolve()}", args.revision], cwd=ROOT, check=True)
         # Include the actual reviewed theme patch alongside the shared source snapshot.
         with zipfile.ZipFile(source, "a", zipfile.ZIP_DEFLATED) as output:
