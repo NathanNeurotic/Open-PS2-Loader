@@ -1689,6 +1689,50 @@ static GSTEXTURE *cacheResidentByValue(image_cache_t *cache, const char *value)
     return NULL;
 }
 
+// A row that holds no live slot (a list rebuild, an ISO/VCD toggle) re-finds a slot keyed `name` that
+// some row already settled on as its name fallback, and takes it over: 1 when it did, with *tex the art
+// (NULL while it is still loading, or when *cacheId became CACHE_ID_PS1_BOTH_ABSENT).
+static int cacheAdoptFallback(image_cache_t *cache, const char *name, int *cacheId, int *UID, GSTEXTURE **tex)
+{
+    int i;
+
+    *tex = NULL;
+
+    // The row still owns a slot of its own (its id probe, say): that answer comes first.
+    if (*cacheId >= 0 && *cacheId < cache->count && cache->content[*cacheId].UID == *UID)
+        return 0;
+    if (strlen(name) >= sizeof(cache->content[0].key))
+        return 0;
+
+    for (i = 0; i < cache->count; i++) {
+        cache_entry_t *entry = &cache->content[i];
+        if (!entry->nameFallback || entry->UID == 0 || strcmp(entry->key, name) != 0)
+            continue;
+
+        if (entry->qr == NULL && entry->lastUsed == 0) {
+            // The name is parked absent too. Only this generation's park answers for both values;
+            // the name claim that parked it was made right after the id's absence in that same one.
+            if (entry->failEpoch != gArtFailEpoch)
+                return 0;
+            *cacheId = CACHE_ID_PS1_BOTH_ABSENT;
+            *UID = (int)gArtFailEpoch;
+            return 1;
+        }
+
+        if (entry->qr == NULL && entry->texture.Mem == NULL)
+            return 0;
+
+        *cacheId = i;
+        *UID = entry->UID;
+        entry->lastUsed = guiFrameId;
+        if (entry->qr == NULL)
+            *tex = &entry->texture;
+        return 1;
+    }
+
+    return 0;
+}
+
 // The id-keyed probe with the name-keyed fallback (PS1 rows: RetroGEM disc id first, row name second).
 // The row has one (cacheId, UID) pair for both values.
 GSTEXTURE *cacheGetTextureIdOrName(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *id, char *name, int isPriority)
@@ -1712,6 +1756,17 @@ GSTEXTURE *cacheGetTextureIdOrName(image_cache_t *cache, item_list_t *list, int 
         if (*cacheId == -2)
             *cacheId = CACHE_ID_PS1_BOTH_ABSENT;
         return nameTex;
+    }
+
+    // A row reborn without its slot (every list rebuild, a device rescan, an L3 ISO/VCD toggle) takes
+    // over the name fallback a row already settled on. Reunion by value alone would look for the id
+    // first, and the id's absence memo is gone by then (the name claim usually evicts it: lastUsed 0
+    // goes first) -- so every visible PS1 cover re-read its id off the device, and on a full cache
+    // that claim evicted a visible cover, after every rebuild.
+    {
+        GSTEXTURE *adopted;
+        if (cacheAdoptFallback(cache, name, cacheId, UID, &adopted))
+            return adopted;
     }
 
     // UID alone cannot tell which value owns the slot: when another value does (or an absence is
