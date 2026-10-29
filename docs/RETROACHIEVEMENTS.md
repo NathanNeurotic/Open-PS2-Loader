@@ -10,7 +10,7 @@ else — talking to the RetroAchievements servers, deciding what unlocked, your 
 PC.
 
 Based on the RetroAchievements implementation by **[hacan359 (yoba)](https://github.com/hacan359/Open-PS2-Loader/pull/1)**.
-Use the upstream **[xeRAbora PC client](https://github.com/hacan359/xerabora)** with RiptOPL's RA build. Download the required **[v0.1.0-alpha.17 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)**.
+Use the upstream **[xeRAbora PC client](https://github.com/hacan359/xerabora)** with RiptOPL's RA build. Download the required **[v1.0.1 release](https://github.com/hacan359/xerabora/releases/tag/v1.0.1)**.
 
 RiptOPL's real-hardware stabilization was contributed by **[oMrRexD](https://github.com/oMrRexD)** through
 PRs **#702–#705**, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
@@ -111,7 +111,7 @@ as finished.
 
 1. Start **RIPTOPL-RA.ELF** from the RetroAchievements package. The standard ELF
    has no achievement telemetry or companion requirement.
-2. Run **xeRAbora alpha.17** on the companion PC and sign into your
+2. Run **xeRAbora v1.0.1** (alpha.17 or later) on the companion PC and sign into your
    RetroAchievements account in its Settings page. Keep the client running.
    Account login enables unlock submission; the Web API key supplies account/library data.
 3. In RiptOPL **Settings > Network**, select **RA Mode: Xerabora**, enable
@@ -273,7 +273,7 @@ answers. Nothing is stored between runs.
 The PS2 console core follows **xeRAbora v0.1.0-alpha.15** (client
 [`d36ee3a5`](https://github.com/hacan359/xerabora/commit/d36ee3a54c8769825c99756f908367b2cc2622f3),
 which pins console [`f4d559a3`](https://github.com/hacan359/Open-PS2-Loader/commit/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a)).
-The PS1 POPStarter bridge additionally follows alpha.16, and the Mode 6 snapshot handling follows alpha.17. Use the alpha.17 companion required above for this RA build; updating the external client alone does not update the telemetry code in your ELF.
+The PS1 POPStarter bridge additionally follows alpha.16, and the Mode 6 snapshot handling follows alpha.17. Use the v1.0.1 companion (alpha.17 or later) required above for this RA build; updating the external client alone does not update the telemetry code in your ELF.
 
 - **Larger achievement sets:** up to 4,096 direct watches and 128 pointer-chain nodes, subject to the snapshot byte limit. The loader sizes the persistent module-storage block to the actual set, instead of keeping the larger tables in ee_core's limited memory.
 - **Bounded telemetry cadence:** up to three snapshot packets per video frame on average. Sets needing four to six parts are sampled every second frame; seven to nine parts every third frame. Smaller sets remain at one sample per frame. Packets still transmit as one snapshot batch; this is a cadence budget, not packet pacing.
@@ -284,7 +284,7 @@ The PS1 POPStarter bridge additionally follows alpha.16, and the Mode 6 snapshot
 - **Delivery guarantees retained:** 4 ms sender polling, busy/torn snapshot retries, ~1 second keepalive, and marking the staged sequence sent only after every multipart packet succeeds.
 
 > [!IMPORTANT]
-> Use **[xeRAbora v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)** with this updated RA ELF. Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.
+> Use **[xeRAbora v1.0.1](https://github.com/hacan359/xerabora/releases/tag/v1.0.1)** with this updated RA ELF; alpha.17 or later works. Since alpha.17 the client has only gained a setting that keeps unlock notices off the TV (it then sends nothing) and reads optional link counters from the snapshot header. That is from a source review of xeRAbora `v0.1.0-alpha.17...v1.0.1` and its console fork `fa2d2e42...a9f97397`; **v1.0.1 is NOT TESTED on hardware with this build.** Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.
 
 
 ---
@@ -347,7 +347,7 @@ stock Neutrino remain independent. Existing historical tagged releases are retai
 The labelled folders are the two ps2dev builds, so they say `PINNED`/`ROLLING` where the main
 package says `PS2DEVPINNED`/`PS2DEVROLLING`. The names are kept short on purpose: a memory card file
 name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
-archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0-alpha.17 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)), because the loader does nothing without the PC client.
+archive also carries **`xeRAbora.url`** (pointing directly to the paired [v1.0.1 release](https://github.com/hacan359/xerabora/releases/tag/v1.0.1)), because the loader does nothing without the PC client.
 
 It is deliberately *not* an entry in `RIPTOPL-VARIANTS-*.zip`: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
