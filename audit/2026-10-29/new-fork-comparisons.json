@@ -1,0 +1,300 @@
+[
+  {
+    "repository_full_name": "ps2homebrew/Open-PS2-Loader",
+    "base": "master",
+    "head": "Blayr:feature/favorites",
+    "status": "ahead",
+    "ahead_by": 7,
+    "behind_by": 0,
+    "total_commits": 7,
+    "too_large": null,
+    "base_commit": {
+      "sha": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+      "url": "https://api.github.com/repos/ps2homebrew/Open-PS2-Loader/commits/b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+      "html_url": "https://github.com/ps2homebrew/Open-PS2-Loader/commit/b3a2199795fe89ba7e2dd7b843354472dff2c3eb"
+    },
+    "merge_base_commit": {
+      "sha": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+      "url": "https://api.github.com/repos/ps2homebrew/Open-PS2-Loader/commits/b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+      "html_url": "https://github.com/ps2homebrew/Open-PS2-Loader/commit/b3a2199795fe89ba7e2dd7b843354472dff2c3eb"
+    },
+    "files": [
+      {
+        "filename": ".gitignore",
+        "status": "modified",
+        "additions": 6,
+        "deletions": 0,
+        "changes": 6,
+        "previous_filename": null
+      },
+      {
+        "filename": "Build-Custom.ps1",
+        "status": "added",
+        "additions": 22,
+        "deletions": 0,
+        "changes": 22,
+        "previous_filename": null
+      },
+      {
+        "filename": "CUSTOM.md",
+        "status": "added",
+        "additions": 130,
+        "deletions": 0,
+        "changes": 130,
+        "previous_filename": null
+      },
+      {
+        "filename": "Makefile",
+        "status": "modified",
+        "additions": 3,
+        "deletions": 3,
+        "changes": 6,
+        "previous_filename": null
+      },
+      {
+        "filename": "README.md",
+        "status": "modified",
+        "additions": 55,
+        "deletions": 3,
+        "changes": 58,
+        "previous_filename": null
+      },
+      {
+        "filename": "Run-Emulator.ps1",
+        "status": "added",
+        "additions": 12,
+        "deletions": 0,
+        "changes": 12,
+        "previous_filename": null
+      },
+      {
+        "filename": "gfx/favorite.png",
+        "status": "added",
+        "additions": 0,
+        "deletions": 0,
+        "changes": 0,
+        "previous_filename": null
+      },
+      {
+        "filename": "include/config.h",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 0,
+        "changes": 1,
+        "previous_filename": null
+      },
+      {
+        "filename": "include/dialogs.h",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 0,
+        "changes": 1,
+        "previous_filename": null
+      },
+      {
+        "filename": "include/favorites.h",
+        "status": "added",
+        "additions": 17,
+        "deletions": 0,
+        "changes": 17,
+        "previous_filename": null
+      },
+      {
+        "filename": "include/menusys.h",
+        "status": "modified",
+        "additions": 22,
+        "deletions": 0,
+        "changes": 22,
+        "previous_filename": null
+      },
+      {
+        "filename": "include/opl.h",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 0,
+        "changes": 1,
+        "previous_filename": null
+      },
+      {
+        "filename": "include/texcache.h",
+        "status": "modified",
+        "additions": 6,
+        "deletions": 0,
+        "changes": 6,
+        "previous_filename": null
+      },
+      {
+        "filename": "include/textures.h",
+        "status": "modified",
+        "additions": 3,
+        "deletions": 0,
+        "changes": 3,
+        "previous_filename": null
+      },
+      {
+        "filename": "lng_tmpl/_base.yml",
+        "status": "modified",
+        "additions": 22,
+        "deletions": 0,
+        "changes": 22,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/dialogs.c",
+        "status": "modified",
+        "additions": 8,
+        "deletions": 8,
+        "changes": 16,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/favorites.c",
+        "status": "added",
+        "additions": 104,
+        "deletions": 0,
+        "changes": 104,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/gui.c",
+        "status": "modified",
+        "additions": 19,
+        "deletions": 7,
+        "changes": 26,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/menufilter.c",
+        "status": "added",
+        "additions": 114,
+        "deletions": 0,
+        "changes": 114,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/menusys.c",
+        "status": "modified",
+        "additions": 129,
+        "deletions": 21,
+        "changes": 150,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/opl.c",
+        "status": "modified",
+        "additions": 15,
+        "deletions": 0,
+        "changes": 15,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/texcache.c",
+        "status": "modified",
+        "additions": 66,
+        "deletions": 4,
+        "changes": 70,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/textures.c",
+        "status": "modified",
+        "additions": 7,
+        "deletions": 1,
+        "changes": 8,
+        "previous_filename": null
+      },
+      {
+        "filename": "src/themes.c",
+        "status": "modified",
+        "additions": 119,
+        "deletions": 29,
+        "changes": 148,
+        "previous_filename": null
+      },
+      {
+        "filename": "tests/favorites_test.c",
+        "status": "added",
+        "additions": 452,
+        "deletions": 0,
+        "changes": 452,
+        "previous_filename": null
+      },
+      {
+        "filename": "tests/populate_emulator.py",
+        "status": "added",
+        "additions": 32,
+        "deletions": 0,
+        "changes": 32,
+        "previous_filename": null
+      },
+      {
+        "filename": "tests/run_favorites.py",
+        "status": "added",
+        "additions": 25,
+        "deletions": 0,
+        "changes": 25,
+        "previous_filename": null
+      },
+      {
+        "filename": "tests/run_prefetch.py",
+        "status": "added",
+        "additions": 104,
+        "deletions": 0,
+        "changes": 104,
+        "previous_filename": null
+      },
+      {
+        "filename": "tests/stubs/include/iosupport.h",
+        "status": "added",
+        "additions": 5,
+        "deletions": 0,
+        "changes": 5,
+        "previous_filename": null
+      },
+      {
+        "filename": "tests/stubs/include/opl.h",
+        "status": "added",
+        "additions": 12,
+        "deletions": 0,
+        "changes": 12,
+        "previous_filename": null
+      }
+    ]
+  },
+  {
+    "repository_full_name": "NathanNeurotic/RiptOPL",
+    "base": "33838c2bfee8d778b8736bfe1f4160ee07b0cabb",
+    "head": "Diegoprofeta:rebuild/main",
+    "status": "identical",
+    "ahead_by": 0,
+    "behind_by": 0,
+    "total_commits": 0,
+    "too_large": null,
+    "base_commit": {
+      "sha": "33838c2bfee8d778b8736bfe1f4160ee07b0cabb",
+      "url": "https://api.github.com/repos/NathanNeurotic/RiptOPL/commits/33838c2bfee8d778b8736bfe1f4160ee07b0cabb",
+      "html_url": "https://github.com/NathanNeurotic/RiptOPL/commit/33838c2bfee8d778b8736bfe1f4160ee07b0cabb"
+    },
+    "merge_base_commit": {
+      "sha": "33838c2bfee8d778b8736bfe1f4160ee07b0cabb",
+      "url": "https://api.github.com/repos/NathanNeurotic/RiptOPL/commits/33838c2bfee8d778b8736bfe1f4160ee07b0cabb",
+      "html_url": "https://github.com/NathanNeurotic/RiptOPL/commit/33838c2bfee8d778b8736bfe1f4160ee07b0cabb"
+    },
+    "files": []
+  },
+  {
+    "repository_full_name": "taisonboxing3-code/Open-PS2-Loader",
+    "head": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+    "base_repository": "ps2homebrew/Open-PS2-Loader",
+    "base": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+    "method": "Advertised HEAD equality",
+    "status": "identical"
+  },
+  {
+    "repository_full_name": "1247847495/RiptOPL",
+    "head": "6edea174e5522b241139eeb4c683c9f2c76f776f",
+    "base": "33838c2bfee8d778b8736bfe1f4160ee07b0cabb",
+    "method": "git merge-base --is-ancestor fork-head target-head; exit 0",
+    "status": "ancestor; no independent default delta"
+  }
+]

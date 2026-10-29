@@ -1,0 +1,60 @@
+{
+  "checked_at": "2026-10-29T17:40:20.610217+00:00",
+  "structural_checks": "passed",
+  "sites": [
+    {
+      "site": "riptopl-site",
+      "records": 292,
+      "families": 143,
+      "directory_rows": 152,
+      "retained_anchors": 471,
+      "target_evidence_paths": 43,
+      "search_entries": 570,
+      "source_document_links": "passed"
+    },
+    {
+      "site": "legacy-site",
+      "records": 292,
+      "families": 143,
+      "directory_rows": 152,
+      "retained_anchors": 472,
+      "target_evidence_paths": 43,
+      "search_entries": 562,
+      "source_document_links": "passed"
+    }
+  ],
+  "other_checks": {
+    "site_links": {
+      "RiptOPL": {
+        "pages": 40,
+        "links_resources": 2650,
+        "result": "passed"
+      },
+      "Open-PS2-Loader": {
+        "pages": 39,
+        "links_resources": 2604,
+        "result": "passed"
+      }
+    },
+    "site_sync_check": {
+      "both_sites": "passed; idempotent"
+    },
+    "diff_check": "passed in all four isolated checkouts",
+    "browser_preview": "In-app browser cannot reach the local preview server; deployed UI verification pending.",
+    "site_sync_unit_tests": {
+      "RiptOPL": {
+        "tests": 9,
+        "result": "passed"
+      },
+      "Open-PS2-Loader": {
+        "tests": 11,
+        "result": "passed"
+      }
+    }
+  },
+  "console": "not performed",
+  "target_build": "not performed; documentation/data only",
+  "emulator": "not performed",
+  "copied_historical_host_results": "not rerun; the October 29 JUMP classifier probe remains explicitly historical",
+  "scope_note": "No foreign setup/build script, storage write probe, gameplay test or throughput benchmark executed."
+}
