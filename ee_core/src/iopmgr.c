@@ -175,6 +175,7 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
 
 #ifdef __LOAD_DEBUG_MODULES
 #if !defined(TTY_PPC)
+    // The menu never packs these for UDPBD/UDPFS, whose block driver owns the adapter; the loads just fail.
     LoadOPLModule(OPL_MODULE_ID_SMSTCPIP, 0, 0, NULL);
     LoadOPLModule(OPL_MODULE_ID_SMAP, 0, g_ipconfig_len, g_ipconfig);
 #endif
@@ -210,7 +211,8 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
        not finish loading under the fork while it runs on stock OPL. 1 loads
        nothing of ours, 2 the stack only, 3 the stack and SMAP, 4 those and
        raudp but no snapshots from the EE. 0, the default, is the real thing. */
-    if (config->GameMode != ETH_MODE && config->GameMode != HTTP_MODE && RA_TelemetryWanted(config)) {
+    if (config->GameMode != ETH_MODE && config->GameMode != HTTP_MODE && config->GameMode != BDM_UDP_MODE &&
+        config->GameMode != BDM_UFS_MODE && RA_TelemetryWanted(config)) {
         if (RA_PROBE != 1)
             LoadOPLModule(OPL_MODULE_ID_SMSTCPIP, 0, 0, NULL);
         if (RA_PROBE != 1 && RA_PROBE != 2)
@@ -271,6 +273,23 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
         case MMCE_MODE:
             LoadOPLModule(OPL_MODULE_ID_MMCEDRV, 0, 0, NULL);
             break;
+        case BDM_UDP_MODE:
+        case BDM_UFS_MODE: {
+            // The chain the menu loaded, reloaded after the reset. dev9 and bdm now come from
+            // bdm_udp_cdvdman; the server is found by broadcast, so the driver needs only the PS2's
+            // static IP (the menu filled g_ps2_ip with it for these modes). Each module needs the one
+            // before it, so stop at the first that does not start: cdvdman then waits for a device
+            // that never comes, which is the same visible failure as a server that never answers.
+            char ipArg[3 + sizeof(config->g_ps2_ip)];
+            _strcpy(ipArg, "ip=");
+            _strcpy(&ipArg[3], config->g_ps2_ip);
+            if (config->GameMode == BDM_UDP_MODE)
+                LoadOPLModule(OPL_MODULE_ID_SMAP_UDPBD, 0, strlen(ipArg) + 1, ipArg);
+            else if (LoadOPLModule(OPL_MODULE_ID_UDPFS_SMAP, 0, 0, NULL) > 0 &&
+                     LoadOPLModule(OPL_MODULE_ID_UDPFS_MINISTACK, 0, strlen(ipArg) + 1, ipArg) > 0)
+                LoadOPLModule(OPL_MODULE_ID_UDPFS_BD, 0, 0, NULL);
+            break;
+        }
     };
 
 #ifdef RETROACHIEVEMENTS

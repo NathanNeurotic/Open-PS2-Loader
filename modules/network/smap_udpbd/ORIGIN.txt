@@ -34,3 +34,12 @@ LOCAL CHANGE vs upstream: security-audit hardening (re-apply after re-vendoring)
     fires). This is an OOB-write guard against a malicious/buggy server or a spoofed LAN reply.
   - src/imports.lst: added I_bzero (smap.c:571 calls bzero; upstream relied on the compiler
     inlining the constant-size call at -O2, which is fragile at -O0 / future toolchains).
+
+LOCAL CHANGE vs upstream: read burst cap (re-apply after re-vendoring):
+  - src/udpbd.h: UDPBD_MAX_SECTOR_READ 512 -> 32 (16 KiB, 12 reply packets per request). The
+    server sends a read's reply packets back to back. On a console test (fat PS2 at 100 Mbit/s,
+    server on a 1 Gbit/s PC, udpbd-vexfat 0.2.0, GTA San Andreas) every 64 KiB read (47 packets)
+    lost packets, the driver retried 4 times, disconnected and the game hung at boot; 12 and 24
+    packet bursts never lost one. 16 KiB is the size of the SMAP receive FIFO. Ported from
+    belomaxorka/YAOPL 12cc6fb5 (Roman Kelesidis, 2026-10-28), which patches the same define in
+    Neutrino's split udpbd module; that result is YAOPL's, not reproduced here.

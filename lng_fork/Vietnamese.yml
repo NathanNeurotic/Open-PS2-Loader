@@ -575,7 +575,7 @@ translations:
   HINT_BDMCACHE: Bộ đệm đọc trước cho USB và các ổ BDM khác khi đang chơi. Lớn hơn có thể giúp truyền mượt hơn nhưng tốn bộ nhớ hơn.
   HINT_HDDCACHE: Bộ đệm đọc trước cho HDD trong khi đang chơi.
   HINT_SMBCACHE: Bộ đệm đọc trước cho SMB khi đang chơi.
-  HINT_CORE_LOADER: Lõi cho trò chơi này khi cả hai đều được hỗ trợ. UDPFS/UDPBD chỉ dùng Neutrino; SMB/HTTP chỉ dùng <OPL>. Mặc định theo Chạy trò chơi.
+  HINT_CORE_LOADER: Lõi cho trò chơi này khi cả hai đều được hỗ trợ. UDPFS Files chỉ dùng Neutrino; SMB/HTTP chỉ dùng <OPL>. Mặc định theo Chạy trò chơi. Trên UDPBD/UDPFS IMG, Mặc định là Neutrino.
   HINT_DMA_MODE: Chế độ truyền của HDD trong cho trò chơi này. Hạ xuống nếu trò chơi giật hoặc treo.
   HINT_DNAS_GAMEID: ID đĩa cho trò chơi trực tuyến DNAS. Nạp từ đĩa sẽ đọc nó từ đĩa gốc.
   HINT_LOAD_FROM_DISC: Đọc ID DNAS từ đĩa gốc trong ổ.

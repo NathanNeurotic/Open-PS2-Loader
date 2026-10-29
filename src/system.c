@@ -772,6 +772,24 @@ int sysLaunchDisc(int (*progress)(void))
 #define CORE_IRX_MX4SIO 0x100
 #define CORE_IRX_MMCE   0x200
 #define CORE_IRX_PCCF   0x400
+#define CORE_IRX_UDPBD  0x800  // OPL-core UDPBD game: the smap_udpbd monolith
+#define CORE_IRX_UDPFS  0x1000 // OPL-core UDPFS (block) game: udpfs_smap + udpfs_ministack + udpfs_bd
+
+// The two OPL-core network block modes. Their driver owns the SMAP adapter in game, so nothing else
+// may put a network stack on it: no SMB/RA SMAP + SMSTCPIP pair, no udptty.
+static int sysModeIsNetBlock(const char *mode_str)
+{
+    return !strcmp(mode_str, "BDM_UDP_MODE") || !strcmp(mode_str, "BDM_UFS_MODE");
+}
+
+#ifdef RETROACHIEVEMENTS
+// Modes whose game cannot stream RA telemetry: CF owns the bus, and on UDPBD/UDPFS the block driver owns
+// the NIC (raudp links against the SMB stack's SMAP, which cannot load beside it).
+static int sysModeHasNoRATelemetry(const char *mode_str)
+{
+    return !strcmp(mode_str, "BDM_CF_MODE") || sysModeIsNetBlock(mode_str);
+}
+#endif
 
 typedef struct
 {
@@ -868,6 +886,10 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
         modules |= CORE_IRX_ETH;
     else if (!strcmp(mode_str, "MMCE_MODE"))
         modules |= CORE_IRX_MMCE;
+    else if (!strcmp(mode_str, "BDM_UDP_MODE"))
+        modules |= CORE_IRX_UDPBD;
+    else if (!strcmp(mode_str, "BDM_UFS_MODE"))
+        modules |= CORE_IRX_UDPFS;
     else
         modules |= CORE_IRX_HDD;
 
@@ -886,9 +908,12 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
       GetWatchCount() is authoritative here because the launch legs have already
       run sbLoadWatchList() by this point; no list means nothing to send.
     */
-    if (strcmp(mode_str, "BDM_CF_MODE") && gRATelemetry && GetWatchCount() > 0)
+    if (!sysModeHasNoRATelemetry(mode_str) && gRATelemetry && GetWatchCount() > 0)
         modules |= CORE_IRX_ETH;
 #endif
+    // The network block driver owns the adapter in game; a second SMAP driver must never travel with it.
+    if (sysModeIsNetBlock(mode_str))
+        modules &= ~(CORE_IRX_ETH | CORE_IRX_SMB | CORE_IRX_DECI2);
 
     irxtable = (irxtab_t *)ModuleStorage;
     irxptr_tab = (irxptr_t *)((unsigned char *)irxtable + sizeof(irxtab_t));
@@ -967,6 +992,20 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
     if (modules & CORE_IRX_MX4SIO) {
         irxptr_tab[modcount].info = size_mx4sio_bd_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_MX4SIOBD);
         irxptr_tab[modcount++].ptr = (void *)&mx4sio_bd_irx;
+    }
+    // The same network block chain the menu loaded (bdmEnsureNetworkSourceModules): the IOP reset unloads
+    // it, and in game it imports dev9 and bdm from bdm_udp_cdvdman instead of DEV9.IRX and bdm.irx.
+    if (modules & CORE_IRX_UDPBD) {
+        irxptr_tab[modcount].info = size_smap_udpbd_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_SMAP_UDPBD);
+        irxptr_tab[modcount++].ptr = (void *)&smap_udpbd_irx;
+    }
+    if (modules & CORE_IRX_UDPFS) {
+        irxptr_tab[modcount].info = size_udpfs_smap_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_SMAP);
+        irxptr_tab[modcount++].ptr = (void *)&udpfs_smap_irx;
+        irxptr_tab[modcount].info = size_udpfs_ministack_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_MINISTACK);
+        irxptr_tab[modcount++].ptr = (void *)&udpfs_ministack_irx;
+        irxptr_tab[modcount].info = size_udpfs_bd_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_BD);
+        irxptr_tab[modcount++].ptr = (void *)&udpfs_bd_irx;
     }
 #ifdef RETROACHIEVEMENTS
     if (!strcmp(mode_str, "DISC_MODE") && (modules & CORE_IRX_ETH)) {
@@ -2602,6 +2641,9 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     modules |= CORE_IRX_ETH;
 #endif
 #endif
+    // udptty and DECI2 ride the SMB stack's SMAP; on UDPBD/UDPFS the block driver owns the adapter.
+    if (sysModeIsNetBlock(mode_str))
+        modules &= ~(CORE_IRX_ETH | CORE_IRX_DECI2 | CORE_IRX_DEBUG);
 
 #ifdef RETROACHIEVEMENTS
     const int discMode = !strcmp(mode_str, "DISC_MODE");
@@ -2619,7 +2661,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 
     ModuleStorageEnd = (void *)((u8 *)ModuleStorage + ModuleStorageSize);
 #ifdef RETROACHIEVEMENTS
-    if (strcmp(mode_str, "BDM_CF_MODE") && gRATelemetry && GetWatchCount() > 0)
+    if (!sysModeHasNoRATelemetry(mode_str) && gRATelemetry && GetWatchCount() > 0)
         ModuleStorageEnd = PlaceWatchBlock(ModuleStorageEnd);
 #endif
 
@@ -2696,15 +2738,15 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // RetroAchievements: the watch list for this game, already loaded by the launch
     // leg. It may legitimately be absent -- the game simply is not tracked -- in
     // which case ee_core sees NULL and never starts the telemetry path.
-    config->raWatchList = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockList();
-    config->raWatchCount = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetWatchCount();
+    config->raWatchList = sysModeHasNoRATelemetry(mode_str) ? NULL : GetWatchBlockList();
+    config->raWatchCount = sysModeHasNoRATelemetry(mode_str) ? 0 : GetWatchCount();
     config->raClientMode = gRAMode;
     config->raHostPinned = (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) != 0;
-    config->raSnapBytes = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetWatchBytes();
-    config->raNodeList = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockNodes();
-    config->raNodeCount = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetNodeCount();
-    config->raSnapBuf = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockSnap();
-    config->raOverlayBuf = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockOverlay();
+    config->raSnapBytes = sysModeHasNoRATelemetry(mode_str) ? 0 : GetWatchBytes();
+    config->raNodeList = sysModeHasNoRATelemetry(mode_str) ? NULL : GetWatchBlockNodes();
+    config->raNodeCount = sysModeHasNoRATelemetry(mode_str) ? 0 : GetNodeCount();
+    config->raSnapBuf = sysModeHasNoRATelemetry(mode_str) ? NULL : GetWatchBlockSnap();
+    config->raOverlayBuf = sysModeHasNoRATelemetry(mode_str) ? NULL : GetWatchBlockOverlay();
     {
         u32 peer = raNetPeerIP();
         if (peer) {
@@ -2727,6 +2769,9 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #endif
 
     sprintf(config->g_ps2_ip, "%u.%u.%u.%u", local_ip_address[0], local_ip_address[1], local_ip_address[2], local_ip_address[3]);
+    // The network block chain has no DHCP: it takes the static PS2 IP, the same ip= the menu passed it.
+    if (sysModeIsNetBlock(mode_str))
+        sprintf(config->g_ps2_ip, "%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
     sprintf(config->g_ps2_netmask, "%u.%u.%u.%u", local_netmask[0], local_netmask[1], local_netmask[2], local_netmask[3]);
     sprintf(config->g_ps2_gateway, "%u.%u.%u.%u", local_gateway[0], local_gateway[1], local_gateway[2], local_gateway[3]);
 

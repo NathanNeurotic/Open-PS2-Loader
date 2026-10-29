@@ -154,7 +154,7 @@ IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o usbhdfsd.o bdmevent.o dvrdrv.o dvrf
 
 EECORE_OBJS = ee_core.o ioprp.o util.o \
 		udnl.o imgdrv.o eesync.o \
-		bdm_cdvdman.o bdm_ata_cdvdman.o IOPRP_img.o smb_cdvdman.o http_cdvdman.o \
+		bdm_cdvdman.o bdm_ata_cdvdman.o bdm_udp_cdvdman.o IOPRP_img.o smb_cdvdman.o http_cdvdman.o \
 		hdd_cdvdman.o mmce_cdvdman.o hdd_hdpro_cdvdman.o cdvdfsv.o \
 		ingame_smstcpip.o smap_ingame.o smbman.o smbinit.o
 
@@ -469,6 +469,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/iopcore/cdvdman USE_PCCF=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_BDM=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_BDM_ATA=1 clean
+	$(MAKE) -C modules/iopcore/cdvdman USE_BDM_UDP=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_MMCE=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_SMB=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_HTTP=1 clean
@@ -666,6 +667,13 @@ modules/iopcore/cdvdman/bdm_ata_cdvdman.irx: modules/iopcore/cdvdman
 
 $(EE_ASM_DIR)bdm_ata_cdvdman.c: modules/iopcore/cdvdman/bdm_ata_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ bdm_ata_cdvdman_irx
+
+# OPL-core UDPBD / UDPFS (block) games: BDM plus the DEV9 core, which the in-game network block chain imports.
+modules/iopcore/cdvdman/bdm_udp_cdvdman.irx: modules/iopcore/cdvdman
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_BDM_UDP=1 -C $< all
+
+$(EE_ASM_DIR)bdm_udp_cdvdman.c: modules/iopcore/cdvdman/bdm_udp_cdvdman.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ bdm_udp_cdvdman_irx
 
 modules/iopcore/cdvdman/mmce_cdvdman.irx: modules/iopcore/cdvdman
 	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) $(CDVDMAN_RA_FLAGS) USE_MMCE=1 -C $< all

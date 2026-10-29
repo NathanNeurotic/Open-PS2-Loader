@@ -152,7 +152,7 @@ PSU imports and companion placement. [Test builds](docs/TEST-BUILDS.md) covers P
 - **HTTP:** implemented and host-tested, but not yet tested on PS2 hardware. ISO only; no VMC, Neutrino or PS1. DVD9 probing is implemented but unproven. [HTTP guide](docs/HTTP.md).
 - **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; in-game notices use the pulse by default. Settings > Network offers default-Off Caduceus experimental title/points cards for tracked PS2 OPL launches; they may flicker or freeze games because safe GS ownership is unresolved. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
 - **iLink:** revision 2692 passed Ember on the tested SCPH-39001 but failed native OPL, Neutrino and POPSTARTER handoffs. The Neutrino `-qb` correction is implemented, and the i.LINK drivers used by native OPL, the bundled Neutrino and POPSTARTER now keep logging in to the drive after an IOP reset (#1018); a passing retest is still needed.
-- **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS/UDPBD use Neutrino. See the [source table](#introduction).
+- **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS Files uses Neutrino; UDPBD and UDPFS IMG default to Neutrino and can use OPL per game. See the [source table](#introduction).
 
 ## Introduction
 
@@ -169,7 +169,7 @@ SMB, UDPFS, UDPBD and HTTP over Ethernet. Capabilities depend on both the source
 | iLink | OPL or Neutrino paths implemented | Local files | Launch remains pending hardware retest; see [iLink status](#usbmmcemx4sioilink) |
 | Internal HDD, APA | OPL or Neutrino | HDLoader partitions | OPL supports VMC; Neutrino drops APA/PFS VMC with a warning |
 | SMB | OPL | ISO, ZSO, UL | Server must permit writes for VMC saves |
-| UDPFS Files / IMG and UDPBD | Neutrino | Files under `CD/` / `DVD/`, or a served FAT/exFAT disk image | Depends on backend and write access; see [Neutrino](docs/NEUTRINO.md) |
+| UDPFS Files / IMG and UDPBD | Neutrino (IMG and UDPBD: `<OPL>` per game) | Files under `CD/` / `DVD/`, or a served FAT/exFAT disk image | Depends on backend and write access; see [Neutrino](docs/NEUTRINO.md) |
 | HTTP | OPL | ISO listed in `games.csv`; compressed images refuse to launch | No VMC; use physical memory cards |
 
 Neutrino does not read local ZSO or UL split images. A compatible UDPFS server can instead
@@ -217,7 +217,7 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 | Optional Coverflow, PSBBN Flow and Grid views of `<OPL>` | Select under Interface → Theme View, or hold L3 on the main page. Left/Right browse, Up/Down change sources (in Grid, Up/Down move one row and change sources from the top or bottom row), R3 toggles Favorites. [Theme Engine](docs/THEME_ENGINE.md) includes layout, reflection, animation and per-device placement. |
 | Favorites across devices | Enable Favorites under Game Sources; R3 stars a game or app. L3 cycles PS2 → PS1 → ELF → All in One independently of device display modes. [Favorites guide](https://nathanneurotic.github.io/Open-PS2-Loader/favourites.html). |
 | External Neutrino core per PS2 game | Complete runtime installation, path aliases, video, cheats, VMC and argument precedence: [Neutrino](docs/NEUTRINO.md). |
-| Network libraries | SMB and HTTP use OPL's core; UDPFS/UDPBD require Neutrino. Choose Network Connectivity in Game Sources and Protocol on Game Sources or Network. [Network boot](https://nathanneurotic.github.io/Open-PS2-Loader/network-boot.html), [HTTP](docs/HTTP.md). |
+| Network libraries | SMB and HTTP use OPL's core; UDPFS Files requires Neutrino; UDPBD and UDPFS IMG default to Neutrino and can use OPL's core per game. Choose Network Connectivity in Game Sources and Protocol on Game Sources or Network. [Network boot](https://nathanneurotic.github.io/Open-PS2-Loader/network-boot.html), [HTTP](docs/HTTP.md). |
 | Folder browsing, Apps/PS1ELF split and menu audio | [Interface behavior](docs/INTERFACE.md), [Apps](#apps) and [controls](docs/CONTROLS.md). |
 | Artwork archives, disc/logo art and optional 3D save icons | [Theme Engine](docs/THEME_ENGINE.md). Save-icon rendering still requires hardware validation. |
 | Fresh-start defaults and separate master settings | Built-in `<OPL>`, 4:3, Auto menu video, artwork/notifications on, audio off. [Defaults](docs/DEFAULTS.md) and [file locations](#where-your-files-live). |
