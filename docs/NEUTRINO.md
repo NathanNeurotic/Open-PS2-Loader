@@ -157,7 +157,7 @@ paths are no longer limited to 31 characters.
 | iLink / IEEE 1394 (**FAT PS2 models only**) | ⚠️ supported and wired; the post-2692 build adds quick boot for RiptOPL's inherited-stack handoff, pending hardware retest | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; the overall iLink launch is pending retest |
 | Internal HDD (APA → HDL) | ✅ | ❌ **games boot, VMC is dropped with a warning** — Neutrino has no APA/pfs backing store to open the `.bin` from (NHDDL's HDL backend has the same no-VMC rule). The OPL core honors the same VMC normally. |
 | MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
-| UDPFS (network boot — Files or Image) | ✅ **required for Files** — Files has no OPL core. **Image** defaults to Neutrino and runs on `<OPL>` when the game's Loader Core says so (see §4) | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail |
+| UDPFS (network boot — Files or Image) | ✅ **default** for Files and Image — Neutrino unless the game's Loader Core is `<OPL>` (see §4). On `<OPL>`, Files reads the ISO through the in-game `udpfs_fhi` module and keeps VMCs on the server (`udpfs_mcemu`); **not tested on hardware** | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail. Same rule on `<OPL>`: a VMC the server will not open read-write offers the usual skip prompt |
 | UDPBD (network boot — served disk image) | ✅ **default** — Neutrino unless the game's Loader Core is `<OPL>` (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
 | SMB / ETH | ❌ (always launches with `<OPL>`; the core selector is locked and a stale Neutrino selection warns at launch) | n/a (OPL-core VMC works normally) |
 | USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) | n/a |
@@ -321,7 +321,7 @@ reading, so an SMBv1-only server (including the bundled PS2-Servers tool) will l
 |---|---|---|---|---|
 | **Network Connectivity: Off** | — | no network device (default) | — | — |
 | **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core (not Neutrino) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
-| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Files: Neutrino only. Image: Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
+| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Files and Image: Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
 | **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
 | **HTTP** | HTTP byte ranges | a `games.csv` catalog and ISO streams | OPL's own core | [Docmine17's server](https://github.com/Docmine17/Open-PS2-Loader-HTTP) or a server meeting the [HTTP profile](HTTP.md) |
 
@@ -394,9 +394,9 @@ effect** (OPL shows the usual restart-to-apply notice).
   when either UDP protocol is selected.
 - You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
   background (both Files and Image), so the games page appears when the server comes up — no reboot.
-- UDPFS **Files** is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns
-  and returns to the menu. UDPBD and UDPFS **Image** fall back to the OPL core instead (below),
-  except when the bsd toml is missing or unwritable: that still returns to the menu, as its message says.
+- When the Neutrino launch cannot start (no `neutrino.elf`, a `.zso` image), UDPFS **Files**, UDPFS
+  **Image** and UDPBD all fall back to the OPL core (below). A missing or unwritable bsd toml is the
+  exception: that still returns to the menu, as its message says.
 
 ### UDPBD and UDPFS Image on the `<OPL>` core
 
@@ -422,6 +422,29 @@ On the OPL core:
   blinks red and the console stops, instead of hanging on a black screen.
 
 > **Not tested on hardware yet.** Report results with the game, the server and the protocol.
+
+### UDPFS Files on the `<OPL>` core
+
+UDPFS **Files** games can run on the OPL core too. As with Image, Neutrino stays the default: a game
+uses the OPL core when its own **Loader Core** is `<OPL>`, or when Neutrino cannot run it (no
+`neutrino.elf`, a `.zso` image).
+
+How it works, following Neutrino's own `udpfs_fhi` design:
+
+- The menu opens the game's ISO on the server and keeps it open across the IOP reset. The server keeps
+  that open file for the console when the console finds it again, so the game reads the same file.
+- In game, OPL loads `udpfs_smap`, `udpfs_ministack` and `udpfs_fhi`. `udpfs_fhi` finds the server
+  again and reads 512-byte sectors of the open ISO for OPL's disc driver.
+- The game waits up to 30 seconds for the server at start, and after a dropped connection it waits for
+  the reconnect and retries a read up to 3 times.
+- **VMCs work and saves go to the server.** Each card is opened read-write and kept open the same way.
+  If the server will not open a card for writing (a read-only share, or the file is already open
+  elsewhere), you get the usual prompt to continue without that VMC. Automatic VMC works here too.
+- The same limits as Image apply: no RetroAchievements telemetry and no in-game UDPTTY or DECI2.
+- If the PC server is **restarted** while a game runs, the game loses its open files and cannot reopen
+  them; restart the game. Neutrino has the same limit.
+
+> **Not tested on hardware yet.** Report results with the game, the server and whether VMCs were on.
 
 > **At launch, Neutrino reads its own IP from a toml, not from OPL.** When a game boots, control hands
 > to the external Neutrino, which reads the toml for the active mode — **Files** uses the stock
