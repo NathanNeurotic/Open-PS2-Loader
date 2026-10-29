@@ -18,6 +18,7 @@
 * Reject a SYSTEM.CNF BOOT2 line without '=' instead of passing NULL to the value parser during image discovery. Matches the existing C++ guard. Credit belomaxorka/YAOPL 43781768. Hardware validation pending.
 * SMB games: a read whose reply the server cuts off mid-message (for example Samba dropping an idle PS2) now fails instead of freezing the game with the SMB lock held. Credit belomaxorka/YAOPL e16e2d15. Host-tested; hardware validation pending.
 * IGR and power-off stop the USB host controller before the IOP reset, so IGR with a USB PADEMU pad (DualShock 3) or a USB device no longer hangs before the next program. Credit belomaxorka/YAOPL e72c9f48. Host-tested; hardware validation pending.
+* MMCE Game ID: an SD2PSX that stops answering while it swaps cards is waited out (bounded at 7.5 s) instead of ending the wait, so the game no longer starts while its memory card is still switching. Cards without a busy query still launch at once. Credit belomaxorka/YAOPL 19578cc6 and akilluminati47 (RIPPS2) for the wait it extends. Host-tested; hardware validation pending.
 
 ==== Version 0.9.3 ====
 CORE:
