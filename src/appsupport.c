@@ -859,6 +859,20 @@ static char *appGetItemStartup(item_list_t *itemList, int id)
     return id >= 0 ? appsList[id].startup : "";
 }
 
+// Whether the app is on a device that does not keep what is written, so it cannot be renamed or deleted
+// (belomaxorka / YAOPL 760d7e3c).
+int appIsReadOnly(item_list_t *itemList, int id)
+{
+    id = appVisibleToMaster(itemList, id);
+    if (id < 0)
+        return 0;
+    if (appsList[id].legacy) {
+        struct config_value_t *cur = appGetConfigValue(id);
+        return cur != NULL && bdmIsReadOnlyPath(cur->val);
+    }
+    return bdmIsReadOnlyPath(appsList[id].path);
+}
+
 static void appDeleteItem(item_list_t *itemList, int id)
 {
     id = appVisibleToMaster(itemList, id);

@@ -182,6 +182,10 @@ endif
 # apart from the list above, so the Korium theme delta, which rewrites that list, still applies.
 PNG_ASSETS += $(foreach set,standard white,$(foreach n,cross circle square triangle start select L1 R1 L3 R3 left right,glyph_$(set)_$(n)))
 
+# BdmIndex dots for two, three and four mass devices (tools/make_bdmindex.py), apart from the list above
+# for the same reason.
+PNG_ASSETS += Index2_0 Index2_1 Index3_0 Index3_1 Index3_2 Index4_0 Index4_1 Index4_2 Index4_3
+
 GFX_OBJS = $(PNG_ASSETS:%=%_png.o) poeveticanew.o
 
 # NOTE: audio/bgm.ogg is intentionally NOT compiled into the ELF (saves ~324 KB).

@@ -57,6 +57,7 @@ static int favGetItemSourceMode(int id) { (void)id; return BDM_MODE; }
 static int udpbdSupport;
 static int bdmSupportIsUDPBD(const item_list_t *s) { (void)s; return udpbdSupport; }
 static int bdmModeIsPCCF(int m) { (void)m; return 0; }
+static int bdmModeIsReadOnly(int m) { (void)m; return 0; }
 static int bdmModeIsUDPBD(int m) { (void)m; return 0; }
 static int udpbdCore = -1; /* the game's own Loader Core key on the UDPBD device: -1 = none */
 static int configGetInt(config_set_t *c, const char *k, int *v) { (void)c; (void)k; (void)v; return 0; }

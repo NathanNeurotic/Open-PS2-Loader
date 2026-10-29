@@ -537,9 +537,9 @@ translations:
   HINT_PLASCOLOR: Boja umiješana u animiranu pozadinu.
   HINT_RESETCOLOR: Vraća ugrađene boje RiptOPL-a, ne boje teme.
   HINT_WIDESCREEN: Crta izbornik za TV 16:9.
-  HINT_XOFF: Pomiče izbornik lijevo ili desno na zaslonu.
-  HINT_YOFF: Pomiče izbornik gore ili dolje na zaslonu.
-  HINT_MENU_OVERSCAN: Sužava izbornik prema unutra ako TV odsijeca rubove.
+  HINT_XOFF: "Pomiče izbornik lijevo ili desno na zaslonu. Pamti se za svaki video način."
+  HINT_YOFF: "Pomiče izbornik gore ili dolje na zaslonu. Pamti se za svaki video način."
+  HINT_MENU_OVERSCAN: "Sužava izbornik prema unutra ako TV odsijeca rubove. Pamti se za svaki video način."
   HINT_APPLYGAMEID: Prikazuje crtični kod dok igra počinje, da Pixel FX, RetroGEM i PS2Digital uređaji promijene profil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Neutrino putanja, video način i argumenti za svaku igru.
   HINT_OSD_DEFAULTS_BUTTON: Jezik konzole, veličina zaslona i video način koji se predaju igrama.
@@ -667,3 +667,5 @@ translations:
   HINT_ENABLE_DVR: Eksperimentalno otkrivanje DESR DVR ISO datoteka. Zahtijeva uključen HDD izvor; pokretanje igre zahtijeva vanjski Neutrino koji podržava DVR.
   THEME_VIEW: "Prikaz teme"
   HINT_THEME_VIEW: "Kako tema prikazuje vaše igre: List, Coverflow, PSBBN Flow ili Grid. Držite L3 na glavnoj stranici za promjenu. Teme bez tog izgleda koriste svoj zadani prikaz."
+  BOTH: Oba
+  NET_READ_ONLY_VMC: "Ovaj UDPBD/UDPFS poslužitelj je samo za čitanje, pa se na njemu ne može koristiti VMC. Igra sprema na pravu memorijsku karticu."

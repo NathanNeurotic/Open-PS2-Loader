@@ -78,6 +78,17 @@ the folder alone does not make CHD or CSO playable.
 **UDPBD:** exports block-device contents. Select a supported disk/filesystem
 layout for Neutrino; it is not the same service as UDPFS virtual ISO streaming.
 
+**Read-only UDPBD/UDPFS IMG servers** (udpbd-vexfat, udpbd-server on a
+read-only image, PS2-Servers serving a folder or run with `--read-only`)
+acknowledge writes they never keep. When such a device connects, the loader
+writes a small `opl_write_test.tmp` file, reads it back and deletes it. If the
+data does not come back, the device is treated as read-only: no folders or
+`games.bin` cache are created on it, OPL's own settings are never saved there,
+a game's settings are kept in `CFG/` next to OPL's settings (a CFG file already
+on the server is still read the first time), a VMC set for its games is not used
+(they save to the real memory card), and Rename, Delete, VMC and Ember settings
+are hidden for its games and apps. Not yet tested on hardware.
+
 ## Renaming or deleting a UL game
 
 Renaming or deleting a UL game from the menu renames or removes its parts and

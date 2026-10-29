@@ -20,7 +20,7 @@ README = (notes.ROOT / "README.md").read_text(encoding="utf-8")
 class ReleaseNotesTests(unittest.TestCase):
     def test_ra_download_requirements_match_documented_client(self):
         guide = (pathlib.Path(__file__).resolve().parents[2] / "docs/RETROACHIEVEMENTS.md").read_text(encoding="utf-8")
-        required = notes.re.search(r"Download the required .*?(v\d+\.\d+\.\d+-alpha\.\d+)", guide).group(1)
+        required = notes.re.search(r"Download the required .*?(v\d+\.\d+\.\d+(?:-alpha\.\d+)?)", guide).group(1)
         for asset in ("RIPTOPL-RA.ELF", "RIPTOPL-RetroAchievements-v1.zip"):
             self.assertIn(required, notes.description(asset))
 

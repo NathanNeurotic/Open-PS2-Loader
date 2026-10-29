@@ -18,7 +18,9 @@ IRX_ID(MODNAME, 1, 1);
 
 struct dirTocEntry
 {
-    short length;
+    u8 length;           // 0, ISO 9660 LEN_DR: the record's size in bytes
+    u8 extAttrLength;    // 1, not used. Read together with byte 0 as one short, a non-zero value
+                         // made the scan step 256+ bytes, or backwards from 0x80 up.
     u32 fileLBA;         // 2
     u32 fileLBA_bigend;  // 6
     u32 fileSize;        // 10
@@ -266,12 +268,19 @@ lbl_startlocate:
         do {
             tocEntryPointer = (struct dirTocEntry *)&cdvdman_buf[tocPos];
 
-            if (tocEntryPointer->length == 0)
+            // 0 is the padding to the end of the sector. A record shorter than its fixed part and name,
+            // or running past the sector (records never cross one), is damage: skip the rest of the sector.
+            if (tocEntryPointer->length == 0 || tocEntryPointer->length < 33 + tocEntryPointer->filenameLength ||
+                tocPos + tocEntryPointer->length > 2048)
                 break;
 
             filename_len = tocEntryPointer->filenameLength;
             if (filename_len) {
-                r = strcmp(cdvdman_dirname, tocEntryPointer->filename);
+                // Within the record: the on-disc name is not zero-terminated, so strcmp() read on past it.
+                // Same result otherwise: it matches up to filenameLength or up to a zero byte inside it.
+                len = strlen(cdvdman_dirname);
+                r = !(len <= filename_len && memcmp(cdvdman_dirname, tocEntryPointer->filename, len) == 0 &&
+                      (len == filename_len || tocEntryPointer->filename[len] == '\0'));
                 if ((!r) && (!slash)) { // we searched a file so it's found
                     DPRINTF("cdvdman_locatefile found file! LBA=%d size=%d\n", (int)tocEntryPointer->fileLBA, (int)tocEntryPointer->fileSize);
                     return tocEntryPointer;
@@ -288,10 +297,12 @@ lbl_startlocate:
                         tocLBA += layer1_start;
 
                     goto lbl_startlocate;
-                } else {
-                    tocPos += (tocEntryPointer->length << 16) >> 16;
                 }
             }
+
+            // Every other record, also one without a name: it used to be stepped over only inside
+            // "if (filename_len)", so a nameless record never moved tocPos and the scan spun forever.
+            tocPos += tocEntryPointer->length;
         } while (tocPos < 2016);
     }
 
@@ -339,8 +350,12 @@ static int cdvdman_findfile(cd_file_t *pcdfile, const char *name, int layer)
         {
             // name[] is 16 bytes; a longer ISO9660/Joliet basename used to overrun date[] and beyond.
             // Truncate instead: the name is informational, the lsn/size above are what open() uses.
-            const char *base = strrchr(name, '\\');
-            base = (base != NULL) ? base + 1 : name;
+            // The game list asks for "/SYSTEM.CNF;1", so '/' ends a component as well as '\\'.
+            const char *base = name, *c;
+            for (c = name; *c != '\0'; c++) {
+                if (*c == '\\' || *c == '/')
+                    base = c + 1;
+            }
             strncpy(pcdfile->name, base, sizeof(pcdfile->name) - 1);
             pcdfile->name[sizeof(pcdfile->name) - 1] = '\0';
         }
@@ -520,9 +535,8 @@ static int ProbeZISO(int fd)
         u32 first_block;
     } ziso_data;
     longLseek(fd, 0);
-    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC) {
-        // initialize ZSO
-        ziso_init(&ziso_data.header, ziso_data.first_block);
+    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC &&
+        ziso_init(&ziso_data.header, ziso_data.first_block) == 0) { // a header it cannot read is no ZSO
         // redirect cdEmuRead function
         cdEmuRead = &cdEmuReadCompressed;
         return 1;

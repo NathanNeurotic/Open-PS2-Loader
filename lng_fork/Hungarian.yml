@@ -526,9 +526,9 @@ translations:
   HINT_PLASCOLOR: A mozgó háttérbe kevert szín.
   HINT_RESETCOLOR: A RiptOPL beépített színeit állítja vissza, nem a témáét.
   HINT_WIDESCREEN: 16:9-es tévéhez rajzolja a menüt.
-  HINT_XOFF: Balra vagy jobbra mozgatja a menüt a képernyőn.
-  HINT_YOFF: Fel vagy le mozgatja a menüt a képernyőn.
-  HINT_MENU_OVERSCAN: Befelé zsugorítja a menüt, ha a tévé levágja a széleit.
+  HINT_XOFF: "Balra vagy jobbra mozgatja a menüt a képernyőn. Minden videómódhoz külön megmarad."
+  HINT_YOFF: "Fel vagy le mozgatja a menüt a képernyőn. Minden videómódhoz külön megmarad."
+  HINT_MENU_OVERSCAN: "Befelé zsugorítja a menüt, ha a tévé levágja a széleit. Minden videómódhoz külön megmarad."
   HINT_APPLYGAMEID: Játékindításkor vonalkódot mutat, hogy a Pixel FX, RetroGEM és PS2Digital eszközök profilt váltsanak.
   HINT_NEUTRINO_DEFAULTS_BUTTON: A Neutrino útvonala, videómódja és argumentumai minden játékhoz.
   HINT_OSD_DEFAULTS_BUTTON: A játékoknak átadott konzolnyelv, képernyőméret és videómód.
@@ -656,3 +656,5 @@ translations:
   HINT_ENABLE_DVR: Kísérleti DESR DVR ISO felderítés. Bekapcsolt HDD forrás kell hozzá; a játékindításhoz külső, DVR-képes Neutrino kell.
   THEME_VIEW: "Téma nézete"
   HINT_THEME_VIEW: "Hogyan jeleníti meg a téma a játékaidat: List, Coverflow, PSBBN Flow vagy Grid. Váltáshoz tartsd lenyomva az L3-at a főoldalon. Az ilyen nézet nélküli témák az alapértelmezett nézetüket használják."
+  BOTH: Mindkettő
+  NET_READ_ONLY_VMC: "Ez az UDPBD/UDPFS szerver csak olvasható, ezért VMC nem használható rajta. A játék a valódi memóriakártyára ment."

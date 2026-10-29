@@ -2893,10 +2893,9 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // Check for ZSO to correctly adjust layer1 start
     settings->common.layer1_start = 0; // cdvdman will read it from APA header
     hddReadSectors(game->start_sector + OPL_HDD_MODE_PS2LOGO_OFFSET, 1, IOBuffer);
-    if (*(u32 *)IOBuffer == ZSO_MAGIC) {
+    if (*(u32 *)IOBuffer == ZSO_MAGIC && ziso_init((ZISO_header *)IOBuffer, *(u32 *)((u8 *)IOBuffer + sizeof(ZISO_header))) == 0) {
         probed_fd = 0;
         probed_lba = game->start_sector + OPL_HDD_MODE_PS2LOGO_OFFSET;
-        ziso_init((ZISO_header *)IOBuffer, *(u32 *)((u8 *)IOBuffer + sizeof(ZISO_header)));
         // A failed read leaves no PVD in IOBuffer, so keep the APA-header layer1 start.
         u32 maxLBA = (ziso_read_sector(IOBuffer, 16, 1) == 1) ? *(u32 *)(IOBuffer + 80) : 0;
         if (maxLBA > 0 && maxLBA < ziso_total_block) {   // dual layer check

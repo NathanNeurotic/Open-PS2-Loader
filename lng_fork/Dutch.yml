@@ -582,9 +582,9 @@ translations:
   HINT_PLASCOLOR: Kleur die in de bewegende achtergrond wordt gemengd.
   HINT_RESETCOLOR: Zet de ingebouwde kleuren van RiptOPL terug, niet die van het thema.
   HINT_WIDESCREEN: Tekent het menu voor een 16:9-tv.
-  HINT_XOFF: Verschuift het menu naar links of rechts op het scherm.
-  HINT_YOFF: Verschuift het menu omhoog of omlaag op het scherm.
-  HINT_MENU_OVERSCAN: Krimpt het menu naar binnen als de tv de randen afsnijdt.
+  HINT_XOFF: "Verschuift het menu naar links of rechts op het scherm. Bewaard per videomodus."
+  HINT_YOFF: "Verschuift het menu omhoog of omlaag op het scherm. Bewaard per videomodus."
+  HINT_MENU_OVERSCAN: "Krimpt het menu naar binnen als de tv de randen afsnijdt. Bewaard per videomodus."
   HINT_APPLYGAMEID: Toont een barcode als een game start, zodat Pixel FX-, RetroGEM- en PS2Digital-apparaten van profiel wisselen.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Pad, videomodus en argumenten van Neutrino voor elke game.
   HINT_OSD_DEFAULTS_BUTTON: Consoletaal, schermgrootte en videomodus die aan games worden doorgegeven.
@@ -713,3 +713,5 @@ translations:
   'NO': Nee
   THEME_VIEW: "Themaweergave"
   HINT_THEME_VIEW: "Hoe het thema je games toont: List, Coverflow, PSBBN Flow of Grid. Houd L3 ingedrukt op de hoofdpagina om te wisselen. Thema's zonder die weergave gebruiken hun standaardweergave."
+  BOTH: Beide
+  NET_READ_ONLY_VMC: "Deze UDPBD/UDPFS-server is alleen-lezen, dus er kan geen VMC op worden gebruikt. Het spel slaat op op de echte geheugenkaart."

@@ -18,8 +18,16 @@ u32 ziso_total_block;
 // block buffers
 u8 *ziso_tmp_buf = NULL;
 
-void ziso_init(ZISO_header *header, u32 first_block)
+int ziso_init(ZISO_header *header, u32 first_block)
 {
+    // read_raw_data() divides by (2048 >> align): a larger shift divides by zero, or is undefined
+    if (header->align > 11)
+        return -1;
+    // The reader indexes blocks of one 2048-byte sector. maxcso writes 16 KiB blocks for images of
+    // 2 GiB and more, whose index would be read as the wrong sectors (belomaxorka / YAOPL 9ad4afeb).
+    if (header->block_size != 2048)
+        return -1;
+
     // read header information
     ziso_align = header->align;
     ziso_idx_start_block = -1;
@@ -35,6 +43,7 @@ void ziso_init(ZISO_header *header, u32 first_block)
             ziso_idx_cache = (u32 *)(ziso_tmp_buf + 2048);
         }
     }
+    return 0;
 }
 
 /*
@@ -42,24 +51,13 @@ void ziso_init(ZISO_header *header, u32 first_block)
   Taken from ARK-4's Inferno 2 ISO Driver.
   Tailored for OPL.
   It's made to work with 2048 block size (matching DVD sector size) and LZ4 compression (ZSO).
-  Returns the sectors decoded (fewer near the end of the image), or -1 when a device read failed.
+  Reads at most ZISO_IDX_MAX_ENTRIES - 1 sectors, which the index cache covers at once.
+  Returns the sectors decoded, 0 for an index that cannot be right, or -1 when a device read failed.
 */
-int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
+static int ziso_read_slice(u8 *addr, u32 lsn, unsigned int count)
 {
 
     u32 cur_block = lsn;
-
-    if (ziso_idx_cache == NULL) {
-        return 0; // ziso_init could not allocate the index cache
-    }
-
-    if (lsn >= ziso_total_block) {
-        return 0; // can't seek beyond file
-    }
-
-    if (lsn + count > ziso_total_block) {
-        count = ziso_total_block - lsn; // adjust oob reads
-    }
 
     // refresh index table if needed
     if (ziso_idx_start_block < 0 || lsn < ziso_idx_start_block || lsn + count >= ziso_idx_start_block + ziso_idx_entries - 1) {
@@ -76,10 +74,19 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
 
     u32 o_start = (ziso_idx_cache[cur_block - ziso_idx_start_block] & 0x7FFFFFFF);
     u32 o_end = (ziso_idx_cache[cur_block + count - ziso_idx_start_block] & 0x7FFFFFFF);
+
+    // A corrupt or truncated index could place the compressed data outside the buffer: the offsets must
+    // not decrease, and the blocks must fit the count * 2048 bytes the caller provides (a block is stored
+    // in at most the 2048 bytes it decodes to). Checked before the subtraction is trusted as a size.
+    for (unsigned int i = 1; i <= count; i++) {
+        if ((ziso_idx_cache[cur_block - ziso_idx_start_block + i] & 0x7FFFFFFF) < (ziso_idx_cache[cur_block - ziso_idx_start_block + i - 1] & 0x7FFFFFFF))
+            return 0;
+    }
+    if (o_end - o_start > (count * 2048) >> ziso_align)
+        return 0;
     u32 compressed_size = (o_end - o_start) << ziso_align;
 
     // read all compressed data to the end of provided buffer to reduce IO
-    // there should be no overflow or overrun, as long as compressed data is smaller, and it should be
     u8 *c_buff = addr + (count * 2048) - compressed_size;
     if (read_raw_data(c_buff, compressed_size, o_start, ziso_align) != (int)compressed_size)
         return -1; // a short or failed read must not be decompressed as if it were the image
@@ -112,4 +119,40 @@ int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
         c_buff += b_size;
     }
     return cur_block - lsn;
+}
+
+/*
+  Returns the sectors decoded (fewer near the end of the image, or up to an index that cannot be right),
+  or -1 when a device read failed.
+*/
+int ziso_read_sector(u8 *addr, u32 lsn, unsigned int count)
+{
+    unsigned int done = 0;
+
+    if (ziso_idx_cache == NULL) {
+        return 0; // ziso_init could not allocate the index cache
+    }
+
+    if (lsn >= ziso_total_block) {
+        return 0; // can't seek beyond file
+    }
+
+    if (lsn + count > ziso_total_block) {
+        count = ziso_total_block - lsn; // adjust oob reads
+    }
+
+    // The index cache holds ZISO_IDX_MAX_ENTRIES offsets, so a larger read goes in slices. The game's whole
+    // request reaches here when accurate reads are off; above 256 sectors it used to fail every time.
+    while (done < count) {
+        unsigned int n = count - done;
+        if (n > ZISO_IDX_MAX_ENTRIES - 1)
+            n = ZISO_IDX_MAX_ENTRIES - 1;
+        int r = ziso_read_slice(addr + done * 2048, lsn + done, n);
+        if (r < 0)
+            return -1; // a device read failed: never report it as a short read
+        done += r;
+        if ((unsigned int)r != n)
+            break;
+    }
+    return done;
 }

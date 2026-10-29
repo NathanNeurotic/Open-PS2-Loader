@@ -272,7 +272,9 @@ int SMAPSendPacket(const void *data, unsigned int length)
         while (SMAP_EMAC3_GET(SMAP_R_EMAC3_TxMODE0) & SMAP_E3_TX_GNP_0) {
         };
 
-        BD_data_ptr = SMAP_REG16(SMAP_R_TXFIFO_WR_PTR);
+        // The descriptor takes the TX buffer address, not the FIFO write offset, as in every other SMAP
+        // driver (zokzot, xeRAbora OPL 205223e2).
+        BD_data_ptr = SMAP_REG16(SMAP_R_TXFIFO_WR_PTR) + SMAP_TX_BASE;
         BD_ptr = &tx_bd[SmapDriverData.TxBDIndex % SMAP_BD_MAX_ENTRY];
 
         if ((result = CopyToFIFOWithDMA(SmapDriverData.smap_regbase, (void *)data, length)) > 0) {

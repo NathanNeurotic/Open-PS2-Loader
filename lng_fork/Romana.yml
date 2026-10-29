@@ -571,9 +571,9 @@ translations:
   HINT_PLASCOLOR: Culoarea amestecată în fundalul animat.
   HINT_RESETCOLOR: Readuce culorile integrate ale RiptOPL, nu pe cele ale temei.
   HINT_WIDESCREEN: Desenează meniul pentru un televizor 16:9.
-  HINT_XOFF: Mută meniul la stânga sau la dreapta pe ecran.
-  HINT_YOFF: Mută meniul în sus sau în jos pe ecran.
-  HINT_MENU_OVERSCAN: Micșorează meniul spre interior dacă televizorul îi taie marginile.
+  HINT_XOFF: "Mută meniul la stânga sau la dreapta pe ecran. Se păstrează pentru fiecare mod video."
+  HINT_YOFF: "Mută meniul în sus sau în jos pe ecran. Se păstrează pentru fiecare mod video."
+  HINT_MENU_OVERSCAN: "Micșorează meniul spre interior dacă televizorul îi taie marginile. Se păstrează pentru fiecare mod video."
   HINT_APPLYGAMEID: Arată un cod de bare când pornește un joc, ca dispozitivele Pixel FX, RetroGEM și PS2Digital să schimbe profilul.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Calea, modul video și argumentele Neutrino pentru fiecare joc.
   HINT_OSD_DEFAULTS_BUTTON: Limba consolei, mărimea ecranului și modul video date jocurilor.
@@ -704,3 +704,5 @@ translations:
   'NO': Nu
   THEME_VIEW: "Vizualizare temă"
   HINT_THEME_VIEW: "Cum afișează tema jocurile tale: List, Coverflow, PSBBN Flow sau Grid. Ține apăsat L3 pe pagina principală pentru a schimba. Temele fără acea vizualizare o folosesc pe cea implicită."
+  BOTH: Ambele
+  NET_READ_ONLY_VMC: "Acest server UDPBD/UDPFS este doar pentru citire, deci nu se poate folosi un VMC pe el. Jocul salvează pe cardul de memorie real."
