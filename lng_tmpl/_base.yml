@@ -2247,6 +2247,7 @@ gui_strings:
 - comment: MMCE IGR boot card slot choice, after Off, 0 and 1. Both card slots.
   label: BOTH
   string: Both
+
 - label: NET_READ_ONLY_VMC
   comment: Game menu VMC entry on a UDPBD/UDPFS IMG server that does not keep what is written. The game then uses the real memory card.
   string: "This UDPBD/UDPFS server is read-only, so no VMC can be used on it. The game saves to the real memory card."
