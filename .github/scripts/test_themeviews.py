@@ -44,6 +44,7 @@ program = r'''
 #include <string.h>
 #include <strings.h>
 #define CONFIG_KEY_NAME_LEN @KEYLEN@
+#define CONFIG_KEY_VALUE_LEN 256
 struct config_value_t {
     char key[CONFIG_KEY_NAME_LEN];
     char val[256];
@@ -53,6 +54,8 @@ typedef struct { struct config_value_t *head, *tail; } config_set_t;
 
 static void configSetStr(config_set_t *c, const char *key, const char *val)
 {
+    for (struct config_value_t *e = c->head; e; e = e->next) // an existing key is overwritten, as in config.c
+        if (!strncmp(e->key, key, CONFIG_KEY_NAME_LEN - 1)) { strncpy(e->val, val, sizeof(e->val) - 1); return; }
     struct config_value_t *v = calloc(1, sizeof(*v));
     strncpy(v->key, key, CONFIG_KEY_NAME_LEN - 1); // truncates like config.c
     strncpy(v->val, val, sizeof(v->val) - 1);
@@ -242,7 +245,69 @@ int main(void)
     thmViewScan(NULL, &info);
     assert(info.native == THM_VIEW_LIST && info.mask == (1u << THM_VIEW_LIST) && info.defaultView == THM_VIEW_LIST);
 
-    puts("themeviews: view names, legacy names, scan, choice, prefixes, slot chains, inherit=0, scoped keys and key length passed");
+    // SD/HD layouts: _sd/_hd variants and the uOPL/wOPL _wsX key.
+    {
+        static const char *layout = "bg_color=#000000\n"
+                                    "bg_color_hd=#101010\n"
+                                    "main1:\n\ttype=StaticImage\n\tx=100\n\ty=50\n\tx_hd=140\n\ty_hd=60\n"
+                                    "main2:\n\ttype=StaticImage\n\tx=200\n\twsX=-150\n"
+                                    "main3:\n\ttype=StaticImage\n\tx=300\n\twsX=310\n\tx_hd=320\n"
+                                    "main4:\n\ttype=StaticImage\n\tx=400\n\tx_sd=410\n"
+                                    "coverflow.main5:\n\ttype=Coverflow\n\ty=240\n\ty_hd=250\n";
+        const char *s;
+        int i;
+
+        config_set_t *sd = parse(layout);
+        assert(thmApplyDisplayLayout(sd, 0) == 1);
+        assert(configGetInt(sd, "main1_x", &i) && i == 100);
+        assert(configGetInt(sd, "main1_y", &i) && i == 50);
+        assert(configGetInt(sd, "main2_x", &i) && i == 200); // _wsX is for 16:9 only
+        assert(configGetInt(sd, "main4_x", &i) && i == 410); // _sd wins in 4:3
+        assert(configGetStr(sd, "bg_color", &s) && !strcmp(s, "#000000"));
+        assert(configGetInt(sd, "coverflow.main5_y", &i) && i == 240);
+        configFree(sd);
+
+        config_set_t *hd = parse(layout);
+        assert(thmApplyDisplayLayout(hd, 1) == 1);
+        assert(configGetInt(hd, "main1_x", &i) && i == 140);
+        assert(configGetInt(hd, "main1_y", &i) && i == 60);
+        assert(configGetInt(hd, "main2_x", &i) && i == -150); // negative = from the right edge, as for x
+        assert(configGetInt(hd, "main3_x", &i) && i == 320);  // x_hd beats wsX
+        assert(configGetInt(hd, "main4_x", &i) && i == 400);  // no _hd: the plain key
+        assert(configGetStr(hd, "bg_color", &s) && !strcmp(s, "#101010"));
+        assert(configGetInt(hd, "coverflow.main5_y", &i) && i == 250); // works under a view prefix
+        assert(configGetInt(hd, "main1_x_hd", &i) && i == 140);       // the variant keys stay readable
+        configFree(hd);
+
+        // A theme without variants reports none and is left exactly as read.
+        config_set_t *none = parse("main0:\n\ttype=Background\nmain1:\n\ttype=StaticImage\n\tx=12\n");
+        int before = 0, after = 0;
+        for (struct config_value_t *e = none->head; e; e = e->next)
+            before++;
+        assert(thmApplyDisplayLayout(none, 1) == 0);
+        for (struct config_value_t *e = none->head; e; e = e->next)
+            after++;
+        assert(before == after);
+        assert(configGetInt(none, "main1_x", &i) && i == 12);
+        configFree(none);
+        assert(thmApplyDisplayLayout(NULL, 1) == 0);
+
+        // A variant whose plain key is missing creates it: an element can exist in one mode only.
+        config_set_t *only = parse("main6_type_hd=StaticText\n");
+        assert(thmApplyDisplayLayout(only, 0) == 1 && !configGetStr(only, "main6_type", &s));
+        configFree(only);
+        only = parse("main6_type_hd=StaticText\n");
+        assert(thmApplyDisplayLayout(only, 1) == 1 && configGetStr(only, "main6_type", &s) && !strcmp(s, "StaticText"));
+        configFree(only);
+
+        // hd_autofit: the 4:3 layout scaled by 3/4 about the centre.
+        assert(thmLayoutAutoFitX(320, 640) == 320);
+        assert(thmLayoutAutoFitX(0, 640) == 80);
+        assert(thmLayoutAutoFitX(640, 640) == 560);
+        assert(thmLayoutAutoFitX(100, 640) == 155);
+    }
+
+    puts("themeviews: view names, legacy names, scan, choice, prefixes, slot chains, inherit=0, scoped keys, SD/HD layouts and key length passed");
     return 0;
 }
 '''

@@ -9,6 +9,7 @@
 === Changelog ===
 
 ==== Unreleased ====
+* Themes: one conf_theme.cfg can hold a 4:3 and a 16:9 layout. Any key may carry an _hd variant (used while Widescreen is on) or an _sd variant (while it is off); without one the plain key is used, so existing themes look the same. The uOPL/wOPL wsX element key is read as x_hd. Opt-in hd_autofit=1 keeps a 4:3 layout's proportions in 16:9 by scaling positions 3/4 about the screen centre. Changing Widescreen reloads only themes that use these keys. Ideas: KrahJohlito (wsX, uOPL/wOPL) and Berion (_sd/_hd with fallback). Host-tested; NOT TESTED on hardware.
 * Disc key reads: release the synchronous N-command lock on success and RPC failure; repeated Load From Disc and the Launch Disc key path share the fix. Credit belomaxorka/YAOPL 7f1018e7. Host-tested; hardware validation pending.
 * Bound OSD history executable filenames to the 15 characters a history record stores, preventing long alternate startup names from overflowing the launch stack and letting a repeat launch find its existing record. Credit belomaxorka/YAOPL 80c5558d. Host-tested; hardware validation pending.
 * Keep the final NUL when fitting wrapped theme text and stop at the string boundary, preventing reads/writes beyond exact-size allocations. Existing private copies keep saved CFG text unchanged. Credit belomaxorka/YAOPL a4c0830f. Hardware validation pending.

@@ -224,6 +224,12 @@ typedef struct theme
     unsigned int viewMask;
     int defaultView; // the view thmLoad picks when the request is -1 or not offered
 
+    // SD/HD layouts (thmApplyDisplayLayout): the Widescreen setting this theme was built for, and whether
+    // it looks different in the other mode (any _sd/_hd/_wsX key, or hd_autofit) -- then a change of the
+    // setting reloads it (thmRefreshDisplayLayout).
+    int layoutWide;
+    int layoutDependsOnWide;
+
     theme_element_t *coverflow;
     theme_element_t *psbbnFlow;
     theme_element_t *grid; // first Grid element: Left/Right step a cover, Up/Down a row (themes.c)
@@ -309,6 +315,9 @@ int thmGetGuiValue(void);
 int thmSetView(int view);
 // Switch to the next view the active theme offers (hold L3). Returns 1 when the theme was reloaded.
 int thmCycleView(void);
+// Reload the active theme when the Widescreen setting no longer matches the layout it was built with (only
+// for themes with SD/HD variants). Returns 1 when the theme was reloaded.
+int thmRefreshDisplayLayout(void);
 int thmFindGuiID(const char *theme);
 const char **thmGetGuiList(void);
 char *thmGetFilePath(int themeID);
