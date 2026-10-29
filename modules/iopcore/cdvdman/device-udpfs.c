@@ -42,6 +42,10 @@ void DeviceInit(void)
     sema.option = 0;
     sema.attr = SA_THPRI;
     udpfs_io_sema = CreateSema(&sema);
+
+    // A USB host controller the menu's USBD left running would corrupt the modules loaded after this
+    // one, as on the udp BDM device (device-bdm.c, YAOPL 15eee615).
+    cdvdman_usb_host_stop();
 }
 
 void DeviceDeinit(void)

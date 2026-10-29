@@ -53,7 +53,7 @@ static u32 read_status(void) { status_reads++; if (reset_after && status_reads >
 #define OHCI_HcInterruptDisable intdis
 /* HcCommandStatus reads go through read_status() so the reset can finish after N polls. */
 static u32 *status_ref(void) { read_status(); return &status; }
-''' + body('static void cdvdman_usb_host_stop(void)\n{') + r'''
+''' + body('void cdvdman_usb_host_stop(void)\n{') + r'''
 static void run(u32 hcfs, u32 finish_after)
 {
     control = hcfs | 0x3F; status = 0; intdis = 0; status_reads = 0; reset_after = finish_after;

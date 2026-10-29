@@ -239,6 +239,7 @@ int SignalSema(int s);
 int DelayThread(int us);
 void cdvdman_vmc_io_begin(int is_write);
 void cdvdman_vmc_io_end(void);
+void cdvdman_usb_host_stop(void);
 '''
 STUB_IOPLIB = r'''
 #pragma once
@@ -263,6 +264,8 @@ static int resident = 1, connected = 1, connect_after = -1, delays, held, calls,
 static unsigned char disc[64 * 2048];
 static unsigned last_sector, last_count; static int last_handle;
 static unsigned char vmc[16 * 512]; static int read_only, vmc_busy, vmc_writes;
+static int usb_stops;
+void cdvdman_usb_host_stop(void) { usb_stops++; }
 void cdvdman_vmc_io_begin(int is_write) { assert(!vmc_busy); vmc_busy = 1; vmc_writes += is_write; }
 void cdvdman_vmc_io_end(void) { assert(vmc_busy && !held); vmc_busy = 0; }
 int CreateSema(iop_sema_t *s) { (void)s; return 1; }
@@ -304,6 +307,7 @@ int main(void)
     for (unsigned i = 0; i < sizeof(disc); i++) disc[i] = (unsigned char)(i * 7 + i / 2048);
     cdvdman_settings.iso_handle = 42;
     DeviceInit();
+    assert(usb_stops == 1);  /* a USB host the menu left running is stopped first (YAOPL 15eee615) */
 
     /* udpfs_fhi not resident: reads fail fast and never call through a stale pointer. */
     resident = 0; DeviceFSInit();

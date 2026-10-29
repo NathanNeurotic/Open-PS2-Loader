@@ -126,6 +126,11 @@ variant = variant[:variant.find('endif')]
 check('IOP_BIN  = bdm_udp_cdvdman.irx' in variant and '-DBDM_DRIVER -DUSE_BDM_UDP' in variant and
       'USE_DEV9 = 1' in variant and 'device-bdm.o' in variant and '-lbdm' in variant,
       'cdvdman Makefile: USE_BDM_UDP is a BDM variant with DEV9 and bdm')
+bdm_dev = read('modules/iopcore/cdvdman/device-bdm.c')
+bdm_init = bdm_dev[bdm_dev.find('void DeviceInit(void)'):]
+bdm_init = bdm_init[:bdm_init.find('\n}\n')]
+check('#ifdef USE_BDM_UDP' in bdm_init and 'cdvdman_usb_host_stop();\n#endif' in bdm_init,
+      'device-bdm.c: the udp variant stops a USB host the menu left running at start (YAOPL 15eee615)')
 check('#if defined(SMB_DRIVER) || defined(HTTP_DRIVER) || defined(USE_BDM_UDP)' in ioplib,
       'ioplib_util.c: the udp variant fakes the game\'s SMAP like SMB and HTTP')
 check('USE_BDM_UDP=1 -C $< all' in top and 'bdm_udp_cdvdman.o' in top and 'USE_BDM_UDP=1 clean' in top,
