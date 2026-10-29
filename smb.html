@@ -326,6 +326,13 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
       <td>PS1 VCD launch fails or hangs</td>
       <td>Check that the four SMB IRX modules (<code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, <code>ps2dev9.irx</code>) are present in <code>mc?:/POPSTARTER/</code>, and that the network config files (<code>IPCONFIG.DAT</code>, <code>SMBCONFIG.DAT</code>) have been written. Set them up from <b>POPSTARTER Network Settings</b> on <b>Settings → Network</b>. Note that this leg is SMBv1 whatever <b>SMB Version</b> is set to, so the server must still answer SMBv1 for PS1 VCDs.</td>
     </tr>
+    <tr id="smb-idle-freeze">
+      <td>A game freezes at its next disc read after the console sat idle (paused, or waiting on a menu)</td>
+      <td>Samba sends a NetBIOS keepalive every few minutes. While the game reads nothing, each one waits in the in-game network stack's small buffer pool (8 buffers). After about eight of them the PS2 stops answering, and Samba closes the connection. Turn those keepalives off and let TCP keep the connection alive: in the <code>[global]</code> section of <code>smb.conf</code> set
+        <pre>keepalive = 0
+socket options = SO_KEEPALIVE=1 TCP_NODELAY=1</pre>
+        and restart Samba. A reporter measured the eight keepalives with Wireshark and found these settings held for three hours; this is not yet verified on our side. A read cut off this way now fails instead of locking the game up for good, but the game still cannot continue, so the server settings are the real fix. Diagnosis and workaround documented by belomaxorka / YAOPL (36e07200).</td>
+    </tr>
     <tr>
       <td>Windows: share works from PC but PS2 cannot connect</td>
       <td>Use <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> instead of enabling Windows' built-in SMB1 feature, and match the IP, port, share and credentials shown by its launcher. Confirm its firewall rule allows the selected SMB port on your private LAN.</td>
