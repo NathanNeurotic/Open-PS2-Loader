@@ -194,7 +194,10 @@ int main(void) {
 '''.replace('@HELPER@', helper).replace('@HDD_HELPERS@', hdd_helpers).replace('@BDM_SLOTS@', bdm_slots).replace('@HDD_SLOTS@', hdd_slots)
 
 labels = re.findall(r'^- label: (\w+)', (root / 'lng_tmpl/_base.yml').read_text(encoding='utf-8'), re.M)
-assert labels[-2:] == ['ERR_VMC_FRAGMENTS_CONTINUE', 'VMC_DEFRAGMENT_HINT']
+# Appended after the last pre-existing string, in this order, so earlier string IDs keep their values.
+# Later strings may follow them.
+fragments = labels.index('ERR_VMC_FRAGMENTS_CONTINUE')
+assert labels[fragments - 1:fragments + 2] == ['HINT_SHOW_HIDDEN_GAMES', 'ERR_VMC_FRAGMENTS_CONTINUE', 'VMC_DEFRAGMENT_HINT']
 
 with tempfile.TemporaryDirectory() as temp:
     path = Path(temp)

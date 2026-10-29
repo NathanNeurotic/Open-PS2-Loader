@@ -295,7 +295,7 @@ jobs:
           python3 .github/scripts/test_cfg_titles.py
       - name: Check PS1 scan recovery, launch readiness and optional IOP startup failures
         run: python3 .github/scripts/test_pr894_hardening.py
-      - name: Check disc hashing, reset image and launch gates
+      - name: Check disc hashing, disc key lock, history names, font wrap and SYSTEM.CNF parsing
         run: |
           python3 .github/scripts/test_ra_disc.py
           python3 .github/scripts/test_disc_key_semaphore.py

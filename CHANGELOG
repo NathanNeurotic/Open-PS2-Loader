@@ -10,7 +10,7 @@
 
 ==== Unreleased ====
 * Disc key reads: release the synchronous N-command lock on success and RPC failure; repeated Load From Disc and the Launch Disc key path share the fix. Credit belomaxorka/YAOPL 7f1018e7. Host-tested; hardware validation pending.
-* Bound OSD history executable filenames to the record's 16 bytes, preventing long alternate startup names from overflowing the launch stack. Credit belomaxorka/YAOPL 80c5558d. Host-tested; hardware validation pending.
+* Bound OSD history executable filenames to the 15 characters a history record stores, preventing long alternate startup names from overflowing the launch stack and letting a repeat launch find its existing record. Credit belomaxorka/YAOPL 80c5558d. Host-tested; hardware validation pending.
 * Keep the final NUL when fitting wrapped theme text and stop at the string boundary, preventing reads/writes beyond exact-size allocations. Existing private copies keep saved CFG text unchanged. Credit belomaxorka/YAOPL a4c0830f. Hardware validation pending.
 * Stop parsing at the cheat-table capacity, preserving every accepted cheat's codes.
   Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
