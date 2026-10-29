@@ -470,8 +470,12 @@ int ds34usb_get_data(u8 *dst, int size, int port)
 
     if (ds34pad[port].data_pending) {
         TransferWait(ds34pad[port].data_sema);
-        if (!ds34pad[port].data_pending && !ds34pad[port].data_result)
-            readReport(data_buf[port], port);
+        if (!ds34pad[port].data_pending) {
+            // Completed just after the timeout woke the wait: drop its signal, or the next call reads this report again.
+            PollSema(ds34pad[port].data_sema);
+            if (!ds34pad[port].data_result)
+                readReport(data_buf[port], port);
+        }
     }
 
     mips_memcpy(dst, ds34pad[port].data, size);

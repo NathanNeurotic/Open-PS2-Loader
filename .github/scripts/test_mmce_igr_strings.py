@@ -55,10 +55,13 @@ def main():
     words = {}
     for path in sorted(FORK.glob('*.yml')):
         match = re.search(r'^  BOTH: (.+)$', path.read_text(encoding='utf-8'), re.M)
-        if not match or match.group(1).strip() in ('', 'Both'):
+        word = match.group(1).strip() if match else ''
+        if len(word) >= 2 and word[0] == word[-1] and word[0] in '\'"':
+            word = word[1:-1]  # a quoted YAML scalar: the compiler emits it without the quotes
+        if word in ('', 'Both'):
             failures.append('%s does not translate BOTH' % path.name)
         else:
-            words[path.stem] = match.group(1).strip()
+            words[path.stem] = word
 
     with tempfile.TemporaryDirectory() as temp:
         temp = Path(temp)

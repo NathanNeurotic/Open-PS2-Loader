@@ -93,6 +93,8 @@ static int favGetItemSourceMode(int id) { (void)id; return favSource; }
 static int udpbdSupport;
 static int bdmSupportIsUDPBD(const item_list_t *s) { (void)s; return udpbdSupport; }
 static int bdmModeIsPCCF(int m) { (void)m; return 0; }
+static int readOnly;
+static int bdmModeIsReadOnly(int m) { (void)m; return readOnly; }
 static int bdmModeIsUDPBD(int m) { (void)m; return 0; }
 static int configGetInt(config_set_t *c, const char *k, int *v) { (void)c; (void)k; if (cfgCore < 0) return 0; *v = cfgCore; return 1; }
 static int bdmNetBlockCoreLoader(config_set_t *c) { (void)c; return cfgCore == 0 ? 0 : 1; }
@@ -165,7 +167,7 @@ static void reset(void)
     gAutoCreateVmc = 1; gDefaultCoreLoader = 0; guiActive = 1; rowView = LIB_VIEW_PS2; favSource = BDM_MODE;
     cfgCore = -1; cfgDisabled = 0; cfgVmc[0] = 0; fileExists = 0; checkCalls = 0; createSize = 0;
     renders = saves = lastMsg = msgs = aborts = polls = jobPolls = jobError = jobNeverEnds = fragmented = pfsMapTooLong = jobActive = wedged = 0;
-    jobDoneAfter = 3; cancelAtPoll = -1; createdName[0] = 0; dev.mode = BDM_MODE;
+    jobDoneAfter = 3; cancelAtPoll = -1; createdName[0] = 0; dev.mode = BDM_MODE; readOnly = 0;
 }
 
 static void skipped(const char *why)
@@ -185,6 +187,7 @@ int main(void)
     reset(); rowView = LIB_VIEW_PS1; skipped("PS1 row");
     reset(); dev.mode = APP_MODE; skipped("app row");
     reset(); dev.mode = FAV_MODE; favSource = HTTP_MODE; skipped("HTTP favourite");
+    reset(); readOnly = 1; skipped("read-only server (launches without a VMC)");
     reset(); dev.mode = HDD_MODE; cfgCore = 1; skipped("APA under per-game Neutrino");
     reset(); dev.mode = HDD_MODE; gDefaultCoreLoader = 1; skipped("APA under global Neutrino");
     reset(); snprintf(cfgVmc, sizeof(cfgVmc), "MyCard"); skipped("slot 1 already set");

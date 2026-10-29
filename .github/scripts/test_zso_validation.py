@@ -174,7 +174,7 @@ def main():
         warn = ['-Wall', '-Wextra', '-Werror', '-Wno-sign-compare', '-Wno-pointer-to-int-cast',
                 '-Wno-int-to-pointer-cast', '-Wno-unused-function', '-Wno-unused-parameter']
         inc = ['-I', str(temp), '-I', str(ROOT / 'modules/isofs')]
-        for san in (['-fsanitize=address,undefined', '-fno-omit-frame-pointer'], []):
+        for san in (['-fsanitize=address,undefined', '-fno-sanitize-recover=undefined', '-fno-omit-frame-pointer'], []):
             built = subprocess.run([cc, '-std=gnu99', '-g', '-O1', '-w', *san, *inc, '-c',
                                     str(ROOT / 'modules/isofs/lz4.c'), '-o', str(temp / 'lz4.o')],
                                    capture_output=True, text=True)

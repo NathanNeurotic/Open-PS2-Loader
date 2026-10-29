@@ -602,7 +602,8 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
         return 1;
 
     sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(id) : support->mode;
-    if (sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
+    // A read-only server launches without a VMC, so there is nothing to create.
+    if (sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode) || bdmModeIsReadOnly(sourceMode))
         return 1;
     coreLoader = gDefaultCoreLoader;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);

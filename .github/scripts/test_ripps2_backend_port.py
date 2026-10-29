@@ -255,7 +255,7 @@ int main(void)
     for (int i = 0; i < 8; i++)
         sd2psx[n++] = 1;
     sd2psx[n++] = 0;
-    assert(run(sd2psx, n) == 1);                           /* waits out the swap and the load: confirmed */
+    assert(run(sd2psx, n) == 1 && calls == n);             /* waits out the swap and the load: confirmed */
     const int silentThenIdle[] = {0, -1, -1, -1, -1, 0};   /* a small card loads between two polls */
     assert(run(silentThenIdle, 6) == 1 && calls == 6);
     const int blipNoSwitch[] = {0, -1, 0};                 /* one failed query after an answer is not a switch */
