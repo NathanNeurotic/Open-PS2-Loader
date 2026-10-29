@@ -172,6 +172,8 @@ jobs:
         run: python3 .github/scripts/test_lang_format_guard.py
       - name: Check that a broken cheat file is never reported as a missing one
         run: python3 .github/scripts/test_cheat_load.py
+      - name: Check full cheat tables preserve accepted entries
+        run: python3 .github/scripts/test_cheat_capacity.py
       - name: Check that a -bsdfs=bd launch without a device number is refused before teardown
         run: python3 .github/scripts/test_neutrino_bsdfs.py
       - name: Check PSX DVR Neutrino discovery and safety gates
