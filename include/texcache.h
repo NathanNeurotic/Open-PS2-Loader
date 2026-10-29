@@ -51,7 +51,21 @@ typedef struct
     // bumps the global; a memo from an older generation is ignored, so "new art may have appeared"
     // (applyConfig, a list rebuild) makes rows re-probe exactly as it always claimed to.
     unsigned int failEpoch;
+
+    // 1 when a PS1 row settled on THIS slot as its name fallback, because its disc-id art was asked for
+    // and parked absent. The row's one (cacheId, UID) pair cannot hold both the id's absence memo and
+    // the name slot, so without this it re-asked for the id art every frame -- and that memo is the
+    // first thing any claim evicts (lastUsed 0). Each PS1 row then needed TWO slots, coverflow warming
+    // fills exactly one per row, and the covers flickered between the art and the placeholder for as
+    // long as the list was on screen. Like any resident cover it holds until the slot is evicted;
+    // cacheClearItem zeroes it with the rest of the entry.
+    unsigned char nameFallback;
 } cache_entry_t;
+
+// A PS1 row's cache_id when its disc-id art AND its name art are both parked absent in the current
+// fail generation (cache_uid carries that generation, as it does for -2). -2 alone cannot say it: on
+// a PS1 row it may be the id's absence only, with the name still to be asked.
+#define CACHE_ID_PS1_BOTH_ABSENT -3
 
 
 /// One texture cache instance
@@ -116,6 +130,11 @@ void cacheDestroyCache(image_cache_t *cache);
 
 GSTEXTURE *cacheGetTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value);
 GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value, int isPriority);
+
+/** PS1 rows: probe `id` first and fall back to `name`, through the row's single (cacheId, UID) pair.
+ * Once the id is parked absent and the name owns a slot, the row stays on that slot for as long as
+ * it is resident instead of re-asking for the id every frame. */
+GSTEXTURE *cacheGetTextureIdOrName(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *id, char *name, int isPriority);
 
 
 /** Lookup only: returns this item's texture if its cache slot is still live, and never claims a
