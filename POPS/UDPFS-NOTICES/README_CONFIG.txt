@@ -54,6 +54,10 @@ Server side
 - File and folder names are case sensitive on a Linux server: they must be
   exactly what the program asks for (for example POPS/<game>.VCD, or
   EMBER/games/<folder>/<name>.cue).
+- A POPStarter game can be a `.cue` + `.bin` instead of a `.VCD`: put
+  POPS/<game>.cue (or .CUE) and the .bin file(s) it names in the same folder.
+  The module opens every .bin once at game start to learn its size (about
+  10 ms per file).
 - Every file the program used to find on the USB drive must be on the server.
   Missing optional files (TROJAN_*.BIN, PATCH_*.BIN, IGR_*.TM2, ...) are
   answered "not found" and the program goes on without them.
@@ -100,8 +104,9 @@ DISCOVERY, so no discovery window is spent without a link (cable unplugged).
 Boot discovery sends DISCOVERY at short intervals first (6 packets over a 3 s
 window, spaced 150, 150, 300, 600, 900, 900 ms).
 
-All reads use BREAD. Unaligned reads (the VCD header, Ember's .bin) read the
-head and tail through a one-sector cache per open file.
+All reads use BREAD. Unaligned reads (Ember's .bin, the files after the first
+one of a multi-file cue) read the head and tail through a one-sector cache
+per open file. The header of a VCD built from a cue is served from RAM.
 
 
 Behavior when the network or the server fails
