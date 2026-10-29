@@ -2684,7 +2684,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
        (above it some games keep data, see ee_core/linkfile): a game moved lower (mod_storage_location_list) or a
        storage too full for it gets the menu without the page, and its cheats run as ticked before the launch. */
     void *igrCheats = NULL;
-    if (gIgrMenu && !discMode && GetCheatsEnabled() && ModuleStorage == (void *)OPL_MOD_STORAGE) {
+    if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && !discMode && GetCheatsEnabled() && ModuleStorage == (void *)OPL_MOD_STORAGE) {
         u8 *at = (u8 *)ModuleStorage + ModuleStorageSize;
         unsigned int room = (u32)at < 0xD0000 ? 0xD0000 - (u32)at : 0;
         int bytes = igrCheatsPack(at, room);
@@ -2770,7 +2770,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #ifdef IGR_MENU
     // The in-game menu (RIPPS2's, by akilluminati47; ee_core igrmenu.c). RetroAchievements builds and the IGS and
     // freeze-report builds make ee_core without it (no room), and leave these zero.
-    config->IgrMenu = gIgrMenu;
+    config->IgrMenu = gIgrMenu && !(compatflags & COMPAT_MODE_6); // Mode 6 (Disable IGR) turns the menu off too
     config->IgrConfirmCircle = gSelectButton == KEY_CIRCLE;
     if (igrCheats != NULL && config->gCheatList != NULL) {
         set_cheats_list_live(igrCheats); // every hook, and the ticked cheats as the menu builds them

@@ -145,8 +145,9 @@ static int eecoreInit(int argc, char **argv)
         EnableGSTracker();
 #endif
 #ifdef IGR_MENU
-    // The in-game menu draws into the frame the game last set to show (igrmenu.c): the same passive record
-    if (!config->EnableGSMOp && config->IgrMenu)
+    // The in-game menu draws into the frame the game last set to show (igrmenu.c): the same passive record.
+    // Mode 6 (Disable IGR) installs no IGR handler, so the menu cannot open and the tracker stays off.
+    if (!config->EnableGSMOp && config->IgrMenu && !(g_compat_mask & COMPAT_MODE_6))
         EnableGSTracker();
 #endif
     set_ipconfig();
