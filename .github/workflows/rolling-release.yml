@@ -19,7 +19,7 @@ name: Rolling Release
 #   * ps2dev/ps2dev:latest                        -> -PS2DEVROLLING   (moving canary #3)
 #   * ghcr.io/ps2homebrew/ps2homebrew:main        -> -OFFICIALROLLING (moving canary #4)
 #
-# A source snapshot (RIPTOPL-<version>-src.zip) of the exact built commit is also
+# A source snapshot (RIPTOPL-src-<version>.zip) of the exact built commit is also
 # published, so every rolling build is self-preserving: testers can restore and
 # rebuild precisely what they ran, even if history is later rewritten.
 #
@@ -1057,6 +1057,17 @@ jobs:
             rm -rf "rolling/$kind" 2>/dev/null || true
           done
 
+      - name: End every ZIP name with the version
+        env:
+          # The Korium line's download version ends with its channel (v1.2.0-Beta-4420-Korium); the
+          # label moves in front of the version so the revision is the last thing in every name.
+          CHANNEL: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && 'Korium' || '' }}
+        run: |
+          set -eu
+          python3 .github/scripts/test_version_last.py
+          python3 .github/scripts/version_last.py rolling --version "${ASSET_VERSION:-rolling}" --channel "$CHANNEL"
+          ls -la rolling
+
       - name: Build release notes
         run: |
           set -euo pipefail
@@ -1235,8 +1246,8 @@ jobs:
             echo "rolling/ is empty -- refusing to build a MEGA archive" >&2
             exit 1
           fi
-          if ! ls rolling/*-src.zip >/dev/null 2>&1; then
-            echo "No *-src.zip source snapshot in rolling/ -- refusing to archive an incomplete payload" >&2
+          if ! ls rolling/RIPTOPL-src-*.zip >/dev/null 2>&1; then
+            echo "No RIPTOPL-src-*.zip source snapshot in rolling/ -- refusing to archive an incomplete payload" >&2
             exit 1
           fi
 

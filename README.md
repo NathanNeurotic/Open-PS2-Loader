@@ -113,7 +113,7 @@ existing installation; it does not update Neutrino, Ember or POPSTARTER support 
 | Channel | Contents and purpose |
 | --- | --- |
 | [Rolling — inceBtion](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling) | Current standard development build from `rebuild/main`; GitHub Latest. Start with `RIPTOPL-<version>.zip`. |
-| [Rolling — Korium](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium) | Standard build with the Korium theme, in `RIPTOPL-<version>-Korium.zip`. |
+| [Rolling — Korium](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium) | Standard build with the Korium theme, in `RIPTOPL-Korium-<version>.zip`. |
 | [RetroAchievements — both themes](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) | Experimental RA kits: `RIPTOPL-RetroAchievements-inceBtion-<version>.zip` or `RIPTOPL-RetroAchievements-Korium-<version>.zip`. Read the [RA setup and validation limits](docs/RETROACHIEVEMENTS.md). |
 | [Current Fan Favorite](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite) | Preserved development snapshot for comparisons; its older package names and feature set can differ. |
 

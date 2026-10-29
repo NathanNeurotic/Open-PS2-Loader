@@ -38,7 +38,7 @@ def validate(folder):
     revision = manifest["revision"]
     if not re.fullmatch(r"[0-9a-f]{40}", revision) or manifest["themes"] != list(THEMES):
         raise ValueError("release requires both themes and a full source SHA")
-    required = {f"RIPTOPL-RetroAchievements-{version}-src.zip"}
+    required = {f"RIPTOPL-RetroAchievements-src-{version}.zip"}
     for theme in THEMES:
         required.update((f"RIPTOPL-RA-{theme}.ELF", f"APP_RIPTOPL-RA-{theme}.psu",
                          f"RIPTOPL-RetroAchievements-{theme}-{version}.zip"))
