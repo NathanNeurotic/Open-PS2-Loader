@@ -12,6 +12,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DRIVERS = ['modules/network/smap-ingame/xfer.c', 'modules/network/smap_udpbd/src/xfer.c',
            'modules/network/udpfs_smap/src/xfer.c']
+# Comments and string literals, so a commented-out copy of the read cannot stand in for live code.
+COMMENT_OR_LITERAL = re.compile(r'"(?:\\.|[^"\\\n])*"|/\*.*?\*/|//[^\n]*', re.S)
+
+
+def code_only(text):
+    return COMMENT_OR_LITERAL.sub(lambda m: m.group(0) if m.group(0).startswith('"') else ' ', text)
 
 
 def main():
@@ -20,14 +26,15 @@ def main():
     for rel in DRIVERS:
         path = ROOT / rel
         if not path.exists():
+            failures.append('%s: driver is missing' % rel)
             continue
-        text = path.read_text(encoding='utf-8')
+        text = code_only(path.read_text(encoding='utf-8'))
         reads = re.findall(r'(\w+)\s*=\s*SMAP_REG16\(SMAP_R_TXFIFO_WR_PTR\)([^;]*);', text)
         if not reads:
             failures.append('%s reads no TX FIFO write pointer' % rel)
         for var, rest in reads:
-            if 'SMAP_TX_BASE' not in rest:
-                failures.append('%s: %s is the FIFO offset without SMAP_TX_BASE' % (rel, var))
+            if not re.fullmatch(r'\s*\+\s*SMAP_TX_BASE\s*', rest):
+                failures.append('%s: %s does not add SMAP_TX_BASE to the FIFO offset' % (rel, var))
             if not re.search(r'->pointer\s*=\s*%s\s*;' % re.escape(var), text):
                 failures.append('%s: no descriptor takes %s' % (rel, var))
         checked += 1
