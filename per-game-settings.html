@@ -120,11 +120,11 @@ RiptOPL / OPL / wOPL builds that read from the same device; only the master sett
 The screen adapts immediately when you change this picker — see
 <a href="#core-aware-adaptation">Core-aware adaptation</a> below.</p>
 
-<div class="callout info"><div class="h">i UDPBD / UDPFS games always launch through Neutrino</div>
-Network-boot games (UDPBD / UDPFS) have no OPL core backend, so they launch through Neutrino.
-The Loader Core selector is locked to <b>Neutrino</b> on UDPBD, UDPFS <b>IMG</b>, and UDPFS
-<b>Files</b> games, including Favorites that resolve back to those sources. If
-<code>neutrino.elf</code> is missing, OPL warns you and returns to the menu — there is no fallback.
+<div class="callout info"><div class="h">i UDPBD / UDPFS games default to Neutrino</div>
+UDPFS <b>Files</b> games have no OPL core backend: their Loader Core selector is locked to
+<b>Neutrino</b>, including Favorites that resolve back to them, and a missing <code>neutrino.elf</code>
+returns you to the menu. UDPBD and UDPFS <b>IMG</b> games launch through Neutrino by default; set the
+Loader Core to <code>&lt;OPL&gt;</code> to use OPL's own core (on these games <b>Default</b> means Neutrino).
 </div>
 
 <h3 id="neutrino-args-video">Neutrino Launch Args &amp; Neutrino Video (Neutrino core only)</h3>
@@ -336,7 +336,7 @@ will be silently ignored at launch.</p>
     <tr><td>PADEMU / Pad Macro panels</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
     <tr><td>OSD Language panel</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
     <tr><td>VMC panel</td><td><b>Active</b></td><td><b>Active</b> (via -mc0/-mc1)</td></tr>
-    <tr><td>Loader Core selector</td><td><b>Active</b> where supported</td><td><b>Active</b> where supported; locked to Neutrino for UDPFS/UDPBD, and locked away from Neutrino for SMB/HTTP/PS1</td></tr>
+    <tr><td>Loader Core selector</td><td><b>Active</b> where supported</td><td><b>Active</b> where supported; locked to Neutrino for UDPFS Files (on UDPBD/UDPFS IMG, Default means Neutrino), and locked away from Neutrino for SMB/HTTP/PS1</td></tr>
   </tbody>
 </table>
 
