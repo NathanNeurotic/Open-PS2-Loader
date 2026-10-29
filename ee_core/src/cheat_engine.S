@@ -174,6 +174,8 @@ CodeHandler:
     lw      $t0, codeset
     lui     $t6, %hi(codeentry)
     sw      $t0, %lo(codeentry)($t6)
+    lui     $t6, %hi(codedone)
+    sw      $zero, %lo(codedone)($t6) /* no finished pass until this one ends */
     lw      $t3, 0($t0)
     addiu   $t0, $t0, 4
     beqz    $t3, ch_ret

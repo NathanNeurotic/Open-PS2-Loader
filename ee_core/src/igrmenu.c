@@ -643,18 +643,22 @@ static void igrmBpcBack(u32 bpc)
     ee_kmode_exit();
 }
 
-// The power button, read as the VBLANK handler reads it (that handler is held while the game is paused)
-static int igrmPowerButton(void)
+// The power button, read as the VBLANK handler reads it (that handler is held while the game is paused): the
+// power-off request is latched, so a press counts once, when it appears, and is cancelled then. Returns 1 for a
+// new press.
+static int igrmPowerButton(int *latched)
 {
-    int pressed = 0;
+    int pending, pressed;
 
     ee_kmode_enter();
-    if ((*CDVD_R_NDIN & 0x20) && (*CDVD_R_POFF & 0x04)) {
+    pending = (*CDVD_R_NDIN & 0x20) && (*CDVD_R_POFF & 0x04);
+    pressed = pending && !*latched;
+    if (pressed) {
         *CDVD_R_SDIN = 0x00;
         *CDVD_R_SCMD = 0x1B; // cancel the power off, to catch a second press
-        pressed = 1;
     }
     ee_kmode_exit();
+    *latched = pending;
     return pressed;
 }
 
@@ -663,9 +667,9 @@ int IGR_MenuRun(u16 (*buttons)(void))
     USE_LOCAL_EECORE_CONFIG;
     u32 raw[(112 + PW * 2 * 4 + 64) / 4]; // one line of the panel at its widest (the IGR thread's stack)
     u32 *pkt = (u32 *)(((u32)raw + 63) & ~63);
-    u32 d1chcr, d1madr, d1qwc, d1tadr, gameDone, t, pressT = 0, firstT = 0, bpc;
+    u32 d1chcr, d1madr, d1qwc, d1tadr, gameDone, t, firstT = 0, bpc;
     u16 held, now, pressed, ok, back;
-    int sel = 0, armed = 0, result = IGR_MENU_RESUME, presses = 0, power = 1, i;
+    int sel = 0, armed = 0, result = IGR_MENU_RESUME, presses = 0, power = 1, powerLatched = 0, i;
     int page = 0, csel = 0, ctop = 0, full = 0, changed = 0;
     char gameId[CORE_GAME_ID_MAX_LEN + 1];
     igrm_line_t lines[IGRM_LINES];
@@ -782,11 +786,8 @@ int IGR_MenuRun(u16 (*buttons)(void))
 
         if (power) { // once = power off, twice = leave, decided a second after the first press (as OPL)
             t = igrmCount();
-            if ((presses == 0 || t - pressT > IGRM_SECOND / 8) && igrmPowerButton()) {
-                if (presses++ == 0)
-                    firstT = t;
-                pressT = t;
-            }
+            if (igrmPowerButton(&powerLatched) && presses++ == 0)
+                firstT = t;
             if (presses && t - firstT > IGRM_SECOND) {
                 result = presses == 1 ? IGR_MENU_POWEROFF : IGR_MENU_EXIT;
                 break;

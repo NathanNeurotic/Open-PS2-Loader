@@ -573,6 +573,13 @@ static int cheatRealCodes(const cheat_entry_t *e)
     return n;
 }
 
+// One more row of n codes fits the page after count rows of pairs codes. Both of igrCheatsPack's walks ask this.
+static int igrRowFits(unsigned int count, unsigned int pairs, int n, unsigned int room)
+{
+    return count < IGR_CHEATS_MAX && n <= IGR_CHEAT_SET_CODES && pairs + n <= IGR_CHEAT_CODES_MAX &&
+           IGR_CHEATS_BYTES(count + 1, pairs + n) <= room;
+}
+
 int igrCheatsPack(void *dst, unsigned int room)
 {
     igr_cheats_t *h = (igr_cheats_t *)dst;
@@ -580,13 +587,17 @@ int igrCheatsPack(void *dst, unsigned int room)
 
     if (gCheats == NULL || dst == NULL || room < IGR_CHEATS_BYTES(1, 1))
         return 0;
-    // what fits: rows first, then their codes
-    for (int i = 0; i < MAX_CODES && count < IGR_CHEATS_MAX; ++i) {
+    // what fits: rows first, then their codes. A ticked cheat the page cannot hold means no page: the game then
+    // starts with the list it gets without the menu's page (set_cheats_list), and the ticked cheat runs.
+    for (int i = 0; i < MAX_CODES; ++i) {
         int n = gCheats[i].codes[0].addr != 0 ? cheatRealCodes(&gCheats[i]) : 0;
-        if (n == 0 || n > IGR_CHEAT_SET_CODES || pairs + n > IGR_CHEAT_CODES_MAX)
+        if (n == 0)
             continue;
-        if (IGR_CHEATS_BYTES(count + 1, pairs + n) > room)
-            break;
+        if (!igrRowFits(count, pairs, n, room)) {
+            if (gCheats[i].enabled)
+                return 0;
+            continue;
+        }
         count++;
         pairs += n;
     }
@@ -601,7 +612,7 @@ int igrCheatsPack(void *dst, unsigned int room)
     unsigned int *codes = IGR_CHEATS_CODES(h), r = 0, p = 0;
     for (int i = 0; i < MAX_CODES && r < count; ++i) {
         int n = gCheats[i].codes[0].addr != 0 ? cheatRealCodes(&gCheats[i]) : 0;
-        if (n == 0 || n > IGR_CHEAT_SET_CODES || p + n > IGR_CHEAT_CODES_MAX)
+        if (n == 0 || !igrRowFits(r, p, n, room))
             continue;
         int canHook = 1;
         row[r].first = p;
@@ -639,21 +650,31 @@ void set_cheats_list_live(const void *packed)
     memset((void *)gCheatList, 0, sizeof(gCheatList));
     if (gCheats == NULL)
         return;
-    // every hook, from every cheat (at most MAX_HOOKS are used by the engine)
-    for (int i = 0; i < MAX_CODES; ++i) {
-        int canHook = 1;
-        for (int j = 0; j < MAX_CHEATLIST && gCheats[i].codes[j].addr != 0; ++j)
-            if (cheatIsHook(&gCheats[i].codes[j], &canHook) && cheatCount + 2 <= MAX_HOOKS * 2) {
-                gCheatList[cheatCount++] = gCheats[i].codes[j].addr;
-                gCheatList[cheatCount++] = gCheats[i].codes[j].val;
+    // every hook, from every cheat: the engine takes MAX_HOOKS, so the ticked cheats' hooks go first, and a hook two
+    // cheats share is listed once
+    for (int pass = 0; pass < 2; ++pass)
+        for (int i = 0; i < MAX_CODES; ++i) {
+            if ((gCheats[i].enabled != 0) != (pass == 0))
+                continue;
+            int canHook = 1;
+            for (int j = 0; j < MAX_CHEATLIST && gCheats[i].codes[j].addr != 0; ++j) {
+                if (!cheatIsHook(&gCheats[i].codes[j], &canHook) || cheatCount + 2 > MAX_HOOKS * 2)
+                    continue;
+                int seen = 0;
+                for (int d = 0; d < cheatCount && !seen; d += 2)
+                    seen = gCheatList[d] == gCheats[i].codes[j].addr && gCheatList[d + 1] == gCheats[i].codes[j].val;
+                if (!seen) {
+                    gCheatList[cheatCount++] = gCheats[i].codes[j].addr;
+                    gCheatList[cheatCount++] = gCheats[i].codes[j].val;
+                }
             }
-    }
-    // then the ticked rows' codes, as the menu builds them
+        }
+    // then the ticked rows' codes, as the menu builds them: at most MAX_CODES, so with MAX_HOOKS hooks the list is
+    // exactly full, which SetupCheats reads without a terminator (it stops at MAX_CHEATLIST); a shorter list ends
+    // in the zeros of the memset above
     unsigned int n = igrCheatsBuild(h, set);
-    for (unsigned int k = 0; k < n && cheatCount + 2 <= MAX_CHEATLIST - 2; ++k) {
+    for (unsigned int k = 0; k < n && cheatCount + 2 <= MAX_CHEATLIST; ++k) {
         gCheatList[cheatCount++] = set[1 + k * 2];
         gCheatList[cheatCount++] = set[2 + k * 2];
     }
-    gCheatList[cheatCount++] = 0; // the terminator (MAX_CHEATLIST - 2 above keeps room for it)
-    gCheatList[cheatCount++] = 0;
 }

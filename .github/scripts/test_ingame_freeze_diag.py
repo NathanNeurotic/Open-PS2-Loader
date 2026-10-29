@@ -104,6 +104,8 @@ check("g_freeze_diag_polls++;" in handler[:handler.index("IGR_CheckInputs();")],
 # pauses the game itself and RESUME gives it back. The shutdown wake is the handler's last one.
 check(handler.index("iSuspendThread(i);") < handler.rindex("iWakeupThread(IGR_Thread_ID);"),
       "the handler suspends the game's threads before waking the worker")
+check(handler.index("IGR_HoldInterrupts();") < handler.index("iWakeupThread(IGR_Thread_ID);"),
+      "the menu's branch holds the game's interrupts before it wakes the worker")
 worker = pad[pad.index("static void IGR_Thread(void *arg)"):]
 i_wait = worker.index("SleepThread();")
 i_begin = worker.index("FreezeDiag_Begin(")

@@ -6,7 +6,7 @@
 
   The launcher packs every cheat of the game's file here, not only the ones ticked, and puts the block after the
   IOP modules (below 0xD0000, kept for the whole game). ee_core reads it in place while the game is paused.
-  Shared by the launcher (src/platform/system.cpp) and ee_core: plain C, fixed sizes, no pointers inside.
+  Shared by the launcher (its cheat manager packs it) and ee_core: plain C, fixed sizes, no pointers inside.
 
   Layout, all words little endian:
     igr_cheats_t           header
@@ -59,7 +59,7 @@ static inline unsigned int igrCheatsBuild(const igr_cheats_t *b, unsigned int *s
     unsigned int n = 0, i, k;
 
     for (i = 0; i < b->count; i++) {
-        if (!row[i].on || n + row[i].count > IGR_CHEAT_SET_CODES)
+        if (!row[i].on || n + row[i].count > IGR_CHEAT_SET_CODES || row[i].first + row[i].count > b->pairs)
             continue;
         for (k = 0; k < row[i].count; k++, n++) {
             set[1 + n * 2] = codes[(row[i].first + k) * 2];

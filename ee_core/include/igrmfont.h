@@ -1,9 +1,9 @@
 /*
   igrmfont.h the in-game menu's font (igrmenu.c), RIPPS2 build 87
 
-  Build 108: the table left ee_core, which RIPSHOT filled to its floor. RIPPS2 copies it after the modules with the
-  menu's thread stack (src/system.c), and the menu reads it there through config->IgrFont. Define IGRM_FONT_DATA
-  before including this to get the table itself (RIPPS2's launch, and igrmenu.c's host test).
+  RIPPS2 build 108 moved the table out of ee_core (RIPSHOT had filled it) and reads it through config->IgrFont.
+  This port has no RIPSHOT, so the table stays in ee_core: igrmenu.c defines IGRM_FONT_DATA before including this
+  to get the table itself, as the host test does.
 */
 
 #ifndef IGRMFONT_H
