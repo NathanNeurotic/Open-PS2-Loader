@@ -72,7 +72,7 @@ static int priority[8] = {0, 31, 40};
 static int current = 1, referFails = 0, priorityWrites = 0;
 struct ee_thread_status_t { int current_priority; };
 static int GetThreadId() { return current; }
-static int ReferThreadStatus(int id, ee_thread_status_t *s) { if (referFails) return -1; s->current_priority = priority[id]; return 0; }
+static int ReferThreadStatus(int id, ee_thread_status_t *s) { if (referFails) return -1; s->current_priority = priority[id]; return id; } // the EE returns the thread id, not 0
 static void ChangeThreadPriority(int id, int p) { priority[id] = p; priorityWrites++; }
 
 static int hiresActive = 0;
