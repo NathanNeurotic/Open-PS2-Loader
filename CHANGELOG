@@ -8,6 +8,9 @@
 
 === Changelog ===
 
+==== Unreleased ====
+* Fragmented native BDM VMC warnings show the existing fragment count and, on Cancel, backup/recovery guidance. Native refusal and physical-card fallback are unchanged. Credit belomaxorka/YAOPL c19eed08. Hardware validation pending.
+
 ==== Version 0.9.3 ====
 CORE:
 
