@@ -331,6 +331,60 @@ where neither the view nor the base has a block.
   `misc/theme_grid.cfg`), which are
   good references for a view's blocks.
 
+### SD and HD layouts (`_sd` / `_hd`) — *this fork*
+
+One `conf_theme.cfg` can carry a 4:3 layout and a 16:9 layout, so a theme no longer needs separate
+"SD" and "HD/widescreen" packages. Ideas: KrahJohlito (uOPL/wOPL's `wsX` key) and Berion
+(`_sd`/`_hd` suffixes that fall back to the plain key).
+
+Add `_hd` to **any** key to give the value used while **Settings → Interface → Widescreen** is on, or
+`_sd` for the value used while it is off. A key without a variant for the current mode keeps its
+plain value, so a theme without these keys looks exactly as before:
+
+```ini
+main3:
+	type=AttributeImage
+	attribute=#Compatibility
+	x=420
+	y=300
+	x_hd=455          # 16:9: closes the gap the narrower 16:9 badges leave
+	y_hd=310          # Y can differ too
+	wsX=455           # uOPL/wOPL spelling of x_hd; also read (x_hd wins if both are given)
+
+bg_color_hd=#101018              # globals work the same way
+coverflow.main2_y_hd=250         # and so do view-prefixed keys
+main9_type_hd=StaticText         # an element that only exists in 16:9
+```
+
+| Key | Value | Meaning |
+|---|---|---|
+| `<key>_hd` | as `<key>` | Used instead of `<key>` while Widescreen is on. |
+| `<key>_sd` | as `<key>` | Used instead of `<key>` while Widescreen is off. Handy for a theme authored 16:9-first. |
+| `<block>_wsX` (inside a block: `wsX=`) | as `x` | The uOPL/wOPL key: the element's x in 16:9. Same as `x_hd`; `x_hd` wins if both are given. Negative values count from the right edge, as for `x`. |
+| `hd_autofit` | `0` / `1` | `1`: in 16:9, keep the 4:3 layout's proportions automatically (below). Default `0`. Works as `<view>.hd_autofit` too. |
+
+**Precedence.** The variant replaces its plain key before anything else reads the file, so the view
+rules above still apply on top: `coverflow.main2_x_hd` → `coverflow.main2_x` → `main2_x_hd` →
+`main2_x` (a view block replaces the whole base block, exactly as without variants).
+
+**`hd_autofit=1`.** In 16:9, OPL draws scaled widths at 3/4 but leaves x where it was, which opens
+gaps between neighbouring elements (badge rows, a cover beside its case). With `hd_autofit=1` each
+element's x becomes `320 + (x − 320) × 3/4`: the whole 4:3 composition shrinks horizontally about the
+screen centre, so left edges, centres, right edges and the gaps between them keep their 4:3 shape,
+whatever the alignment, and text/list boxes narrow to match their already-narrower text. It is the one
+placement that can be computed exactly; spreading a layout across the extra 16:9 width depends on the
+designer's intent, which is what `_hd` keys are for. Left alone: elements with their own `x_hd`/`wsX`,
+the background and anything as wide as the screen, `Coverflow`/`PSBBNFlow`/`Grid` (they lay themselves
+out for 16:9 already), and `scaled=0` images (16:9 still draws those full width).
+
+- Switching Widescreen in Settings reloads a theme that has any `_sd`/`_hd`/`wsX`/`hd_autofit` keys,
+  once the settings page is closed. Other themes are not reloaded.
+- Keep the plain keys as your 4:3 layout: stock OPL and other forks ignore the variants and use them.
+- The background choice stays one setting for both modes (`bg_*`, `main0`) unless the theme gives it
+  `_hd` variants.
+- Names stay within 47 characters including the suffix; `coverflow.favsVcdMain12_reflection_offset_hd`
+  is 44.
+
 ---
 
 ## 2. Global properties
@@ -882,6 +936,8 @@ place a SaveIcon; custom PSBBN Flow themes can add the element.
 - With `scaled=1`, image **widths** are corrected for widescreen and the PS2's pixel aspect,
   so a square stays square in both 4:3 and 16:9. Positions are not aspect-scaled, so layouts
   fill the wider screen naturally.
+  To place elements differently in 16:9, give them `_hd` keys or set `hd_autofit=1` (see
+  [SD and HD layouts](#sd-and-hd-layouts-_sd--_hd--this-fork)).
 - Negative `x`/`y` and `POS_MID`/`DIM_INF` let you anchor to edges/center without hardcoding
   resolution-specific numbers.
 

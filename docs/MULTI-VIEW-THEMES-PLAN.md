@@ -143,6 +143,13 @@ Host tests (`.github/scripts/test_themeviews.py`, `.github/scripts/test_psbbn_fl
 for the built-in theme and a few community themes, then one hardware pass: switch views, launch a game,
 return, launch a second game, change theme with a view saved, cold and warm boot.
 
+## SD and HD layouts
+
+Separate 4:3 and 16:9 layouts live in the same file through `_sd`/`_hd` key variants, the uOPL/wOPL
+`wsX` key and the opt-in `hd_autofit=1` (ideas: KrahJohlito and Berion). They are applied to the cfg
+before the view is resolved, so they combine with every view rule above; see
+[THEME_ENGINE.md, SD and HD layouts](THEME_ENGINE.md#sd-and-hd-layouts-_sd--_hd--this-fork).
+
 ## Open questions
 
 - Remember the view per theme only, or per device page too (like the L3 ring)?

@@ -4559,6 +4559,9 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
 
     // theme must be set after color, and lng after theme
     changed = thmSetGuiValue(themeID, changed);
+    // A theme with SD/HD layouts is rebuilt for the Widescreen setting it is now shown with.
+    if (!changed)
+        changed = thmRefreshDisplayLayout();
     int langChanged = lngSetGuiValue(langID);
 
     guiUpdateScreenScale();
