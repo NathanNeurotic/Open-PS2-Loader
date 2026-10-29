@@ -1900,7 +1900,7 @@ struct UIItem diaAbout[] = {
 
     {UI_SPACER},
     // Preserve this non-scrolling dialog at 4:3 SD resolution: add belomaxorka
-    // and Akilluminati47 (RIPPS2 partner) without adding a row or exceeding the
+    // and Akilluminati47 (RIPPS2 co-developer) without adding a row or exceeding the
     // widest coder row. CREDITS and README explain the RIPPS2, YAOPL, LUNA,
     // PS2CF, and PSUManager contributions in full.
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47 - belomaxorka - darkladark - mihhru - techwritescode", -1}}},
