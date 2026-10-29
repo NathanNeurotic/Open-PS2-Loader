@@ -8,8 +8,8 @@
 
 #define ZSO_MAGIC 0x4F53495A // ZISO
 
-// no game should request more than 256 sectors per read (512KB of data)
-// should allow us to decompress all data with only 2 IO calls at most.
+// The index cache covers 256 sectors (512KB of data) at a time; ziso_read_sector() reads larger
+// requests in slices of that size.
 #define ZISO_IDX_MAX_ENTRIES 257
 
 #define MIN(x, y) ((x < y) ? x : y)
@@ -38,7 +38,9 @@ extern u32 ziso_total_block;
 // temp block buffer (2048 bytes)
 extern u8 *ziso_tmp_buf;
 
-void ziso_init(ZISO_header *header, u32 first_block);
+// 0, or -1 for a header the reader cannot read (align above 11, or blocks other than 2048 bytes):
+// the file is then not handled as a ZSO image.
+int ziso_init(ZISO_header *header, u32 first_block);
 int ziso_read_sector(u8 *buf, u32 sector, unsigned int count);
 
 // This must be implemented by isofs/cdvdman/frontend

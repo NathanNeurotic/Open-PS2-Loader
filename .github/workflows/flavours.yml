@@ -392,6 +392,8 @@ jobs:
         run: python3 .github/scripts/test_pad_handoff.py
       - name: Check the ISO 9660 directory walk in isofs and the in-game CDVDMAN
         run: python3 .github/scripts/test_iso9660_records.py
+      - name: Check ZSO header, index and large-read validation
+        run: python3 .github/scripts/test_zso_validation.py
       - name: Check local transport binding and iLink aliases cannot cross-wire devices
         run: python3 .github/scripts/test_bdm_transport_binding.py
       - name: Check BDM partition I/O bounds and sector-size refusal

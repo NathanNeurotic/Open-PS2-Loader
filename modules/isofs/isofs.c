@@ -535,9 +535,8 @@ static int ProbeZISO(int fd)
         u32 first_block;
     } ziso_data;
     longLseek(fd, 0);
-    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC) {
-        // initialize ZSO
-        ziso_init(&ziso_data.header, ziso_data.first_block);
+    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC &&
+        ziso_init(&ziso_data.header, ziso_data.first_block) == 0) { // a header it cannot read is no ZSO
         // redirect cdEmuRead function
         cdEmuRead = &cdEmuReadCompressed;
         return 1;

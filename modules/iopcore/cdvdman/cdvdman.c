@@ -425,9 +425,7 @@ static int ProbeZSO(u8 *buffer)
     if (DeviceReadSectors(0, buffer, 1) != SCECdErNO)
         return 0;
     probed = 1;
-    if (*(u32 *)buffer == ZSO_MAGIC) {
-        // initialize ZSO
-        ziso_init((ZISO_header *)buffer, *(u32 *)(buffer + sizeof(ZISO_header)));
+    if (*(u32 *)buffer == ZSO_MAGIC && ziso_init((ZISO_header *)buffer, *(u32 *)(buffer + sizeof(ZISO_header))) == 0) {
         // initialize cache
         initCache();
         // redirect sector reader
