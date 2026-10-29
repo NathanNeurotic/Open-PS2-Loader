@@ -51,7 +51,7 @@ class ReleaseNotesTests(unittest.TestCase):
             "RIPTOPL-v1.zip", "RIPTOPL.ELF", "RIPTOPL-RA.ELF",
             "RIPTOPL-RetroAchievements-v1.zip", "APP_RIPTOPL.psu",
             "APP_RIPTOPL-RA.psu", "RIPTOPL-DEBUG-v1.zip",
-            "RIPTOPL-LANGS-v1.zip", "RIPTOPL-VARIANTS-v1.zip", "RIPTOPL-v1-src.zip",
+            "RIPTOPL-LANGS-v1.zip", "RIPTOPL-VARIANTS-v1.zip", "RIPTOPL-src-v1.zip",
         ]
 
     def git(self, *args):
@@ -90,6 +90,14 @@ class ReleaseNotesTests(unittest.TestCase):
         self.assertEqual(3, body.count("\n\n</details>"))
         self.assertNotIn("<details open", body)
         self.assertLess(len(body), 8000)
+
+    def test_version_last_names_keep_their_descriptions(self):
+        for name in ("RIPTOPL-src-v1.2.0-Beta-4420.zip", "RIPTOPL-src-Korium-v1.2.0-Beta-4420.zip",
+                     "RIPTOPL-RetroAchievements-src-v1.2.0-Beta-4420.zip", "RIPTOPL-v1.2.0-Beta-4420-src.zip"):
+            self.assertEqual(notes.description(name), "Source code snapshot.", name)
+        for name in ("RIPTOPL-Korium-v1.2.0-Beta-4420.zip", "RIPTOPL-v1.2.0-Beta-4420.zip"):
+            self.assertTrue(notes.description(name).startswith("Full install:"), name)
+        self.assertTrue(notes.description("RIPTOPL-DEBUG-Korium-v1.2.0-Beta-4420.zip").startswith("Debug loaders"))
 
     def test_channels_and_tagged_releases(self):
         for tag in ("rolling", "rolling-korium", "v1.2.3"):

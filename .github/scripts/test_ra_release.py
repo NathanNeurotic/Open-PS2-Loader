@@ -37,7 +37,7 @@ class ReleaseTests(unittest.TestCase):
                     (folder / "Korium.patch").write_bytes(b"same theme patch")
 
     def assets(self):
-        names = {"RIPTOPL-RetroAchievements-test-src.zip"}
+        names = {"RIPTOPL-RetroAchievements-src-test.zip"}
         for theme in publisher.THEMES:
             names.update((f"RIPTOPL-RA-{theme}.ELF", f"APP_RIPTOPL-RA-{theme}.psu",
                           f"RIPTOPL-RetroAchievements-{theme}-test.zip"))
@@ -66,10 +66,12 @@ class ReleaseTests(unittest.TestCase):
 
     def test_bootstrap_selects_install_kit_instead_of_source_or_ra_archive(self):
         names = ["RIPTOPL-v1.2.0-Beta-3841-src.zip", "RIPTOPL-v1.2.0-Beta-3841.zip",
-                 "RIPTOPL-RetroAchievements-v1.2.0-Beta-3841.zip", "RIPTOPL-DEBUG-v1.zip"]
+                 "RIPTOPL-RetroAchievements-v1.2.0-Beta-3841.zip", "RIPTOPL-DEBUG-v1.zip",
+                 "RIPTOPL-src-v1.2.0-Beta-3841.zip"]
         self.assertEqual(pack.standard_asset([{"name": name} for name in names]), names[1])
-        with self.assertRaises(ValueError):
-            pack.standard_asset([{"name": names[0]}])
+        for source in (names[0], names[4]):
+            with self.assertRaises(ValueError):
+                pack.standard_asset([{"name": source}])
 
     def old_shared_kit(self):
         archive = self.folder / "standard.zip"

@@ -27,7 +27,7 @@ def description(name):
         return "SHA-256 checksums for the complete two-theme release."
     if name in fixed:
         return fixed[name]
-    if name.endswith("-src.zip"):
+    if name.endswith(".zip") and (name.endswith("-src.zip") or "-src-" in name):
         return "Source code snapshot."
     for prefix, text in (
         ("RIPTOPL-RetroAchievements-", "Full RetroAchievements kit: loader, artwork, PSU, POPStarter, Ember and pinned ORBIT Neutrino v1.0.2 (RA-only); requires xeRAbora v1.0.1 or alpha.17+."),

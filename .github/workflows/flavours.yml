@@ -271,6 +271,8 @@ jobs:
           persist-credentials: false
       - name: Check compact release notes and changelog
         run: python3 .github/scripts/test_release_notes.py
+      - name: Check every release ZIP name ends with the version
+        run: python3 .github/scripts/test_version_last.py
       - name: Check release edition titles and classification policy
         run: python3 .github/scripts/test_release_titles.py
       - name: Check release versions use complete Git history for every SDK

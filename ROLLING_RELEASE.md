@@ -24,7 +24,7 @@ archives by purpose (RA, DEBUG and language packs are listed when produced):
 | `RIPTOPL-<version>.zip` | **Complete standard install kit.** `APPS/APP_RIPTOPL/` contains a real `RIPTOPL.ELF`, app metadata, icons and music; `ART/RIPTOPL.ELF_*.png` supplies matching artwork. `APP_RIPTOPL.psu` is the same app as a single memory-card save. The app uses `-OFFICIALROLLING` when available, with a named fallback recorded in its metadata. Four separately labelled SDK ELF folders remain for comparisons, subject to best-effort build availability. The ZIP also includes the complete `POPS/`, `EMBER/` and `neutrino/` folders and five companion-tool shortcuts, including `android-udpfs-server.url`. |
 | `RIPTOPL.ELF` | **The loader on its own, for updating an install you already have.** Download it and overwrite your existing `RIPTOPL.ELF` — no archive to unpack, nothing else to copy. Its name never changes, so <https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a permanent link. It is the **`-OFFICIALROLLING`** flavour; there is only one of these because four would put the "which do I pick?" question back in front of the people this file exists for. It is not a first install: the bare loader does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files, so PS1 and Neutrino launches need the package above. If you want a reproducible build to quote in a bug report, take a pinned folder from the package instead — see [Which build should I use?](#which-build-should-i-use). Best-effort, like the flavour it is copied from: if that build fails the release simply ships without it. |
 | `APP_RIPTOPL.psu` | Standard app-only memory-card save. Copy shared folders from the full standard kit separately. |
-| `RIPTOPL-<version>-src.zip` | Source snapshot to rebuild this exact commit. |
+| `RIPTOPL-src-<version>.zip` | Source snapshot to rebuild this exact commit. |
 | `RIPTOPL-LANGS-*.zip` | Extra UI language files (`.lng` + non-Latin fonts) — copy into your OPL folder. |
 | `RIPTOPL-VARIANTS-*.zip` | Alternate build configs across the moving and pinned ps2dev flavours; the normalizer also adds one ready-made DualSense (`DUALSENSE=1`) loader for each available official flavour. |
 | `RIPTOPL-DEBUG-*.zip` | Diagnostic builds across the moving and pinned ps2dev flavours, when produced. |
@@ -74,8 +74,9 @@ the current values and reconnects immediately; Select / Refresh retries a failed
 ## Reading the build version
 
 You can identify a published build before downloading it: the release notes header gives the
-build version and source commit. The normal ZIP filename uses the shorter version, for example
-`RIPTOPL-v1.2.0-Beta-4224.zip`. About and the Settings index show the full identifier, such as
+build version and source commit. Every ZIP filename ends with the shorter version, for example
+`RIPTOPL-v1.2.0-Beta-4224.zip`, `RIPTOPL-src-v1.2.0-Beta-4224.zip` or, on the Korium channel,
+`RIPTOPL-Korium-v1.2.0-Beta-4224.zip`; the revision number is always the last part of the name. About and the Settings index show the full identifier, such as
 `v1.2.0-Beta-4224-308bc6a-OFFICIALROLLING`:
 
 | Part | Meaning |
