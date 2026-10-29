@@ -543,9 +543,9 @@ translations:
   HINT_PLASCOLOR: Warna yang dicampur ke latar animasi.
   HINT_RESETCOLOR: Mengembalikan warna bawaan RiptOPL, bukan warna tema.
   HINT_WIDESCREEN: Menggambar menu untuk TV 16:9.
-  HINT_XOFF: Menggeser menu ke kiri atau kanan di layar.
-  HINT_YOFF: Menggeser menu ke atas atau bawah di layar.
-  HINT_MENU_OVERSCAN: Mengecilkan menu ke dalam jika TV memotong tepinya.
+  HINT_XOFF: "Menggeser menu ke kiri atau kanan di layar. Disimpan untuk setiap mode video."
+  HINT_YOFF: "Menggeser menu ke atas atau bawah di layar. Disimpan untuk setiap mode video."
+  HINT_MENU_OVERSCAN: "Mengecilkan menu ke dalam jika TV memotong tepinya. Disimpan untuk setiap mode video."
   HINT_APPLYGAMEID: Menampilkan barcode saat game dimulai, supaya perangkat Pixel FX, RetroGEM, dan PS2Digital berganti profil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Jalur, mode video, dan argumen Neutrino untuk setiap game.
   HINT_OSD_DEFAULTS_BUTTON: Bahasa konsol, ukuran layar, dan mode video yang diberikan ke game.
@@ -671,3 +671,5 @@ translations:
   HINT_ENABLE_DVR: Penemuan ISO DESR DVR eksperimental. Butuh sumber HDD menyala; peluncuran game butuh Neutrino eksternal yang mendukung DVR.
   THEME_VIEW: "Tampilan Tema"
   HINT_THEME_VIEW: "Cara tema menampilkan game Anda: List, Coverflow, PSBBN Flow atau Grid. Tahan L3 di halaman utama untuk beralih. Tema tanpa tampilan itu memakai tampilan bawaannya."
+  BOTH: Keduanya
+  NET_READ_ONLY_VMC: "Server UDPBD/UDPFS ini hanya-baca, jadi VMC tidak dapat digunakan di sana. Game menyimpan ke memory card asli."

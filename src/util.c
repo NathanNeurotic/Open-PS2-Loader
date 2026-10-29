@@ -755,12 +755,14 @@ int CheckPS2Logo(int fd, u32 lba)
     }
 
     if (*(u32 *)logo == ZSO_MAGIC) {
-        // initialize ZSO
-        ziso_init((ZISO_header *)logo, *(u32 *)((u8 *)logo + sizeof(ZISO_header)));
-        probed_fd = fd;
-        probed_lba = lba;
-        // read ZISO data
-        w = (ziso_read_sector(logo, 0, 12) == 12);
+        if (ziso_init((ZISO_header *)logo, *(u32 *)((u8 *)logo + sizeof(ZISO_header))) == 0) {
+            probed_fd = fd;
+            probed_lba = lba;
+            // read ZISO data
+            w = (ziso_read_sector(logo, 0, 12) == 12);
+        } else {
+            w = 0; // a header the reader cannot read leaves no logo to check
+        }
     }
 
     if (w) {

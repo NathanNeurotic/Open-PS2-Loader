@@ -116,7 +116,10 @@ lbl_startlocate:
         do {
             tocEntryPointer = (struct dirTocEntry *)&cdvdman_buf[tocPos];
 
-            if (tocEntryPointer->length == 0)
+            // 0 is the padding to the end of the sector. A record shorter than its fixed part and name,
+            // or running past the sector (records never cross one), is damage: skip the rest of the sector.
+            if (tocEntryPointer->length == 0 || tocEntryPointer->length < 33 + tocEntryPointer->filenameLength ||
+                tocPos + tocEntryPointer->length > 2048)
                 break;
 
             filename_len = tocEntryPointer->filenameLength;
@@ -152,10 +155,12 @@ lbl_startlocate:
                     }
 
                     goto lbl_startlocate;
-                } else {
-                    tocPos += (tocEntryPointer->length << 16) >> 16;
                 }
             }
+
+            // Every other record, also one without a name: it used to be stepped over only inside
+            // "if (filename_len)", so a nameless record never moved tocPos and the scan spun forever.
+            tocPos += tocEntryPointer->length;
         } while (tocPos < 2016);
     }
 
@@ -214,7 +219,15 @@ static int cdvdman_findfile(sceCdlFILE *pcdfile, const char *name, int layer)
     else
         pcdfile->size = tocEntryPointer->fileSize;
 
-    strcpy(pcdfile->name, strrchr(name, '\\') + 1);
+    // For information only: the last path component, cut to fit name[16]. The path may use '/' and
+    // have no '\\' at all ("/SYSTEM.CNF;1"), where strrchr() used to return NULL.
+    const char *base = name, *c;
+    for (c = name; *c != '\0'; c++) {
+        if (*c == '\\' || *c == '/')
+            base = c + 1;
+    }
+    strncpy(pcdfile->name, base, sizeof(pcdfile->name) - 1);
+    pcdfile->name[sizeof(pcdfile->name) - 1] = '\0';
 
     DPRINTF("cdvdman_findfile found %s\n", name);
 

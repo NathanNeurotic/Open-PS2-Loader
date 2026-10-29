@@ -642,6 +642,9 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
     // Handle fragmented packets
     while (rcv_size < expected_size) {
         r = plwip_recvfrom(main_socket, NULL, 0, &((u8 *)readbuf)[rcv_size - RRsp->DataOffset - 4], expected_size - rcv_size, 0, NULL, NULL); // - rcv_size
+        // 0: the connection is closed, < 0: an error
+        if (r <= 0)
+            return -2;
         rcv_size += r;
     }
 #else

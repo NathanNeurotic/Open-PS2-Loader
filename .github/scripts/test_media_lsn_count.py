@@ -72,10 +72,11 @@ typedef struct {
 static u32 ziso_total_block;
 static int probed_fd;
 static u32 probed_lba;
-static void ziso_init(ZISO_header *header, u32 first_block)
+static int ziso_init(ZISO_header *header, u32 first_block)
 {
     (void)first_block;
     ziso_total_block = (u32)(header->total_bytes >> 11);
+    return 0;
 }
 
 /* The fake device: one file at a time, by name. */

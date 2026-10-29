@@ -245,6 +245,26 @@ int main(void)
     startPressed = 1;
     assert(run(stuckBusy, 1) == 1);                        /* START launches at once */
     startPressed = 0;
+    /* sd2psXtd 8a20bd9 after a Game ID: idle until its next main-loop pass, then no answer at all while it
+       exits, closes, sleeps 500 ms and reopens the card, then busy while the new card loads, then idle. */
+    static int sd2psx[64];
+    int n = 0;
+    sd2psx[n++] = 0;
+    for (int i = 0; i < 14; i++)
+        sd2psx[n++] = -1; /* 700 ms of silence at the 50 ms start poll */
+    for (int i = 0; i < 8; i++)
+        sd2psx[n++] = 1;
+    sd2psx[n++] = 0;
+    assert(run(sd2psx, n) == 1 && calls == n);             /* waits out the swap and the load: confirmed */
+    const int silentThenIdle[] = {0, -1, -1, -1, -1, 0};   /* a small card loads between two polls */
+    assert(run(silentThenIdle, 6) == 1 && calls == 6);
+    const int blipNoSwitch[] = {0, -1, 0};                 /* one failed query after an answer is not a switch */
+    assert(run(blipNoSwitch, 3) == 1 && calls > 3);
+    const int neverAgain[] = {0, -1};                      /* answered once, then gone for good: bounded */
+    assert(run(neverAgain, 2) == -1);
+    assert(calls - 1 - MMCE_GAMEID_QUERY_SILENT == MMCE_CARD_READY_SILENT_MS / (MMCE_CARD_READY_POLL_US / 1000));
+    const int busySilentBusy[] = {1, -1, -1, -1, 1, 1, 0}; /* silence in the middle of the load */
+    assert(run(busySilentBusy, 7) == 1);
     return 0;
 }
 '''

@@ -86,8 +86,12 @@ jobs:
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
         run: python3 .github/scripts/test_igr_polling.py
+      - name: Check IGR and power-off stop the USB host controller before the IOP reset
+        run: python3 .github/scripts/test_igr_usb_host_stop.py
       - name: Check SMB VMC I/O releases smb_io_sema, reports failed pages and trusts only the server's write Count
         run: python3 .github/scripts/test_smb_vmc_io_result.py
+      - name: Check an SMB read reply cut off by the server fails instead of hanging the game
+        run: python3 .github/scripts/test_smb_read_closed.py
       - name: Check the menu's smbman (every flavour) trusts only the server's write Count
         run: python3 .github/scripts/test_smbman_ra_write_count.py
       - name: Check BDM and MMCE VMC writes, reads and erases report device failures
@@ -242,6 +246,10 @@ jobs:
         run: python3 .github/scripts/test_vmc_preserve_existing.py
       - name: Check Create VMC on First Launch creates, reuses, skips and reports correctly
         run: python3 .github/scripts/test_auto_create_vmc.py
+      - name: Check a read-only UDPBD/UDPFS IMG server is found and never written to
+        run: python3 .github/scripts/test_udpbd_read_only.py
+      - name: Check the screen position is kept for each video mode (RIPPS2 build 124)
+        run: python3 .github/scripts/test_screen_pos_per_mode.py
       - name: Check Neutrino VMC budget recovery and #831 compat defaults
         run: python3 .github/scripts/test_issues_830_831.py
       - name: Check per-title compat defaults and per-core routing
@@ -382,6 +390,20 @@ jobs:
         run: python3 .github/scripts/test_sio2man_hooks.py
       - name: Check native SIO2MAN packing follows active VMC/PADEMU and preserves MMCE
         run: python3 .github/scripts/test_mmce_sio2man_pack.py
+      - name: Check DS3/DS4 USB report transfers and IOP alarm cancels
+        run: python3 .github/scripts/test_ds34usb_report_transfer.py
+      - name: Check the DualShock launch handoff
+        run: python3 .github/scripts/test_pad_handoff.py
+      - name: Check the ISO 9660 directory walk in isofs and the in-game CDVDMAN
+        run: python3 .github/scripts/test_iso9660_records.py
+      - name: Check ZSO header, index and large-read validation
+        run: python3 .github/scripts/test_zso_validation.py
+      - name: Check BdmIndex shows one dot per visible mass device
+        run: python3 .github/scripts/test_bdm_index.py
+      - name: Check the MMCE IGR slot and ON/OFF choices are translated
+        run: python3 .github/scripts/test_mmce_igr_strings.py
+      - name: Check every SMAP driver gives a TX descriptor the buffer address
+        run: python3 .github/scripts/test_smap_tx_base.py
       - name: Check local transport binding and iLink aliases cannot cross-wire devices
         run: python3 .github/scripts/test_bdm_transport_binding.py
       - name: Check BDM partition I/O bounds and sector-size refusal

@@ -540,9 +540,9 @@ translations:
   HINT_PLASCOLOR: Couleur mêlée au fond animé.
   HINT_RESETCOLOR: Rétablit les couleurs intégrées de RiptOPL, pas celles du thème.
   HINT_WIDESCREEN: Dessine le menu pour un téléviseur 16:9.
-  HINT_XOFF: Déplace le menu à gauche ou à droite de l'écran.
-  HINT_YOFF: Déplace le menu vers le haut ou le bas de l'écran.
-  HINT_MENU_OVERSCAN: Réduit le menu vers l'intérieur si le téléviseur en coupe les bords.
+  HINT_XOFF: "Déplace le menu à gauche ou à droite de l'écran. Conservé pour chaque mode vidéo."
+  HINT_YOFF: "Déplace le menu vers le haut ou le bas de l'écran. Conservé pour chaque mode vidéo."
+  HINT_MENU_OVERSCAN: "Réduit le menu vers l'intérieur si le téléviseur en coupe les bords. Conservé pour chaque mode vidéo."
   HINT_APPLYGAMEID: Affiche un code-barres au démarrage d'un jeu, pour que les appareils Pixel FX, RetroGEM et PS2Digital changent de profil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Le chemin, le mode vidéo et les arguments de Neutrino pour chaque jeu.
   HINT_OSD_DEFAULTS_BUTTON: Langue de la console, taille d'écran et mode vidéo transmis aux jeux.
@@ -654,3 +654,5 @@ translations:
   XERA_SET_CLOCK: Pas encore dans votre bibliothèque RetroAchievements. Réglez l'horloge de la console dans les paramètres système pour voir sa liste complète, ou jouez-y une fois avec les succès.
   THEME_VIEW: "Vue du thème"
   HINT_THEME_VIEW: "Comment le thème affiche vos jeux : List, Coverflow, PSBBN Flow ou Grid. Maintenez L3 sur la page principale pour changer. Les thèmes sans cette vue utilisent leur vue par défaut."
+  BOTH: Les deux
+  NET_READ_ONLY_VMC: "Ce serveur UDPBD/UDPFS est en lecture seule, aucune VMC ne peut donc y être utilisée. Le jeu sauvegarde sur la vraie carte mémoire."

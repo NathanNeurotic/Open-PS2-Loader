@@ -51,6 +51,7 @@ int sbCreateSemaphore(void);
 // inside subfolders. Pass fsize=NULL for ISO-only scanning: never probe ul.cfg and
 // do not write a UL-size cache value (used by UDPFS, whose Neutrino backend cannot launch UL).
 int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int *fsize, int *gamecount);
+extern int sbListCacheReadOnly; // set around sbReadList() for a read-only device: its games.bin is not written
 // errno of the last CD/DVD folder the latest sbReadList could not open (0 = both opened).
 int sbGetReadListError(void);
 // Folder browsing: set the active subpath the path composers inject (see sbBrowseSub in supportbase.c).
@@ -81,6 +82,9 @@ void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, 
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);
 void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id, char *newname);
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep);
+// As sbPopulateConfig, but the game's CFG is kept in cfgDir (ending in a separator) when cfgDir is set: the
+// game's device is read-only. With nothing saved there yet, the CFG on the device is read and saved to cfgDir.
+config_set_t *sbPopulateConfigIn(base_game_info_t *game, const char *prefix, const char *sep, const char *cfgDir);
 void sbResolvePs1Size(base_game_info_t *game, const char *ps1Root, config_set_t *config);
 // Gate for sbPopulateConfig's per-game size stat. OFF while scrolling the game list -- over SMB a
 // fresh stat() of an ISO can cost seconds, and the main page only needs the metadata-derived badges

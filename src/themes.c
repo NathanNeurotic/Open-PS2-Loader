@@ -2590,12 +2590,33 @@ static void drawBDMIndex(struct menu_list *menu, struct submenu_list *item, conf
     if (itemList->mode >= ETH_MODE || menu->item->visible == 0)
         return;
 
+    // Count the visible mass-device pages in menu order, and the position of this one among them. The
+    // dots counted slots: USB in slot 0 and UDPBD in slot 1 showed five dots, devices in slots 0 and 2
+    // gave the first none, and one device in slot 2 still showed "3 of 5" (belomaxorka / YAOPL f84b227d).
+    struct menu_list *cur = menu;
+    while (cur->prev)
+        cur = cur->prev;
+
+    int count = 0, pos = 0;
+    for (; cur; cur = cur->next) {
+        if (cur->item->visible && ((item_list_t *)cur->item->userdata)->mode < ETH_MODE) {
+            if (cur == menu)
+                pos = count;
+            count++;
+        }
+    }
+
     // Only render if multiple mass devices are connected
-    if (itemList->mode == 0 && menu->next->item->visible == 0)
+    if (count < 2)
         return;
 
     char imgName[32];
-    snprintf(imgName, sizeof(imgName), "Index_%d", itemList->mode);
+    if (count < 5 && !gTheme->bdmIndexFixed)
+        snprintf(imgName, sizeof(imgName), "Index%d_%d", count, pos);
+    else if (count == 5 && !gTheme->bdmIndexFixed)
+        snprintf(imgName, sizeof(imgName), "Index_%d", pos);
+    else // a theme that keeps its own five dots, or more devices than five dots: by slot, as before
+        snprintf(imgName, sizeof(imgName), "Index_%d", itemList->mode);
 
     GSTEXTURE *indexTex = thmGetTexture(texLookupInternalTexId(&imgName[0]));
     if (indexTex && indexTex->Mem)
@@ -4458,8 +4479,18 @@ static int thmLoad(const char *themePath)
     newT->loadingIconCount = i;
 
     // Customizable icons
-    for (i = BDM_ICON; i <= START_ICON; i++)
-        thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
+    int customIndex = 0, customIndexCount = 0;
+    for (i = BDM_ICON; i <= START_ICON; i++) {
+        if (thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault) >= 0 && i == INDEX_0)
+            customIndex = 1;
+    }
+    for (i = INDEX2_0; i <= INDEX4_3; i++) {
+        if (thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault) >= 0)
+            customIndexCount = 1;
+    }
+    // A theme with its own five-dot BdmIndex pictures but none for fewer devices keeps its five dots by
+    // slot, so its style is not mixed with the built-in dots (belomaxorka / YAOPL f84b227d).
+    newT->bdmIndexFixed = customIndex && !customIndexCount;
 
     // UDPFS_ICON is appended at the very END of the enum (after CASE_OVERLAY2) so that saved
     // favourite icon_ids stay ABI-stable -- which puts it OUTSIDE the BDM_ICON..START_ICON device

@@ -207,6 +207,10 @@ static void freeISOGameListCache(struct game_cache_list *cache)
     }
 }
 
+// Set while the list of a read-only device is read: its games.bin cache is not written, as the server would
+// drop it and every refresh would write it again (belomaxorka / YAOPL afe59be2).
+int sbListCacheReadOnly;
+
 static int updateISOGameList(const char *path, const struct game_cache_list *cache, const struct game_list_t *head, int count)
 {
     char filename[256];
@@ -214,6 +218,9 @@ static int updateISOGameList(const char *path, const struct game_cache_list *cac
     const struct game_list_t *game;
     int result, i, modified;
     base_game_info_t *list;
+
+    if (sbListCacheReadOnly)
+        return 0;
 
     modified = 0;
     if (cache != NULL) {
@@ -705,9 +712,8 @@ static int ProbeZISO(int fd)
         u32 first_block;
     } ziso_data;
     lseek(fd, 0, SEEK_SET);
-    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC) {
-        // initialize ZSO
-        ziso_init(&ziso_data.header, ziso_data.first_block);
+    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC &&
+        ziso_init(&ziso_data.header, ziso_data.first_block) == 0) { // a header it cannot read is no ZSO
         // set ISO file descriptor for ZSO reader
         probed_fd = fd;
         probed_lba = 0;
@@ -1288,6 +1294,11 @@ void sbResolvePs1Size(base_game_info_t *game, const char *ps1Root, config_set_t 
 
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep)
 {
+    return sbPopulateConfigIn(game, prefix, sep, NULL);
+}
+
+config_set_t *sbPopulateConfigIn(base_game_info_t *game, const char *prefix, const char *sep, const char *cfgDir)
+{
     char path[256];
     struct stat st;
 
@@ -1307,11 +1318,26 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     const int isPs1 = isVcd || cueIsCueEntry(game);
     const char *cfgKey = isPs1 ? game->name : game->startup;
 
-    snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
+    // cfgDir, if set, keeps the settings instead of the game's device, which is read-only (belomaxorka / YAOPL
+    // 7781959c): a save there would be acknowledged and dropped.
+    if (cfgDir != NULL)
+        snprintf(path, sizeof(path), "%s%s.cfg", cfgDir, cfgKey);
+    else
+        snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
     config_set_t *config = configAlloc(0, NULL, path);
     if (config == NULL)
         return NULL;
     int configLoaded = configRead(config); // Does not matter if the config file could be loaded or not.
+    if (!configLoaded && cfgDir != NULL) {
+        // Nothing saved in cfgDir yet: a CFG that a PC manager put on the device still applies, and the next
+        // save goes to cfgDir. The device is never written to.
+        char devicePath[256];
+
+        snprintf(devicePath, sizeof(devicePath), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
+        configMove(config, devicePath);
+        configLoaded = configRead(config);
+        configMove(config, path);
+    }
 
     // Compatibility only: filename remains the VCD identity, but an existing disc-ID config may be
     // loaded when the primary filename config is absent. Keep the primary object if both miss so a

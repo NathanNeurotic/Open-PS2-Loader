@@ -329,7 +329,7 @@ if page and '_STR_EMBER_480P_CONFIRM' not in page:
 
 # An Ember row's CFG is keyed by its full folder name: its startup is that name cut to 12 characters,
 # which made two "Crash Bandic..." games share one CFG, and a Favourites proxy has no startup at all.
-populate = function_text(read('src/supportbase.c'), 'src/supportbase.c', 'config_set_t *sbPopulateConfig(')
+populate = function_text(read('src/supportbase.c'), 'src/supportbase.c', 'config_set_t *sbPopulateConfigIn(')
 if populate and not re.search(r'isPs1\s*=\s*isVcd\s*\|\|\s*cueIsCueEntry\(game\)', populate):
     failures.append('src/supportbase.c: sbPopulateConfig does not treat an Ember row as PS1')
 if populate and 'cfgKey = isPs1 ? game->name : game->startup' not in populate:
@@ -337,11 +337,11 @@ if populate and 'cfgKey = isPs1 ? game->name : game->startup' not in populate:
 
 menusys_c = read('src/menusys.c')
 vcd_menu = function_text(menusys_c, 'src/menusys.c', 'void menuInitVcdMenu(')
-if vcd_menu and not re.search(r'if \(isEmber\)\s*submenuAppendItem\(&appMenu, -1, NULL, APP_EMBER_GAME_SETTINGS', vcd_menu):
+if vcd_menu and not re.search(r'if \(isEmber && !readOnly\)\s*submenuAppendItem\(&appMenu, -1, NULL, APP_EMBER_GAME_SETTINGS', vcd_menu):
     failures.append('src/menusys.c: Ember Game Settings is not offered only on Ember rows')
 if 'guiShowEmberGameSettings();' not in menusys_c:
     failures.append('src/menusys.c: APP_EMBER_GAME_SETTINGS does not open guiShowEmberGameSettings')
-if 'menuInitVcdMenu(kind == FAV_KIND_CUE);' not in read('src/opl.c'):
+if 'menuInitVcdMenu(kind == FAV_KIND_CUE, ' not in read('src/opl.c'):
     failures.append('src/opl.c: the PS1 Triangle menu is not told whether the row is an Ember row')
 
 game_page = function_text(gui_c, 'src/gui.c', 'void guiShowEmberGameSettings(')

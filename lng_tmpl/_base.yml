@@ -1548,11 +1548,11 @@ gui_strings:
 - label: HINT_WIDESCREEN
   string: "Draws the menu for a 16:9 TV."
 - label: HINT_XOFF
-  string: "Moves the menu left or right on screen."
+  string: "Moves the menu left or right on screen. Kept for each video mode."
 - label: HINT_YOFF
-  string: "Moves the menu up or down on screen."
+  string: "Moves the menu up or down on screen. Kept for each video mode."
 - label: HINT_MENU_OVERSCAN
-  string: "Shrinks the menu inward if the TV cuts off its edges."
+  string: "Shrinks the menu inward if the TV cuts off its edges. Kept for each video mode."
 - label: HINT_APPLYGAMEID
   string: "Shows a barcode as a game starts, so Pixel FX, RetroGEM and PS2Digital devices switch profiles."
 - label: HINT_NEUTRINO_DEFAULTS_BUTTON
@@ -2243,3 +2243,11 @@ gui_strings:
 - label: VMC_DEFRAGMENT_HINT
   comment: Shown after cancelling a fragmented native BDM VMC launch. Never suggest deleting the only copy.
   string: "Back up the VMC to a PC, remove it from the device, then copy it back. If it is still fragmented, free space and retry. Never delete your only copy."
+
+- comment: MMCE IGR boot card slot choice, after Off, 0 and 1. Both card slots.
+  label: BOTH
+  string: Both
+
+- label: NET_READ_ONLY_VMC
+  comment: Game menu VMC entry on a UDPBD/UDPFS IMG server that does not keep what is written. The game then uses the real memory card.
+  string: "This UDPBD/UDPFS server is read-only, so no VMC can be used on it. The game saves to the real memory card."

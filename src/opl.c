@@ -255,6 +255,84 @@ int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
 int gYOff;
 int gOverscan;
+
+// The screen position for each video mode, so 1080i and 480i each keep their own centring (RIPPS2 build 124,
+// akilluminati47). A mode never set takes the shared xoff/yoff/overscan, which are still written as the mode in
+// use's, so an older build reads what it always did.
+#define SCREEN_POS_MODES 16
+static int gPosX[SCREEN_POS_MODES], gPosY[SCREEN_POS_MODES], gPosOver[SCREEN_POS_MODES];
+static unsigned char gPosSet[SCREEN_POS_MODES];
+
+void screenPosStore(int vmode)
+{
+    if (vmode < 0 || vmode >= SCREEN_POS_MODES)
+        return;
+    gPosX[vmode] = gXOff;
+    gPosY[vmode] = gYOff;
+    gPosOver[vmode] = gOverscan;
+    gPosSet[vmode] = 1;
+}
+
+void screenPosRecall(int vmode)
+{
+    if (vmode < 0 || vmode >= SCREEN_POS_MODES || !gPosSet[vmode])
+        return; // never set for this mode: the current values carry over, as before
+    gXOff = gPosX[vmode];
+    gYOff = gPosY[vmode];
+    gOverscan = gPosOver[vmode];
+}
+
+// x, y and overscan are the position when the dialog opened. The mode left keeps it; the new mode brings back its
+// own unless the position was moved in the same dialog, which then goes with the new mode.
+void screenPosModeChanged(int oldMode, int x, int y, int overscan)
+{
+    int moved = gXOff != x || gYOff != y || gOverscan != overscan;
+
+    if (oldMode == gVMode)
+        return;
+    if (oldMode >= 0 && oldMode < SCREEN_POS_MODES) {
+        gPosX[oldMode] = x;
+        gPosY[oldMode] = y;
+        gPosOver[oldMode] = overscan;
+        gPosSet[oldMode] = 1;
+    }
+    if (!moved)
+        screenPosRecall(gVMode);
+}
+
+void screenPosLoad(config_set_t *configOPL)
+{
+    for (int m = 0; m < SCREEN_POS_MODES; m++) {
+        char kx[16], ky[16], ko[20];
+        snprintf(kx, sizeof(kx), "xoff_%d", m);
+        snprintf(ky, sizeof(ky), "yoff_%d", m);
+        snprintf(ko, sizeof(ko), "overscan_%d", m);
+        gPosSet[m] = configGetInt(configOPL, kx, &gPosX[m]) && configGetInt(configOPL, ky, &gPosY[m]) &&
+                     configGetInt(configOPL, ko, &gPosOver[m]);
+    }
+    screenPosRecall(gVMode);
+}
+
+void screenPosSave(config_set_t *configOPL)
+{
+    screenPosStore(gVMode); // the mode in use keeps what it shows now
+    for (int m = 0; m < SCREEN_POS_MODES; m++) {
+        char k[20];
+        if (!gPosSet[m])
+            continue;
+        snprintf(k, sizeof(k), "xoff_%d", m);
+        configSetInt(configOPL, k, gPosX[m]);
+        snprintf(k, sizeof(k), "yoff_%d", m);
+        configSetInt(configOPL, k, gPosY[m]);
+        snprintf(k, sizeof(k), "overscan_%d", m);
+        configSetInt(configOPL, k, gPosOver[m]);
+    }
+}
+
+void screenPosReset(void)
+{
+    memset(gPosSet, 0, sizeof(gPosSet));
+}
 int gSelectButton;
 int gHDDGameListCache;
 int gEnableSFX;
@@ -828,7 +906,8 @@ static void itemExecTriangle(struct menu_item *curMenu)
                 // The row names its core: a favourite by its stored kind, a device row by its extension.
                 int kind = (support->mode == FAV_MODE) ? favGetItemKind(curMenu->current->item.id) :
                                                          itemFavKind(support, curMenu->current->item.id, curMenu->current->item.text);
-                menuInitVcdMenu(kind == FAV_KIND_CUE);
+                int sourceMode = (support->mode == FAV_MODE) ? favGetItemSourceMode(curMenu->current->item.id) : support->mode;
+                menuInitVcdMenu(kind == FAV_KIND_CUE, bdmModeIsReadOnly(sourceMode));
                 guiSwitchScreen(GUI_SCREEN_APP_MENU);
             }
             return;
@@ -846,7 +925,8 @@ static void itemExecTriangle(struct menu_item *curMenu)
                 guiGameLoadConfig(support, configSet);
             }
         } else {
-            if (menuCheckParentalLock() == 0 && gEnableWrite) {
+            // The app menu has only Rename and Delete, which a read-only server would drop
+            if (menuCheckParentalLock() == 0 && gEnableWrite && !(support->mode == APP_MODE && appIsReadOnly(support, curMenu->current->item.id))) {
                 menuInitAppMenu();
                 guiSwitchScreen(GUI_SCREEN_APP_MENU);
             }
@@ -3460,6 +3540,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_XOFF, &gXOff);
             configGetInt(configOPL, CONFIG_OPL_YOFF, &gYOff);
             configGetInt(configOPL, CONFIG_OPL_OVERSCAN, &gOverscan);
+            screenPosLoad(configOPL); // this mode's own position, where one was saved (RIPPS2 build 124)
 
             configGetInt(configOPL, CONFIG_OPL_BDM_CACHE, &bdmCacheSize);
             configGetInt(configOPL, CONFIG_OPL_HDD_CACHE, &hddCacheSize);
@@ -4134,6 +4215,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
         configSetInt(configOPL, CONFIG_OPL_YOFF, gYOff);
         configSetInt(configOPL, CONFIG_OPL_OVERSCAN, gOverscan);
+        screenPosSave(configOPL); // each video mode's position (RIPPS2 build 124)
         configSetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, gEnableDebug);
         configSetInt(configOPL, CONFIG_OPL_PS2LOGO, gPS2Logo);
         configSetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, gAutoCreateVmc);
@@ -5257,6 +5339,7 @@ static void setDefaults(void)
     gXOff = 0;
     gYOff = 0;
     gOverscan = 0;
+    screenPosReset();
 
     setDefaultColors();
 
