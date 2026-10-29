@@ -1900,9 +1900,10 @@ struct UIItem diaAbout[] = {
 
     {UI_SPACER},
     // Preserve this non-scrolling dialog at 4:3 SD resolution: add belomaxorka
-    // without adding a row or increasing the label width. CREDITS and README
-    // explain the YAOPL, LUNA, PS2CF, and PSUManager contributions in full.
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"belomaxorka - darkladark - mihhru - techwritescode", -1}}},
+    // and Akilluminati47 (RIPPS2 partner) without adding a row or exceeding the
+    // widest coder row. CREDITS and README explain the RIPPS2, YAOPL, LUNA,
+    // PS2CF, and PSUManager contributions in full.
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47 - belomaxorka - darkladark - mihhru - techwritescode", -1}}},
     {UI_BREAK},
 
     // Quality Assurance
