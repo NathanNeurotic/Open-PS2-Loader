@@ -659,3 +659,4 @@ translations:
   THEME_VIEW: "Theme-Ansicht"
   HINT_THEME_VIEW: "Wie das Theme deine Spiele zeigt: List, Coverflow, PSBBN Flow oder Grid. L3 auf der Hauptseite gedrückt halten zum Wechseln. Themes ohne diese Ansicht nutzen ihre Standardansicht."
   BOTH: Beide
+  NET_READ_ONLY_VMC: "Dieser UDPBD/UDPFS-Server ist schreibgeschützt, daher kann darauf keine VMC genutzt werden. Das Spiel speichert auf der echten Memory Card."

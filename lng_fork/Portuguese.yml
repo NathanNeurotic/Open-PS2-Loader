@@ -650,3 +650,4 @@ translations:
   THEME_VIEW: "Vista do tema"
   HINT_THEME_VIEW: "Como o tema mostra os seus jogos: List, Coverflow, PSBBN Flow ou Grid. Mantenha L3 premido na página principal para mudar. Os temas sem essa vista usam a vista predefinida."
   BOTH: Ambos
+  NET_READ_ONLY_VMC: "Este servidor UDPBD/UDPFS é só de leitura, por isso não é possível usar um VMC nele. O jogo grava no cartão de memória real."

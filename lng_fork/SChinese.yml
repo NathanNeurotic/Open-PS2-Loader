@@ -648,3 +648,4 @@ translations:
   THEME_VIEW: "主题视图"
   HINT_THEME_VIEW: "主题显示游戏的方式：List, Coverflow, PSBBN Flow 或 Grid。在主页面长按 L3 切换。没有该视图的主题使用其默认视图。"
   BOTH: 两者
+  NET_READ_ONLY_VMC: "此 UDPBD/UDPFS 服务器为只读，因此无法在其上使用 VMC。游戏会存档到真实的记忆卡。"

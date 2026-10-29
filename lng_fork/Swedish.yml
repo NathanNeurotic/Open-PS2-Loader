@@ -668,3 +668,4 @@ translations:
   THEME_VIEW: "Temavy"
   HINT_THEME_VIEW: "Hur temat visar dina spel: List, Coverflow, PSBBN Flow eller Grid. Håll in L3 på huvudsidan för att byta. Teman utan den vyn använder sin standardvy."
   BOTH: Båda
+  NET_READ_ONLY_VMC: "Den här UDPBD/UDPFS-servern är skrivskyddad, så inget VMC kan användas på den. Spelet sparar på det riktiga minneskortet."

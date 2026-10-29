@@ -668,3 +668,4 @@ translations:
   THEME_VIEW: "Prikaz teme"
   HINT_THEME_VIEW: "Kako tema prikazuje vaše igre: List, Coverflow, PSBBN Flow ili Grid. Držite L3 na glavnoj stranici za promjenu. Teme bez tog izgleda koriste svoj zadani prikaz."
   BOTH: Oba
+  NET_READ_ONLY_VMC: "Ovaj UDPBD/UDPFS poslužitelj je samo za čitanje, pa se na njemu ne može koristiti VMC. Igra sprema na pravu memorijsku karticu."

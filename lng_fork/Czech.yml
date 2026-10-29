@@ -646,3 +646,4 @@ translations:
   THEME_VIEW: "Zobrazení motivu"
   HINT_THEME_VIEW: "Jak motiv zobrazuje vaše hry: List, Coverflow, PSBBN Flow nebo Grid. Přepnete podržením L3 na hlavní stránce. Motivy bez tohoto vzhledu použijí své výchozí zobrazení."
   BOTH: Oba
+  NET_READ_ONLY_VMC: "Tento server UDPBD/UDPFS je jen pro čtení, takže na něm nelze použít VMC. Hra ukládá na skutečnou paměťovou kartu."

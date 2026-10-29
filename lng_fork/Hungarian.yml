@@ -657,3 +657,4 @@ translations:
   THEME_VIEW: "Téma nézete"
   HINT_THEME_VIEW: "Hogyan jeleníti meg a téma a játékaidat: List, Coverflow, PSBBN Flow vagy Grid. Váltáshoz tartsd lenyomva az L3-at a főoldalon. Az ilyen nézet nélküli témák az alapértelmezett nézetüket használják."
   BOTH: Mindkettő
+  NET_READ_ONLY_VMC: "Ez az UDPBD/UDPFS szerver csak olvasható, ezért VMC nem használható rajta. A játék a valódi memóriakártyára ment."

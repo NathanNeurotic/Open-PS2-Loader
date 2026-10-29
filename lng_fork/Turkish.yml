@@ -652,3 +652,4 @@ translations:
   THEME_VIEW: "Tema görünümü"
   HINT_THEME_VIEW: "Temanın oyunlarınızı gösterme biçimi: List, Coverflow, PSBBN Flow veya Grid. Değiştirmek için ana sayfada L3'e basılı tutun. Bu görünümü olmayan temalar varsayılan görünümlerini kullanır."
   BOTH: Her ikisi
+  NET_READ_ONLY_VMC: "Bu UDPBD/UDPFS sunucusu salt okunur, bu yüzden üzerinde VMC kullanılamaz. Oyun gerçek hafıza kartına kaydeder."

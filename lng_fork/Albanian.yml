@@ -670,3 +670,4 @@ translations:
   THEME_VIEW: "Pamja e temës"
   HINT_THEME_VIEW: "Si i shfaq tema lojërat: List, Coverflow, PSBBN Flow ose Grid. Mbaj L3 në faqen kryesore për të ndërruar. Temat pa atë pamje përdorin pamjen e tyre të paracaktuar."
   BOTH: Të dyja
+  NET_READ_ONLY_VMC: "Ky server UDPBD/UDPFS është vetëm për lexim, prandaj nuk mund të përdoret një VMC në të. Loja ruan në kartën e vërtetë të kujtesës."

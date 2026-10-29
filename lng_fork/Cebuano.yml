@@ -676,3 +676,4 @@ translations:
   THEME_VIEW: "Hitsura sa Tema"
   HINT_THEME_VIEW: "Giunsa pagpakita sa tema ang imong mga dula: List, Coverflow, PSBBN Flow o Grid. Pugngi ang L3 sa main page aron mobalhin. Ang mga tema nga walay ingon niana nga hitsura mogamit sa ilang default."
   BOTH: Pareho
+  NET_READ_ONLY_VMC: "Kining UDPBD/UDPFS server pang-basa lang, busa dili magamit ang VMC niini. Ang dula mag-save sa tinuod nga memory card."

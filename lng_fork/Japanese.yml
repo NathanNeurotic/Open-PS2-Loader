@@ -647,3 +647,4 @@ translations:
   THEME_VIEW: "テーマビュー"
   HINT_THEME_VIEW: "テーマでのゲームの表示方法: List, Coverflow, PSBBN Flow、Grid。メインページでL3を長押しすると切り替わります。その表示がないテーマは既定の表示を使います。"
   BOTH: 両方
+  NET_READ_ONLY_VMC: "このUDPBD/UDPFSサーバーは読み取り専用のため、VMCは使えません。ゲームは本物のメモリーカードにセーブします。"
