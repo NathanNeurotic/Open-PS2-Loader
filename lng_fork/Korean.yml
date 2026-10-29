@@ -532,7 +532,7 @@ translations:
   HINT_BDMCACHE: 게임 중 USB 및 다른 BDM 드라이브의 미리 읽기 캐시. 클수록 스트리밍이 부드러워질 수 있지만 메모리를 더 씁니다.
   HINT_HDDCACHE: 게임 중 내장 HDD의 미리 읽기 캐시.
   HINT_SMBCACHE: 게임 중 SMB의 미리 읽기 캐시.
-  HINT_CORE_LOADER: 둘 다 지원할 때 이 게임에 쓸 코어. UDPFS Files는 Neutrino 전용, SMB/HTTP는 <OPL> 전용입니다. 기본값은 게임 실행 설정을 따릅니다. UDPBD/UDPFS IMG에서는 기본값이 Neutrino입니다.
+  HINT_CORE_LOADER: 둘 다 지원할 때 이 게임에 쓸 코어. SMB/HTTP는 <OPL> 전용입니다. 기본값은 게임 실행 설정을 따릅니다. UDPFS/UDPBD에서는 기본값이 Neutrino입니다.
   HINT_DMA_MODE: 이 게임의 내장 HDD 전송 모드. 게임이 끊기거나 멈추면 낮추세요.
   HINT_DNAS_GAMEID: DNAS 온라인 게임의 디스크 ID. 디스크에서 불러오기는 원본 디스크에서 읽습니다.
   HINT_LOAD_FROM_DISC: 드라이브에 있는 원본 디스크에서 DNAS ID를 읽습니다.

@@ -128,7 +128,8 @@ int bdmEnsureTypedSource(int bdmType, u32 timeoutMs);
 // reboot while the loaded IRX cannot.
 int bdmGetLoadedNetProtocol(void);
 int bdmSupportIsUDPBD(const item_list_t *support); // 1 if this support is the UDPBD block device (UDPBD or UDPFS block)
-// Core of a game on that device: 1 = Neutrino (its default), 0 = the OPL core (only its own <OPL> key).
+// Core of a UDPBD / UDPFS game (block device, or UDPFS Files): 1 = Neutrino (its default), 0 = the OPL
+// core (only its own <OPL> key).
 int bdmNetBlockCoreLoader(config_set_t *configSet);
 #ifdef RETROACHIEVEMENTS
 int bdmModeIsUSB(int mode);

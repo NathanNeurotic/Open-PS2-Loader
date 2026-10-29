@@ -2500,9 +2500,8 @@ static int gameMenuCoreIsNeutrino(void)
             int sourceMode = support->mode == FAV_MODE ? (selected_item->item->current != NULL ? favGetItemSourceMode(selected_item->item->current->item.id) : -1) : support->mode;
             if (menuSelectedRowView(support) == LIB_VIEW_PS1 || sourceMode == ETH_MODE || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
                 return 0;
-            if (sourceMode == UDPFS_MODE)
-                return 1; // UDPFS Files: no OPL core backend
-            if (bdmModeIsUDPBD(sourceMode))
+            // UDPFS (Files and IMG) and UDPBD are Neutrino unless the game's own key says <OPL>.
+            if (sourceMode == UDPFS_MODE || bdmModeIsUDPBD(sourceMode))
                 return bdmNetBlockCoreLoader(itemConfig);
         }
     }

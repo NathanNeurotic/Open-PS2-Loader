@@ -537,7 +537,7 @@ translations:
   HINT_BDMCACHE: Oyun içinde USB ve diğer BDM sürücüleri için önden okuma önbelleği. Daha büyüğü akışı düzgünleştirebilir ama daha fazla bellek kullanır.
   HINT_HDDCACHE: Oyun içinde dahili HDD için önden okuma önbelleği.
   HINT_SMBCACHE: Oyun içinde SMB için önden okuma önbelleği.
-  HINT_CORE_LOADER: İkisinin de desteklendiği yerde bu oyunun çekirdeği. UDPFS Files yalnızca Neutrino; SMB/HTTP yalnızca <OPL>. Varsayılan, Oyun Başlatma'yı izler. UDPBD/UDPFS IMG'de Varsayılan Neutrino'dur.
+  HINT_CORE_LOADER: İkisinin de desteklendiği yerde bu oyunun çekirdeği. SMB/HTTP yalnızca <OPL>. Varsayılan, Oyun Başlatma'yı izler. UDPFS/UDPBD'de Varsayılan Neutrino'dur.
   HINT_DMA_MODE: Bu oyun için dahili HDD aktarım modu. Oyun takılır veya donarsa düşürün.
   HINT_DNAS_GAMEID: DNAS çevrimiçi oyunları için disk kimliği. Diskten Yükle onu orijinal diskten okur.
   HINT_LOAD_FROM_DISC: DNAS kimliğini sürücüdeki orijinal diskten okur.

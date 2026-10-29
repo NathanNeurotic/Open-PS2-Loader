@@ -229,18 +229,18 @@ static int guiGameVMCUpdater(int modified)
 
 static int guiGameResolveEffectiveCore(config_set_t *configSet, item_list_t *support, int id)
 {
-    int core = gDefaultCoreLoader;
+    int key = 2; // the game's own $CoreLoader; 2 = none, follow the global
+    int core;
     int sourceMode = support == NULL           ? -1 :
                      support->mode == FAV_MODE ? favGetItemSourceMode(id) :
                                                  support->mode;
     if (configSet != NULL)
-        configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &core);
-    if (core == 2)
-        core = gDefaultCoreLoader;
-    if (sourceMode == UDPFS_MODE)
-        core = 1;
-    else if (bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
-        core = bdmNetBlockCoreLoader(configSet);
+        configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &key);
+    core = key == 2 ? gDefaultCoreLoader : key;
+    // UDPFS (Files and IMG) and UDPBD: Neutrino unless the game's own key says <OPL>, whatever the
+    // global is (bdmNetBlockCoreLoader's rule).
+    if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
+        core = key == 0 ? 0 : 1;
     else if (sourceMode == ETH_MODE || bdmModeIsPCCF(sourceMode) || (support != NULL && libListRowView(support, id) == LIB_VIEW_PS1))
         core = 0;
     return core;
@@ -608,12 +608,10 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (coreLoader == 2)
         coreLoader = gDefaultCoreLoader;
-    // Some sources launch one way whatever the settings say (as the compatibility dialog shows):
-    // UDPFS Files only through Neutrino, SMB only through the native core. UDPBD defaults to
-    // Neutrino and takes the native core only from its own <OPL> key.
-    if (sourceMode == UDPFS_MODE)
-        coreLoader = 1;
-    else if (bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
+    // Some sources launch one way whatever the settings say (as the compatibility dialog shows): SMB
+    // only through the native core. UDPFS (Files and IMG) and UDPBD default to Neutrino and take the
+    // native core only from their own <OPL> key.
+    if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
         coreLoader = bdmNetBlockCoreLoader(configSet);
     else if (sourceMode == ETH_MODE)
         coreLoader = 0;
@@ -1495,8 +1493,8 @@ static int bsdfsDeviceCapable = 1;
 // row greyed for a VCD game even when the global default core is Neutrino (the locked "Default" row
 // would otherwise resolve to the global and un-grey them).
 static int coreNeverNeutrino = 0;
-// UDPBD (UDPBD and UDPFS block) games: the Loader row's "Default" means Neutrino, whatever the global
-// core is (bdmNetBlockCoreLoader). Set once per dialog entry, like coreNeverNeutrino.
+// UDPFS (Files and block) and UDPBD games: the Loader row's "Default" means Neutrino, whatever the
+// global core is (bdmNetBlockCoreLoader). Set once per dialog entry, like coreNeverNeutrino.
 static int coreDefaultNeutrino = 0;
 // The core whose title defaults filled the compatibility checkboxes in guiGameLoadConfig. Saving compares
 // against that core's defaults: the Loader row can change afterwards without refilling the checkboxes (#1072).
@@ -1564,12 +1562,10 @@ static int guiGameDialogCoreIsNeutrino(item_list_t *support, int neverNeutrino)
 
     if (neverNeutrino)
         return 0;
-    // UDPFS Files always boots Neutrino, whatever the Loader row says before the dialog locks it.
-    if (support != NULL && support->mode == UDPFS_MODE)
-        return 1;
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreChoice);
-    // UDPBD: "Default" means Neutrino there, whatever the global core is (bdmNetBlockCoreLoader).
-    if (bdmSupportIsUDPBD(support))
+    // UDPFS (Files and IMG) and UDPBD: "Default" means Neutrino there, whatever the global core is
+    // (bdmNetBlockCoreLoader).
+    if (support != NULL && (support->mode == UDPFS_MODE || bdmSupportIsUDPBD(support)))
         return coreChoice != 0;
     return (coreChoice == 1) || (coreChoice == 2 && gDefaultCoreLoader == 1);
 }
@@ -1670,11 +1666,10 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // CF is also native-core only: external Neutrino cannot restore the CF bus.
     coreNeverNeutrino = (support != NULL && ((libViewActive(support->mode) == LIB_VIEW_PS1) || support->mode == ETH_MODE || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode)));
 
-    // UDPFS Files has no OPL core backend -- it always launches via Neutrino, so its selector is locked
-    // to Neutrino (sourceMode also catches a Favourite that points back to it). The UDP block device
-    // (UDPBD and UDPFS block: bdmSupportIsUDPBD for its page, bdmModeIsUDPBD for a Favourite of it)
-    // boots either core; its selector stays open and its "Default" row means Neutrino.
-    coreDefaultNeutrino = bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode);
+    // UDPFS (Files: UDPFS_MODE, also for a Favourite that points back to it) and the UDP block device
+    // (UDPBD and UDPFS block: bdmSupportIsUDPBD for its page, bdmModeIsUDPBD for a Favourite of it) boot
+    // either core; their selector stays open and its "Default" row means Neutrino.
+    coreDefaultNeutrino = sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode);
     if (support != NULL && (libViewActive(support->mode) == LIB_VIEW_PS1)) {
         // VCD (PS1) games launch ONLY via POPSTARTER -- neither OPL's core nor Neutrino is used, so the
         // Loader Core choice is meaningless. Pin it to the inert "Default" row (index 2 -> no per-game
@@ -1688,9 +1683,6 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
         // removes any stale $CoreLoader key, self-healing old Neutrino selections) and lock it. Launch-time
         // honesty for keys set elsewhere (e.g. via Favourites) is the toast in ethLaunchGame.
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 2);
-        diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
-    } else if (sourceMode == UDPFS_MODE) {
-        diaSetInt(diaCompatConfig, COMPAT_LOADER, 1);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
     } else {
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 1);

@@ -54,6 +54,9 @@
 #elif MMCE_DRIVER
 #define CDVDMAN_SETTINGS_TYPE cdvdman_settings_mmce
 #define CDVDMAN_SETTINGS_DEFAULT_DEVICE_SETTINGS
+#elif UDPFS_DRIVER
+#define CDVDMAN_SETTINGS_TYPE cdvdman_settings_udpfs
+#define CDVDMAN_SETTINGS_DEFAULT_DEVICE_SETTINGS
 #else
 #error Unknown driver type. Please check the Makefile.
 #endif

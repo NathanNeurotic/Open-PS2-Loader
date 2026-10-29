@@ -1,0 +1,24 @@
+In-game UDPFS reader for OPL-core UDPFS Files games. Adapted from rickgaiser/neutrino
+(https://github.com/rickgaiser/neutrino) iop/udpfs/src/udpfs_fhi.c (built UDPFS_FHI=1 upstream),
+with the transport shared with udpfs_ioman and udpfs_bd (../udpfs_shared, pinned with them to
+06188cce7cd07d2a158cb4b2646c5719fc16a565; see ../udpfs_bd/ORIGIN.txt for provenance and local changes).
+
+Load chain after the game's IOP reset (EE core, UDPFS_MODE):
+  udpfs_smap -> udpfs_ministack (ip=) -> udpfs_fhi
+dev9 comes from udpfs_cdvdman, which also fakes the game's own SMAP.
+
+The menu opens the ISO on udpfs_ioman, keeps it open across the reset, and hands the server handle
+(ioctl2 0x80) to cdvdman in struct cdvdman_settings_udpfs. cdvdman (device-udpfs.c) finds this
+module's "udpfsfhi" export library with getModInfo and reads 2048-byte sectors as four 512-byte
+BREAD sectors of that handle. udpfsd keeps a peer's open handles when the peer re-discovers it
+(udpfs/connection.go ResetPeer; peers time out after 1 hour of silence by default).
+
+LOCAL CHANGES vs upstream udpfs_fhi.c:
+  - The handle is a call argument, not a MODULE_SETTINGS_MAGIC struct filled by Neutrino's loader.
+  - Export library "udpfsfhi" ([4] udpfs_fhi_read, [5] udpfs_fhi_connected) instead of "fhi"
+    (fhi_size/fhi_read/fhi_write), so it never answers for Neutrino's interface. No write export:
+    cdvdman only reads the disc image.
+  - Lazy-connect watchdog (the udpfs_bd pattern): one attempt at module start, then a thread that
+    re-discovers the server whenever the session is down, under the same lock as reads.
+  - MODNAME "UDPFS_FHI". The src/*.h headers and imports.lst are byte-identical copies of
+    ../udpfs_bd/src (test_udpfs_shared_transport.py checks the headers).

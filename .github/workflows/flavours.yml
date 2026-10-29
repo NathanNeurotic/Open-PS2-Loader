@@ -248,6 +248,8 @@ jobs:
         run: python3 .github/scripts/test_title_compat_defaults.py
       - name: Check UDPBD and UDPFS IMG games boot the OPL core on their own <OPL> key
         run: python3 .github/scripts/test_netblock_oplcore.py
+      - name: Check UDPFS Files games boot the OPL core, with VMC saves, on their own <OPL> key
+        run: python3 .github/scripts/test_udpfs_files_oplcore.py
       - name: Check menu rumble is off by default
         run: python3 .github/scripts/test_rumble_default.py
       - name: Check network-share art bypasses the directory index

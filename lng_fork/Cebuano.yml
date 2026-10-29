@@ -559,7 +559,7 @@ translations:
   HINT_BDMCACHE: Read-ahead cache alang sa USB ug ubang BDM drive samtang nagdula. Ang mas dako makapahapsay sa streaming apan mogamit og mas daghang memory.
   HINT_HDDCACHE: Read-ahead cache alang sa internal HDD samtang nagdula.
   HINT_SMBCACHE: Read-ahead cache alang sa SMB samtang nagdula.
-  HINT_CORE_LOADER: Core alang niining dula kung asa suportado ang duha. Neutrino ra ang UDPFS Files; <OPL> ra ang SMB/HTTP. Gisundan sa Default ang Game Launching. Sa UDPBD/UDPFS IMG, Neutrino ang Default.
+  HINT_CORE_LOADER: Core alang niining dula kung asa suportado ang duha. <OPL> ra ang SMB/HTTP. Gisundan sa Default ang Game Launching. Sa UDPFS/UDPBD, Neutrino ang Default.
   HINT_DMA_MODE: Transfer mode sa internal HDD alang niining dula. Paubsa kini kung mag-utal o mo-freeze ang dula.
   HINT_DNAS_GAMEID: Disc ID alang sa DNAS online nga dula. Basahon kini sa Load From Disc gikan sa orihinal nga disc.
   HINT_LOAD_FROM_DISC: Basahon ang DNAS ID gikan sa orihinal nga disc sa drive.

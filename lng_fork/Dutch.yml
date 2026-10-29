@@ -596,7 +596,7 @@ translations:
   HINT_BDMCACHE: Vooruitleescache voor USB en andere BDM-schijven in de game. Groter kan streaming soepeler maken, maar gebruikt meer geheugen.
   HINT_HDDCACHE: Vooruitleescache voor de interne HDD in de game.
   HINT_SMBCACHE: Vooruitleescache voor SMB in de game.
-  HINT_CORE_LOADER: Kern voor deze game waar beide worden ondersteund. UDPFS Files zijn alleen Neutrino; SMB/HTTP zijn alleen <OPL>. Standaard volgt Games starten. Op UDPBD/UDPFS IMG is Standaard Neutrino.
+  HINT_CORE_LOADER: Kern voor deze game waar beide worden ondersteund. SMB/HTTP zijn alleen <OPL>. Standaard volgt Games starten. Op UDPFS/UDPBD is Standaard Neutrino.
   HINT_DMA_MODE: Overdrachtsmodus van de interne HDD voor deze game. Verlaag hem als de game hapert of vastloopt.
   HINT_DNAS_GAMEID: Schijf-ID voor DNAS-onlinegames. Laden van schijf leest het van de originele schijf.
   HINT_LOAD_FROM_DISC: Leest het DNAS-ID van de originele schijf in de lade.

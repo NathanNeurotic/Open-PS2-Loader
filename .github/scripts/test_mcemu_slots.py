@@ -109,6 +109,14 @@ for leg, image, cache, fn in (('src/bdmsupport.c', 'bdm_mcemu_irx', 'bdmMcemuSlo
                      r'memcpy\(&\(\(u32 \*\)&%s\)\[slotWord\]' % (image, image), launch):
         failures.append('%s: write the slot only where it was found, loading mcemu only for an active card' % leg)
 
+udpfs_body = text('src/udpfssupport.c')
+udpfs = function(udpfs_body, 'static void udpfsLaunchOplCore(')
+if udpfs.count('sbMcemuSlotWord(&udpfs_mcemu_irx, size_udpfs_mcemu_irx, vmc_id, udpfsMcemuSlots)') != 1 \
+        or 'static int udpfsMcemuSlots[2] = {-2, -2};' not in udpfs_body or '0xC0DEFAC0' in udpfs \
+        or not re.search(r'if \(slotWord >= 0\) \{\s*if \(vmc_infos\[vmc_id\]\.active\)\s*size_mcemu_irx = size_udpfs_mcemu_irx;\s*'
+                         r'memcpy\(&\(\(u32 \*\)&udpfs_mcemu_irx\)\[slotWord\]', udpfs):
+    failures.append('udpfssupport.c: the UDPFS OPL core leg must use the cached, bounded slot like the other legs')
+
 hdd = function(text('src/hddsupport.c'), 'void hddLaunchGame(')
 loop = hdd[hdd.index('for (vmc_id = 0; vmc_id < 2; vmc_id++) {'):]
 if not (0 <= loop.find('} else\n                hdd_vmc_infos.active = 0;') < loop.find('int slotWord = sbMcemuSlotWord(&hdd_mcemu_irx')):
@@ -117,4 +125,4 @@ if not (0 <= loop.find('} else\n                hdd_vmc_infos.active = 0;') < lo
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('mcemu VMC slots: found once, kept after the marker is overwritten, bounded; all four legs use them')
+print('mcemu VMC slots: found once, kept after the marker is overwritten, bounded; all five legs use them')

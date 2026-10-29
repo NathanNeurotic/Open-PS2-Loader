@@ -86,7 +86,8 @@ if picker:
         elif subprocess.run([str(exe)]).returncode != 0:
             failures.append('bdmNetBlockCoreLoader: wrong core for a config state')
 
-# 2. Every place that resolves the core of a udp game uses the picker, and UDPFS Files stays Neutrino.
+# 2. Every place that resolves the core of a udp game uses the picker (UDPFS Files too, since its OPL
+# core leg; test_udpfs_files_oplcore.py checks that leg).
 neutrino = function(bdm, 'static int bdmTryNeutrinoLaunch(', 'src/bdmsupport.c')
 check('if (isUdp)\n        coreLoader = bdmNetBlockCoreLoader(configSet);' in neutrino,
       'bdmTryNeutrinoLaunch: the udp device must take its core from bdmNetBlockCoreLoader')
@@ -98,8 +99,10 @@ check('_STR_NET_NEEDS_NEUTRINO' not in neutrino,
       'bdmTryNeutrinoLaunch: udp games are no longer Neutrino-only')
 check(menusys.count('bdmNetBlockCoreLoader(itemConfig)') == 2,
       'gameMenuCoreIsNeutrino: both udp branches (Favourites and direct) use the picker')
-check(guigame.count('bdmNetBlockCoreLoader(configSet)') == 2,
-      'guigame.c: effective core and auto-VMC core both use the picker for udp')
+check(guigame.count('bdmNetBlockCoreLoader(configSet)') == 1,
+      'guigame.c: the auto-VMC core uses the picker for udp')
+check('if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))\n        core = key == 0 ? 0 : 1;' in guigame,
+      'guigame.c: the effective core applies the picker\'s rule to whichever config it read')
 
 # 3. The native launch: the udp CDVDMAN variant, DEV9/SMAP faked, the mode chosen from the resident chain.
 check('irx = &bdm_udp_cdvdman_irx;' in bdm and 'irx_size = size_bdm_udp_cdvdman_irx;' in bdm,
@@ -136,19 +139,19 @@ for mode in ('BDM_UDP_MODE', 'BDM_UFS_MODE'):
     check('!_strncmp(config->GameModeDesc, "%s", 12))\n        config->GameMode = %s;' % (mode, mode) in main_c,
           'ee_core main.c: %s is parsed' % mode)
 check(re.search(r'OPL_MODULE_ID_PCCF = 60,\n(?:\s*//[^\n]*\n|\s*\n)*\s*OPL_MODULE_ID_SMAP_UDPBD,\n\s*OPL_MODULE_ID_UDPFS_SMAP,\n'
-                r'\s*OPL_MODULE_ID_UDPFS_MINISTACK,\n\s*OPL_MODULE_ID_UDPFS_BD,\n\s*OPL_MODULE_ID_COUNT', modules_h) is not None,
+                r'\s*OPL_MODULE_ID_UDPFS_MINISTACK,\n\s*OPL_MODULE_ID_UDPFS_BD,\n\s*OPL_MODULE_ID_UDPFS_FHI,[^\n]*\n\s*OPL_MODULE_ID_COUNT', modules_h) is not None,
       'modules.h: the network block IDs are appended after PCCF')
 case = iopmgr[iopmgr.find('case BDM_UDP_MODE:'):]
 case = case[:case.find('break;') + 6]
-check('case BDM_UFS_MODE: {' in case and '_strcpy(&ipArg[3], config->g_ps2_ip);' in case,
+check('case BDM_UFS_MODE:\n        case UDPFS_FILE_MODE: {' in case and '_strcpy(&ipArg[3], config->g_ps2_ip);' in case,
       'iopmgr.c: both modes pass ip=<static PS2 IP>')
 check('LoadOPLModule(OPL_MODULE_ID_SMAP_UDPBD, 0, strlen(ipArg) + 1, ipArg);' in case,
       'iopmgr.c: UDPBD reloads smap_udpbd with its IP')
 smap = case.find('LoadOPLModule(OPL_MODULE_ID_UDPFS_SMAP, 0, 0, NULL) > 0')
 stack = case.find('LoadOPLModule(OPL_MODULE_ID_UDPFS_MINISTACK, 0, strlen(ipArg) + 1, ipArg) > 0')
-bd = case.find('LoadOPLModule(OPL_MODULE_ID_UDPFS_BD, 0, 0, NULL);')
+bd = case.find('LoadOPLModule(config->GameMode == UDPFS_FILE_MODE ? OPL_MODULE_ID_UDPFS_FHI : OPL_MODULE_ID_UDPFS_BD, 0, 0, NULL);')
 check(0 <= smap < stack < bd, 'iopmgr.c: UDPFS reloads smap, then ministack (with IP), then udpfs_bd, each after the one before')
-check('config->GameMode != BDM_UDP_MODE &&\n        config->GameMode != BDM_UFS_MODE && RA_TelemetryWanted(config)' in iopmgr,
+check('config->GameMode != BDM_UDP_MODE &&\n        config->GameMode != BDM_UFS_MODE && config->GameMode != UDPFS_FILE_MODE && RA_TelemetryWanted(config)' in iopmgr,
       'iopmgr.c: no RA SMAP/SMSTCPIP beside the block driver')
 
 modmgr = read('ee_core/src/modmgr.c')
@@ -163,7 +166,7 @@ check(modmgr.count('RequiredTransportFailed();') == 3,
 
 # 6. The menu packs the right modules and nothing else that would take the adapter.
 check('static int sysModeIsNetBlock(const char *mode_str)' in system and
-      'return !strcmp(mode_str, "BDM_UDP_MODE") || !strcmp(mode_str, "BDM_UFS_MODE");' in system,
+      'return !strcmp(mode_str, "BDM_UDP_MODE") || !strcmp(mode_str, "BDM_UFS_MODE") || !strcmp(mode_str, "UDPFS_MODE");' in system,
       'system.c: both net-block modes are recognised')
 check('modules &= ~(CORE_IRX_ETH | CORE_IRX_SMB | CORE_IRX_DECI2);' in system,
       'system.c: sendIrxKernelRAM never packs a second SMAP stack for net-block modes')

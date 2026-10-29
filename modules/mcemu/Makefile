@@ -28,6 +28,13 @@ IOP_OBJS += device-mmce.o
 IOP_CFLAGS += -DMMCE_DRIVER
 endif
 
+ifeq ($(USE_UDPFS),1)
+IOP_BIN  = udpfs_mcemu.irx
+IOP_OBJS_DIR = obj.udpfs/
+IOP_OBJS += device-udpfs.o
+IOP_CFLAGS += -DUDPFS_DRIVER
+endif
+
 ifeq ($(IOPCORE_DEBUG),1)
 IOP_CFLAGS += -DDEBUG
 endif

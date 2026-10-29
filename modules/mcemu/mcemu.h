@@ -118,8 +118,8 @@ typedef struct _McImageSpec
     u16 fid;        /* SMB Vmc file id */
 #endif
 
-#ifdef MMCE_DRIVER
-    int fd; /* fd used with MMCE */
+#if defined(MMCE_DRIVER) || defined(UDPFS_DRIVER)
+    int fd; /* fd used with MMCE; the server's handle for the VMC with UDPFS */
 #endif
 
     int flags;    /* Memory Card Flags */

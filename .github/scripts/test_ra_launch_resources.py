@@ -54,6 +54,7 @@ harness = r"""
 #define OPL_MODULE_ID_UDPFS_SMAP 62
 #define OPL_MODULE_ID_UDPFS_MINISTACK 63
 #define OPL_MODULE_ID_UDPFS_BD 64
+#define OPL_MODULE_ID_UDPFS_FHI 65
 #define MODMGR 0
 #define BGCOLND(...) ((void)0)
 #define DBGCOL(...) ((void)0)

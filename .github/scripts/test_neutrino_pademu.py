@@ -106,9 +106,8 @@ int main(void) {
                             view=0;
                             int expected=choice<0 ? defaultCore : choice;
                             if (mode==ETH_MODE || mode==HTTP_MODE || (mode==BDM_MODE && pccf)) expected=0;
-                            if (mode==UDPFS_MODE) expected=1;
-                            /* UDPBD defaults to Neutrino; only its own <OPL> key picks the OPL core */
-                            if (mode==BDM_MODE && udpbd) expected=choice!=0;
+                            /* UDPFS and UDPBD default to Neutrino; only their own <OPL> key picks the OPL core */
+                            if (mode==UDPFS_MODE || (mode==BDM_MODE && udpbd)) expected=choice!=0;
                             assert(gameMenuCoreIsNeutrino()==expected);
                             view=LIB_VIEW_PS1; assert(gameMenuCoreIsNeutrino()==0);
                         }

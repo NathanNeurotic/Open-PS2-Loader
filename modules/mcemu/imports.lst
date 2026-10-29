@@ -26,6 +26,10 @@ I_bdm_writeSector
 I_mmce_read_offset
 I_mmce_write_offset
 #endif
+#ifdef UDPFS_DRIVER
+I_udpfs_vmc_read
+I_udpfs_vmc_write
+#endif
 #ifdef HDD_DRIVER
 I_sceAtaDmaTransfer
 #endif
