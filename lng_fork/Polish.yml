@@ -653,3 +653,4 @@ translations:
   HINT_ENABLE_DVR: Eksperymentalne wykrywanie ISO DESR DVR. Wymaga włączonego źródła HDD; uruchamianie gier wymaga zewnętrznego Neutrino z obsługą DVR.
   THEME_VIEW: "Widok motywu"
   HINT_THEME_VIEW: "Jak motyw pokazuje twoje gry: List, Coverflow, PSBBN Flow lub Grid. Przytrzymaj L3 na stronie głównej, aby przełączyć. Motywy bez tego widoku używają swojego widoku domyślnego."
+  BOTH: Oba

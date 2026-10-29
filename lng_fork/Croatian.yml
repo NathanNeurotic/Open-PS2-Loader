@@ -667,3 +667,4 @@ translations:
   HINT_ENABLE_DVR: Eksperimentalno otkrivanje DESR DVR ISO datoteka. Zahtijeva uključen HDD izvor; pokretanje igre zahtijeva vanjski Neutrino koji podržava DVR.
   THEME_VIEW: "Prikaz teme"
   HINT_THEME_VIEW: "Kako tema prikazuje vaše igre: List, Coverflow, PSBBN Flow ili Grid. Držite L3 na glavnoj stranici za promjenu. Teme bez tog izgleda koriste svoj zadani prikaz."
+  BOTH: Oba

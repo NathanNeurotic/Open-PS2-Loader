@@ -2243,3 +2243,7 @@ gui_strings:
 - label: VMC_DEFRAGMENT_HINT
   comment: Shown after cancelling a fragmented native BDM VMC launch. Never suggest deleting the only copy.
   string: "Back up the VMC to a PC, remove it from the device, then copy it back. If it is still fragmented, free space and retry. Never delete your only copy."
+
+- comment: MMCE IGR boot card slot choice, after Off, 0 and 1. Both card slots.
+  label: BOTH
+  string: Both

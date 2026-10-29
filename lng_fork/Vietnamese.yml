@@ -694,3 +694,4 @@ translations:
   'NO': Không
   THEME_VIEW: "Chế độ xem chủ đề"
   HINT_THEME_VIEW: "Cách chủ đề hiển thị trò chơi: List, Coverflow, PSBBN Flow hoặc Grid. Giữ L3 ở trang chính để chuyển. Chủ đề không có kiểu xem đó sẽ dùng kiểu mặc định."
+  BOTH: Cả hai

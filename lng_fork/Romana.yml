@@ -704,3 +704,4 @@ translations:
   'NO': Nu
   THEME_VIEW: "Vizualizare temă"
   HINT_THEME_VIEW: "Cum afișează tema jocurile tale: List, Coverflow, PSBBN Flow sau Grid. Ține apăsat L3 pe pagina principală pentru a schimba. Temele fără acea vizualizare o folosesc pe cea implicită."
+  BOTH: Ambele
