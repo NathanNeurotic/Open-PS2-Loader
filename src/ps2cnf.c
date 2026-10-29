@@ -108,7 +108,7 @@ int ps2cnfGetBootFile(const char *path, char *bootfile)
         return -1;
     }
 
-    if ((pChar = CNFGetToken(pChar, cnf_end, "=")) == (const char *)-1) { // Unexpected EOF
+    if ((pChar = CNFGetToken(pChar, cnf_end, "=")) == (const char *)-1 || pChar == NULL) { // Unexpected EOF, or BOOT2 without '='
         return -1;
     }
 

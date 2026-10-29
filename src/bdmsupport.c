@@ -2562,12 +2562,13 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     }
 
     char vmc_name[32], vmc_path[256];
-    int vmc_id, have_error, size_mcemu_irx = 0;
+    int vmc_id, have_error, vmc_fragments, size_mcemu_irx = 0;
     bdm_vmc_infos_t bdm_vmc_infos;
     vmc_superblock_t vmc_superblock;
 
     for (vmc_id = 0; vmc_id < 2 && pDeviceData->bdmDeviceType != BDM_TYPE_PCCF; vmc_id++) {
         have_error = NATIVE_VMC_OK;
+        vmc_fragments = 0;
         memset(&bdm_vmc_infos, 0, sizeof(bdm_vmc_infos_t));
         configGetVMC(configSet, vmc_name, sizeof(vmc_name), vmc_id);
         if (vmc_name[0]) {
@@ -2586,10 +2587,9 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                 if (fd >= 0) {
                     iop_fd = ps2sdk_get_iop_fd(fd);
                     u64 startingLBA;
-                    int fragments;
-                    have_error = bdmCheckNativeVmcLayout(iop_fd, vmcSizeInMb, &startingLBA, &fragments);
+                    have_error = bdmCheckNativeVmcLayout(iop_fd, vmcSizeInMb, &startingLBA, &vmc_fragments);
                     LOG("BDMSUPPORT VMC slot %d layout: reason=%d fragments=%d start=0x%08x%08x\n",
-                        vmc_id, have_error, fragments, (u32)(startingLBA >> 32), (u32)startingLBA);
+                        vmc_id, have_error, vmc_fragments, (u32)(startingLBA >> 32), (u32)startingLBA);
                     if (have_error == NATIVE_VMC_OK) {
                         bdm_vmc_infos.active = 1;
                         bdm_vmc_infos.start_sector = startingLBA;
@@ -2603,7 +2603,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (gAutoLaunchBDMGame == NULL) {
             if (have_error) {
                 char error[256];
-                if (have_error == NATIVE_VMC_FRAGMENTED)
+                // Diagnostic-only port: belomaxorka/YAOPL c19eed08. Reuse the
+                // verified layout count; fragmented native VMCs stay inactive.
+                if (have_error == NATIVE_VMC_FRAGMENTED && vmc_fragments > 1)
+                    snprintf(error, sizeof(error), _l(_STR_ERR_VMC_FRAGMENTS_CONTINUE), vmc_name, vmc_fragments, (vmc_id + 1));
+                else if (have_error == NATIVE_VMC_FRAGMENTED)
                     snprintf(error, sizeof(error), _l(_STR_ERR_VMC_FRAGMENTED_CONTINUE), vmc_name, (vmc_id + 1));
                 else if (have_error == NATIVE_VMC_LBA_RANGE)
                     snprintf(error, sizeof(error), _l(_STR_ERR_VMC_LBA_RANGE_CONTINUE), vmc_name, (vmc_id + 1));
@@ -2612,6 +2616,8 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                 else
                     snprintf(error, sizeof(error), _l(_STR_ERR_VMC_CONTINUE), vmc_name, (vmc_id + 1));
                 if (!guiMsgBox(error, 1, NULL)) {
+                    if (have_error == NATIVE_VMC_FRAGMENTED && vmc_fragments > 1)
+                        guiMsgBox(_l(_STR_VMC_DEFRAGMENT_HINT), 0, NULL);
                     return;
                 }
             }

@@ -4,6 +4,8 @@
   Review OpenUsbLd README & LICENSE files for further details.
 */
 
+#include "disc_key.h"
+
 #ifdef __DECI2_DEBUG
 #include <iopcontrol_special.h>
 #endif
@@ -488,7 +490,7 @@ int sysGetDiscID(char *hexDiscID)
     sceCdSync(0);
 
     LOG("SYSTEM Disc read key\n");
-    if (sceCdReadKey(0, 0, 0x4b, key) == 0) {
+    if (sysReadDiscKey(0, 0, 0x4b, key) == 0) {
         LOG("SYSTEM Cannot read CD/DVD key.\n");
         sceCdStop();
         sceCdSync(0);
@@ -559,7 +561,7 @@ static int sysParseBoot2(const char *cnf, char *out, int outSize)
 // success it tears OPL down and never returns.
 //
 // The boot path comes from the disc's OWN SYSTEM.CNF "BOOT2" line -- full PS2BBL/OSDSYS parity.
-// A sceCdReadKey(0x004B)-derived name that returns plausible-but-wrong bytes produces a
+// A sysReadDiscKey(0x004B)-derived name that returns plausible-but-wrong bytes produces a
 // nonexistent cdrom0: path, so PS2LOGO shows the logo (the DISC authenticates fine) and falls
 // through to OSDSYS. The derivation is kept as the FALLBACK when SYSTEM.CNF is unreadable, and
 // as a logged cross-check otherwise.
@@ -675,7 +677,7 @@ int sysGetDiscBootPath(char *path, int pathSize, int (*progress)(void))
     // Fallback + cross-check: derive the boot name from the disc key (PS2BBL PS2GetBootFile,
     // non-China path). Best-effort: if BOOT2 was parsed, a key failure no longer matters.
     boot[0] = '\0';
-    if (sceCdReadKey(0, 0, 0x004B, key) != 0 && sceCdGetError() == 0) {
+    if (sysReadDiscKey(0, 0, 0x004B, key) != 0 && sceCdGetError() == 0) {
         boot[11] = '\0';
         k32 = (key[4] >> 3) | (key[14] >> 3 << 5) | ((key[0] & 0x7F) << 10);
         boot[10] = '0' + (k32 % 10);
