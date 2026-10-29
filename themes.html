@@ -252,6 +252,49 @@ references for a view's blocks.</li>
 </ul>
 <p>Full reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#views-multi-view-themes--this-fork">THEME_ENGINE.md, Views</a>.</p>
 
+<h3 id="sd-hd-layouts">SD and HD layouts (<code>_sd</code> / <code>_hd</code>) — <em>this fork</em></h3>
+<p>One <code>conf_theme.cfg</code> can carry a 4:3 layout and a 16:9 layout, so a theme no longer needs separate SD and
+HD/widescreen packages. Ideas: KrahJohlito (uOPL/wOPL's <code>wsX</code> key) and Berion (<code>_sd</code>/<code>_hd</code>
+suffixes that fall back to the plain key). Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1152">Open-PS2-Loader #1152</a>; NOT TESTED on hardware.</p>
+<p>Add <code>_hd</code> to <b>any</b> key for the value used while <b>Settings → Interface → Widescreen</b> is on, or
+<code>_sd</code> for the value used while it is off. A key without a variant for the current mode keeps its plain value, so a
+theme without these keys looks exactly as before:</p>
+<pre>main3:
+	type=AttributeImage
+	attribute=#Compatibility
+	x=420
+	y=300
+	x_hd=455          # 16:9: closes the gap the narrower 16:9 badges leave
+	y_hd=310          # Y can differ too
+	wsX=455           # uOPL/wOPL spelling of x_hd; also read (x_hd wins if both are given)
+
+bg_color_hd=#101018              # globals work the same way
+coverflow.main2_y_hd=250         # and so do view-prefixed keys
+main9_type_hd=StaticText         # an element that only exists in 16:9</pre>
+<table><thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>&lt;key&gt;_hd</code></td><td>as <code>&lt;key&gt;</code></td><td>Used instead of <code>&lt;key&gt;</code> while Widescreen is on.</td></tr>
+<tr><td><code>&lt;key&gt;_sd</code></td><td>as <code>&lt;key&gt;</code></td><td>Used instead of <code>&lt;key&gt;</code> while Widescreen is off. Handy for a theme authored 16:9-first.</td></tr>
+<tr><td><code>wsX</code> (in a block)</td><td>as <code>x</code></td><td>The uOPL/wOPL key: the element's x in 16:9. Same as <code>x_hd</code>; <code>x_hd</code> wins if both are given. Negative values count from the right edge, as for <code>x</code>.</td></tr>
+<tr><td><code>hd_autofit</code></td><td><code>0</code> / <code>1</code></td><td><code>1</code>: in 16:9, keep the 4:3 layout's proportions automatically (below). Default <code>0</code>. Works as <code>&lt;view&gt;.hd_autofit</code> too.</td></tr>
+</tbody></table>
+<p><b>Precedence.</b> The variant replaces its plain key before anything else reads the file, so the view rules above still apply
+on top: <code>coverflow.main2_x_hd</code> → <code>coverflow.main2_x</code> → <code>main2_x_hd</code> → <code>main2_x</code>.</p>
+<p><b><code>hd_autofit=1</code>.</b> In 16:9 OPL draws scaled widths at 3/4 but leaves x where it was, which opens gaps between
+neighbouring elements (badge rows, a cover beside its case). With <code>hd_autofit=1</code> each element's x becomes
+<code>320 + (x − 320) × 3/4</code>: the whole 4:3 composition shrinks horizontally about the screen centre, so edges, centres and
+the gaps between elements keep their 4:3 shape whatever the alignment, and text/list boxes narrow to match their already-narrower
+text. It is the one placement that can be computed exactly; spreading a layout across the extra 16:9 width depends on the
+designer's intent, which is what <code>_hd</code> keys are for. Left alone: elements with their own <code>x_hd</code>/<code>wsX</code>,
+the background and anything as wide as the screen, <code>Coverflow</code>/<code>PSBBNFlow</code>/<code>Grid</code> (they lay themselves
+out for 16:9 already), and <code>scaled=0</code> images.</p>
+<ul>
+<li>Switching Widescreen in Settings reloads a theme that has any <code>_sd</code>/<code>_hd</code>/<code>wsX</code>/<code>hd_autofit</code> keys, once the settings page is closed. Other themes are not reloaded.</li>
+<li>Keep the plain keys as your 4:3 layout: stock OPL and other forks ignore the variants and use them.</li>
+<li>The background stays one setting for both modes unless the theme gives its keys <code>_hd</code> variants.</li>
+<li>Names stay within 47 characters including the suffix; <code>coverflow.favsVcdMain12_reflection_offset_hd</code> is 44.</li>
+</ul>
+<p>Full reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#sd-and-hd-layouts-_sd--_hd--this-fork">THEME_ENGINE.md, SD and HD layouts</a>.</p>
+
 <h2 id="global-properties">3 · Global properties</h2>
 <p>These go at the <em>top</em> of the file, outside any block.</p>
 
