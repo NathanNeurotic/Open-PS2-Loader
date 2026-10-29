@@ -8,6 +8,10 @@
 
 === Changelog ===
 
+==== Unreleased ====
+* Stop parsing at the cheat-table capacity, preserving every accepted cheat's codes.
+  Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
+
 ==== Version 0.9.3 ====
 CORE:
 

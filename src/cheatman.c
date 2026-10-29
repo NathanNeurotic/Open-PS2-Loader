@@ -353,10 +353,13 @@ static int parse_buf(const char *buf)
                 code = parse_line(line, linenumber);
                 if (!(code.addr == 0 && code.val == 0)) {
                     // Only add the cheat entry if we have a valid cheat name in temp_name.
-                    // Check the POST-increment index: cheat_index is pre-incremented below,
-                    // so testing "cheat_index < MAX_CODES" let the index reach MAX_CODES and
-                    // write gCheats[MAX_CODES], one past the end of the array.
-                    if (cheat_index + 1 < MAX_CODES && temp_name[0] != NUL) {
+                    if (temp_name[0] != NUL) {
+                        // belomaxorka / YAOPL 44a003bd: once full, stop before another
+                        // cheat's codes can overwrite or append to the last accepted cheat.
+                        if (cheat_index + 1 >= MAX_CODES) {
+                            LOG("%s: more than %d cheats, ignoring the rest\n", __FUNCTION__, MAX_CODES);
+                            break;
+                        }
                         cheat_index++; // Move to the next cheat entry
                         strncpy(gCheats[cheat_index].name, temp_name, CHEAT_NAME_MAX);
                         gCheats[cheat_index].name[CHEAT_NAME_MAX] = NUL;
