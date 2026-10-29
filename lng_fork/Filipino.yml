@@ -685,3 +685,4 @@ translations:
   HINT_ENABLE_DVR: Eksperimental na paghahanap ng DESR DVR ISO. Kailangang naka-enable ang HDD source; kailangan ng panlabas na Neutrino na kayang mag-DVR para mailunsad ang laro.
   THEME_VIEW: "View ng Tema"
   HINT_THEME_VIEW: "Paano ipinapakita ng tema ang iyong mga laro: List, Coverflow, PSBBN Flow o Grid. Pindutin nang matagal ang L3 sa main page para lumipat. Ang mga temang walang ganoong view ay gagamit ng kanilang default."
+  NET_READ_ONLY_VMC: "Read-only ang UDPBD/UDPFS server na ito, kaya hindi magagamit ang VMC dito. Sa totoong memory card magse-save ang laro."

@@ -828,7 +828,8 @@ static void itemExecTriangle(struct menu_item *curMenu)
                 // The row names its core: a favourite by its stored kind, a device row by its extension.
                 int kind = (support->mode == FAV_MODE) ? favGetItemKind(curMenu->current->item.id) :
                                                          itemFavKind(support, curMenu->current->item.id, curMenu->current->item.text);
-                menuInitVcdMenu(kind == FAV_KIND_CUE);
+                int sourceMode = (support->mode == FAV_MODE) ? favGetItemSourceMode(curMenu->current->item.id) : support->mode;
+                menuInitVcdMenu(kind == FAV_KIND_CUE, bdmModeIsReadOnly(sourceMode));
                 guiSwitchScreen(GUI_SCREEN_APP_MENU);
             }
             return;
@@ -846,7 +847,8 @@ static void itemExecTriangle(struct menu_item *curMenu)
                 guiGameLoadConfig(support, configSet);
             }
         } else {
-            if (menuCheckParentalLock() == 0 && gEnableWrite) {
+            // The app menu has only Rename and Delete, which a read-only server would drop
+            if (menuCheckParentalLock() == 0 && gEnableWrite && !(support->mode == APP_MODE && appIsReadOnly(support, curMenu->current->item.id))) {
                 menuInitAppMenu();
                 guiSwitchScreen(GUI_SCREEN_APP_MENU);
             }

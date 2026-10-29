@@ -662,3 +662,4 @@ translations:
   HINT_ENABLE_DVR: Eksperimentel registrering af DESR DVR-ISO'er. Kræver, at HDD-kilden er slået til; spilstart kræver en ekstern Neutrino med DVR-understøttelse.
   THEME_VIEW: "Temavisning"
   HINT_THEME_VIEW: "Sådan viser temaet dine spil: List, Coverflow, PSBBN Flow eller Grid. Hold L3 nede på hovedsiden for at skifte. Temaer uden det udseende bruger deres standardvisning."
+  NET_READ_ONLY_VMC: "Denne UDPBD/UDPFS-server er skrivebeskyttet, så der kan ikke bruges et VMC på den. Spillet gemmer på det rigtige hukommelseskort."

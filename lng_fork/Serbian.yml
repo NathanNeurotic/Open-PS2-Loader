@@ -563,3 +563,4 @@ translations:
   HINT_ENABLE_DVR: Eksperimentalno otkrivanje DESR DVR ISO datoteka. Zahteva uključen HDD izvor; pokretanje igre zahteva spoljni Neutrino koji podržava DVR.
   THEME_VIEW: "Приказ теме"
   HINT_THEME_VIEW: "Како тема приказује ваше игре: List, Coverflow, PSBBN Flow или Grid. Држите L3 на главној страници за промену. Теме без тог приказа користе свој подразумевани приказ."
+  NET_READ_ONLY_VMC: "Овај UDPBD/UDPFS сервер је само за читање, па се на њему не може користити VMC. Игра снима на праву меморијску картицу."

@@ -651,3 +651,4 @@ translations:
   HINT_ENABLE_DVR: Deneysel DESR DVR ISO keşfi. HDD kaynağının açık olmasını gerektirir; oyun başlatmak için harici DVR destekli Neutrino gerekir.
   THEME_VIEW: "Tema görünümü"
   HINT_THEME_VIEW: "Temanın oyunlarınızı gösterme biçimi: List, Coverflow, PSBBN Flow veya Grid. Değiştirmek için ana sayfada L3'e basılı tutun. Bu görünümü olmayan temalar varsayılan görünümlerini kullanır."
+  NET_READ_ONLY_VMC: "Bu UDPBD/UDPFS sunucusu salt okunur, bu yüzden üzerinde VMC kullanılamaz. Oyun gerçek hafıza kartına kaydeder."

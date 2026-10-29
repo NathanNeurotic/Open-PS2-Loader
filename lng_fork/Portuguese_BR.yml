@@ -658,3 +658,4 @@ translations:
   XERA_SET_CLOCK: Ainda não está na sua biblioteca do RetroAchievements. Acerte o relógio do console nas configurações do sistema para ver a lista completa, ou jogue uma vez com conquistas.
   THEME_VIEW: "Visualização do tema"
   HINT_THEME_VIEW: "Como o tema mostra seus jogos: List, Coverflow, PSBBN Flow ou Grid. Segure L3 na página principal para trocar. Temas sem essa visualização usam a visualização padrão."
+  NET_READ_ONLY_VMC: "Este servidor UDPBD/UDPFS é somente leitura, então não é possível usar um VMC nele. O jogo salva no memory card real."

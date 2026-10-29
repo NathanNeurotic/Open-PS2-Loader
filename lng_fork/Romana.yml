@@ -704,3 +704,4 @@ translations:
   'NO': Nu
   THEME_VIEW: "Vizualizare temă"
   HINT_THEME_VIEW: "Cum afișează tema jocurile tale: List, Coverflow, PSBBN Flow sau Grid. Ține apăsat L3 pe pagina principală pentru a schimba. Temele fără acea vizualizare o folosesc pe cea implicită."
+  NET_READ_ONLY_VMC: "Acest server UDPBD/UDPFS este doar pentru citire, deci nu se poate folosi un VMC pe el. Jocul salvează pe cardul de memorie real."

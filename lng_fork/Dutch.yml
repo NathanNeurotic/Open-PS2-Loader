@@ -713,3 +713,4 @@ translations:
   'NO': Nee
   THEME_VIEW: "Themaweergave"
   HINT_THEME_VIEW: "Hoe het thema je games toont: List, Coverflow, PSBBN Flow of Grid. Houd L3 ingedrukt op de hoofdpagina om te wisselen. Thema's zonder die weergave gebruiken hun standaardweergave."
+  NET_READ_ONLY_VMC: "Deze UDPBD/UDPFS-server is alleen-lezen, dus er kan geen VMC op worden gebruikt. Het spel slaat op op de echte geheugenkaart."

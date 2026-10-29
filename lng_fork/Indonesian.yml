@@ -671,3 +671,4 @@ translations:
   HINT_ENABLE_DVR: Penemuan ISO DESR DVR eksperimental. Butuh sumber HDD menyala; peluncuran game butuh Neutrino eksternal yang mendukung DVR.
   THEME_VIEW: "Tampilan Tema"
   HINT_THEME_VIEW: "Cara tema menampilkan game Anda: List, Coverflow, PSBBN Flow atau Grid. Tahan L3 di halaman utama untuk beralih. Tema tanpa tampilan itu memakai tampilan bawaannya."
+  NET_READ_ONLY_VMC: "Server UDPBD/UDPFS ini hanya-baca, jadi VMC tidak dapat digunakan di sana. Game menyimpan ke memory card asli."

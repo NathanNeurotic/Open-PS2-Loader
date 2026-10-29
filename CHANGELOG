@@ -16,6 +16,7 @@
   Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
 * Fragmented native BDM VMC warnings show the existing fragment count and, on Cancel, backup/recovery guidance. Native refusal and physical-card fallback are unchanged. Credit belomaxorka/YAOPL c19eed08. Hardware validation pending.
 * Reject a SYSTEM.CNF BOOT2 line without '=' instead of passing NULL to the value parser during image discovery. Matches the existing C++ guard. Credit belomaxorka/YAOPL 43781768. Hardware validation pending.
+* Read-only UDPBD/UDPFS IMG servers (udpbd-vexfat, udpbd-server on a read-only image, PS2-Servers on a folder or with --read-only): OPL now writes and reads back a test file when such a device connects. On one that keeps nothing it creates no folders or games.bin cache, never saves OPL's settings there, keeps that device's game settings in CFG/ next to OPL's own (a CFG already on the server is still read), drops a VMC set for its games (they save to the real memory card), and hides Rename, Delete, VMC and Ember settings for its games and apps. The UDPBD driver counts a write the server refuses as done, so one refused write no longer makes the whole disk unreadable. Credit belomaxorka/YAOPL (Roman Kelesidis) 093b541b..760d7e3c and df65546e. Host-tested; hardware validation pending.
 
 ==== Version 0.9.3 ====
 CORE:

@@ -849,6 +849,26 @@ int bdmModeIsUDPBD(int mode)
     return ((bdm_device_data_t *)bdmDeviceList[mode - BDM_MODE].priv)->bdmDeviceType == BDM_TYPE_UDPBD;
 }
 
+// A UDPBD/UDPFS IMG server found read-only when it connected (bdmCheckWritable). Nothing is written to it.
+int bdmModeIsReadOnly(int mode)
+{
+    if (mode < BDM_MODE || mode > BDM_MODE_LAST)
+        return 0;
+    return (bdmDeviceList[mode - BDM_MODE].flags & MODE_FLAG_READ_ONLY) != 0;
+}
+
+// Whether a "massN:..." path is on such a device (an app's folder or ELF).
+int bdmIsReadOnlyPath(const char *path)
+{
+    if (path == NULL || strncmp(path, "mass", 4) != 0 || path[4] < '0' || path[4] > '9')
+        return 0;
+    int unit = 0;
+    const char *p = path + 4;
+    while (*p >= '0' && *p <= '9')
+        unit = unit * 10 + (*p++ - '0');
+    return *p == ':' && bdmModeIsReadOnly(BDM_MODE + unit);
+}
+
 static void bdmEventHandler(void *packet, void *opt)
 {
     const bdm_event_packet_t *event = (const bdm_event_packet_t *)packet;
@@ -1747,8 +1767,10 @@ static int bdmNeedsUpdate(item_list_t *itemList)
         sfxPlay(SFX_BD_CONNECT);
 
     // Belt-and-suspenders: never create the library tree at an empty prefix (= the CWD/boot folder).
+    // A read-only server would acknowledge the folders and drop them.
     if (!pDeviceData->FoldersCreated && pDeviceData->bdmPrefix[0] != '\0') {
-        sbCreateFolders(pDeviceData->bdmPrefix, 1);
+        if (!(itemList->flags & MODE_FLAG_READ_ONLY))
+            sbCreateFolders(pDeviceData->bdmPrefix, 1);
         pDeviceData->FoldersCreated = 1;
     }
 
@@ -1828,7 +1850,9 @@ static int bdmUpdateGameList(item_list_t *itemList)
     }
     if (view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) {
         const char *sub = folderGetSub(itemList->mode);
+        sbListCacheReadOnly = (itemList->flags & MODE_FLAG_READ_ONLY) != 0;
         sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, sub, &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
+        sbListCacheReadOnly = 0;
         // Still -2 after a root scan = neither CD nor DVD would open and there is no ul.cfg. Say where
         // it looked rather than leave a silently empty page. Only a connect, SELECT, L3 or
         // delete/rename pass scans, so this cannot repeat on its own.
@@ -2312,9 +2336,14 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
-    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_BSDFS, &neutrinoBsdfs);     // #11: bdm legs (incl. udpbd/udpfsbd) are the block-backed consumers
-    sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc); // Δ2-validated -mc args
-    sbCreatePath(game, partname, pDeviceData->bdmPrefix, "/", 0);            // -dvd target (multi-part was rejected above)
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_BSDFS, &neutrinoBsdfs); // #11: bdm legs (incl. udpbd/udpfsbd) are the block-backed consumers
+    // A VMC on a read-only server would lose every save written to it: the game uses the real memory card.
+    // The setting stays in the config, which a copy of the game on a USB drive may share (YAOPL 7c375a09).
+    if (itemList != NULL && (itemList->flags & MODE_FLAG_READ_ONLY))
+        LOG("[NEUTRINO] VMC not used: the device is read-only\n");
+    else
+        sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc); // Δ2-validated -mc args
+    sbCreatePath(game, partname, pDeviceData->bdmPrefix, "/", 0);                // -dvd target (multi-part was rejected above)
     snprintf(bdmCurrentDriver, sizeof(bdmCurrentDriver), "%s", pDeviceData->bdmDriver);
     // The bdm device number behind this mount (USBMASS_IOCTL_GET_DEVICE_NUMBER, the same value the
     // native leg binds) -- the <devNr> of a -bsdfs=bd "<driver><devNr>p0" tuple. Copied now: the
@@ -2590,6 +2619,12 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         vmc_fragments = 0;
         memset(&bdm_vmc_infos, 0, sizeof(bdm_vmc_infos_t));
         configGetVMC(configSet, vmc_name, sizeof(vmc_name), vmc_id);
+        // A read-only server would drop the saves written to the VMC: the game uses the real memory card, and
+        // the setting stays in the config (belomaxorka / YAOPL 7c375a09).
+        if (vmc_name[0] && itemList != NULL && (itemList->flags & MODE_FLAG_READ_ONLY)) {
+            LOG("BDMSUPPORT VMC %s not used: the device is read-only\n", vmc_name);
+            vmc_name[0] = '\0';
+        }
         if (vmc_name[0]) {
             have_error = NATIVE_VMC_INVALID;
             int vmcSizeInMb = sysCheckVMC(pDeviceData->bdmPrefix, "/", vmc_name, 0, &vmc_superblock);
@@ -2891,7 +2926,17 @@ static config_set_t *bdmGetConfig(item_list_t *itemList, int id)
     // Active view's array (#120 split) -- a VCD's per-game CFG keys off its own entry, and a stale
     // id resolves to the empty entry instead of indexing outside either backing array.
     base_game_info_t *game = bdmActiveGame(itemList, id);
-    config = sbPopulateConfig(game, pDeviceData->bdmPrefix, "/");
+    // The settings of a game on a read-only server are kept in a CFG folder next to OPL's own settings, as HTTP
+    // games' are (belomaxorka / YAOPL 7781959c), unless those are on a read-only server too.
+    char cfgDir[256];
+    const char *home = configGetHomePath();
+    int useCfgDir = 0;
+    if ((itemList->flags & MODE_FLAG_READ_ONLY) && home != NULL && home[0] != '\0' && !bdmIsReadOnlyPath(home)) {
+        size_t len = strlen(home);
+        snprintf(cfgDir, sizeof(cfgDir), "%s%sCFG/", home, (home[len - 1] == '/' || home[len - 1] == ':') ? "" : "/");
+        useCfgDir = 1;
+    }
+    config = sbPopulateConfigIn(game, pDeviceData->bdmPrefix, "/", useCfgDir ? cfgDir : NULL);
     if (sbConfigStatSizeEnabled()) {
         char ps1Prefix[BDM_DEVICE_ROOT_MAX + 2];
         bdmBuildPs1Prefix(ps1Prefix, sizeof(ps1Prefix), itemList->mode); // PS1 games live at the device root
@@ -3204,6 +3249,37 @@ void bdmResolveLBA_UDMA(bdm_device_data_t *pDeviceData)
     }
 }
 
+// Write a sector of new data to a file on the device and read it back. A UDPBD or UDPFS IMG server may only read
+// (udpbd-vexfat, udpbd-server on a read-only image, PS2-Servers on a folder or with --read-only), yet neither protocol
+// has a read-only flag and these servers acknowledge the writes they drop, so a write that seems to succeed proves
+// nothing. The data differs on every check: a dropped write must not read back what an earlier check, on a day the
+// disk was writable, left in the same free cluster (belomaxorka / YAOPL 093b541b).
+static int bdmCheckWritable(int unit)
+{
+    static u32 data[128], check[128];
+    char path[40];
+    u32 seed = (u32)GetTimerSystemTime();
+    int fd, i, result;
+
+    for (i = 0; i < 128; i++)
+        data[i] = seed + i * 0x9E3779B9;
+
+    snprintf(path, sizeof(path), "mass%d:/opl_write_test.tmp", unit);
+    if ((fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+        return 0;
+    result = (write(fd, data, sizeof(data)) == (int)sizeof(data));
+    close(fd);
+
+    if (result && (fd = open(path, O_RDONLY)) >= 0) {
+        result = (read(fd, check, sizeof(check)) == (int)sizeof(check)) && memcmp(data, check, sizeof(data)) == 0;
+        close(fd);
+    } else
+        result = 0;
+
+    remove(path);
+    return result;
+}
+
 int bdmUpdateDeviceData(item_list_t *itemList)
 {
     char path[BDM_DEVICE_ROOT_MAX + 2] = {0};
@@ -3373,6 +3449,12 @@ int bdmUpdateDeviceData(item_list_t *itemList)
         // Attach order can hand this device a different massN slot than last boot; take the L3
         // position remembered for its type before the first scan reads it.
         libViewBdmAttach(itemList->mode, pDeviceData->bdmDeviceType);
+
+        // A network server may keep nothing that is written: find out once, before the first scan writes.
+        if (pDeviceData->bdmDeviceType == BDM_TYPE_UDPBD && !bdmCheckWritable(itemList->mode)) {
+            LOG("Mass device: %d is read-only\n", itemList->mode);
+            itemList->flags |= MODE_FLAG_READ_ONLY;
+        }
 
         // Make the menu item visible.
         if (itemList->owner != NULL) {
@@ -4097,6 +4179,10 @@ int bdmFindPartition(char *target, const char *name, int write)
      * (char[32]) and target buffers are 64 bytes, so the device-prefix writes
      * cannot overflow. */
     for (i = 0; i < MAX_BDM_DEVICES; i++) {
+        // A read-only server passes the write probe, but what is saved there is lost (belomaxorka / YAOPL c92f681d).
+        if (write && (bdmDeviceList[i].flags & MODE_FLAG_READ_ONLY))
+            continue;
+
         if (gBDMPrefix[0] != '\0')
             snprintf(path, sizeof(path), "mass%d:/%s/%s", i, gBDMPrefix, name);
         else

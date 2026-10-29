@@ -56,6 +56,7 @@ HARNESS = r'''
 #define GAME_STARTUP_MAX 12
 #define ISO_GAME_FNAME_MAX (ISO_GAME_NAME_MAX + ISO_GAME_EXTENSION_MAX)
 #define LOG(...) ((void)0)
+static int sbListCacheReadOnly; /* a read-only device's list: no games.bin (test_udpbd_read_only.py) */
 
 typedef struct
 {

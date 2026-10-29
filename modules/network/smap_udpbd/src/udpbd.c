@@ -278,6 +278,15 @@ static int udpbd_write(struct block_device *bd, uint64_t sector, const void *buf
         return count;
     }
 
+    // An answer with an error, not a timeout, means the server does not write here: PS2-Servers on a folder or with
+    // --read-only. Report the sectors as written, as udpbd-vexfat and a read-only udpbd-server do for the writes they
+    // drop: FatFs keeps a sector it cannot write back and then fails every read of another sector, so the whole disk
+    // became unreadable. OPL finds the server read-only by reading back a test file (belomaxorka / YAOPL df65546e).
+    if (g_errno == 0) {
+        M_DEBUG("%s(%d, %d): not written by the server\n", __func__, (uint32_t)sector, count);
+        return count;
+    }
+
     M_DEBUG("%s(%d, %d): ERROR\n", __func__, (uint32_t)sector, count);
     g_errno = 0;
     return -EIO;

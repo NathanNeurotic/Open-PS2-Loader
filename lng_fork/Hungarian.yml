@@ -656,3 +656,4 @@ translations:
   HINT_ENABLE_DVR: Kísérleti DESR DVR ISO felderítés. Bekapcsolt HDD forrás kell hozzá; a játékindításhoz külső, DVR-képes Neutrino kell.
   THEME_VIEW: "Téma nézete"
   HINT_THEME_VIEW: "Hogyan jeleníti meg a téma a játékaidat: List, Coverflow, PSBBN Flow vagy Grid. Váltáshoz tartsd lenyomva az L3-at a főoldalon. Az ilyen nézet nélküli témák az alapértelmezett nézetüket használják."
+  NET_READ_ONLY_VMC: "Ez az UDPBD/UDPFS szerver csak olvasható, ezért VMC nem használható rajta. A játék a valódi memóriakártyára ment."

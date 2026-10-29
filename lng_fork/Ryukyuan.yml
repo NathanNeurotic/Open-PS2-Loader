@@ -320,3 +320,4 @@ translations:
   POPS_UDPFS_NOT_READY: "メモリーカードから POPS UDPFS ぬネットワーク設定読みきらんたん。"
   THEME_VIEW: "テーマぬ見せ方"
   HINT_THEME_VIEW: "テーマぬゲーム見せ方: List, Coverflow, PSBBN Flow、Grid。メインページさーにL3長押しすしぇー切い替わゆん。うぬ見せ方ぬねーらんテーマー元ぬ見せ方使ゆん。"
+  NET_READ_ONLY_VMC: "くぬUDPBD/UDPFSサーバーや読むしかならんくとぅ、VMCや使ららん。ゲームや本物ぬメモリーカードんかいセーブすん。"
