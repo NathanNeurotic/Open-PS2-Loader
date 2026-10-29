@@ -349,11 +349,19 @@ art_fn = art_fn[:art_fn.index('\n}')]
 assert 'list->mode != FAV_MODE && list->mode != APP_MODE' in art_fn, \
     'PS1 id-art must stay off the FAV/APP pages (favGetArtMode matches the value)'
 assert art_fn.index('ps1RowIdCached(startup, kind, id, sizeof(id))') < \
-    art_fn.index('cacheGetTextureEx(cache, list, cacheId, cacheUid, startup, isPriority)'), \
-    'id-keyed art must be probed before the name-keyed fallback'
+    art_fn.index('cacheGetTextureIdOrName(cache, list, cacheId, cacheUid, id, startup, isPriority)') < \
+    art_fn.rindex('cacheGetTextureEx(cache, list, cacheId, cacheUid, startup, isPriority)'), \
+    'id-keyed art must be probed (with its name fallback) before the plain name probe'
 assert 'ps1RowIdRequest(startup, kind);' in art_fn, 'a cold memo must queue a background resolve'
-assert '*cacheId = parkId;' in art_fn and 'parkUid' in art_fn, \
+texcache = (ROOT / 'src/texcache.c').read_text(encoding='utf-8')
+probe_fn = texcache[texcache.index('GSTEXTURE *cacheGetTextureIdOrName('):]
+probe_fn = probe_fn[:probe_fn.index('\n}')]
+assert '*cacheId = parkId;' in probe_fn and 'parkUid' in probe_fn, \
     'the id-absence memo must be parked aside so the name fallback is not shadowed'
+assert probe_fn.index('cacheHoldsFallback(') < probe_fn.index('cacheSlotKeyedOther('), \
+    'a row settled on its name fallback must not re-probe the id every frame (cover flicker)'
+assert probe_fn.index('cacheAdoptFallback(') < probe_fn.index('cacheSlotKeyedOther('), \
+    'a row reseated by a list rebuild must take back its settled name fallback before re-probing the id'
 
 support = (ROOT / 'src/supportbase.c').read_text(encoding='utf-8')
 cfg_fn = support[support.index('PS1 metadata fallback (both cores)'):]
@@ -387,8 +395,9 @@ CONSUMERS = r'''
 #define PS1_ROW_CUE 1
 #define FAV_MODE 10
 #define APP_MODE 11
-typedef struct { int marker; } GSTEXTURE;
-typedef struct { GSTEXTURE texture; int UID; char key[128]; } cache_entry_t;
+#define CACHE_ID_PS1_BOTH_ABSENT -3
+typedef struct { int marker; void *Mem; } GSTEXTURE;
+typedef struct { GSTEXTURE texture; int UID; char key[128]; void *qr; int lastUsed; unsigned int failEpoch; unsigned char nameFallback; } cache_entry_t;
 typedef struct { int userId, count; char *suffix; cache_entry_t *content; } image_cache_t;
 typedef struct { char name[256], extension[8]; int cue; } base_game_info_t;
 typedef struct item_list item_list_t;
@@ -401,7 +410,9 @@ static int cueIsCueEntry(const base_game_info_t *r) { return r->cue; }
 static base_game_info_t row;
 static char *startup(item_list_t *l, int i) { (void)l; (void)i; return row.name; }
 static void *getrow(item_list_t *l, int i) { (void)l; (void)i; return &row; }
-static int requests, resolved, idPresent = 1, namePresent = 1, idLoading;
+static int requests, resolved, idPresent = 1, namePresent = 1, idLoading, guiFrameId = 1;
+static unsigned int gArtFailEpoch = 9;
+static int idAsks; /* id lookups that got past the UID fast path: each is a claim + device read on a miss */
 static void ps1RowIdRequest(const char *n, int k) { (void)n; (void)k; requests++; }
 static int ps1RowIdCached(const char *n, int k, char *out, int size)
 { (void)n; (void)k; snprintf(out, size, "%s", resolved ? "SLUS_222.22" : "SLUS_111.11"); return 1; }
@@ -414,12 +425,14 @@ static GSTEXTURE *cacheGetTextureEx(image_cache_t *c, item_list_t *l, int *slot,
         return &c->content[*slot].texture;
     *slot = -1;
     int isId = strcmp(v, row.name) != 0;
-    if ((isId && !idPresent) || (!isId && !namePresent)) { *slot = -2; *uid = 9; return NULL; }
+    idAsks += isId;
+    if ((isId && !idPresent) || (!isId && !namePresent)) { *slot = -2; *uid = (int)gArtFailEpoch; return NULL; }
     if (isId && idLoading) return NULL;
     for (int i = 0; i < c->count; i++)
         if (!strcmp(c->content[i].key, v)) { *slot = i; *uid = c->content[i].UID; return &c->content[i].texture; }
     return NULL;
 }
+@PROBE@
 @ART@
 typedef struct { const char *title; int modified, setting; } config_set_t;
 static config_set_t metadata = {"Disc title", 0, 999};
@@ -449,7 +462,8 @@ static void normalized(const char *raw, const char *expected)
 }
 int main(void)
 {
-    cache_entry_t entries[3] = {{{1}, 101, "SLUS_111.11.Name"}, {{2}, 102, "SLUS_111.11"}, {{3}, 103, "SLUS_222.22"}};
+    cache_entry_t entries[3] = {{{1, NULL}, 101, "SLUS_111.11.Name", NULL, 0, 0, 0}, {{2, NULL}, 102, "SLUS_111.11", NULL, 0, 0, 0},
+                                {{3, NULL}, 103, "SLUS_222.22", NULL, 0, 0, 0}};
     image_cache_t cache = {0, 3, "COV", entries}; item_list_t list = {0, startup, getrow};
     int slot = 0, uid = 101; struct submenu_item item = {0, 0, &slot, &uid};
     strcpy(row.name, "SLUS_111.11.Name"); strcpy(row.extension, ".VCD");
@@ -460,11 +474,21 @@ int main(void)
     resolved = 0; idPresent = 0;
     assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[0].texture);
     assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[0].texture);
+    assert(entries[0].nameFallback); /* settled: the row stays on its name art, no id re-probe */
+    /* a list rebuild reseats the row with no slot: it takes its settled (decoded) name fallback back */
+    entries[0].texture.Mem = &entries[0], entries[0].lastUsed = 1, slot = -1, uid = -1;
+    int asks = idAsks;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[0].texture && slot == 0 && uid == 101);
+    assert(idAsks == asks); /* the id's absence memo is long evicted: asking again re-reads the device */
+    entries[0].texture.Mem = NULL, entries[0].lastUsed = 0;
     namePresent = 0; slot = -1;
-    assert(getGameImageTextureEx(&cache, &list, &item, 0) == NULL && slot == -2);
-    idPresent = 1;
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == NULL && slot == CACHE_ID_PS1_BOTH_ABSENT);
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == NULL && slot == CACHE_ID_PS1_BOTH_ABSENT);
+    idPresent = 1; gArtFailEpoch++; /* new art may have appeared: the park re-opens */
     assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[1].texture);
-    slot = 0; uid = 101; idLoading = 1;
+    slot = 0; uid = 101; idLoading = 1; /* on its name fallback while id art loads: keeps the name art */
+    assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[0].texture);
+    entries[0].nameFallback = 0; /* not a settled fallback: the id is asked for */
     assert(getGameImageTextureEx(&cache, &list, &item, 0) == NULL);
     row.cue = 1; idLoading = 0;
     assert(getGameImageTextureEx(&cache, &list, &item, 0) == &entries[1].texture);
@@ -512,7 +536,10 @@ int main(void)
 }
 '''
 cfg_block = cfg_fn[cfg_fn.index('    if (isPs1) {'):] + '\n    }'
-consumer_source = CONSUMERS.replace('@ART@', function('src/themes.c',
+probe = '\n'.join(function('src/texcache.c', signature) for signature in (
+    'static int cacheSlotKeyedOther(', 'static int cacheHoldsFallback(', 'static GSTEXTURE *cacheResidentByValue(',
+    'static int cacheAdoptFallback(', 'GSTEXTURE *cacheGetTextureIdOrName('))
+consumer_source = CONSUMERS.replace('@PROBE@', probe).replace('@ART@', function('src/themes.c',
     'static GSTEXTURE *getGameImageTextureEx(')).replace('@CFG@', cfg_block)
 normalizer = function('src/retrogem.c', 'static int retrogemTitlePrefixChar(')
 normalizer += '\n' + function('src/retrogem.c', 'int retrogemNormalizeGameID(')
