@@ -86,6 +86,8 @@ jobs:
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
         run: python3 .github/scripts/test_igr_polling.py
+      - name: Check IGR and power-off stop the USB host controller before the IOP reset
+        run: python3 .github/scripts/test_igr_usb_host_stop.py
       - name: Check SMB VMC I/O releases smb_io_sema, reports failed pages and trusts only the server's write Count
         run: python3 .github/scripts/test_smb_vmc_io_result.py
       - name: Check an SMB read reply cut off by the server fails instead of hanging the game

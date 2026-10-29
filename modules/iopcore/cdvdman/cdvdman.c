@@ -235,6 +235,28 @@ static void cdvdman_vmc_drain(void)
     }
 }
 
+// OHCI registers of the USB host controller.
+#define OHCI_HcControl          (*(volatile u32 *)0xBF801604)
+#define OHCI_HcCommandStatus    (*(volatile u32 *)0xBF801608)
+#define OHCI_HcInterruptDisable (*(volatile u32 *)0xBF801614)
+
+// An IOP reset does not touch the USB host controller. If USBD left it running (a PADEMU pad, a USB
+// device), it keeps walking its lists and writing back into memory the rebooted IOP uses for other
+// modules, and IGR hangs before the next program comes up. Stop it the way USBD resets it.
+// Ported from belomaxorka/YAOPL e72c9f48.
+static void cdvdman_usb_host_stop(void)
+{
+    if ((OHCI_HcControl & 0xC0) == 0x80) { // HCFS = UsbOperational
+        int i;
+
+        OHCI_HcInterruptDisable = ~0;
+        OHCI_HcCommandStatus = 1; // HCR
+        OHCI_HcControl = 0;
+        for (i = 0; (OHCI_HcCommandStatus & 1) && i < 1000; i++)
+            ;
+    }
+}
+
 static void oplShutdown(int poff)
 {
     u32 stat;
@@ -252,6 +274,9 @@ static void oplShutdown(int poff)
 #endif
         sceCdPowerOff(&stat);
     }
+
+    // IGR resets the IOP next. The device is unmounted and the VMC flushed, so nothing needs USB now.
+    cdvdman_usb_host_stop();
 }
 
 //-------------------------------------------------------------------------
