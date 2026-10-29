@@ -22,6 +22,9 @@ static short int vmode = -1;
 static u8 hires = 0;
 static u8 guiWakeupCount;
 static int vsync_id = -1;
+// The thread gsKit_hires_init_screen raised to priority 2, and the priority it had before (-1: none).
+static int hiresThread = -1;
+static int hiresPriority = -1;
 
 #define NUM_RM_VMODES 16
 #define RM_VMODE_AUTO 0
@@ -267,6 +270,16 @@ int rmSetMode(int force)
             // other _gsKit_create_passes caller is gsKit_hires_set_bg, which OPL never calls (and
             // must not casually: a bg texture replaces the baked clear entirely).
             gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+            // gsKit_hires_init_screen raises its CALLER to priority 2 (a HACK in gsHires.c, so the
+            // caller sits right under its priority-1 DMA thread) and gsKit_hires_deinit_global never
+            // lowers it again. Remember who that is and what it ran at, so rmEnd() can put it back:
+            // otherwise one visit to a 704-wide, 720p or 1080i mode left the GUI thread (31 since
+            // main) at 2 until reboot, above the background-music threads (30/31) it normally yields
+            // to, in every mode chosen after it. rmSetMode can also run on the IO worker (applyConfig
+            // from _loadConfig), so the thread is recorded, not assumed to be guiThreadID.
+            ee_thread_status_t status;
+            hiresThread = GetThreadId();
+            hiresPriority = (ReferThreadStatus(hiresThread, &status) >= 0) ? status.current_priority : -1;
             gsKit_hires_init_screen(gsGlobal, rm_mode_table[vmode].passes);
             gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
         } else {
@@ -331,6 +344,12 @@ void rmEnd(void)
 {
     if (hires) {
         gsKit_hires_deinit_global(gsGlobal);
+        // Undo gsKit_hires_init_screen's priority bump (see rmSetMode). ReferThreadStatus returns the
+        // status (>= 0) on the EE, so a failed lookup is the only case left at -1 and skipped.
+        if (hiresThread >= 0 && hiresPriority >= 0)
+            ChangeThreadPriority(hiresThread, hiresPriority);
+        hiresThread = -1;
+        hiresPriority = -1;
     } else {
         gsKit_deinit_global(gsGlobal);
         gsKit_remove_vsync_handler(vsync_id);
