@@ -103,7 +103,7 @@ typedef uint64_t u64;
 static u32 fakeTicks;
 static u32 cpu_ticks(void) { return fakeTicks; }
 
-static u32 paddata, oldpaddata;
+static u32 paddata, oldpaddata, padHeldUnknown;
 static int delaycnt[16], paddelay[16];
 static int KeyPressedOnce, DisableCron;
 
