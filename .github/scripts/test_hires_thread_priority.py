@@ -103,6 +103,7 @@ void rmEnd(void);
 static void rmSetDisplayOffset(int, int) {}
 static void rmSetOverscan(int) {}
 static void rmSetAspectRatio(enum rm_aratio) {}
+static int rmIsWideDisplay(void) { return 0; }
 @SETMODE@
 @END@
 
