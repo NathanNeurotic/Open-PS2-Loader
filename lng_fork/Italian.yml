@@ -533,7 +533,7 @@ translations:
   HINT_BDMCACHE: Cache di lettura anticipata per USB e altre unità BDM in gioco. Più grande può rendere più fluido lo streaming ma usa più memoria.
   HINT_HDDCACHE: Cache di lettura anticipata per l'hard disk interno in gioco.
   HINT_SMBCACHE: Cache di lettura anticipata per SMB in gioco.
-  HINT_CORE_LOADER: Il core di questo gioco dove entrambi sono supportati. UDPFS/UDPBD solo con Neutrino; SMB/HTTP solo con <OPL>. Predefinito segue Avvio dei giochi.
+  HINT_CORE_LOADER: Il core di questo gioco dove entrambi sono supportati. UDPFS Files solo con Neutrino; SMB/HTTP solo con <OPL>. Predefinito segue Avvio dei giochi. Su UDPBD/UDPFS IMG, Predefinito è Neutrino.
   HINT_DMA_MODE: Modalità di trasferimento dell'hard disk interno per questo gioco. Abbassala se il gioco scatta o si blocca.
   HINT_DNAS_GAMEID: ID del disco per i giochi online DNAS. Carica dal disco lo legge dal disco originale.
   HINT_LOAD_FROM_DISC: Legge l'ID DNAS dal disco originale nell'unità.

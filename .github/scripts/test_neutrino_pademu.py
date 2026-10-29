@@ -72,6 +72,7 @@ static int menuSelectedRowView(item_list_t *s) { (void)s; return view; }
 static int favGetItemSourceMode(int id) { (void)id; return favMode; }
 static int bdmModeIsUDPBD(int mode) { return mode == BDM_MODE && udpbd; }
 static int bdmSupportIsUDPBD(void *s) { return bdmModeIsUDPBD(((item_list_t *)s)->mode); }
+static int bdmNetBlockCoreLoader(config_set_t *c) { return !(c && c->core_present && c->core == 0); }
 static int pccf;
 static int bdmModeIsPCCF(int mode) { return mode == BDM_MODE && pccf; }
 @WARNING@
@@ -105,7 +106,9 @@ int main(void) {
                             view=0;
                             int expected=choice<0 ? defaultCore : choice;
                             if (mode==ETH_MODE || mode==HTTP_MODE || (mode==BDM_MODE && pccf)) expected=0;
-                            if (mode==UDPFS_MODE || (mode==BDM_MODE && udpbd)) expected=1;
+                            if (mode==UDPFS_MODE) expected=1;
+                            /* UDPBD defaults to Neutrino; only its own <OPL> key picks the OPL core */
+                            if (mode==BDM_MODE && udpbd) expected=choice!=0;
                             assert(gameMenuCoreIsNeutrino()==expected);
                             view=LIB_VIEW_PS1; assert(gameMenuCoreIsNeutrino()==0);
                         }

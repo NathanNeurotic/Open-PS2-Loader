@@ -329,7 +329,7 @@ module_make = read('modules/iopcore/cdvdman/Makefile')
 check(re.match(r'IOP_OBJS = cdvdman\.o ', module_make) is not None, 'cdvdman.o is in every CDVDMAN variant')
 top = read('Makefile')
 variants = re.findall(r'\t\$\(MAKE\) \$\(CDVDMAN_PS2LOGO_FLAGS\)[^\n]*?(USE_[A-Z_]+)=1 -C \$< all', top)
-check(len(variants) == 8, 'eight CDVDMAN variants in the top Makefile (got %d)' % len(variants))
+check(len(variants) == 9, 'nine CDVDMAN variants in the top Makefile (got %d)' % len(variants))
 
 
 def variant_defines(use, debug, diag):

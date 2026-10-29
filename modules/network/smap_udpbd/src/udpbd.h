@@ -17,7 +17,7 @@
 #define UDPBD_CMD_WRITE_DONE 0x06 // server -> client
 
 
-#define UDPBD_MAX_SECTOR_READ 512 // 512 sectors of 512 bytes = 256KiB
+#define UDPBD_MAX_SECTOR_READ 32 // 32 sectors of 512 bytes = 16KiB (local change, see ORIGIN.txt)
 
 
 /*

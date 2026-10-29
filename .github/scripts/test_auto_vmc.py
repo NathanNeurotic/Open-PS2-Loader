@@ -58,7 +58,9 @@ static int udpbdSupport;
 static int bdmSupportIsUDPBD(const item_list_t *s) { (void)s; return udpbdSupport; }
 static int bdmModeIsPCCF(int m) { (void)m; return 0; }
 static int bdmModeIsUDPBD(int m) { (void)m; return 0; }
+static int udpbdCore = -1; /* the game's own Loader Core key on the UDPBD device: -1 = none */
 static int configGetInt(config_set_t *c, const char *k, int *v) { (void)c; (void)k; (void)v; return 0; }
+static int bdmNetBlockCoreLoader(config_set_t *c) { (void)c; return udpbdCore == 0 ? 0 : 1; }
 static int configGetVMC(config_set_t *c, char *out, int size, int slot) { (void)c; (void)size; (void)slot; out[0] = 0; return 0; }
 static int configGetVMCDisable(config_set_t *c, int slot, int *v) { (void)c; (void)slot; *v = 0; return 0; }
 static void configSetVMC(config_set_t *c, const char *vmc, int slot) { (void)c; (void)slot; assigned++; snprintf(assignedName, sizeof(assignedName), "%s", vmc); }
@@ -121,7 +123,7 @@ static void reset(int probe, int submit, int reprobe)
     probeResult = probe; submitResult = submit; reprobeResult = reprobe;
     probes = submits = aborts = saves = assigned = msgs = frame = statusPolls = 0;
     cancelAt = -1; busyBefore = 0; finishAfter = 3; jobError = 0;
-    list.mode = BDM_MODE; udpbdSupport = 0; gDefaultCoreLoader = 0;
+    list.mode = BDM_MODE; udpbdSupport = 0; udpbdCore = -1; gDefaultCoreLoader = 0;
     strcpy(startupNow, "SLUS_123.45");
     assignedName[0] = 0;
 }
@@ -162,11 +164,19 @@ int main(void)
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
     assert(assigned == 1 && submits == 0 && msgs == 0);
 
-    /* udpbd_odd_size_card: so does the UDPBD block device */
+    /* udpbd_odd_size_card: the UDPBD block device defaults to Neutrino, whatever the global default */
     reset(0, -1, 8);
     udpbdSupport = 1;
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
     assert(assigned == 1 && submits == 0 && msgs == 0);
+
+    /* udpbd_odd_size_card_under_opl_key: its own <OPL> key launches native, which refuses the card */
+    reset(0, -1, 8);
+    udpbdSupport = 1;
+    udpbdCore = 0;
+    gDefaultCoreLoader = 1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 0 && msgs == 1);
 
     /* smb_odd_size_card_under_neutrino_default: SMB always launches native, which refuses the card */
     reset(0, -1, 8);

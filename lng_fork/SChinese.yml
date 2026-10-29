@@ -533,7 +533,7 @@ translations:
   HINT_BDMCACHE: 游戏中 USB 和其他 BDM 驱动器的预读缓存。越大越能平滑流式读取，但占用更多内存。
   HINT_HDDCACHE: 游戏中内置硬盘的预读缓存。
   HINT_SMBCACHE: 游戏中 SMB 的预读缓存。
-  HINT_CORE_LOADER: 两者都支持时此游戏使用的核心。UDPFS/UDPBD 仅限 Neutrino；SMB/HTTP 仅限 <OPL>。默认跟随“游戏启动”。
+  HINT_CORE_LOADER: 两者都支持时此游戏使用的核心。UDPFS Files 仅限 Neutrino；SMB/HTTP 仅限 <OPL>。默认跟随“游戏启动”。UDPBD/UDPFS IMG 上默认为 Neutrino。
   HINT_DMA_MODE: 此游戏的内置硬盘传输模式。游戏卡顿或卡死时调低。
   HINT_DNAS_GAMEID: DNAS 联网游戏的光盘 ID。“从光盘加载”会从原版光盘读取。
   HINT_LOAD_FROM_DISC: 从光驱中的原版光盘读取 DNAS ID。

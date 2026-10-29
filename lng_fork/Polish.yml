@@ -539,7 +539,7 @@ translations:
   HINT_BDMCACHE: Bufor odczytu z wyprzedzeniem dla USB i innych dysków BDM w grze. Większy może wygładzić strumieniowanie, ale zużywa więcej pamięci.
   HINT_HDDCACHE: Bufor odczytu z wyprzedzeniem dla wewnętrznego HDD w grze.
   HINT_SMBCACHE: Bufor odczytu z wyprzedzeniem dla SMB w grze.
-  HINT_CORE_LOADER: Rdzeń dla tej gry tam, gdzie oba są obsługiwane. UDPFS/UDPBD tylko Neutrino; SMB/HTTP tylko <OPL>. Domyślne podąża za Uruchamianiem gier.
+  HINT_CORE_LOADER: Rdzeń dla tej gry tam, gdzie oba są obsługiwane. UDPFS Files tylko Neutrino; SMB/HTTP tylko <OPL>. Domyślne podąża za Uruchamianiem gier. Na UDPBD/UDPFS IMG Domyślne oznacza Neutrino.
   HINT_DMA_MODE: Tryb transferu wewnętrznego HDD dla tej gry. Obniż go, jeśli gra się zacina lub zawiesza.
   HINT_DNAS_GAMEID: ID płyty dla gier online DNAS. Wczytaj z płyty odczytuje je z oryginalnej płyty.
   HINT_LOAD_FROM_DISC: Odczytuje ID DNAS z oryginalnej płyty w napędzie.

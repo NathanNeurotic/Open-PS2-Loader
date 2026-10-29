@@ -551,7 +551,7 @@ translations:
   HINT_BDMCACHE: Predmemorija čitanja unaprijed za USB i druge BDM pogone u igri. Veća može ujednačiti strujanje, ali troši više memorije.
   HINT_HDDCACHE: Predmemorija čitanja unaprijed za unutarnji HDD u igri.
   HINT_SMBCACHE: Predmemorija čitanja unaprijed za SMB u igri.
-  HINT_CORE_LOADER: Jezgra za ovu igru gdje su podržane obje. UDPFS/UDPBD su samo za Neutrino; SMB/HTTP samo za <OPL>. Zadano prati Pokretanje igara.
+  HINT_CORE_LOADER: Jezgra za ovu igru gdje su podržane obje. UDPFS Files su samo za Neutrino; SMB/HTTP samo za <OPL>. Zadano prati Pokretanje igara. Na UDPBD/UDPFS IMG Zadano je Neutrino.
   HINT_DMA_MODE: Način prijenosa unutarnjeg HDD-a za ovu igru. Smanji ga ako igra zastajkuje ili se smrzava.
   HINT_DNAS_GAMEID: ID diska za DNAS mrežne igre. Učitaj s diska čita ga s originalnog diska.
   HINT_LOAD_FROM_DISC: Čita DNAS ID s originalnog diska u pogonu.

@@ -557,7 +557,7 @@ translations:
   HINT_BDMCACHE: Cache baca-dulu untuk USB dan drive BDM lain saat bermain. Makin besar bisa memperhalus streaming tetapi memakai lebih banyak memori.
   HINT_HDDCACHE: Cache baca-dulu untuk HDD internal saat bermain.
   HINT_SMBCACHE: Cache baca-dulu untuk SMB saat bermain.
-  HINT_CORE_LOADER: Inti untuk game ini jika keduanya didukung. UDPFS/UDPBD hanya Neutrino; SMB/HTTP hanya <OPL>. Bawaan mengikuti Peluncuran Game.
+  HINT_CORE_LOADER: Inti untuk game ini jika keduanya didukung. UDPFS Files hanya Neutrino; SMB/HTTP hanya <OPL>. Bawaan mengikuti Peluncuran Game. Pada UDPBD/UDPFS IMG, Bawaan berarti Neutrino.
   HINT_DMA_MODE: Mode transfer HDD internal untuk game ini. Turunkan jika game tersendat atau macet.
   HINT_DNAS_GAMEID: ID disk untuk game online DNAS. Muat dari Disk membacanya dari disk asli.
   HINT_LOAD_FROM_DISC: Membaca ID DNAS dari disk asli di drive.

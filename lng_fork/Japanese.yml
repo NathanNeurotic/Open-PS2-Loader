@@ -532,7 +532,7 @@ translations:
   HINT_BDMCACHE: ゲーム中の USB などの BDM ドライブの先読みキャッシュ。大きいほどストリーミングが滑らかになることがありますが、メモリーを多く使います。
   HINT_HDDCACHE: ゲーム中の内蔵 HDD の先読みキャッシュ。
   HINT_SMBCACHE: ゲーム中の SMB の先読みキャッシュ。
-  HINT_CORE_LOADER: 両方に対応する場合にこのゲームで使うコア。UDPFS/UDPBD は Neutrino のみ、SMB/HTTP は <OPL> のみ。既定は「ゲームの起動」に従います。
+  HINT_CORE_LOADER: 両方に対応する場合にこのゲームで使うコア。UDPFS Files は Neutrino のみ、SMB/HTTP は <OPL> のみ。既定は「ゲームの起動」に従います。UDPBD/UDPFS IMG では既定は Neutrino です。
   HINT_DMA_MODE: このゲームの内蔵 HDD の転送モード。ゲームがカクついたり固まったりするなら下げてください。
   HINT_DNAS_GAMEID: DNAS オンラインゲームのディスク ID。「ディスクから読み込む」は元のディスクから読みます。
   HINT_LOAD_FROM_DISC: ドライブに入っている元のディスクから DNAS ID を読みます。

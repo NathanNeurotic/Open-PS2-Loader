@@ -28,8 +28,8 @@ the same `CD/` or `DVD/` placement and naming rules as ISO. APA installations
 require an appropriate installer rather than copying a file into a folder.
 
 When Neutrino is selected for a direct ZSO image, RiptOPL falls back to OPL on
-paths with a built-in core. UDPFS/UDPBD have no such fallback, so a compressed
-image reaching Neutrino directly is refused. A **server-decoded virtual ISO**
+paths with a built-in core, which now include UDPBD and UDPFS IMG. UDPFS Files has
+no such fallback, so a compressed image reaching Neutrino there is refused. A **server-decoded virtual ISO**
 over UDPFS avoids this restriction: Neutrino receives ISO data, not ZSO bytes.
 
 See the [ZSO guide](https://nathanneurotic.github.io/Open-PS2-Loader/zso.html)

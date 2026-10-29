@@ -56,6 +56,10 @@ static int eecoreInit(int argc, char **argv)
         config->GameMode = BDM_CF_MODE;
     else if (!_strncmp(config->GameModeDesc, "BDM_ATA_MODE", 12))
         config->GameMode = BDM_HDD_MODE;
+    else if (!_strncmp(config->GameModeDesc, "BDM_UDP_MODE", 12))
+        config->GameMode = BDM_UDP_MODE;
+    else if (!_strncmp(config->GameModeDesc, "BDM_UFS_MODE", 12))
+        config->GameMode = BDM_UFS_MODE;
     else if (!_strncmp(config->GameModeDesc, "HTTP_MODE", 9))
         config->GameMode = HTTP_MODE;
     else if (!_strncmp(config->GameModeDesc, "ETH_MODE", 8))

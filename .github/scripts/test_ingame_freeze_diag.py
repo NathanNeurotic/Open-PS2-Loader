@@ -88,7 +88,7 @@ check("INGAMEDIAG ?= 0" in top, "INGAMEDIAG defaults off")
 check(re.search(r"ifeq \(\$\(INGAMEDIAG\),1\)\n  ifeq \(\$\(RETROACHIEVEMENTS\),1\)\n    \$\(error", top) is not None,
       "INGAMEDIAG refuses to combine with RETROACHIEVEMENTS (RA runs IGR from VBLANK)")
 cdvdman_rules = re.findall(r"\t\$\(MAKE\) \$\(CDVDMAN_PS2LOGO_FLAGS\)[^\n]*USE_[A-Z_]+=1 -C \$< all", top)
-check(len(cdvdman_rules) == 8, f"eight CDVDMAN variant rules found (got {len(cdvdman_rules)})")
+check(len(cdvdman_rules) == 9, f"nine CDVDMAN variant rules found (got {len(cdvdman_rules)})")
 check(all("$(CDVDMAN_DIAG_FLAGS)" in r for r in cdvdman_rules), "every CDVDMAN variant receives the diag flag")
 check("\t$(MAKE) $(CDVDMAN_DIAG_FLAGS) -C $<" in top, "CDVDFSV receives the diag flag")
 check("EECORE_EXTRA_FLAGS += INGAMEDIAG=1" in top, "ee_core gets the flag")
@@ -151,7 +151,7 @@ check("freeze_diag_format(" in irx, "the IRX uses the host-tested formatter")
 fmt = read("ee_core/src/freeze_diag_format.c")
 check("long long" not in fmt, "the formatter needs no 64-bit division (IOP has none)")
 mods = read("ee_core/include/modules.h")
-check(re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*OPL_MODULE_ID_FREEZEDIAG,\n#endif\n\n\s*OPL_MODULE_ID_PCCF = 60,\n\s*OPL_MODULE_ID_COUNT", mods) is not None,
+check(re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*OPL_MODULE_ID_FREEZEDIAG,\n#endif\n\n\s*OPL_MODULE_ID_PCCF = 60,\n(?:[^\n]*\n)*?\s*OPL_MODULE_ID_COUNT", mods) is not None,
       "the diagnostic ID remains guarded and existing IDs are preserved before CF")
 sysc = read("src/system.c")
 check(re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*irxptr_tab\[modcount\]\.info = size_freezediag_irx", sysc) is not None,
