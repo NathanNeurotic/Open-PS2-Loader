@@ -398,6 +398,8 @@ jobs:
         run: python3 .github/scripts/test_bdm_index.py
       - name: Check the MMCE IGR slot and ON/OFF choices are translated
         run: python3 .github/scripts/test_mmce_igr_strings.py
+      - name: Check every SMAP driver gives a TX descriptor the buffer address
+        run: python3 .github/scripts/test_smap_tx_base.py
       - name: Check local transport binding and iLink aliases cannot cross-wire devices
         run: python3 .github/scripts/test_bdm_transport_binding.py
       - name: Check BDM partition I/O bounds and sector-size refusal
