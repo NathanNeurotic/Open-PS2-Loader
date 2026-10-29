@@ -4211,6 +4211,19 @@ int thmHintRank(const theme_t *theme, int token)
     return THM_HINT_COUNT;
 }
 
+// The built-in <OPL> theme's cfg for a view: the template a fallback view takes its presenter from.
+static void thmReadViewTemplate(config_set_t *cfg, int view)
+{
+    if (view == THM_VIEW_COVERFLOW)
+        configReadBuffer(cfg, &theme_coverflow_cfg, size_theme_coverflow_cfg);
+    else if (view == THM_VIEW_PSBBN)
+        configReadBuffer(cfg, &theme_psbbn_flow_cfg, size_theme_psbbn_flow_cfg);
+    else if (view == THM_VIEW_GRID)
+        configReadBuffer(cfg, &theme_grid_cfg, size_theme_grid_cfg);
+    else
+        configReadBuffer(cfg, &conf_theme_OPL_cfg, size_conf_theme_OPL_cfg);
+}
+
 static int thmLoad(const char *themePath)
 {
     LOG("THEMES Load theme path=%s\n", themePath);
@@ -4308,6 +4321,30 @@ static int thmLoad(const char *themePath)
     newT->view = thmViewChoose(&viewInfo, gThemeViewRequest);
     newT->viewMask = viewInfo.mask;
     newT->defaultView = viewInfo.defaultView;
+    // Fallback views: a disk theme without views= offers every view. One it does not declare is built from
+    // its own layout with the built-in template's presenter (thmViewSynthesize). views= keeps a theme to the
+    // views it names.
+    if (themePath != NULL && !viewInfo.listed) {
+        unsigned int offered = (1u << THM_VIEW_COUNT) - 1;
+        int requested = gThemeViewRequest;
+        if (requested >= 0 && requested < THM_VIEW_COUNT && !(viewInfo.mask & (1u << requested))) {
+            int built = 0;
+            config_set_t *tmpl = configAlloc(0, NULL, NULL);
+            if (tmpl != NULL) {
+                thmReadViewTemplate(tmpl, requested);
+                built = thmViewSynthesize(themeConfig, tmpl, requested);
+                configFree(tmpl);
+            }
+            if (built) {
+                viewInfo.blocksMask |= 1u << requested; // its blocks now exist under "<view>."
+                newT->view = requested;
+                LOG("THEMES View %s: not declared by the theme, built from its layout\n", thmViewName(requested));
+            } else {
+                offered &= ~(1u << requested); // stays on the default view; L3 must not keep asking for it
+            }
+        }
+        newT->viewMask = offered;
+    }
     if (builtinView >= 0) {
         newT->view = builtinView;
         newT->viewMask = (1u << THM_VIEW_LIST) | (1u << THM_VIEW_COVERFLOW) | (1u << THM_VIEW_PSBBN) | (1u << THM_VIEW_GRID);

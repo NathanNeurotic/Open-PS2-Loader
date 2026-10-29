@@ -45,6 +45,7 @@ typedef struct
     unsigned int blocksMask; // views the theme declares at least one "<view>." key for
     unsigned int ownMask;    // views with <view>.inherit=0: their blocks do not fall back to the base
     int defaultView;         // default_view= if the theme offers it, else native
+    int listed;              // views= names at least one known view: the theme chose its views itself
 } thm_view_info_t;
 
 void thmViewScan(config_set_t *themeConfig, thm_view_info_t *info);
@@ -90,5 +91,17 @@ int thmApplyDisplayLayout(config_set_t *themeConfig, int wide);
 // neighbours; scaling each position by the same 3/4 about the screen centre closes them exactly, whatever
 // the alignment (left edge, centre and right edge all move by the same rule).
 int thmLayoutAutoFitX(int x, int screenWidth);
+
+// Fallback views. A theme without views= offers every view: one it does not declare is built from its own
+// List (or flow) layout, keeping its background, colours, fonts, icons, hints and info page, and swapping
+// only the presenter for the one in the built-in template of that view (tmpl: the <OPL> theme's cfg for
+// the view, so an edition that replaces those cfgs changes the fallback too). Per main-side family
+// (main, appsMain, vcdMain, favsMain, favsVcdMain, favsAppsMain) every base block is copied into
+// "<view>.<block>": its first ItemCover/Coverflow/PSBBNFlow/Grid becomes the template's presenter for that
+// family, any further one is switched off, and an unfiltered ItemsList takes the template list's x, y,
+// width, height and alignment. A family without a presenter of its own gets the template's after its last
+// block (main) or in main's presenter slot (apps, PS1). Info blocks are not touched. Returns 1 when the
+// view was built, 0 when the template has no presenter for it (the caller then shows the default view).
+int thmViewSynthesize(config_set_t *themeConfig, config_set_t *tmpl, int view);
 
 #endif

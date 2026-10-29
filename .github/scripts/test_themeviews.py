@@ -307,7 +307,68 @@ int main(void)
         assert(thmLayoutAutoFitX(100, 640) == 155);
     }
 
-    puts("themeviews: view names, legacy names, scan, choice, prefixes, slot chains, inherit=0, scoped keys, SD/HD layouts and key length passed");
+    // Fallback views: a theme without views= gets every view, built from its own layout.
+    {
+        config_set_t *lv = parse("views=list,coverflow\nmain0:\n\ttype=Background\n");
+        thmViewScan(lv, &info);
+        assert(info.listed == 1);
+        configFree(lv);
+
+        static const char *listTheme = "main0:\n\ttype=Background\n\tdefault=bg\n"
+                                       "main1:\n\ttype=MenuIcon\n\tx=40\n"
+                                       "main2:\n\ttype=ItemsList\n\tx=20\n\ty=60\n\twidth=380\n\theight=330\n\tfont=1\n"
+                                       "main3:\n\ttype=ItemCover\n\tdefault=cover\n\tx=-120\n"
+                                       "main4:\n\ttype=StaticText\n\tvalue=Hi\n"
+                                       "main5_enabled=0\n"
+                                       "appsMain3:\n\ttype=ItemCover\n\tdefault=coverapp\n"
+                                       "info0:\n\ttype=Background\n";
+        static const char *cfTemplate = "main0:\n\ttype=Background\n"
+                                        "main2:\n\ttype=Coverflow\n\tdefault=cover\n\ty=233\n\twidth=184\n"
+                                        "appsMain2:\n\ttype=Coverflow\n\tdefault=coverapp\n\ty=239\n"
+                                        "vcdMain2:\n\ttype=Coverflow\n\tdefault=cover\n"
+                                        "main15:\n\ttype=ItemsList\n\tx=POS_MID\n\ty=45\n\twidth=DIM_INF\n\theight=24\n\taligned=1\n";
+        config_set_t *t = parse(listTheme);
+        config_set_t *tmpl = parse(cfTemplate);
+        thmViewScan(t, &info);
+        assert(info.listed == 0 && info.mask == (1u << THM_VIEW_LIST));
+        assert(thmViewSynthesize(t, tmpl, THM_VIEW_COVERFLOW) == 1);
+        const char *s;
+        int i;
+        SLOT(t, "coverflow", mainChain, 1, 0, "coverflow.main0");
+        assert(configGetStr(t, "coverflow.main0_default", &s) && !strcmp(s, "bg"));       // the theme's own background
+        assert(configGetStr(t, "coverflow.main3_type", &s) && !strcmp(s, "Coverflow"));   // cover -> carousel, same slot
+        assert(configGetInt(t, "coverflow.main3_y", &i) && i == 233);
+        assert(!configGetStr(t, "coverflow.main3_x", &s));                                // no stale key from the ItemCover
+        assert(configGetStr(t, "coverflow.main2_y", &s) && !strcmp(s, "45"));            // list moved to the title strip
+        assert(configGetStr(t, "coverflow.main2_width", &s) && !strcmp(s, "DIM_INF"));
+        assert(configGetInt(t, "coverflow.main2_font", &i) && i == 1);                   // keeps its own font
+        assert(configGetStr(t, "coverflow.main4_value", &s) && !strcmp(s, "Hi"));
+        assert(configGetInt(t, "coverflow.main5_enabled", &i) && i == 0);
+        assert(configGetStr(t, "coverflow.appsMain3_default", &s) && !strcmp(s, "coverapp")); // apps template
+        assert(configGetInt(t, "coverflow.appsMain3_y", &i) && i == 239);
+        assert(configGetStr(t, "coverflow.vcdMain3_type", &s) && !strcmp(s, "Coverflow")); // PS1 gets its own
+        assert(!configGetStr(t, "coverflow.info0_type", &s));                               // info pages untouched
+        assert(configGetStr(t, "main3_type", &s) && !strcmp(s, "ItemCover"));             // base left as is
+        configFree(t);
+
+        // A list-only theme without a cover: the presenter goes after its last main block.
+        t = parse("main0:\n\ttype=Background\nmain1:\n\ttype=ItemsList\n");
+        assert(thmViewSynthesize(t, tmpl, THM_VIEW_COVERFLOW) == 1);
+        assert(configGetStr(t, "coverflow.main2_type", &s) && !strcmp(s, "Coverflow"));
+        SLOT(t, "coverflow", mainChain, 1, 2, "coverflow.main2");
+        configFree(t);
+
+        // A template without the presenter builds nothing.
+        config_set_t *empty = parse("main0:\n\ttype=Background\n");
+        t = parse(listTheme);
+        assert(thmViewSynthesize(t, empty, THM_VIEW_GRID) == 0);
+        assert(!configGetStr(t, "grid.main0_type", &s));
+        configFree(t);
+        configFree(empty);
+        configFree(tmpl);
+    }
+
+    puts("themeviews: view names, legacy names, scan, choice, prefixes, slot chains, inherit=0, scoped keys, SD/HD layouts, fallback views and key length passed");
     return 0;
 }
 '''
