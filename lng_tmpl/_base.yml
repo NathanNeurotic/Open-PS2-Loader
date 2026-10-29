@@ -2234,3 +2234,12 @@ gui_strings:
 - comment: Interface setting (multi-view themes) that picks how the theme draws the game pages.
   label: THEME_VIEW
   string: Theme View
+
+
+- label: ERR_VMC_FRAGMENTS_CONTINUE
+  comment: Native BDM VMC refusal. Arguments are card name, fragment count and physical memory-card slot. Keep this order.
+  string: "VMC %s is in %d fragments. Continue with Memory Card in slot %d?"
+
+- label: VMC_DEFRAGMENT_HINT
+  comment: Shown after cancelling a fragmented native BDM VMC launch. Never suggest deleting the only copy.
+  string: "Back up the VMC to a PC, remove it from the device, then copy it back. If it is still fragmented, free space and retry. Never delete your only copy."

@@ -89,3 +89,16 @@ On the internal HDD each action is synced before the page reports it done.
 
 A card image with ECC data, such as a PCSX2 `.ps2` file, can be listed and copied out, but it is never
 changed here. With writes disabled in Settings, only listing is offered.
+
+## Fragment-count diagnostics
+
+When a native BDM VMC is fragmented, the launch warning shows its fragment
+count and asks whether to continue with the physical memory card in that slot.
+The fragmented VMC remains disabled. Cancel stops the launch and shows recovery
+advice: back up the VMC to a PC before removing and copying it back. Never delete
+the only copy; recopying is not guaranteed to make a file contiguous.
+
+Unknown layouts and out-of-range LBAs keep their own warnings. This does not
+change Neutrino's separate VMC mapping. Adapted from belomaxorka/YAOPL
+[c19eed08](https://github.com/yaopl/yaopl/commit/c19eed0850aed1ec30286f8448681043144b9d5c);
+console validation remains pending.
