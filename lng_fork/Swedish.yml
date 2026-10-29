@@ -667,3 +667,4 @@ translations:
   HINT_ENABLE_DVR: Experimentell upptäckt av DESR DVR-ISO:er. Kräver att HDD-källan är på; spelstart kräver en extern Neutrino med DVR-stöd.
   THEME_VIEW: "Temavy"
   HINT_THEME_VIEW: "Hur temat visar dina spel: List, Coverflow, PSBBN Flow eller Grid. Håll in L3 på huvudsidan för att byta. Teman utan den vyn använder sin standardvy."
+  BOTH: Båda

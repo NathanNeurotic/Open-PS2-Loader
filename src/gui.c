@@ -965,15 +965,21 @@ int guiShowMmceConfig(void)
     const struct UIItem *parts[] = {diaMmceConfig, diaMmceCommConfig, diaMmcePathConfig};
     const int skipIDs[] = {MMCE_COMM_BUTTON, MMCE_PATH_BUTTON};
     static const char *deviceSlots[] = {"0", "1", NULL, NULL};
-    static const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
+    static const char *deviceIGRSlots[] = {NULL, "0", "1", NULL, NULL};
     static const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
-    static const char *deviceOnOff[] = {"OFF", "ON", NULL};
+    static const char *deviceOnOff[] = {NULL, NULL, NULL};
     struct UIItem *previousActiveDialog = guiSettingsActiveDialog;
     struct UIItem *ui;
 
     // diaSetEnum stores the array pointer rather than copying it. Keep the MMCE options alive for
     // the lifetime of the dedicated child dialog, including any parent re-entry after Circle.
     deviceSlots[2] = _l(_STR_AUTO);
+    // The IGR slot and ON/OFF choices were fixed English text no translation could change
+    // (belomaxorka / YAOPL 999bb6d3). The stored values (mmceigr_slot 0-3, 0/1) are unchanged.
+    deviceIGRSlots[0] = _l(_STR_OFF);
+    deviceIGRSlots[3] = _l(_STR_BOTH);
+    deviceOnOff[0] = _l(_STR_OFF);
+    deviceOnOff[1] = _l(_STR_ON);
     ui = guiSettingsComposeInto(guiMmceSettingsDialog, parts, 3, skipIDs, 2, -1, 1);
 
     if (ui == NULL)

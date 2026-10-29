@@ -654,3 +654,4 @@ translations:
   XERA_SET_CLOCK: Aún no está en tu biblioteca de RetroAchievements. Pon en hora el reloj de la consola en los ajustes del sistema para ver su lista completa, o juégalo una vez con logros.
   THEME_VIEW: "Vista del tema"
   HINT_THEME_VIEW: "Cómo muestra el tema tus juegos: List, Coverflow, PSBBN Flow o Grid. Mantén L3 en la página principal para cambiar. Los temas sin esa vista usan su vista predeterminada."
+  BOTH: Ambas

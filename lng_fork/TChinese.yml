@@ -656,3 +656,4 @@ translations:
   HINT_ENABLE_DVR: 實驗性的 DESR DVR ISO 探索。需要開啟硬碟來源；啟動遊戲需要外部支援 DVR 的 Neutrino。
   THEME_VIEW: "主題檢視"
   HINT_THEME_VIEW: "主題顯示遊戲的方式：List, Coverflow, PSBBN Flow 或 Grid。在主頁面長按 L3 切換。沒有該檢視的主題會使用其預設檢視。"
+  BOTH: 兩者
