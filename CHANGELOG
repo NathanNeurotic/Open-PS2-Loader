@@ -14,6 +14,7 @@
 * Keep the final NUL when fitting wrapped theme text and stop at the string boundary, preventing reads/writes beyond exact-size allocations. Existing private copies keep saved CFG text unchanged. Credit belomaxorka/YAOPL a4c0830f. Hardware validation pending.
 * Stop parsing at the cheat-table capacity, preserving every accepted cheat's codes.
   Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
+* Fragmented native BDM VMC warnings show the existing fragment count and, on Cancel, backup/recovery guidance. Native refusal and physical-card fallback are unchanged. Credit belomaxorka/YAOPL c19eed08. Hardware validation pending.
 
 ==== Version 0.9.3 ====
 CORE:
