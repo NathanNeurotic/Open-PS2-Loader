@@ -6,6 +6,8 @@ The [website](https://nathanneurotic.github.io/Open-PS2-Loader/) provides search
 the [wiki](https://github.com/NathanNeurotic/Open-PS2-Loader/wiki) offers the same guides in GitHub.
 Use the references below for implementation details, exact limits and contributor workflows.
 
+- [October 29 ecosystem fork-gap reconciliation](FORK-GAP-ECOSYSTEM-AUDIT-2026-10-29.md) — current refs/releases, merged and pending work, and every stable record.
+
 ## Installation and troubleshooting
 
 | Task | Reference |

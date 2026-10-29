@@ -1,5 +1,9 @@
 # Fork-gap status: 2026-10-28
 
+> Historical snapshot. The [October 29 ecosystem reconciliation](FORK-GAP-ECOSYSTEM-AUDIT-2026-10-29.md)
+> supersedes availability wording below and pins both current editions, release/development
+> source, dependency gitlinks and open implementation PRs.
+
 > **This is the legacy version of RiptOPL.** Development has moved to ps2build's C++ Edition at
 > [NathanNeurotic/RiptOPL](https://github.com/NathanNeurotic/RiptOPL). This repository gets legacy
 > maintenance and the fixes that land in both editions. RiptOPL carries the same page in its `docs/`.
