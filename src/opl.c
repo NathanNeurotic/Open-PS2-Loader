@@ -5380,8 +5380,13 @@ static void bootDisplayPeek(void)
     fp = fopen(path, "r");
     if (fp == NULL)
         return;
+    int atLineStart = 1;
     while (fgets(line, sizeof(line), fp) != NULL) {
-        int value;
+        // A line longer than the buffer comes back in pieces: only a piece that starts a line is a key.
+        int lineStart = atLineStart, value;
+        atLineStart = strchr(line, '\n') != NULL;
+        if (!lineStart)
+            continue;
         if (bootPeekKey(line, CONFIG_OPL_VMODE, &value))
             gVMode = value; // out of range is clamped to Auto by rmSetMode()
         else if (bootPeekKey(line, CONFIG_OPL_WIDESCREEN, &value))
