@@ -8,6 +8,9 @@
 
 === Changelog ===
 
+==== Unreleased ====
+* Keep the final NUL when fitting wrapped theme text and stop at the string boundary, preventing reads/writes beyond exact-size allocations. Existing private copies keep saved CFG text unchanged. Credit belomaxorka/YAOPL a4c0830f. Hardware validation pending.
+
 ==== Version 0.9.3 ====
 CORE:
 

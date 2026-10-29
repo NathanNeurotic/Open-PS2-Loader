@@ -294,7 +294,9 @@ jobs:
       - name: Check PS1 scan recovery, launch readiness and optional IOP startup failures
         run: python3 .github/scripts/test_pr894_hardening.py
       - name: Check disc hashing, reset image and launch gates
-        run: python3 .github/scripts/test_ra_disc.py
+        run: |
+          python3 .github/scripts/test_ra_disc.py
+          python3 .github/scripts/test_font_fit_bounds.py
       - name: Check RA language isolation and stable string IDs
         run: python3 .github/scripts/test_ra_language_isolation.py
       - name: Check RA watch validation, persistent layout and EE sampling
