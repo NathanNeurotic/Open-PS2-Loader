@@ -248,6 +248,8 @@ jobs:
         run: python3 .github/scripts/test_auto_create_vmc.py
       - name: Check a read-only UDPBD/UDPFS IMG server is found and never written to
         run: python3 .github/scripts/test_udpbd_read_only.py
+      - name: Check the screen position is kept for each video mode (RIPPS2 build 124)
+        run: python3 .github/scripts/test_screen_pos_per_mode.py
       - name: Check Neutrino VMC budget recovery and #831 compat defaults
         run: python3 .github/scripts/test_issues_830_831.py
       - name: Check per-title compat defaults and per-core routing

@@ -371,6 +371,13 @@ extern int gVMode;    // 0 - Auto, 1 - PAL, 2 - NTSC
 extern int gXOff;
 extern int gYOff;
 extern int gOverscan;
+// The screen position (H-POS, V-POS, Overscan) is kept for each video mode (RIPPS2 build 124, AK).
+void screenPosStore(int vmode);                                     // remember the current position as vmode's
+void screenPosRecall(int vmode);                                    // bring back vmode's position, if it has one
+void screenPosModeChanged(int oldMode, int x, int y, int overscan); // a dialog switched gVMode away from oldMode
+void screenPosLoad(config_set_t *configOPL);
+void screenPosSave(config_set_t *configOPL);
+void screenPosReset(void);
 extern int gSelectButton;
 extern int gHDDGameListCache;
 

@@ -517,9 +517,9 @@ translations:
   HINT_PLASCOLOR: Barva přimíchaná do animovaného pozadí.
   HINT_RESETCOLOR: Obnoví vestavěné barvy RiptOPL, ne barvy motivu.
   HINT_WIDESCREEN: Kreslí menu pro televizor 16:9.
-  HINT_XOFF: Posune menu na obrazovce doleva nebo doprava.
-  HINT_YOFF: Posune menu na obrazovce nahoru nebo dolů.
-  HINT_MENU_OVERSCAN: Zmenší menu dovnitř, pokud televizor ořezává okraje.
+  HINT_XOFF: "Posune menu na obrazovce doleva nebo doprava. Uloží se pro každý režim videa."
+  HINT_YOFF: "Posune menu na obrazovce nahoru nebo dolů. Uloží se pro každý režim videa."
+  HINT_MENU_OVERSCAN: "Zmenší menu dovnitř, pokud televizor ořezává okraje. Uloží se pro každý režim videa."
   HINT_APPLYGAMEID: Při startu hry ukáže čárový kód, aby zařízení Pixel FX, RetroGEM a PS2Digital přepnula profily.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Cesta, režim videa a argumenty Neutrina pro každou hru.
   HINT_OSD_DEFAULTS_BUTTON: Jazyk konzole, velikost obrazovky a režim videa předávané hrám.

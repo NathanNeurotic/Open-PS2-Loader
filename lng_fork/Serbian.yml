@@ -433,9 +433,9 @@ translations:
   HINT_PLASCOLOR: Boja umešana u animiranu pozadinu.
   HINT_RESETCOLOR: Vraća ugrađene boje RiptOPL-a, ne boje teme.
   HINT_WIDESCREEN: Crta meni za TV 16:9.
-  HINT_XOFF: Pomera meni levo ili desno na ekranu.
-  HINT_YOFF: Pomera meni gore ili dole na ekranu.
-  HINT_MENU_OVERSCAN: Sužava meni ka unutra ako TV odseca ivice.
+  HINT_XOFF: "Pomera meni levo ili desno na ekranu. Pamti se za svaki video režim."
+  HINT_YOFF: "Pomera meni gore ili dole na ekranu. Pamti se za svaki video režim."
+  HINT_MENU_OVERSCAN: "Sužava meni ka unutra ako TV odseca ivice. Pamti se za svaki video režim."
   HINT_APPLYGAMEID: Prikazuje bar-kod dok igra počinje, da bi Pixel FX, RetroGEM i PS2Digital uređaji promenili profil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Neutrino putanja, video režim i argumenti za svaku igru.
   HINT_OSD_DEFAULTS_BUTTON: Jezik konzole, veličina ekrana i video režim koji se predaju igrama.

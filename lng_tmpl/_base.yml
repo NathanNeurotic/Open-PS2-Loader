@@ -1548,11 +1548,11 @@ gui_strings:
 - label: HINT_WIDESCREEN
   string: "Draws the menu for a 16:9 TV."
 - label: HINT_XOFF
-  string: "Moves the menu left or right on screen."
+  string: "Moves the menu left or right on screen. Kept for each video mode."
 - label: HINT_YOFF
-  string: "Moves the menu up or down on screen."
+  string: "Moves the menu up or down on screen. Kept for each video mode."
 - label: HINT_MENU_OVERSCAN
-  string: "Shrinks the menu inward if the TV cuts off its edges."
+  string: "Shrinks the menu inward if the TV cuts off its edges. Kept for each video mode."
 - label: HINT_APPLYGAMEID
   string: "Shows a barcode as a game starts, so Pixel FX, RetroGEM and PS2Digital devices switch profiles."
 - label: HINT_NEUTRINO_DEFAULTS_BUTTON
