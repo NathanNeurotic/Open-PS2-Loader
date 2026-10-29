@@ -394,6 +394,8 @@ jobs:
         run: python3 .github/scripts/test_iso9660_records.py
       - name: Check ZSO header, index and large-read validation
         run: python3 .github/scripts/test_zso_validation.py
+      - name: Check BdmIndex shows one dot per visible mass device
+        run: python3 .github/scripts/test_bdm_index.py
       - name: Check local transport binding and iLink aliases cannot cross-wire devices
         run: python3 .github/scripts/test_bdm_transport_binding.py
       - name: Check BDM partition I/O bounds and sector-size refusal

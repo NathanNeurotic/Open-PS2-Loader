@@ -235,6 +235,7 @@ typedef struct theme
     theme_element_t *itemsList;
     theme_element_t *loadingIcon;
     int loadingIconCount;
+    int bdmIndexFixed;  // has its own five-dot BdmIndex pictures (Index_0) but none for fewer devices
     int logoFrameCount; // count of contiguous animated boot-logo frames (0 = use single LOGO_PICTURE)
 
     GSTEXTURE textures[TEXTURES_COUNT];
