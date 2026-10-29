@@ -236,14 +236,14 @@ also replaces <code>appsMain2</code> in Coverflow unless the theme adds <code>co
 <b>whole</b> base block; it does not merge single keys from it. <code>_enabled=0</code> counts as present, which is how a view
 hides a base block. The <a href="#block-families">contiguous numbering rule</a> applies to the merged list.</p>
 <table><thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead><tbody>
-<tr><td><code>views</code></td><td>comma list of <code>list</code>, <code>coverflow</code>, <code>psbbn</code>, <code>grid</code></td><td>The views the theme offers (a bitmask inside the loader). Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order <code>views=</code> lists them in. Absent: the theme's own view (the first <code>PSBBNFlow</code>, <code>Coverflow</code> or <code>Grid</code> element among the base's contiguous <code>mainN</code> blocks gives psbbn, coverflow or grid, else list; <code>appsMain</code>, <code>vcdMain</code> and <code>favsMain</code> blocks do not count) plus every view it declares a <code>&lt;view&gt;.</code> key for.</td></tr>
+<tr><td><code>views</code></td><td>comma list of <code>list</code>, <code>coverflow</code>, <code>psbbn</code>, <code>grid</code></td><td>The views the theme offers, and only those. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order <code>views=</code> lists them in. Absent: <b>every</b> view; a view the theme does not declare is built for it (see <a href="#fallback-views">Fallback views</a>). The theme's own view, its default, is the first <code>PSBBNFlow</code>, <code>Coverflow</code> or <code>Grid</code> element among the base's contiguous <code>mainN</code> blocks (psbbn, coverflow or grid), else list; <code>appsMain</code>, <code>vcdMain</code> and <code>favsMain</code> blocks do not count.</td></tr>
 <tr><td><code>default_view</code></td><td>a view name</td><td>The view used until the user picks one, and when the user's pick is not offered. Absent, or naming a view the theme does not offer: the theme's own view if <code>views=</code> offers it, else the first offered view in the order list, coverflow, psbbn, grid.</td></tr>
 <tr><td><code>&lt;view&gt;.inherit</code></td><td><code>0</code></td><td>That view never falls back to the base blocks: it brings its whole main and info layout.</td></tr>
 <tr><td><code>&lt;view&gt;.&lt;global key&gt;</code></td><td>as the key</td><td>Overrides <code>use_default</code>, <code>use_real_height</code>, <code>coverflow_cover_offset</code> and the colour keys in that view.</td></tr>
 </tbody></table>
 <ul>
 <li>Make the base the List view. Stock OPL and other forks ignore the prefixed blocks, so they still load the theme as a list.</li>
-<li>The user's Theme View choice is one setting for every theme (<code>theme_view=</code>). A theme that does not offer it shows its <code>default_view</code>.</li>
+<li>The user's Theme View choice is one setting for every theme (<code>theme_view=</code>). A theme that does not offer it (it limits itself with <code>views=</code>) shows its <code>default_view</code>.</li>
 <li>Only the active view is built. Switching views reloads the theme, so it costs no extra memory.</li>
 <li>Names stay within 47 characters; the longest prefixed key, <code>coverflow.favsVcdMain12_reflection_offset</code>, is 41.</li>
 <li>The built-in <code>&lt;OPL&gt;</code> theme offers List, Coverflow, PSBBN Flow and Grid. Each still lives in its own file
@@ -251,6 +251,25 @@ hides a base block. The <a href="#block-families">contiguous numbering rule</a> 
 references for a view's blocks.</li>
 </ul>
 <p>Full reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#views-multi-view-themes--this-fork">THEME_ENGINE.md, Views</a>.</p>
+
+<h3 id="fallback-views">Fallback views — <em>this fork</em></h3>
+<p>A theme without <code>views=</code> offers all four views, even when it only describes one. When the user picks a view the
+theme does not declare, it is built from the theme's own layout. The background, colours, fonts, menu icons, hints, text and
+the whole info page stay the theme's. Only the <b>presenter</b> is swapped, for the one in the built-in <code>&lt;OPL&gt;</code>
+theme's file for that view (<code>misc/theme_coverflow.cfg</code>, <code>misc/theme_psbbn_flow.cfg</code>,
+<code>misc/theme_grid.cfg</code>, or <code>misc/conf_theme_OPL.cfg</code> for List). Design: KrahJohlito. Added in
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1154">Open-PS2-Loader #1154</a>; NOT TESTED on hardware or with community themes.</p>
+<ul>
+<li>In each of <code>main</code>, <code>appsMain</code>, <code>vcdMain</code>, <code>favsMain</code>, <code>favsVcdMain</code> and
+<code>favsAppsMain</code>, the first <code>ItemCover</code>, <code>Coverflow</code>, <code>PSBBNFlow</code> or <code>Grid</code> block
+becomes that file's presenter for the family, in the same slot (so it draws at the same depth). Any further one is hidden.</li>
+<li>An <code>ItemsList</code> without <code>devices=</code> keeps its font and colours but takes that file's list position and size
+(the title strip in Coverflow and Grid, the right-hand column in PSBBN Flow, the left panel in List).</li>
+<li>A theme with no cover at all gets the presenter after its last <code>mainN</code> block. Apps and PS1 pages get the file's own
+<code>appsMain</code>/<code>vcdMain</code> presenter in the same slot unless the theme put a block there.</li>
+<li>Info blocks and the theme's own <code>&lt;view&gt;.</code> blocks are never touched. The theme's static art is not moved, so a
+built view can overlap it. To keep a theme to the views it was designed for, list them in <code>views=</code>.</li>
+</ul>
 
 <h3 id="sd-hd-layouts">SD and HD layouts (<code>_sd</code> / <code>_hd</code>) — <em>this fork</em></h3>
 <p>One <code>conf_theme.cfg</code> can carry a 4:3 layout and a 16:9 layout, so a theme no longer needs separate SD and
