@@ -50,7 +50,7 @@ L3-switched views, one combined list with filters, or a single locked library. T
 the same device page — with the same covers, favorites, and per-game settings — rather than extra
 device tabs.
 
-**RiptOPL’s UDPFS Files page lists Ember titles and uppercase `POPS/*.VCD` files.**
+**RiptOPL’s UDPFS Files page lists Ember titles, uppercase `POPS/*.VCD` files and `POPS/*.cue` games.**
 Ember keeps the mounted network transport alive. POPSTARTER reads UDPFS VCDs through Okeanos’s
 separate UDPFS Assault BDMA variants; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
 With **BDMA Apply on Launch**, RiptOPL equips the `.udpfs` pair from the game device before VCD handoff.
@@ -365,7 +365,8 @@ so POPSTARTER itself can read them off the exFAT volume.
 
 ### POPS UDPFS with BDM-UDPFS Assault
 
-RiptOPL uses [Okeanos's UDPFS Assault 1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0)
+RiptOPL uses [Okeanos's UDPFS Assault TEST](https://github.com/Okeanos86/BDMAssault/releases/tag/UDPFS_TEST) pre-release (2026-10-28; it
+replaces [1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0))
 as its sole POPSTARTER UDPFS BDMA driver. It serves every `mass:` request from the
 UDPFS server, including POPS dependencies and VMC writes. **USB is not required.**
 The older Alpha and USB-first fallback driver are no longer bundled or selected.
@@ -373,11 +374,12 @@ This runtime starts again after POPSTARTER resets the IOP, independently of
 RiptOPL's mounted UDPFS connection.
 
 The existing **BDMA Mode -> UDPFS** uses `POPS/usbd.irx.udpfs` (the unmodified
-44,597-byte `udp_fs_assault.irx`) and `POPS/usbhdfsd.irx.udpfs` (the 34,508-byte
+51,029-byte `udp_fs_assault.irx`) and `POPS/usbhdfsd.irx.udpfs` (the 34,508-byte
 `usbd_bd_assault.irx`). They install as `mc?:/POPSTARTER/usbd.irx` and
 `usbhdfsd.irx`. The mode ID and `udpfs` marker remain unchanged. With **VCD BDMA
 Apply on Launch** enabled, a UDPFS game equips this pair automatically; matching
-installed/manual pairs skip copying, while old Alpha/USB-first pairs are stale.
+installed/manual pairs skip copying, while 1.0.0, Alpha and USB-first pairs are stale and
+are replaced.
 With automatic equip disabled, equip **UDPFS** manually before launching.
 
 Keep all support files together in the **game device's POPS folder**: for UDPFS,
@@ -386,6 +388,16 @@ running). Automatic launch equip reads this folder exclusively and never
 substitutes another device's pair. Put your own `POPS_IOX.PAK`, VCDs and other
 POPS dependencies on the server at their normal paths. RiptOPL does not migrate
 existing saves. Use uppercase `.VCD` and exact path casing on Linux.
+
+**BIN/CUE without conversion.** A game can also be `POPS/<game>.cue` (or `.CUE`) plus the
+`.bin` file(s) it names, in the same folder. RiptOPL lists it like a VCD, and the driver presents
+it to POPSTARTER as `POPS/<game>.VCD`, built on the fly. A real `.VCD` with the same name always
+wins, and the list shows that game once. One `.bin` per disc or one per track (Redump) both work.
+Upstream limits: track 1 must be MODE2/2352, no PREGAP/POSTGAP, every track needs INDEX 01,
+`.bin` sizes must be multiples of 2352, cue sheets up to 16 KiB and 99 tracks, images under
+4 GiB. The driver opens each `.bin` once at start (about 10 ms per file) and uses about 46 KB more
+IOP RAM than 1.0.0. A cue game's disc ID is not read from the image in the list or for the
+RetroGEM barcode; name the file `SLUS_123.45.Title.cue` if you want the ID shown.
 
 | Optional file in the game's POPS folder | MC destination | Contents |
 | --- | --- | --- |
@@ -468,7 +480,7 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
    put the defect on RiptOPL's external-equip side; exact files narrow it to POPSTARTER/BDMA runtime
    reinitialization after the handoff.
 8. **UDPFS shows Ember but no VCDs?** Select **UDPFS Files**, check server `POPS/*.VCD`
-   with uppercase `.VCD`, and refresh the PS1/Mixed view. For launch failures, check the
+   with uppercase `.VCD` (or `POPS/*.cue` / `*.CUE`), and refresh the PS1/Mixed view. For launch failures, check the
    [BDM-UDPFS Assault setup](#pops-udpfs-with-bdm-udpfs-assault): installed memory-card
    pair, `IPCONFIG.DAT` and `UDPFSCONFIG.DAT` in `mc?:/SYS-CONF/` (missing ones are copied there at
    launch from the server's `POPS/` folder), runtime support files and same-subnet server. UDPBD and UDPFS

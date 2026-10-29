@@ -1,9 +1,9 @@
 # UDPFS Assault credits and provenance
 
 The adjacent usbd.irx.udpfs / usbhdfsd.irx.udpfs pair is the unmodified
-[UDPFS Assault 1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0)
-network read/write release by Okeanos86. It replaces both the Alpha and USB-first
-fallback drivers. All mass: requests, including VMC writes, use the server.
+[UDPFS Assault TEST](https://github.com/Okeanos86/BDMAssault/releases/tag/UDPFS_TEST)
+pre-release (2026-10-28) by Okeanos86: the network read/write driver of 1.0.0 plus BIN/CUE
+games. It replaces 1.0.0, the Alpha and the USB-first fallback drivers. All mass: requests, including VMC writes, use the server.
 
 PROVENANCE.json records the verified archive and module SHA-256 hashes. NETWORK/
 preserves the complete upstream README, configuration guide, licenses and notices.

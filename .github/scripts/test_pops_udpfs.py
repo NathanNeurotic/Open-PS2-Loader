@@ -203,7 +203,11 @@ static int vcdBdmaLaunchReady(int m){return ready==m;}
 static const char *_l(int s){(void)s;return "message";}
 static int guiMsgBox(const char *s,int a,void *b){(void)s;(void)a;(void)b;error++;return 0;}
 static void guiMsgBoxMissing(const char *s,const char *p){(void)s;(void)p;error++;}
-static int open(const char *p,int f){assert(!strcmp(p,"udpfs:/POPS/Game.VCD")&&f==0);return 0;}
+static int cueOnly,opens;
+static int open(const char *p,int f){assert(f==0);opens++;
+ if(!strcmp(p,"udpfs:/POPS/Game.VCD"))return cueOnly?-1:0;
+ assert(cueOnly&&(!strcmp(p,"udpfs:/POPS/Game.cue")||!strcmp(p,"udpfs:/POPS/Game.CUE")));
+ return cueOnly==1&&!strcmp(p,"udpfs:/POPS/Game.CUE")?0:-1;}
 static int close(int f){assert(f==0);return 0;}
 static int vcdResolvePopstarter(const char *p,char *elf,int n){assert(!strcmp(p,udpfsPrefix));snprintf(elf,n,"udpfs:/POPS/POPSTARTER.ELF");return 1;}
 static void vcdDescribePopstarterLookup(const char *p,char *out,int n){(void)p;(void)out;(void)n;}
@@ -219,7 +223,7 @@ static int oplPath2Mode(const char *p){(void)p;return 0;}
 static void deinitEx(int a,int b,int c){(void)a;(void)b;(void)c;teardown++;}
 static void sysLaunchPopstarter(const char *p,const char *s){assert(!strcmp(p,"udpfs:/POPS/POPSTARTER.ELF")&&!strcmp(s,"mass:/POPS/XX.Game.ELF"));launched++;}
 @LAUNCH@
-static void reset(void){ready=equips=configs=installs=launched=teardown=error=equipError=configError=0;gBdmaApplyOnLaunch=clean=1;}
+static void reset(void){ready=equips=configs=installs=launched=teardown=error=equipError=configError=cueOnly=opens=0;gBdmaApplyOnLaunch=clean=1;}
 int main(void){
  item_list_t list={0};
  reset();udpfsLaunchVcd(&list,"Game",NULL);
@@ -232,6 +236,9 @@ int main(void){
  reset();equipError=-5;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown);
  reset();ready=6;configError=-3;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown&&!equips);
  reset();ready=6;clean=0;udpfsLaunchVcd(&list,"Game",NULL);assert(!launched&&!teardown);
+ reset();ready=6;udpfsLaunchVcd(&list,"Game",NULL);assert(launched==1&&opens==1); // a .VCD is not second-guessed
+ reset();ready=6;cueOnly=1;udpfsLaunchVcd(&list,"Game",NULL);assert(launched==1&&opens==3); // cue-only game
+ reset();ready=6;cueOnly=2;udpfsLaunchVcd(&list,"Game",NULL);assert(error&&!launched&&!teardown&&opens==3);
  puts("POPS UDPFS: network-only launch without USB, automatic/manual pairs, skip-on-valid and pre-teardown failures passed");
 }
 '''
@@ -242,8 +249,63 @@ with tempfile.TemporaryDirectory() as temp:
     exe = path/('launch.exe' if os.name == 'nt' else 'launch')
     subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', str(cfile), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
+
+# The scan on a fake directory: UDPFS lists uppercase *.VCD and *.cue/*.CUE once per game; any other
+# device keeps its case-insensitive .VCD-only listing.
+SCAN = r"""
+#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/stat.h>
+typedef unsigned int u32;
+#define VCD_NAME_MAX 256
+#define VCD_MAX_ITEMS 2048
+#define ISO_GAME_NAME_MAX 160
+#define LOG(...) ((void)0)
+typedef struct { char name[VCD_NAME_MAX]; u32 sizeMB; } vcd_entry_t;
+struct fake_dirent { char d_name[256]; };
+typedef struct { const char **names; int at; struct fake_dirent de; } FAKE_DIR;
+#define dirent fake_dirent
+#define DIR FAKE_DIR
+static const char **gNames;
+static FAKE_DIR gDir;
+static FAKE_DIR *opendir(const char *p) { (void)p; gDir.names = gNames; gDir.at = 0; return &gDir; }
+static struct fake_dirent *readdir(FAKE_DIR *d) {
+    if (d->names[d->at] == NULL) return NULL;
+    snprintf(d->de.d_name, sizeof(d->de.d_name), "%s", d->names[d->at++]); return &d->de;
+}
+static int closedir(FAKE_DIR *d) { (void)d; return 0; }
+static int gAutosort = 1;
+static int vcdEntryCmp(const void *a, const void *b) { return strcmp(((const vcd_entry_t *)a)->name, ((const vcd_entry_t *)b)->name); }
+static int vcdJoinDirFile(char *o, int n, const char *d, const char *f) { (void)o; (void)n; (void)d; (void)f; return -1; }
+static void vcdNoteScanDir(const char *n, const char *d) { (void)n; (void)d; }
+""" + function('static int vcdScanOpenDir(') + r"""
+static int scan(const char *dir, const char **names, vcd_entry_t **list) { gNames = names; return vcdScanOpenDir(dir, list, 0); }
+int main(void) {
+    vcd_entry_t *l = NULL;
+    const char *udp[] = {"A.cue", "A.VCD", "B.VCD", "B.CUE", "C.CUE", "C.cue", "D.Cue", "E.vcd", "F.bin", "G.VCD", NULL};
+    const char *usb[] = {"A.cue", "B.VCD", "C.vcd", NULL};
+    assert(scan("udpfs:/POPS", udp, &l) == 4);
+    assert(!strcmp(l[0].name, "A") && !strcmp(l[1].name, "B") && !strcmp(l[2].name, "C") && !strcmp(l[3].name, "G"));
+    free(l); l = NULL;
+    assert(scan("mass0:/POPS", usb, &l) == 2 && !strcmp(l[0].name, "B") && !strcmp(l[1].name, "C"));
+    free(l);
+    puts("POPS UDPFS: the scan lists .cue/.CUE once per game on UDPFS only");
+    return 0;
+}
+"""
+with tempfile.TemporaryDirectory() as temp:
+    path = Path(temp)
+    (path/'scan.c').write_text(SCAN, encoding='utf-8')
+    exe = path/('scan.exe' if os.name == 'nt' else 'scan')
+    subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', str(path/'scan.c'), '-o', str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
 releases = json.loads((ROOT/'POPS/UDPFS-NOTICES/PROVENANCE.json').read_text())
-assert len(releases) == 1 and releases[0]['tag'] == '1.0.0'
+assert len(releases) == 1 and releases[0]['tag'] == 'UDPFS_TEST' and releases[0]['prerelease'] is True
+assert releases[0]['files']['POPS/usbd.irx.udpfs']['bytes'] == 51029
 for release in releases:
     for name, expected in release['files'].items():
         data = (ROOT/name).read_bytes()
