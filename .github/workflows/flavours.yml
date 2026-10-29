@@ -122,6 +122,8 @@ jobs:
         run: python3 .github/scripts/test_handoff_probe.py
       - name: Check that a blind button press cannot keep a video mode the TV cannot show
         run: python3 .github/scripts/test_vmode_confirm.py
+      - name: Check that leaving a 704-wide, 720p or 1080i mode gives the GUI thread its priority back
+        run: python3 .github/scripts/test_hires_thread_priority.py
       - name: Check 3D save icons parse real icons and card images, and refuse damaged ones
         run: python3 .github/scripts/test_save_icons.py
       - name: Check native PS2 logo validation including descriptor zero
