@@ -243,8 +243,9 @@ static void cdvdman_vmc_drain(void)
 // An IOP reset does not touch the USB host controller. If USBD left it running (a PADEMU pad, a USB
 // device), it keeps walking its lists and writing back into memory the rebooted IOP uses for other
 // modules, and IGR hangs before the next program comes up. Stop it the way USBD resets it.
-// Ported from belomaxorka/YAOPL e72c9f48.
-static void cdvdman_usb_host_stop(void)
+// Ported from belomaxorka/YAOPL e72c9f48. The network block devices also call it at start
+// (YAOPL 15eee615): see their DeviceInit.
+void cdvdman_usb_host_stop(void)
 {
     if ((OHCI_HcControl & 0xC0) == 0x80) { // HCFS = UsbOperational
         int i;

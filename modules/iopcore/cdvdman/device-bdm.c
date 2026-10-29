@@ -153,6 +153,15 @@ void DeviceInit(void)
     atad_start();
     atad_inited = 1;
 #endif
+
+#ifdef USE_BDM_UDP
+    // The menu's USBD leaves the USB host controller running across IOP resets: it keeps walking its
+    // lists in memory that now holds other modules, and with a USB device plugged in the game hangs at
+    // its first screen (the game's own IOP reset never brings the network driver back). This cdvdman
+    // starts before the network modules in every IOP reset of the game; a game or PadEmu that loads
+    // USBD later sets the controller up again. Ported from belomaxorka/YAOPL 15eee615.
+    cdvdman_usb_host_stop();
+#endif
 }
 
 void DeviceDeinit(void)

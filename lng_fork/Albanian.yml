@@ -553,7 +553,7 @@ translations:
   HINT_BDMCACHE: Memorie leximi paraprak për USB dhe njësitë e tjera BDM gjatë lojës. Më e madhe mund ta bëjë transmetimin më të butë por përdor më shumë memorie.
   HINT_HDDCACHE: Memorie leximi paraprak për HDD-në e brendshme gjatë lojës.
   HINT_SMBCACHE: Memorie leximi paraprak për SMB gjatë lojës.
-  HINT_CORE_LOADER: Bërthama për këtë lojë aty ku mbështeten të dyja. UDPFS Files vetëm Neutrino; SMB/HTTP vetëm <OPL>. Parazgjedhja ndjek Nisja e lojërave. Në UDPBD/UDPFS IMG, Parazgjedhja është Neutrino.
+  HINT_CORE_LOADER: Bërthama për këtë lojë aty ku mbështeten të dyja. SMB/HTTP vetëm <OPL>. Parazgjedhja ndjek Nisja e lojërave. Në UDPFS/UDPBD, Parazgjedhja është Neutrino.
   HINT_DMA_MODE: Mënyra e transferimit të HDD-së së brendshme për këtë lojë. Uleje nëse loja ngec ose ngrin.
   HINT_DNAS_GAMEID: ID e diskut për lojërat online DNAS. Ngarko nga disku e lexon nga disku origjinal.
   HINT_LOAD_FROM_DISC: Lexon ID-në DNAS nga disku origjinal në njësi.

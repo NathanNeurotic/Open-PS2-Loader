@@ -761,25 +761,26 @@ int sysLaunchDisc(int (*progress)(void))
 }
 
 // Module bits
-#define CORE_IRX_USB    0x01
-#define CORE_IRX_ETH    0x02
-#define CORE_IRX_SMB    0x04
-#define CORE_IRX_HDD    0x08
-#define CORE_IRX_VMC    0x10
-#define CORE_IRX_DEBUG  0x20
-#define CORE_IRX_DECI2  0x40
-#define CORE_IRX_ILINK  0x80
-#define CORE_IRX_MX4SIO 0x100
-#define CORE_IRX_MMCE   0x200
-#define CORE_IRX_PCCF   0x400
-#define CORE_IRX_UDPBD  0x800  // OPL-core UDPBD game: the smap_udpbd monolith
-#define CORE_IRX_UDPFS  0x1000 // OPL-core UDPFS (block) game: udpfs_smap + udpfs_ministack + udpfs_bd
+#define CORE_IRX_USB         0x01
+#define CORE_IRX_ETH         0x02
+#define CORE_IRX_SMB         0x04
+#define CORE_IRX_HDD         0x08
+#define CORE_IRX_VMC         0x10
+#define CORE_IRX_DEBUG       0x20
+#define CORE_IRX_DECI2       0x40
+#define CORE_IRX_ILINK       0x80
+#define CORE_IRX_MX4SIO      0x100
+#define CORE_IRX_MMCE        0x200
+#define CORE_IRX_PCCF        0x400
+#define CORE_IRX_UDPBD       0x800  // OPL-core UDPBD game: the smap_udpbd monolith
+#define CORE_IRX_UDPFS       0x1000 // OPL-core UDPFS (block) game: udpfs_smap + udpfs_ministack + udpfs_bd
+#define CORE_IRX_UDPFS_FILES 0x2000 // OPL-core UDPFS Files game: udpfs_smap + udpfs_ministack + udpfs_fhi
 
-// The two OPL-core network block modes. Their driver owns the SMAP adapter in game, so nothing else
-// may put a network stack on it: no SMB/RA SMAP + SMSTCPIP pair, no udptty.
+// The OPL-core UDPBD / UDPFS modes (UDPFS Files included). Their driver owns the SMAP adapter in game,
+// so nothing else may put a network stack on it: no SMB/RA SMAP + SMSTCPIP pair, no udptty.
 static int sysModeIsNetBlock(const char *mode_str)
 {
-    return !strcmp(mode_str, "BDM_UDP_MODE") || !strcmp(mode_str, "BDM_UFS_MODE");
+    return !strcmp(mode_str, "BDM_UDP_MODE") || !strcmp(mode_str, "BDM_UFS_MODE") || !strcmp(mode_str, "UDPFS_MODE");
 }
 
 #ifdef RETROACHIEVEMENTS
@@ -890,6 +891,8 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
         modules |= CORE_IRX_UDPBD;
     else if (!strcmp(mode_str, "BDM_UFS_MODE"))
         modules |= CORE_IRX_UDPFS;
+    else if (!strcmp(mode_str, "UDPFS_MODE"))
+        modules |= CORE_IRX_UDPFS_FILES;
     else
         modules |= CORE_IRX_HDD;
 
@@ -1006,6 +1009,16 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
         irxptr_tab[modcount++].ptr = (void *)&udpfs_ministack_irx;
         irxptr_tab[modcount].info = size_udpfs_bd_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_BD);
         irxptr_tab[modcount++].ptr = (void *)&udpfs_bd_irx;
+    }
+    // UDPFS Files: the menu's chain, but udpfs_fhi in place of udpfs_ioman. It reads the ISO the menu kept
+    // open by its server handle (cdvdman_settings_udpfs), and imports dev9 from udpfs_cdvdman.
+    if (modules & CORE_IRX_UDPFS_FILES) {
+        irxptr_tab[modcount].info = size_udpfs_smap_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_SMAP);
+        irxptr_tab[modcount++].ptr = (void *)&udpfs_smap_irx;
+        irxptr_tab[modcount].info = size_udpfs_ministack_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_MINISTACK);
+        irxptr_tab[modcount++].ptr = (void *)&udpfs_ministack_irx;
+        irxptr_tab[modcount].info = size_udpfs_fhi_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_FHI);
+        irxptr_tab[modcount++].ptr = (void *)&udpfs_fhi_irx;
     }
 #ifdef RETROACHIEVEMENTS
     if (!strcmp(mode_str, "DISC_MODE") && (modules & CORE_IRX_ETH)) {
@@ -2643,8 +2656,13 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #endif
 #endif
     // udptty and DECI2 ride the SMB stack's SMAP; on UDPBD/UDPFS the block driver owns the adapter.
-    if (sysModeIsNetBlock(mode_str))
-        modules &= ~(CORE_IRX_ETH | CORE_IRX_DECI2 | CORE_IRX_DEBUG);
+    // The PPC UART tty needs no network, so it stays.
+    if (sysModeIsNetBlock(mode_str)) {
+        modules &= ~(CORE_IRX_ETH | CORE_IRX_DECI2);
+#ifdef TTY_UDP
+        modules &= ~CORE_IRX_DEBUG;
+#endif
+    }
 
 #ifdef RETROACHIEVEMENTS
     const int discMode = !strcmp(mode_str, "DISC_MODE");

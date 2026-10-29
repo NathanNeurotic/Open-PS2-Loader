@@ -329,7 +329,7 @@ module_make = read('modules/iopcore/cdvdman/Makefile')
 check(re.match(r'IOP_OBJS = cdvdman\.o ', module_make) is not None, 'cdvdman.o is in every CDVDMAN variant')
 top = read('Makefile')
 variants = re.findall(r'\t\$\(MAKE\) \$\(CDVDMAN_PS2LOGO_FLAGS\)[^\n]*?(USE_[A-Z_]+)=1 -C \$< all', top)
-check(len(variants) == 9, 'nine CDVDMAN variants in the top Makefile (got %d)' % len(variants))
+check(len(variants) == 10, 'ten CDVDMAN variants in the top Makefile (got %d)' % len(variants))
 
 
 def variant_defines(use, debug, diag):
@@ -382,11 +382,12 @@ EXPORTS = [
     ('modules/iopcore/cdvdman/device-hdd.c', 'hdd_vmcDmaTransfer(', 'dir == ATA_DIR_WRITE', 'res = sceAtaDmaTransfer(device, buf, lba, nsectors, dir);', None),
     ('modules/iopcore/cdvdman/device-smb.c', 'smb_vmcReadFile(', '0', 'res = smb_ReadFile(FID, offsetlow, offsethigh, readbuf, nbytes);', None),
     ('modules/iopcore/cdvdman/device-smb.c', 'smb_vmcWriteFile(', '1', 'res = smb_WriteFile(FID, offsetlow, offsethigh, writebuf, nbytes);', None),
+    ('modules/iopcore/cdvdman/device-udpfs.c', 'udpfs_vmc_io(', 'is_write', 'WaitSema(udpfs_io_sema);', 'SignalSema(udpfs_io_sema);'),
 ]
 for rel, sig, kind, first, last in EXPORTS:
     # The return type is not what matters here (void or int), only where the hooks sit.
     src = read(rel)
-    match = re.search(r'^(?:void|int) ' + re.escape(sig), src, re.M)
+    match = re.search(r'^(?:static )?(?:void|int) ' + re.escape(sig), src, re.M)
     body = function(src, src[match.start():match.end()], rel) if match else ''
     if not body:
         failures.append('%s: %s...) not found' % (rel, sig))

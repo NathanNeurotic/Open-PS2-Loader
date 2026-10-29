@@ -65,6 +65,7 @@ enum OPL_MODULE_ID {
     OPL_MODULE_ID_UDPFS_SMAP,
     OPL_MODULE_ID_UDPFS_MINISTACK,
     OPL_MODULE_ID_UDPFS_BD,
+    OPL_MODULE_ID_UDPFS_FHI, // UDPFS Files: reads the ISO the menu kept open, by its server handle
     OPL_MODULE_ID_COUNT
 
 };

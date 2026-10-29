@@ -805,8 +805,8 @@ int bdmEnsureTypedSource(int bdmType, u32 timeoutMs)
     return bdmEnsureSourceModules(bdmType, timeoutMs);
 }
 
-// The core a UDPBD / UDPFS (block) game launches with: 1 = Neutrino, 0 = the OPL core. These games
-// booted only through Neutrino until the OPL core learned to reload their network block chain, so
+// The core a UDPBD / UDPFS game (block, or UDPFS Files) launches with: 1 = Neutrino, 0 = the OPL core.
+// These games booted only through Neutrino until the OPL core learned to reload their network chain, so
 // Neutrino stays their default whatever the global core is; only the game's own Loader Core set to
 // <OPL> picks the OPL core. Before that, a "Default" game here was always a Neutrino game.
 int bdmNetBlockCoreLoader(config_set_t *configSet)

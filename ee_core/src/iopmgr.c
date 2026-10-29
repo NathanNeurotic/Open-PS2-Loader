@@ -212,7 +212,7 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
        nothing of ours, 2 the stack only, 3 the stack and SMAP, 4 those and
        raudp but no snapshots from the EE. 0, the default, is the real thing. */
     if (config->GameMode != ETH_MODE && config->GameMode != HTTP_MODE && config->GameMode != BDM_UDP_MODE &&
-        config->GameMode != BDM_UFS_MODE && RA_TelemetryWanted(config)) {
+        config->GameMode != BDM_UFS_MODE && config->GameMode != UDPFS_FILE_MODE && RA_TelemetryWanted(config)) {
         if (RA_PROBE != 1)
             LoadOPLModule(OPL_MODULE_ID_SMSTCPIP, 0, 0, NULL);
         if (RA_PROBE != 1 && RA_PROBE != 2)
@@ -274,10 +274,13 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
             LoadOPLModule(OPL_MODULE_ID_MMCEDRV, 0, 0, NULL);
             break;
         case BDM_UDP_MODE:
-        case BDM_UFS_MODE: {
-            // The chain the menu loaded, reloaded after the reset. dev9 and bdm now come from
-            // bdm_udp_cdvdman; the server is found by broadcast, so the driver needs only the PS2's
-            // static IP (the menu filled g_ps2_ip with it for these modes). Each module needs the one
+        case BDM_UFS_MODE:
+        case UDPFS_FILE_MODE: {
+            // The chain the menu loaded, reloaded after the reset. dev9 (and bdm) now come from
+            // bdm_udp_cdvdman, or from udpfs_cdvdman for UDPFS Files, whose last module is udpfs_fhi in
+            // place of the menu's udpfs_ioman: it reads the ISO by the server handle the menu kept open.
+            // The server is found by broadcast, so the driver needs only the PS2's static IP (the menu
+            // filled g_ps2_ip with it for these modes). Each module needs the one
             // before it; one that does not start stops the boot on a blinking red screen (modmgr.c,
             // IsRequiredTransport) instead of leaving cdvdman waiting for a device that never comes.
             char ipArg[3 + sizeof(config->g_ps2_ip)];
@@ -287,7 +290,7 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
                 LoadOPLModule(OPL_MODULE_ID_SMAP_UDPBD, 0, strlen(ipArg) + 1, ipArg);
             else if (LoadOPLModule(OPL_MODULE_ID_UDPFS_SMAP, 0, 0, NULL) > 0 &&
                      LoadOPLModule(OPL_MODULE_ID_UDPFS_MINISTACK, 0, strlen(ipArg) + 1, ipArg) > 0)
-                LoadOPLModule(OPL_MODULE_ID_UDPFS_BD, 0, 0, NULL);
+                LoadOPLModule(config->GameMode == UDPFS_FILE_MODE ? OPL_MODULE_ID_UDPFS_FHI : OPL_MODULE_ID_UDPFS_BD, 0, 0, NULL);
             break;
         }
     };

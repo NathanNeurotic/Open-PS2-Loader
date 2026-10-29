@@ -677,10 +677,15 @@ int udpfs_core_bread(int32_t handle, uint64_t sector, void *buffer, uint32_t cou
 
         ret = _recv_with_result(g_socket, &req, sizeof(req), buffer, chunk * sector_size, 30000);
 
-        if (ret < 0) {
-            M_DEBUG("udpfs: bread failed\n");
+        if (ret <= 0) {
+            /* 0 is EOF: no data arrived, so the buffer must not be reported as read. */
+            M_DEBUG("udpfs: bread failed: %d\n", ret);
             return -EIO;
         }
+        /* A short read (the file ends inside the chunk) leaves the tail unwritten; zero it like a
+         * read past the end of a disc, instead of handing the caller stale bytes. */
+        if ((uint32_t)ret < chunk * sector_size)
+            memset((uint8_t *)buffer + ret, 0, chunk * sector_size - ret);
 
         sectors_left -= chunk;
         sector += chunk;

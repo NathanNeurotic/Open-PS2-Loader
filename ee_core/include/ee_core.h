@@ -78,8 +78,9 @@ enum GAME_MODE {
     DISC_MODE,
 #endif
     BDM_CF_MODE = 32,
-    BDM_UDP_MODE, // OPL-core UDPBD game: smap_udpbd after the reset
-    BDM_UFS_MODE, // OPL-core UDPFS (block) game: udpfs_smap + udpfs_ministack + udpfs_bd after the reset
+    BDM_UDP_MODE,    // OPL-core UDPBD game: smap_udpbd after the reset
+    BDM_UFS_MODE,    // OPL-core UDPFS (block) game: udpfs_smap + udpfs_ministack + udpfs_bd after the reset
+    UDPFS_FILE_MODE, // OPL-core UDPFS Files game: udpfs_smap + udpfs_ministack + udpfs_fhi after the reset
 };
 
 extern int EnableDebug;

@@ -255,6 +255,10 @@ DECLARE_EXPORT_TABLE(oplutils, 1, 2)
 	DECLARE_EXPORT(mmce_read_offset)
 	DECLARE_EXPORT(mmce_write_offset)
 #endif
+#ifdef UDPFS_DRIVER
+	DECLARE_EXPORT(udpfs_vmc_read)  // MCEMU's udpfs_vmc_read
+	DECLARE_EXPORT(udpfs_vmc_write) // MCEMU's udpfs_vmc_write
+#endif
 #ifdef HDD_DRIVER
 	DECLARE_EXPORT(hdd_vmcDmaTransfer) // MCEMU's sceAtaDmaTransfer
 #endif

@@ -15,6 +15,7 @@ IMPORT_BIN2C(bdm_irx);
 IMPORT_BIN2C(bdm_ata_cdvdman_irx);
 
 IMPORT_BIN2C(bdm_udp_cdvdman_irx);
+IMPORT_BIN2C(udpfs_cdvdman_irx);
 
 IMPORT_BIN2C(bdm_cdvdman_irx);
 
@@ -85,6 +86,7 @@ IMPORT_BIN2C(mcserv_irx);
 IMPORT_BIN2C(mmce_cdvdman_irx);
 
 IMPORT_BIN2C(mmce_mcemu_irx);
+IMPORT_BIN2C(udpfs_mcemu_irx);
 
 IMPORT_BIN2C(mmceman_irx);
 
@@ -137,6 +139,7 @@ IMPORT_BIN2C(udpfs_smap_irx);
 IMPORT_BIN2C(udpfs_ministack_irx);
 IMPORT_BIN2C(udpfs_bd_irx);
 IMPORT_BIN2C(udpfs_ioman_irx);
+IMPORT_BIN2C(udpfs_fhi_irx);
 
 IMPORT_BIN2C(smap_ingame_irx);
 

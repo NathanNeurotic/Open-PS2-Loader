@@ -2,6 +2,17 @@
 #define __UDPFS_SUPPORT_H
 
 #include "include/iosupport.h"
+#include "include/mcemu.h"
+
+// A VMC for udpfs_mcemu on the OPL core (modules/mcemu/mcemu.h McImageSpec with UDPFS_DRIVER): fd is
+// the server's handle for the .bin, opened read-write by the menu and kept open across the IOP reset.
+typedef struct
+{
+    int active;       /* Activation flag */
+    int fd;           /* Server handle of the VMC file */
+    int flags;        /* Card flag */
+    vmc_spec_t specs; /* Card specifications */
+} udpfs_vmc_infos_t;
 
 // Reuse ETH's refresh cadence: this is a network filesystem, so the same slow-poll delay applies.
 #define UDPFS_MODE_UPDATE_DELAY 300
