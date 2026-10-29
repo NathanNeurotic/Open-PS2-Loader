@@ -395,7 +395,8 @@ effect** (OPL shows the usual restart-to-apply notice).
 - You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
   background (both Files and Image), so the games page appears when the server comes up — no reboot.
 - UDPFS **Files** is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns
-  and returns to the menu. UDPBD and UDPFS **Image** fall back to the OPL core instead (below).
+  and returns to the menu. UDPBD and UDPFS **Image** fall back to the OPL core instead (below),
+  except when the bsd toml is missing or unwritable: that still returns to the menu, as its message says.
 
 ### UDPBD and UDPFS Image on the `<OPL>` core
 
@@ -404,6 +405,7 @@ The OPL core can also run games from the UDP block device, that is UDPBD and UDP
 launches with Neutrino unless its own **Loader Core** is set to `<OPL>`; the global Game Launching
 default does not change that. When the Neutrino launch cannot start (no `neutrino.elf`, a `.zso`
 image, too many fragments), the game falls back to the OPL core instead of returning to the menu.
+A missing or unwritable bsd toml is the exception: that launch returns to the menu with its message.
 
 On the OPL core:
 
@@ -416,6 +418,8 @@ On the OPL core:
 - PADEMU, OPL-core cheats and patches, and VMCs work as on USB. A VMC needs a server that is not
   read-only.
 - UDPBD reads at most 32 sectors (16 KiB) per request, in the menu and in game (YAOPL `12cc6fb`).
+- If the block driver does not start after the reset (for example a bad static IP), the screen
+  blinks red and the console stops, instead of hanging on a black screen.
 
 > **Not tested on hardware yet.** Report results with the game, the server and the protocol.
 

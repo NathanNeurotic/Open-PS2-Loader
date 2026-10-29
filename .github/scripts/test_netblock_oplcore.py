@@ -92,6 +92,8 @@ check('if (isUdp)\n        coreLoader = bdmNetBlockCoreLoader(configSet);' in ne
       'bdmTryNeutrinoLaunch: the udp device must take its core from bdmNetBlockCoreLoader')
 check('int failResult = 0;' in neutrino,
       'bdmTryNeutrinoLaunch: a failed udp Neutrino leg falls back to the OPL core, like local devices')
+check('bdmDevNr) < 0) {\n        if (isUdp)\n            failResult = 1;\n        goto fail;' in neutrino,
+      'Neutrino leg: a failed preflight (bsd toml) on udp aborts, as its toast says')
 check('_STR_NET_NEEDS_NEUTRINO' not in neutrino,
       'bdmTryNeutrinoLaunch: udp games are no longer Neutrino-only')
 check(menusys.count('bdmNetBlockCoreLoader(itemConfig)') == 2,
@@ -148,6 +150,16 @@ bd = case.find('LoadOPLModule(OPL_MODULE_ID_UDPFS_BD, 0, 0, NULL);')
 check(0 <= smap < stack < bd, 'iopmgr.c: UDPFS reloads smap, then ministack (with IP), then udpfs_bd, each after the one before')
 check('config->GameMode != BDM_UDP_MODE &&\n        config->GameMode != BDM_UFS_MODE && RA_TelemetryWanted(config)' in iopmgr,
       'iopmgr.c: no RA SMAP/SMSTCPIP beside the block driver')
+
+modmgr = read('ee_core/src/modmgr.c')
+required = function(modmgr, 'static int IsRequiredTransport(int id)', 'ee_core/src/modmgr.c')
+check(all(m in required for m in ('OPL_MODULE_ID_PCCF', 'OPL_MODULE_ID_SMAP_UDPBD', 'OPL_MODULE_ID_UDPFS_SMAP',
+                                  'OPL_MODULE_ID_UDPFS_MINISTACK', 'OPL_MODULE_ID_UDPFS_BD')),
+      'modmgr.c: every network block module is a required transport')
+check('if (IsRequiredTransport(id) && (result < 1 || moduleStartResult != 0))\n                RequiredTransportFailed();' in modmgr,
+      'modmgr.c: a required transport that loads but does not stay resident halts visibly')
+check(modmgr.count('RequiredTransportFailed();') == 3,
+      'modmgr.c: failed, empty and unpacked required transports all halt visibly')
 
 # 6. The menu packs the right modules and nothing else that would take the adapter.
 check('static int sysModeIsNetBlock(const char *mode_str)' in system and

@@ -2064,7 +2064,8 @@ void sysNeutrinoWarnPadEmu(config_set_t *configSet)
 // Δ6 (NHDDL parity): everything that can FAIL a Neutrino launch and is checkable pre-teardown runs
 // HERE, called by every device leg BEFORE deinitEx -- the GUI is alive for a toast and nothing has
 // been torn down, so a failure is "stay in the menu", not a post-teardown black screen. Returns
-// 0 = proceed; <0 = abort (a toast was shown). neutrinoBsdfs/extraArgs/bdDevNr are what the leg will
+// 0 = proceed; <0 = the Neutrino leg cannot run (a toast was shown): the caller aborts, or on a local
+// BDM device falls back to the native core. neutrinoBsdfs/extraArgs/bdDevNr are what the leg will
 // pass to sysLaunchNeutrino (0 / NULL / -1 for legs without a block device).
 int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutrinoBsdfs, const char *extraArgs, int bdDevNr)
 {

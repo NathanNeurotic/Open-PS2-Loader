@@ -278,8 +278,8 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
             // The chain the menu loaded, reloaded after the reset. dev9 and bdm now come from
             // bdm_udp_cdvdman; the server is found by broadcast, so the driver needs only the PS2's
             // static IP (the menu filled g_ps2_ip with it for these modes). Each module needs the one
-            // before it, so stop at the first that does not start: cdvdman then waits for a device
-            // that never comes, which is the same visible failure as a server that never answers.
+            // before it; one that does not start stops the boot on a blinking red screen (modmgr.c,
+            // IsRequiredTransport) instead of leaving cdvdman waiting for a device that never comes.
             char ipArg[3 + sizeof(config->g_ps2_ip)];
             _strcpy(ipArg, "ip=");
             _strcpy(&ipArg[3], config->g_ps2_ip);

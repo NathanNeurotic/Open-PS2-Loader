@@ -2282,7 +2282,8 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         launchDiagMark(1); // arms gLaunchDiag; every later marker gates on it
 
     // Abort helper contract: a failure here falls back to the native core, which since BDM_UDP_MODE /
-    // BDM_UFS_MODE can also boot the udp device. Declined prompts and argv overflows still abort.
+    // BDM_UFS_MODE can also boot the udp device. Declined prompts, argv overflows and (on udp) a
+    // failed preflight still abort.
     int failResult = 0;
 
     if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
@@ -2337,9 +2338,14 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         saveConfig(CONFIG_LAST, 0);
     }
 
-    // Δ6 preflight (driver token + network toml sync) -- abort stays in a live menu.
-    if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath, neutrinoBsdfs, neutrinoExtraArgs, bdmDevNr) < 0)
+    // Δ6 preflight (driver token + network toml sync) -- abort stays in a live menu. On the udp device
+    // its failures (bsd toml missing or unwritable, bd with no device number) are settings the user
+    // must fix, and the toast says the launch was aborted, so it aborts rather than falling back.
+    if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath, neutrinoBsdfs, neutrinoExtraArgs, bdmDevNr) < 0) {
+        if (isUdp)
+            failResult = 1;
         goto fail;
+    }
     // Cheats: the same per-game settings, .cht and Select-mode picker as the native leg, handed to
     // Neutrino as a config file. After the preflight, so a launch that falls back to the native
     // core asks nothing twice; backing out returns to the menu, never to the other core.
