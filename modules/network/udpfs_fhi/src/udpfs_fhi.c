@@ -121,6 +121,19 @@ int udpfs_fhi_init(void)
     return 0;
 }
 
+/* Undo udpfs_fhi_init when the module cannot stay resident (export table already registered). */
+void udpfs_fhi_cleanup(void)
+{
+    if (g_tid >= 0) {
+        DeleteThread(g_tid);
+        g_tid = -1;
+    }
+    if (g_sema >= 0) {
+        DeleteSema(g_sema);
+        g_sema = -1;
+    }
+}
+
 /* First connection attempt while the EE core waits on this module's start, then the watchdog. */
 void udpfs_fhi_start(void)
 {

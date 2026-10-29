@@ -5,6 +5,7 @@
 
 int udpfs_fhi_init(void);
 void udpfs_fhi_start(void);
+void udpfs_fhi_cleanup(void);
 
 IRX_ID(MODNAME, 0x2, 0x1A);
 
@@ -19,6 +20,7 @@ int _start(int argc, char *argv[])
         return MODULE_NO_RESIDENT_END;
     if (RegisterLibraryEntries(&_exp_udpfsfhi) != 0) {
         M_DEBUG("udpfs_fhi: module already loaded\n");
+        udpfs_fhi_cleanup();
         return MODULE_NO_RESIDENT_END;
     }
     udpfs_fhi_start();

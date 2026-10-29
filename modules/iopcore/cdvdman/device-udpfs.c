@@ -153,7 +153,8 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     for (attempt = 0; attempt < 3; attempt++) {
         if (udpfs_read_once((u32)lsn, buffer, sectors))
             break;
-        if (!udpfs_wait_connected())
+        // No wait after the last attempt: it would only delay the error.
+        if (attempt < 2 && !udpfs_wait_connected())
             attempt = 3;
     }
     if (attempt >= 3) {
@@ -213,7 +214,7 @@ static int udpfs_vmc_io(int handle, unsigned int offset, unsigned int size, unsi
         udpfs_dev_ready = 1;
         for (attempt = 0; attempt < 3 && !ok; attempt++) {
             ok = udpfs_vmc_once(handle, offset / 512, size / 512, buffer, is_write);
-            if (!ok && !udpfs_wait_connected())
+            if (!ok && (attempt == 2 || !udpfs_wait_connected()))
                 break;
         }
     }

@@ -203,6 +203,14 @@ check('IMPORT_BIN2C(udpfs_mcemu_irx);' in extern_irx and 'udpfs_mcemu.o' in root
       '$(MAKE) -C modules/mcemu USE_UDPFS=1 clean' in root_make, 'udpfs_mcemu: declared, built, embedded and cleaned')
 check(fhi_main.find('udpfs_fhi_init() < 0') < fhi_main.find('RegisterLibraryEntries(&_exp_udpfsfhi)') < fhi_main.find('udpfs_fhi_start();'),
       'udpfs_fhi main.c: create, register, then connect')
+start_fn = function(fhi, 'void udpfs_fhi_start(', 'udpfs_fhi.c')
+check(0 <= start_fn.find('udpfs_fhi_try_connect();') < start_fn.find('StartThread(g_tid, NULL);'),
+      'udpfs_fhi_start: first connect attempt, then the watchdog thread')
+cleanup_fn = function(fhi, 'void udpfs_fhi_cleanup(', 'udpfs_fhi.c')
+register = fhi_main[fhi_main.find('RegisterLibraryEntries(&_exp_udpfsfhi)'):]
+check('DeleteThread(g_tid);' in cleanup_fn and 'DeleteSema(g_sema);' in cleanup_fn and
+      0 <= register.find('udpfs_fhi_cleanup();') < register.find('MODULE_NO_RESIDENT_END'),
+      'udpfs_fhi main.c: a failed registration frees the semaphore and the watchdog thread')
 read_fn = function(fhi, 'int udpfs_fhi_read(', 'udpfs_fhi.c')
 check('WaitSema(g_sema);' in read_fn and 'udpfs_core_bread(handle, (uint64_t)sector, buffer, count, 512)' in read_fn,
       'udpfs_fhi_read: locked 512-byte BREAD of the caller\'s handle')

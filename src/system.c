@@ -2656,8 +2656,13 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #endif
 #endif
     // udptty and DECI2 ride the SMB stack's SMAP; on UDPBD/UDPFS the block driver owns the adapter.
-    if (sysModeIsNetBlock(mode_str))
-        modules &= ~(CORE_IRX_ETH | CORE_IRX_DECI2 | CORE_IRX_DEBUG);
+    // The PPC UART tty needs no network, so it stays.
+    if (sysModeIsNetBlock(mode_str)) {
+        modules &= ~(CORE_IRX_ETH | CORE_IRX_DECI2);
+#ifdef TTY_UDP
+        modules &= ~CORE_IRX_DEBUG;
+#endif
+    }
 
 #ifdef RETROACHIEVEMENTS
     const int discMode = !strcmp(mode_str, "DISC_MODE");

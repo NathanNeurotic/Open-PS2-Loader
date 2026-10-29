@@ -170,8 +170,8 @@ check('static int sysModeIsNetBlock(const char *mode_str)' in system and
       'system.c: both net-block modes are recognised')
 check('modules &= ~(CORE_IRX_ETH | CORE_IRX_SMB | CORE_IRX_DECI2);' in system,
       'system.c: sendIrxKernelRAM never packs a second SMAP stack for net-block modes')
-check('modules &= ~(CORE_IRX_ETH | CORE_IRX_DECI2 | CORE_IRX_DEBUG);' in system,
-      'system.c: sysLaunchLoaderElf strips udptty/DECI2 for net-block modes')
+check('modules &= ~(CORE_IRX_ETH | CORE_IRX_DECI2);\n#ifdef TTY_UDP\n        modules &= ~CORE_IRX_DEBUG;\n#endif' in system,
+      'system.c: sysLaunchLoaderElf strips udptty/DECI2 (not the PPC UART tty) for net-block modes')
 check('SET_OPL_MOD_ID(OPL_MODULE_ID_SMAP_UDPBD)' in system and 'SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_SMAP)' in system and
       'SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_MINISTACK)' in system and 'SET_OPL_MOD_ID(OPL_MODULE_ID_UDPFS_BD)' in system,
       'system.c: the block chain modules are packed under their IDs')

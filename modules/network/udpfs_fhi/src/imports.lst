@@ -10,6 +10,7 @@ smap_IMPORTS_end
 
 thbase_IMPORTS_start
 I_CreateThread
+I_DeleteThread
 I_StartThread
 I_DelayThread
 I_SetAlarm

@@ -58,8 +58,8 @@ int mmce_write_offset(int fd, unsigned int offset, unsigned int size, const unsi
 #define I_mmce_write_offset DECLARE_IMPORT(7, mmce_write_offset)
 #endif
 
-/* UDPFS Transfer Imports: 1 when every byte was transferred, 0 otherwise. offset and size are whole
-   512-byte sectors of the VMC's server handle. */
+/* UDPFS Transfer Imports: 1 when every byte was transferred, 0 otherwise. offset and size are byte
+   counts into the VMC's server handle, both multiples of 512 (the handle is read in 512-byte sectors). */
 #ifdef UDPFS_DRIVER
 int udpfs_vmc_read(int handle, unsigned int offset, unsigned int size, unsigned char *buffer);
 #define I_udpfs_vmc_read DECLARE_IMPORT(6, udpfs_vmc_read)
