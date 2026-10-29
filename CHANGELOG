@@ -8,6 +8,9 @@
 
 === Changelog ===
 
+==== Unreleased ====
+* Bound OSD history executable filenames to the record's 16 bytes, preventing long alternate startup names from overflowing the launch stack. Credit belomaxorka/YAOPL 80c5558d. Host-tested; hardware validation pending.
+
 ==== Version 0.9.3 ====
 CORE:
 
