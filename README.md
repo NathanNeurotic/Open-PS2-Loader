@@ -154,7 +154,7 @@ PSU imports and companion placement. [Test builds](docs/TEST-BUILDS.md) covers P
 - **HTTP:** implemented and host-tested, but not yet tested on PS2 hardware. ISO only; no VMC, Neutrino or PS1. DVD9 probing is implemented but unproven. [HTTP guide](docs/HTTP.md).
 - **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v1.0.1](https://github.com/hacan359/xerabora/releases/tag/v1.0.1) (alpha.17 or later) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; in-game notices use the pulse by default. Settings > Network offers default-Off Caduceus experimental title/points cards for tracked PS2 OPL launches; they may flicker or freeze games because safe GS ownership is unresolved. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
 - **iLink:** revision 2692 passed Ember on the tested SCPH-39001 but failed native OPL, Neutrino and POPSTARTER handoffs. The Neutrino `-qb` correction is implemented, and the i.LINK drivers used by native OPL, the bundled Neutrino and POPSTARTER now keep logging in to the drive after an IOP reset (#1018); a passing retest is still needed.
-- **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS Files uses Neutrino; UDPBD and UDPFS IMG default to Neutrino and can use OPL per game. See the [source table](#introduction).
+- **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS (Files and IMG) and UDPBD default to Neutrino and can use OPL per game. See the [source table](#introduction).
 
 ## Introduction
 
@@ -171,7 +171,7 @@ SMB, UDPFS, UDPBD and HTTP over Ethernet. Capabilities depend on both the source
 | iLink | OPL or Neutrino paths implemented | Local files | Launch remains pending hardware retest; see [iLink status](#usbmmcemx4sioilink) |
 | Internal HDD, APA | OPL or Neutrino | HDLoader partitions | OPL supports VMC; Neutrino drops APA/PFS VMC with a warning |
 | SMB | OPL | ISO, ZSO, UL | Server must permit writes for VMC saves |
-| UDPFS Files / IMG and UDPBD | Neutrino (IMG and UDPBD: `<OPL>` per game) | Files under `CD/` / `DVD/`, or a served FAT/exFAT disk image | Depends on backend and write access; see [Neutrino](docs/NEUTRINO.md) |
+| UDPFS Files / IMG and UDPBD | Neutrino (`<OPL>` per game) | Files under `CD/` / `DVD/`, or a served FAT/exFAT disk image | Depends on backend and write access; see [Neutrino](docs/NEUTRINO.md) |
 | HTTP | OPL | ISO listed in `games.csv`; compressed images refuse to launch | No VMC; use physical memory cards |
 
 Neutrino does not read local ZSO or UL split images. A compatible UDPFS server can instead

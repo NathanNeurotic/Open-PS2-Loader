@@ -14,8 +14,8 @@ PADEMU is the work of **belek666**.
 a title whose Loader Core is Neutrino shows *"This setting is not used with the Neutrino core."* If
 you need PADEMU for a game, that game has to launch on the OPL core.
 
-This also applies to UDPFS Files games and their Favourites, which always use Neutrino, and to UDPBD and
-UDPFS IMG games left on **Default**, which use Neutrino; set their Loader Core to `<OPL>` for PADEMU.
+This also applies to UDPBD and UDPFS games (Files and IMG) left on **Default**, which use Neutrino;
+set their Loader Core to `<OPL>` for PADEMU.
 An interactive Neutrino launch warns if the game's effective global or per-game PADEMU setting is
 enabled. Saved settings are preserved for OPL-core games. Autolaunch logs the limitation without
 waiting for a dialog.
