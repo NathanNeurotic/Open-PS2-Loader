@@ -16,6 +16,7 @@
   Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
 * Fragmented native BDM VMC warnings show the existing fragment count and, on Cancel, backup/recovery guidance. Native refusal and physical-card fallback are unchanged. Credit belomaxorka/YAOPL c19eed08. Hardware validation pending.
 * Reject a SYSTEM.CNF BOOT2 line without '=' instead of passing NULL to the value parser during image discovery. Matches the existing C++ guard. Credit belomaxorka/YAOPL 43781768. Hardware validation pending.
+* BdmIndex shows one dot per visible mass device, in menu order: two devices show two dots (it showed five), devices in slots 0 and 2 both get dots, and a lone device shows none instead of "3 of 5". New Index2_0..Index4_3 pictures are drawn from Index_0 by tools/make_bdmindex.py; a theme with only its own five-dot pictures keeps them by slot. Ported from belomaxorka / YAOPL (f84b227d). NOT TESTED on hardware.
 
 ==== Version 0.9.3 ====
 CORE:
