@@ -163,6 +163,13 @@ static int isPadReadyState(int state)
 #define PAD_WAIT_POLLS   25
 #define PAD_WAIT_POLL_US 1000
 
+// The launch handoff (unloadPad): each mode request is waited out, bounded. padman refreshes the
+// state it reports once a frame, so after a request the first PAD_HANDOFF_SETTLE_US (three frames)
+// are always waited before an idle reading is trusted. DelayThread() takes real microseconds.
+#define PAD_HANDOFF_SETTLE_US (50 * 1000)
+#define PAD_HANDOFF_MAX_US    (1000 * 1000)
+#define PAD_HANDOFF_POLL_US   2000
+
 // Milliseconds of continuously VERIFIED idle -- clean, zero-input polls -- before a reconnect-edge
 // initializePad() may run (#271/#272). The init is a few hundred ms of polled waits on the GUI
 // thread, and its trigger -- freepad dropping the pad under IOP/SIO2 load -- fires exactly while
@@ -968,10 +975,44 @@ int getButtonDelay(int button)
     return paddelay[button - 1];
 }
 
+/** Waits, bounded by PAD_HANDOFF_MAX_US, until the pad is stable with no request running, or
+ * disconnected. Nothing counts as idle before settleUs have passed.
+ * @return the last pad state read */
+static int waitPadIdle(struct pad_data_t *pad, int settleUs)
+{
+    int waited = 0;
+    int state;
+
+    for (;;) {
+        state = padGetState(pad->port, pad->slot);
+        if (waited >= settleUs &&
+            (state == PAD_STATE_DISCONN || (state == PAD_STATE_STABLE && padGetReqState(pad->port, pad->slot) != PAD_RSTAT_BUSY)))
+            return state;
+        if (waited >= PAD_HANDOFF_MAX_US) {
+            LOG("PAD pad %d,%d handoff wait timed out in state %d\n", pad->port, pad->slot, state);
+            return state;
+        }
+        DelayThread(PAD_HANDOFF_POLL_US);
+        waited += PAD_HANDOFF_POLL_US;
+    }
+}
+
 /** Unloads a single pad.
+ * The pad is not powered off across the IOP reset into the game or ELF, so it keeps the mode the menu
+ * set (DualShock, locked, pressure on). A DualShock is put back as it powers up (digital, unlocked, no
+ * pressure), as a disc started from the OSD finds it: Gran Turismo 4 now and then failed to take over
+ * a DualShock 2 left locked in DualShock mode, until it was replugged (belomaxorka / YAOPL c56a91b6).
+ * A pad that is not stable, or has no DualShock modes, is closed as it is.
  * @see unloadPads */
 static void unloadPad(struct pad_data_t *pad)
 {
+    if (waitPadIdle(pad, 0) == PAD_STATE_STABLE && padInfoMode(pad->port, pad->slot, PAD_MODECUREXID, 0) != 0) {
+        padExitPressMode(pad->port, pad->slot);
+        waitPadIdle(pad, PAD_HANDOFF_SETTLE_US);
+        padSetMainMode(pad->port, pad->slot, PAD_MMODE_DIGITAL, PAD_MMODE_UNLOCK);
+        waitPadIdle(pad, PAD_HANDOFF_SETTLE_US);
+    }
+
     padPortClose(pad->port, pad->slot);
 }
 

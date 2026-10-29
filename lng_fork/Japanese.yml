@@ -518,9 +518,9 @@ translations:
   HINT_PLASCOLOR: 動く背景に混ぜる色。
   HINT_RESETCOLOR: テーマのものではなく、RiptOPL の内蔵の色に戻します。
   HINT_WIDESCREEN: 16:9 のテレビ向けにメニューを描きます。
-  HINT_XOFF: 画面上でメニューを左右に動かします。
-  HINT_YOFF: 画面上でメニューを上下に動かします。
-  HINT_MENU_OVERSCAN: テレビが端を切ってしまう場合に、メニューを内側に縮めます。
+  HINT_XOFF: "画面上でメニューを左右に動かします。ビデオモードごとに保存されます。"
+  HINT_YOFF: "画面上でメニューを上下に動かします。ビデオモードごとに保存されます。"
+  HINT_MENU_OVERSCAN: "テレビが端を切ってしまう場合に、メニューを内側に縮めます。ビデオモードごとに保存されます。"
   HINT_APPLYGAMEID: ゲームの起動時にバーコードを表示し、Pixel FX、RetroGEM、PS2Digital の機器がプロファイルを切り替えられるようにします。
   HINT_NEUTRINO_DEFAULTS_BUTTON: すべてのゲームに使う Neutrino のパス、映像モード、引数。
   HINT_OSD_DEFAULTS_BUTTON: ゲームに渡す本体の言語、画面サイズ、映像モード。
@@ -646,3 +646,5 @@ translations:
   HINT_ENABLE_DVR: 実験的な DESR DVR ISO の検出。HDD ソースをオンにする必要があります。ゲームの起動には外部の DVR 対応 Neutrino が必要です。
   THEME_VIEW: "テーマビュー"
   HINT_THEME_VIEW: "テーマでのゲームの表示方法: List, Coverflow, PSBBN Flow、Grid。メインページでL3を長押しすると切り替わります。その表示がないテーマは既定の表示を使います。"
+  BOTH: 両方
+  NET_READ_ONLY_VMC: "このUDPBD/UDPFSサーバーは読み取り専用のため、VMCは使えません。ゲームは本物のメモリーカードにセーブします。"

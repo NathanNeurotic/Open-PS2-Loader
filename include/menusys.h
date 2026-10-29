@@ -121,7 +121,8 @@ void menuInitGameMenu(struct _item_list_t *support);
 void menuInitAppMenu(void);
 // Reuses the lightweight item-operation menu, but exposes Rename only. VCD/POPSTARTER entries
 // must never enter the PS2 per-game configuration menu.
-void menuInitVcdMenu(int isEmber); // isEmber: the row launches through Ember (adds Ember Game Settings)
+void menuInitVcdMenu(int isEmber, int readOnly); // isEmber: the row launches through Ember (adds Ember Game Settings);
+                                                 // readOnly: the row is on a read-only server (no Rename or Ember settings)
 
 void menuAppendItem(menu_item_t *item);
 

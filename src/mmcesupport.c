@@ -105,8 +105,10 @@ static unsigned char mmceEverResolved = 0;
 #define MMCE_GAMEID_START_MS       2000 // how long a sent Game ID may take to start the switch
 #define MMCE_GAMEID_START_POLL_MS  50   // poll interval while waiting for the switch to start
 #define MMCE_GAMEID_QUERY_FAILURES 3    // failed busy queries in a row that end the wait (unconfirmed)
+#define MMCE_GAMEID_QUERY_SILENT   2    // after an answer: failed queries in a row that mean the switch began
 #define MMCE_CARD_READY_MAX_S      180  // the longest the launch waits for the game's card
 #define MMCE_CARD_READY_POLL_US    (250 * 1000)
+#define MMCE_CARD_READY_SILENT_MS  7500 // the longest the card may not answer at all (mmceigr's bound)
 /* The MMCE worker checks its abort flag between 32 KB staged reads. A
  * 500 ms wait gives a slow card time to reach the next safe checkpoint. */
 #define MMCE_ART_ABORT_WAIT_TICKS  500
@@ -127,14 +129,27 @@ static int mmceModLoaded = 0;          // latched by mmceLoadModules; read by mm
 static char mmceGameIdTarget[8] = {0}; // last device a GameID 0x8 switch was SENT to (mmceGameIdSettle polls it)
 
 // Waits, on screen, while the card reports busy after a Game ID switch. Returns 1 when it is ready or the
-// user pressed START, 0 when it was still busy at MMCE_CARD_READY_MAX_S, -1 when the busy query failed
-// before the card reported ready (unconfirmed). The launch goes ahead in every case.
+// user pressed START, 0 when it was still busy at MMCE_CARD_READY_MAX_S, -1 when the card stopped
+// answering for MMCE_CARD_READY_SILENT_MS before it reported ready (unconfirmed). The launch goes ahead in
+// every case. An SD2PSX does not answer at all while it swaps cards (sd2psXtd ps2_mmceman_task(): card exit,
+// close, 500 ms, open), so a failed query here is part of the switch, not its end.
 static int mmceWaitCardReady(const char *device)
 {
     char line[256];
-    int status, polls;
+    int status, polls, silent = 0;
 
-    for (polls = 0; (status = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0)) >= 0 && (status & 1); polls++) {
+    for (polls = 0;; polls++) {
+        status = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
+        if (status >= 0 && (status & 1) == 0)
+            break; // the game's card is ready
+        if (status >= 0)
+            silent = 0;
+        else if (++silent * (MMCE_CARD_READY_POLL_US / 1000) >= MMCE_CARD_READY_SILENT_MS) {
+            LOG("MMCE: the card did not answer for %d ms during the wait; not confirmed\n",
+                silent * (MMCE_CARD_READY_POLL_US / 1000));
+            diagLog("mmce: the card's busy query failed during the wait");
+            return -1;
+        }
         int seconds = polls * MMCE_CARD_READY_POLL_US / 1000000;
         if (seconds >= MMCE_CARD_READY_MAX_S) {
             LOG("MMCE: the game's memory card was still busy after %d s; launching\n", seconds);
@@ -150,11 +165,6 @@ static int mmceWaitCardReady(const char *device)
         snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), seconds);
         guiRenderTextScreen(line);
         DelayThread(MMCE_CARD_READY_POLL_US);
-    }
-    if (status < 0) {
-        LOG("MMCE: the card's busy query failed during the wait; not confirmed\n");
-        diagLog("mmce: the card's busy query failed during the wait");
-        return -1;
     }
     diagLog("mmce: the game's card ready after %d ms", polls * MMCE_CARD_READY_POLL_US / 1000);
     return 1;
@@ -241,22 +251,32 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
     snprintf(mmceGameIdTarget, sizeof(mmceGameIdTarget), "%s", mmceDevice);
 
     int queryFailures = 0;
+    int answered = 0; // the card answered a busy query since the send, so its firmware has one
     for (int waited = 0; waited < MMCE_GAMEID_START_MS; waited += MMCE_GAMEID_START_POLL_MS) {
         int status = fileXioDevctl(mmceDevice, 0x2, NULL, 0, NULL, 0);
         if (status < 0) {
-            // A failed busy query says nothing about the switch. Retry a few times; a run of failures
-            // (the firmware has no busy query) ends the wait unconfirmed so the launch is not held.
-            if (++queryFailures >= MMCE_GAMEID_QUERY_FAILURES) {
+            // One failed query is retried, not trusted. Before any answer, a run of failures means the
+            // firmware has no busy query: end the wait unconfirmed so the launch is not held. After an
+            // answer, a run of failures is the switch itself: an SD2PSX stops answering while it swaps the
+            // cards, then reports busy while the new one loads (sd2psXtd 8a20bd9; belomaxorka/YAOPL
+            // 19578cc6 found the same silence).
+            ++queryFailures;
+            if (!answered && queryFailures >= MMCE_GAMEID_QUERY_FAILURES) {
                 LOG("MMCE GameID switch: busy query failed %d times; launching unconfirmed\n", queryFailures);
                 diagLog("gameid %s: busy query failed %d times; launching unconfirmed", startup, queryFailures);
                 return -1;
             }
-            DelayThread(MMCE_GAMEID_START_POLL_MS * 1000);
-            continue;
+            if (!answered || queryFailures < MMCE_GAMEID_QUERY_SILENT) {
+                DelayThread(MMCE_GAMEID_START_POLL_MS * 1000);
+                continue;
+            }
+        } else {
+            answered = 1;
+            queryFailures = 0;
         }
-        queryFailures = 0;
-        if (status & 1) {
-            LOG("MMCE GameID %s: the card started switching after %d ms\n", startup, waited);
+        if (status < 0 || (status & 1)) {
+            LOG("MMCE GameID %s: the card started switching after %d ms (%s)\n", startup, waited,
+                status < 0 ? "not answering" : "busy");
             diagLog("gameid %s: the card switching after %d ms", startup, waited);
             int ready = mmceWaitCardReady(mmceDevice);
             if (ready < 0)

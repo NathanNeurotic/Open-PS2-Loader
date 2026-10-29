@@ -545,9 +545,9 @@ translations:
   HINT_PLASCOLOR: Kolor nga gisagol sa animated nga background.
   HINT_RESETCOLOR: Ibalik ang built-in nga kolor sa RiptOPL, dili ang sa tema.
   HINT_WIDESCREEN: Drowingon ang menu alang sa 16:9 nga TV.
-  HINT_XOFF: Ibalhin ang menu sa wala o tuo sa screen.
-  HINT_YOFF: Ibalhin ang menu pataas o paubos sa screen.
-  HINT_MENU_OVERSCAN: Pagamyon ang menu pasulod kung putlon sa TV ang mga ngilit niini.
+  HINT_XOFF: "Ibalhin ang menu sa wala o tuo sa screen. Gitipigan para sa matag video mode."
+  HINT_YOFF: "Ibalhin ang menu pataas o paubos sa screen. Gitipigan para sa matag video mode."
+  HINT_MENU_OVERSCAN: "Pagamyon ang menu pasulod kung putlon sa TV ang mga ngilit niini. Gitipigan para sa matag video mode."
   HINT_APPLYGAMEID: Magpakita og barcode samtang nagsugod ang dula, aron mobalhin og profile ang mga Pixel FX, RetroGEM ug PS2Digital device.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Path, video mode ug mga argument sa Neutrino alang sa matag dula.
   HINT_OSD_DEFAULTS_BUTTON: Pinulongan sa console, gidak-on sa screen ug video mode nga ihatag sa mga dula.
@@ -675,3 +675,5 @@ translations:
   HINT_ENABLE_DVR: Eksperimental nga pagpangita sa DESR DVR ISO. Kinahanglan naka-enable ang HDD source; kinahanglan sa paglansad sa dula ang gawas nga Neutrino nga makahimo og DVR.
   THEME_VIEW: "Hitsura sa Tema"
   HINT_THEME_VIEW: "Giunsa pagpakita sa tema ang imong mga dula: List, Coverflow, PSBBN Flow o Grid. Pugngi ang L3 sa main page aron mobalhin. Ang mga tema nga walay ingon niana nga hitsura mogamit sa ilang default."
+  BOTH: Pareho
+  NET_READ_ONLY_VMC: "Kining UDPBD/UDPFS server pang-basa lang, busa dili magamit ang VMC niini. Ang dula mag-save sa tinuod nga memory card."

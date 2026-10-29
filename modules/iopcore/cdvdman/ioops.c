@@ -405,7 +405,7 @@ static int cdrom_dopen(iop_file_t *f, const char *dirname)
 static int cdrom_dread(iop_file_t *f, iox_dirent_t *dirent)
 {
     register int r = 0;
-    register u32 mode;
+    register u32 mode = 0;
     FHANDLE *fh = (FHANDLE *)f->privdata;
     struct dirTocEntry *tocEntryPointer;
 
@@ -419,22 +419,35 @@ static int cdrom_dread(iop_file_t *f, iox_dirent_t *dirent)
 
         do {
             r = 0;
+            // The directory is read one sector at a time: stop at its end instead of reading past it.
+            if (fh->position > 2048 - 34) {
+                tocEntryPointer = NULL;
+                break;
+            }
             tocEntryPointer = (struct dirTocEntry *)&cdvdman_fs_buf[fh->position];
             if (tocEntryPointer->length == 0)
                 break;
+            // A record must hold its name and end inside the sector, or the name read below takes stale bytes.
+            if (tocEntryPointer->length < 33 + tocEntryPointer->filenameLength || fh->position + tocEntryPointer->length > 2048) {
+                tocEntryPointer = NULL;
+                r = 0;
+                break;
+            }
 
             fh->position += tocEntryPointer->length;
             r = 1;
         } while (tocEntryPointer->filenameLength == 1);
 
-        mode = 0x2124;
-        if (tocEntryPointer->fileProperties & 2)
-            mode = 0x116d;
+        if (tocEntryPointer != NULL) {
+            mode = 0x2124;
+            if (tocEntryPointer->fileProperties & 2)
+                mode = 0x116d;
 
-        dirent->stat.mode = mode;
-        dirent->stat.size = tocEntryPointer->fileSize;
-        strncpy(dirent->name, tocEntryPointer->filename, tocEntryPointer->filenameLength);
-        dirent->name[tocEntryPointer->filenameLength] = '\0';
+            dirent->stat.mode = mode;
+            dirent->stat.size = tocEntryPointer->fileSize;
+            strncpy(dirent->name, tocEntryPointer->filename, tocEntryPointer->filenameLength);
+            dirent->name[tocEntryPointer->filenameLength] = '\0';
+        }
 
         DPRINTF("cdrom_dread r=%d mode=%04x name=%s\n", r, (int)mode, dirent->name);
     } else

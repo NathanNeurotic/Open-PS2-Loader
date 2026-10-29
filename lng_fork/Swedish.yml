@@ -539,9 +539,9 @@ translations:
   HINT_PLASCOLOR: Färg som blandas in i den animerade bakgrunden.
   HINT_RESETCOLOR: Återställer RiptOPL:s inbyggda färger, inte temats.
   HINT_WIDESCREEN: Ritar menyn för en 16:9-TV.
-  HINT_XOFF: Flyttar menyn åt vänster eller höger på skärmen.
-  HINT_YOFF: Flyttar menyn uppåt eller nedåt på skärmen.
-  HINT_MENU_OVERSCAN: Krymper menyn inåt om TV:n klipper av dess kanter.
+  HINT_XOFF: "Flyttar menyn åt vänster eller höger på skärmen. Sparas för varje videoläge."
+  HINT_YOFF: "Flyttar menyn uppåt eller nedåt på skärmen. Sparas för varje videoläge."
+  HINT_MENU_OVERSCAN: "Krymper menyn inåt om TV:n klipper av dess kanter. Sparas för varje videoläge."
   HINT_APPLYGAMEID: Visar en streckkod när ett spel startar, så att Pixel FX-, RetroGEM- och PS2Digital-enheter byter profil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Neutrinos sökväg, videoläge och argument för varje spel.
   HINT_OSD_DEFAULTS_BUTTON: Konsolspråk, skärmstorlek och videoläge som skickas till spelen.
@@ -667,3 +667,5 @@ translations:
   HINT_ENABLE_DVR: Experimentell upptäckt av DESR DVR-ISO:er. Kräver att HDD-källan är på; spelstart kräver en extern Neutrino med DVR-stöd.
   THEME_VIEW: "Temavy"
   HINT_THEME_VIEW: "Hur temat visar dina spel: List, Coverflow, PSBBN Flow eller Grid. Håll in L3 på huvudsidan för att byta. Teman utan den vyn använder sin standardvy."
+  BOTH: Båda
+  NET_READ_ONLY_VMC: "Den här UDPBD/UDPFS-servern är skrivskyddad, så inget VMC kan användas på den. Spelet sparar på det riktiga minneskortet."

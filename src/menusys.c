@@ -882,10 +882,12 @@ void menuInitGameMenu(item_list_t *support)
     if (gEnableWrite) {
         // Offer only what the page can do. Favorites keeps both so it can explain why not. The APA
         // HDD page neither renames nor deletes PS2 games: both would edit the partition table.
+        // A read-only server would only seem to rename or delete (YAOPL 9f556b55).
         int fav = support != NULL && support->mode == FAV_MODE;
-        if (fav || (support != NULL && support->itemRename != NULL && support->mode != HDD_MODE))
+        int readOnly = support != NULL && !fav && (support->flags & MODE_FLAG_READ_ONLY);
+        if (fav || (support != NULL && support->itemRename != NULL && support->mode != HDD_MODE && !readOnly))
             submenuAppendItem(&gameMenu, -1, NULL, GAME_RENAME_GAME, _STR_RENAME);
-        if (fav || (support != NULL && support->itemDelete != NULL))
+        if (fav || (support != NULL && support->itemDelete != NULL && !readOnly))
             submenuAppendItem(&gameMenu, -1, NULL, GAME_DELETE_GAME, _STR_DELETE);
         int hidden;
         if (menuHiddenState(&hidden))
@@ -912,7 +914,7 @@ void menuInitAppMenu(void)
     appMenuCurrent = appMenu;
 }
 
-void menuInitVcdMenu(int isEmber)
+void menuInitVcdMenu(int isEmber, int readOnly)
 {
     if (appMenu)
         submenuDestroy(&appMenu);
@@ -922,9 +924,11 @@ void menuInitVcdMenu(int isEmber)
     // keep this item-operation path free of PS2 per-game CFG reads/creation.
     submenuAppendItem(&appMenu, -1, NULL, APP_GLOBAL_PS_SETTINGS, _STR_GLOBAL_PS_EMULATION_SETTINGS);
     // Ember reads a per-game settings.txt; POPSTARTER has nothing equivalent, so only Ember rows get it.
-    if (isEmber)
+    // Both write to the game's device, which a read-only server would only seem to keep.
+    if (isEmber && !readOnly)
         submenuAppendItem(&appMenu, -1, NULL, APP_EMBER_GAME_SETTINGS, _STR_EMBER_GAME_SETTINGS);
-    submenuAppendItem(&appMenu, -1, NULL, APP_RENAME, _STR_RENAME);
+    if (!readOnly)
+        submenuAppendItem(&appMenu, -1, NULL, APP_RENAME, _STR_RENAME);
     int hidden;
     if (menuHiddenState(&hidden))
         submenuAppendItem(&appMenu, -1, NULL, APP_HIDE_GAME, hidden ? _STR_UNHIDE_GAME : _STR_HIDE_GAME);

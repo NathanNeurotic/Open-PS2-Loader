@@ -519,9 +519,9 @@ translations:
   HINT_PLASCOLOR: 混入动态背景的颜色。
   HINT_RESETCOLOR: 恢复 RiptOPL 的内置颜色，而不是主题的颜色。
   HINT_WIDESCREEN: 按 16:9 电视绘制菜单。
-  HINT_XOFF: 在屏幕上左右移动菜单。
-  HINT_YOFF: 在屏幕上上下移动菜单。
-  HINT_MENU_OVERSCAN: 如果电视切掉边缘，就把菜单向内缩小。
+  HINT_XOFF: "在屏幕上左右移动菜单。每种视频模式各自保存。"
+  HINT_YOFF: "在屏幕上上下移动菜单。每种视频模式各自保存。"
+  HINT_MENU_OVERSCAN: "如果电视切掉边缘，就把菜单向内缩小。每种视频模式各自保存。"
   HINT_APPLYGAMEID: 游戏启动时显示条码，让 Pixel FX、RetroGEM 和 PS2Digital 设备切换配置。
   HINT_NEUTRINO_DEFAULTS_BUTTON: 所有游戏的 Neutrino 路径、视频模式和参数。
   HINT_OSD_DEFAULTS_BUTTON: 传给游戏的主机语言、屏幕比例和视频模式。
@@ -647,3 +647,5 @@ translations:
   HINT_ENABLE_DVR: 实验性的 DESR DVR ISO 发现。需要开启硬盘来源；启动游戏需要外部支持 DVR 的 Neutrino。
   THEME_VIEW: "主题视图"
   HINT_THEME_VIEW: "主题显示游戏的方式：List, Coverflow, PSBBN Flow 或 Grid。在主页面长按 L3 切换。没有该视图的主题使用其默认视图。"
+  BOTH: 两者
+  NET_READ_ONLY_VMC: "此 UDPBD/UDPFS 服务器为只读，因此无法在其上使用 VMC。游戏会存档到真实的记忆卡。"

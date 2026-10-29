@@ -539,9 +539,9 @@ translations:
   HINT_PLASCOLOR: Ngjyra e përzier në sfondin e animuar.
   HINT_RESETCOLOR: Rikthen ngjyrat e integruara të RiptOPL, jo ato të temës.
   HINT_WIDESCREEN: Vizaton menynë për një televizor 16:9.
-  HINT_XOFF: Lëviz menynë majtas ose djathtas në ekran.
-  HINT_YOFF: Lëviz menynë lart ose poshtë në ekran.
-  HINT_MENU_OVERSCAN: Tkurr menynë drejt brendësisë nëse televizori i pret skajet.
+  HINT_XOFF: "Lëviz menynë majtas ose djathtas në ekran. Ruhet për çdo mënyrë video."
+  HINT_YOFF: "Lëviz menynë lart ose poshtë në ekran. Ruhet për çdo mënyrë video."
+  HINT_MENU_OVERSCAN: "Tkurr menynë drejt brendësisë nëse televizori i pret skajet. Ruhet për çdo mënyrë video."
   HINT_APPLYGAMEID: Shfaq një barkod kur fillon një lojë, që pajisjet Pixel FX, RetroGEM dhe PS2Digital të ndërrojnë profil.
   HINT_NEUTRINO_DEFAULTS_BUTTON: Shtegu, mënyra e videos dhe argumentet e Neutrino për çdo lojë.
   HINT_OSD_DEFAULTS_BUTTON: Gjuha e konsolës, madhësia e ekranit dhe mënyra e videos që u jepen lojërave.
@@ -669,3 +669,5 @@ translations:
   HINT_ENABLE_DVR: Zbulim eksperimental i ISO-ve DESR DVR. Kërkon burimin HDD të ndezur; nisja e lojës kërkon një Neutrino të jashtëm që mbështet DVR.
   THEME_VIEW: "Pamja e temës"
   HINT_THEME_VIEW: "Si i shfaq tema lojërat: List, Coverflow, PSBBN Flow ose Grid. Mbaj L3 në faqen kryesore për të ndërruar. Temat pa atë pamje përdorin pamjen e tyre të paracaktuar."
+  BOTH: Të dyja
+  NET_READ_ONLY_VMC: "Ky server UDPBD/UDPFS është vetëm për lexim, prandaj nuk mund të përdoret një VMC në të. Loja ruan në kartën e vërtetë të kujtesës."

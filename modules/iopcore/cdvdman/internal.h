@@ -92,7 +92,9 @@ typedef struct
 
 struct dirTocEntry
 {
-    short length;
+    u8 length;           // 0, ISO 9660 LEN_DR: the record's size in bytes
+    u8 extAttrLength;    // 1, not used. Read together with byte 0 as one short, a non-zero value
+                         // made the scan step 256+ bytes, or backwards from 0x80 up.
     u32 fileLBA;         // 2
     u32 fileLBA_bigend;  // 6
     u32 fileSize;        // 10

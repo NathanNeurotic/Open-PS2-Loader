@@ -965,15 +965,21 @@ int guiShowMmceConfig(void)
     const struct UIItem *parts[] = {diaMmceConfig, diaMmceCommConfig, diaMmcePathConfig};
     const int skipIDs[] = {MMCE_COMM_BUTTON, MMCE_PATH_BUTTON};
     static const char *deviceSlots[] = {"0", "1", NULL, NULL};
-    static const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
+    static const char *deviceIGRSlots[] = {NULL, "0", "1", NULL, NULL};
     static const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
-    static const char *deviceOnOff[] = {"OFF", "ON", NULL};
+    static const char *deviceOnOff[] = {NULL, NULL, NULL};
     struct UIItem *previousActiveDialog = guiSettingsActiveDialog;
     struct UIItem *ui;
 
     // diaSetEnum stores the array pointer rather than copying it. Keep the MMCE options alive for
     // the lifetime of the dedicated child dialog, including any parent re-entry after Circle.
     deviceSlots[2] = _l(_STR_AUTO);
+    // The IGR slot and ON/OFF choices were fixed English text no translation could change
+    // (belomaxorka / YAOPL 999bb6d3). The stored values (mmceigr_slot 0-3, 0/1) are unchanged.
+    deviceIGRSlots[0] = _l(_STR_OFF);
+    deviceIGRSlots[3] = _l(_STR_BOTH);
+    deviceOnOff[0] = _l(_STR_OFF);
+    deviceOnOff[1] = _l(_STR_ON);
     ui = guiSettingsComposeInto(guiMmceSettingsDialog, parts, 3, skipIDs, 2, -1, 1);
 
     if (ui == NULL)
@@ -1213,6 +1219,7 @@ void guiShowUIConfig(void)
 reshow_ui:
     previousTheme = thmGetGuiValue();
     previousVMode = gVMode;
+    int openX = gXOff, openY = gYOff, openOver = gOverscan; // the position kept for each video mode
     // Keep a dialog-owned theme-name snapshot across deferred device discovery.
     guiFreeNameList(themeNamesSnap);
     guiLock(); // must cover the getter FETCH too, not just the copy (Gemini review of #165)
@@ -1283,6 +1290,7 @@ reshow_ui:
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         int themeViewRequest = guiReadThemeViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
+        screenPosModeChanged(previousVMode, openX, openY, openOver); // before applyConfig shows the mode
         diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
         diaGetInt(diaUIConfig, UICFG_GLYPH_SET, &gGlyphSet);
 
@@ -1311,6 +1319,9 @@ reshow_ui:
 
         if (previousVMode != gVMode && guiConfirmVideoMode() == 0) {
             gVMode = previousVMode;
+            gXOff = openX; // and its position with it
+            gYOff = openY;
+            gOverscan = openOver;
             applyConfig(-1, -1, 1);
         }
     }
@@ -3241,6 +3252,7 @@ static int guiSettingsShowInterface(void)
     guiResetNotifications();
     previousTheme = thmGetGuiValue();
     previousVMode = gVMode;
+    int openX = gXOff, openY = gYOff, openOver = gOverscan; // the position kept for each video mode
 
     guiLock();
     themeNamesSnap = guiCopyNameList((const char **)thmGetGuiList());
@@ -3325,6 +3337,7 @@ reshow_interface:
         diaGetInt(ui, UICFG_XOFF, &gXOff);
         diaGetInt(ui, UICFG_YOFF, &gYOff);
         diaGetInt(ui, UICFG_OVERSCAN, &gOverscan);
+        screenPosModeChanged(previousVMode, openX, openY, openOver); // before applyConfig shows the mode
         {
             int gameIDMode;
             diaGetInt(ui, CFG_APPLYGAMEID, &gameIDMode);
@@ -3351,6 +3364,9 @@ reshow_interface:
 
         if (previousVMode != gVMode && guiConfirmVideoMode() == 0) {
             gVMode = previousVMode;
+            gXOff = openX; // and its position with it
+            gYOff = openY;
+            gOverscan = openOver;
             applyConfig(-1, -1, 1);
         }
     }
