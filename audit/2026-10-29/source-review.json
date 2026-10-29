@@ -1,0 +1,100 @@
+[
+  {
+    "project": "RIPPS2",
+    "head": "b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86",
+    "depth": "75-patch reconstructed source; targeted builds 114-124 mechanisms",
+    "inspected": [
+      "src/ripps2artpack.c",
+      "src/ripps2biossnd.c",
+      "src/themes.c",
+      "src/opl.c",
+      "src/gui.c",
+      "elf/patches/0115..0124"
+    ],
+    "findings": [
+      "released121 versus development124",
+      "ART merge rename window",
+      "audio startup revert",
+      "mode-position and watchdog are development-only"
+    ],
+    "executed_upstream_scripts": false
+  },
+  {
+    "project": "LUNA pinned frontend",
+    "head": "f640a4e8cfd4c91579af4c4faf9246261e3536d7",
+    "branch": "luna",
+    "depth": "17-commit frontend diff; VMC/art/MMCE/Neutrino source mechanisms",
+    "inspected": [
+      "src/vmc_storage.c",
+      "src/ui/vmc_manager.inc",
+      "src/devices/mmce.c",
+      "src/neutrino.c",
+      "src/ui/collection_art.c",
+      "src/ui/art_cache.c",
+      "include/ui/collection_art.h"
+    ],
+    "findings": [
+      "wrapper pin newer than tracked main",
+      "paired runtime flags",
+      "4MiB decoded reuse",
+      "whole-card lifecycle differs from save browsing"
+    ]
+  },
+  {
+    "project": "YAOPL",
+    "head": "fc5426469c04c9a46a936c4d89fba9c80e7c9e30",
+    "depth": "mechanism reconciliation against both target defaults and PR merge snapshots",
+    "inspected": [
+      "CHANGELOG.md",
+      "src/bdmsupport.c",
+      "modules/iopcore/cdvdman/cdvdman.c",
+      "src/mmcesupport.c"
+    ],
+    "findings": [
+      "read-only policy remains coordinated design",
+      "withdrawn remap",
+      "native UDPBD port merged",
+      "individual source hardening merged or pending as recorded"
+    ]
+  },
+  {
+    "project": "Blayr/opl-custom",
+    "head": "7959031a65ed4f1abc12369820679d741dea0277",
+    "depth": "seven-commit compare; CUSTOM.md and Favorites/prefetch source",
+    "inspected": [
+      "CUSTOM.md",
+      "src/favorites.c",
+      "src/texcache.c",
+      "src/menusys.c"
+    ],
+    "findings": [
+      "alternative selectable Favorites persistence",
+      "bounded speculative artwork queue",
+      "author hardware/emulator evidence not reproduced"
+    ]
+  },
+  {
+    "project": "Both local editions",
+    "heads": [
+      "2b948bc32b75a8f093c7dccae68e8327368a6f9c",
+      "8f39a490c30ba0ecd796a05abcfe9b1e3dd98fc1"
+    ],
+    "depth": "merged history, current feature guides and targeted owning source; no new runtime test",
+    "inspected": [
+      "docs/GAME-LIBRARY.md",
+      "docs/THEME_ENGINE.md",
+      "docs/FORK-GAP-STATUS-2026-10-28.md",
+      "src/gfx/themes.cpp",
+      "src/core/vmcsaves.cpp",
+      "src/platform/sysneutrino.cpp",
+      "src/sources/mmcesupport.cpp",
+      "modules/network/smap-ingame/xfer.c"
+    ],
+    "findings": [
+      "generic grid/library/recents/RTL now present",
+      "save browsing is not PSU/full-image lifecycle",
+      "14-target-argument guard remains",
+      "H13 merged in RiptOPL #162 and legacy #1133"
+    ]
+  }
+]

@@ -1,0 +1,53 @@
+{
+  "luna": [
+    {
+      "wrapper": "dnunezx/LUNA",
+      "wrapper_head": "b65ec63a3b43b6cfc30e6a51786c669f5bc4d93a",
+      "path": "neutrino",
+      "sha": "fff99d9828c287a7328958668ecd25b1f17ea601"
+    },
+    {
+      "wrapper": "dnunezx/LUNA",
+      "wrapper_head": "b65ec63a3b43b6cfc30e6a51786c669f5bc4d93a",
+      "path": "nhddl",
+      "sha": "f640a4e8cfd4c91579af4c4faf9246261e3536d7"
+    },
+    {
+      "wrapper": "dnunezx/LUNA",
+      "wrapper_head": "b65ec63a3b43b6cfc30e6a51786c669f5bc4d93a",
+      "path": "opl",
+      "sha": "c533f939195847df1cd4d905f089aeb07300c72e"
+    },
+    {
+      "wrapper": "dnunezx/LUNA",
+      "wrapper_head": "b65ec63a3b43b6cfc30e6a51786c669f5bc4d93a",
+      "path": "psxcore",
+      "sha": "5d4de02f57933f70c48335d938c1d4c8b69634ad"
+    }
+  ],
+  "frontend_branch": "luna",
+  "frontend_tracked_main_unchanged": true,
+  "ripps2": {
+    "base": "65d4b89ab9cbeda3e315abb1dfa2730ee5d2723f",
+    "patches": 75,
+    "last_patch": "0124-ripps2-position-per-mode.patch",
+    "reviewed_repo_head": "b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86",
+    "method": "git archive of pinned legacy base; git apply of numbered patches; no upstream build/setup scripts executed",
+    "excludes": "Generated sources, font/audio assets, vendored libraries and build-only substitutions; not a target build"
+  },
+  "ripps2_release": {
+    "tag": "v1.2.1-beta",
+    "sha": "29e455b0a3c0b9f42e142ee395e4db39befdc60f",
+    "build": 121,
+    "github_prerelease": false,
+    "product_stage": "beta"
+  },
+  "ripps2_development": {
+    "sha": "b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86",
+    "build": 124
+  },
+  "target_baselines": {
+    "RiptOPL": "33838c2bfee8d778b8736bfe1f4160ee07b0cabb",
+    "Open_PS2_Loader": "a64cab1122a613b13d73b9f5b8209b51f0aad9d8"
+  }
+}

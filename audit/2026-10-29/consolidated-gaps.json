@@ -1,0 +1,4467 @@
+[
+  {
+    "number": 1,
+    "ids": [
+      "RI5",
+      "RI9"
+    ],
+    "scope": "Localization",
+    "evidence": "Released source",
+    "feature": "Text-keyed translation packs and layered glyph fallback; basic RTL now present",
+    "assessment": "RIPPS2 uses English-text hashes with fallback and adds Arabic/Persian joining/bidi plus Lao marks/wrapping. RiptOPL remains positional; printf-format validation already exists and is not counted as missing.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0104-ripps2-languages.patch",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084"
+    ],
+    "states": [
+      "partial",
+      "shipped"
+    ],
+    "remaining_ids": [
+      "RI5"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI5",
+        "state": "partial",
+        "assessment": "Arabic/Persian shaping, bidi and CJK/Thai/Lao line breaking are present (RI9). The remaining difference is RIPPS2 text-keyed/version-tolerant translation packs and layered per-glyph fallback; positional translation validation is already present."
+      },
+      {
+        "id": "RI9",
+        "state": "shipped",
+        "assessment": "Arabic/Persian shaping and right-to-left lines plus CJK/Thai/Lao line breaks were merged in both editions. This is source parity; font coverage and real-console language acceptance remain separate."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 2,
+    "ids": [
+      "OH1",
+      "OH12"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Declarative HTML/CSS flexbox compilation and reusable C99 console UI runtime",
+    "assessment": "OPHTML compiles layouts to a bounded zero-allocation GS command list and publishes a reusable launcher-core archive; RiptOPL uses its existing theme configuration engine.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/tree/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/ophtml_console.h",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/examples/console-min/Makefile"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "OH1",
+      "OH12"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "OH1",
+        "state": "tracked",
+        "assessment": "Consolidated #2 OPHTML compiles layouts to a bounded zero-allocation GS command list and publishes a reusable launcher-core archive; RiptOPL uses its existing theme configuration engine. source 1 · source 2"
+      },
+      {
+        "id": "OH12",
+        "state": "tracked",
+        "assessment": "Consolidated #2 OPHTML compiles layouts to a bounded zero-allocation GS command list and publishes a reusable launcher-core archive; RiptOPL uses its existing theme configuration engine. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 3,
+    "ids": [
+      "OH2"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Pre-resolved pairwise HarfBuzz kerning",
+    "assessment": "Font shaping/kerning data is prepared off-console for EE use; separate from having UTF-8 fonts.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/fontgen.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "OH2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "OH2",
+        "state": "tracked",
+        "assessment": "Consolidated #3 Font shaping/kerning data is prepared off-console for EE use; separate from having UTF-8 fonts. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 4,
+    "ids": [
+      "OH3"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Palette-index theme switching without texture re-upload",
+    "assessment": "Specific instant color-scheme mechanism rather than ordinary theme switching.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.h",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "OH3"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "OH3",
+        "state": "tracked",
+        "assessment": "Consolidated #4 Specific instant color-scheme mechanism rather than ordinary theme switching. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 5,
+    "ids": [
+      "OH4"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Runtime 2D layout-coordinate offsets for animated expansion",
+    "assessment": "OPHTML runtime layout primitive, beyond RiptOPL's element-specific carousel/list animations.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "OH4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "OH4",
+        "state": "tracked",
+        "assessment": "Consolidated #5 OPHTML runtime layout primitive, beyond RiptOPL's element-specific carousel/list animations. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 6,
+    "ids": [
+      "OH5"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Focus-subtree visibility masking with automatic navigation bypass",
+    "assessment": "A coordinated layout/focus-tree mechanism, not simply hiding one image.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "OH5"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "OH5",
+        "state": "tracked",
+        "assessment": "Consolidated #6 A coordinated layout/focus-tree mechanism, not simply hiding one image. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 7,
+    "ids": [
+      "OH10",
+      "OH11"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Bounded binary UI loading and compiler budgets for declarative themes",
+    "assessment": "Fuzzed .uib parsing, alignment checks and hard input/layout safety limits for OPHTML's format. Different architecture; not proof of an exploitable RiptOPL theme bug.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/tests/fuzz_load.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/caps.py",
+      "https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/limits.js"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "OH10",
+      "OH11"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "OH10",
+        "state": "tracked",
+        "assessment": "Consolidated #7 Fuzzed .uib parsing, alignment checks and hard input/layout safety limits for OPHTML's format. Different architecture; not proof of an exploitable RiptOPL theme bug. source 1 · source 2"
+      },
+      {
+        "id": "OH11",
+        "state": "tracked",
+        "assessment": "Consolidated #7 Fuzzed .uib parsing, alignment checks and hard input/layout safety limits for OPHTML's format. Different architecture; not proof of an exploitable RiptOPL theme bug. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 8,
+    "ids": [
+      "P5",
+      "RI46"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Partial",
+    "feature": "Animated game-launch presentation beyond black fade",
+    "assessment": "RiptOPL has launch/video black fades; PS2-Launcher and Titan have their own staged launch animations. Retained as optional presentation, not missing handoff correctness.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c",
+      "https://github.com/akilluminati47/RIPPS2/blob/b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86/elf/patches/0122-ripps2-launch-disc-spin.patch"
+    ],
+    "states": [
+      "experimental",
+      "partial"
+    ],
+    "remaining_ids": [
+      "P5",
+      "RI46"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "P5",
+        "state": "partial",
+        "assessment": "Consolidated #8 RiptOPL has launch/video black fades; PS2-Launcher and Titan have their own staged launch animations. Retained as optional presentation, not missing handoff correctness. source 1"
+      },
+      {
+        "id": "RI46",
+        "state": "experimental",
+        "assessment": "Development build 122 adds spinning/zoom launch-disc presentation with theme fallback/Off policy. Local launch/video fades overlap P5 but do not provide this animation. This is optional UI, not a launch-correctness fix."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 9,
+    "ids": [
+      "K1"
+    ],
+    "scope": "Diagnostics",
+    "evidence": "Historical source",
+    "feature": "Write debug logs to a BDM storage device",
+    "assessment": "Historical uOPL logging output, distinct from RiptOPL's network/debug logging.",
+    "sources": [
+      "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/include/ioman.h",
+      "https://github.com/slimpuggamer/uOPL/blob/uOPL-1/src/ioman.c"
+    ],
+    "states": [
+      "historical"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "K1",
+        "state": "historical",
+        "assessment": "Consolidated #9 Historical uOPL logging output, distinct from RiptOPL's network/debug logging. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 10,
+    "ids": [
+      "LU8",
+      "LU43"
+    ],
+    "scope": "Core",
+    "evidence": "Source",
+    "feature": "Neutrino in-game return/IGR",
+    "assessment": "RiptOPL has OPL-core IGR; the bundled Neutrino does not implement LUNA's held-combo return path.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/padhook.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/luna_igr_rpc.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c",
+      "https://github.com/NathanNeurotic/RiptOPL/blob/rebuild/main/docs/IGR.md",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/src/devices/mmce.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/fff99d9828c287a7328958668ecd25b1f17ea601/ee/loader/src/mmce.c",
+      "https://github.com/dnunezx/Open-PS2-Loader/blob/c533f939195847df1cd4d905f089aeb07300c72e/ee_core/src/padhook.c"
+    ],
+    "states": [
+      "partial",
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU8",
+      "LU43"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU8",
+        "state": "tracked",
+        "assessment": "Consolidated #10 RiptOPL has OPL-core IGR; the bundled Neutrino does not implement LUNA's held-combo return path. source 1 · source 2 · source 3 · source 4 · source 5"
+      },
+      {
+        "id": "LU43",
+        "state": "partial",
+        "assessment": "LUNA now defaults physical-MMCE switching Off, separates it from storage scanning and carries accepted-slot bits into both native and its matched Neutrino IGR. Local GameID, boot-path protection and selectable native IGR slots already exist. The remaining Neutrino return contract relates to LU8, not absence of generic MMCE support. MX4SIO/SIO2 exclusions and firmware timing differ."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 11,
+    "ids": [
+      "LU7"
+    ],
+    "scope": "Core",
+    "evidence": "Source",
+    "feature": "Coordinated Neutrino power-button shutdown",
+    "assessment": "Optical-work drain and DEV9 shutdown on the physical power event; separate from the OPL-core power path.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c",
+      "https://github.com/NathanNeurotic/neutrino/blob/master/iop/cdvdfsv/src/cdvdfsv.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU7"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU7",
+        "state": "tracked",
+        "assessment": "Consolidated #11 Optical-work drain and DEV9 shutdown on the physical power event; separate from the OPL-core power path. source 1 · source 2 · source 3"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 12,
+    "ids": [
+      "LU11",
+      "LU35"
+    ],
+    "scope": "Storage",
+    "evidence": "Partial",
+    "feature": "Neutrino VMC backing and management for APA/PFS games",
+    "assessment": "RiptOPL supports native-core VMC on APA, but deliberately drops Neutrino APA VMC arguments. LUNA's mapped backing has geometry and fragment limits; save/reload testing remains necessary.",
+    "sources": [
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/pfs_vmc.c",
+      "https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/main.c",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/blob/9ef8d643a739d88a4f4b5fd055a209d0b27299c4/docs/NEUTRINO.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/src/vmc_storage.c"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "LU11",
+      "LU35"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU11",
+        "state": "partial",
+        "assessment": "Consolidated #12 RiptOPL supports native-core VMC on APA, but deliberately drops Neutrino APA VMC arguments. LUNA's mapped backing has geometry and fragment limits; save/reload testing remains necessary. source 1 · source 2 · source 3"
+      },
+      {
+        "id": "LU35",
+        "state": "partial",
+        "assessment": "LUNA APA/PFS VMC management is now integrated into its shared PS1/PS2 manager. The local native-core VMC path already supports APA; local Neutrino APA backing remains deliberately constrained. Do not copy save mappings without geometry, fragment and recovery verification."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 13,
+    "ids": [
+      "LU12",
+      "LU34",
+      "TV7"
+    ],
+    "scope": "PS1",
+    "evidence": "Source / claim",
+    "feature": "Grouped PS1 disc sets, starting-disc picker and in-game swaps",
+    "assessment": "LUNA implements ordered two-to-four-VCD sets and swaps in its matching runtime; FastLoader claims an Ember starting-disc picker. RiptOPL's ordinary PS1 listing is already present.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_discset.c",
+      "https://github.com/NathanNeurotic/RiptOPL/blob/rebuild/main/docs/VCD.md",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU12",
+      "LU34",
+      "TV7"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU12",
+        "state": "tracked",
+        "assessment": "Consolidated #13 LUNA implements ordered two-to-four-VCD sets and swaps in its matching runtime; FastLoader claims an Ember starting-disc picker. RiptOPL's ordinary PS1 listing is already present. source 1 · source 2"
+      },
+      {
+        "id": "LU34",
+        "state": "tracked",
+        "assessment": "Consolidated #13 LUNA implements ordered two-to-four-VCD sets and swaps in its matching runtime; FastLoader claims an Ember starting-disc picker. RiptOPL's ordinary PS1 listing is already present. source 1"
+      },
+      {
+        "id": "TV7",
+        "state": "tracked",
+        "assessment": "Consolidated #13 LUNA implements ordered two-to-four-VCD sets and swaps in its matching runtime; FastLoader claims an Ember starting-disc picker. RiptOPL's ordinary PS1 listing is already present. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 14,
+    "ids": [
+      "LU13",
+      "LU33",
+      "LU44"
+    ],
+    "scope": "PS1 saves",
+    "evidence": "Source",
+    "feature": "Unified PS1/PS2 whole-card lifecycle, independent slot assignment and recovery",
+    "assessment": "The missing capability is the integrated pair-management lifecycle, beyond existing POPStarter/Ember saves and basic card creation.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/psxcore_vmc.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/src/vmc_storage.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/src/ui/vmc_manager.inc",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "LU13",
+      "LU33",
+      "LU44"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU13",
+        "state": "partial",
+        "assessment": "Current LUNA now uses one PS1/PS2 VMC lifecycle with Create/Assign/Duplicate/Import/Export/Back Up/Restore/Recover, independent PS1 slot paths, staged whole-card copies and launch recovery gates. Local creation, assignment and the VMC Saves browser overlap, but are not this whole-card lifecycle. Upstream builds/tests are reported evidence, not local hardware acceptance."
+      },
+      {
+        "id": "LU33",
+        "state": "partial",
+        "assessment": "Current LUNA now uses one PS1/PS2 VMC lifecycle with Create/Assign/Duplicate/Import/Export/Back Up/Restore/Recover, independent PS1 slot paths, staged whole-card copies and launch recovery gates. Local creation, assignment and the VMC Saves browser overlap, but are not this whole-card lifecycle. Upstream builds/tests are reported evidence, not local hardware acceptance."
+      },
+      {
+        "id": "LU44",
+        "state": "partial",
+        "assessment": "Current source unifies raw-image format validation, staged verified copies, backups, replacement/recovery and independent PS1 slot assignment. Local VMC create/assign and Saves browsing overlap but do not establish this full lifecycle. Extends LU13/LU33/LU35; count the shared family once."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 15,
+    "ids": [
+      "RI1",
+      "PX21"
+    ],
+    "scope": "Save tools",
+    "evidence": "Source",
+    "feature": "PSU and PS1 card-pair operations beyond the merged VMC Saves browser",
+    "assessment": "Integrated VMC-as-folder/PSU tools and confirmed absent-destination PS1 pair copies; RiptOPL can create/assign cards but does not expose these save-browser operations.",
+    "sources": [
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0098-ripps2-build98-memory-files.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/main/README.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "partial",
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RI1",
+      "PX21"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI1",
+        "state": "partial",
+        "assessment": "Both editions have a VMC Saves page: browse a card image, copy a save out/in and delete. PSU import/export and PS1 card-pair lifecycle are not provided by this page. Preserve raw/ECC image and write-safety boundaries."
+      },
+      {
+        "id": "PX21",
+        "state": "tracked",
+        "assessment": "Consolidated #15 Integrated VMC-as-folder/PSU tools and confirmed absent-destination PS1 pair copies; RiptOPL can create/assign cards but does not expose these save-browser operations. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 16,
+    "ids": [
+      "RI2",
+      "B5"
+    ],
+    "scope": "Save tools",
+    "evidence": "Source / claim",
+    "feature": "Physical memory-card backup, restore, format and repair UI",
+    "assessment": "Other shells integrate these tools. Optional extension with destructive operations, rather than a missing ability to save a game.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/main/elf/patches/0086-ripps2-build86-card-manager-neutrino-logo-first.patch",
+      "https://boliviaos.site/",
+      "https://github.com/ffgriever-pl/Memory-Card-Annihilator"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RI2",
+      "B5"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI2",
+        "state": "tracked",
+        "assessment": "Consolidated #16 Other shells integrate these tools. Optional extension with destructive operations, rather than a missing ability to save a game. source 1"
+      },
+      {
+        "id": "B5",
+        "state": "tracked",
+        "assessment": "Consolidated #16 Other shells integrate these tools. Optional extension with destructive operations, rather than a missing ability to save a game. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 17,
+    "ids": [
+      "RI3",
+      "T3",
+      "RI12",
+      "LU15"
+    ],
+    "scope": "In-game UI",
+    "evidence": "Experimental",
+    "feature": "Paused in-game actions menu with resume, return and power off",
+    "assessment": "RIPPS2 now enables its panel by default and adds power off; Titan has profile-gated suspend/resume, and LUNA integrates a native PS1 Quit/Play return panel. RiptOPL's reset and RA notices do not provide these menus.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0108-ripps2-ripshot.patch",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_SMART_IGR.md",
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0106-ripps2-poweroff-star.patch",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/tools/build-luna-psxcore.sh",
+      "https://github.com/dnunezx/PSXCore/blob/360a788ff7bb7c6853702a8edec6860cae49c0a2/runtime/igrloader/main.c",
+      "https://github.com/NathanNeurotic/RiptOPL/blob/rebuild/main/docs/VCD.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "RI3",
+      "T3",
+      "RI12",
+      "LU15"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI3",
+        "state": "experimental",
+        "assessment": "Consolidated #17 RIPPS2 now enables its panel by default and adds power off; Titan has profile-gated suspend/resume, and LUNA integrates a native PS1 Quit/Play return panel. RiptOPL's reset and RA notices do not provide these menus. source 1"
+      },
+      {
+        "id": "T3",
+        "state": "experimental",
+        "assessment": "Consolidated #17 RIPPS2 now enables its panel by default and adds power off; Titan has profile-gated suspend/resume, and LUNA integrates a native PS1 Quit/Play return panel. RiptOPL's reset and RA notices do not provide these menus. source 1"
+      },
+      {
+        "id": "RI12",
+        "state": "experimental",
+        "assessment": "Consolidated #17 RIPPS2 now enables its panel by default and adds power off; Titan has profile-gated suspend/resume, and LUNA integrates a native PS1 Quit/Play return panel. RiptOPL's reset and RA notices do not provide these menus. source 1"
+      },
+      {
+        "id": "LU15",
+        "state": "experimental",
+        "assessment": "Consolidated #17 RIPPS2 now enables its panel by default and adds power off; Titan has profile-gated suspend/resume, and LUNA integrates a native PS1 Quit/Play return panel. RiptOPL's reset and RA notices do not provide these menus. source 1 · source 2 · source 3"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 18,
+    "ids": [
+      "RI6"
+    ],
+    "scope": "Disc tools",
+    "evidence": "Released source",
+    "feature": "Rip optical discs directly to the library or media storage",
+    "assessment": "RIPDISC now exists in builds 105-110: PS2 ISO/split output, PS1 BIN/CUE, audio CD and DVD-video paths. Previous planned status is obsolete; emulator reports are not PS2 acceptance.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0105-ripps2-ripdisc.patch"
+    ],
+    "states": [
+      "declined"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "RI6",
+        "state": "declined",
+        "assessment": "Optical-disc ripping was explicitly declined in the October 28 local scope decision. Retain RIPPS2 attribution and source evidence; do not recommend it as unfinished required work."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 19,
+    "ids": [
+      "RI7",
+      "RI14",
+      "O13"
+    ],
+    "scope": "Screenshots",
+    "evidence": "Released source",
+    "feature": "Managed in-game screenshot capture and artwork development",
+    "assessment": "RIPSHOT has six-slot rolls, preview/Keep/Delete, ART/MEDIA output, PNG development and SCRn slideshow. RiptOPL inherits optional IGS code, so the gap is this complete managed workflow, not the existence of screenshot code.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0108-ripps2-ripshot.patch",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/import-igs.py"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RI7",
+      "RI14",
+      "O13"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI7",
+        "state": "tracked",
+        "assessment": "Consolidated #19 RIPSHOT has six-slot rolls, preview/Keep/Delete, ART/MEDIA output, PNG development and SCRn slideshow. RiptOPL inherits optional IGS code, so the gap is this complete managed workflow, not the existence of screenshot code. source 1"
+      },
+      {
+        "id": "RI14",
+        "state": "tracked",
+        "assessment": "Consolidated #19 RIPSHOT has six-slot rolls, preview/Keep/Delete, ART/MEDIA output, PNG development and SCRn slideshow. RiptOPL inherits optional IGS code, so the gap is this complete managed workflow, not the existence of screenshot code. source 1"
+      },
+      {
+        "id": "O13",
+        "state": "tracked",
+        "assessment": "Consolidated #19 RIPSHOT has six-slot rolls, preview/Keep/Delete, ART/MEDIA output, PNG development and SCRn slideshow. RiptOPL inherits optional IGS code, so the gap is this complete managed workflow, not the existence of screenshot code. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 20,
+    "ids": [
+      "B1",
+      "LU14",
+      "LU20",
+      "LU21",
+      "TV9"
+    ],
+    "scope": "Console tools",
+    "evidence": "Source / claim",
+    "feature": "Integrated multi-device file explorer and bulk operations",
+    "assessment": "Copy/move tray, rename/delete/mkdir, conflict choices, verified moves, text preview and ELF launch. Launchstation can supply file management externally; it is not embedded in RiptOPL.",
+    "sources": [
+      "https://boliviaos.site/",
+      "https://github.com/dnunezx/nhddl-luna/blob/127d012b07322dc0805ce62f877e5ba5e8cd6dbc/src/ui/file_manager.c",
+      "https://github.com/NathanNeurotic/Launchstation",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md",
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "B1",
+      "LU14",
+      "LU20",
+      "LU21",
+      "TV9"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "B1",
+        "state": "tracked",
+        "assessment": "Consolidated #20 Copy/move tray, rename/delete/mkdir, conflict choices, verified moves, text preview and ELF launch. Launchstation can supply file management externally; it is not embedded in RiptOPL. source 1"
+      },
+      {
+        "id": "LU14",
+        "state": "tracked",
+        "assessment": "Consolidated #20 Copy/move tray, rename/delete/mkdir, conflict choices, verified moves, text preview and ELF launch. Launchstation can supply file management externally; it is not embedded in RiptOPL. source 1 · source 2"
+      },
+      {
+        "id": "LU20",
+        "state": "tracked",
+        "assessment": "Consolidated #20 Copy/move tray, rename/delete/mkdir, conflict choices, verified moves, text preview and ELF launch. Launchstation can supply file management externally; it is not embedded in RiptOPL. source 1"
+      },
+      {
+        "id": "LU21",
+        "state": "tracked",
+        "assessment": "Consolidated #20 Copy/move tray, rename/delete/mkdir, conflict choices, verified moves, text preview and ELF launch. Launchstation can supply file management externally; it is not embedded in RiptOPL. source 1"
+      },
+      {
+        "id": "TV9",
+        "state": "tracked",
+        "assessment": "Consolidated #20 Copy/move tray, rename/delete/mkdir, conflict choices, verified moves, text preview and ELF launch. Launchstation can supply file management externally; it is not embedded in RiptOPL. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 21,
+    "ids": [
+      "RI8"
+    ],
+    "scope": "Console tools",
+    "evidence": "Released source",
+    "feature": "Cross-device file/folder search that opens the matching location",
+    "assessment": "RIPPS2 build 107 implements bounded breadth-first search, cancellation and result navigation; it is no longer merely planned.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0107-ripps2-search.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RI8"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI8",
+        "state": "tracked",
+        "assessment": "Consolidated #21 RIPPS2 build 107 implements bounded breadth-first search, cancellation and result navigation; it is no longer merely planned. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 22,
+    "ids": [
+      "TV2"
+    ],
+    "scope": "Library",
+    "evidence": "Claimed release",
+    "feature": "Coordinated game-file rename with art, VMC and metadata migration",
+    "assessment": "FastLoader claims renaming the ISO carries its associated assets, card and settings; display-title editing in RiptOPL is already available.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "TV2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "TV2",
+        "state": "tracked",
+        "assessment": "Consolidated #22 FastLoader claims renaming the ISO carries its associated assets, card and settings; display-title editing in RiptOPL is already available. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 23,
+    "ids": [
+      "TV1"
+    ],
+    "scope": "Library",
+    "evidence": "Claimed release",
+    "feature": "Automatic ISO discovery throughout arbitrary folder trees",
+    "assessment": "FastLoader claims four-level discovery outside CD/DVD. RiptOPL's prefix/subfolder navigation is not a whole-drive arbitrary-directory scan.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "TV1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "TV1",
+        "state": "tracked",
+        "assessment": "Consolidated #23 FastLoader claims four-level discovery outside CD/DVD. RiptOPL's prefix/subfolder navigation is not a whole-drive arbitrary-directory scan. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 24,
+    "ids": [
+      "RI10"
+    ],
+    "scope": "Library",
+    "evidence": "Released source",
+    "feature": "Persistent per-source game-list snapshots with idle revalidation",
+    "assessment": "RIPPS2 caches MMCE/BDM/SMB lists on their source. RiptOPL already has ISO-ID and APA list caches; the missing scope is its equivalent across those other backends.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0110-ripps2-quicklists.patch"
+    ],
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "RI10"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI10",
+        "state": "candidate",
+        "assessment": "Persistent per-source/master snapshots and Trust Cache/manual-refresh policy remain source/design comparisons. Local APA/ISO-ID caches and current All Games are already present; trusting cached names cannot validate a replaced or removed device."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 25,
+    "ids": [
+      "RI11",
+      "RI30"
+    ],
+    "scope": "Settings",
+    "evidence": "Partial",
+    "feature": "One settings-destination picker that provisions typed device paths",
+    "assessment": "RIPPS2 offers typed MC/HDD/USB/MX4SIO/iLink/MMCE destinations, provisions the directory, and Build 111 adds a bootstrap pointer that survives a competing memory-card config. RiptOPL has custom settings paths; exact precedence needs separate regression comparison.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0110-ripps2-quicklists.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0111-ripps2-soundclean.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0110-ripps2-quicklists.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "RI11",
+      "RI30"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI11",
+        "state": "partial",
+        "assessment": "The editions support selected settings destinations and boot-slot fallback, including the merged empty-USB-slot save fix. RIPPS2 guided typed-family provisioning and memory-card bootstrap precedence remain a narrower comparison; no identical current error is established."
+      },
+      {
+        "id": "RI30",
+        "state": "partial",
+        "assessment": "The editions support selected settings destinations and boot-slot fallback, including the merged empty-USB-slot save fix. RIPPS2 guided typed-family provisioning and memory-card bootstrap precedence remain a narrower comparison; no identical current error is established."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 26,
+    "ids": [
+      "O3",
+      "RI38"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "Extended Recent Games capacity and lazy-source navigation; last-10 list now present",
+    "assessment": "OPLattice retains the last eight, rather than only RiptOPL's remembered last title.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ],
+    "states": [
+      "partial",
+      "shipped"
+    ],
+    "remaining_ids": [
+      "RI38"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O3",
+        "state": "shipped",
+        "assessment": "Both editions have a persistent last-10 Recent list and a Recent filter. A separate lazy-source page with up to 99 entries is the narrower remaining RI38 design."
+      },
+      {
+        "id": "RI38",
+        "state": "partial",
+        "assessment": "Both editions keep the last 10 recents, expose a Recent filter and sort by Last played. RIPPS2 separate lazy-source Recent page and configurable capacity up to 99 remain the narrower difference."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 27,
+    "ids": [
+      "O4"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "User-selectable alphabetical, reverse, recent and scan-order sorting",
+    "assessment": "Distinct from remembering a selected game and from PS1/PS2 filters.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "O4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O4",
+        "state": "partial",
+        "assessment": "Sort Games now supports Off, A to Z and Last played in both editions. Further OPLattice sort modes/policies need an exact comparison; do not call all sorting absent or equate a recent timestamp with a play-count database."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 28,
+    "ids": [
+      "O9"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "Per-game launch counts and accumulated play time",
+    "assessment": "A play-history/statistics layer, beyond a last-played selection.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/08-play-stats.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "O9"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O9",
+        "state": "partial",
+        "assessment": "Persistent recents and last-played ordering now overlap the history portion. Per-title play counters/statistics remain a separate comparison; no new gameplay-time tracking is established."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 29,
+    "ids": [
+      "P3"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "One automatically aggregated library across every game device",
+    "assessment": "RiptOPL's Favorites can span sources and its platform filters mix PS1/PS2; neither aggregates all non-favorite games from every source into one library.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084"
+    ],
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "P3",
+        "state": "shipped",
+        "assessment": "All Games aggregates games from started devices; All/PS2/PS1/Apps/Favourites/Recent filters and device-tagged duplicates are present in both editions. A persistent master catalogue before sources answer remains RI21."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 30,
+    "ids": [
+      "LU5",
+      "BL1"
+    ],
+    "scope": "Library",
+    "evidence": "Design option",
+    "feature": "Favorites stored per game drive and carried with that drive",
+    "assessment": "RiptOPL deliberately uses a shared cross-device favorites file. This is an alternative persistence policy, not missing Favorites.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c",
+      "https://github.com/NathanNeurotic/RiptOPL/blob/rebuild/main/src/sources/favsupport.cpp",
+      "https://github.com/Blayr/opl-custom/blob/7959031a65ed4f1abc12369820679d741dea0277/src/favorites.c",
+      "https://github.com/Blayr/opl-custom/blob/7959031a65ed4f1abc12369820679d741dea0277/CUSTOM.md"
+    ],
+    "states": [
+      "intentional",
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU5",
+      "BL1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU5",
+        "state": "tracked",
+        "assessment": "Consolidated #30 RiptOPL deliberately uses a shared cross-device favorites file. This is an alternative persistence policy, not missing Favorites. source 1 · source 2 · source 3"
+      },
+      {
+        "id": "BL1",
+        "state": "intentional",
+        "assessment": "New fork 7959031a has game-ID Favorites with selectable device-local or shared MC conf_favorites.cfg and no silent fallback. Both local editions already have cross-device Favorites and failure reporting. Per-device portability is an alternative identity/storage policy, grouped with LU5; do not replace local folder/name identity mechanically."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 31,
+    "ids": [
+      "LU6"
+    ],
+    "scope": "Reliability",
+    "evidence": "Partial",
+    "feature": "Staged replacement and recovery for last-title and title-ID cache files",
+    "assessment": "Favorites staging/recovery already exists in RiptOPL. Only LUNA's additional last-title/cache coverage remains to compare and extend.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/945",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/options.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/devices/iso.c"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "LU6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU6",
+        "state": "partial",
+        "assessment": "Consolidated #31 Favorites staging/recovery already exists in RiptOPL. Only LUNA's additional last-title/cache coverage remains to compare and extend. source 1 · source 2 · source 3 · source 4 · source 5"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 32,
+    "ids": [
+      "M1"
+    ],
+    "scope": "Network UI",
+    "evidence": "Claimed release",
+    "feature": "Choose among multiple discovered UDPFS servers",
+    "assessment": "Modulo exposes server selection; RiptOPL automatically chooses a server. Existing network-game transport is not missing.",
+    "sources": [
+      "https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2#readme"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "M1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "M1",
+        "state": "tracked",
+        "assessment": "Consolidated #32 Modulo exposes server selection; RiptOPL automatically chooses a server. Existing network-game transport is not missing. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 33,
+    "ids": [
+      "N1"
+    ],
+    "scope": "CLI",
+    "evidence": "Source",
+    "feature": "Generic backend/path forward-boot command line including no-init",
+    "assessment": "NHDDL accepts mode/DVD-path forwarding and reuse of the resident environment; RiptOPL's positional HDD/BDM autolaunch is narrower.",
+    "sources": [
+      "https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#forward-boot-mode"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "N1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "N1",
+        "state": "tracked",
+        "assessment": "Consolidated #33 NHDDL accepts mode/DVD-path forwarding and reuse of the resident environment; RiptOPL's positional HDD/BDM autolaunch is narrower. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 34,
+    "ids": [
+      "L1"
+    ],
+    "scope": "Storage",
+    "evidence": "Source",
+    "feature": "Extended APA addressing for HDDs above 2 TiB",
+    "assessment": "Different from existing exFAT/GPT large-drive support. Source integration and safe media layout need independent evaluation.",
+    "sources": [
+      "https://github.com/L10N37/Open-PS2-Loader-Extended-APA/blob/main/EXTENDED_APA.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "L1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "L1",
+        "state": "tracked",
+        "assessment": "Consolidated #34 Different from existing exFAT/GPT large-drive support. Source integration and safe media layout need independent evaluation. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 35,
+    "ids": [
+      "X1"
+    ],
+    "scope": "Storage",
+    "evidence": "Historical source",
+    "feature": "EXT2 filesystem support on USB",
+    "assessment": "E2OPL's legacy filesystem path is distinct from RiptOPL's FAT32/exFAT support; no current hardware regression claim.",
+    "sources": [
+      "https://sourceforge.net/projects/e2opl/",
+      "https://sourceforge.net/p/e2opl/code/HEAD/tree/trunk/README"
+    ],
+    "states": [
+      "historical"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "X1",
+        "state": "historical",
+        "assessment": "Consolidated #35 E2OPL's legacy filesystem path is distinct from RiptOPL's FAT32/exFAT support; no current hardware regression claim. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 36,
+    "ids": [
+      "DL1"
+    ],
+    "scope": "Disc launching",
+    "evidence": "Source",
+    "feature": "Selectable DKWDRV/PS1VModeNeg physical-PS1-disc handoff",
+    "assessment": "RiptOPL has ordinary disc actions and PS1 image cores; this is the explicit enhanced-disc-launcher handoff workflow.",
+    "sources": [
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/src/main.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DL1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DL1",
+        "state": "tracked",
+        "assessment": "Consolidated #36 RiptOPL has ordinary disc actions and PS1 image cores; this is the explicit enhanced-disc-launcher handoff workflow. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 37,
+    "ids": [
+      "DL2"
+    ],
+    "scope": "Disc launching",
+    "evidence": "Source",
+    "feature": "Conditional import-disc OSD language override",
+    "assessment": "The enhanced launcher applies an override conditionally for import-disc behavior.",
+    "sources": [
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/src/main.c",
+      "https://github.com/exalandru/Enhanced-PS2-Disc-Launcher/blob/main/disc-launcher.cnf"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DL2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DL2",
+        "state": "tracked",
+        "assessment": "Consolidated #37 The enhanced launcher applies an override conditionally for import-disc behavior. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 38,
+    "ids": [
+      "P2"
+    ],
+    "scope": "Library",
+    "evidence": "Source",
+    "feature": "Download cover artwork directly on the PS2",
+    "assessment": "PC artwork tools already work with RiptOPL; the missing operation is the console-initiated download.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c",
+      "https://irfanlesnar.github.io/PS2-Launcher-Manager/"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "P2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "P2",
+        "state": "tracked",
+        "assessment": "Consolidated #38 PC artwork tools already work with RiptOPL; the missing operation is the console-initiated download. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 39,
+    "ids": [
+      "U6"
+    ],
+    "scope": "Network",
+    "evidence": "Source",
+    "feature": "Broadcast a game-launch event for a Discord presence listener",
+    "assessment": "A console launch-announcement interface, distinct from an external companion calculating presence by other means.",
+    "sources": [
+      "https://github.com/ps2homebrew/Open-PS2-Loader/pull/1736"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "U6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "U6",
+        "state": "tracked",
+        "assessment": "Consolidated #39 A console launch-announcement interface, distinct from an external companion calculating presence by other means. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 40,
+    "ids": [
+      "DB1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "DualSense over Bluetooth in menu and in-game PADEMU",
+    "assessment": "RiptOPL already has an optional USB DualSense variant; Bluetooth support is the gap.",
+    "sources": [
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/ds34bt/iop/ds34bt.c",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/modules/pademu/ds34bt.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DB1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DB1",
+        "state": "tracked",
+        "assessment": "Consolidated #40 RiptOPL already has an optional USB DualSense variant; Bluetooth support is the gap. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 41,
+    "ids": [
+      "DB2"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Wireless device discovery, secure pairing and persisted link keys in the GUI",
+    "assessment": "Distinct from existing DS3 cable pairing and stock DS3/DS4 Bluetooth input.",
+    "sources": [
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/include/btkeys.h",
+      "https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/blob/dualsense-bt/src/dialogs.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DB2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DB2",
+        "state": "tracked",
+        "assessment": "Consolidated #41 Distinct from existing DS3 cable pairing and stock DS3/DS4 Bluetooth input. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 42,
+    "ids": [
+      "DT1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Automatic RTL8761B/BU Bluetooth firmware loading",
+    "assessment": "Menu and in-game dongle initialization in the Realtek fork.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/tree/2cf308511b187f8a0b209140f71936dca0bb0bae/modules/ds34bt"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DT1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DT1",
+        "state": "tracked",
+        "assessment": "Consolidated #42 Menu and in-game dongle initialization in the Realtek fork. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 43,
+    "ids": [
+      "DT2"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Extended DS4-clone HID, CRC, handshake and rumble handling",
+    "assessment": "Additional clone protocol/feedback support; existing fake-DS3 workaround is not equivalent.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/tree/2cf308511b187f8a0b209140f71936dca0bb0bae/modules/ds34bt"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DT2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DT2",
+        "state": "tracked",
+        "assessment": "Consolidated #43 Additional clone protocol/feedback support; existing fake-DS3 workaround is not equivalent. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 44,
+    "ids": [
+      "DT3",
+      "DT5",
+      "P7",
+      "DT7"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Multi-pad connection/type/battery HUD and setup/test/disconnect UI",
+    "assessment": "Combines overlapping pad-status rows rather than counting each fork's screen twice.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/commit/f638621cdd40d834877745bda75fa01dae0e1d84",
+      "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/blob/c6d4741e079eadbdecd6cdcba318f81448de6601/src/gui.c",
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/releases/tag/rt-2.8.0"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DT3",
+      "DT5",
+      "P7",
+      "DT7"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DT3",
+        "state": "tracked",
+        "assessment": "Consolidated #44 Combines overlapping pad-status rows rather than counting each fork's screen twice. source 1 · source 2 · source 3 · source 4"
+      },
+      {
+        "id": "DT5",
+        "state": "tracked",
+        "assessment": "Consolidated #44 Combines overlapping pad-status rows rather than counting each fork's screen twice. source 1"
+      },
+      {
+        "id": "P7",
+        "state": "tracked",
+        "assessment": "Consolidated #44 Combines overlapping pad-status rows rather than counting each fork's screen twice. source 1"
+      },
+      {
+        "id": "DT7",
+        "state": "tracked",
+        "assessment": "Consolidated #44 rt-2.8.0 includes custom RGB selection; maintainer notes limited testing and clone differences. Do not copy its one-dongle USB pool reduction into a multi-device build. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 45,
+    "ids": [
+      "DT4"
+    ],
+    "scope": "Controllers",
+    "evidence": "Released source",
+    "feature": "Mixed physical/wireless multitap routing per slot and two-port poll",
+    "assessment": "The rt-2.7.0 source splits real-pad transfers and preserves per-slot choices. RiptOPL has multitap emulation already; this is the additional routing behavior/fix.",
+    "sources": [
+      "https://github.com/MiguelQueiroz010/OPL-DS4RTBT/compare/e016d934e117a645e476564eddfd7f14f0188e01...rt-2.7.0"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DT4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DT4",
+        "state": "tracked",
+        "assessment": "Consolidated #45 The rt-2.7.0 source splits real-pad transfers and preserves per-slot choices. RiptOPL has multitap emulation already; this is the additional routing behavior/fix. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 46,
+    "ids": [
+      "P1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Xbox One and Series controllers over USB",
+    "assessment": "Requires a controller driver/protocol beyond RiptOPL's DS3/DS4 and optional DS5 paths.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/tree/main/modules/xboxusb"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "P1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "P1",
+        "state": "tracked",
+        "assessment": "Consolidated #46 Requires a controller driver/protocol beyond RiptOPL's DS3/DS4 and optional DS5 paths. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 47,
+    "ids": [
+      "MP1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Historical source",
+    "feature": "Xbox 360 controllers over USB",
+    "assessment": "Separate controller class from Xbox One/Series; implemented in historical modular PADEMU.",
+    "sources": [
+      "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/xbox360usb/xbox360usb.c"
+    ],
+    "states": [
+      "historical"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "MP1",
+        "state": "historical",
+        "assessment": "Consolidated #47 Separate controller class from Xbox One/Series; implemented in historical modular PADEMU. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 48,
+    "ids": [
+      "MP2"
+    ],
+    "scope": "Controllers",
+    "evidence": "Historical source",
+    "feature": "Generic descriptor-driven USB HID gamepads",
+    "assessment": "Generic report parsing, rather than only a whitelist of controller-specific drivers.",
+    "sources": [
+      "https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/hidusb/hidusb.c"
+    ],
+    "states": [
+      "historical"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "MP2",
+        "state": "historical",
+        "assessment": "Consolidated #48 Generic report parsing, rather than only a whitelist of controller-specific drivers. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 49,
+    "ids": [
+      "P6"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "Additional Steam Controller, Shanwan PS3 and GP300 USB support",
+    "assessment": "Specific protocol/device coverage in PS2-Launcher, not a claim that every clone is supported there.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "P6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "P6",
+        "state": "tracked",
+        "assessment": "Consolidated #49 Specific protocol/device coverage in PS2-Launcher, not a claim that every clone is supported there. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 50,
+    "ids": [
+      "RR1"
+    ],
+    "scope": "Controllers",
+    "evidence": "Source",
+    "feature": "USB Driving Force wheel presented as a negCon",
+    "assessment": "An experimental wheel translation path, distinct from ordinary pad emulation.",
+    "sources": [
+      "https://github.com/exaconn/Open-PS2-Loader/commit/3ab34d2028e3da9592b99b4681a7cdb324e3a070",
+      "https://github.com/exaconn/Open-PS2-Loader/commit/e70e6cbddf39a68497c28b302d19695ee2ce753a",
+      "https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RR1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RR1",
+        "state": "tracked",
+        "assessment": "Consolidated #50 An experimental wheel translation path, distinct from ordinary pad emulation. source 1 · source 2 · source 3"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 51,
+    "ids": [
+      "T9",
+      "B6"
+    ],
+    "scope": "Controllers",
+    "evidence": "Experimental",
+    "feature": "Xbox Bluetooth/BLE and USB keyboard/mouse input classes",
+    "assessment": "Titan's modern-input contracts are source/host validated with target acceptance pending; BoliviaOS separately advertises USB keyboard input.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_MODERN_CONTROLLER_MATRIX.md",
+      "https://boliviaos.site/"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "T9",
+      "B6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T9",
+        "state": "experimental",
+        "assessment": "Consolidated #51 Titan's modern-input contracts are source/host validated with target acceptance pending; BoliviaOS separately advertises USB keyboard input. source 1"
+      },
+      {
+        "id": "B6",
+        "state": "experimental",
+        "assessment": "Consolidated #51 Titan's modern-input contracts are source/host validated with target acceptance pending; BoliviaOS separately advertises USB keyboard input. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 52,
+    "ids": [
+      "P4"
+    ],
+    "scope": "In-game UI",
+    "evidence": "Source",
+    "feature": "Hold SELECT alone to leave a game",
+    "assessment": "Alternative configurable exit interaction, beyond existing multi-button IGR.",
+    "sources": [
+      "https://github.com/Irfanlesnar/PS2-Launcher/blob/main/ee_core/src/padhook.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "P4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "P4",
+        "state": "tracked",
+        "assessment": "Consolidated #52 Alternative configurable exit interaction, beyond existing multi-button IGR. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 53,
+    "ids": [
+      "O1",
+      "RI17"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Two-axis flat tile-grid library navigation",
+    "assessment": "RiptOPL's linear Coverflow and PSBBN perspective fan do not provide the same grid.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/121",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1097",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0078-ripps2-build78-grid-element-frosted-glass-towers-key.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0097-ripps2-build97-grid-and-flow.patch"
+    ],
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "O1",
+        "state": "shipped",
+        "assessment": "Both editions now implement a two-axis Grid element and selectable Grid view, with cover-cache coverage and row/page navigation. This closes the generic flat-grid gap; LUNA projected 3D cases remain LU9. Source/merge evidence, no console acceptance."
+      },
+      {
+        "id": "RI17",
+        "state": "shipped",
+        "assessment": "Both editions now implement a two-axis Grid element and selectable Grid view, with cover-cache coverage and row/page navigation. This closes the generic flat-grid gap; LUNA projected 3D cases remain LU9. Source/merge evidence, no console acceptance."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 54,
+    "ids": [
+      "LU2"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Depth-sorted orbital ring library view",
+    "assessment": "A complete selectable ring renderer with perspective and depth falloff.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_orbit.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU2",
+        "state": "tracked",
+        "assessment": "Consolidated #54 A complete selectable ring renderer with perspective and depth falloff. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 55,
+    "ids": [
+      "LU9",
+      "LU26"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Projected 3D case grid with case styles and inspection",
+    "assessment": "LUNA's projected case layout and PS1 case presentation; distinct from flat tiles and PSBBN Flow.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_3d.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/include/ui/navigation.h",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU9",
+      "LU26"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU9",
+        "state": "tracked",
+        "assessment": "Consolidated #55 LUNA's projected case layout and PS1 case presentation; distinct from flat tiles and PSBBN Flow. source 1 · source 2"
+      },
+      {
+        "id": "LU26",
+        "state": "tracked",
+        "assessment": "Consolidated #55 LUNA's projected case layout and PS1 case presentation; distinct from flat tiles and PSBBN Flow. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 56,
+    "ids": [
+      "LU10",
+      "LU27",
+      "LU29"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Experimental",
+    "feature": "Ambient-orb Scroll view with logo/title fallback and controls",
+    "assessment": "A full browsing view, not a claim that RiptOPL lacks animation or missing-art text.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_scroll.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/gui.c",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "LU10",
+      "LU27",
+      "LU29"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU10",
+        "state": "experimental",
+        "assessment": "Consolidated #56 A full browsing view, not a claim that RiptOPL lacks animation or missing-art text. source 1 · source 2"
+      },
+      {
+        "id": "LU27",
+        "state": "experimental",
+        "assessment": "Consolidated #56 A full browsing view, not a claim that RiptOPL lacks animation or missing-art text. source 1"
+      },
+      {
+        "id": "LU29",
+        "state": "experimental",
+        "assessment": "Consolidated #56 A full browsing view, not a claim that RiptOPL lacks animation or missing-art text. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 57,
+    "ids": [
+      "LU4",
+      "LU25"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Continuously rotating disc-label art and paired-art presentation",
+    "assessment": "RiptOPL already supports ICO/LGO/COV artwork; animation is the differentiated capability.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA",
+      "https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_classic.c",
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU4",
+      "LU25"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU4",
+        "state": "tracked",
+        "assessment": "Consolidated #57 RiptOPL already supports ICO/LGO/COV artwork; animation is the differentiated capability. source 1 · source 2"
+      },
+      {
+        "id": "LU25",
+        "state": "tracked",
+        "assessment": "Consolidated #57 RiptOPL already supports ICO/LGO/COV artwork; animation is the differentiated capability. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 58,
+    "ids": [
+      "LU23",
+      "LU24",
+      "LU28"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Design option",
+    "feature": "LUNA-specific view toggles, Random Scan and presentation presets",
+    "assessment": "Includes view enablement, orbital auto-browsing, glass/font/background options; generic theme selection already exists in RiptOPL.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA/blob/4614b0c53e0f904a57afb18572b15090a6afd657/README.md"
+    ],
+    "states": [
+      "partial",
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU23",
+      "LU24",
+      "LU28"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU23",
+        "state": "partial",
+        "assessment": "Both editions now offer per-theme List/Coverflow/PSBBN/Grid declarations, default-view selection and a Theme View setting/hold-L3 cycle. LUNA per-view enablement and its distinct renderers/options are not identical to this contract."
+      },
+      {
+        "id": "LU24",
+        "state": "tracked",
+        "assessment": "Consolidated #58 Includes view enablement, orbital auto-browsing, glass/font/background options; generic theme selection already exists in RiptOPL. source 1"
+      },
+      {
+        "id": "LU28",
+        "state": "tracked",
+        "assessment": "Consolidated #58 Includes view enablement, orbital auto-browsing, glass/font/background options; generic theme selection already exists in RiptOPL. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 59,
+    "ids": [
+      "O10",
+      "RI15"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "SHELF dashboard/sidebar with Home, Library, Apps and Settings",
+    "assessment": "Optional sidebar shells differ: OPLattice offers Home/Library/Apps/Settings; RIPPS2 Build 113 adds three category glyphs, bounded source drawers and exclusive focus. Counted once as the sidebar family, not as a new storage capability.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0113-ripps2-sidebar.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "O10",
+      "RI15"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O10",
+        "state": "tracked",
+        "assessment": "Consolidated #59 An optional complete shell presentation rather than a new game source. source 1"
+      },
+      {
+        "id": "RI15",
+        "state": "tracked",
+        "assessment": "Consolidated #59 Released Build 113 adds Launch Disc / Storage / Memory Files glyphs, text-measured drawers and exclusive sidebar focus. Shares the existing optional-sidebar capability family; not a new storage backend. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 60,
+    "ids": [
+      "CO1"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Source",
+    "feature": "Interpolated XMB category and game-list rails",
+    "assessment": "Caduceus OPL's specific navigation model.",
+    "sources": [
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1088-L1242"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "CO1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "CO1",
+        "state": "tracked",
+        "assessment": "Consolidated #60 Caduceus OPL's specific navigation model. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 61,
+    "ids": [
+      "CO2"
+    ],
+    "scope": "RetroAchievements UI",
+    "evidence": "Partial",
+    "feature": "Game-details card with automatic RA support/status checks",
+    "assessment": "RiptOPL already has achievement support checks and a browser; the additional automatic details-card workflow remains different.",
+    "sources": [
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1367-L1505"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "CO2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "CO2",
+        "state": "partial",
+        "assessment": "Consolidated #61 RiptOPL already has achievement support checks and a browser; the additional automatic details-card workflow remains different. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 62,
+    "ids": [
+      "CO7"
+    ],
+    "scope": "Device UI",
+    "evidence": "Source",
+    "feature": "Initialize manual devices asynchronously when their category receives focus",
+    "assessment": "RiptOPL has manual and automatic discovery, but not this specific category-focus policy.",
+    "sources": [
+      "https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/opl.c#L272-L298"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "CO7"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "CO7",
+        "state": "tracked",
+        "assessment": "Consolidated #62 RiptOPL has manual and automatic discovery, but not this specific category-focus policy. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 63,
+    "ids": [
+      "OF1"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Experimental",
+    "feature": "Dedicated carousel/device dock and system-status HUD primitives",
+    "assessment": "OPL FUTURE's optional interface architecture; no generalized console-performance claim.",
+    "sources": [
+      "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_UI.md",
+      "https://github.com/brunlx/OPL-Future---BETA/blob/main/OPL_FUTURE_QA_REPORT.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "OF1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "OF1",
+        "state": "experimental",
+        "assessment": "Consolidated #63 OPL FUTURE's optional interface architecture; no generalized console-performance claim. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 64,
+    "ids": [
+      "E1"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Experimental",
+    "feature": "Unified controller, memory-card, storage and network dashboard",
+    "assessment": "OPL Evolution's integrated status surface; ordinary individual status indicators overlap existing behavior.",
+    "sources": [
+      "https://github.com/officialjuicedesigns/OPL-Evolution/blob/evo-development/src/evo_ui.c"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "E1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "E1",
+        "state": "experimental",
+        "assessment": "Consolidated #64 OPL Evolution's integrated status surface; ordinary individual status indicators overlap existing behavior. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 65,
+    "ids": [
+      "DN1"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Configurable framebuffer blur/frosted-glass compositing",
+    "assessment": "A new render/compositing primitive rather than an image that resembles blur.",
+    "sources": [
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/rmblur.c",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/themes.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DN1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DN1",
+        "state": "tracked",
+        "assessment": "Consolidated #65 A new render/compositing primitive rather than an image that resembles blur. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 66,
+    "ids": [
+      "DN2"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "CardShelf element and crossfading cover-art wallpaper",
+    "assessment": "Daniel's PS5-style theme primitives; generic carousel/artwork display already exists.",
+    "sources": [
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/src/themes.c",
+      "https://github.com/danielnuld/Open-PS2-Loader/blob/fca8fcb03e8ca366a49123cd85e7ec43d39697f9/themes/PS5/conf_theme.cfg"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "DN2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "DN2",
+        "state": "tracked",
+        "assessment": "Consolidated #66 Daniel's PS5-style theme primitives; generic carousel/artwork display already exists. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 67,
+    "ids": [
+      "W1"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Load an entire theme from a TAR archive",
+    "assessment": "RiptOPL already loads ART/CFG/CHT archives; the missing archive type is THM/theme resources.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/pull/370",
+      "https://github.com/ps2homebrew/wOPL/pull/378"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "W1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "W1",
+        "state": "tracked",
+        "assessment": "Consolidated #67 RiptOPL already loads ART/CFG/CHT archives; the missing archive type is THM/theme resources. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 68,
+    "ids": [
+      "W2",
+      "O7"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Theme X-position controls specifically for widescreen layouts",
+    "assessment": "wsX and x_scaled address the same broad layout requirement and are counted together.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c",
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "W2",
+      "O7"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "W2",
+        "state": "tracked",
+        "assessment": "Consolidated #68 wsX and x_scaled address the same broad layout requirement and are counted together. source 1"
+      },
+      {
+        "id": "O7",
+        "state": "tracked",
+        "assessment": "Consolidated #68 wsX and x_scaled address the same broad layout requirement and are counted together. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 69,
+    "ids": [
+      "W3"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Live PADEMU/GSM/cheat-state icons supplied to themes",
+    "assessment": "Distinct from static metadata badges in AttributeImage.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/textures.c",
+      "https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "W3"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "W3",
+        "state": "tracked",
+        "assessment": "Consolidated #69 Distinct from static metadata badges in AttributeImage. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 70,
+    "ids": [
+      "W6"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Design option",
+    "feature": "Info-only page without list navigation",
+    "assessment": "An alternative information-screen interaction policy.",
+    "sources": [
+      "https://github.com/ps2homebrew/wOPL/pull/308"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "W6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "W6",
+        "state": "tracked",
+        "assessment": "Consolidated #70 An alternative information-screen interaction policy. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 71,
+    "ids": [
+      "O2"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Bind image elements to non-selected neighboring game rows",
+    "assessment": "Offset-driven hero/filmstrip layouts.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "O2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O2",
+        "state": "tracked",
+        "assessment": "Consolidated #71 Offset-driven hero/filmstrip layouts. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 72,
+    "ids": [
+      "O5"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "MenuTabs strip showing all devices and custom labels",
+    "assessment": "Existing MenuText/current-device selection is narrower.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "O5"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O5",
+        "state": "tracked",
+        "assessment": "Consolidated #72 Existing MenuText/current-device selection is narrower. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 73,
+    "ids": [
+      "O6"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Theme-controlled game-count prefix and suffix",
+    "assessment": "Current RiptOPL GameCountText uses the localized FILE_COUNT format.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "O6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O6",
+        "state": "tracked",
+        "assessment": "Consolidated #73 Current RiptOPL GameCountText uses the localized FILE_COUNT format. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 74,
+    "ids": [
+      "O11"
+    ],
+    "scope": "Apps",
+    "evidence": "Source",
+    "feature": "Per-app subtitle metadata and display",
+    "assessment": "A separate subtitle field in the app's title.cfg.",
+    "sources": [
+      "https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "O11"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "O11",
+        "state": "tracked",
+        "assessment": "Consolidated #74 A separate subtitle field in the app's title.cfg. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 75,
+    "ids": [
+      "RI13"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Released source",
+    "feature": "Per-row star, highlight and platform-decorator controls",
+    "assessment": "RiptOPL has Favorites and decorators; the configurable star column/highlight/PS1/PS2/app controls are additional.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e6b3fc9a5ad0bce0c08e30df84b697519aa9c803/elf/patches/0106-ripps2-poweroff-star.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "RI13"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI13",
+        "state": "partial",
+        "assessment": "The RIPPS2 port adds dimmed disabled rows, scroll bars, right-stick peek, glyph sets and font weight. The exact star-column/highlight/platform-decorator configuration remains source-specific; these controls do not imply the whole RIPPS2 navigation renderer was ported."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 76,
+    "ids": [
+      "TV8"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Claimed release",
+    "feature": "Cycle startup backgrounds without repeats until the set is exhausted",
+    "assessment": "Specific shuffle-bag behavior advertised by FastLoader, not basic background/theme support.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/blob/42c33b5be94cfa990f4a6f1281d0596922d20a46/README.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "TV8"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "TV8",
+        "state": "tracked",
+        "assessment": "Consolidated #76 Specific shuffle-bag behavior advertised by FastLoader, not basic background/theme support. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 77,
+    "ids": [
+      "T1"
+    ],
+    "scope": "Enhancements",
+    "evidence": "Source",
+    "feature": "Independent graphics-enhancement files and selection",
+    "assessment": "Titan separates ENH enhancements from gameplay CHT cheats, with separate per-game choices and metadata.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_GAME_PATCHES.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "T1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T1",
+        "state": "tracked",
+        "assessment": "Consolidated #77 Titan separates ENH enhancements from gameplay CHT cheats, with separate per-game choices and metadata. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 78,
+    "ids": [
+      "T4"
+    ],
+    "scope": "Profiles",
+    "evidence": "Source",
+    "feature": "Named system users whose selected profile chooses an exclusive VMC",
+    "assessment": "Different from per-game card assignment alone.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_user_profile.h",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_profile_storage.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "T4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T4",
+        "state": "tracked",
+        "assessment": "Consolidated #78 Different from per-game card assignment alone. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 79,
+    "ids": [
+      "T5"
+    ],
+    "scope": "System UI",
+    "evidence": "Source",
+    "feature": "Notification center with retained activity/download progress",
+    "assessment": "RiptOPL has transient notifications rather than a retained activity service.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_notifications.h",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_shell_catalog.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "T5"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T5",
+        "state": "tracked",
+        "assessment": "Consolidated #79 RiptOPL has transient notifications rather than a retained activity service. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 80,
+    "ids": [
+      "T2"
+    ],
+    "scope": "System platform",
+    "evidence": "Source",
+    "feature": "Installable native app packages and an in-process application SDK",
+    "assessment": "Titan TPKG/runtime services; ordinary external ELF launching is already present.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition#product-components",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_PACKAGE_FORMAT.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/reference/TITAN_STANDALONE_SDK.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "T2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T2",
+        "state": "tracked",
+        "assessment": "Consolidated #80 Titan TPKG/runtime services; ordinary external ELF launching is already present. source 1 · source 2 · source 3"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 81,
+    "ids": [
+      "T6"
+    ],
+    "scope": "System tools",
+    "evidence": "Source",
+    "feature": "Integrated lightweight interactive web browser",
+    "assessment": "HTTP text/link browsing and bridge-backed HTTPS, rather than HTTP game streaming.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/apps/internet-browser/README.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "T6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T6",
+        "state": "tracked",
+        "assessment": "Consolidated #81 HTTP text/link browsing and bridge-backed HTTPS, rather than HTTP game streaming. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 82,
+    "ids": [
+      "T7"
+    ],
+    "scope": "System tools",
+    "evidence": "Source",
+    "feature": "In-console staged/rollback-capable system updater",
+    "assessment": "RiptOPL distributes release kits instead of performing transactional console installation.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/SYSTEM_UPDATE_PUP.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "T7"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T7",
+        "state": "tracked",
+        "assessment": "Consolidated #82 RiptOPL distributes release kits instead of performing transactional console installation. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 83,
+    "ids": [
+      "T10"
+    ],
+    "scope": "System platform",
+    "evidence": "Experimental",
+    "feature": "Repository catalog, dependency resolution and verified package downloads",
+    "assessment": "Titan Store foundation; target download acceptance remains pending and no finished-storefront claim is made.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_STORE_ARCHITECTURE.md",
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_DOWNLOAD_SERVICE.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "T10"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T10",
+        "state": "experimental",
+        "assessment": "Consolidated #83 Titan Store foundation; target download acceptance remains pending and no finished-storefront claim is made. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 84,
+    "ids": [
+      "T8"
+    ],
+    "scope": "Theme engine",
+    "evidence": "Source",
+    "feature": "Packaged scene/keyframe themes with transitions, idle loops and audio",
+    "assessment": "More than existing OPL theme images, BGM and built-in animations.",
+    "sources": [
+      "https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/THEME_AUTHORING.md"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "T8"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "T8",
+        "state": "tracked",
+        "assessment": "Consolidated #84 More than existing OPL theme images, BGM and built-in animations. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 85,
+    "ids": [
+      "B2"
+    ],
+    "scope": "Media tools",
+    "evidence": "Claimed / source",
+    "feature": "General-purpose console music player",
+    "assessment": "Separate from RiptOPL background music playback.",
+    "sources": [
+      "https://boliviaos.site/"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "B2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "B2",
+        "state": "tracked",
+        "assessment": "Consolidated #85 Separate from RiptOPL background music playback. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 86,
+    "ids": [
+      "B3"
+    ],
+    "scope": "Media tools",
+    "evidence": "Claimed / source",
+    "feature": "General-purpose image and font viewers",
+    "assessment": "Separate from rendering game artwork and UI fonts.",
+    "sources": [
+      "https://boliviaos.site/"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "B3"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "B3",
+        "state": "tracked",
+        "assessment": "Consolidated #86 Separate from rendering game artwork and UI fonts. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 87,
+    "ids": [
+      "B4"
+    ],
+    "scope": "System tools",
+    "evidence": "Claimed / source",
+    "feature": "Integrated text/code editor and terminal",
+    "assessment": "BoliviaOS tool suite, outside normal game launching.",
+    "sources": [
+      "https://boliviaos.site/"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "B4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "B4",
+        "state": "tracked",
+        "assessment": "Consolidated #87 BoliviaOS tool suite, outside normal game launching. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 88,
+    "ids": [
+      "B7"
+    ],
+    "scope": "Media tools",
+    "evidence": "Claimed / source",
+    "feature": "Integrated PDF viewer",
+    "assessment": "A separate document-viewing application in the console shell.",
+    "sources": [
+      "https://boliviaos.site/"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "B7"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "B7",
+        "state": "tracked",
+        "assessment": "Consolidated #88 A separate document-viewing application in the console shell. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 89,
+    "ids": [
+      "R1",
+      "TV3"
+    ],
+    "scope": "Emulator frontend",
+    "evidence": "Source / claim",
+    "feature": "Retro-system ROM libraries with configured emulator/core launch",
+    "assessment": "RETROLauncher and the Retro Arcade suite provide ROM catalogs beyond RiptOPL's PS1/PS2/Apps views; launching an emulator ELF through Apps already exists.",
+    "sources": [
+      "https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher#readme",
+      "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "R1",
+      "TV3"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "R1",
+        "state": "tracked",
+        "assessment": "Consolidated #89 RETROLauncher and the Retro Arcade suite provide ROM catalogs beyond RiptOPL's PS1/PS2/Apps views; launching an emulator ELF through Apps already exists. source 1"
+      },
+      {
+        "id": "TV3",
+        "state": "tracked",
+        "assessment": "Consolidated #89 RETROLauncher and the Retro Arcade suite provide ROM catalogs beyond RiptOPL's PS1/PS2/Apps views; launching an emulator ELF through Apps already exists. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 90,
+    "ids": [
+      "TV4"
+    ],
+    "scope": "Emulator frontend",
+    "evidence": "Claimed release",
+    "feature": "Retro Arcade launch-mode picker and return to the selected ROM",
+    "assessment": "The suite documents 240p/480i/480p selection and returning to the same game; not a new PS2 OPL/Neutrino compatibility mode.",
+    "sources": [
+      "https://github.com/Kyllemn/PS2TVCRT/releases/tag/FullAnFinalRelease"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "TV4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "TV4",
+        "state": "tracked",
+        "assessment": "Consolidated #90 The suite documents 240p/480i/480p selection and returning to the same game; not a new PS2 OPL/Neutrino compatibility mode. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 91,
+    "ids": [
+      "PX3",
+      "PX4"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "Select PSXCore as a third PS1 runtime / use its source-buildable adapter",
+    "assessment": "RiptOPL ships POPStarter and Ember, not PSXCore. Main no longer ships tester sources; the tester branch is separate.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/INTEGRATION.md",
+      "https://github.com/NathanNeurotic/RiptOPL/blob/rebuild/main/docs/VCD.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX3",
+      "PX4"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX3",
+        "state": "experimental",
+        "assessment": "Consolidated #91 RiptOPL ships POPStarter and Ember, not PSXCore. Main no longer ships tester sources; the tester branch is separate. source 1"
+      },
+      {
+        "id": "PX4",
+        "state": "experimental",
+        "assessment": "Consolidated #91 RiptOPL ships POPStarter and Ember, not PSXCore. Main no longer ships tester sources; the tester branch is separate. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 92,
+    "ids": [
+      "PX1"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "Optional guarded decoded-instruction code validation",
+    "assessment": "A PSXCore mechanism; different from RiptOPL checking file/module identities before launch.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/compat.c"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX1",
+        "state": "experimental",
+        "assessment": "Consolidated #92 A PSXCore mechanism; different from RiptOPL checking file/module identities before launch. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 93,
+    "ids": [
+      "PX2",
+      "PX31",
+      "PX32"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore GPU/GTE/DMA semantic corrections",
+    "assessment": "Current source extends the earlier GPU/GTE/DMA work with exact polygon packets, native GTE read/flag/depth/clamp and far-color/special-matrix corrections. Some options were reverted or default-enabled later; this audit follows net 636961dd source, not every intermediate commit message.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/runtime_corrections.c",
+      "https://github.com/dnunezx/PSXCore/commit/9d9c7a36c493abd741793fec4dafb018883b0212",
+      "https://github.com/dnunezx/PSXCore/commit/2f35645aa9c35a4af83feee91da79f39155ced1c"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX2",
+      "PX31",
+      "PX32"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX2",
+        "state": "experimental",
+        "assessment": "Consolidated #93 Includes palette/query fixes, signed INTPL interpolation and parked-worker GP1 DMA-control changes. No inferred superiority for a particular game. source 1"
+      },
+      {
+        "id": "PX31",
+        "state": "experimental",
+        "assessment": "Consolidated #93 Includes palette/query fixes, signed INTPL interpolation and parked-worker GP1 DMA-control changes. No inferred superiority for a particular game. source 1"
+      },
+      {
+        "id": "PX32",
+        "state": "experimental",
+        "assessment": "Consolidated #93 Includes palette/query fixes, signed INTPL interpolation and parked-worker GP1 DMA-control changes. No inferred superiority for a particular game. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 94,
+    "ids": [
+      "PX5",
+      "PX33",
+      "PX36",
+      "LU39"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore MDEC/RGB24/buffered-interlace corrections",
+    "assessment": "PSXCore source now includes MDEC run-length/quantization corrections and an opt-in output-only interlaced HDTV patch, with a wrapper-pinned per-game UI. These are specific runtime mechanisms; POPStarter/Ember already have PS1 video paths. No universal HD or compatibility win is claimed.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/runtime/Makefile",
+      "https://github.com/dnunezx/PSXCore/commit/dcf1fc868de33a957ae14072145a2d6810abc3ff",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/src/hdtv.c",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/runtime/hdtv.S",
+      "https://github.com/dnunezx/nhddl-luna/blob/15f01bd180f076d8098529b5c5d5df4d07b13f46/src/ui/game_options.c",
+      "https://github.com/dnunezx/LUNA/tree/386f352cf1c2d74a010b23f519c680d31826405d"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX5",
+      "PX33",
+      "PX36",
+      "LU39"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX5",
+        "state": "experimental",
+        "assessment": "Consolidated #94 Includes publishing the completed interlace display descriptor; not proof that all FMVs are fixed. source 1"
+      },
+      {
+        "id": "PX33",
+        "state": "experimental",
+        "assessment": "Consolidated #94 Includes publishing the completed interlace display descriptor; not proof that all FMVs are fixed. source 1"
+      },
+      {
+        "id": "PX36",
+        "state": "experimental",
+        "assessment": "Consolidated #94 Exact-site/known-runtime patch with --hdtv overrides; current wrapper pins it. Keep guest timing/rendering separate from presentation and require representative display/game tests. source 1 · source 2"
+      },
+      {
+        "id": "LU39",
+        "state": "experimental",
+        "assessment": "Consolidated #94 The wrapper pins the UI and core option. This is output-only interlaced compatibility for PSXCore, not higher-resolution rendering or a universal substitute for POPStarter/Ember video settings. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 95,
+    "ids": [
+      "PX6"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore SPU, capture-IRQ, reverb and CDDA corrections",
+    "assessment": "Alternative runtime implementation, not a claim RiptOPL has no PS1 audio.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/runtime_corrections.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/runtime/Makefile"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX6"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX6",
+        "state": "experimental",
+        "assessment": "Consolidated #95 Alternative runtime implementation, not a claim RiptOPL has no PS1 audio. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 96,
+    "ids": [
+      "PX7",
+      "PX34",
+      "PX37"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore guest-memory, CPU-timing and load-delay fast paths",
+    "assessment": "Includes precomputed addressing and smaller DMA/GP0/GP1 saves now enabled by default, with disable switches retained.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/compare/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9...0d4348ea5fff50a16c303c5c1910038e65bf7915",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/runtime/gamepatches/rayman2.c",
+      "https://github.com/dnunezx/PSXCore/blob/636961dd666f71d5fe2fd2a0d6c8aa95c0b110ae/runtime/gamepatches.c"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX7",
+      "PX34",
+      "PX37"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX7",
+        "state": "experimental",
+        "assessment": "Consolidated #96 Includes precomputed addressing and smaller DMA/GP0/GP1 saves now enabled by default, with disable switches retained. source 1"
+      },
+      {
+        "id": "PX34",
+        "state": "experimental",
+        "assessment": "Consolidated #96 Includes precomputed addressing and smaller DMA/GP0/GP1 saves now enabled by default, with disable switches retained. source 1"
+      },
+      {
+        "id": "PX37",
+        "state": "experimental",
+        "assessment": "Consolidated #96 Rayman 2 handoff retirement and a shared startup dispatcher are new source mechanisms, not proof of a missing POPStarter/Ember compatibility fix. Additional GTE/MDEC fixes also extend existing PX2/PX5 families. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 97,
+    "ids": [
+      "PX8",
+      "PX14"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore firmware-identity and transactional runtime-patch planner",
+    "assessment": "Includes byte guards, overlap/capacity checks and revision-specific license-string changes; no generic region-bypass claim.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/patch.c",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX8",
+      "PX14"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX8",
+        "state": "experimental",
+        "assessment": "Consolidated #97 Includes byte guards, overlap/capacity checks and revision-specific license-string changes; no generic region-bypass claim. source 1"
+      },
+      {
+        "id": "PX14",
+        "state": "experimental",
+        "assessment": "Consolidated #97 Includes byte guards, overlap/capacity checks and revision-specific license-string changes; no generic region-bypass claim. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 98,
+    "ids": [
+      "PX9",
+      "PX29"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore native-save worker, PFS ownership and flush guards",
+    "assessment": "Partially provisioned native-partition path; source mechanisms do not establish power-loss durability or a complete APA user flow.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/INTEGRATION.md",
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX9",
+      "PX29"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX9",
+        "state": "experimental",
+        "assessment": "Consolidated #98 Partially provisioned native-partition path; source mechanisms do not establish power-loss durability or a complete APA user flow. source 1"
+      },
+      {
+        "id": "PX29",
+        "state": "experimental",
+        "assessment": "Consolidated #98 Partially provisioned native-partition path; source mechanisms do not establish power-loss durability or a complete APA user flow. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 99,
+    "ids": [
+      "PX10"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore disc/TOC fingerprint binding to save identity",
+    "assessment": "A content-identity mechanism beyond ordinary file naming.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/src/discset.c"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX10"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX10",
+        "state": "experimental",
+        "assessment": "Consolidated #99 A content-identity mechanism beyond ordinary file naming. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 100,
+    "ids": [
+      "PX11"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "Optional adaptive PCM output-rate feedback",
+    "assessment": "Off by default, changes rate/possibly pitch; not a CPU-speed fix.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX11"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX11",
+        "state": "experimental",
+        "assessment": "Consolidated #100 Off by default, changes rate/possibly pitch; not a CPU-speed fix. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 101,
+    "ids": [
+      "PX24"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore bounded sector-tail cache and seek-status correction",
+    "assessment": "Runtime I/O mechanism; broad game-speed improvement is unmeasured.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX24"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX24",
+        "state": "experimental",
+        "assessment": "Consolidated #101 Runtime I/O mechanism; broad game-speed improvement is unmeasured. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 102,
+    "ids": [
+      "PX25"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore exact raster/polygon-cost fast path",
+    "assessment": "Keep timing/compatibility evidence separate from build success.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX25"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX25",
+        "state": "experimental",
+        "assessment": "Consolidated #102 Keep timing/compatibility evidence separate from build success. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 103,
+    "ids": [
+      "PX26"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore GP0 packet/callback/empty-flush fast paths",
+    "assessment": "Source optimization, not a standalone proven end-user compatibility feature.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX26"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX26",
+        "state": "experimental",
+        "assessment": "Consolidated #103 Source optimization, not a standalone proven end-user compatibility feature. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 104,
+    "ids": [
+      "PX30"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore bounded aligned/unaligned upload-row copies",
+    "assessment": "The newer branch streams rows with aligned quadword loads while retaining bounds.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX30"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX30",
+        "state": "experimental",
+        "assessment": "Consolidated #104 The newer branch streams rows with aligned quadword loads while retaining bounds. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 105,
+    "ids": [
+      "PX23",
+      "PX35"
+    ],
+    "scope": "PS1 runtime",
+    "evidence": "Experimental",
+    "feature": "PSXCore boot/save-worker and patch-plan diagnostics",
+    "assessment": "Current adapter also reports planner failures and increases its bounded capacity.",
+    "sources": [
+      "https://github.com/dnunezx/PSXCore/blob/66c70e9f920c39ebbe8c3d1deb7cfc7a78cf4fc9/README.md",
+      "https://github.com/dnunezx/PSXCore/commit/f1333504bdd43815f295081f434276dcfae80eff"
+    ],
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "PX23",
+      "PX35"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "PX23",
+        "state": "experimental",
+        "assessment": "Consolidated #105 Current adapter also reports planner failures and increases its bounded capacity. source 1"
+      },
+      {
+        "id": "PX35",
+        "state": "experimental",
+        "assessment": "Consolidated #105 Current adapter also reports planner failures and increases its bounded capacity. source 1"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 106,
+    "ids": [
+      "RI18"
+    ],
+    "scope": "Rendering design",
+    "evidence": "Source design alternative",
+    "feature": "Magnified single-pass 720p/1080i menu presentation",
+    "assessment": "Uses 640-wide framebuffers with GS magnification and one render pass. This trades horizontal raster resolution for lower queue replay/VRAM pressure; RiptOPL already has HD output. Benchmark before adopting.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0075-ripps2-build75-one-pass-hd-early-boot-sound-neutrino-show-args.patch"
+    ],
+    "states": [
+      "intentional"
+    ],
+    "remaining_ids": [
+      "RI18"
+    ],
+    "disposition": "Intentional alternative",
+    "current_assessments": [
+      {
+        "id": "RI18",
+        "state": "intentional",
+        "assessment": "RIPPS2 single-pass magnified 640-wide HD is an alternative raster/VRAM tradeoff. The local edition deliberately retains sharper hires rendering; no correctness gap or automatic performance win is established."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 107,
+    "ids": [
+      "RI21"
+    ],
+    "scope": "Library",
+    "evidence": "Released source",
+    "feature": "Master library before sources answer, with waiting rows",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 stores allgames.bin, validates its schema/checksum and resolves waiting rows through their source at launch. Different from RI10 per-source snapshots. Development source, not released Build 113 or proven cold-boot/game acceptance.",
+    "sources": [
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "RI21"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI21",
+        "state": "partial",
+        "assessment": "All Games is merged, but it aggregates started devices. RIPPS2 saved allgames.bin, waiting rows and lazy source activation are still a distinct persistent-catalogue design."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 108,
+    "ids": [
+      "RI22"
+    ],
+    "scope": "Library",
+    "evidence": "Released source",
+    "feature": "Per-device hidden-game catalogue and Hidden Games manager",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 stores RIPPS2.HID on each source and offers restoration through Settings. Separate from parental-lock policy and temporarily unavailable sources.",
+    "sources": [
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ],
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "RI22",
+        "state": "shipped",
+        "assessment": "Per-device hidden.txt, Hide Game and Show Hidden Games are present in both editions. Hidden entries are excluded from the unified/favourites/recent/random views."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 109,
+    "ids": [
+      "RI23"
+    ],
+    "scope": "Game management",
+    "evidence": "Released source",
+    "feature": "Managed full-game cleanup with a read-only APA preflight",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 plans associated-file removal, explicit save choices and APA header/size/alignment/link checks before partition deletion. Synthetic tests are useful but do not certify arbitrary real disks, interrupted deletion or shared-save ownership.",
+    "sources": [
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "RI23"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI23",
+        "state": "partial",
+        "assessment": "BDM/MMCE/SMB PS2 cleanup now removes all game parts before CFG/art/cheats and keeps VMC saves. APA partition deletion was intentionally declined; it is not an outstanding port commitment."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 110,
+    "ids": [
+      "RI24"
+    ],
+    "scope": "Image tools",
+    "evidence": "Released source",
+    "feature": "On-console ISO/ZSO conversion with staged read-back checks",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 implements LZ4 packing/unpacking, free-space checks, aligned streaming, per-run CRC read-back and a separate confirmation before source removal. OPL-core ZSO support is not Neutrino support. Needs malformed-header, overflow, cancellation, temp-file ownership and power-loss tests before adoption.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RI24"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI24",
+        "state": "tracked",
+        "assessment": "Released source / adoption candidate October 25 update: Build 114 is now released as v1.1.4-beta. Build 114 implements LZ4 packing/unpacking, free-space checks, aligned streaming, per-run CRC read-back and a separate confirmation before source removal. OPL-core ZSO support is not Neutrino support. Needs malformed-header, overflow, cancellation, temp-file ownership and power-loss tests before adoption. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 111,
+    "ids": [
+      "RI26"
+    ],
+    "scope": "Theme / UI",
+    "evidence": "Released source",
+    "feature": "Editable named Color Sweeps with speed and delete controls",
+    "assessment": "October 25: Build 114 released; preserve runtime/save-safety validation limits. b114 adds a named sweep manager, distinguishes Sweep from Theme Color and keeps theme ordering explicit. Optional presentation source; not a game-loading requirement.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/1d8888ed63c33aa45c27355cd61c966dd1f918eb/elf/patches/0114-ripps2-games.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/f59abffde0794debdadaee526c175414a4b12b21/elf/patches/0114-ripps2-games.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RI26"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI26",
+        "state": "tracked",
+        "assessment": "Released source / adoption candidate October 25 update: Build 114 is now released as v1.1.4-beta. Build 114 adds a named sweep manager, distinguishes Sweep from Theme Color and keeps theme ordering explicit. Optional presentation source; not a game-loading requirement. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 112,
+    "ids": [
+      "RI28"
+    ],
+    "scope": "Menu audio",
+    "evidence": "Released source",
+    "feature": "16-bit WAV mono/rate conversion for menu music",
+    "assessment": "Released Build 111 streams mono WAVs as stereo and resamples rates for audsrv; Build 112 distinguishes the two BIOS-derived pieces. RiptOPL’s existing Vorbis BGM is not the same PCM input path. No audio assets are redistributed by this audit.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0111-ripps2-soundclean.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/9b876e6153e3d801c4fc18ce93f38229e319fd8f/elf/patches/0112-ripps2-menumusic.patch"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "RI28"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI28",
+        "state": "tracked",
+        "assessment": "Consolidated #112 Released Build 111 streams mono WAVs as stereo and resamples rates for audsrv; Build 112 distinguishes the two BIOS-derived pieces. RiptOPL’s existing Vorbis BGM is not the same PCM input path. No audio assets are redistributed by this audit. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 113,
+    "ids": [
+      "LU36"
+    ],
+    "scope": "Audio design",
+    "evidence": "Wrapper-pinned source",
+    "feature": "SPU2 ADPCM hardware-loop ambient playback",
+    "assessment": "LUNA now pins the implementation and packages its bounded LADP asset. RiptOPL already has streaming BGM; this alternative removes continuous decoding for a fixed resident loop but reserves SPU2 memory/voices and changes the asset format.",
+    "sources": [
+      "https://github.com/dnunezx/LUNA/tree/386f352cf1c2d74a010b23f519c680d31826405d",
+      "https://github.com/dnunezx/nhddl-luna/blob/15f01bd180f076d8098529b5c5d5df4d07b13f46/src/ui/ambient.c"
+    ],
+    "states": [
+      "tracked"
+    ],
+    "remaining_ids": [
+      "LU36"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU36",
+        "state": "tracked",
+        "assessment": "Consolidated #113 No longer an unbundled frontend experiment: LUNA 386f352c pins frontend 15f01bd1, including SPU2 hardware-loop ambient playback. RiptOPL already has BGM; this is an alternative bounded playback mechanism, not missing music. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 114,
+    "ids": [
+      "RI34"
+    ],
+    "scope": "Correctness / design review",
+    "evidence": "Development source",
+    "feature": "Version-aware external Neutrino argument negotiation",
+    "assessment": "Build 115 reads version.txt, then ELF strings/config markers before teardown and gates automatically generated options. RiptOPL already validates token boundaries and argument budgets, but that is not runtime option negotiation. Unknown or packed installs retain permissive compatibility behavior in its tests; a conservative fallback would need separate design. Inspect ORBIT and user overrides independently.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ],
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "RI34"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI34",
+        "state": "candidate",
+        "assessment": "Version-aware capability negotiation for whichever external Neutrino ELF is installed remains a candidate. Local argument budgeting, read-only cheat/config handling and explicit launch-argument inspection already exist; LUNA long-argument transport is LU42 and requires a paired runtime."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 115,
+    "ids": [
+      "RI35"
+    ],
+    "scope": "Correctness / design review",
+    "evidence": "Development source",
+    "feature": "MMCE busy/card-creation coordination before scans and launch",
+    "assessment": "Build 115 checks device busy state, delays card reads and writes play history before waiting for the game card. Device busy is different from loader IO busy. Recheck firmware semantics, cancellation, timeout and shared SIO2 scheduling before any port; upstream hardware notes still describe a failed MMCE game launch.",
+    "sources": [
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/146",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1118"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "RI35"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI35",
+        "state": "partial",
+        "assessment": "The busy-seen-then-ready launch wait, START skip and bounded timeout are merged in both editions. Broader scan/card-creation coordination is separate. YA-09 silent-swap follow-up: Merged in both editions: RiptOPL #146 (batch #162) and legacy #1118 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 116,
+    "ids": [
+      "RI36"
+    ],
+    "scope": "Artwork interoperability",
+    "evidence": "Development source",
+    "feature": "Artwork name aliases with exact case-preserved directory lookup",
+    "assessment": "Build 115 adds JPEG/case-aware lookup, OPL Manager BG_00/SCR_00/SCR_01 aliases and PS1 disc/ELF alternatives. Source-extracted host check passed. Avoid extra network misses and define deterministic precedence when two aliases exist.",
+    "sources": [
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "RI36"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI36",
+        "state": "partial",
+        "assessment": "JPG/JPEG decoding, exact case-preserved lookup in indexed ART folders, OPL Manager BG_00/SCR_00/SCR_01 aliases and JPG archive members are merged. RIPPS2 additional PS1 disc/ELF-name alternatives are not part of that port; unindexed network folders retain bounded extension probes."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 117,
+    "ids": [
+      "RI38"
+    ],
+    "scope": "Library navigation",
+    "evidence": "Development source",
+    "feature": "Extended Recent Games capacity and lazy-source navigation; last-10 list now present",
+    "assessment": "A separate sidebar list shares All Games source proxies; Manual drives start when selected. RiptOPL already retains last-played/favorite concepts; a bounded history page is a distinct UI extension, not missing history altogether.",
+    "sources": [
+      "https://github.com/NathanNeurotic/RiptOPL/pull/99",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1084",
+      "https://github.com/akilluminati47/RIPPS2/blob/e1e3504f4a8bfd6b2f88425d284eb845393cfcb9/elf/patches/0115-ripps2-hardware.patch"
+    ],
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "RI38"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI38",
+        "state": "partial",
+        "assessment": "Both editions keep the last 10 recents, expose a Recent filter and sort by Last played. RIPPS2 separate lazy-source Recent page and configurable capacity up to 99 remain the narrower difference."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 118,
+    "ids": [
+      "NV1"
+    ],
+    "scope": "In-game audio",
+    "evidence": "Uncompiled proof of concept",
+    "feature": "In-game master-volume RPC with framebuffer overlay",
+    "assessment": "New fork explicitly calls this an uncompiled proof of concept. SPU2 master-volume RPC and active-framebuffer drawing need build and console checks, game-owned audio reconfiguration, IOP reset/rebind and DMA race analysis. Not release-ready or evidence of safe arbitrary-game overlays.",
+    "sources": [
+      "https://github.com/Nrlemo/Open-PS2-Loader-volume/blob/c1a5b3305be955bb1d4a6115bbf12335880f8176/docs/IN_GAME_VOLUME_CONTROL.md",
+      "https://github.com/Nrlemo/Open-PS2-Loader-volume/blob/c1a5b3305be955bb1d4a6115bbf12335880f8176/docs/IN_GAME_VOLUME_OVERLAY.md"
+    ],
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "NV1"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "NV1",
+        "state": "candidate",
+        "assessment": "Review candidate; not a confirmed RiptOPL defect New fork explicitly calls this an uncompiled proof of concept. SPU2 master-volume RPC and active-framebuffer drawing need build and console checks, game-owned audio reconfiguration, IOP reset/rebind and DMA race analysis. Not release-ready or evidence of safe arbitrary-game overlays. source 1 · source 2"
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated."
+  },
+  {
+    "number": 119,
+    "ids": [
+      "LU37",
+      "LU41",
+      "BL2"
+    ],
+    "feature": "Artwork scheduling, bounded decoded-source reuse and cancellation",
+    "scope": "October 29 source findings",
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "LU37",
+      "LU41",
+      "BL2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU37",
+        "state": "candidate",
+        "assessment": "LUNA retained cooperative artwork slicing and now adds direction-aware decoded-cover reuse within 4 MiB (LU41). Both local editions already have asynchronous artwork workers, caching and Grid coverage. Compare cancellation, generation ownership, RAM/VRAM and actual storage latency before claiming a speedup."
+      },
+      {
+        "id": "LU41",
+        "state": "candidate",
+        "assessment": "Current wrapper pins 74ea4e0-era cover preparation and the 4 MiB COLLECTION_REUSE_BYTES cache at f640a4e8. Existing local asynchronous artwork/Grid caches overlap; retained decoded sources, forward/backward reuse and RAM budgeting are the narrower comparison. No measured local speedup is claimed."
+      },
+      {
+        "id": "BL2",
+        "state": "candidate",
+        "assessment": "New fork speculatively loads COV/ICO for up to two visible neighbours each way, one queued request, after selection settles. Local artwork workers and Grid caches already overlap. Compare queue fairness, cancellation, filtered indices and device removal; the author reports a PS2 prefetch trial but newer Favorites/UI only emulator checks, not local acceptance."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/dnunezx/nhddl-luna/blob/15f01bd180f076d8098529b5c5d5df4d07b13f46/src/ui/artwork_slice.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/src/ui/collection_art.c",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/include/ui/collection_art.h",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/src/ui/art_cache.c",
+      "https://github.com/Blayr/opl-custom/blob/7959031a65ed4f1abc12369820679d741dea0277/src/texcache.c",
+      "https://github.com/Blayr/opl-custom/blob/7959031a65ed4f1abc12369820679d741dea0277/CUSTOM.md"
+    ]
+  },
+  {
+    "number": 120,
+    "ids": [
+      "RI41",
+      "RI42"
+    ],
+    "feature": "On-console ART archive construction and merge",
+    "scope": "October 29 source findings",
+    "states": [
+      "candidate",
+      "experimental"
+    ],
+    "remaining_ids": [
+      "RI41",
+      "RI42"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI41",
+        "state": "candidate",
+        "assessment": "Released builds 118-121 add ART Pack construction, estimates and selection. Local ART .tar reading and JPEG aliases are already present; building/managing packs on-console is the difference. No filesystem performance or save-safety acceptance is inferred."
+      },
+      {
+        "id": "RI42",
+        "state": "experimental",
+        "assessment": "Development build 123 merges two ART archives into sibling temporary output, prefers merged-in picture stems and swaps the completed result. It records the two-rename recovery window; source staging does not prove atomic replacement or power-loss durability. Local archive reading is not archive merging."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86/elf/patches/0118-ripps2-artpack-bootsound.patch",
+      "https://github.com/akilluminati47/RIPPS2/blob/b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86/elf/patches/0123-ripps2-tar-merge.patch"
+    ]
+  },
+  {
+    "number": 121,
+    "ids": [
+      "RI43"
+    ],
+    "feature": "Aspect-aware picture crop policy",
+    "scope": "October 29 source findings",
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "RI43"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI43",
+        "state": "candidate",
+        "assessment": "Released build 119 crops game pictures to their middle three quarters in 16:9 while preserving covers/logos, with explicit opt-out. Local existing art scaling is not this automatic policy. Treat as presentation choice and compare 4:3/16:9 themes and art semantics."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86/elf/patches/0119-ripps2-infopage-artpack-flow.patch"
+    ]
+  },
+  {
+    "number": 122,
+    "ids": [
+      "RI44"
+    ],
+    "feature": "Menu position profiles per video mode",
+    "scope": "October 29 source findings",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "RI44",
+        "state": "shipped",
+        "assessment": "Ported from RIPPS2 development build 124 (AK): H-POS/V-POS/Overscan are kept per video mode. Merged in both editions: RiptOPL #159 (batch #162) and legacy #1131 (batch #1133). Not tested on hardware. No mode-switch or CRT acceptance is established."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86/elf/patches/0124-ripps2-position-per-mode.patch"
+    ]
+  },
+  {
+    "number": 123,
+    "ids": [
+      "RI45"
+    ],
+    "feature": "Memory-card boot-sound sidecar policy",
+    "scope": "October 29 source findings",
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "RI45"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI45",
+        "state": "candidate",
+        "assessment": "Released build 121 offers to place boot.adp beside the booted MC ELF so playback need not await a drive. Local sound sets and built-in boot sound already exist; this is discovery/copy timing policy. RIPPS2 reverted an unsafe early audsrv startup before release; its emulator timing is not PS2 evidence."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86/elf/patches/0121-ripps2-boot-sound-card.patch"
+    ]
+  },
+  {
+    "number": 124,
+    "ids": [
+      "RI47"
+    ],
+    "feature": "Opt-in thread-wait watchdog diagnostics",
+    "scope": "October 29 source findings",
+    "states": [
+      "experimental"
+    ],
+    "remaining_ids": [
+      "RI47"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "RI47",
+        "state": "experimental",
+        "assessment": "Development build 124 adds RIPPS2_HANG_WATCH thread waitType/waitId diagnostics. The source still investigates a full-library freeze; this is a diagnostic lead, not a confirmed fix or proof of a local hang."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/akilluminati47/RIPPS2/blob/b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86/elf/patches/0124-ripps2-position-per-mode.patch"
+    ]
+  },
+  {
+    "number": 125,
+    "ids": [
+      "LU42"
+    ],
+    "feature": "Paired resident long-argument launch transport",
+    "scope": "October 29 source findings",
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "LU42"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "LU42",
+        "state": "candidate",
+        "assessment": "LUNA uses a validated resident argv block and a matched -luna-args loader extension to carry longer launch settings across startup. Local launch preflight safely refuses its kernel-budget overflow rather than silently truncating. Supporting larger arguments requires paired frontend/runtime ownership, not merely increasing argv[32]."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/dnunezx/neutrino-luna/blob/fff99d9828c287a7328958668ecd25b1f17ea601/ee/loader/src/luna_handoff.h",
+      "https://github.com/dnunezx/nhddl-luna/blob/f640a4e8cfd4c91579af4c4faf9246261e3536d7/src/neutrino.c"
+    ]
+  },
+  {
+    "number": 126,
+    "ids": [
+      "JUMP1",
+      "JUMP2"
+    ],
+    "feature": "Optional loose shortcut discovery and display categorization",
+    "scope": "October 29 source findings",
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "JUMP1",
+      "JUMP2"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "JUMP1",
+        "state": "partial",
+        "assessment": "Explicit [PS1] Apps tags and separate POPSTARTER launch preparation already exist locally. JUMP adds prefix-based shelf categorization. Its predicate confuses some PS2 IDs, omits some regional PS1 prefixes and does not itself enforce .ELF; classification must never choose a core or bypass launch checks."
+      },
+      {
+        "id": "JUMP2",
+        "state": "partial",
+        "assessment": "JUMP scans loose root/POPS/APPS ELFs into its portal. Local All Games aggregation and configured Apps already exist; opt-in loose-shortcut discovery is the narrower optional difference. Bound scans and preserve source/path identity, arguments and deduplication."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/juankyt505/OPL-JUMP/blob/414674c2448533ec3d386a31d035deb3e5b31687/src/appsupport.c",
+      "https://github.com/juankyt505/OPL-JUMP/blob/414674c2448533ec3d386a31d035deb3e5b31687/src/menusys.c"
+    ]
+  },
+  {
+    "number": 127,
+    "ids": [
+      "YA-01"
+    ],
+    "feature": "OSD history executable-name bounds",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-01",
+        "state": "shipped",
+        "assessment": "Bounds and 15-character history payload follow-up merged in both hardening batches."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/142",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1114"
+    ]
+  },
+  {
+    "number": 128,
+    "ids": [
+      "YA-02"
+    ],
+    "feature": "ISO9660 directory record bounds and empty-name handling",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-02",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #150 (batch #162) and legacy #1122 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/150",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1122"
+    ]
+  },
+  {
+    "number": 129,
+    "ids": [
+      "YA-03"
+    ],
+    "feature": "ZSO header/index validation and bounded large-read slices",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-03",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #151 (batch #162) and legacy #1124 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/151",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1124"
+    ]
+  },
+  {
+    "number": 130,
+    "ids": [
+      "YA-04"
+    ],
+    "feature": "Wrapped font-string terminator preservation",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-04",
+        "state": "shipped",
+        "assessment": "Font NUL fix merged in both hardening batches."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/142",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1114"
+    ]
+  },
+  {
+    "number": 131,
+    "ids": [
+      "YA-05"
+    ],
+    "feature": "Cheat-table full-capacity attribution and accepted-code preservation",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-05",
+        "state": "shipped",
+        "assessment": "Both merged parsers preserve accepted codes when capacity is reached."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/142",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1114"
+    ]
+  },
+  {
+    "number": 132,
+    "ids": [
+      "YA-06"
+    ],
+    "feature": "DualShock 2 digital and unlocked launch handoff",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-06",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #149 (batch #162) and legacy #1121 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/149",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1121"
+    ]
+  },
+  {
+    "number": 133,
+    "ids": [
+      "YA-07"
+    ],
+    "feature": "Per-pad DS34 USB report ownership and alarm cancellation",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-07",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #147 (batch #162) and legacy #1119 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/147",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1119"
+    ]
+  },
+  {
+    "number": 134,
+    "ids": [
+      "YA-08"
+    ],
+    "feature": "Native UDPBD/UDPFS IMG launch and startup/read scheduling",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "partial"
+    ],
+    "remaining_ids": [
+      "YA-08"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "YA-08",
+        "state": "partial",
+        "assessment": "Native OPL core launches and the 16 KiB UDPBD read cap are merged (#153/#1123); Neutrino stays default. UDPFS Files games can also use the OPL core, with VMC saves (RiptOPL #161, legacy #1134). Retry/yield/SMAP-priority experiments require separate comparison; branch names are not accepted fixes."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/153",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1123"
+    ]
+  },
+  {
+    "number": 135,
+    "ids": [
+      "YA-09"
+    ],
+    "feature": "MMCE silent card-switch status settling",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-09",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #146 (batch #162) and legacy #1118 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/146",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1118"
+    ]
+  },
+  {
+    "number": 136,
+    "ids": [
+      "YA-10"
+    ],
+    "feature": "SYSTEM.CNF BOOT2 missing-equals handling",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-10",
+        "state": "shipped",
+        "assessment": "C++ already had the guard and now has its regression; legacy guard/test merged in #1114. This record follows the #131 plan numbering, not the conflicting #130 handoff numbering."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/142",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1114"
+    ]
+  },
+  {
+    "number": 137,
+    "ids": [
+      "YA-12"
+    ],
+    "feature": "One BdmIndex dot per visible mass device",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-12",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #152 (batch #162) and legacy #1125 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/152",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1125"
+    ]
+  },
+  {
+    "number": 138,
+    "ids": [
+      "YA-13"
+    ],
+    "feature": "MMCE bar/controller coverage verification",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "candidate"
+    ],
+    "remaining_ids": [
+      "YA-13"
+    ],
+    "disposition": "Remaining comparison / partial / pending",
+    "current_assessments": [
+      {
+        "id": "YA-13",
+        "state": "candidate",
+        "assessment": "Verification-only plan item. No new confirmed runtime defect or delivered source feature is inferred; retain the transport/controller acceptance matrix."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/131",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1105"
+    ]
+  },
+  {
+    "number": 139,
+    "ids": [
+      "YA-14"
+    ],
+    "feature": "Translated MMCE IGR slot choices and integration coverage",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-14",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #154 (batch #162) and legacy #1126 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/154",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1126"
+    ]
+  },
+  {
+    "number": 140,
+    "ids": [
+      "YA-15"
+    ],
+    "feature": "Synchronous disc-key RPC semaphore lifetime",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-15",
+        "state": "shipped",
+        "assessment": "Both merged helpers own the N-command semaphore through the complete key RPC and handle the disc-read and launch paths. Hardware repeated-read/launch checks remain pending."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/yaopl/yaopl/commit/7f1018e7bddd659cd3de4f477daefd2cbe75eabf",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/142",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1114"
+    ]
+  },
+  {
+    "number": 141,
+    "ids": [
+      "YA-16"
+    ],
+    "feature": "Fragmented-VMC counts and recovery guidance",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-16",
+        "state": "shipped",
+        "assessment": "Both merged dialogs use fragment counts and backup-first advice while retaining the existing layout/range rejection policy."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/yaopl/yaopl/commit/c19eed0850aed1ec30286f8448681043144b9d5c",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/142",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1114"
+    ]
+  },
+  {
+    "number": 142,
+    "ids": [
+      "YA-17"
+    ],
+    "feature": "USB host shutdown before IGR IOP reset",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-17",
+        "state": "shipped",
+        "assessment": "Merged in both editions: RiptOPL #144 (batch #162) and legacy #1116 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/yaopl/yaopl/commit/e72c9f485cfc1f99f33829cdccaf8c1dda4b3ef3",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/144",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1116"
+    ]
+  },
+  {
+    "number": 143,
+    "ids": [
+      "YA-18"
+    ],
+    "feature": "Coordinated read-only UDPBD capability and write policy",
+    "scope": "YAOPL mechanisms",
+    "states": [
+      "shipped"
+    ],
+    "remaining_ids": [],
+    "disposition": "Retained history / overlap",
+    "current_assessments": [
+      {
+        "id": "YA-18",
+        "state": "shipped",
+        "assessment": "A UDPBD/UDPFS IMG device is write-checked when it connects (512 timer-seeded bytes to opl_write_test.tmp, read back, deleted). A read-only device gets no folders, games.bin or OPL settings; game CFGs move to CFG/ by the settings home; no VMC; Rename/Delete/VMC/Ember settings hidden. smap_udpbd counts a refused write as done, so FatFs stays readable. The refused-write rule ships together with that suppression policy, not alone; the probe still uses a fixed file name. Merged in both editions: RiptOPL #158 (batch #162) and legacy #1130 (batch #1133). Not tested on hardware."
+      }
+    ],
+    "source_date": "See each ID; carried-forward source findings are explicitly dated.",
+    "sources": [
+      "https://github.com/yaopl/yaopl/blob/fc5426469c04c9a46a936c4d89fba9c80e7c9e30/CHANGELOG.md",
+      "https://github.com/yaopl/yaopl/commit/093b541bf13edcda418fd4e59c3c222a9b83fb40",
+      "https://github.com/NathanNeurotic/RiptOPL/pull/158",
+      "https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1130"
+    ]
+  }
+]
