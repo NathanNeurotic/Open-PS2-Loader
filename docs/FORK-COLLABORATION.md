@@ -5,9 +5,12 @@ actual source and runtime contract before calling a difference a gap. Other proj
 LUNA, YAOPL and upstream OPL, can provide equally useful correctness and design references.
 
 The [current fork report](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html)
-provides pinned revisions, stable record IDs and a deduplicated capability list. Its October 25
-snapshot covers 128 previously tracked repository identities and six newly created upstream
-forks. A source-head sweep is bounded evidence, not an exhaustive search of all PS2 development.
+provides pinned revisions, stable record IDs and a deduplicated capability list. The
+[October 29 ecosystem reconciliation](FORK-GAP-ECOSYSTEM-AUDIT-2026-10-29.md) checks 141 repository identities
+(138 canonical repositories), current release metadata and wrapper dependency pins. Its
+292 provenance records include overlap, experiments, tools and intentional alternatives;
+they are not counts of defects or promised ports. Unchanged source findings retain their
+earlier assessment dates. No new physical-console evidence was obtained.
 
 ## Evidence to retain for a candidate
 
@@ -24,17 +27,30 @@ An older plan can disagree with newer source. A README-only release announcement
 implementation evidence than a source diff. A new fork's name does not prove the named feature
 exists. A count of commits includes merges, tests and shared fixes; it is not a feature count.
 
-## October 28 status
+## Current reconciliation — October 29
 
-[Fork-gap status: 2026-10-28](FORK-GAP-STATUS-2026-10-28.md) supersedes the status of the table
-below. In short: the RIPPS2 audit of build 119 (`95299389`) credits **akilluminati47** for its
-findings, and the owner agreed a port plan (PRs A to H) on 2026-10-28 in which every port lands in
-both this repository and [RiptOPL](https://github.com/NathanNeurotic/RiptOPL). The MMCE busy wait
-and RIPPS2's artwork aliases are in that plan (PRs A and B); external-Neutrino option detection is
-not scheduled. The pad fixes and the `imgdrv` rename were declined, as were disc ripping, the CD
-player and every HDD partition change. PR A is open as [RiptOPL#99](https://github.com/NathanNeurotic/RiptOPL/pull/99) (not merged); nothing is tested on hardware.
+The [current audit](FORK-GAP-ECOSYSTEM-AUDIT-2026-10-29.md) supersedes availability wording in the
+[October 28 historical status](FORK-GAP-STATUS-2026-10-28.md). RIPPS2 integration
+A–H is merged in both editions (RiptOPL #99 / legacy #1084), as are Grid/multi-view
+themes, the YAOPL hardening batch (#142 / #1114), and native OPL UDPBD/UDPFS IMG
+launch support (#153 / #1123). The exact current source baselines and pending PR heads
+are pinned in the audit; merged source does not establish console acceptance.
 
-## October 25 candidate triage
+RIPPS2 release 121 and development build 124 are reviewed separately. LUNA must be
+followed through its wrapper gitlinks: frontend `luna@f640a4e8` is newer than the
+unchanged tracked `main` branch. YAOPL task numbers differ between the two planning
+handoffs; match mechanisms and merged commits, not unchecked boxes or numbers alone.
+
+Disc ripping, the CD player and HDD partition changes remain declined local scope.
+The magnified single-pass HD renderer and external-only runtime packaging are
+intentional design alternatives. The withdrawn YAOPL remap is deferred; read-only
+UDPBD requires coordinated capability/write/VMC policy. Preserve akilluminati47,
+belomaxorka, dnunezx, juankyt505, Blayr and other original authors in any future work.
+
+## Historical October 25 candidate triage
+
+This table records the earlier research leads. Current merged/partial/declined dispositions
+are in the October 29 audit; do not revive a completed or declined item from this table.
 
 | Candidate | Practical next work | Main regression risk |
 | --- | --- | --- |
