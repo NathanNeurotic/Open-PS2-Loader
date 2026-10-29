@@ -75,6 +75,9 @@ For every item, first write a failing host test or reproducible hardware case. I
 - **YA-16:** [implementation #1108](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1108) adds existing fragment counts and backup-first Cancel guidance, preserving native refusal, range/layout checks, slot isolation and autolaunch. Extended native VMC launch tests and strict translation checks pass. CI/review and console validation remain pending.
 - **YA-01:** [implementation #1109](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1109) bounds history filenames to 16 bytes plus NUL. The new guarded-output regression fails on the unmodified base and passes after the fix, including long names, exact fits, separators, versions and empty input. CI/review and console validation remain pending.
 
+- **YA-04:** [implementation #1110](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1110) preserves the font-fitting terminator and stops before advancing beyond it. Production-function ASan/UBSan regressions reproduce the base failure and pass after the fix; existing font/theme tests pass. Build and format CI passed; ready for review. Console theme/CFG validation remains pending.
+- **YA-10:** [implementation #1111](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1111) rejects BOOT2 lines missing an equals sign. Full-parser file-fixture ASan/UBSan tests reproduce the base NULL dereference and pass with the fix; the production parser cross-compiles with ps2build EE LLVM. CI/review and console validation remain pending. The C++ edition already contains this guard.
+
 These PRs remain separate and unmerged. No checkbox is promoted to hardware-confirmed acceptance by these host results. Remaining YA tasks are still open.
 
 ## Attribution
