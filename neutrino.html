@@ -159,7 +159,7 @@ case-sensitive. The other old choices load as <em>&lt;not set&gt;</em>.</p>
 <tr><td>Internal ATA (BDM block device)</td><td>Yes</td></tr>
 <tr><td>Internal HDD (APA partition &rarr; HDL)</td><td>Yes</td></tr>
 <tr><td>MMCE (SD2PSX / MemCard PRO2)</td><td>Yes</td></tr>
-<tr><td>UDPBD / UDPFS (network block device)</td><td>Yes — the default. UDPFS Files is Neutrino-only; UDPBD and UDPFS IMG can also run on <code>&lt;OPL&gt;</code> per game (see <a href="network-boot.html#neutrino-only">Network Boot</a>). Both work on a real PS2; the UDPBD test (2026-09-26) used every Neutrino setting at its default.</td></tr>
+<tr><td>UDPBD / UDPFS (network block device)</td><td>Yes — the default. UDPBD and UDPFS (Files and IMG) can also run on <code>&lt;OPL&gt;</code> per game (see <a href="network-boot.html#neutrino-only">Network Boot</a>). Both work on a real PS2; the UDPBD test (2026-09-26) used every Neutrino setting at its default.</td></tr>
 <tr><td>SMB / Ethernet</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
 <tr><td>USB Extreme split images (<code>.ul</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
 <tr><td>Compressed ISO (<code>.zso</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
@@ -346,7 +346,7 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 <li>The <b>Configure GSM</b>, <b>Controller Emulation</b> and <b>OSD Settings</b> screens show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
 <li><b>Cheat Settings</b> works on both cores; only its <b>PS2RD Cheat Image</b> row is greyed, because Neutrino has no cheat-image support. Cheats require the post-v1.8.0 development Neutrino build and a 90-series mastercode hook. See <a href="cheats.html#neutrino">Cheats with the Neutrino core</a>.</li>
 <li><b>VMC</b> and the rest of <b>Game Settings</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
-<li><b>UDPFS Files games</b> have no OPL core backend, so their Loader Core selector is locked to Neutrino. <b>UDPBD and UDPFS IMG games</b> keep the selector open; there, <b>Default</b> means Neutrino and <code>&lt;OPL&gt;</code> picks the OPL core.</li>
+<li><b>UDPBD and UDPFS games</b> (Files and IMG) keep the selector open; there, <b>Default</b> means Neutrino and <code>&lt;OPL&gt;</code> picks the OPL core.</li>
 </ul>
 
 <h3>When Loader Core = &lt;OPL&gt;</h3>
@@ -359,7 +359,7 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 
 <h2 id="network-boot">7. Network boot — UDPBD / UDPFS</h2>
 
-<p>UDPBD and UDPFS stream games from a PC over the LAN as network block devices. The block protocols (UDPBD and UDPFS-Image) share the BDM block tab — labelled <b>UDPBD Games</b> or <b>UDPFSBD Games</b> depending on which one is active — while UDPFS-Files is a separate filesystem device with its own <b>UDPFS Games</b> tab. Only one can be active per boot anyway (a single NIC), so the two never appear side by side. Either list carries covers and per-game settings. UDPFS-Files games <b>only launch via Neutrino</b>; if <code>neutrino.elf</code> is missing, OPL warns and returns to the menu. UDPBD and UDPFS-Image games launch via Neutrino by default and run on the OPL core when their Loader Core is <code>&lt;OPL&gt;</code>, or when the Neutrino launch cannot start (see <a href="network-boot.html#neutrino-only">Network Boot</a>).</p>
+<p>UDPBD and UDPFS stream games from a PC over the LAN as network block devices. The block protocols (UDPBD and UDPFS-Image) share the BDM block tab — labelled <b>UDPBD Games</b> or <b>UDPFSBD Games</b> depending on which one is active — while UDPFS-Files is a separate filesystem device with its own <b>UDPFS Games</b> tab. Only one can be active per boot anyway (a single NIC), so the two never appear side by side. Either list carries covers and per-game settings. UDPBD and UDPFS games (Files and Image) launch via Neutrino by default and run on the OPL core when their Loader Core is <code>&lt;OPL&gt;</code>, or when the Neutrino launch cannot start (see <a href="network-boot.html#neutrino-only">Network Boot</a>).</p>
 
 <p>Full setup, server instructions, and the UDPBD vs UDPFS protocol comparison are on the <a href="network-boot.html">Network Boot</a> page.</p>
 
