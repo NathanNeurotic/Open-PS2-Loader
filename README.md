@@ -299,9 +299,8 @@ different home, a memory card included: `mc1:` saves to the card root, and `mc1:
 folder, which RiptOPL creates (with its browser icon) on the first save. Check the active location
 instead of assuming all settings are on `mc0:/OPL/`.
 
-If a place RiptOPL checks has no RiptOPL settings but does have official OPL's `conf_opl.cfg`,
-RiptOPL starts from that file. It is read-only: RiptOPL never writes it, and the next save writes
-`settings_riptopl.cfg` to RiptOPL's own settings home. On an APA + exFAT hybrid disk (PSBBN
+RiptOPL never reads official OPL's `conf_opl.cfg`: with no RiptOPL settings it starts from its
+own defaults. On an APA + exFAT hybrid disk (PSBBN
 Definitive's "APA-Jail" layout), a RiptOPL launched from APA uses the exFAT volume as its
 settings home, as official OPL does, and starts its BDM page so the exFAT games show. RiptOPL
 settings an older build saved in the APA data home are carried over and written to exFAT on the
