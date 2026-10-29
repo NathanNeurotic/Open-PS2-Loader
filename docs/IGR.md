@@ -161,6 +161,58 @@ the `ram84` region — you can have achievements or in-game screenshots, not bot
 
 ---
 
+## The in-game menu (beta)
+
+**Settings → Game Launching → In-Game Menu (Beta)**, off by default. With it on, **L1 + L2 + R1 + R2 +
+Start + Select** no longer leaves the game at once: it **pauses** the game under a small panel.
+
+| Item | What it does |
+|---|---|
+| **Resume** | Back to the game, exactly where it stopped. Start or the back button also resume. |
+| **Cheats** | Only when the game was started with cheats on. Every cheat of the game's `.cht` file, **ON** or **OFF**; the confirm button switches one, the back button returns. Changes apply when you resume. |
+| **Exit Game** | What the combo always did: leave for the **IGR Path** (or the PS2 browser). Press confirm twice. |
+| **Power Off** | Turns the console off. Press confirm twice. |
+
+Up and Down move; the confirm and back buttons are the ones OPL's own menus use.
+The console's power button still works while the menu is open: once powers off, twice exits.
+
+**Cheats, live.** The game's `.cht` file is read when the game starts (*Cheats* on in the game's
+settings, as before); every cheat comes along, ticked or not, and the menu turns them on and off while
+you play, without a restart. Things to know:
+
+* **OFF stops a cheat writing; it does not undo it.** A value it wrote (health, money) stays until the
+  game changes it, and a cheat that patches the game's code (widescreen, "always run") stays patched
+  until the game reloads that code.
+* The **master code** (the `9…` hook line) is always in, ticked or not: the cheat engine can only plant
+  its hook when the game starts, so a cheat that is nothing but a hook cannot be switched.
+* The ticked cheats must fit the engine's 250 codes. A cheat that would not fit stays OFF and the page
+  says *FULL: TURN ONE OFF FIRST*. The page lists up to 64 cheats (512 codes in all).
+* *The cheat engine has not run in this game yet* means the master code's hook never matched: no cheat
+  is being applied, ticked or not. Check the master code for your version of the game.
+* *Not applied yet* means the engine was in the middle of applying codes when you paused; resume and
+  open the menu again.
+
+**Where it works.** Games on the **OPL core** only (USB, MX4SIO, iLink, exFAT and APA HDD, SMB, MMCE,
+UDPBD/UDPFS). Neutrino has no IGR at all, and PS1 games use POPStarter's or Ember's own. The menu draws
+into the picture the game is showing, which it finds through the same GS write breakpoint GSM uses:
+
+* **PCSX2 cannot show it** (it has no data breakpoints), so there the combo leaves the game as before.
+* A game that shows its picture in a way the menu cannot see, or in a format it cannot draw, also
+  leaves at once, as before. Nothing is lost compared with the menu off.
+* Game sound keeps playing (looping) while the menu is open, and the panel stays on a still screen
+  until the game draws over it.
+* Not in the **RetroAchievements** builds, nor in the IGS (`EXTRA_FEATURES=1`) and freeze-report
+  (`INGAMEDIAG=1`) builds: `ee_core` has no room for both. Those keep the plain combo and have no
+  *In-Game Menu* row. `make IGR_MENU=0` leaves it out of a standard build too.
+* The CHEATS page needs a game whose modules sit at the usual address; a few games moved elsewhere
+  (`mod_storage_location_list`) get the menu without it, and their cheats run as ticked before launch.
+
+The menu is **RIPPS2's** (by **akilluminati47**), itself built on ORBIT's Neutrino in-game menu
+(danielnuld/ps2-launcher, AFL-3.0); RIPPS2's Screenshot and Achievements pages are not ported yet, the
+Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.
+
+---
+
 ## Troubleshooting
 
 **Nothing happens when I press the combination.** Check, in order: the game has actually started
@@ -193,6 +245,11 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 | `ee_core/include/padhook.h` | The combo constants (`IGR_COMBO_R1_L1_R2_L2`, `IGR_COMBO_START_SELECT`, `IGR_COMBO_R3_L3`, `IGR_COMBO_UP`) |
 | `ee_core/src/cd_igr_rpc.c` | IOP-side reset RPC |
 | `ee_core/src/igs_api.c` | Screenshot capture and BMP writing |
+| `ee_core/src/igrmenu.c` | The in-game menu: finding the shown frame, drawing the panel, the pages, the pad loop |
+| `ee_core/include/igrcheats.h` | The cheat list the launcher hands the menu, and how a code set is built from it |
+| `ee_core/src/cheat_engine.S`, `cheat_api.c` | The cheat engine; `CheatLiveApply` swaps in the menu's code set |
+| `src/cheatman.c` | `igrCheatsPack` / `set_cheats_list_live`: the launcher's side of live cheats |
+| `ee_core/tests/test_igrmenu.cpp` | Host test: the pages as pictures, and the code set the Cheats page builds |
 | `include/iosupport.h` | `COMPAT_MODE_6` — the Disable IGR flag |
 
 ## See also

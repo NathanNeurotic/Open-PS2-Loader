@@ -100,7 +100,9 @@ pad = read("ee_core/src/padhook.c")
 handler = pad[pad.index("static int IGR_Intc_Handler(int cause)"):]
 handler = handler[:handler.index("\n}\n")]
 check("g_freeze_diag_polls++;" in handler[:handler.index("IGR_CheckInputs();")], "each VBLANK input sample is counted")
-check(handler.index("iSuspendThread(i);") < handler.index("iWakeupThread(IGR_Thread_ID);"),
+# The in-game menu (IGR_MENU) wakes the worker first, from its own branch, without stopping anything: the worker
+# pauses the game itself and RESUME gives it back. The shutdown wake is the handler's last one.
+check(handler.index("iSuspendThread(i);") < handler.rindex("iWakeupThread(IGR_Thread_ID);"),
       "the handler suspends the game's threads before waking the worker")
 worker = pad[pad.index("static void IGR_Thread(void *arg)"):]
 i_wait = worker.index("SleepThread();")

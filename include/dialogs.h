@@ -103,6 +103,7 @@ enum UI_ITEMS {
     CFG_NEUTRINO_ELF_ARG,   // auto-supply the game's boot ELF to Neutrino
     CFG_NEUTRINO_SHOW_ARGS, // show the composed Neutrino argv and ask before launching
     CFG_AUTO_CREATE_VMC,    // create + assign a per-game VMC on a PS2 game's first launch
+    CFG_IGR_MENU,           // the in-game menu (gIgrMenu)
     CFG_POPSTARTER_DEVICE,
     CFG_LBL_POPSTARTER_PATH,
     CFG_POPSTARTER_PATH,

@@ -57,6 +57,11 @@
 
 .globl  numcodes
 .globl  codelist
+#ifdef IGR_MENU
+.globl  codeset
+.globl  codeentry
+.globl  codedone
+#endif
 
 .globl  engine_info
 
@@ -158,10 +163,27 @@ CodeHandler:
      * $t3 - total number of codes
      * $t4 - number of codes done
      */
+    /*
+     * The code set is [count][pairs]: numcodes/codelist, or the in-game menu's second set (igrcheats.h).
+     * One pointer load picks it, so a thread paused here by the menu and resumed after the menu flipped
+     * codeset walks one set or the other, never half of each. codeentry/codedone say which set the last
+     * pass started on and which one it finished, for the menu (cheat_api.c CheatLiveApply).
+     * Builds without the menu (IGR_MENU) keep the one fixed set.
+     */
+#ifdef IGR_MENU
+    lw      $t0, codeset
+    lui     $t6, %hi(codeentry)
+    sw      $t0, %lo(codeentry)($t6)
+    lw      $t3, 0($t0)
+    addiu   $t0, $t0, 4
+    beqz    $t3, ch_ret
+    li      $t4, 0
+#else
     lw      $t3, numcodes
     beqz    $t3, ch_ret
     li      $t4, 0
     la      $t0, codelist
+#endif
     la      $t1, type_tab
 ch_loop:
     /*
@@ -506,8 +528,15 @@ next:
     bnez    $at, ch_loop
     nop
 ch_ret:
+#ifdef IGR_MENU
+    addiu   $t5, $t0, -4
+    lui     $t6, %hi(codedone)
+    jr      $ra
+    sw      $t5, %lo(codedone)($t6)
+#else
     jr      $ra
     nop
+#endif
 .end    CodeHandler
 
     /* jump table for code types */
@@ -611,6 +640,21 @@ HookSetupThread:
 engine_info:
 .word   0x00000002 /* version 0.2 */
 
+#ifdef IGR_MENU
+/*******************************************************************************
+ *
+ * .data section
+ *
+ ******************************************************************************/
+.section .data
+
+/*
+ * The code set CodeHandler walks: numcodes/codelist unless the in-game menu flipped it.
+ */
+codeset:
+.word   numcodes
+#endif
+
 /*******************************************************************************
  *
  * .bss section
@@ -639,6 +683,16 @@ numcodes:
 .word   0
 codelist:
 .word   0:(MAX_CODES*2)
+
+#ifdef IGR_MENU
+/*
+ * The set the last pass started on, and the set the last finished pass walked.
+ */
+codeentry:
+.word   0
+codedone:
+.word   0
+#endif
 
 .set    pop
 

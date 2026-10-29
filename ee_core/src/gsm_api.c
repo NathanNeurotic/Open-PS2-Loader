@@ -70,7 +70,7 @@ struct GSMFlags
     u8 DISPLAY_fix;
     u8 FIELD_fix;
     u8 gs576P_param;
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
     u8 track_only;
 #endif
 } __attribute__((packed));
@@ -197,7 +197,7 @@ static void Remove_GSHandler(void)
 /*-------------------------------------------*/
 void EnableGSM(void)
 {
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
     GSMFlags.track_only = 0;
 #endif
     // Install Hook SetGsCrt
@@ -229,8 +229,8 @@ void setdve_576P(void)
     dve_set_reg(0x91, 0x02);
 }
 
-#ifdef RETROACHIEVEMENTS
-/* RetroAchievements needs the framebuffer values that games write to the
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
+/* RetroAchievements cards and the in-game menu (igrmenu.c) need the framebuffer values that games write to the
    GS, but PMODE/DISPFB are not readable reliably on real hardware. Reuse
    GSM's proven write trap in a strictly observational mode. Hook_SetGsCrt
    is kept so games that disable debug breakpoints cannot permanently stop

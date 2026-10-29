@@ -26,6 +26,7 @@
 #include <syscallnr.h>
 #include "include/cheat_api.h"
 #include "coreconfig.h"
+#include "igrcheats.h"
 
 /*-----------------------------------------------------------*/
 /* Prebuilt PS2RD cheat-image (.img): apply at boot          */
@@ -154,3 +155,31 @@ void DisableCheats(void)
     // Remove Hook SetupThread
     Remove_HookSetupThread();
 }
+
+#ifdef IGR_MENU
+/*-------------------------------------------------------------*/
+/* In-game menu: the ticked cheats as a fresh code set          */
+/*-------------------------------------------------------------*/
+// Called with every game thread paused (padhook.c). The codes go into the set CodeHandler is NOT walking, then one
+// store of codeset hands it over: a thread the pause stopped inside CodeHandler finishes on the set it started on.
+// The only set we must not write is one a pass started on and has not finished (codeentry != codedone on it):
+// then nothing changes and 0 is returned. Cheats are added whole, in file order, while they fit the set; the
+// menu does not let more be ticked than fit (CheatLiveFits).
+int CheatLiveApply(const igr_cheats_t *b)
+{
+    u32 *idle = codeset == &numcodes ? IGR_CHEATS_SPARE(b) : &numcodes;
+
+    if (codeentry == idle && codedone != codeentry)
+        return 0;
+    igrCheatsBuild(b, idle);
+    asm volatile("sync.l");
+    codeset = idle;
+    asm volatile("sync.l");
+    return 1;
+}
+
+int CheatLiveFits(const igr_cheats_t *b, u32 at)
+{
+    return igrCheatsFit(b, at);
+}
+#endif

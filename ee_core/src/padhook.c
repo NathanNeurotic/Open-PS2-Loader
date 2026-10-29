@@ -39,6 +39,9 @@
 #include "cheat_api.h"
 #include "cd_igr_rpc.h"
 #include "coreconfig.h"
+#ifdef IGR_MENU
+#include "igrmenu.h"
+#endif
 #ifdef INGAMEDIAG
 #include "freeze_diag_core.h"
 #endif
@@ -86,6 +89,79 @@ static u8 IGR_Stack[IGR_STACK_SIZE] __attribute__((aligned(16)));
 /* Extern symbol */
 extern void *_gp;
 extern void *_end;
+
+#ifdef IGR_MENU
+/*
+  The in-game menu (igrmenu.c, RIPPS2's, by akilluminati47). The pause is ORBIT's (danielnuld/ps2-launcher,
+  third_party/neutrino-igr/igr.c, AFL-3.0), as RIPPS2 build 87 brought it here: the game's threads stop and its
+  interrupts are held, and nothing is reset. The SIF stays up (SBUS, DMA channels 5-7), so padman keeps filling the
+  pad buffer the menu reads. RESUME gives everything back; any other way out goes on to the IGR below, as before.
+*/
+#define IGR_I_MASK    ((vu32 *)0x1000f010)
+#define IGR_INTC_SBUS 1
+static volatile int IGR_MenuOpen = 0;
+static int IGR_MenuRearm = 1;
+static u32 IGR_PausedThreads[8], IGR_HeldIntc, IGR_HeldDmac;
+static const u8 IGR_DmacHeld[] = {0, 1, 2, 3, 4, 8, 9}; // never SIF 5-7
+
+// libpad's buttons, 1 = held (its buffer is active-low), or 0 while the pad is not stable
+static u16 IGR_PadButtons(void)
+{
+    const u8 *b;
+    u8 state;
+
+    if (Pad_Data.pad_buf == NULL)
+        return 0;
+    b = (const u8 *)UNCACHED_SEG(Pad_Data.pad_buf); // the IOP's padman fills it over SIF DMA, behind the cache
+    state = b[Pad_Data.pos_state];
+    if (!((Pad_Data.libpad == IGR_LIBPAD && state == IGR_PAD_STABLE_V1) || (Pad_Data.libpad == IGR_LIBPAD2 && state == IGR_PAD_STABLE_V2)))
+        return 0;
+    return ~(b[Pad_Data.pos_combo2] | b[Pad_Data.pos_combo1] << 8) & 0xFFFF;
+}
+
+// interrupt handler context: the game's interrupts and DMA completions wait, the SIF's do not
+static void IGR_HoldInterrupts(void)
+{
+    int i;
+
+    IGR_HeldIntc = *IGR_I_MASK;
+    for (i = 0; i <= 14; i++)
+        if (i != IGR_INTC_SBUS && (IGR_HeldIntc & (1 << i)))
+            iDisableIntc(i);
+    IGR_HeldDmac = (*R_EE_D_STAT >> 16) & 0x3ff;
+    for (i = 0; i < (int)sizeof(IGR_DmacHeld); i++)
+        if (IGR_HeldDmac & (1 << IGR_DmacHeld[i]))
+            iDisableDmac(IGR_DmacHeld[i]);
+}
+
+// From the IGR thread at priority 0, while no game thread runs. Suspending the interrupted thread from
+// the handler left it READY but never scheduled again after ResumeThread (ORBIT): so here, not there
+static void IGR_PauseThreads(void)
+{
+    int i;
+
+    for (i = 1; i < 256; i++) {
+        IGR_PausedThreads[i / 32] &= ~(1 << (i % 32));
+        if (i != IGR_Thread_ID && SuspendThread(i) >= 0)
+            IGR_PausedThreads[i / 32] |= 1 << (i % 32);
+    }
+}
+
+static void IGR_ResumeGame(void) // the pause, undone in reverse
+{
+    int i;
+
+    for (i = 0; i < (int)sizeof(IGR_DmacHeld); i++)
+        if (IGR_HeldDmac & (1 << IGR_DmacHeld[i]))
+            EnableDmac(IGR_DmacHeld[i]);
+    for (i = 0; i <= 14; i++)
+        if (i != IGR_INTC_SBUS && (IGR_HeldIntc & (1 << i)))
+            EnableIntc(i);
+    for (i = 1; i < 256; i++)
+        if (IGR_PausedThreads[i / 32] & (1 << (i % 32)))
+            ResumeThread(i);
+}
+#endif
 
 // Load home ELF
 static void t_loadElf(void)
@@ -313,8 +389,36 @@ static void IGR_Thread(void *arg)
     // Wait for the VBLANK_END handler. It latches the request, stops DMA/GS, suspends every other
     // thread and raises this one to priority 0 before waking it. Recheck the latch so a stray
     // wakeup cannot start a shutdown nobody asked for.
+#ifdef IGR_MENU
+    // With In-Game Menu on the handler wakes this thread for the menu too (IGR_MenuOpen), with the game's
+    // interrupts held but nothing stopped; RESUME sends it back to sleep. Any other way out goes on below.
+    for (;;) {
+        int choice;
+
+        while (Pad_Data.combo_type == 0x00 && !IGR_MenuOpen)
+            SleepThread();
+        if (!IGR_MenuOpen)
+            break; // the power button, or the plain combo: the handler stopped DMA/GS and the game
+
+        IGR_PauseThreads();
+        choice = IGR_MenuRun(IGR_PadButtons);
+        if (choice == IGR_MENU_RESUME) {
+            IGR_ResumeGame();
+            IGR_MenuOpen = 0;
+            ChangeThreadPriority(IGR_Thread_ID, 127);
+            continue;
+        }
+        // EXIT GAME, POWER OFF, the power button, or a frame the menu could not draw on: what the combo did
+        // before. ResetEE leaves the DMAC alone (0x7E, not 0x7F): a SIF transfer in flight would stick (ORBIT)
+        IGR_StopDmaAndGs();
+        ResetEE(0x7E);
+        Pad_Data.combo_type = choice == IGR_MENU_POWEROFF ? IGR_COMBO_R3_L3 : IGR_COMBO_START_SELECT;
+        break;
+    }
+#else
     while (Pad_Data.combo_type == 0x00)
         SleepThread();
+#endif
 
     DPRINTF("IGR thread woken up!\n");
 
@@ -399,6 +503,10 @@ static void IGR_Thread(void *arg)
         }
 #if defined(RETROACHIEVEMENTS) && RA_EXPERIMENTAL_CARD_DMA
         else if (config->raOverlayBuf)
+            DisableGSTracker();
+#endif
+#ifdef IGR_MENU
+        else if (config->IgrMenu)
             DisableGSTracker();
 #endif
 
@@ -490,6 +598,9 @@ void IGR_Exit(s32 exit_code)
 // IGR VBLANK_END interrupt handler install to monitor combo trick in pad data aera.
 static int IGR_Intc_Handler(int cause)
 {
+#ifdef IGR_MENU
+    USE_LOCAL_EECORE_CONFIG;
+#endif
     int i;
 
 #ifdef RETROACHIEVEMENTS
@@ -500,6 +611,22 @@ static int IGR_Intc_Handler(int cause)
     g_freeze_diag_polls++;
 #endif
     IGR_CheckInputs();
+
+#ifdef IGR_MENU
+    // With In-Game Menu on, the reset combo pauses the game under the menu (igrmenu.c) instead. The power
+    // button pressed twice still leaves at once.
+    if (Pad_Data.combo_type == IGR_COMBO_START_SELECT && config->IgrMenu && !Power_Button.press) {
+        Pad_Data.combo_type = 0x00;
+        if (IGR_MenuRearm && !IGR_MenuOpen) { // once per press: a menu closed at once must not reopen
+            IGR_MenuOpen = 1;
+            IGR_MenuRearm = 0;
+            IGR_HoldInterrupts(); // this handler's VBLANK too: the menu reads the pad itself
+            iChangeThreadPriority(IGR_Thread_ID, 0);
+            iWakeupThread(IGR_Thread_ID);
+        }
+    } else if (Pad_Data.combo_type == 0x00)
+        IGR_MenuRearm = 1;
+#endif
 
     // If power button or combo is press
     // Disable all interrupts & reset some peripherals.
