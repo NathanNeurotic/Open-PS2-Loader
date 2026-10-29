@@ -7,7 +7,8 @@ wide_screen straight from the memory-card settings file before rmInit().
 This compiles bootDisplayPeek() from the app source on the host against a small config stub and checks:
 
 - vmode and wide_screen are read from the file, and nothing else changes;
-- a key that only starts the same way (vmode_x=) is not taken for it;
+- a key that only starts the same way (vmode_x=) is not taken for it, and libconfig (wOPL) syntax
+  ("vmode = 4;") is read too;
 - a file that is not on a memory card, an unresolved mc?: path, or a missing file leaves the defaults;
 - init() calls it before rmInit(), and the START skip puts the defaults back before applyConfig().
 """
@@ -22,11 +23,15 @@ OPL = root / ('src/app/opl.cpp' if cpp else 'src/opl.c')
 failures = []
 
 opl = OPL.read_text(encoding='utf-8').replace('\r\n', '\n')
-start = opl.find('static void bootDisplayPeek(void)')
+start = opl.find('static int bootPeekKey(')
 if start < 0:
+    print('%s: bootPeekKey is missing' % OPL.relative_to(root))
+    sys.exit(1)
+peek = opl.find('static void bootDisplayPeek(void)')
+if peek < 0:
     print('%s: bootDisplayPeek is missing' % OPL.relative_to(root))
     sys.exit(1)
-block = opl[start:opl.index('\n}\n', start) + 3]
+block = opl[start:opl.index('\n}\n', peek) + 3]
 
 CONFIG = r'''
 struct config_set_t {
@@ -80,6 +85,10 @@ int main(void)
     run("mc0:/settings.cfg");
     assert(gVMode == 2 && gWideScreen == 0);
 
+    writeFile("vmode = 4;\n  wide_screen = 1;\nvmodex = 9;\n");  /* libconfig (wOPL) syntax */
+    run("mc0:/settings.cfg");
+    assert(gVMode == 4 && gWideScreen == 1);
+
     writeFile("vmode=5\nwide_screen=1\n");
     run("mc?:/settings.cfg");     /* unresolved card wildcard: not read */
     assert(gVMode == 0 && gWideScreen == 0);
@@ -114,15 +123,20 @@ with tempfile.TemporaryDirectory() as tmp:
 
 init = opl[opl.find('static void init(void)'):]
 init = init[:init.index('\n}\n')]
-peek_at, rm_at = init.find('bootDisplayPeek();'), init.find('rmInit();')
+rel = OPL.relative_to(root)
+peek_at, rm_at, cfg_at = init.find('bootDisplayPeek();'), init.find('rmInit();'), init.find('configInit(')
 if peek_at < 0 or rm_at < 0 or peek_at > rm_at:
-    failures.append('%s: init() must call bootDisplayPeek() before rmInit()' % OPL.relative_to(root))
-if init.find('configInit(') > peek_at:
-    failures.append('%s: bootDisplayPeek() needs configInit() first (it reads the CONFIG_OPL path)' % OPL.relative_to(root))
-skip = init[init.find('SKIPPING OPL CONFIG LOADING'):]
-skip = skip[:skip.find('applyConfig(-1, -1, 0);')]
-if 'gVMode = defaultVMode;' not in skip or 'gWideScreen = defaultWideScreen;' not in skip:
-    failures.append('%s: the START skip must put the default video mode and widescreen back' % OPL.relative_to(root))
+    failures.append('%s: init() must call bootDisplayPeek() before rmInit()' % rel)
+if cfg_at < 0 or (peek_at >= 0 and cfg_at > peek_at):
+    failures.append('%s: bootDisplayPeek() needs configInit() first (it reads the CONFIG_OPL path)' % rel)
+skip_at = init.find('SKIPPING OPL CONFIG LOADING')
+apply_at = init.find('applyConfig(-1, -1, 0);', skip_at) if skip_at >= 0 else -1
+if skip_at < 0 or apply_at < 0:
+    failures.append('%s: the START skip (SKIPPING OPL CONFIG LOADING ... applyConfig(-1, -1, 0);) is missing' % rel)
+else:
+    skip = init[skip_at:apply_at]
+    if 'gVMode = defaultVMode;' not in skip or 'gWideScreen = defaultWideScreen;' not in skip:
+        failures.append('%s: the START skip must put the default video mode and widescreen back' % rel)
 
 if failures:
     print('\n'.join(failures))

@@ -5349,11 +5349,29 @@ static void setDefaults(void)
 // so rmInit() sets the user's mode once. Nothing is saved and nothing else is read: _loadConfig()
 // reads every key again as before, and the recovery combos and the START skip still decide there.
 // A missing or unreadable file leaves the defaults, which is the old behaviour.
+// One settings line, "key=value" as configWrite() writes it or "key = value;" as a libconfig file
+// (wOPL) has it: 1 and the value when the line is that key.
+static int bootPeekKey(const char *line, const char *key, int *value)
+{
+    size_t len = strlen(key);
+
+    while (*line == ' ' || *line == '\t')
+        line++;
+    if (strncmp(line, key, len) != 0)
+        return 0;
+    line += len;
+    while (*line == ' ' || *line == '\t')
+        line++;
+    if (*line != '=')
+        return 0;
+    *value = atoi(line + 1); // atoi skips the spaces after '=' and stops at a ';'
+    return 1;
+}
+
 static void bootDisplayPeek(void)
 {
     config_set_t *configOPL = configGetByType(CONFIG_OPL);
     const char *path = (configOPL != NULL) ? configOPL->filename : NULL;
-    const size_t vmodeLen = sizeof(CONFIG_OPL_VMODE) - 1, wideLen = sizeof(CONFIG_OPL_WIDESCREEN) - 1;
     char line[256];
     FILE *fp;
 
@@ -5363,10 +5381,11 @@ static void bootDisplayPeek(void)
     if (fp == NULL)
         return;
     while (fgets(line, sizeof(line), fp) != NULL) {
-        if (!strncmp(line, CONFIG_OPL_VMODE, vmodeLen) && line[vmodeLen] == '=')
-            gVMode = atoi(line + vmodeLen + 1); // out of range is clamped to Auto by rmSetMode()
-        else if (!strncmp(line, CONFIG_OPL_WIDESCREEN, wideLen) && line[wideLen] == '=')
-            gWideScreen = atoi(line + wideLen + 1) != 0;
+        int value;
+        if (bootPeekKey(line, CONFIG_OPL_VMODE, &value))
+            gVMode = value; // out of range is clamped to Auto by rmSetMode()
+        else if (bootPeekKey(line, CONFIG_OPL_WIDESCREEN, &value))
+            gWideScreen = value != 0;
     }
     fclose(fp);
     LOG("BOOT display peek: %s vmode=%d wide=%d\n", path, gVMode, gWideScreen);
