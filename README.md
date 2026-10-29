@@ -10,6 +10,8 @@
   <img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" />
 </p>
 
+> **RiptOPL is developed in partnership and collaboration with the [RIPPS2 Project](https://github.com/akilluminati47/RIPPS2) by [Akilluminati47](https://github.com/akilluminati47).**
+
 > **Our daughter project: [RIPPS2](https://github.com/akilluminati47/RIPPS2) by Akilluminati47.** A RiptOPL-derived PS2 frontend with a downloadable ELF and a [web demo](https://akilluminati47.github.io/RIPPS2/). Use [its releases](https://github.com/akilluminati47/RIPPS2/releases) for current builds and its own compatibility notes.
 
 > **ps2build C++ Edition.** The [C++ Edition](https://github.com/NathanNeurotic/RiptOPL), built with ps2build in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**, is now the main line of RiptOPL.
