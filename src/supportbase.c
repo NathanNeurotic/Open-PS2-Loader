@@ -705,9 +705,8 @@ static int ProbeZISO(int fd)
         u32 first_block;
     } ziso_data;
     lseek(fd, 0, SEEK_SET);
-    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC) {
-        // initialize ZSO
-        ziso_init(&ziso_data.header, ziso_data.first_block);
+    if (read(fd, &ziso_data, sizeof(ziso_data)) == sizeof(ziso_data) && ziso_data.header.magic == ZSO_MAGIC &&
+        ziso_init(&ziso_data.header, ziso_data.first_block) == 0) { // a header it cannot read is no ZSO
         // set ISO file descriptor for ZSO reader
         probed_fd = fd;
         probed_lba = 0;

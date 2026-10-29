@@ -16,6 +16,7 @@
   Credit: belomaxorka / YAOPL 44a003bd5868539481baf3c09922660246ca96f5.
 * Fragmented native BDM VMC warnings show the existing fragment count and, on Cancel, backup/recovery guidance. Native refusal and physical-card fallback are unchanged. Credit belomaxorka/YAOPL c19eed08. Hardware validation pending.
 * Reject a SYSTEM.CNF BOOT2 line without '=' instead of passing NULL to the value parser during image discovery. Matches the existing C++ guard. Credit belomaxorka/YAOPL 43781768. Hardware validation pending.
+* ZSO images: a header the reader cannot read (align above 11, or blocks other than 2048 bytes, which maxcso writes for images of 2 GiB and more) is no longer opened as ZSO, so it is not listed and cannot divide by zero or decode 16 KiB blocks into a 2 KiB buffer. An index whose offsets go backwards, or whose blocks are larger than the sectors they decode to, is a failed read instead of data written outside the buffer, and reads of more than 256 sectors now go in slices (they used to fail every time). Ported from belomaxorka / YAOPL (0253f98b, 9ad4afeb, 147e2493, 4baf5921). NOT TESTED on hardware.
 
 ==== Version 0.9.3 ====
 CORE:
