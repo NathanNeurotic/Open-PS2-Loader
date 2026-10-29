@@ -1213,7 +1213,7 @@ void fntFitString(int id, char *string, size_t width)
                 *sp = osp;
                 cw = ww;
                 psp = sp;
-            } else {
+            } else if (osp != '\0') {
                 // no prev. space to hijack, must break after the word
                 // this will mean overflowed text...
                 *sp = '\n';
@@ -1224,6 +1224,11 @@ void fntFitString(int id, char *string, size_t width)
             *sp = osp;
             psp = sp;
         }
+
+        // belomaxorka/YAOPL a4c0830f: keep the final NUL and never
+        // scan beyond an exact-size theme/config string allocation.
+        if (osp == '\0')
+            break;
 
         cw += spacewidth;
         str = ++sp;
