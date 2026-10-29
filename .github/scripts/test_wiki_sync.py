@@ -32,7 +32,7 @@ class WikiConversionTests(unittest.TestCase):
 <table><thead><tr><th>Problem</th><th>Fix</th></tr></thead>
 <tbody><tr><td>Freeze</td><td>In smb.conf set
 <pre>keepalive = 0
-a|b &lt;x&gt;</pre>
+a|b &lt;x&gt; *em* `c` [l](u) ~~s~~ \\</pre>
 and restart Samba.</td></tr>
 <tr><td>Other</td><td>Two</td></tr></tbody></table></main>'''
         with tempfile.TemporaryDirectory() as temp:
@@ -42,7 +42,7 @@ and restart Samba.</td></tr>
         rendered = BeautifulSoup(wiki_sync.MD.render(result), "html.parser")
         self.assertEqual(len(rendered.select("table")), 1)
         self.assertEqual(len(rendered.select("td")), 4)
-        self.assertEqual(rendered.select_one("td pre").get_text(), "keepalive = 0\na|b <x>")
+        self.assertEqual(rendered.select_one("td pre").get_text(), "keepalive = 0\na|b <x> *em* `c` [l](u) ~~s~~ \\")
 
     def test_source_index_keeps_duplicate_headings_and_explicit_bookmarks(self):
         with tempfile.TemporaryDirectory() as temp:

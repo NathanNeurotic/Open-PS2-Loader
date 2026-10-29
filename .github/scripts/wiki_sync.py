@@ -228,11 +228,14 @@ class Converter(MarkdownConverter):
 
     # A Markdown table cell is one line, so a fenced code block cannot sit in it. Keep a code
     # example inside a cell as inline HTML instead: its line breaks become &#10; and a pipe
-    # becomes &#124;, so the cell stays on one line and the table keeps its columns.
+    # becomes &#124;, so the cell stays on one line and the table keeps its columns. Text
+    # between inline tags is still parsed as Markdown, so the other delimiters are encoded too.
     def convert_pre(self, el, text, parent_tags):
         if {"td", "th"} & parent_tags:
-            code = html.escape(el.get_text(), quote=False).replace("|", "&#124;").replace("\n", "&#10;")
-            return "<pre>" + code + "</pre>"
+            code = html.escape(el.get_text(), quote=False)
+            for char in "\\`*_[]()~|!":
+                code = code.replace(char, "&#%d;" % ord(char))
+            return "<pre>" + code.replace("\n", "&#10;") + "</pre>"
         return super().convert_pre(el, text, parent_tags)
 
     def convert_summary(self, el, text, parent_tags):
