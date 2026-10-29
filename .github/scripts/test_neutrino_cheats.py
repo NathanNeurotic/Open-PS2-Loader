@@ -290,8 +290,8 @@ if not re.search(r'if \(sbNeutrinoLoadCheats\([^;]+\) < 0\)\s*return gAutoLaunch
     failures.append('hddsupport.c: backing out of the cheats must stay in the menu')
 # A way back to the menu after sbPrepare must restore the IRX patch zone: sbPrepare finds it by the
 # pristine sample, so a zone left patched fails the next launch. MMCE launches that IRX natively, so each
-# Neutrino abort undoes it; UDPFS only borrows the SMB IRX as scratch and restores it right after the
-# cheats step, before any later return.
+# Neutrino abort undoes it; the UDPFS Neutrino leg only borrows the SMB IRX as scratch and restores it
+# right after the cheats step, before any later return.
 mmce = text('src/mmcesupport.c')
 for call in ('sysNeutrinoPreflight(', 'sysNeutrinoHandCheats(', 'sysNeutrinoArgsPreflight('):
     if not re.search(r'if \(' + re.escape(call) + r'[^;]+\) < 0\) \{(?: //[^\n]*)?\s*sbUnprepare\(&settings->common\);\s*return;', mmce):
@@ -299,7 +299,7 @@ for call in ('sysNeutrinoPreflight(', 'sysNeutrinoHandCheats(', 'sysNeutrinoArgs
 udpfs = text('src/udpfssupport.c')
 restore = udpfs.find('sbUnprepare((u8 *)(&smb_cdvdman_irx) + index);\n    sbLoadImage(')
 if not (0 <= udpfs.find('sbCheatsMissingContinue((u8 *)(&smb_cdvdman_irx) + index, result)') < restore <
-        udpfs.find('_STR_NET_NEEDS_NEUTRINO')):
+        udpfs.find('sysNeutrinoPreflight("udpfs"')):
     failures.append('udpfssupport.c: restore the scratch zone right after the cheats step, before any later return')
 if not re.search(r'if \(sysNeutrinoHandCheats\([^;]+\) < 0\)\s*return;', udpfs):
     failures.append('udpfssupport.c: backing out of the cheats hand-off must stay in the menu')
@@ -307,7 +307,7 @@ if not re.search(r'if \(sysNeutrinoHandCheats\([^;]+\) < 0\)\s*return;', udpfs):
 support = text('src/supportbase.c')
 calls = re.findall(r'sbLoadCheats\(([^;]*?)\)\) < 0', '\n'.join(text('src/' + f) for f in (
     'bdmsupport.c', 'ethsupport.c', 'hddsupport.c', 'httpsupport.c', 'mmcesupport.c', 'udpfssupport.c')))
-if len(calls) != 6 or any(not c.rstrip().endswith('configSet') for c in calls):
+if len(calls) != 7 or any(not c.rstrip().endswith('configSet') for c in calls):
     failures.append('every sbLoadCheats caller must pass the game config (found %r)' % calls)
 select = function(support, 'static void sbCheatsSelect(')
 if (select.find('cheatConfigLoadSelections(configSet);') < 0 or select.find('guiManageCheats(configSet);') <

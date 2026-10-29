@@ -130,6 +130,14 @@ struct cdvdman_settings_mmce
     int use_alarms;
 } __attribute__((packed));
 
+// UDPFS Files on the OPL core: the server handle of the ISO the menu keeps open on udpfs_ioman
+// (fileXioIoctl2 0x80). udpfs_fhi reads 512-byte sectors of it after the reset.
+struct cdvdman_settings_udpfs
+{
+    struct cdvdman_settings_common common;
+    int iso_handle;
+} __attribute__((packed));
+
 #define CDVDMAN_SETTINGS_DEFAULT_COMMON                                \
     {                                                                  \
         0x68, 0x68, 0x1234, 0x39393939, "DSKID", 16, 8, 16, 0x87654321 \

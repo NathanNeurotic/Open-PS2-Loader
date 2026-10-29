@@ -157,7 +157,7 @@ int GetOPLModInfo(int id, void **pointer, unsigned int *size)
 static int IsRequiredTransport(int id)
 {
     return id == OPL_MODULE_ID_PCCF || id == OPL_MODULE_ID_SMAP_UDPBD || id == OPL_MODULE_ID_UDPFS_SMAP ||
-           id == OPL_MODULE_ID_UDPFS_MINISTACK || id == OPL_MODULE_ID_UDPFS_BD;
+           id == OPL_MODULE_ID_UDPFS_MINISTACK || id == OPL_MODULE_ID_UDPFS_BD || id == OPL_MODULE_ID_UDPFS_FHI;
 }
 
 static void RequiredTransportFailed(void)

@@ -531,7 +531,7 @@ translations:
   HINT_BDMCACHE: Mezipaměť čtení dopředu pro USB a další disky BDM ve hře. Větší může vyhladit streamování, ale bere víc paměti.
   HINT_HDDCACHE: Mezipaměť čtení dopředu pro interní HDD ve hře.
   HINT_SMBCACHE: Mezipaměť čtení dopředu pro SMB ve hře.
-  HINT_CORE_LOADER: Jádro pro tuto hru tam, kde jsou podporována obě. UDPFS Files jen Neutrino; SMB/HTTP jen <OPL>. Výchozí se řídí Spouštěním her. Na UDPBD/UDPFS IMG je Výchozí Neutrino.
+  HINT_CORE_LOADER: Jádro pro tuto hru tam, kde jsou podporována obě. SMB/HTTP jen <OPL>. Výchozí se řídí Spouštěním her. Na UDPFS/UDPBD je Výchozí Neutrino.
   HINT_DMA_MODE: Režim přenosu interního HDD pro tuto hru. Snižte ho, pokud se hra trhá nebo zamrzá.
   HINT_DNAS_GAMEID: ID disku pro online hry DNAS. Načíst z disku ho přečte z originálního disku.
   HINT_LOAD_FROM_DISC: Přečte ID DNAS z originálního disku v mechanice.

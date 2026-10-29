@@ -1,9 +1,9 @@
-"""Guard against accidental divergence of the two UDPFS transport implementations."""
+"""Guard against accidental divergence of the UDPFS transport builds (filesystem, block device, in-game FHI)."""
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 root = ROOT / "modules" / "network"
 
-for variant in ("udpfs_ioman", "udpfs_bd"):
+for variant in ("udpfs_ioman", "udpfs_bd", "udpfs_fhi"):
     make = (root / variant / "Makefile").read_text()
     assert "IOP_SRC_DIR := src/" in make
     # GNU Make defaults to the first explicit target. Do not let incremental
@@ -29,7 +29,7 @@ for variant in ("udpfs_ioman", "udpfs_bd"):
     for header in ("udpfs_core.h", "udprdma.h", "udprdma_seq.h",
                    "udpfs_packet.h", "udprdma_packet.h"):
         this = (root / variant / "src" / header).read_bytes()
-        other = (root / ("udpfs_bd" if variant == "udpfs_ioman" else "udpfs_ioman")
+        other = (root / ("udpfs_ioman" if variant == "udpfs_bd" else "udpfs_bd")
                  / "src" / header).read_bytes()
         assert this == other, (variant, header)
 
@@ -44,4 +44,4 @@ assert transport.count("covered = _wait_ack(socket, sent_seq_nr);") == 2
 # A (re)discover restarts the session's sequence state.
 assert transport.count("_reset_session(socket);") == 1
 assert "udpfs_core_init(" in core
-print("PASS: filesystem and block UDPFS builds use identical canonical transport sources")
+print("PASS: filesystem, block and in-game FHI UDPFS builds use identical canonical transport sources")

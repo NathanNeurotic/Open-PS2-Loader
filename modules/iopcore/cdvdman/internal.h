@@ -54,6 +54,9 @@
 #elif MMCE_DRIVER
 #define CDVDMAN_SETTINGS_TYPE cdvdman_settings_mmce
 #define CDVDMAN_SETTINGS_DEFAULT_DEVICE_SETTINGS
+#elif UDPFS_DRIVER
+#define CDVDMAN_SETTINGS_TYPE cdvdman_settings_udpfs
+#define CDVDMAN_SETTINGS_DEFAULT_DEVICE_SETTINGS
 #else
 #error Unknown driver type. Please check the Makefile.
 #endif
@@ -116,6 +119,9 @@ extern void cdvdman_cb_event(int reason);
 // VMC page I/O through the oplutils exports MCEMU calls, so oplShutdown can let a save finish.
 extern void cdvdman_vmc_io_begin(int is_write);
 extern void cdvdman_vmc_io_end(void);
+
+// Resets the USB host controller if it is still running (OHCI UsbOperational). See cdvdman.c.
+extern void cdvdman_usb_host_stop(void);
 
 extern void cdvdman_init(void);
 extern void cdvdman_fs_init(void);

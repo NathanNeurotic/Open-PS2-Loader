@@ -71,6 +71,16 @@ IOP_LIBS += -L$(PS2SDK)/iop/lib -lbdm
 USE_DEV9 = 1
 endif
 
+# OPL-core UDPFS Files games: udpfs_fhi, which the EE core reloads after the reset, imports dev9 from
+# this cdvdman and reads the ISO by the server handle the menu kept open.
+ifeq ($(USE_UDPFS),1)
+IOP_BIN  = udpfs_cdvdman.irx
+IOP_OBJS_DIR = obj.udpfs/
+IOP_OBJS += device-udpfs.o
+IOP_CFLAGS += -DUDPFS_DRIVER
+USE_DEV9 = 1
+endif
+
 ifeq ($(USE_PCCF),1)
 IOP_BIN = pccf_cdvdman.irx
 IOP_OBJS_DIR = obj.pccf/
