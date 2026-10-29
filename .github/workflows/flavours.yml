@@ -386,6 +386,8 @@ jobs:
         run: python3 .github/scripts/test_sio2man_hooks.py
       - name: Check native SIO2MAN packing follows active VMC/PADEMU and preserves MMCE
         run: python3 .github/scripts/test_mmce_sio2man_pack.py
+      - name: Check DS3/DS4 USB report transfers and IOP alarm cancels
+        run: python3 .github/scripts/test_ds34usb_report_transfer.py
       - name: Check local transport binding and iLink aliases cannot cross-wire devices
         run: python3 .github/scripts/test_bdm_transport_binding.py
       - name: Check BDM partition I/O bounds and sector-size refusal

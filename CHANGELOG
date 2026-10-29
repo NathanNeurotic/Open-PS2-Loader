@@ -19,6 +19,7 @@
 * SMB games: a read whose reply the server cuts off mid-message (for example Samba dropping an idle PS2) now fails instead of freezing the game with the SMB lock held. Credit belomaxorka/YAOPL e16e2d15. Host-tested; hardware validation pending.
 * IGR and power-off stop the USB host controller before the IOP reset, so IGR with a USB PADEMU pad (DualShock 3) or a USB device no longer hangs before the next program. Credit belomaxorka/YAOPL e72c9f48. Host-tested; hardware validation pending.
 * MMCE Game ID: an SD2PSX that stops answering while it swaps cards is waited out (bounded at 7.5 s) instead of ending the wait, so the game no longer starts while its memory card is still switching. Cards without a busy query still launch at once. Credit belomaxorka/YAOPL 19578cc6 and akilluminati47 (RIPPS2) for the wait it extends. Host-tested; hardware validation pending.
+* DS3/DS4 on USB: each pad now has its own report buffer and completion, a report transfer that timed out is waited out instead of being overwritten by the next one, and the DS3 enable report no longer shares the rumble/LED buffer. The 200 ms transfer timeout is now actually cancelled (it was cancelled with the wrong argument, so it fired later and woke the next transfer early); this also fixes the menu driver. Ported from belomaxorka / YAOPL (1ef5b49c, 4b1106e4, c4a82e95). NOT TESTED on hardware.
 
 ==== Version 0.9.3 ====
 CORE:
