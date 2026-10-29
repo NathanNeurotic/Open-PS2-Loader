@@ -77,7 +77,7 @@
   </nav>
   <main class="content">
 <h1>Network Boot (SMB / UDP)</h1>
-<p class="lead">UDPFS and UDPBD stream PS2 games from a PC and require Neutrino. Set <b>Network Connectivity</b> (Off / Manual / Auto) in <b>Game Sources</b> and choose the <b>Protocol</b> indented under it (the same row is on the <b>Network</b> page). The picker contains SMB / UDPFS / UDPBD / HTTP. SMB and <a href="http.html">HTTP</a> use OPL's own core; HTTP has separate setup and limits.</p>
+<p class="lead">UDPFS and UDPBD stream PS2 games from a PC. They launch through Neutrino by default; UDPBD and UDPFS IMG games can also run on OPL's own core, per game. Set <b>Network Connectivity</b> (Off / Manual / Auto) in <b>Game Sources</b> and choose the <b>Protocol</b> indented under it (the same row is on the <b>Network</b> page). The picker contains SMB / UDPFS / UDPBD / HTTP. SMB and <a href="http.html">HTTP</a> use OPL's own core; HTTP has separate setup and limits.</p>
 
 <div class="callout info"><div class="h">Four rows, Off by default</div>
 The old <b>Network Boot</b> ON/OFF toggle and the separate <b>Net Boot Protocol</b> picker are retired
@@ -119,14 +119,14 @@ PC-side server. Pick a protocol only when you have those pieces in place. Local 
   <b>block device</b> (<code>massN:</code>, disk image), set by <b>Access</b> below</td>
   <td><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> (recommended, PC) /
   <a href="https://github.com/YouKnow-sys/udpfs-server">udpfs-server</a> (Android) / <code>udpfsd</code></td>
-  <td>Neutrino only</td>
+  <td>Files: Neutrino only. IMG: Neutrino by default, <code>&lt;OPL&gt;</code> per game</td>
 </tr>
 <tr>
   <td><b>UDPBD</b></td>
   <td>SUDPBDv2</td>
   <td>a served disk image mounted as <code>massN:</code></td>
   <td><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> (recommended) / <code>udpbd-server</code></td>
-  <td>Neutrino only</td>
+  <td>Neutrino by default, <code>&lt;OPL&gt;</code> per game</td>
 </tr>
 <tr><td><b>HTTP</b></td><td>HTTP byte ranges</td><td>games.csv catalog and ISO streams</td><td>Server meeting the <a href="http.html">client profile</a></td><td>OPL core; hardware validation pending</td></tr>
 </tbody>
@@ -291,8 +291,10 @@ the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
   <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> directly. The standalone
   <code>udpbd-server</code> (SUDPBDv2) does <b>not</b> work with UDPFS — it belongs to the separate
   <b>Protocol</b> = <b>UDPBD</b> choice.</li>
-  <li><b>Neutrino ELF</b> for UDPFS. UDPFS (Files and IMG) always launches via Neutrino;
-  if <code>neutrino.elf</code> is not found at launch, RiptOPL warns and returns to the menu. The
+  <li><b>Neutrino ELF</b> for UDPFS. UDPFS Files always launches via Neutrino; if
+  <code>neutrino.elf</code> is not found at launch, RiptOPL warns and returns to the menu. UDPFS IMG
+  launches via Neutrino by default and falls back to OPL's own core without it (see
+  <a href="#neutrino-only">Which core runs a network game</a>). The
   UDPFS feature ships its <b>own bundled Neutrino</b> (a ready-to-use <code>neutrino/</code> folder in
   the release zip, pre-populated with the UDPFS config). See <a href="neutrino.html">Neutrino
   Core</a>. <i>(SMB needs no Neutrino — it uses OPL's own core.)</i></li>
@@ -356,20 +358,30 @@ udpfsd.exe -bdpath C:\path\to\games.img  # IMG   (Windows)
 <h3>Boot the PS2 and find your games</h3>
 <p>RiptOPL loads the IOP module as soon as it starts. UDPFS <b>Files</b> mounts the <code>udpfs:</code>
 filesystem; UDPFS <b>IMG</b> mounts the served image as <code>massN:</code>. Your games appear in the
-UDPFS games list. Select a game and launch it — Neutrino is invoked automatically; SMB boots through
-OPL's own core.</p>
+UDPFS games list. Select a game and launch it — Neutrino is invoked automatically unless the game's Loader Core is
+<code>&lt;OPL&gt;</code> (UDPBD and UDPFS IMG only); SMB boots through OPL's own core.</p>
 </div>
 </div>
 
-<h2 id="neutrino-only">Neutrino-only: no OPL core fallback (UDPFS)</h2>
+<h2 id="neutrino-only">Which core runs a network game</h2>
 
-<p>UDPFS (both Files and IMG) has no embedded <code>cdvdman</code> backend, so it cannot use OPL's
-built-in EE core. Every UDPFS game launches via Neutrino, regardless of the per-game <b>Loader Core</b>
-setting. In the per-game Compatibility screen, the Loader Core selector is <b>locked to Neutrino</b> on
-the block-device tabs (UDPFS <b>IMG</b> and UDPBD) — it cannot be changed to <code>&lt;OPL&gt;</code>;
-the UDPFS <b>Files</b> tab also locks the selector, including Favorites resolved to these sources. If
-<code>neutrino.elf</code> is missing when a game is launched, OPL shows a warning and returns to the
-menu; it does not attempt an OPL-core fallback.</p>
+<p><b>UDPFS Files</b> has no OPL core backend. Every UDPFS Files game launches via Neutrino, whatever
+the per-game <b>Loader Core</b> says, and its Loader Core selector is <b>locked to Neutrino</b>, including
+Favorites that resolve back to it. If <code>neutrino.elf</code> is missing, OPL shows a warning and
+returns to the menu.</p>
+
+<p><b>UDPBD and UDPFS IMG</b> (the block-device tabs) launch via Neutrino by default, even when the
+global Default Loader Core is <code>&lt;OPL&gt;</code>. Set a game's Loader Core to <code>&lt;OPL&gt;</code>
+to run it on OPL's own core instead (ported from YAOPL). The selector stays open, and its <b>Default</b>
+entry means Neutrino on these tabs. If the Neutrino launch cannot start (no <code>neutrino.elf</code>, a
+<code>.zso</code> image, too many fragments), the game falls back to the OPL core; a missing or
+unwritable bsd toml still returns to the menu with its message.</p>
+
+<p>On the OPL core the game keeps the network: after the IOP reset OPL reloads the same block driver
+the menu used, gives it the static PS2 IP from <b>Settings → Network</b>, and fakes the game's own DEV9
+and SMAP modules. There is no RetroAchievements telemetry and no in-game UDPTTY on that path. UDPBD
+reads at most 16 KiB per request. If the block driver does not start, the screen blinks red and the
+console stops instead of hanging on black. <b>Not tested on hardware yet.</b></p>
 
 <p><b>SMB is different:</b> it is served by OPL's own core, needs no Neutrino, and behaves like the
 classic OPL network share. See <a href="smb.html">SMB (network share)</a>.</p>
