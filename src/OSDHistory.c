@@ -273,6 +273,10 @@ static void GetBootFilename(const char *bootpath, char *filename)
             if (length > 2 && bootpath[length - 1] == '1' && bootpath[length - 2] == ';')
                 length -= 2;
             length -= (i + 1);
+            // belomaxorka/YAOPL 80c5558d bounds the copy. Clamp to the 15 characters AddHistoryRecord()
+            // stores in HistoryEntry.name, so its 16-byte compare finds the same record on the next launch.
+            if (length > 15)
+                length = 15;
             strncpy(filename, &bootpath[i + 1], length);
             filename[length] = '\0';
             break;
@@ -280,7 +284,8 @@ static void GetBootFilename(const char *bootpath, char *filename)
     }
 
     if (i == 0) { // The boot path contains only the filename.
-        strcpy(filename, bootpath);
+        strncpy(filename, bootpath, 15);
+        filename[15] = '\0';
     }
 }
 
