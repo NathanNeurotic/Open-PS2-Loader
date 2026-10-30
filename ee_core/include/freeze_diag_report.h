@@ -9,6 +9,7 @@
 #define FREEZE_DIAG_REPORT_H
 
 #include "../../modules/iopcore/common/freeze_diag.h"
+#include "../../modules/iopcore/common/heap_diag.h"
 
 #define FREEZE_DIAG_MAX_THREADS 16
 
@@ -26,6 +27,13 @@ enum {
     FREEZE_DIAG_SHUTDOWN_DONE = 0,
     FREEZE_DIAG_SHUTDOWN_TIMEOUT, // sent, never finished within the budget
     FREEZE_DIAG_SHUTDOWN_SKIPPED, // not sent: the IOP did not answer the report request
+};
+
+// What took the report.
+enum {
+    FREEZE_DIAG_TRIGGER_COMBO = 0,
+    FREEZE_DIAG_TRIGGER_POWER, // the power button, pressed once or twice
+    FREEZE_DIAG_TRIGGER_STALL, // the pad data stopped (padhook.c's watchdog): the IOP stopped sending it
 };
 
 typedef struct freeze_diag_thread
@@ -46,6 +54,8 @@ typedef struct freeze_diag_report
     unsigned int compat;
     unsigned int cheats;
     unsigned int gsm;
+    unsigned int pademu;
+    unsigned int trigger; // FREEZE_DIAG_TRIGGER_*
     unsigned int iop_resets;
     unsigned int iop_reset_failures;
     unsigned int igr_polls;
@@ -64,5 +74,8 @@ typedef struct freeze_diag_report
 // Writes the report as text into out (at most cap - 1 characters, always terminated) and returns
 // the number of characters written.
 int freeze_diag_format(const freeze_diag_report_t *r, const char *build, char *out, int cap);
+
+// Writes the IOP heap part of the report (heap_diag.h) the same way.
+int freeze_diag_format_heap(const heap_diag_snapshot_t *h, char *out, int cap);
 
 #endif

@@ -44,6 +44,7 @@
 #endif
 #ifdef INGAMEDIAG
 #include "freeze_diag_core.h"
+#include "freeze_diag_report.h"
 #endif
 
 /* scePadPortOpen & scePad2CreateSocket prototypes */
@@ -55,6 +56,16 @@ static paddata_t Pad_Data;
 
 /* Monitored power button data */
 static powerbuttondata_t Power_Button;
+
+#ifdef INGAMEDIAG
+// Freeze watchdog: padman's thread sends the pad buffer every frame while the IOP runs. A frame counter that stopped
+// this long, after it once ran, takes the report as the combo would: a stuck IOP sends no combo either. About 15 s
+// (18 s on PAL); a game that closes its pad port for longer than that gets the report too.
+#define FREEZE_DIAG_STALL_VBLANKS 900
+static unsigned int Freeze_Stall_Vb;
+static u8 Freeze_Stall_Frame;
+static int Freeze_Stall_Fired;
+#endif
 
 /* How IGR watches the pad: a VBLANK_END interrupt handler, in every build (issue #984).
  *
@@ -259,6 +270,18 @@ static void IGR_CheckInputs(void)
         pad_pos_combo1 = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_combo1];
         pad_pos_combo2 = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_combo2];
 
+#ifdef INGAMEDIAG
+        if (padOpen_hooked && Pad_Data.combo_type == 0x00) {
+            if (pad_pos_frame != Freeze_Stall_Frame) {
+                Freeze_Stall_Frame = pad_pos_frame;
+                Freeze_Stall_Vb = 0;
+            } else if (++Freeze_Stall_Vb >= FREEZE_DIAG_STALL_VBLANKS) {
+                Freeze_Stall_Fired = 1;
+                Pad_Data.combo_type = IGR_COMBO_START_SELECT;
+            }
+        }
+#endif
+
         // First check pad state
         if (((Pad_Data.libpad == IGR_LIBPAD) && (pad_pos_state == IGR_PAD_STABLE_V1)) ||
             ((Pad_Data.libpad == IGR_LIBPAD2) && (pad_pos_state == IGR_PAD_STABLE_V2))) {
@@ -324,10 +347,16 @@ static void IGR_CheckInputs(void)
         if (Power_Button.press) {
             // Check number of power button press after 1 ~ sec
             if (Power_Button.vb_count++ >= 50) {
+#ifdef INGAMEDIAG
+                // One press or two: the report. Its page then waits for one more; holding the button still
+                // powers the console off.
+                Pad_Data.combo_type = IGR_COMBO_START_SELECT;
+#else
                 if (Power_Button.press == 1)
                     Pad_Data.combo_type = IGR_COMBO_R3_L3; // power button press 1 time, so poweroff
                 else
                     Pad_Data.combo_type = IGR_COMBO_START_SELECT; // power button press 2 time, so reset
+#endif
             }
         }
 
@@ -435,7 +464,10 @@ static void IGR_Thread(void *arg)
             pad_state = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_state];
             pad_frame = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_frame];
         }
-        FreezeDiag_Begin(Pad_Data.libpad, pad_state, pad_frame);
+        FreezeDiag_Begin(Pad_Data.libpad, pad_state, pad_frame,
+                         Freeze_Stall_Fired ? FREEZE_DIAG_TRIGGER_STALL :
+                         Power_Button.press ? FREEZE_DIAG_TRIGGER_POWER :
+                                              FREEZE_DIAG_TRIGGER_COMBO);
     }
 #endif
 
@@ -673,6 +705,9 @@ void Invalidate_PadBuffer(void)
     Pad_Data.pad_buf = NULL;
     Pad_Data.vb_count = 0;
     Pad_Data.prev_frame = 0;
+#ifdef INGAMEDIAG
+    Freeze_Stall_Vb = 0; // a new buffer starts its own count
+#endif
 
     if (intr)
         EI();
@@ -706,6 +741,9 @@ static void Set_libpad_Params(void *addr)
     Pad_Data.vb_count = 0;
     Pad_Data.prev_frame = 0;
     Pad_Data.pad_buf = addr;
+#ifdef INGAMEDIAG
+    Freeze_Stall_Vb = 0;
+#endif
 
     if (intr)
         EI();

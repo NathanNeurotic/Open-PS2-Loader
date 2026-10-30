@@ -19,7 +19,7 @@ static int failures = 0;
         }                                                   \
     } while (0)
 
-static char out[4096];
+static char out[16384];
 
 static void base_report(freeze_diag_report_t *r)
 {
@@ -71,7 +71,7 @@ int main(void)
     r.threads[1].prio = 30;
     len = freeze_diag_format(&r, "v1.2.0-Beta-1-abc-OFFICIALROLLING-FREEZEDIAG", out, sizeof(out));
     CHECK(len > 0 && len == (int)strlen(out), "returns the string length");
-    CHECK(contains("RiptOPL in-game freeze report v1"), "title");
+    CHECK(contains("RiptOPL in-game freeze report v2"), "title");
     CHECK(contains("build=v1.2.0-Beta-1-abc-OFFICIALROLLING-FREEZEDIAG"), "build line");
     CHECK(contains("game=SLUS_210.00"), "game id");
     CHECK(contains("compat=0x0000000A"), "compat mask in hex");
@@ -194,6 +194,62 @@ int main(void)
     memset(r.game_id, 'A', sizeof(r.game_id));
     freeze_diag_format(&r, "b", out, sizeof(out));
     CHECK(contains("game=AAAAAAAAAAAAAAAA\n"), "unterminated game id bounded");
+
+    // IOP heap record: sizes the EE copies by, module lookup, address order, the overrun flag.
+    {
+        static heap_diag_snapshot_t h;
+
+        CHECK(sizeof(heap_diag_iop_t) == HEAP_DIAG_IOP_SIZE, "heap record size matches HEAP_DIAG_IOP_SIZE");
+        CHECK(sizeof(heap_diag_iop_t) % 16 == 0, "heap record is a whole number of 16-byte blocks");
+        CHECK(sizeof(heap_diag_snapshot_t) == HEAP_DIAG_SNAPSHOT_SIZE, "snapshot size matches HEAP_DIAG_SNAPSHOT_SIZE");
+        CHECK(sizeof(heap_diag_snapshot_t) % 16 == 0, "snapshot is a whole number of SIF DMA blocks");
+
+        memset(&h, 0, sizeof(h));
+        len = freeze_diag_format_heap(&h, out, sizeof(out));
+        CHECK(len > 0 && contains("heap=none"), "no record found");
+
+        h.found = 1;
+        h.found_at = 0x1A2B0;
+        h.iop.version = HEAP_DIAG_VERSION;
+        h.iop.allocs = 40;
+        h.iop.free_now = 300000;
+        h.iop.free_min = 120000;
+        h.iop.module_count = 2;
+        memcpy(h.iop.modules[0].name, "cdvdman", 7);
+        h.iop.modules[0].text_start = 0x20000;
+        h.iop.modules[0].size = 0x8000;
+        memcpy(h.iop.modules[1].name, "sounddrv", 8); // exactly 8: no terminator
+        h.iop.modules[1].text_start = 0x60000;
+        h.iop.modules[1].size = 0x4000;
+        h.iop.blocks[3].addr = 0x90000; // listed out of order on purpose
+        h.iop.blocks[3].size = 2304;
+        h.iop.blocks[3].ra = 0x60123;
+        h.iop.blocks[3].seq = 7;
+        h.tail_ff[3] = 1792;
+        h.iop.blocks[5].addr = 0x80000;
+        h.iop.blocks[5].size = 25344;
+        h.iop.blocks[5].ra = 0x123456; // in no module
+        h.iop.blocks[5].seq = 3;
+        h.tail_ff[5] = 12; // too short to call an overrun
+        len = freeze_diag_format_heap(&h, out, sizeof(out));
+        CHECK(len > 0 && len == (int)strlen(out), "heap returns the string length");
+        CHECK(contains("heap=found at=0x0001A2B0 allocs=40"), "heap summary");
+        CHECK(contains("heap_free now=300000 lowest=120000"), "free memory");
+        CHECK(contains("module name=sounddrv text=0x00060000"), "8-character module name bounded");
+        CHECK(contains("by=sounddrv+0x00000123"), "caller resolved to module+offset");
+        CHECK(contains("by=0x00123456"), "caller outside every module stays an address");
+        CHECK(strstr(out, "addr=0x00080000") < strstr(out, "addr=0x00090000"), "blocks listed by address");
+        CHECK(contains("size=2304 by=sounddrv+0x00000123 seq=7 ff_after=1792 OVERRUN?"), "long 0xFF run flagged");
+        CHECK(!contains("ff_after=12 OVERRUN?"), "short 0xFF run not flagged");
+        CHECK(contains("heap_hint=the 2304-byte block from sounddrv+0x00000123 is followed by 1792 bytes of 0xFF"), "overrun hint");
+
+        h.iop.fails = 1;
+        h.iop.failed[0].size = 65536;
+        h.iop.failed[0].ra = 0x60010;
+        len = freeze_diag_format_heap(&h, out, sizeof(out));
+        CHECK(contains("failed_alloc size=65536 mode=0 by=sounddrv+0x00000010"), "failed allocation listed");
+        CHECK(contains("heap_hint=1 IOP allocation(s) failed"), "failed-allocation hint first");
+    }
 
     if (failures == 0)
         printf("test_freeze_diag_format: all checks passed\n");

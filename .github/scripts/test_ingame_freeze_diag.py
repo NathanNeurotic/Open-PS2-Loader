@@ -77,8 +77,8 @@ for rel in [
         FAILURES.append("report code outside #ifdef INGAMEDIAG: " + line)
 
 ee_make = read("ee_core/Makefile")
-check(re.search(r"ifeq \(\$\(INGAMEDIAG\),1\)\nEE_OBJS \+= freeze_diag\.o\n", ee_make) is not None,
-      "ee_core builds freeze_diag.o only under INGAMEDIAG (formatting and file I/O live in freezediag.irx)")
+check(re.search(r"ifeq \(\$\(INGAMEDIAG\),1\)\nEE_OBJS \+= freeze_diag\.o freeze_diag_screen\.o\n", ee_make) is not None,
+      "ee_core builds freeze_diag.o only under INGAMEDIAG and its TV page (formatting and file I/O live in freezediag.irx)")
 for rel in ["modules/iopcore/cdvdman/Makefile", "modules/iopcore/cdvdfsv/Makefile"]:
     check(re.search(r"ifeq \(\$\(INGAMEDIAG\),1\)\nIOP_CFLAGS \+= -DINGAMEDIAG\n", read(rel)) is not None,
           f"{rel} defines INGAMEDIAG only when asked")
@@ -180,6 +180,19 @@ flav = read(".github/workflows/flavours.yml")
 check(re.search(r"- flavour: OFFICIALROLLING-FREEZEDIAG\n\s+image: ghcr\.io/ps2homebrew/ps2homebrew:main\n(?:\s+\w+: [^\n]*\n)*?\s+ingamediag: \"1\"", flav) is not None,
       "OFFICIALROLLING-FREEZEDIAG flavour on the toolchain testers run")
 check("INGAMEDIAG=${{ matrix.ingamediag || '0' }}" in flav, "the build step passes INGAMEDIAG")
+
+# The TV page: drawn before anything asks the IOP (its composer's host test runs in flavours.yml).
+core_src = read("ee_core/src/freeze_diag.c")
+begin = core_src[core_src.index("void FreezeDiag_Begin("):]
+begin = begin[:begin.index("\n}\n")]
+check(begin.index("heap_snapshot();") < begin.index("FreezeDiag_Screen(&report, HEAP_SNAPSHOT);"),
+      "the TV page shows the heap snapshot, taken first")
+check("Sif" not in read("ee_core/src/freeze_diag_screen.c"), "the TV page asks nothing of the IOP")
+pad = read("ee_core/src/padhook.c")
+thread = pad[pad.index("static void IGR_Thread(void *arg)"):]
+check(thread.index("FreezeDiag_Begin(") < thread.index("SifInitRpc(0);"), "the report (and its TV page) comes before the first SIF call")
+check("FREEZE_DIAG_STALL_VBLANKS" in pad and "Freeze_Stall_Fired = 1;" in pad, "the pad-data watchdog takes the report on its own")
+check("freeze_diag_screen.o" in read("ee_core/Makefile"), "the TV page is built in the flavour")
 
 if FAILURES:
     for f in FAILURES:

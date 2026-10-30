@@ -104,6 +104,8 @@ IOP_INCS += -I../common
 # In-game freeze report (top Makefile INGAMEDIAG=1, the FREEZEDIAG flavour). Run make clean when switching it.
 ifeq ($(INGAMEDIAG),1)
 IOP_CFLAGS += -DINGAMEDIAG
+# The IOP heap record ee_core reads for the report (../common/heap_diag.h).
+IOP_OBJS += heapdiag.o
 endif
 
 ifeq ($(IOPCORE_DEBUG),1)
