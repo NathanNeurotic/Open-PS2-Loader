@@ -22,6 +22,7 @@
 #include "include/favsupport.h" // gFAVStartMode -- Favourites Start Mode row
 #include "include/gamemanage.h" // Hide Game and Delete everything (RIPPS2)
 #include "include/pad.h"
+#include "include/menuwatch.h"
 #include "include/sound.h" // sfxGetPlayDiag/sfxGetDropDiag -- SFX RPC cost + silent-drop counters for the debug HUD
 #include "include/util.h"
 #include "include/config.h"
@@ -4896,17 +4897,22 @@ void guiMainLoop(void)
         bgmStart();
 
     while (!gTerminate) {
+        menuWatchStep(MENUWATCH_FRAME_START);
         guiStartFrame();
 
         // Read the pad states to prepare for input processing in the screen handler
+        menuWatchStep(MENUWATCH_PADS);
         guiReadPads();
 
         // handle inputs and render screen
+        menuWatchStep(MENUWATCH_SHOW);
         guiShow();
 
         // Render overlaying gui thingies :)
+        menuWatchStep(MENUWATCH_OVERLAYS);
         guiDrawOverlays();
 
+        menuWatchStep(MENUWATCH_NOTIFICATIONS);
         // The DHCP notice is a misconfiguration warning, not a courtesy popup -- show it even
         // when the user has notifications off (it explains an otherwise-silent empty games page).
         if (gEnableNotifications || showNetDhcpPopup)
@@ -4921,15 +4927,19 @@ void guiMainLoop(void)
         guiRenderToast();
 
         // handle deferred operations
+        menuWatchStep(MENUWATCH_DEFERRED);
         guiHandleDeferredOps();
 
+        menuWatchStep(MENUWATCH_FRAME_END);
         guiEndFrame();
 
         // if not transiting, handle input
         // done here so we can use renderman if needed
+        menuWatchStep(MENUWATCH_INPUT);
         if (!screenHandlerTarget && screenHandler)
             screenHandler->handleInput();
 
+        menuWatchStep(MENUWATCH_FRAME_HOOK);
         if (gFrameHook)
             gFrameHook();
     }
