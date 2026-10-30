@@ -1,6 +1,7 @@
 // igrmenu: the in-game menu's renderer (ee_core/src/igrmenu.c, IGR_MENU_HOST_TEST) and its cheat list
 // (ee_core/include/igrcheats.h): what a page draws, which items it lists, and the code set CHEATS builds.
 // IGRMENU_PPM=<dir> also writes each page as a picture, to look at.
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
