@@ -291,7 +291,9 @@ def ra_release_links(html: str, releases: bool = False) -> str:
         '<section class="callout info" id="ra-release-channel"><div class="h">RetroAchievements downloads</div>'
         f'<p>The <a href="{base}/tag/rolling-ra">single experimental RetroAchievements release</a> '
         'offers both <b>inceBtion</b> and <b>Korium</b> themes. Choose one complete theme kit. '
-        'Both use the same RiptOPL source revision and pinned ORBIT runtime. '
+        'Both use the same RiptOPL source revision and the pinned '
+        '<a href="https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2">ORBIT Neutrino RA runtime v1.0.2</a>, '
+        'which replaces upstream Neutrino in the RA kits. '
         'Standard Rolling and Korium downloads contain standard builds only. '
         'Installing the other RA theme replaces the same <code>APP_RIPTOPL-RA</code> app. '
         'See the <a href="retroachievements.html">RA setup guide and compatibility limits</a>.</p></section>'
@@ -327,7 +329,8 @@ def ra_release_links(html: str, releases: bool = False) -> str:
                 '<code>RIPTOPL-RetroAchievements-Korium-&lt;version&gt;.zip</code></td>'
                 f'<td>Both full theme kits in <a href="{base}/tag/rolling-ra">one RA release</a>. '
                 'Each includes the ready official-toolchain app, ps2dev comparison apps, artwork, '
-                'PSU, POPS, Ember, pinned ORBIT Neutrino and companion links. '
+                'PSU, POPS, Ember, the pinned <a href="https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2">'
+                'ORBIT Neutrino RA runtime v1.0.2</a> (in place of upstream Neutrino) and companion links. '
                 'Experimental: review the <a href="retroachievements.html">setup and limits</a>.</td>'
             ),
         }

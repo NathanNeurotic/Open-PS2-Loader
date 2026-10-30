@@ -79,7 +79,9 @@ def stage(archive: Path, destination: Path, pin: dict) -> None:
         "\n"
         "In the RA edition every Neutrino launch uses this runtime, so upstream changes made\n"
         "after Neutrino v1.8.0 (including Neutrino cheats) are not available here. Use the\n"
-        "standard RiptOPL kit for those.\n", encoding="utf-8")
+        "standard RiptOPL kit for those.\n"
+        "\n"
+        f"ORBIT Neutrino RA runtime {pin['tag']}: https://github.com/{pin['repository']}/releases/tag/{pin['tag']}\n", encoding="utf-8")
 
 
 def main():
