@@ -2258,3 +2258,14 @@ gui_strings:
 
 - label: HINT_IGR_MENU
   string: "The IGR combo pauses the game under a menu: Resume, Cheats, Exit Game, Power Off. OPL core games on a real PS2 only; where it cannot draw, the combo leaves the game as before."
+
+- comment: Coverflow Settings dialog. Grid Layout picks how many covers a Grid view page shows; the presets follow RIPPS2's grid (by akilluminati47). "4 x 2" and the other sizes are not translated; "Large" reuses LARGE.
+  label: GRID_LAYOUT
+  string: Grid Layout
+
+- label: HINT_GRID_LAYOUT
+  string: "Covers per page in the Grid view: the theme's own, or 4 x 2, 5 x 2, 3 x 2 Large or 6 x 3 Compact (wider on a 16:9 picture)."
+
+- comment: Grid Layout's smallest covers, shown as "6 x 3 Compact".
+  label: GRID_COMPACT
+  string: Compact

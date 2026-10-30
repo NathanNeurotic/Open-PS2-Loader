@@ -8,8 +8,8 @@
 #define GRID_DEFAULT_ROWS    3
 #define GRID_DEFAULT_COLUMNS 4
 #define GRID_MAX_ROWS        4
-#define GRID_MAX_COLUMNS     6
-#define GRID_MAX_CELLS       16 // the visible covers plus room to warm must fit COVER_CACHE_SLOTS (20)
+#define GRID_MAX_COLUMNS     8  // RIPPS2's 8 x 3 Compact on a 16:9 picture
+#define GRID_MAX_CELLS       24 // a page; the cover cache holds two (one slides out as the next slides in)
 #define GRID_DEFAULT_SPACING 16
 
 // Clamps a theme's rows/columns so the grid stays within GRID_MAX_CELLS; columns win over rows.
@@ -59,7 +59,8 @@ static inline int gridPageStep(int count, int index, int rows, int columns, int 
 #define GRID_SELECTED_SCALE 112
 
 // Up (dir < 0) or Down (dir > 0) one row, keeping the column. A short last row takes its last cover.
-// -1 when there is no row that way: the caller switches device page instead, as Up/Down do in Coverflow.
+// -1 when there is no row that way: the cursor stays when the device sidebar is on (devices change there,
+// as in RIPPS2's grid), else the caller switches device page, as Up/Down do in Coverflow.
 static inline int gridRowStep(int count, int index, int columns, int dir)
 {
     if (count <= 0 || columns < 1 || index < 0 || index >= count)
@@ -70,6 +71,44 @@ static inline int gridRowStep(int count, int index, int columns, int dir)
     if (row == lastRow)
         return -1;
     return index + columns < count ? index + columns : count - 1;
+}
+
+// Settings > Interface > Coverflow Settings > Grid Layout, after RIPPS2's (build 91/98, akilluminati47): 0 the
+// theme's own layout, else a preset that replaces the theme's rows, columns, cover size and spacing. A 16:9
+// picture draws a cover at three quarters of its width, so each preset has a wider twin for it.
+#define GRID_LAYOUTS 4 // presets, after "Theme"
+typedef struct
+{
+    int columns, rows, width, height, spacing;
+} grid_layout_t;
+
+// 1 and the preset in *out for layout 1..GRID_LAYOUTS; 0 (the theme's) for anything else.
+static inline int gridLayoutPreset(int layout, int wide, grid_layout_t *out)
+{
+    static const grid_layout_t sd[GRID_LAYOUTS] = {{4, 2, 107, 150, 12}, {5, 2, 86, 120, 10}, {3, 2, 112, 157, 16}, {6, 3, 66, 92, 8}};
+    static const grid_layout_t hd[GRID_LAYOUTS] = {{6, 2, 107, 150, 12}, {7, 2, 96, 135, 10}, {5, 2, 112, 157, 16}, {8, 3, 66, 92, 8}};
+    if (layout < 1 || layout > GRID_LAYOUTS)
+        return 0;
+    *out = wide ? hd[layout - 1] : sd[layout - 1];
+    return 1;
+}
+
+// Is index in the page's first column? Left there opens the device sidebar.
+static inline int gridAtRowStart(int count, int index, int columns)
+{
+    return count <= 0 || columns < 1 || index < 0 || index % columns == 0;
+}
+
+// The page slide (RIPPS2 build 82): how far (0..1) the new page has come in, t the slide's elapsed fraction.
+// Eased out, cubic, as RIPFLOW's carousel is.
+static inline float gridSlideEase(float t)
+{
+    if (t <= 0.0f)
+        return 0.0f;
+    if (t >= 1.0f)
+        return 1.0f;
+    float r = 1.0f - t;
+    return 1.0f - r * r * r;
 }
 
 #endif

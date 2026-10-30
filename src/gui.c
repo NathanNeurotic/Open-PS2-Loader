@@ -44,6 +44,7 @@
 #include "include/texcache.h"
 #include "include/appsupport.h" // appGetObject() -- push a live Art Delay change onto the APPS list
 #include "include/tar.h"        // tarInvalidate -- re-arm the .tar probe when the toggle flips
+#include "include/grid.h"       // GRID_LAYOUTS -- Grid Layout's presets
 
 #include <limits.h>
 #include <stdlib.h>
@@ -1234,7 +1235,7 @@ reshow_ui:
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     diaSetInt(diaUIConfig, UICFG_CFG_TITLES, gCfgTitlesInLists);
-    diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL);
+    diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL || gTheme->grid != NULL);
     guiSetGameViewPicker(diaUIConfig);
     guiSetAppsViewPicker(diaUIConfig);
     guiSetThemeViewPicker(diaUIConfig);
@@ -2688,6 +2689,15 @@ void guiShowCoverflowConfig(void)
 
     diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_DIM, gCoverflowDimCovers ? 1 : 0);
 
+    // Grid Layout (RIPPS2 build 91, akilluminati47): the theme's, or one of RIPPS2's pages of covers.
+    char large[48], compact[48];
+    snprintf(large, sizeof(large), "3 x 2 %s", _l(_STR_LARGE));
+    snprintf(compact, sizeof(compact), "6 x 3 %s", _l(_STR_GRID_COMPACT));
+    const char *gridLayouts[] = {_l(_STR_THEME), "4 x 2", "5 x 2", large, compact, NULL};
+    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, gridLayouts);
+    diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, gGridLayout);
+    int keepLayout = gGridLayout;
+
     int result = diaExecuteDialog(diaCoverflowConfig, -1, 1, NULL);
     if (result) {
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_COUNT, &value))
@@ -2698,6 +2708,11 @@ void guiShowCoverflowConfig(void)
             gCoverflowAnimSpeed = animValues[(value >= 0 && value <= 3) ? value : 2];
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_DIM, &value))
             gCoverflowDimCovers = value ? 1 : 0;
+        if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, &value))
+            gGridLayout = (value >= 0 && value <= GRID_LAYOUTS) ? value : 0;
+        // A new layout changes how many covers a page holds, and so the cover cache: the theme loads again.
+        if (gGridLayout != keepLayout && gTheme != NULL && gTheme->grid != NULL)
+            thmSetGuiValue(thmGetGuiValue(), 1);
     }
 }
 

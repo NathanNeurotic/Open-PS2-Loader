@@ -1,4 +1,4 @@
-"""Exercise the Grid view's shape limits, page scrolling, Up/Down and L1/R1 steps (include/grid.h).
+"""Exercise the Grid view's shape limits, page scrolling, Up/Down and L1/R1 steps, layouts and slide (include/grid.h).
 
 The header is compiled as-is into a small host program. Also checks that the Grid element, the
 built-in Grid view and the Up/Down row navigation stay wired up. Multi-view themes idea: KrahJohlito.
@@ -33,8 +33,23 @@ assert MENUSYS.count('if (menuPageIsGrid())') == 4  # Up, Down, L1, R1
 assert 'gridPageStep(count, index, gTheme->gridRows, gTheme->gridColumns, dir)' in MENUSYS
 assert 'menuGridPage(-1);' in MENUSYS and 'menuGridPage(1);' in MENUSYS
 # The selected cover is drawn last and larger; the counter and the title under the grid are theme keys.
-assert 'drawGridCell(menu, item, elem, selX, selY, gDefaultCol, GRID_SELECTED_SCALE);' in THEMES
-assert '"%s_counter"' in THEMES and '"%s_title"' in THEMES
+assert 'drawGridCell(menu, item, elem, selX, selY, gDefaultCol, GRID_SELECTED_SCALE, turn, selBack, 0);' in THEMES
+for key in ('counter', 'title', 'devices', 'vignette', 'flip'):
+    assert 'gridKeyInt(themeConfig, name, "%s"' % key in THEMES, key
+assert '"%s_coverless"' in THEMES
+# The rest of RIPPS2's grid (akilluminati47): the device sidebar, the page slide, the case flip (COV2) and
+# Grid Layout. Up/Down stop at the ends when the sidebar is on; Left from the first column opens it.
+assert 'drawDeviceSidebar(menu, elem->posY);' in THEMES and 'grid_devices_png' in THEMES
+assert 'PNG_ASSETS += grid_devices' in MAKEFILE and (ROOT / 'gfx/grid_devices.png').is_file()
+assert 'cacheInitCache(theme->gameCacheCount++, "ART", 1, "COV2", GRID_BACK_SLOTS)' in THEMES
+assert 'padGetRightStick(&sx, &sy);' in THEMES
+assert 'gridSlideUpdate(menu, first)' in THEMES
+assert 'gridLayoutPreset(gGridLayout, theme->layoutWide, &preset)' in THEMES
+assert 'if (gTheme->gridDevices)\n            return;' in MENUSYS
+assert 'if (menuGridSidebarFocused()) {\n        menuGridSidebarInput();\n        return;\n    }' in MENUSYS
+assert 'gridAtRowStart(count, index, gTheme->gridColumns)' in MENUSYS
+assert 'COVERFLOW_CFG_GRID_LAYOUT' in GUI and 'gTheme->coverflow != NULL || gTheme->grid != NULL' in GUI
+assert 'coverless=serial' in CFG
 # The built-in Grid: 4 x 2 covers, 6 columns on a 16:9 picture; a disk theme's fallback Grid resolves them too.
 assert 'rows=2' in CFG and 'columns=4' in CFG and 'columns_hd=6' in CFG
 assert 'if (thmApplyDisplayLayout(tmpl, newT->layoutWide))' in THEMES
@@ -52,7 +67,7 @@ int main(void)
     assert(rows == GRID_DEFAULT_ROWS && columns == GRID_DEFAULT_COLUMNS);
     rows = 9, columns = 9;
     gridClamp(&rows, &columns);
-    assert(columns == GRID_MAX_COLUMNS && rows * columns <= GRID_MAX_CELLS && rows == 2);
+    assert(columns == GRID_MAX_COLUMNS && rows * columns <= GRID_MAX_CELLS && rows == 3);
     rows = 4, columns = 4;
     gridClamp(&rows, &columns);
     assert(rows == 4 && columns == 4);
@@ -80,7 +95,7 @@ int main(void)
     assert(gridPageStep(0, 0, 2, 4, 1) == -1);
     assert(gridPageStep(30, 40, 2, 4, -1) == -1);
 
-    // Up/Down keep the column, a short last row takes its last cover, -1 leaves the grid.
+    // Up/Down keep the column, a short last row takes its last cover, -1 at the top/bottom row.
     assert(gridRowStep(10, 1, 4, -1) == -1);
     assert(gridRowStep(10, 5, 4, -1) == 1);
     assert(gridRowStep(10, 1, 4, 1) == 5);
@@ -90,7 +105,28 @@ int main(void)
     assert(gridRowStep(0, 0, 4, 1) == -1);
     assert(gridRowStep(10, 12, 4, 1) == -1);
 
-    puts("grid: shape limits, pages, row and page steps passed");
+    // Grid Layout: RIPPS2's presets, a wider twin on 16:9, every one within the limits and beside the sidebar.
+    grid_layout_t l;
+    assert(!gridLayoutPreset(0, 0, &l) && !gridLayoutPreset(GRID_LAYOUTS + 1, 1, &l));
+    assert(gridLayoutPreset(1, 0, &l) && l.columns == 4 && l.rows == 2 && l.width == 107 && l.height == 150);
+    assert(gridLayoutPreset(1, 1, &l) && l.columns == 6 && l.rows == 2);
+    for (int p = 1; p <= GRID_LAYOUTS; p++)
+        for (int wide = 0; wide < 2; wide++) {
+            assert(gridLayoutPreset(p, wide, &l));
+            int r = l.rows, c = l.columns;
+            gridClamp(&r, &c);
+            assert(r == l.rows && c == l.columns);
+            int drawn = wide ? l.width * 3 / 4 : l.width;
+            assert(c * drawn + (c - 1) * l.spacing <= 640 - 2 * 32);
+        }
+
+    // The sidebar opens from the first column; the slide eases out and ends in place.
+    assert(gridAtRowStart(10, 0, 4) && gridAtRowStart(10, 8, 4) && !gridAtRowStart(10, 1, 4) && gridAtRowStart(0, 0, 4));
+    assert(gridSlideEase(0.0f) == 0.0f && gridSlideEase(1.0f) == 1.0f && gridSlideEase(0.5f) > 0.5f);
+    for (int i = 1; i <= 10; i++)
+        assert(gridSlideEase(i / 10.0f) >= gridSlideEase((i - 1) / 10.0f));
+
+    puts("grid: shape limits, pages, row and page steps, layouts and slide passed");
     return 0;
 }
 '''.replace('@HEADER@', HEADER)
