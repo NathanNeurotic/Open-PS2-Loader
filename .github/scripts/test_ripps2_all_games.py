@@ -372,3 +372,12 @@ assert '(gFAVStartMode || gAllGames) && mod->support->mode != FAV_MODE' in opl, 
 assert 'if (!gFAVStartMode && !gAllGames) // Favourites and All Games both off' in opl, 'R3 must work with All Games on and Favourites off'
 assert 'if (gFAVStartMode || gAllGames)\n            menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);' in opl, 'the R3 hint must show with All Games on'
 print('ok   the page starts with the setting, boots first, and follows every source refresh')
+
+bdm = (root / 'src/bdmsupport.c').read_text()
+needs = function(bdm, 'static int bdmNeedsUpdate(item_list_t *itemList)')
+hide = needs[needs.index('if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0) {'):]
+hide = hide[:hide.index('\n        }\n')]
+assert 'if (gAllGames)\n                loadFavourites();' in hide, 'a page hidden for a switched-off transport must leave All Games'
+assert 'if (gAllGames && bdmTransportEnabled(pDeviceData->bdmDeviceType) != 0)\n            loadFavourites();' in bdm, \
+    'a reappearing slot rejoins All Games, unless its transport is Off'
+print('ok   a BDM page hidden for a switched-off transport, or shown again, rebuilds All Games')
