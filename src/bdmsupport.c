@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/favsupport.h" // loadFavourites -- a reappearing slot rejoins All Games
 #ifdef RETROACHIEVEMENTS
 #include "include/achievements.h"
 #endif
@@ -3371,6 +3372,10 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             ((opl_io_module_t *)itemList->owner)->menuItem.visible = 1;
             moduleUpdateMenu(itemList->mode, 0, 0);
         }
+        // All Games dropped this slot's rows when its page hid, and this pass rebuilds nothing, so
+        // ask for the one list again (one FAV rebuild, from the rows this slot already holds).
+        if (gAllGames)
+            loadFavourites();
         pDeviceData->bdmMissCount = 0;
         // The one thing re-read: another server may now answer in this network slot, so its
         // read-only verdict is decided again. One small write, and only for UDPBD.
