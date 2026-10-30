@@ -29,6 +29,13 @@ enum {
     FREEZE_DIAG_SHUTDOWN_SKIPPED, // not sent: the IOP did not answer the report request
 };
 
+// What took the report.
+enum {
+    FREEZE_DIAG_TRIGGER_COMBO = 0,
+    FREEZE_DIAG_TRIGGER_POWER, // the power button, pressed once or twice
+    FREEZE_DIAG_TRIGGER_STALL, // the pad data stopped (padhook.c's watchdog): the IOP stopped sending it
+};
+
 typedef struct freeze_diag_thread
 {
     unsigned int id;
@@ -48,6 +55,7 @@ typedef struct freeze_diag_report
     unsigned int cheats;
     unsigned int gsm;
     unsigned int pademu;
+    unsigned int trigger; // FREEZE_DIAG_TRIGGER_*
     unsigned int iop_resets;
     unsigned int iop_reset_failures;
     unsigned int igr_polls;

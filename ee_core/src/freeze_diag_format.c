@@ -164,6 +164,11 @@ int freeze_diag_format(const freeze_diag_report_t *r, const char *build, char *o
         put_char(&b, r->game_id[i]);
     put_char(&b, '\n');
 
+    put_str(&b, "trigger=");
+    put_str(&b, r->trigger == FREEZE_DIAG_TRIGGER_STALL ? "stall" : r->trigger == FREEZE_DIAG_TRIGGER_POWER ? "power" :
+                                                                                                              "combo");
+    put_char(&b, '\n');
+
     put_str(&b, "mode=");
     put_dec(&b, r->game_mode);
     put_str(&b, " compat=");

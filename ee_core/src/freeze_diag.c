@@ -1,10 +1,11 @@
 /*
   In-game freeze report (INGAMEDIAG flavour only).
 
-  When a game freezes, the player presses the IGR combo. If the IGR thread still gets to run,
-  this records what the console was doing -- the game's threads, the IOP's disc and VMC
-  activity -- and writes it to the memory card as plain text, then lets IGR exit as usual.
-  An unresponsive combo must be reported separately; it does not prove an EE freeze.
+  When a game freezes, the player presses the IGR combo or the power button, or the pad data
+  stops (padhook.c's watchdog: the IOP stopped sending it). If the IGR thread still gets to run,
+  this records what the console was doing -- the game's threads, the IOP's heap, disc and VMC
+  activity -- draws it on the TV (freeze_diag_screen.c), then writes it to the memory card as
+  plain text and lets IGR exit as usual. The TV page needs nothing from the IOP; the file does.
 
   Nothing here exists in other builds: the whole file is only compiled with INGAMEDIAG=1.
 */
@@ -15,6 +16,7 @@
 #include "modmgr.h"
 #include "freeze_diag_core.h"
 #include "freeze_diag_report.h"
+#include "freeze_diag_screen.h"
 #include "cd_igr_rpc.h"
 
 #include <iopcontrol.h>
@@ -98,7 +100,7 @@ static void heap_snapshot(void)
     h->found = 1;
 }
 
-void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int pad_frame)
+void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int pad_frame, unsigned int trigger)
 {
     USE_LOCAL_EECORE_CONFIG;
     ee_thread_status_t status;
@@ -111,6 +113,7 @@ void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int 
     report.cheats = config->gCheatList != NULL;
     report.gsm = config->EnableGSMOp != 0;
     report.pademu = config->EnablePadEmuOp != 0;
+    report.trigger = trigger;
     report.iop_resets = iop_reboot_count;
     report.iop_reset_failures = g_freeze_diag_reset_failures;
     report.igr_polls = g_freeze_diag_polls;
@@ -143,6 +146,9 @@ void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int 
     heap_snapshot();
 
     report_armed = 1;
+
+    // A stuck IOP answers none of what follows: the TV gets the report first.
+    FreezeDiag_Screen(&report, HEAP_SNAPSHOT);
 }
 
 // Ask CDVDFSV for CDVDMAN's record over the IGR RPC, with a deadline: a stuck IOP must not hang
