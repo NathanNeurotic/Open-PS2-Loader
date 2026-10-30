@@ -66,6 +66,7 @@ typedef struct submenu_list {
     struct submenu_list *prev, *next;
     submenu_item_t item;
 } submenu_list_t;
+static void gridForgetItem(const void *item) { (void)item; } /* themes.c: a freed row drops its case-flip state */
 @DESTROY_FN@
 @REMOVE_FN@
 static submenu_list_t *node(int id) {

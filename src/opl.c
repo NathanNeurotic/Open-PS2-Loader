@@ -58,6 +58,7 @@
 #include "include/sound.h"
 #include "include/xparam.h"
 #include "include/cfgtitle.h" // optional CFG Titles in the game lists (#918)
+#include "include/grid.h"     // GRID_LAYOUTS -- clamp a hand-edited grid_layout
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioDopen/fileXioIoctl2/fileXioDclose used by BDM autolaunch
@@ -3727,6 +3728,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_SCALE, &gCoverflowCenterScale);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_ANIM, &gCoverflowAnimSpeed);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_DIM, &gCoverflowDimCovers);
+            configGetInt(configOPL, CONFIG_OPL_GRID_LAYOUT, &gGridLayout);
             // clamp count to {3,5} on load -- defends a hand-edited conf.cfg
             gCoverflowCount = (gCoverflowCount == 5) ? 5 : 3;
             // clamp the remaining coverflow values too -- a hand-edited conf.cfg
@@ -3740,6 +3742,8 @@ static void _loadConfig()
             else if (gCoverflowAnimSpeed > 5000)
                 gCoverflowAnimSpeed = 5000;
             gCoverflowDimCovers = gCoverflowDimCovers ? 1 : 0;
+            if (gGridLayout < 0 || gGridLayout > GRID_LAYOUTS)
+                gGridLayout = 0;
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_PCCF, &gEnablePCCF);
@@ -4287,6 +4291,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_SCALE, gCoverflowCenterScale);
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_ANIM, gCoverflowAnimSpeed);
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_DIM, gCoverflowDimCovers);
+        configSetInt(configOPL, CONFIG_OPL_GRID_LAYOUT, gGridLayout);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, gEnableILK);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, gEnableMX4SIO);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_PCCF, gEnablePCCF);

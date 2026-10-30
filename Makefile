@@ -197,6 +197,10 @@ PNG_ASSETS += $(foreach set,standard white,$(foreach n,cross circle square trian
 # for the same reason.
 PNG_ASSETS += Index2_0 Index2_1 Index3_0 Index3_1 Index3_2 Index4_0 Index4_1 Index4_2 Index4_3
 
+# The Grid's device sidebar glyphs (RIPPS2's sidebar atlas, akilluminati47; themes.c drawDeviceSidebar), apart
+# from the list above for the same reason.
+PNG_ASSETS += grid_devices
+
 GFX_OBJS = $(PNG_ASSETS:%=%_png.o) poeveticanew.o
 
 # NOTE: audio/bgm.ogg is intentionally NOT compiled into the ELF (saves ~324 KB).
