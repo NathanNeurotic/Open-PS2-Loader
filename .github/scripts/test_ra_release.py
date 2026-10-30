@@ -224,6 +224,51 @@ class ReleaseTests(unittest.TestCase):
         self.assertTrue(all("--latest=false" in call for call in calls if call[:2] == ("release", "edit")))
 
 
+    def republish(self, draft_fails=False, stays_draft=False):
+        self.assets()
+        old = dict(tag_name="rolling-ra", assets=[{"name": "old-kit.zip"}])
+        calls = self.calls = []
+        state = dict(isDraft=False, publishedAt="2026-10-12T18:56:18Z")
+
+        def fake(*args):
+            calls.append(args)
+            if args[:2] == ("api", "repos/owner/repo/git/ref/tags/rolling"):
+                return json.dumps(dict(object=dict(sha=self.sha)))
+            if args[:2] == ("api", "--paginate"):
+                return json.dumps([[old]])
+            if args[:2] == ("release", "view"):
+                return json.dumps(state)
+            if args[:2] == ("release", "edit") and "--draft=true" in args:
+                if draft_fails:
+                    raise subprocess.CalledProcessError(1, "gh")
+                state["isDraft"] = True
+            elif args[:2] == ("release", "edit") and state["isDraft"] and not stays_draft:
+                state.update(isDraft=False, publishedAt="2026-10-30T06:00:00Z")
+            return ""
+
+        with patch.object(publisher, "gh", side_effect=fake):
+            publisher.publish(self.folder, Path("notes"), "owner/repo")
+        return calls, state
+
+    def test_republished_release_gets_a_new_date_and_stays_a_prerelease(self):
+        calls, state = self.republish()
+        edits = [call for call in calls if call[:2] == ("release", "edit")]
+        self.assertEqual(edits[1:], [("release", "edit", "rolling-ra", "--repo", "owner/repo", "--draft=true"),
+                                     ("release", "edit", "rolling-ra", "--repo", "owner/repo", "--draft=false",
+                                      "--prerelease", "--latest=false")])
+        self.assertEqual(state, dict(isDraft=False, publishedAt="2026-10-30T06:00:00Z"))
+        # The tag moves only after the release is visible again.
+        self.assertGreater(next(i for i, c in enumerate(calls) if "PATCH" in c), calls.index(edits[-1]))
+
+    def test_failed_draft_call_still_republishes_and_fails_the_run(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.republish(draft_fails=True)
+        self.assertIn("--draft=false", self.calls[-1])
+
+    def test_release_left_a_draft_fails_the_run(self):
+        with self.assertRaisesRegex(RuntimeError, "still a draft"):
+            self.republish(stays_draft=True)
+
 class MbedtlsLicenceShippingTest(unittest.TestCase):
     def test_ra_kit_ships_the_apache_licence_and_ordinary_kits_refuse_it(self):
         root = Path(__file__).resolve().parents[2]
