@@ -1675,6 +1675,10 @@ static int bdmNeedsUpdate(item_list_t *itemList)
         if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0) {
             pOwner->menuItem.visible = 0;
             moduleUpdateMenu(itemList->mode, 0, 0);
+            // All Games may have gathered this page's rows while it was still shown (a Game Sources
+            // apply queues its rebuild before this poll runs), so ask for the list again now it is hidden.
+            if (gAllGames)
+                loadFavourites();
         }
     }
 
