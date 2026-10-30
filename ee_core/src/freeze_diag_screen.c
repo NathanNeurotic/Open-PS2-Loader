@@ -151,7 +151,7 @@ void freeze_diag_screen_compose(const freeze_diag_report_t *r, const heap_diag_s
     ln_dec(&l, r->cheats);
     fds_put(p, row++, FDS_C_TEXT, l.s);
 
-    if (!h->found) {
+    if (!h->found || h->iop.version != HEAP_DIAG_VERSION) {
         fds_put(p, row++, FDS_C_WARN, "IOP HEAP RECORD: NOT FOUND");
     } else {
         const heap_diag_iop_t *iop = &h->iop;

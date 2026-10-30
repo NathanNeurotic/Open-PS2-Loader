@@ -248,7 +248,7 @@ int main(void)
         h.iop.failed[0].ra = 0x60010;
         len = freeze_diag_format_heap(&h, out, sizeof(out));
         CHECK(contains("failed_alloc size=65536 mode=0 by=sounddrv+0x00000010"), "failed allocation listed");
-        CHECK(contains("heap_hint=1 IOP allocation(s) failed"), "out-of-memory hint first");
+        CHECK(contains("heap_hint=1 IOP allocation(s) failed"), "failed-allocation hint first");
     }
 
     if (failures == 0)

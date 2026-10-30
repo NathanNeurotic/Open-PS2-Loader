@@ -251,7 +251,7 @@ static int Hook_ReferModuleStatus(int id, ModuleStatus_t *status)
 
 //--------------------------------------------------------------
 // Point every module that imports the library at its export table again, after a hook changed it.
-static void relinkExports(modinfo_t *info)
+void relinkExports(modinfo_t *info)
 {
     iop_library_t *lib = (iop_library_t *)((u32)info->exports - 0x14);
 
@@ -365,7 +365,7 @@ static void *Hook_AllocSysMemory(int mode, int size, void *ptr)
 {
     void *result = NULL;
 
-    if (size > 0)
+    if (size > 0 && size <= 0x7FFFFFFF - (1792 + IOP_PAD_SIZE))
         result = AllocSysMemory_org(mode, size + iopPadFor(size), ptr);
     if (result == NULL)
         result = AllocSysMemory_org(mode, size, ptr);

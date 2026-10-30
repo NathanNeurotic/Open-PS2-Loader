@@ -423,7 +423,7 @@ int freeze_diag_format_heap(const heap_diag_snapshot_t *h, char *out, int cap)
     put_str(&b, "heap_hint=");
     if (iop->fails != 0) {
         put_dec(&b, iop->fails);
-        put_str(&b, " IOP allocation(s) failed: the IOP ran out of memory (see failed_alloc)");
+        put_str(&b, " IOP allocation(s) failed: see failed_alloc for the mode and size (IOP RAM running out is one cause)");
     } else if (overruns != 0) {
         put_str(&b, "the ");
         put_dec(&b, iop->blocks[worst].size);

@@ -79,6 +79,8 @@ int main(void)
     run(1 << 20, 2304);  /* overrun block */
     run(1 << 20, 4096);  /* any other block: 256 */
     run(1 << 20, 25345); /* rounds past the 25344 block: 256 */
+    run(1 << 20, -1);    /* negative: passed through unpadded */
+    run(1 << 20, 0x7FFFFFF0); /* would overflow with the pad: passed through unpadded */
     return 0;
 }
 '''
@@ -101,6 +103,8 @@ expected = [
     '1 1 %d -1' % (2304 + 1792 + p),
     '1 1 %d -1' % (4096 + p),
     '1 1 %d -1' % (25345 + p),
+    '1 1 -1 -1',
+    '0 1 %d -1' % 0x7FFFFFF0,
 ]
 if p != 256:
     failures.append('ioplib_util.c: IOP_PAD_SIZE is %d, not the 256 of neutrino Mode 7' % p)

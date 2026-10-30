@@ -65,6 +65,7 @@ int main(void)
 
     // A record: two overruns, one short run, one failed allocation, a module list.
     h.found = 1;
+    h.iop.version = HEAP_DIAG_VERSION;
     h.iop.module_count = 2;
     memcpy(h.iop.modules[0].name, "cdvdman", 7);
     h.iop.modules[0].text_start = 0x10000;

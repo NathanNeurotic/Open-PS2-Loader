@@ -116,14 +116,14 @@ static int hook_FreeSysMemory(void *ptr)
 
     CpuSuspendIntr(&oldstate);
     for (i = 0; i < HEAP_DIAG_BLOCKS; i++) {
-        if (g_heap_diag.blocks[i].addr == (unsigned int)ptr && ptr != NULL) {
+        if (result >= 0 && g_heap_diag.blocks[i].addr == (unsigned int)ptr && ptr != NULL) {
             g_heap_diag.blocks[i].addr = 0;
             g_heap_diag.blocks[i].seq = 0;
             g_heap_diag.frees++;
             break;
         }
     }
-    if (i == HEAP_DIAG_BLOCKS)
+    if (result >= 0 && i == HEAP_DIAG_BLOCKS)
         g_heap_diag.unknown_frees++;
     heap_diag_note_free_memory(0);
     heap_diag_note_modules();
@@ -151,10 +151,10 @@ void heap_diag_install(void)
     modinfo_t info;
     int oldstate;
 
+    heap_diag_wipe_stale();
+
     if (!getModInfo("sysmem\0\0", &info))
         return;
-
-    heap_diag_wipe_stale();
 
     CpuSuspendIntr(&oldstate);
     g_heap_diag.version = HEAP_DIAG_VERSION;
@@ -172,4 +172,8 @@ void heap_diag_install(void)
     g_heap_diag.magic = HEAP_DIAG_MAGIC;
     g_heap_diag.check = HEAP_DIAG_CHECK;
     CpuResumeIntr(oldstate);
+
+    // The modules already loaded (and the IOP pad hook's own import, when it is on) go through the
+    // record too.
+    relinkExports(&info);
 }
