@@ -84,6 +84,8 @@ jobs:
         run: python3 .github/scripts/test_sfx_oneshot_cut.py
       - name: Check that a held button keeps repeating across the tick-counter wrap
         run: python3 .github/scripts/test_pad_repeat_clock.py
+      - name: Check that a missed pad read is not a release, and rumble alignment waits for a quiet pad
+        run: python3 .github/scripts/test_pad_missed_read.py
       - name: Check masked pattern scan bounds and rejection of short ranges
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
