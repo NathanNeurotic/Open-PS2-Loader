@@ -121,6 +121,9 @@ IMPORT_BIN2C(ps2ip_irx);
 IMPORT_BIN2C(ps2link_irx);
 
 IMPORT_BIN2C(resetspu_irx);
+#ifdef IGR_MENU
+IMPORT_BIN2C(igrmbox_irx);
+#endif
 #ifdef INGAMEDIAG
 IMPORT_BIN2C(freezediag_irx);
 #endif

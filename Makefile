@@ -94,8 +94,8 @@ OPLDIAG ?= 0
 INGAMEDIAG ?= 0
 # In-game menu (beta; RIPPS2's, by akilluminati47): with the "In-Game Menu" setting on, the IGR combo
 # pauses the game under a panel (RESUME, CHEATS, EXIT GAME, POWER OFF) instead of leaving at once.
-# ee_core only. Left out of the RETROACHIEVEMENTS, IGS and INGAMEDIAG flavours: ee_core has no room
-# for it there (see docs/IGR.md).
+# ee_core only. Left out of the IGS and INGAMEDIAG flavours: ee_core has no room for it there. In the
+# RETROACHIEVEMENTS flavour it is an overlay outside ee_core (see docs/IGR.md).
 IGR_MENU ?= 1
 #How the TTY will reach developer: 'UDP', 'PPC_UART'.
 TTY_APPROACH ?= UDP
@@ -334,12 +334,21 @@ ifeq ($(INGAMEDIAG),1)
   IOP_OBJS += freezediag.o
 endif
 
-ifneq ($(RETROACHIEVEMENTS)$(IGS)$(INGAMEDIAG),000)
+ifneq ($(IGS)$(INGAMEDIAG),00)
   override IGR_MENU = 0
 endif
 ifeq ($(IGR_MENU),1)
   EE_CFLAGS += -DIGR_MENU
   EECORE_EXTRA_FLAGS += IGR_MENU=1
+  # the menu's mailbox (the silent pause, the frame held under the panel), packed only with In-Game Menu on
+  IOP_OBJS += igrmbox.o
+  ifeq ($(RETROACHIEVEMENTS),1)
+    # No room for the menu beside RA in ee_core's ram84: there it is igrovl.elf, an overlay the menu copies to
+    # 0xCC000 only for a launch with In-Game Menu on (ee_core/include/igrovl.h).
+    EE_CFLAGS += -DIGR_OVERLAY
+    EECORE_EXTRA_FLAGS += IGR_OVERLAY=1
+    EECORE_OBJS += igrovl.o
+  endif
 endif
 
 ifeq ($(DEBUG),1)
@@ -497,6 +506,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/iopcore/cdvdfsv clean
 	echo " -resetspu"
 	$(MAKE) -C modules/iopcore/resetspu clean
+	echo " -igrmbox"
+	$(MAKE) -C modules/iopcore/igrmbox clean
 	$(MAKE) -C modules/iopcore/freezediag clean
 	echo "  -patches"
 	echo "   -iremsnd"
@@ -636,6 +647,12 @@ ee_core/ee_core.elf: ee_core
 $(EE_ASM_DIR)ee_core.c: ee_core/ee_core.elf | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ eecore_elf
 
+# Built by the same ee_core make, with IGR_OVERLAY=1.
+ee_core/igrovl.elf: ee_core/ee_core.elf ;
+
+$(EE_ASM_DIR)igrovl.c: ee_core/igrovl.elf | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ igrovl_elf
+
 elfldr/elfldr.elf: elfldr
 	echo "-ELF loader (no-IOP-reset handoff)"
 	$(MAKE) -C $<
@@ -771,6 +788,12 @@ modules/iopcore/resetspu/resetspu.irx: modules/iopcore/resetspu
 	$(MAKE) -C $<
 
 $(EE_ASM_DIR)resetspu.c: modules/iopcore/resetspu/resetspu.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+modules/iopcore/igrmbox/igrmbox.irx: modules/iopcore/igrmbox
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)igrmbox.c: modules/iopcore/igrmbox/igrmbox.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 # The build string goes into the freeze report, so a report always names the ELF it came from.

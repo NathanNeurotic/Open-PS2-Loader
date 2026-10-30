@@ -52,6 +52,12 @@ enum OPL_MODULE_ID {
     OPL_MODULE_ID_SMSUTILS,
 #endif
 
+#ifdef IGR_MENU
+    // The in-game menu's mailbox (igrmbox.irx), packed only for a launch with In-Game Menu on. Appended for the
+    // same reason as above.
+    OPL_MODULE_ID_IGRMBOX,
+#endif
+
 #ifdef INGAMEDIAG
     // In-game freeze report writer (INGAMEDIAG flavour). Appended for the same reason as above.
     OPL_MODULE_ID_FREEZEDIAG,
