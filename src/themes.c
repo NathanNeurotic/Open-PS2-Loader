@@ -1567,7 +1567,7 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     // Widescreen draws each cover at 3/4 width (SCALING_RATIO), leaving spare screen, so
     // allow ~10% larger covers in 16:9. This scales SIZE only -- the cover's authored W:H
     // is untouched, so aspect immunity holds; 4:3 keeps the tight 3-up maximum.
-    if (gWideScreen)
+    if (rmIsWideDisplay())
         maxCoverWidth = maxCoverWidth * 11 / 10;
     if (coverWidth > maxCoverWidth)
         coverWidth = maxCoverWidth;
@@ -4311,7 +4311,7 @@ static int thmLoad(const char *themePath)
 
     // SD/HD layouts: copy the _sd or _hd variants (and uOPL/wOPL _wsX) over their plain keys before anything
     // reads the cfg, so the rest of the load sees one layout. Themes without them are untouched.
-    newT->layoutWide = gWideScreen != 0;
+    newT->layoutWide = rmIsWideDisplay();
     newT->layoutDependsOnWide = thmApplyDisplayLayout(themeConfig, newT->layoutWide);
 
     // Pick the view to build (docs/MULTI-VIEW-THEMES-PLAN.md). Only that view is parsed; switching views
@@ -4862,7 +4862,7 @@ int thmSetView(int view)
 
 int thmRefreshDisplayLayout(void)
 {
-    if (gTheme == NULL || !gTheme->layoutDependsOnWide || gTheme->layoutWide == (gWideScreen != 0))
+    if (gTheme == NULL || !gTheme->layoutDependsOnWide || gTheme->layoutWide == rmIsWideDisplay())
         return 0;
     return thmSetGuiValue(guiThemeID, 1);
 }

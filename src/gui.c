@@ -2634,7 +2634,7 @@ static int guiDisplayUpdater(int modified)
         diaGetInt(diaDisplayConfig, UICFG_WIDESCREEN, &temp);
         if (temp != gWideScreen) {
             gWideScreen = temp;
-            rmSetAspectRatio((gWideScreen == 0) ? RM_ARATIO_4_3 : RM_ARATIO_16_9);
+            rmSetAspectRatio(rmIsWideDisplay() ? RM_ARATIO_16_9 : RM_ARATIO_4_3);
             guiUpdateScreenScale();
         }
     }
@@ -3210,7 +3210,7 @@ static int guiSettingsDisplayUpdater(int modified)
     diaGetInt(guiSettingsActiveDialog, UICFG_WIDESCREEN, &temp);
     if (temp != gWideScreen) {
         gWideScreen = temp;
-        rmSetAspectRatio((gWideScreen == 0) ? RM_ARATIO_4_3 : RM_ARATIO_16_9);
+        rmSetAspectRatio(rmIsWideDisplay() ? RM_ARATIO_16_9 : RM_ARATIO_4_3);
         guiUpdateScreenScale();
     }
     diaGetInt(guiSettingsActiveDialog, UICFG_FONT_SIZE, &temp);
