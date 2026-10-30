@@ -73,7 +73,7 @@ int raHuntRead(const char *text, int len, ra_hunt_t *list, int max)
     const char *p = text, *end = text + len;
     int n = 0;
 
-    if (len < 12 || strncmp(text, "RIPPS2 ACH 1", 12) != 0)
+    if (len < 13 || strncmp(text, "RIPPS2 ACH 1", 12) != 0 || (text[12] != '\n' && text[12] != '\r'))
         return -1;
     while (p < end && *p != '\n')
         p++;

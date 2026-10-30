@@ -6,7 +6,7 @@
 
 #define RA_HUNT_TITLE 64
 #define RA_HUNT_DESC  160
-#define RA_HUNT_MAX   400        // achievements read from one RA/<startup>.ach
+#define RA_HUNT_MAX   1024       // achievements read from one RA/<startup>.ach (achievements.cpp writes as many)
 #define RA_HUNT_BLOB  (8 * 1024) // the most the in-game menu is given (module storage is tight)
 #define RA_HUNT_COLS  24         // the in-game menu's line (ee_core igrmenu.c TEXT_CHARS)
 #define RA_HUNT_ROWS  8          // and its LEFT TO HUNT rows: up to 2 of title, the points, the rest how to earn it

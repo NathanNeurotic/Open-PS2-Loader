@@ -2636,6 +2636,8 @@ static void sbLoadRaHunt(const char *path, const char *file)
                 sbRaHuntUnlocked += list[i].unlocked;
             sbRaHuntTotal = n;
             sbRaHuntBytes = raHuntBlob(list, n, sbRaHunt, sizeof(sbRaHunt), &sbRaHuntCount);
+            if (sbRaHuntCount < sbRaHuntTotal - sbRaHuntUnlocked)
+                sbRaHuntCount = sbRaHuntBytes = 0; // too many to carry: the counts only (docs/IGR.md)
         }
     }
     free(list);

@@ -122,13 +122,17 @@ int main()
     CHECK(set[5] == 0x20000200 && set[6] == 2);
     // the 250-code row does not fit beside the ticked ones; it fits alone
     CHECK(!igrCheatsFit(b, 3));
-    IGR_CHEATS_ROWS(b)[0].on = 0;
-    IGR_CHEATS_ROWS(b)[2].on = 0;
+    IGR_CHEATS_ROWS(b)
+    [0].on = 0;
+    IGR_CHEATS_ROWS(b)
+    [2].on = 0;
     CHECK(igrCheatsFit(b, 3));
-    IGR_CHEATS_ROWS(b)[3].on = 1;
+    IGR_CHEATS_ROWS(b)
+    [3].on = 1;
     CHECK(igrCheatsBuild(b, set) == 250);
     // a row turned on past the set's room is skipped, not cut
-    IGR_CHEATS_ROWS(b)[4].on = 1;
+    IGR_CHEATS_ROWS(b)
+    [4].on = 1;
     CHECK(igrCheatsBuild(b, set) == 250);
     CHECK(set[1 + 249 * 2] == (0x20000000 | (3 << 8) | 249));
     // the spare set holds a full set
@@ -157,6 +161,8 @@ int main()
     static ra_hunt_t list[8];
     CHECK(raHuntRead(ach, o, list, 8) == 3);
     CHECK(raHuntRead("NOT AN ACH", 10, list, 8) == -1);
+    CHECK(raHuntRead("RIPPS2 ACH 10\n1\t5\tA\tB\n", 22, list, 8) == -1); // the header is the whole first line
+    CHECK(raHuntRead("RIPPS2 ACH 1", 12, list, 8) == -1);
     CHECK(list[0].unlocked == 1 && list[1].unlocked == 0 && list[1].points == 10);
     CHECK(strchr(list[1].desc, '\t') == NULL);
     static unsigned char blob[1024];
@@ -178,10 +184,13 @@ int main()
     igrmTestPage(&in, 0, 2, 0, 2, 2, rgb);
     CHECK(count_colour(rgb, PW * 2 * PH * 2, C_GOLD) > 20); // "2 LEFT TO HUNT"
     put_ppm("ach-info", rgb, PW * 2, PH * 2);
+    static u8 body[PW * 2 * PH * 3]; // the lower half of the last entry's page: each entry shows its own text
     for (int at = 0; at < count; at++) {
         igrmTestPage(&in, 2, at, 0, 2, 2, rgb);
         CHECK(igrmLines <= IGRM_LINES);
         CHECK(count_colour(rgb, PW * 2 * PH * 2, C_GOLD) > 20); // the title
+        CHECK(at == 0 || memcmp(body, rgb + sizeof(body), sizeof(body)) != 0);
+        memcpy(body, rgb + sizeof(body), sizeof(body));
         char name[32];
         snprintf(name, sizeof(name), "hunt-%d", at);
         put_ppm(name, rgb, PW * 2, PH * 2);

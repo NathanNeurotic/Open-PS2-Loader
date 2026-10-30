@@ -21,6 +21,10 @@ static char requestKind;
 static int requestPage, requestFilter;
 static char requestTarget[33];
 static char imagePath[256], imageStartup[16], imagePrefix[256];
+/* The game whose set is saved as <huntPrefix>RA/<huntStartup>.ach: the last ISO image opened from its card.
+   Select refetches it by id, after the image fields are gone (xeraSaveHunt). */
+static char huntStartup[16], huntPrefix[256];
+static int huntId;
 static int imageIsVcd;
 /* Empty fields are significant; strtok would merge them. */
 static char *field(char **cursor, char separator)
@@ -530,11 +534,15 @@ static void xeraSaveHunt(void)
     FILE *f;
     int i, ok = 1;
 
-    if (!imagePrefix[0] || !imageStartup[0] || xeraCount <= 0 ||
-        snprintf(file, sizeof(file), "%sRA", imagePrefix) >= (int)sizeof(file))
+    if (!huntPrefix[0] || !huntStartup[0] ||
+        snprintf(file, sizeof(file), "%sRA", huntPrefix) >= (int)sizeof(file))
         return;
     mkdir(file, 0777);
-    snprintf(file, sizeof(file), "%sRA/%s.ach", imagePrefix, imageStartup);
+    snprintf(file, sizeof(file), "%sRA/%s.ach", huntPrefix, huntStartup);
+    if (xeraCount <= 0) {
+        unlink(file); /* an empty set: drop the one saved for an earlier read */
+        return;
+    }
     if ((f = fopen(file, "wb")) == NULL) {
         LOG("RA: could not write %s\n", file);
         return;
@@ -554,7 +562,7 @@ static void loadXerabora(void)
 {
     char hash[33], boot[16], title[57];
     unsigned int host;
-    int count, id, rc;
+    int count, id, rc, fresh;
 
     if (imagePath[0]) {
         if (imageIsVcd ? raHashVcd(imagePath, boot, sizeof(boot), hash) != 0 :
@@ -614,12 +622,21 @@ static void loadXerabora(void)
             return; /* ACH_ERROR */
     }
 fetch:
+    fresh = xeraStale || !xeraList || xeraKind != requestKind || xeraId != id;
     if ((rc = xeraFetch(host, requestKind, id)) != 1) {
         result.state = xeraState(rc);
         return;
     }
     achievementsXeraboraPage(&result, requestKind, requestPage, requestFilter);
-    if (imagePath[0] && !imageIsVcd && requestKind == 'A')
+    if (imagePath[0] && requestKind == 'A') {
+        /* A startup that names a folder would put the file outside RA/. */
+        int saved = !imageIsVcd && imagePrefix[0] && imageStartup[0] && !strpbrk(imageStartup, "/\\");
+        huntId = saved ? id : 0;
+        snprintf(huntStartup, sizeof(huntStartup), "%s", saved ? imageStartup : "");
+        snprintf(huntPrefix, sizeof(huntPrefix), "%s", saved ? imagePrefix : "");
+        fresh = 1;
+    }
+    if (fresh && requestKind == 'A' && huntId > 0 && id == huntId)
         xeraSaveHunt();
 }
 
