@@ -49,9 +49,11 @@ HARNESS = r'''
 #define ALLOC_ADDRESS 2
 static int limit, calls, sizes[4], alloc_mode;
 static char heap[1];
+static void *alloc_ptr, *seen_ptr;
 static void *fake_alloc(int mode, int size, void *ptr)
 {
-    (void)mode; (void)ptr;
+    (void)mode;
+    seen_ptr = ptr;
     if (calls < 4)
         sizes[calls] = size;
     calls++;
@@ -66,8 +68,9 @@ static void run(int lim, int size)
     limit = lim;
     calls = 0;
     sizes[0] = sizes[1] = -1;
-    r = Hook_AllocSysMemory(alloc_mode, size, NULL);
-    printf("%%d %%d %%d %%d\n", r != NULL, calls, sizes[0], sizes[1]);
+    seen_ptr = NULL;
+    r = Hook_AllocSysMemory(alloc_mode, size, alloc_ptr);
+    printf("%%d %%d %%d %%d %%d\n", r != NULL, calls, sizes[0], sizes[1], seen_ptr == alloc_ptr);
 }
 int main(void)
 {
@@ -83,6 +86,7 @@ int main(void)
     run(1 << 20, -1);    /* negative: passed through unpadded */
     run(1 << 20, 0x7FFFFFF0); /* would overflow with the pad: passed through unpadded */
     alloc_mode = ALLOC_ADDRESS;
+    alloc_ptr = (void *)0x1F0000;
     run(1 << 20, 25344); /* fixed address (pbuf_realloc in place): exact extent, unpadded */
     return 0;
 }
@@ -97,18 +101,18 @@ with tempfile.TemporaryDirectory() as tmp:
 
 p = int(pad.group(1))
 expected = [
-    '1 1 %d -1' % (25344 + 1280 + p),
-    '1 2 %d 25344' % (25344 + 1280 + p),
-    '0 2 %d 25344' % (25344 + 1280 + p),
-    '1 1 0 -1',
-    '1 1 %d -1' % (25200 + 1280 + p),
-    '1 1 %d -1' % (3328 + 768 + p),
-    '1 1 %d -1' % (2304 + 1792 + p),
-    '1 1 %d -1' % (4096 + p),
-    '1 1 %d -1' % (25345 + p),
-    '1 1 -1 -1',
-    '0 1 %d -1' % 0x7FFFFFF0,
-    '1 1 25344 -1',
+    '1 1 %d -1 1' % (25344 + 1280 + p),
+    '1 2 %d 25344 1' % (25344 + 1280 + p),
+    '0 2 %d 25344 1' % (25344 + 1280 + p),
+    '1 1 0 -1 1',
+    '1 1 %d -1 1' % (25200 + 1280 + p),
+    '1 1 %d -1 1' % (3328 + 768 + p),
+    '1 1 %d -1 1' % (2304 + 1792 + p),
+    '1 1 %d -1 1' % (4096 + p),
+    '1 1 %d -1 1' % (25345 + p),
+    '1 1 -1 -1 1',
+    '0 1 %d -1 1' % 0x7FFFFFF0,
+    '1 1 25344 -1 1',
 ]
 if p != 256:
     failures.append('ioplib_util.c: IOP_PAD_SIZE is %d, not the 256 of neutrino Mode 7' % p)
