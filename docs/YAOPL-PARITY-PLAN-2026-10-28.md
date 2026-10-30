@@ -6,6 +6,32 @@
 
 YAOPL master: https://github.com/yaopl/yaopl (initial audit at `3ea3a521a0e9`; follow-up through [`b0f8c2ec`](https://github.com/yaopl/yaopl/commit/b0f8c2ecaa112ac89372bf40448eb9da5224ffc9)); changelog: https://github.com/yaopl/yaopl/blob/master/CHANGELOG.md; regression corpus: https://github.com/yaopl/yaopl/tree/master/labs/host-repro; YAOPL author: https://github.com/belomaxorka.
 
+## Status on 2026-10-30
+
+Merged into `rebuild/main` of NathanNeurotic/Open-PS2-Loader. None of these is hardware-tested yet, so the
+boxes below stay unticked under this plan's own rule (a tick means implemented AND tested).
+
+| Item | Merged in |
+|---|---|
+| YA-01 | #1114 (8172c7c), follow-up 028ab31 |
+| YA-02 | #1122 |
+| YA-03 | #1124 |
+| YA-04 | #1114 (8172c7c) |
+| YA-05 | #1114 (8172c7c) |
+| YA-06 | #1121 |
+| YA-07 | #1119 |
+| YA-09 | #1118 |
+| YA-10 | #1114 (8172c7c) |
+| YA-12 | #1125 |
+| YA-14 | #1126 |
+| YA-15 | #1114 (8172c7c) |
+| YA-16 | #1114 (8172c7c) |
+| YA-17 | #1116, plus UDP games a71be38 |
+| YA-18 | #1133 (b1a43a4) |
+
+Still open: **YA-08** (UDPBD read size, investigation only), **YA-11** (deferred, upstream
+withdrew it), **YA-13** (MMCE icon presentation) and the verify-only queue.
+
 ## Goals and non-goals
 - Harvest proven game-compatibility and safety wins, **not** rewrite this fork into YAOPL.
 - Keep all RiptOPL-specific OPL/Neutrino/POPStarter/Ember, RetroAchievements, MMCE, MX4SIO, PC-CARD, UDPFS/UDPBD, iLink, BDM and UI behavior. Neither identical source files nor a green cross-compiler build establish game compatibility.
@@ -79,6 +105,8 @@ For every item, first write a failing host test or reproducible hardware case. I
 6. Keep this plan PR open for tracking until implemented and confirmed, or split into task PRs that reference it. On each successful implementation update the checkbox with PR, commit and test evidence. Never mark a candidate complete solely because code was cherry-picked.
 
 ## Implementation progress (2026-10-29)
+
+> Dated snapshot. The PRs below were later merged together (see the "Status on 2026-10-30" table above); use that table for merge status.
 
 - **YA-15:** [implementation #1107](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1107) is ready for review; required CI passed. Both disc-key paths share a synchronous helper with balanced ownership instead of a post-call repair. Host tests reproduce the old leak and cover success/failure and rejected acquisitions. Hardware stop/read/launch checks remain pending.
 - **YA-16:** [implementation #1108](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1108) adds existing fragment counts and backup-first Cancel guidance, preserving native refusal, range/layout checks, slot isolation and autolaunch. Extended native VMC launch tests and strict translation checks pass. CI/review and console validation remain pending.
