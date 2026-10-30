@@ -832,8 +832,8 @@ See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main
 <p>Use <code>type=Grid</code> for the page's covers in rows and columns. The selected cover is drawn 12% larger and last,
 over its neighbours, inside a soft glow and a 2-pixel frame in the selected-text colour; the others are a step darker under
 a vignette. Left/Right step one cover; Up/Down step one row and keep the column (a short last row takes its last cover),
-and stop at the top and bottom rows. L1/R1 turn a whole page, the cursor keeping its place on it, and wrap at either end as
-they do in the list. The grid shows whole pages: the page holding the selection stays still while the cursor moves on it,
+and stop at the top and bottom rows. L1/R1 turn a whole page, the cursor keeping its place on it (on a short last page, a place past the last cover takes
+the last cover), and wrap at either end as they do in the list; with every cover on one page they do nothing. The grid shows whole pages: the page holding the selection stays still while the cursor moves on it,
 a new page slides in as the old one slides out (at Coverflow's Animation Speed; Off turns the slide off), and a short last
 page keeps its covers in their cells from the top. A position counter (<code>12/40</code>) sits under the grid's lower right
 corner.</p>
@@ -857,7 +857,7 @@ Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1097">#
 <tr><td><code>&lt;block&gt;_counter</code></td><td><code>0</code> hides the position counter; default <code>1</code>. From the first <code>Grid</code> block.</td></tr>
 <tr><td><code>&lt;block&gt;_title</code></td><td><code>1</code> draws the selected title on its own line under the grid, centred and kept clear of the counter; default <code>0</code>. From the first <code>Grid</code> block.</td></tr>
 <tr><td><code>&lt;block&gt;_title_y</code>, <code>&lt;block&gt;_title_font</code></td><td>That line's centre (default: just under the grid) and font slot (default <code>0</code>).</td></tr>
-<tr><td><code>&lt;block&gt;_devices</code></td><td><code>0</code> drops the device sidebar: Up on the top row and Down on the bottom row then switch device page, as Up/Down do in Coverflow. Default <code>1</code>. From the first <code>Grid</code> block.</td></tr>
+<tr><td><code>&lt;block&gt;_devices</code></td><td><code>0</code> drops the device sidebar: Up on the top row and Down on the bottom row then switch device page, as Up/Down do in Coverflow, and Left on the first column goes to the last cover of the row above. Default <code>1</code>. From the first <code>Grid</code> block.</td></tr>
 <tr><td><code>&lt;block&gt;_vignette</code></td><td>The other covers' vignette: <code>0</code> off, <code>1</code> weak (default), <code>2</code> full. From the first <code>Grid</code> block.</td></tr>
 <tr><td><code>&lt;block&gt;_coverless</code></td><td>A game with no cover art: <code>default</code> shows the <code>default</code> image (the default), <code>name</code> a glass tile with its name, <code>serial</code> a glass tile with the serial its case prints (<code>SLUS-20482</code>; the name when it has none). From the first <code>Grid</code> block.</td></tr>
 <tr><td><code>&lt;block&gt;_flip</code></td><td><code>0</code> turns the case flip off; default <code>1</code>. Each <code>Grid</code> block with it keeps a few back covers (<code>COV2</code>) in memory.</td></tr>
