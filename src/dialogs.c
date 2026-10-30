@@ -1910,7 +1910,13 @@ struct UIItem diaAbout[] = {
     // and Akilluminati47 (RIPPS2 co-developer) without adding a row or exceeding the
     // widest coder row. CREDITS and README explain the RIPPS2, YAOPL, LUNA,
     // PS2CF, and PSUManager contributions in full.
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47 - belomaxorka - darkladark - mihhru - techwritescode", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47 - belomaxorka - darkladark - mihhru", -1}}},
+    {UI_BREAK},
+
+    {UI_SPACER},
+    // NathanNeurotic (maintainer). A fifth coder row: the rows above are full, and the dialog's height is
+    // kept by putting Network update and its name on one row below, as Build Options and the forum are.
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"NathanNeurotic - techwritescode", -1}}},
     {UI_BREAK},
 
     // Quality Assurance
@@ -1932,8 +1938,6 @@ struct UIItem diaAbout[] = {
 
     // Network update
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {NULL, _STR_NET_UPDATE}}},
-    {UI_BREAK},
-
     {UI_SPACER},
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"icyson55", -1}}},
     {UI_BREAK},

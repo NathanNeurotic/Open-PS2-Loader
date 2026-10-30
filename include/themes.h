@@ -52,6 +52,10 @@ typedef struct
 #ifdef RETROACHIEVEMENTS
     int raIsCover; // RA: this element shows the cover, so it gets the RA mark (set in initGameImage)
 #endif
+
+    // Background: the cache entry of the last game art it drew, kept on screen while the next game's art loads
+    int lastCacheId;
+    int lastUid;
 } mutable_image_t;
 
 typedef struct
@@ -319,6 +323,7 @@ int thmCycleView(void);
 // for themes with SD/HD variants). Returns 1 when the theme was reloaded.
 int thmRefreshDisplayLayout(void);
 int thmFindGuiID(const char *theme);
+int thmSavedThemePending(void); // the saved disk theme's drive has not offered it yet
 const char **thmGetGuiList(void);
 char *thmGetFilePath(int themeID);
 

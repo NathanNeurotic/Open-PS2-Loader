@@ -349,32 +349,22 @@ void guiEndFrame(void)
 
 void guiShowAbout()
 {
-    char OPLVersion[40];
-    char OPLBuildDetails[40];
+    // Both strings are made of compile-time constants, so they are passed as literals: a 40-byte buffer cut
+    // "Open PS2 Loader v1.2.0-Beta-N-<channel>-<hash>" short, and the build options past "... - PADE".
+    // (YAOPL 9847f4ca, Roman Kelesidis.)
+    diaSetLabel(diaAbout, ABOUT_TITLE, "Open PS2 Loader " OPL_VERSION);
 
-    snprintf(OPLVersion, sizeof(OPLVersion), "Open PS2 Loader %s", OPL_VERSION);
-    diaSetLabel(diaAbout, ABOUT_TITLE, OPLVersion);
-
-    snprintf(OPLBuildDetails, sizeof(OPLBuildDetails), "GSM %s"
-                                                       " - UDMA+"
+    diaSetLabel(diaAbout, ABOUT_BUILD_DETAILS, "GSM " GSM_VERSION " - UDMA+"
 #ifdef __RTL
-                                                       " - RTL"
+                                               " - RTL"
 #endif
 #ifdef IGS
-                                                       " - IGS %s"
+                                               " - IGS " IGS_VERSION
 #endif
 #ifdef PADEMU
-                                                       " - PADEMU"
-#endif
-             // Version numbers
-             ,
-             GSM_VERSION
-#ifdef IGS
-             ,
-             IGS_VERSION
+                                               " - PADEMU"
 #endif
     );
-    diaSetLabel(diaAbout, ABOUT_BUILD_DETAILS, OPLBuildDetails);
 
     diaExecuteDialog(diaAbout, -1, 1, NULL);
 }
@@ -4785,6 +4775,9 @@ static void guiShow()
         screenHandler->renderScreen();
 }
 
+// The longest the greeting waits for the drive that holds the saved theme (RIPPS2 build 125 uses 6 s)
+#define THEME_HOLD_MS 6000
+
 void guiIntroLoop(void)
 {
     int greetingAlpha = 0x80;
@@ -4797,6 +4790,10 @@ void guiIntroLoop(void)
     clock_t tFadeStart = 0;
     clock_t tFadeDelay = 0;
     int tFadeArmed = 0;
+    // RIPPS2 build 125 (AK): a saved disk theme whose drive is not up yet keeps the greeting on screen, so the built-in
+    // theme does not show for a moment before the saved one replaces it. Bounded: at most THEME_HOLD_MS after init.
+    clock_t tInitDone = 0;
+    int tInitSeen = 0;
 
     // oplIsBootInProgress() can become false while background startup work is still queued. That
     // is correct for runtime overlays, but the animated greeting owns the entire intro lifecycle.
@@ -4829,7 +4826,14 @@ void guiIntroLoop(void)
             tFadeArmed = 1;
         }
 
-        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay)
+        if (gInitComplete && !tInitSeen) {
+            tInitDone = clock();
+            tInitSeen = 1;
+        }
+        int themeHold = greetingAlpha == 0x80 && tInitSeen && thmSavedThemePending() &&
+                        (clock() - tInitDone) < (clock_t)THEME_HOLD_MS * (CLOCKS_PER_SEC / 1000);
+
+        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold)
             greetingAlpha -= 2;
 
         if (greetingAlpha <= 0)
