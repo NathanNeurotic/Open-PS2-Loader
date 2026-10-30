@@ -71,9 +71,9 @@ static void *hook_AllocSysMemory(int mode, int size, void *ptr)
     void *result;
     int oldstate, i;
 
-    result = org_AllocSysMemory(mode, size, ptr);
-
+    // Keep the allocation and its record together so a racing free cannot reorder them.
     CpuSuspendIntr(&oldstate);
+    result = org_AllocSysMemory(mode, size, ptr);
     if (result == NULL) {
         slot = &g_heap_diag.failed[g_heap_diag.fail_next];
         g_heap_diag.fail_next = (g_heap_diag.fail_next + 1) % HEAP_DIAG_FAILS;
@@ -112,9 +112,9 @@ static int hook_FreeSysMemory(void *ptr)
 {
     int result, oldstate, i;
 
-    result = org_FreeSysMemory(ptr);
-
+    // Keep the free and its record update together so a racing allocation cannot reuse the slot first.
     CpuSuspendIntr(&oldstate);
+    result = org_FreeSysMemory(ptr);
     for (i = 0; i < HEAP_DIAG_BLOCKS; i++) {
         if (result >= 0 && g_heap_diag.blocks[i].addr == (unsigned int)ptr && ptr != NULL) {
             g_heap_diag.blocks[i].addr = 0;

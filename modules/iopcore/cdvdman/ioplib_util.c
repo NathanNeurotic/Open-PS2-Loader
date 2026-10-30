@@ -365,7 +365,8 @@ static void *Hook_AllocSysMemory(int mode, int size, void *ptr)
 {
     void *result = NULL;
 
-    if (size > 0 && size <= 0x7FFFFFFF - (1792 + IOP_PAD_SIZE))
+    // A fixed-address request (pbuf_realloc grows a block in place) must keep its exact extent.
+    if (mode != ALLOC_ADDRESS && size > 0 && size <= 0x7FFFFFFF - (1792 + IOP_PAD_SIZE))
         result = AllocSysMemory_org(mode, size + iopPadFor(size), ptr);
     if (result == NULL)
         result = AllocSysMemory_org(mode, size, ptr);

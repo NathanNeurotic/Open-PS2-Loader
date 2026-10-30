@@ -4,7 +4,7 @@ The game writes past the end of IOP buffers it allocates and hangs loading into 
 HDD and UDPBD. Compiles the real Hook_AllocSysMemory() from modules/iopcore/cdvdman/ioplib_util.c
 against a fake SYSMEM and checks the three overrun blocks get the overrun plus 256 bytes, every other
 block 256 bytes (a flat 2 KB runs the IOP out of RAM, neutrino #148), it falls back to the size asked
-for when the larger block does not fit, and never pads a zero or negative size. Then checks the flag has a bit of its own,
+for when the larger block does not fit, and never pads a zero or negative size or a fixed-address request. Then checks the flag has a bit of its own,
 CDVDMAN installs the hook only when the flag is set, and sbPrepare sets it for the listed titles only.
 """
 from pathlib import Path
@@ -46,7 +46,8 @@ HARNESS = r'''
 #include <stdio.h>
 #include <stddef.h>
 #define IOP_PAD_SIZE %(pad)s
-static int limit, calls, sizes[4];
+#define ALLOC_ADDRESS 2
+static int limit, calls, sizes[4], alloc_mode;
 static char heap[1];
 static void *fake_alloc(int mode, int size, void *ptr)
 {
@@ -65,7 +66,7 @@ static void run(int lim, int size)
     limit = lim;
     calls = 0;
     sizes[0] = sizes[1] = -1;
-    r = Hook_AllocSysMemory(0, size, NULL);
+    r = Hook_AllocSysMemory(alloc_mode, size, NULL);
     printf("%%d %%d %%d %%d\n", r != NULL, calls, sizes[0], sizes[1]);
 }
 int main(void)
@@ -81,6 +82,8 @@ int main(void)
     run(1 << 20, 25345); /* rounds past the 25344 block: 256 */
     run(1 << 20, -1);    /* negative: passed through unpadded */
     run(1 << 20, 0x7FFFFFF0); /* would overflow with the pad: passed through unpadded */
+    alloc_mode = ALLOC_ADDRESS;
+    run(1 << 20, 25344); /* fixed address (pbuf_realloc in place): exact extent, unpadded */
     return 0;
 }
 '''
@@ -105,6 +108,7 @@ expected = [
     '1 1 %d -1' % (25345 + p),
     '1 1 -1 -1',
     '0 1 %d -1' % 0x7FFFFFF0,
+    '1 1 25344 -1',
 ]
 if p != 256:
     failures.append('ioplib_util.c: IOP_PAD_SIZE is %d, not the 256 of neutrino Mode 7' % p)
