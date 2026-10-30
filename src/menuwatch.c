@@ -35,8 +35,8 @@
 
 // GS privileged registers: with both read circuits off the screen shows the background colour, so
 // the colour is visible whatever the last frame was.
-#define GS_PMODE   ((volatile u64 *)0x12000000)
-#define GS_BGCOLOR ((volatile u64 *)0x120000E0)
+#define MW_GS_PMODE   ((volatile u64 *)0x12000000)
+#define MW_GS_BGCOLOR ((volatile u64 *)0x120000E0)
 
 extern void *_gp;
 
@@ -77,8 +77,8 @@ static const char *threadState(int status)
 
 static void screen(u8 r, u8 g, u8 b)
 {
-    *GS_PMODE = 0;
-    *GS_BGCOLOR = (u64)r | ((u64)g << 8) | ((u64)b << 16);
+    *MW_GS_PMODE = 0;
+    *MW_GS_BGCOLOR = (u64)r | ((u64)g << 8) | ((u64)b << 16);
 }
 
 static int add(int len, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
