@@ -68,7 +68,7 @@ endif
 # In-game freeze report, forwarded from the top Makefile's INGAMEDIAG=1 (the FREEZEDIAG flavour).
 # Run make clean when switching it: padhook.o and iopmgr.o change with it.
 ifeq ($(INGAMEDIAG),1)
-EE_OBJS += freeze_diag.o
+EE_OBJS += freeze_diag.o freeze_diag_screen.o
 EE_CFLAGS += -DINGAMEDIAG
 endif
 

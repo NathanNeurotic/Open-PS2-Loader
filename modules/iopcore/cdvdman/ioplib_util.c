@@ -250,6 +250,29 @@ static int Hook_ReferModuleStatus(int id, ModuleStatus_t *status)
 }
 
 //--------------------------------------------------------------
+// Point every module that imports the library at its export table again, after a hook changed it.
+void relinkExports(modinfo_t *info)
+{
+    iop_library_t *lib = (iop_library_t *)((u32)info->exports - 0x14);
+
+    struct irx_import_table *table;
+    struct irx_import_stub *stub;
+
+    FlushDcache();
+
+    // go through each table that imports the library
+    for (table = lib->caller; table != NULL; table = table->next) {
+        // go through each import in the table
+        for (stub = (struct irx_import_stub *)table->stubs; stub->jump != 0; stub++) {
+            // patch the stub to jump to the address specified in the library export table for "fno"
+            stub->jump = 0x08000000 | (((u32)lib->exports[stub->fno] << 4) >> 6);
+        }
+    }
+
+    FlushIcache();
+}
+
+//--------------------------------------------------------------
 void hookMODLOAD(void)
 {
     struct FakeModule *modlist;
@@ -301,21 +324,69 @@ void hookMODLOAD(void)
     }
 
     // fix imports
-    iop_library_t *lib = (iop_library_t *)((u32)info.exports - 0x14);
+    relinkExports(&info);
+}
 
-    struct irx_import_table *table;
-    struct irx_import_stub *stub;
+//--------------------------------------------------------------
+/* Per-game fix (IOPCORE_COMPAT_IOP_PAD, set by sbPrepare from a title list): some games write past the
+   end of the IOP buffers they allocate. .hack//Infection overruns three of them, 25344, 3328 and 2304
+   bytes long, by 1280, 768 and 1792 bytes and hangs loading into "The World" on USB, HDD and UDPBD alike
+   (neutrino #92). Those three get the overrun plus 256 bytes more, so it lands in memory nobody else
+   owns. Every other allocation gets 256 bytes, like neutrino's Mode 7: a flat 2 KB on every block
+   (neutrino p-membo2k) runs the IOP out of RAM on some setups and black-screens the game (neutrino #148).
+   If the larger block does not fit, the size asked for is used: the pad never makes an allocation fail. */
+#define IOP_PAD_SIZE 256
 
-    FlushDcache();
+static const struct
+{
+    int size; // the overrun block, rounded up to SYSMEM's 256-byte units
+    int pad;
+} iop_pad_blocks[] = {
+    {25344, 1280 + IOP_PAD_SIZE},
+    {3328, 768 + IOP_PAD_SIZE},
+    {2304, 1792 + IOP_PAD_SIZE},
+};
 
-    // go through each table that imports the library
-    for (table = lib->caller; table != NULL; table = table->next) {
-        // go through each import in the table
-        for (stub = (struct irx_import_stub *)table->stubs; stub->jump != 0; stub++) {
-            // patch the stub to jump to the address specified in the library export table for "fno"
-            stub->jump = 0x08000000 | (((u32)lib->exports[stub->fno] << 4) >> 6);
-        }
+static int iopPadFor(int size)
+{
+    int rounded = (size + 255) & ~255;
+    unsigned int i;
+
+    for (i = 0; i < sizeof(iop_pad_blocks) / sizeof(iop_pad_blocks[0]); i++) {
+        if (rounded == iop_pad_blocks[i].size)
+            return iop_pad_blocks[i].pad;
     }
+    return IOP_PAD_SIZE;
+}
 
-    FlushIcache();
+static void *(*AllocSysMemory_org)(int mode, int size, void *ptr);
+
+static void *Hook_AllocSysMemory(int mode, int size, void *ptr)
+{
+    void *result = NULL;
+
+    // A fixed-address request (pbuf_realloc grows a block in place) must keep its exact extent.
+    if (mode != ALLOC_ADDRESS && size > 0 && size <= 0x7FFFFFFF - (1792 + IOP_PAD_SIZE))
+        result = AllocSysMemory_org(mode, size + iopPadFor(size), ptr);
+    if (result == NULL)
+        result = AllocSysMemory_org(mode, size, ptr);
+
+    return result;
+}
+
+void hookAllocSysMemory(void)
+{
+    modinfo_t info;
+    int oldstate;
+
+    if (!getModInfo("sysmem\0\0", &info))
+        return;
+
+    CpuSuspendIntr(&oldstate);
+    AllocSysMemory_org = (void *)info.exports[4];
+    info.exports[4] = (void *)Hook_AllocSysMemory;
+    CpuResumeIntr(oldstate);
+
+    // The modules already loaded (THREADMAN's thread stacks among them) take the pad too, as in neutrino.
+    relinkExports(&info);
 }

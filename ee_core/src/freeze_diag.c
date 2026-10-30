@@ -1,10 +1,11 @@
 /*
   In-game freeze report (INGAMEDIAG flavour only).
 
-  When a game freezes, the player presses the IGR combo. If the IGR thread still gets to run,
-  this records what the console was doing -- the game's threads, the IOP's disc and VMC
-  activity -- and writes it to the memory card as plain text, then lets IGR exit as usual.
-  An unresponsive combo must be reported separately; it does not prove an EE freeze.
+  When a game freezes, the player presses the IGR combo or the power button, or the pad data
+  stops (padhook.c's watchdog: the IOP stopped sending it). If the IGR thread still gets to run,
+  this records what the console was doing -- the game's threads, the IOP's heap, disc and VMC
+  activity -- draws it on the TV (freeze_diag_screen.c), then writes it to the memory card as
+  plain text and lets IGR exit as usual. The TV page needs nothing from the IOP; the file does.
 
   Nothing here exists in other builds: the whole file is only compiled with INGAMEDIAG=1.
 */
@@ -15,6 +16,7 @@
 #include "modmgr.h"
 #include "freeze_diag_core.h"
 #include "freeze_diag_report.h"
+#include "freeze_diag_screen.h"
 #include "cd_igr_rpc.h"
 
 #include <iopcontrol.h>
@@ -22,6 +24,14 @@
 #include "util.h"
 
 #define IGR_RPC_SERVER 0x80000598
+
+// IOP RAM as the EE sees it (uncached). Readable even when the IOP itself is stuck.
+#define IOP_RAM_EE 0xBC000000
+
+// The IOP heap snapshot sits in the game's memory, which IGR is about to drop: ram84 has no room
+// for it (see ee_core/linkfile), and module storage must stay intact for the reboot that writes
+// the report. Below 16 MB nothing of ee_core's or the launcher's lives there.
+#define HEAP_SNAPSHOT ((heap_diag_snapshot_t *)0x01000000)
 
 // The EE count register runs at the CPU clock (294.912 MHz).
 #define EE_TICKS_PER_MS           294912
@@ -54,7 +64,43 @@ static int budget_spent(u32 start)
     return (u32)(ee_ticks() - start) >= (u32)FREEZE_DIAG_IOP_BUDGET_MS * EE_TICKS_PER_MS;
 }
 
-void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int pad_frame)
+// Find CDVDMAN's heap record (heap_diag.h) in IOP RAM and copy it, with the 0xFF run after each
+// live block. Straight memory reads: it needs nothing from the IOP, so it also works when the IOP
+// is stuck and the RPC below gets no answer.
+static void heap_snapshot(void)
+{
+    heap_diag_snapshot_t *h = HEAP_SNAPSHOT;
+    volatile const u32 *rec = NULL;
+    unsigned int a, i;
+
+    h->found = 0;
+    for (a = 0x800; a <= HEAP_DIAG_IOP_RAM_SIZE - HEAP_DIAG_IOP_SIZE; a += 16) {
+        volatile const u32 *p = (volatile const u32 *)(IOP_RAM_EE + a);
+
+        if (p[0] == HEAP_DIAG_MAGIC && p[1] == HEAP_DIAG_CHECK && p[2] == a) {
+            rec = p;
+            break;
+        }
+    }
+    if (rec == NULL)
+        return;
+
+    for (i = 0; i < HEAP_DIAG_IOP_SIZE / 4; i++)
+        ((u32 *)&h->iop)[i] = rec[i];
+    for (i = 0; i < HEAP_DIAG_BLOCKS; i++) {
+        unsigned int end = h->iop.blocks[i].addr + h->iop.blocks[i].size, n = 0;
+
+        if (h->iop.blocks[i].addr != 0) {
+            while (n < HEAP_DIAG_TAIL_SCAN && end + n < HEAP_DIAG_IOP_RAM_SIZE && *(volatile const u8 *)(IOP_RAM_EE + end + n) == 0xFF)
+                n++;
+        }
+        h->tail_ff[i] = (unsigned short)n;
+    }
+    h->found_at = a;
+    h->found = 1;
+}
+
+void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int pad_frame, unsigned int trigger)
 {
     USE_LOCAL_EECORE_CONFIG;
     ee_thread_status_t status;
@@ -66,6 +112,8 @@ void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int 
     report.compat = g_compat_mask;
     report.cheats = config->gCheatList != NULL;
     report.gsm = config->EnableGSMOp != 0;
+    report.pademu = config->EnablePadEmuOp != 0;
+    report.trigger = trigger;
     report.iop_resets = iop_reboot_count;
     report.iop_reset_failures = g_freeze_diag_reset_failures;
     report.igr_polls = g_freeze_diag_polls;
@@ -95,7 +143,12 @@ void FreezeDiag_Begin(unsigned int libpad, unsigned int pad_state, unsigned int 
         }
     }
 
+    heap_snapshot();
+
     report_armed = 1;
+
+    // A stuck IOP answers none of what follows: the TV gets the report first.
+    FreezeDiag_Screen(&report, HEAP_SNAPSHOT);
 }
 
 // Ask CDVDFSV for CDVDMAN's record over the IGR RPC, with a deadline: a stuck IOP must not hang
@@ -200,8 +253,8 @@ void FreezeDiag_Write(void)
 {
     static const char hex[] = "0123456789ABCDEF";
     unsigned int size = (sizeof(report) + 15) & ~15;
-    char arg[9];
-    void *iop;
+    char arg[18]; // two IOP addresses: the report, then the heap snapshot right after it
+    u8 *iop;
     int i;
 
     if (!report_armed)
@@ -211,13 +264,17 @@ void FreezeDiag_Write(void)
     LoadModule("rom0:SIO2MAN", 0, NULL);
     LoadModule("rom0:MCMAN", 0, NULL);
 
-    iop = SifAllocIopHeap(size);
+    iop = SifAllocIopHeap(size + sizeof(heap_diag_snapshot_t));
     if (iop != NULL) {
         FlushCache(0); // CopyToIop DMAs from memory, not from the cache
         CopyToIop(&report, size, iop);
-        for (i = 0; i < 8; i++)
+        CopyToIop(HEAP_SNAPSHOT, sizeof(heap_diag_snapshot_t), iop + size);
+        for (i = 0; i < 8; i++) {
             arg[i] = hex[((u32)iop >> (28 - 4 * i)) & 0xF];
+            arg[9 + i] = hex[((u32)(iop + size) >> (28 - 4 * i)) & 0xF];
+        }
         arg[8] = '\0';
+        arg[17] = '\0';
         LoadOPLModule(OPL_MODULE_ID_FREEZEDIAG, 0, sizeof(arg), arg);
         SifFreeIopHeap(iop);
     }
