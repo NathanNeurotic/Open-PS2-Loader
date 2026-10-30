@@ -28,7 +28,7 @@
 #include "include/sound.h"
 #include "include/favsupport.h"   // gFAVStartMode -- the Favourites tab counts as "something to show"
 #include "include/gamemanage.h"   // Hide Game and Delete everything (RIPPS2)
-#include "include/grid.h"         // gridRowStep -- Up/Down in the Grid view
+#include "include/grid.h"         // gridRowStep, gridPageStep -- Up/Down and L1/R1 in the Grid view
 #include "include/folderbrowse.h" // menuFolderResetLeaving -- leave a device page at its folder root
 #include "include/vcdsupport.h"   // VCD launches never use Neutrino
 #include "include/libview.h"      // libViewActive / libListViewActive -- which list this page shows
@@ -2226,6 +2226,37 @@ static int menuPageIsGrid(void)
     return menuGetMainElems((item_list_t *)selected_item->item->userdata)->hasGrid;
 }
 
+// L1/R1 on a Grid page turn a whole page of covers, the cursor keeping its place on the page (RIPPS2 build
+// 98, akilluminati47). Through the list's own paging they moved one cover: the grid's items list is one row
+// high. Past either end they wrap, as L1/R1 do in the list.
+static void menuGridPage(int dir)
+{
+    submenu_list_t *cur = selected_item->item->current, *walk;
+    int count = 0, index = 0;
+    for (walk = selected_item->item->submenu; walk != NULL; walk = walk->next) {
+        if (walk == cur)
+            index = count;
+        count++;
+    }
+    int target = cur != NULL ? gridPageStep(count, index, gTheme->gridRows, gTheme->gridColumns, dir) : -1;
+    if (target < 0) {
+        if (count > 1) {
+            if (dir < 0)
+                menuLastPage();
+            else
+                menuFirstPage();
+        }
+        return;
+    }
+    for (walk = selected_item->item->submenu; target > 0 && walk != NULL; target--)
+        walk = walk->next;
+    if (walk == NULL)
+        return;
+    selected_item->item->current = walk;
+    selected_item->item->pagestart = walk; // the grid's items list shows the selected title
+    sfxPlay(SFX_CURSOR);
+}
+
 static void menuNavigateLeft()
 {
     if (gTheme->coverflow || menuPageIsGrid())
@@ -2332,9 +2363,15 @@ void menuHandleInputMain()
         if (!viewPending)
             selected_item->item->refresh(selected_item->item);
     } else if (getKey(KEY_L1)) {
-        menuPrevPage();
+        if (menuPageIsGrid())
+            menuGridPage(-1);
+        else
+            menuPrevPage();
     } else if (getKey(KEY_R1)) {
-        menuNextPage();
+        if (menuPageIsGrid())
+            menuGridPage(1);
+        else
+            menuNextPage();
     } else if (getKeyOn(KEY_L2)) { // home
         menuFirstPage();
     } else if (getKeyOn(KEY_R2)) { // end

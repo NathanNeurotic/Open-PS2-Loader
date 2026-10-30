@@ -27,16 +27,36 @@ static inline void gridClamp(int *rows, int *columns)
         (*rows)--;
 }
 
-// The first row on screen: the selected row sits in the middle where the list allows, and the grid
-// never scrolls past its last row.
+// The first row on screen. The grid shows whole pages, rows high: the page holding the selection stays
+// still while the cursor moves on it and turns as a whole when the cursor leaves it, so a cover never
+// changes cell under the cursor (RIPPS2 build 82, by akilluminati47). A short last page keeps its covers
+// in their cells, from the top.
 static inline int gridTopRow(int count, int index, int rows, int columns)
 {
-    int totalRows = (count + columns - 1) / columns;
-    int top = index / columns - (rows - 1) / 2;
-    if (top > totalRows - rows)
-        top = totalRows - rows;
-    return top < 0 ? 0 : top;
+    if (count <= 0 || index < 0 || rows < 1 || columns < 1)
+        return 0;
+    if (index >= count)
+        index = count - 1;
+    return index / columns / rows * rows;
 }
+
+// L1 (dir < 0) or R1 (dir > 0): a whole page back or on, the cursor keeping its place on the page. On the
+// last page R1 takes its last cover when the cursor would land past the end. -1 when there is no page
+// that way: the caller wraps to the other end, as L1/R1 do in the list (RIPPS2 build 98, akilluminati47).
+static inline int gridPageStep(int count, int index, int rows, int columns, int dir)
+{
+    if (count <= 0 || rows < 1 || columns < 1 || index < 0 || index >= count)
+        return -1;
+    int page = rows * columns;
+    if (dir < 0)
+        return index >= page ? index - page : -1;
+    if (index - index % page + page >= count)
+        return -1;
+    return index + page < count ? index + page : count - 1;
+}
+
+// The selected cover is drawn this much larger (percent) and last, over its neighbours (RIPPS2 build 78).
+#define GRID_SELECTED_SCALE 112
 
 // Up (dir < 0) or Down (dir > 0) one row, keeping the column. A short last row takes its last cover.
 // -1 when there is no row that way: the caller switches device page instead, as Up/Down do in Coverflow.

@@ -118,12 +118,15 @@ See [`misc/theme_psbbn_flow.cfg`](../misc/theme_psbbn_flow.cfg) for the full exa
 
 ### Grid element properties
 
-Use `type=Grid` for the page's covers in rows and columns, the selected cover framed in the
-selected-text colour and the others dimmed. Left/Right step one cover; Up/Down step one row and keep
-the column (a short last row takes its last cover). Up on the top row and Down on the bottom row
-switch to the previous/next device page, as Up/Down do in Coverflow. The selected row stays in the
-middle of the grid where the list allows, and the grid never scrolls past its last row. A position
-counter (`12/40`) sits under the grid's lower right corner. Idea: KrahJohlito (multi-view themes).
+Use `type=Grid` for the page's covers in rows and columns. The selected cover is drawn 12% larger
+and last, over its neighbours, inside a soft glow and a 2-pixel frame in the selected-text colour; the
+others are a step darker. Left/Right step one cover; Up/Down step one row and keep the column (a short
+last row takes its last cover). Up on the top row and Down on the bottom row switch to the
+previous/next device page, as Up/Down do in Coverflow. L1/R1 turn a whole page, the cursor keeping its
+place on it, and wrap at either end as they do in the list. The grid shows whole pages: the page holding
+the selection stays still while the cursor moves on it, and a short last page keeps its covers in their
+cells from the top. A position counter (`12/40`) sits under the grid's lower right corner. Idea:
+KrahJohlito (multi-view themes); the page, selection and glow follow RIPPS2's grid (akilluminati47).
 
 | Property | Grid behavior |
 | --- | --- |
@@ -134,6 +137,14 @@ counter (`12/40`) sits under the grid's lower right corner. Idea: KrahJohlito (m
 | `pattern`, `default`, `count` | Native artwork suffix (default `COV`), missing-art asset and cache capacity, as for `Coverflow`. |
 | `overlay`, `overlay2`, overlay corners | Native frame layers, scaled with each cover. Author corners against the element's `width` / `height`. |
 | `font` | Font for the position counter. |
+| `<block>_counter` | `0` hides the position counter; default `1`. From the first `Grid` block. |
+| `<block>_title` | `1` draws the selected title on its own line under the grid, centred and kept clear of the counter; default `0`. From the first `Grid` block. |
+| `<block>_title_y`, `<block>_title_font` | That line's centre (default: just under the grid) and font slot (default `0`). |
+
+For a 16:9 picture, give the grid its own shape with the SD/HD keys (see
+[SD and HD layouts](#sd-and-hd-layouts-_sd--_hd--this-fork)): a cover draws at three quarters of its width there, so more
+columns fit, e.g. `columns_hd=6`. The built-in Grid view shows 4 x 2 covers of 107 x 150, and 6 x 2 on
+16:9.
 
 Keep a one-row `ItemsList` in the same family for the selected title. Left/Right step covers and
 Up/Down step rows on the pages whose family has a `Grid` element (a family without one, such as

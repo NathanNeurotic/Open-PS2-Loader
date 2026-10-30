@@ -1,4 +1,4 @@
-"""Exercise the Grid view's shape limits, scrolling and Up/Down steps (include/grid.h).
+"""Exercise the Grid view's shape limits, page scrolling, Up/Down and L1/R1 steps (include/grid.h).
 
 The header is compiled as-is into a small host program. Also checks that the Grid element, the
 built-in Grid view and the Up/Down row navigation stay wired up. Multi-view themes idea: KrahJohlito.
@@ -28,7 +28,16 @@ assert 'names[4] = "Grid";' in GUI and '#define GUI_THEME_VIEW_PICKS 4' in GUI
 assert 'gridRowStep(count, index, gTheme->gridColumns, dir)' in MENUSYS
 assert 'return menuGetMainElems((item_list_t *)selected_item->item->userdata)->hasGrid;' in MENUSYS
 assert MENUSYS.count('if (gTheme->coverflow || menuPageIsGrid())') == 2
-assert MENUSYS.count('if (menuPageIsGrid())') == 2
+assert MENUSYS.count('if (menuPageIsGrid())') == 4  # Up, Down, L1, R1
+# L1/R1 turn a whole page of covers on a Grid page (RIPPS2 build 98, akilluminati47).
+assert 'gridPageStep(count, index, gTheme->gridRows, gTheme->gridColumns, dir)' in MENUSYS
+assert 'menuGridPage(-1);' in MENUSYS and 'menuGridPage(1);' in MENUSYS
+# The selected cover is drawn last and larger; the counter and the title under the grid are theme keys.
+assert 'drawGridCell(menu, item, elem, selX, selY, gDefaultCol, GRID_SELECTED_SCALE);' in THEMES
+assert '"%s_counter"' in THEMES and '"%s_title"' in THEMES
+# The built-in Grid: 4 x 2 covers, 6 columns on a 16:9 picture; a disk theme's fallback Grid resolves them too.
+assert 'rows=2' in CFG and 'columns=4' in CFG and 'columns_hd=6' in CFG
+assert 'if (thmApplyDisplayLayout(tmpl, newT->layoutWide))' in THEMES
 assert 'elems->hasGrid = 1;' in THEMES
 
 program = r'''
@@ -48,13 +57,28 @@ int main(void)
     gridClamp(&rows, &columns);
     assert(rows == 4 && columns == 4);
 
-    // The selected row stays in the middle, never past either end.
+    // Whole pages: the page holding the selection; moving on a page never scrolls it.
     assert(gridTopRow(30, 0, 3, 4) == 0);
-    assert(gridTopRow(30, 5, 3, 4) == 0);
-    assert(gridTopRow(30, 13, 3, 4) == 2);
-    assert(gridTopRow(30, 29, 3, 4) == 5);
+    assert(gridTopRow(30, 11, 3, 4) == 0);
+    assert(gridTopRow(30, 12, 3, 4) == 3);
+    assert(gridTopRow(30, 29, 3, 4) == 6);
+    assert(gridTopRow(30, 9, 2, 4) == 2);
     assert(gridTopRow(5, 4, 3, 4) == 0);
     assert(gridTopRow(1, 0, 3, 4) == 0);
+    assert(gridTopRow(0, 0, 3, 4) == 0);
+    assert(gridTopRow(10, 12, 2, 4) == 2);
+    for (int i = 8; i < 16; i++)
+        assert(gridTopRow(40, i, 2, 4) == 2);
+
+    // L1/R1: a page back or on, keeping the place on the page; -1 at either end (the caller wraps).
+    assert(gridPageStep(30, 5, 2, 4, 1) == 13);
+    assert(gridPageStep(30, 13, 2, 4, -1) == 5);
+    assert(gridPageStep(30, 5, 2, 4, -1) == -1);
+    assert(gridPageStep(30, 22, 2, 4, 1) == 29);
+    assert(gridPageStep(30, 25, 2, 4, 1) == -1);
+    assert(gridPageStep(8, 3, 2, 4, 1) == -1);
+    assert(gridPageStep(0, 0, 2, 4, 1) == -1);
+    assert(gridPageStep(30, 40, 2, 4, -1) == -1);
 
     // Up/Down keep the column, a short last row takes its last cover, -1 leaves the grid.
     assert(gridRowStep(10, 1, 4, -1) == -1);
@@ -66,7 +90,7 @@ int main(void)
     assert(gridRowStep(0, 0, 4, 1) == -1);
     assert(gridRowStep(10, 12, 4, 1) == -1);
 
-    puts("grid: shape limits, scrolling and row steps passed");
+    puts("grid: shape limits, pages, row and page steps passed");
     return 0;
 }
 '''.replace('@HEADER@', HEADER)

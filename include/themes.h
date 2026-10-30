@@ -234,6 +234,9 @@ typedef struct theme
     theme_element_t *psbbnFlow;
     theme_element_t *grid; // first Grid element: Left/Right step a cover, Up/Down a row (themes.c)
     int gridRows, gridColumns, gridSpacing;
+    int gridCounter;           // the "12/40" position under the grid (<block>_counter, default on)
+    int gridTitle, gridTitleY; // the selected title under the grid at gridTitleY (<block>_title, default off)
+    int gridTitleFont;         // ... in this font handle (<block>_title_font)
     int coverflowCoverOffset;
 
     int gameCacheCount;

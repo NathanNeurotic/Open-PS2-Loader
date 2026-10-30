@@ -2101,8 +2101,10 @@ static void drawPsbbnFlow(struct menu_list *menu, struct submenu_list *item, con
 
 /* Grid: the page's covers in rows and columns with the selection framed (multi-view themes, idea by
  * KrahJohlito; docs/MULTI-VIEW-THEMES-PLAN.md step 6). Left/Right step one cover, Up/Down one row
- * (menusys.c). The element's x/y place the grid's centre, width/height one cover; rows, columns and
- * spacing come from the theme's first Grid block. Covers come from the COV cache like Coverflow. */
+ * (menusys.c), L1/R1 one page. The element's x/y place the grid's centre, width/height one cover; rows,
+ * columns and spacing come from the theme's first Grid block. Covers come from the COV cache like Coverflow.
+ * The look follows RIPPS2's grid (akilluminati47, builds 78-98): whole pages, the selected cover drawn
+ * larger and last inside a soft glow, the others a step back. */
 
 // The size a cover takes in a cell: the page element's size, or, for a cover another family draws (a
 // square app or PS1 cover on a mixed page), that element's shape fitted into the cell.
@@ -2118,7 +2120,7 @@ static void gridCoverSize(theme_element_t *elem, theme_element_t *coverElem, int
         *w = coverElem->width * elem->height / coverElem->height;
 }
 
-static void drawGridCell(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem, int x, int y, u64 color)
+static void drawGridCell(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem, int x, int y, u64 color, int scale)
 {
     theme_element_t *coverElem = thmGetElemForItem(menu, item, elem);
     mutable_image_t *image = (mutable_image_t *)coverElem->extended;
@@ -2133,6 +2135,8 @@ static void drawGridCell(struct menu_list *menu, struct submenu_list *item, them
     // Frame insets scale from the element that owns the overlay to the size drawn here.
     int w, h;
     gridCoverSize(elem, coverElem, &w, &h);
+    w = w * scale / 100;
+    h = h * scale / 100;
     if (image->overlayTexture) {
         image_texture_t *ov = image->overlayTexture;
         int cw = coverElem->width > 0 ? coverElem->width : 1;
@@ -2149,14 +2153,29 @@ static void drawGridCell(struct menu_list *menu, struct submenu_list *item, them
     }
 }
 
+// The selection's frame, after RIPPS2's (build 79): three soft rings in the selected-text colour, wider and
+// fainter outwards, breathing over 2.4 s, round a crisp 2-pixel frame. w/h are the cover as drawn.
 static void drawGridFrame(int x, int y, int w, int h, u64 color)
 {
-    const int t = 3;
-    int x0 = x - w / 2 - t - 2, y0 = y - h / 2 - t - 2, x1 = x + (w + 1) / 2 + 2, y1 = y + (h + 1) / 2 + 2;
-    rmDrawRect(x0, y0, x1 - x0 + t, t, color);
-    rmDrawRect(x0, y1, x1 - x0 + t, t, color);
-    rmDrawRect(x0, y0, t, y1 - y0, color);
-    rmDrawRect(x1, y0, t, y1 - y0, color);
+    float t = (float)(clock() % (CLOCKS_PER_SEC * 12)) / (float)CLOCKS_PER_SEC;
+    float breath = 0.5f + 0.5f * sinf(t * 2.0f * 3.14159265f / 2.4f);
+    int r = color & 0xFF, g = (color >> 8) & 0xFF, b = (color >> 16) & 0xFF;
+    int left = x - w / 2, top = y - h / 2, right = left + w, bottom = top + h;
+
+    for (int i = 3; i >= 1; i--) {
+        int grow = 2 + i * 3 + (int)(breath * 3.0f), t2 = i + 1;
+        u64 ring = GS_SETREG_RGBA(r, g, b, (int)((0x10 + 0x10 * breath) / i));
+        int x0 = left - grow, y0 = top - grow, x1 = right + grow, y1 = bottom + grow;
+        rmDrawRect(x0, y0, x1 - x0, t2, ring);
+        rmDrawRect(x0, y1 - t2, x1 - x0, t2, ring);
+        rmDrawRect(x0, y0 + t2, t2, y1 - y0 - 2 * t2, ring);
+        rmDrawRect(x1 - t2, y0 + t2, t2, y1 - y0 - 2 * t2, ring);
+    }
+    u64 frame = GS_SETREG_RGBA(r, g, b, 0x60 + (int)(0x20 * breath));
+    rmDrawRect(left - 2, top - 2, w + 4, 2, frame);
+    rmDrawRect(left - 2, bottom, w + 4, 2, frame);
+    rmDrawRect(left - 2, top, 2, h, frame);
+    rmDrawRect(right, top, 2, h, frame);
 }
 
 static void drawGrid(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
@@ -2187,7 +2206,7 @@ static void drawGrid(struct menu_list *menu, struct submenu_list *item, config_s
     struct submenu_list *cell = menu->item->submenu;
     for (int i = 0; i < first && cell != NULL; i++)
         cell = cell->next;
-    u64 dim = GS_SETREG_RGBA(0x60, 0x60, 0x60, 0x80);
+    u64 dim = GS_SETREG_RGBA(0x70, 0x70, 0x70, 0x80); // the others a step back (RIPPS2's shade)
     int selX = 0, selY = 0, shown = 0;
     for (int slot = 0; slot < rows * columns && cell != NULL; slot++, cell = cell->next) {
         int x = x0 + (slot % columns) * stepX, y = y0 + (slot / columns) * stepY;
@@ -2195,21 +2214,40 @@ static void drawGrid(struct menu_list *menu, struct submenu_list *item, config_s
             selX = x;
             selY = y;
             shown = 1;
+            continue; // drawn last, larger, over its neighbours
         }
-        drawGridCell(menu, cell, elem, x, y, cell == item ? gDefaultCol : dim);
+        drawGridCell(menu, cell, elem, x, y, dim, 100);
     }
     if (shown) {
         int coverW, coverH;
         gridCoverSize(elem, thmGetElemForItem(menu, item, elem), &coverW, &coverH);
+        coverW = coverW * GRID_SELECTED_SCALE / 100;
+        coverH = coverH * GRID_SELECTED_SCALE / 100;
         drawGridFrame(selX, selY, rmWideScale(coverW), coverH, gTheme->selTextColor);
+        drawGridCell(menu, item, elem, selX, selY, gDefaultCol, GRID_SELECTED_SCALE);
     }
 
-    // Position in the page, under the grid's lower right corner.
-    char counter[32];
-    snprintf(counter, sizeof(counter), "%d/%d", index + 1, count);
-    int counterWidth = rmUnScaleX(fntCalcDimensions(elem->font, counter));
-    fntRenderString(elem->font, x0 + (columns - 1) * stepX + cellW / 2 - counterWidth, y0 + (rows - 1) * stepY + elem->height / 2 + 6,
-                    ALIGN_LEFT, counterWidth, 0, counter, gTheme->textColor);
+    // Under the grid, clear of the selected cover's growth on the bottom row.
+    int gridRight = x0 + (columns - 1) * stepX + cellW / 2;
+    int below = y0 + (rows - 1) * stepY + elem->height / 2 + elem->height * (GRID_SELECTED_SCALE - 100) / 200 + 6;
+
+    // Position in the list, under the grid's lower right corner (<block>_counter=0 hides it).
+    int counterWidth = 0;
+    if (gTheme->gridCounter) {
+        char counter[32];
+        snprintf(counter, sizeof(counter), "%d/%d", index + 1, count);
+        counterWidth = rmUnScaleX(fntCalcDimensions(elem->font, counter));
+        fntRenderString(elem->font, gridRight - counterWidth, below, ALIGN_LEFT, counterWidth, 0, counter, gTheme->textColor);
+    }
+
+    // The selected title on a line of its own under the grid (<block>_title=1), as RIPPS2's RIPGRID shows it;
+    // centred, and kept clear of the counter.
+    if (gTheme->gridTitle && item->item.text != NULL) {
+        int room = 2 * (gridRight - elem->posX - (counterWidth > 0 ? counterWidth + 8 : 0));
+        int y = gTheme->gridTitleY >= 0 ? gTheme->gridTitleY : below + 12;
+        if (room > 0)
+            fntRenderStringFit(gTheme->gridTitleFont, elem->posX, y, ALIGN_CENTER, room, item->item.text, gTheme->textColor, 1);
+    }
 }
 
 static void initGrid(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
@@ -2251,6 +2289,23 @@ static void initGrid(const char *themePath, config_set_t *themeConfig, theme_t *
     theme->gridRows = rows;
     theme->gridColumns = columns;
     theme->gridSpacing = spacing < 0 ? 0 : spacing;
+
+    int value = 1;
+    snprintf(key, sizeof(key), "%s_counter", name);
+    configGetInt(themeConfig, key, &value);
+    theme->gridCounter = value != 0;
+    value = 0;
+    snprintf(key, sizeof(key), "%s_title", name);
+    configGetInt(themeConfig, key, &value);
+    theme->gridTitle = value != 0;
+    theme->gridTitleY = -1; // under the grid
+    snprintf(key, sizeof(key), "%s_title_y", name);
+    if (configGetInt(themeConfig, key, &value) && value >= 0 && value <= 480)
+        theme->gridTitleY = value;
+    value = 0;
+    snprintf(key, sizeof(key), "%s_title_font", name);
+    configGetInt(themeConfig, key, &value);
+    theme->gridTitleFont = theme->fonts[value >= 0 && value < THM_MAX_FONTS ? value : 0];
 }
 
 static void initCoverflow(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
@@ -4332,6 +4387,9 @@ static int thmLoad(const char *themePath)
             config_set_t *tmpl = configAlloc(0, NULL, NULL);
             if (tmpl != NULL) {
                 thmReadViewTemplate(tmpl, requested);
+                // The template's own SD/HD keys (the built-in Grid's columns_hd) resolve for this picture too.
+                if (thmApplyDisplayLayout(tmpl, newT->layoutWide))
+                    newT->layoutDependsOnWide = 1;
                 built = thmViewSynthesize(themeConfig, tmpl, requested);
                 configFree(tmpl);
             }

@@ -43,6 +43,7 @@ every menu keep the standard layout.
 |---|---|---|---|
 | **Up / Down** | Move through the list | Switch device page | Move one row, keeping the column; on the top or bottom row, switch device page |
 | **Left / Right** | Switch device page | Move through the carousel | Move one cover |
+| **L1 / R1** | Page up / down the list | Page up / down the list | Turn a whole page of covers, keeping your place on it; wraps at either end |
 
 Every other button is unchanged, including **R3 = toggle Favorite**. PSBBN Flow and Grid are picked under
 Theme View; R3 does not switch displays. See [PSBBN Flow](THEME_ENGINE.md#psbbn-flow).
