@@ -15,6 +15,7 @@ THEMES = ("inceBtion", "Korium")
 # GitHub's release API intermittently answers 5xx (a 500 once cost the standard release its loose ELF
 # mid-publish, #855). Every call below is safe to repeat, so retry before giving up.
 RETRY_DELAYS = (5, 15)
+REPUBLISH_DELAY = 60
 
 
 def gh(*args):
@@ -56,6 +57,38 @@ def validate(folder):
     return revision
 
 
+def refresh_release_date(repository):
+    """GitHub dates a release by publishedAt, which only a draft -> published transition sets, so a
+    rolling-ra with new notes and assets still read as weeks old. Flip it to draft and straight back,
+    as rolling-release.yml does for rolling and rolling-korium: the release keeps its id, tag, assets,
+    download links and counts. It is hidden for the moment between the two calls, so the republish
+    runs even if the first call fails, and a release still a draft afterwards fails the run."""
+    before = json.loads(gh("release", "view", TAG, "--repo", repository, "--json", "publishedAt"))["publishedAt"]
+    try:
+        gh("release", "edit", TAG, "--repo", repository, "--draft=true")
+    except subprocess.CalledProcessError as error:
+        # Only the date is lost; still republish, check the state and go on to the other channels.
+        print(f"{TAG}: could not switch to draft ({error}); checking it is still published", file=sys.stderr)
+    # A draft cannot hold the Latest marker, so the flags are asserted again. A hidden release is worse
+    # than a stale date, so the republish gets one more try after GitHub has had a minute to recover.
+    for delay in (REPUBLISH_DELAY, None):
+        try:
+            gh("release", "edit", TAG, "--repo", repository, "--draft=false", "--prerelease", "--latest=false")
+            break
+        except subprocess.CalledProcessError:
+            if delay is None:
+                raise
+            print(f"{TAG}: republish failed; retrying in {delay}s", file=sys.stderr)
+            time.sleep(delay)
+    state = json.loads(gh("release", "view", TAG, "--repo", repository, "--json", "isDraft,publishedAt"))
+    if state["isDraft"]:
+        raise RuntimeError(f"{TAG} is still a draft after its date refresh; it is hidden from users")
+    if state["publishedAt"] == before:
+        print(f"{TAG}: GitHub kept the release date {before}", file=sys.stderr)
+    else:
+        print(f"{TAG}: release date refreshed {before} -> {state['publishedAt']}")
+
+
 def publish(folder, notes, repository):
     revision = validate(folder)
     # A queued older run must never replace a newer standard revision's RA release.
@@ -91,6 +124,7 @@ def publish(folder, notes, repository):
                     gh("release", "delete-asset", TAG, name, "--repo", repository, "--yes")
                 except subprocess.CalledProcessError:
                     print(f"warning: could not delete stale asset {name}", file=sys.stderr)
+            refresh_release_date(repository)  # a first publication below is already dated now
         else:
             # Draft first: users cannot see a partial first publication.
             gh("release", "create", TAG, *map(str, assets), "--repo", repository,
