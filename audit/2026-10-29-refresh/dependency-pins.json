@@ -1,0 +1,42 @@
+{
+  "checked_at": "2026-10-30T06:11:17.956128+00:00",
+  "target_baselines": {
+    "RiptOPL": "c136055c85157764d71e0b7122338a556d58e7e6",
+    "Open-PS2-Loader": "3e6b4ec96be338866aed08c9604084d82ec802f9"
+  },
+  "ripps2": {
+    "default_head": "5ebb5e0b4cc074742b184ed9892494d161e97e49",
+    "default_build": 124,
+    "release_tag": "v1.2.4-beta",
+    "release_commit": "b682a93cfffc9f3481a0f6dfd7b4e45a88b5be86",
+    "github_prerelease": false,
+    "product_stage": "beta",
+    "patch_queue_unchanged_since_previous": true,
+    "patches": 75,
+    "unreleased_branch": "b125",
+    "unreleased_head": "524c2cef7c40c3d75b70dfd1713a6c4726fff153",
+    "unreleased_build": 125,
+    "branch_relation": "diverged; not default or released"
+  },
+  "luna": {
+    "wrapper": "c1205fbde0f307a565cb2ecce9a80caea0487018",
+    "frontend_branch": "luna",
+    "frontend": "1c97889d34cecf580e20c5c8f2bbb48e92bb50a0",
+    "tracked_ref": "legacy",
+    "tracked_ref_head": "4e8f4e6be79dd2b79027a92e32574da747f5a845",
+    "neutrino": "fff99d9828c287a7328958668ecd25b1f17ea601",
+    "opl": "c533f939195847df1cd4d905f089aeb07300c72e",
+    "psxcore": "5d4de02f57933f70c48335d938c1d4c8b69634ad"
+  },
+  "yaopl": {
+    "default": "0889ac4d009567b168b283e6d6933af36df7c2e8",
+    "rc2_tag_commit": "ee9cb9fa5bc0565baf3444c8131fba800b14f3ee",
+    "rc2_prerelease": true,
+    "nightly_prerelease": true
+  },
+  "titan": {
+    "default": "2a69c259c80e351da118cb416de1e6f0129e2816",
+    "branch": "arena/23abda97-project-titan-magenta-edition",
+    "branch_head": "d442d58dc85849a0e6ccc7b9df5f07ddb8220f80"
+  }
+}

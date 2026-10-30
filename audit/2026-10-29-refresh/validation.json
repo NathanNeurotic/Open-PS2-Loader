@@ -1,0 +1,253 @@
+{
+  "checked_at": "2026-10-30T06:25:11.246927+00:00",
+  "status": "passed",
+  "results": {
+    "current_source_citations": {
+      "verified": 34,
+      "method": "git ls-tree at exact current/default/development and target source pins"
+    },
+    "riptopl-site-structure": {
+      "register_rows": 301,
+      "families": 152,
+      "directory_rows": 153,
+      "source_groups": 44,
+      "source_count_sum": 301,
+      "preserved_anchors": 658,
+      "historical_files_preserved": 51,
+      "all_filters_selectable": true
+    },
+    "legacy-site-structure": {
+      "register_rows": 301,
+      "families": 152,
+      "directory_rows": 153,
+      "source_groups": 44,
+      "source_count_sum": 301,
+      "preserved_anchors": 659,
+      "historical_files_preserved": 51,
+      "all_filters_selectable": true
+    },
+    "riptopl-search-generate": {
+      "exit_code": 0,
+      "output": "data\\search-index.json: 580 -> 580 entries, 9 new or changed, 0 URL(s) gone, 0 duplicate(s) removed\nregenerated: data\\search-index.json\n"
+    },
+    "riptopl-search-check": {
+      "exit_code": 0,
+      "output": "up to date\n"
+    },
+    "riptopl-links": {
+      "exit_code": 0,
+      "output": "Verified 40 HTML pages, 2680 local links/resources and unique IDs.\n"
+    },
+    "riptopl-site-sync-tests": {
+      "exit_code": 0,
+      "output": "data\\search-index.json: 7 -> 11 entries, 11 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nout of date: retroachievements.html, data\\search-index.json\ndata\\search-index.json: 7 -> 11 entries, 11 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nregenerated: retroachievements.html, data\\search-index.json\nup to date\ndata\\search-index.json: 7 -> 11 entries, 11 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nregenerated: retroachievements.html, data\\search-index.json\ndata\\search-index.json: 7 -> 12 entries, 12 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nregenerated: retroachievements.html, data\\search-index.json\ndata\\search-index.json: 12 -> 13 entries, 2 new or changed, 0 URL(s) gone, 0 duplicate(s) removed\nout of date: notes.html, data\\search-index.json\ndata\\search-index.json: 12 -> 13 entries, 2 new or changed, 0 URL(s) gone, 0 duplicate(s) removed\nregenerated: notes.html, data\\search-index.json\nup to date\n.........\n----------------------------------------------------------------------\nRan 9 tests in 0.182s\n\nOK\n"
+    },
+    "legacy-search-generate": {
+      "exit_code": 0,
+      "output": "data\\search-index.json: 572 -> 572 entries, 9 new or changed, 0 URL(s) gone, 0 duplicate(s) removed\nregenerated: data\\search-index.json\n"
+    },
+    "legacy-search-check": {
+      "exit_code": 0,
+      "output": "up to date\n"
+    },
+    "legacy-links": {
+      "exit_code": 0,
+      "output": "Verified 39 HTML pages, 2633 local links/resources and unique IDs.\n"
+    },
+    "legacy-site-sync-tests": {
+      "exit_code": 0,
+      "output": "data\\search-index.json: 7 -> 11 entries, 11 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nout of date: index.html, retroachievements.html, data\\search-index.json\ndata\\search-index.json: 7 -> 11 entries, 11 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nregenerated: index.html, retroachievements.html, data\\search-index.json\nup to date\ndata\\search-index.json: 7 -> 11 entries, 11 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nregenerated: index.html, retroachievements.html, data\\search-index.json\ndata\\search-index.json: 7 -> 12 entries, 12 new or changed, 1 URL(s) gone, 1 duplicate(s) removed\nregenerated: index.html, retroachievements.html, data\\search-index.json\ndata\\search-index.json: 12 -> 13 entries, 2 new or changed, 0 URL(s) gone, 0 duplicate(s) removed\nout of date: notes.html, data\\search-index.json\ndata\\search-index.json: 12 -> 13 entries, 2 new or changed, 0 URL(s) gone, 0 duplicate(s) removed\nregenerated: notes.html, data\\search-index.json\nup to date\n...........\n----------------------------------------------------------------------\nRan 11 tests in 0.228s\n\nOK\n"
+    },
+    "browser": {
+      "status": "passed",
+      "browser": "isolated headless Chrome over loopback",
+      "results": [
+        {
+          "site": "riptopl-site",
+          "initialRows": 301,
+          "directoryRows": 153,
+          "newIdSearch": true,
+          "combinedFilters": true,
+          "emptyState": true,
+          "hiddenAnchorNavigation": true,
+          "checkedStatuses": [
+            {
+              "status": "tracked",
+              "expected": 88,
+              "actual": 88
+            },
+            {
+              "status": "shipped",
+              "expected": 36,
+              "actual": 36
+            },
+            {
+              "status": "partial",
+              "expected": 35,
+              "actual": 35
+            },
+            {
+              "status": "historical",
+              "expected": 6,
+              "actual": 6
+            },
+            {
+              "status": "overlap",
+              "expected": 27,
+              "actual": 27
+            },
+            {
+              "status": "candidate",
+              "expected": 28,
+              "actual": 28
+            },
+            {
+              "status": "experimental",
+              "expected": 40,
+              "actual": 40
+            },
+            {
+              "status": "companion",
+              "expected": 32,
+              "actual": 32
+            },
+            {
+              "status": "limitation",
+              "expected": 4,
+              "actual": 4
+            },
+            {
+              "status": "planned",
+              "expected": 0,
+              "actual": 0
+            },
+            {
+              "status": "intentional",
+              "expected": 4,
+              "actual": 4
+            },
+            {
+              "status": "declined",
+              "expected": 1,
+              "actual": 1
+            }
+          ],
+          "sortingToggle": true,
+          "newCompanionFilter": true,
+          "globalSearchHits": 7,
+          "desktop": {
+            "viewport": 1440,
+            "scrollWidth": 1440
+          },
+          "mobile": {
+            "viewport": 390,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "site": "legacy-site",
+          "initialRows": 301,
+          "directoryRows": 153,
+          "newIdSearch": true,
+          "combinedFilters": true,
+          "emptyState": true,
+          "hiddenAnchorNavigation": true,
+          "checkedStatuses": [
+            {
+              "status": "tracked",
+              "expected": 88,
+              "actual": 88
+            },
+            {
+              "status": "shipped",
+              "expected": 36,
+              "actual": 36
+            },
+            {
+              "status": "partial",
+              "expected": 35,
+              "actual": 35
+            },
+            {
+              "status": "historical",
+              "expected": 6,
+              "actual": 6
+            },
+            {
+              "status": "overlap",
+              "expected": 27,
+              "actual": 27
+            },
+            {
+              "status": "candidate",
+              "expected": 28,
+              "actual": 28
+            },
+            {
+              "status": "experimental",
+              "expected": 40,
+              "actual": 40
+            },
+            {
+              "status": "companion",
+              "expected": 32,
+              "actual": 32
+            },
+            {
+              "status": "limitation",
+              "expected": 4,
+              "actual": 4
+            },
+            {
+              "status": "planned",
+              "expected": 0,
+              "actual": 0
+            },
+            {
+              "status": "intentional",
+              "expected": 4,
+              "actual": 4
+            },
+            {
+              "status": "declined",
+              "expected": 1,
+              "actual": 1
+            }
+          ],
+          "sortingToggle": true,
+          "newCompanionFilter": true,
+          "globalSearchHits": 7,
+          "desktop": {
+            "viewport": 1440,
+            "scrollWidth": 1440
+          },
+          "mobile": {
+            "viewport": 390,
+            "scrollWidth": 390
+          }
+        }
+      ],
+      "pageErrors": [],
+      "deployedSiteVerified": false
+    },
+    "changed_markdown_local_links": {
+      "files": 10,
+      "links_checked": 136,
+      "missing": 0
+    },
+    "riptopl-site-historical-search-titles": {
+      "titles_explicitly_dated": 10,
+      "regeneration_check": "passed",
+      "entries": 580
+    },
+    "legacy-site-historical-search-titles": {
+      "titles_explicitly_dated": 10,
+      "regeneration_check": "passed",
+      "entries": 572
+    }
+  },
+  "limits": [
+    "No target build, emulator, physical-console/gameplay, save-durability, storage-probe or performance acceptance",
+    "Isolated local browser verification passed; no new deployment or live-site verification"
+  ]
+}
