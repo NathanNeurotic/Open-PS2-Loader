@@ -62,7 +62,7 @@ GSMSourceGSRegs:    .space 88
 GSMDestGSRegs:      .space 88
 
 .globl GSMFlags
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
 GSMFlags: .space 20
 #else
 GSMFlags: .space 19
@@ -157,7 +157,7 @@ Hook_SetGsCrt:
 
 # -----------------------------------------------------------------------------------------
 
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
     /* RA can install this hook only to keep the GS write breakpoint alive.
        In that mode preserve the game's original SetGsCrt arguments exactly. */
     la      $t0, GSMFlags
@@ -495,9 +495,10 @@ have_some_write:                                    # Opcode is a write, so we m
     nop
     ld      $a1, 0($a1)                             # a1 = value in rt
 
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
     /* RetroAchievements can reuse this handler as a passive recorder. In
-       TRACK_ONLY mode record the display values RA needs, then execute the
+       TRACK_ONLY mode record the display values RA and the in-game menu need
+       (PMODE, SMODE2, DISPFB1/2, DISPLAY1/2), then execute the
        game's write unchanged. Do not enter any GSM adaptation path. */
     lbu     $v1, TRACK_ONLY($s2)
     beqz    $v1, normal_GS_write
@@ -513,6 +514,8 @@ have_some_write:                                    # Opcode is a write, so we m
     beqz    $v1, track_DISPLAY1_write
     addi    $v1, $v0, -GS_DISPLAY2
     beqz    $v1, track_DISPLAY2_write
+    addi    $v1, $v0, -GS_SMODE2
+    beqz    $v1, track_SMODE2_write
     nop
     b       not_wanted_reg
     nop
@@ -532,6 +535,9 @@ track_DISPLAY1_write:
 track_DISPLAY2_write:
     b       not_wanted_reg
     sd      $a1, Source_DISPLAY2($s0)
+track_SMODE2_write:
+    b       not_wanted_reg
+    sd      $a1, Source_SMODE2($s0)
 
 normal_GS_write:
 #endif
@@ -1273,7 +1279,7 @@ Enable_GSBreakpoint:
 
     li      $a0, TRAP_BASE                          # Address base for trapping
     li      $a1, TRAP_MASK                          # Address mask for GSM
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
     la      $t0, GSMFlags
     lbu     $t0, TRACK_ONLY($t0)
     beqz    $t0, gs_trap_address_ready
@@ -1300,7 +1306,7 @@ Enable_GSBreakpoint:
     sync.p                                          # Await instruction completion
 
     li      $a2, 0x60280000                         # Data read & write breakpoint on (DRE, DWE, DUE, DKE = 1). Syscalls are run in kernel mode, for the EE.
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
     la      $t0, GSMFlags
     lbu     $t0, TRACK_ONLY($t0)
     beqz    $t0, gs_trap_control_ready

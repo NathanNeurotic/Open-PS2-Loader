@@ -71,9 +71,21 @@ EE_OBJS += freeze_diag.o
 EE_CFLAGS += -DINGAMEDIAG
 endif
 
+# In-game menu (beta), forwarded from the top Makefile's IGR_MENU=1. coreconfig.h's fields are always there;
+# padhook.o, main.o and cheat_api.o change with it, so run make clean when switching it.
+# The menu costs ~9 KB of ram84, more than this build's stack can give (the 3 KB ASSERT in linkfile), so these builds
+# also drop ee_core's unreferenced code and data (dead util.c helpers and the libgcc they pull in): ~8 KB back.
+ifeq ($(IGR_MENU),1)
+EE_OBJS += igrmenu.o
+EE_CFLAGS += -DIGR_MENU -ffunction-sections -fdata-sections
+endif
+
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
 EE_LDFLAGS = -nostartfiles -nostdlib -Tlinkfile -L$(PS2SDK)/ee/lib -s -Wl,-Map,$(MAPFILE)
+ifeq ($(IGR_MENU),1)
+EE_LDFLAGS += -Wl,--gc-sections
+endif
 EE_LIBS += -lpatches
 
 ifeq ($(PADEMU),1)

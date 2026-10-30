@@ -26,6 +26,7 @@
 #include "include/cheatman.h"
 #include "include/cheatconfig.h"
 #include "include/ioman.h"
+#include "../ee_core/include/igrcheats.h"
 
 static int gEnableCheat;     // Enables PS2RD Cheat Engine - 0 for Off, 1 for On
 static int gCheatMode;       // Cheat Mode - 0 Enable all cheats, 1 Cheats selected by user
@@ -540,5 +541,140 @@ void set_cheats_list(void)
         // Overwrite the last cheat with a blank cheat if we are at max
         gCheatList[cheatCount - 2] = 0; // addr
         gCheatList[cheatCount - 1] = 0; // val
+    }
+}
+
+/*
+ * The in-game menu's CHEATS page (ee_core/include/igrcheats.h, RIPPS2's menu by akilluminati47).
+ *
+ * igrCheatsPack lays out every cheat of the loaded file at dst: its name and its codes, hook codes left out (the
+ * engine plants the hook once, when the game calls SetupThread, so a hook cannot be switched later), and whether it
+ * is ticked now. set_cheats_list_live then rebuilds gCheatList for that launch: every cheat's hook codes, so the
+ * hook is planted even when the master code row is not ticked, and the ticked cheats' other codes, whole cheats
+ * while they fit the engine's MAX_CODES. That is the set igrCheatsBuild makes from the same ticks, so the menu's
+ * first change starts from the set the game began with.
+ */
+
+// A hook code, by the engine's own rule (ee_core cheat_api.c SetupCheats): 0x90/0x91 addresses, unless the line
+// before was the first of a two-line 3- or 4-type code. prevCanHook carries that across one cheat's lines.
+static int cheatIsHook(const code_t *c, int *prevCanHook)
+{
+    int hook = ((c->addr & 0xfe000000) == 0x90000000) && *prevCanHook;
+    *prevCanHook = !((c->addr & 0xf0000000) == 0x40000000 || (c->addr & 0xf0000000) == 0x30000000);
+    return hook;
+}
+
+static int cheatRealCodes(const cheat_entry_t *e)
+{
+    int n = 0, canHook = 1;
+    for (int j = 0; j < MAX_CHEATLIST && e->codes[j].addr != 0; ++j)
+        if (!cheatIsHook(&e->codes[j], &canHook))
+            n++;
+    return n;
+}
+
+// One more row of n codes fits the page after count rows of pairs codes. Both of igrCheatsPack's walks ask this.
+static int igrRowFits(unsigned int count, unsigned int pairs, int n, unsigned int room)
+{
+    return count < IGR_CHEATS_MAX && n <= IGR_CHEAT_SET_CODES && pairs + n <= IGR_CHEAT_CODES_MAX &&
+           IGR_CHEATS_BYTES(count + 1, pairs + n) <= room;
+}
+
+int igrCheatsPack(void *dst, unsigned int room)
+{
+    igr_cheats_t *h = (igr_cheats_t *)dst;
+    unsigned int count = 0, pairs = 0;
+
+    if (gCheats == NULL || dst == NULL || room < IGR_CHEATS_BYTES(1, 1))
+        return 0;
+    // what fits: rows first, then their codes. A ticked cheat the page cannot hold means no page: the game then
+    // starts with the list it gets without the menu's page (set_cheats_list), and the ticked cheat runs.
+    for (int i = 0; i < MAX_CODES; ++i) {
+        int n = gCheats[i].codes[0].addr != 0 ? cheatRealCodes(&gCheats[i]) : 0;
+        if (n == 0)
+            continue;
+        if (!igrRowFits(count, pairs, n, room)) {
+            if (gCheats[i].enabled)
+                return 0;
+            continue;
+        }
+        count++;
+        pairs += n;
+    }
+    if (count == 0)
+        return 0;
+
+    memset(dst, 0, IGR_CHEATS_BYTES(count, pairs));
+    h->magic = IGR_CHEATS_MAGIC;
+    h->count = count;
+    h->pairs = pairs;
+    igr_cheat_t *row = IGR_CHEATS_ROWS(h);
+    unsigned int *codes = IGR_CHEATS_CODES(h), r = 0, p = 0;
+    for (int i = 0; i < MAX_CODES && r < count; ++i) {
+        int n = gCheats[i].codes[0].addr != 0 ? cheatRealCodes(&gCheats[i]) : 0;
+        if (n == 0 || !igrRowFits(r, p, n, room))
+            continue;
+        int canHook = 1;
+        row[r].first = p;
+        row[r].count = n;
+        row[r].on = gCheats[i].enabled ? 1 : 0;
+        // the menu's font is upper case ASCII: anything else shows as '?'
+        snprintf(row[r].name, sizeof(row[r].name), "%s", gCheats[i].name[0] ? gCheats[i].name : "CHEAT");
+        for (int j = 0; j < MAX_CHEATLIST && gCheats[i].codes[j].addr != 0; ++j)
+            if (!cheatIsHook(&gCheats[i].codes[j], &canHook)) {
+                codes[p * 2] = gCheats[i].codes[j].addr;
+                codes[p * 2 + 1] = gCheats[i].codes[j].val;
+                p++;
+            }
+        r++;
+    }
+    // ticks that do not fit one set come off, last first, so the rows say what runs
+    for (int i = (int)count - 1; i >= 0; --i) {
+        unsigned int on = 0;
+        for (unsigned int k = 0; k < count; ++k)
+            if (row[k].on)
+                on += row[k].count;
+        if (on <= IGR_CHEAT_SET_CODES)
+            break;
+        row[i].on = 0;
+    }
+    return (int)IGR_CHEATS_BYTES(count, pairs);
+}
+
+void set_cheats_list_live(const void *packed)
+{
+    const igr_cheats_t *h = (const igr_cheats_t *)packed;
+    int cheatCount = 0;
+    unsigned int set[IGR_CHEATS_SPARE_WORDS];
+
+    memset((void *)gCheatList, 0, sizeof(gCheatList));
+    if (gCheats == NULL)
+        return;
+    // every hook, from every cheat: the engine takes MAX_HOOKS, so the ticked cheats' hooks go first, and a hook two
+    // cheats share is listed once
+    for (int pass = 0; pass < 2; ++pass)
+        for (int i = 0; i < MAX_CODES; ++i) {
+            if ((gCheats[i].enabled != 0) != (pass == 0))
+                continue;
+            int canHook = 1;
+            for (int j = 0; j < MAX_CHEATLIST && gCheats[i].codes[j].addr != 0; ++j) {
+                if (!cheatIsHook(&gCheats[i].codes[j], &canHook) || cheatCount + 2 > MAX_HOOKS * 2)
+                    continue;
+                int seen = 0;
+                for (int d = 0; d < cheatCount && !seen; d += 2)
+                    seen = gCheatList[d] == gCheats[i].codes[j].addr && gCheatList[d + 1] == gCheats[i].codes[j].val;
+                if (!seen) {
+                    gCheatList[cheatCount++] = gCheats[i].codes[j].addr;
+                    gCheatList[cheatCount++] = gCheats[i].codes[j].val;
+                }
+            }
+        }
+    // then the ticked rows' codes, as the menu builds them: at most MAX_CODES, so with MAX_HOOKS hooks the list is
+    // exactly full, which SetupCheats reads without a terminator (it stops at MAX_CHEATLIST); a shorter list ends
+    // in the zeros of the memset above
+    unsigned int n = igrCheatsBuild(h, set);
+    for (unsigned int k = 0; k < n && cheatCount + 2 <= MAX_CHEATLIST; ++k) {
+        gCheatList[cheatCount++] = set[1 + k * 2];
+        gCheatList[cheatCount++] = set[2 + k * 2];
     }
 }

@@ -100,8 +100,17 @@ pad = read("ee_core/src/padhook.c")
 handler = pad[pad.index("static int IGR_Intc_Handler(int cause)"):]
 handler = handler[:handler.index("\n}\n")]
 check("g_freeze_diag_polls++;" in handler[:handler.index("IGR_CheckInputs();")], "each VBLANK input sample is counted")
-check(handler.index("iSuspendThread(i);") < handler.index("iWakeupThread(IGR_Thread_ID);"),
+# The in-game menu (IGR_MENU) wakes the worker first, from its own branch, without stopping anything: the worker
+# pauses the game itself and RESUME gives it back. The shutdown wake is the handler's last one.
+check(handler.index("iSuspendThread(i);") < handler.rindex("iWakeupThread(IGR_Thread_ID);"),
       "the handler suspends the game's threads before waking the worker")
+check(handler.index("IGR_HoldInterrupts();") < handler.index("iWakeupThread(IGR_Thread_ID);"),
+      "the menu's branch holds the game's interrupts before it wakes the worker")
+main_c = read("ee_core/src/main.c")
+check("config->IgrMenu && !(g_compat_mask & COMPAT_MODE_6)" in main_c,
+      "Mode 6 (Disable IGR) never arms the in-game menu's frame tracker")
+launch = read("src/system.c" if (ROOT / "src/system.c").exists() else "src/platform/system.cpp")
+check(launch.count("COMPAT_MODE_6") >= 2, "the launcher turns the in-game menu and its cheat page off under Mode 6")
 worker = pad[pad.index("static void IGR_Thread(void *arg)"):]
 i_wait = worker.index("SleepThread();")
 i_begin = worker.index("FreezeDiag_Begin(")

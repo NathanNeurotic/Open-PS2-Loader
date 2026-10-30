@@ -81,6 +81,11 @@ int load_cheats(const char *cheatfile);
 int load_cheats_buf(const char *buf); // buf must be NUL-terminated (tar members carry no NUL)
 void set_cheats_list(void);
 
+// The in-game menu's CHEATS page (ee_core/include/igrcheats.h): pack every cheat at dst (room bytes) and return the
+// bytes used (0: none, or no room); then set_cheats_list_live(dst) makes gCheatList the matching live-mode list.
+int igrCheatsPack(void *dst, unsigned int room);
+void set_cheats_list_live(const void *packed);
+
 // Prebuilt PS2RD cheat image (.img): a binary patch list applied directly at boot, parallel to the
 // text .cht codes. Gated per-game by $EnableImage (default OFF).
 int GetImageEnabled(void);

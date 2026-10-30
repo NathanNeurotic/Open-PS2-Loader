@@ -36,5 +36,8 @@ extern u32 numhooks;
 extern u32 numcodes;
 extern u32 hooklist[];
 extern u32 codelist[];
+extern u32 *codeset;   // the set CodeHandler walks: &numcodes (numcodes, codelist) or the menu's second set
+extern u32 *codeentry; // the set the last pass started on
+extern u32 *codedone;  // the set the last finished pass walked
 
 #endif /* _CHEATENGINE_H_ */
