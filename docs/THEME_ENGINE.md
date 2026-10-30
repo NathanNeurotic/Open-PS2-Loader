@@ -275,7 +275,9 @@ a block, **renumber** the ones after it so there are no holes.
 One `conf_theme.cfg` can describe several **views** of the main and info pages: `list`, `coverflow`,
 `psbbn` and `grid`. The user picks a view under
 **Settings → Interface → Theme View**, or holds **L3** for half a second on the main page to switch to
-the next view the theme offers (a tap on L3 still cycles the library view). Idea and design:
+the next view the theme offers (a tap on L3 still cycles the library view). The picker and L3 list
+the `coverflow` view twice, as **Coverflow (3)** and **Coverflow (5)**: one view, drawn with 3 or 5
+covers (`coverflow_count`), so a theme declares `coverflow` once. Idea and design:
 KrahJohlito.
 
 The unprefixed blocks are the **base**. A block named `<view>.<block>` replaces that block in that
@@ -897,7 +899,7 @@ element, including one in a custom theme. They can be edited before selecting th
 
 | Setting / key | Values | Effect |
 |---|---|---|
-| `coverflow_count` | 3 or 5 | Number of covers shown. |
+| `coverflow_count` | 3 or 5 | Number of covers shown. Set by the Theme View pick, Coverflow (3) or Coverflow (5); no longer on the Coverflow Settings page. |
 | `coverflow_scale` | px | How much the center cover grows. |
 | `coverflow_anim` | ms | Slide animation duration (0 = instant). |
 | `coverflow_dim` | 0/1 | Dim the non-center covers. |

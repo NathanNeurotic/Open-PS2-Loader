@@ -22,7 +22,7 @@ assert 'configReadBuffer(themeConfig, &theme_grid_cfg, size_theme_grid_cfg);' in
 assert '(1u << THM_VIEW_GRID)' in THEMES
 assert 'theme_grid.o' in MAKEFILE and 'misc/theme_grid.cfg' in MAKEFILE
 assert 'type=Grid' in CFG and 'type=Coverflow' not in CFG
-assert 'names[4] = "Grid";' in GUI and '#define GUI_THEME_VIEW_PICKS 4' in GUI
+assert 'names[THM_VIEW_PICK_GRID] = "Grid";' in GUI and 'names[THM_VIEW_PICK_COUNT] = NULL;' in GUI
 # Up/Down step a row in the Grid view; Left/Right step a cover as in Coverflow. Both follow the family
 # the page on screen draws, so a Coverflow games page in a theme with a Grid apps page keeps its keys.
 assert 'gridRowStep(count, index, gTheme->gridColumns, dir)' in MENUSYS
