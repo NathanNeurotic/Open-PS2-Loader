@@ -6,7 +6,9 @@
 3. Stars: a row is starred when favourites.bin holds it (BDM slots lenient, apps by title).
 4. R3 on an All Games row adds or removes the favourite and flips the star only when saved.
 5. L3 ring: All -> PS2 -> PS1 -> APP -> Favourites -> Recent; device pages read both lists.
-6. Tabs: a started device steps aside, a Manual one and a share picker stay.
+6. Tabs: a started device or Apps page steps aside, a Manual one and a share picker stay.
+7. Turning All Games off: a Favourites page left hidden sends the user to the startup page; a
+   device tab that hides for a poll keeps the user (#806).
 """
 from pathlib import Path
 import re
@@ -54,7 +56,7 @@ struct item_list {
     base_game_info_t iso[8], ps1[8];
     int isoCount, ps1Count;
 };
-typedef struct { item_list_t *support; } opl_io_module_t;
+typedef struct { item_list_t *support; struct { int visible; } menuItem; } opl_io_module_t;
 typedef struct { item_list_t *owner; int mode, id, icon_id, text_id, kind; char *text, *display; int starred; } fav_rec_t;
 typedef struct { int mode, id, icon_id, text_id, kind; char text[FAV_TEXT_MAX]; } fav_raw_t;
 
@@ -63,7 +65,8 @@ static int favCount, gAPPStartMode = 1, armed, adds, removes, saveOk = 1;
 static char gPCShareName[32] = "games";
 static item_list_t *modules[MODE_COUNT];
 static opl_io_module_t mods[MODE_COUNT];
-static opl_io_module_t *oplGetModule(int m) { mods[m].support = modules[m]; return &mods[m]; }
+static int gone[MODE_COUNT]; /* the page is hidden: device removed or its start mode switched Off */
+static opl_io_module_t *oplGetModule(int m) { mods[m].support = modules[m]; mods[m].menuItem.visible = !gone[m]; return &mods[m]; }
 static int folderModeSupported(int mode) { return mode != HTTP_MODE; }
 static int cueIsCueEntry(const base_game_info_t *g) { return g->cue; }
 static const char *labels[] = {"USB Games", "HDD Games", "Apps", "SMB Games"};
@@ -191,6 +194,10 @@ int main(void)
     apps.enabled = 0;
     assert(favGatherAllGames(LIB_VIEW_ALL, NULL, 0) == 7 && armed > 0); /* apps on Manual: scan armed (no SMB share) */
     freeArray();
+    gone[BDM_MODE] = 1; /* the stick is pulled: its rows leave with its tab, though the list is kept */
+    assert(favGatherAllGames(LIB_VIEW_ISO, NULL, 0) == 1 && find("Ico", FAV_KIND_ISO) >= 0 && find("Ico (USB Games)", FAV_KIND_ISO) < 0);
+    freeArray();
+    gone[BDM_MODE] = 0;
     usb.enabled = hdd.enabled = smb.enabled = 0;
     assert(favGatherAllGames(LIB_VIEW_ALL, NULL, 0) == 0 && favArray == NULL);
     return 0;
@@ -210,15 +217,20 @@ static char gPCShareName[32];
 ''' + function(menusys, 'int menuItemShown(const menu_item_t *item)') + r'''
 int main(void)
 {
-    item_list_t usb = {BDM_MODE + 2, 1}, hdd = {HDD_MODE, 1}, eth = {ETH_MODE, 1}, apps = {APP_MODE, 1}, fav = {FAV_MODE, 1}, manual = {MMCE_MODE, 0};
-    menu_item_t tUsb = {1, &usb}, tHdd = {1, &hdd}, tEth = {1, &eth}, tApps = {1, &apps}, tFav = {1, &fav}, tManual = {1, &manual}, gone = {0, &fav};
-    assert(menuItemShown(&tUsb) && menuItemShown(&tHdd) && !menuItemShown(&gone) && !menuItemShown(NULL));
+    item_list_t usb = {BDM_MODE + 2, 1}, hdd = {HDD_MODE, 1}, eth = {ETH_MODE, 1}, apps = {APP_MODE, 1}, fav = {FAV_MODE, 1}, manual = {MMCE_MODE, 0},
+                manualApps = {APP_MODE, 0};
+    menu_item_t tUsb = {1, &usb}, tHdd = {1, &hdd}, tEth = {1, &eth}, tApps = {1, &apps}, tFav = {1, &fav}, tManual = {1, &manual}, gone = {0, &fav},
+                tManualApps = {1, &manualApps};
+    assert(menuItemShown(&tUsb) && menuItemShown(&tHdd) && menuItemShown(&tApps) && !menuItemShown(&gone) && !menuItemShown(NULL));
     gAllGames = 1;
     assert(!menuItemShown(&tUsb) && !menuItemShown(&tHdd));       /* started devices step aside */
-    assert(menuItemShown(&tApps) && menuItemShown(&tFav) && menuItemShown(&tManual));
+    assert(!menuItemShown(&tApps));                                /* started apps are on the list too */
+    assert(menuItemShown(&tFav) && menuItemShown(&tManual) && menuItemShown(&tManualApps));
     assert(menuItemShown(&tEth));                                  /* share picker stays */
     gPCShareName[0] = 'g';
     assert(!menuItemShown(&tEth) && !menuItemShown(&gone));
+    gAllGames = 0;                                                 /* switched off: every tab is back */
+    assert(menuItemShown(&tUsb) && menuItemShown(&tHdd) && menuItemShown(&tApps) && menuItemShown(&tEth));
     return 0;
 }
 '''
@@ -232,7 +244,117 @@ with tempfile.TemporaryDirectory(prefix='ripps2-allgames-') as temp:
                         '-fsanitize=address,undefined', str(src), '-o', str(exe)], check=True)
         subprocess.run([str(exe)], check=True)
 print('ok   All Games gathers every started source, tags duplicates, stars favourites, R3 toggles')
-print('ok   started device tabs step aside; Manual devices, share pickers, Apps and the page stay')
+print('ok   started device and Apps tabs step aside; Manual ones, share pickers and the page stay')
+
+assert ('if (selected_item != NULL && !menuItemShown(selected_item->item) && (gAllGames || menuIsFavPage(selected_item)))\n'
+        '        refreshMenuPosition();') in menusys, 'the main page must leave a hidden All Games/Favourites page'
+rehome = r"""
+#include <assert.h>
+#include <stddef.h>
+enum { BDM_MODE = 0, BDM_MODE7 = 7, ETH_MODE, HDD_MODE, APP_MODE, MMCE_MODE, FAV_MODE, UDPFS_MODE, HTTP_MODE };
+#define BDM_MODE_LAST BDM_MODE7
+typedef struct { int mode, enabled; } item_list_t;
+typedef struct menu_item { int visible; void *userdata; } menu_item_t;
+typedef struct menu_list { menu_item_t *item; struct menu_list *next, *prev; } menu_list_t;
+static int gAllGames, gDefaultDevice = HDD_MODE;
+static char gPCShareName[32];
+static menu_list_t *menu, *selected_item;
+""" + function(menusys, 'int menuItemShown(const menu_item_t *item)') + \
+    function(menusys, 'static int menuIsFavPage(const menu_list_t *page)') + \
+    function(menusys, 'static void refreshMenuPosition(void)') + r"""
+static void frame(void) /* menuHandleInputMain's guard */
+{
+    if (selected_item != NULL && !menuItemShown(selected_item->item) && (gAllGames || menuIsFavPage(selected_item)))
+        refreshMenuPosition();
+}
+int main(void)
+{
+    item_list_t usb = {BDM_MODE, 1}, hdd = {HDD_MODE, 1}, apps = {APP_MODE, 1}, fav = {FAV_MODE, 1};
+    menu_item_t tUsb = {1, &usb}, tHdd = {1, &hdd}, tApps = {1, &apps}, tFav = {1, &fav};
+    menu_list_t pUsb = {&tUsb, NULL, NULL}, pHdd = {&tHdd, NULL, NULL}, pApps = {&tApps, NULL, NULL}, pFav = {&tFav, NULL, NULL};
+    pUsb.next = &pHdd; pHdd.prev = &pUsb; pHdd.next = &pApps; pApps.prev = &pHdd; pApps.next = &pFav; pFav.prev = &pApps;
+    menu = &pUsb;
+
+    gAllGames = 1;                    /* on: a device page steps aside, the user lands on All Games */
+    selected_item = &pHdd;
+    frame();
+    assert(selected_item == &pFav);
+
+    gAllGames = 0;                    /* off with Favourites Page Start Mode Off: the page hides */
+    tFav.visible = 0;
+    frame();
+    assert(selected_item == &pHdd);   /* the startup page, every tab shown again */
+    assert(menuItemShown(&tUsb) && menuItemShown(&tApps));
+
+    selected_item = &pFav;            /* no startup page: the first visible one */
+    gDefaultDevice = MMCE_MODE;
+    frame();
+    assert(selected_item == &pUsb);
+
+    tFav.visible = 1;                 /* off with Favourites on: the user stays where they are */
+    selected_item = &pFav;
+    frame();
+    assert(selected_item == &pFav);
+
+    selected_item = &pUsb;            /* a USB page hiding for a poll keeps the user on it (#806) */
+    tUsb.visible = 0;
+    frame();
+    assert(selected_item == &pUsb);
+    return 0;
+}
+"""
+with tempfile.TemporaryDirectory(prefix='ripps2-allgames-off-') as temp:
+    src = Path(temp) / 'rehome.c'
+    src.write_text(rehome)
+    exe = Path(temp) / 'rehome.exe'
+    subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', '-Wno-unused-parameter',
+                    '-fsanitize=address,undefined', str(src), '-o', str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
+print('ok   All Games off: a hidden Favourites page goes to the startup page, a polling device page stays')
+
+iconSrc = (root / 'src/themes.c').read_text()
+icon = r"""
+#include <assert.h>
+#include <stddef.h>
+enum { BDM_MODE = 0, FAV_MODE = 12 };
+enum { FAV_ICON = 7, USB_ICON = 3 };
+typedef struct { int mode, enabled; } item_list_t;
+typedef struct menu_item { int visible, icon_id; void *userdata; } menu_item_t;
+struct menu_list { menu_item_t *item; };
+struct submenu_list { int unused; };
+typedef struct { int unused; } config_set_t;
+struct theme_element { int posX, posY, aligned, width, height, scaled; };
+typedef struct { void *Mem; } GSTEXTURE;
+static int gAllGames, draws, gDefaultCol;
+static GSTEXTURE tex = {&tex};
+static int thmElemSkipsDevice(struct theme_element *e, int id) { (void)e; (void)id; return 0; }
+static GSTEXTURE *thmGetTexture(int id) { (void)id; return &tex; }
+static void rmDrawPixmap(GSTEXTURE *t, int x, int y, int a, int w, int h, int s, int c, int z) { (void)t; (void)x; (void)y; (void)a; (void)w; (void)h; (void)s; (void)c; (void)z; draws++; }
+""" + function(iconSrc, 'static void drawMenuIcon(struct menu_list *menu') + r"""
+int main(void)
+{
+    item_list_t fav = {FAV_MODE, 1}, usb = {BDM_MODE, 1};
+    menu_item_t tFav = {1, FAV_ICON, &fav}, tUsb = {1, USB_ICON, &usb};
+    struct menu_list pFav = {&tFav}, pUsb = {&tUsb};
+    struct theme_element e = {0, 0, 0, 0, 0, 0};
+    drawMenuIcon(&pFav, NULL, NULL, &e);
+    assert(draws == 1);               /* Favourites page: its star */
+    gAllGames = 1;
+    drawMenuIcon(&pFav, NULL, NULL, &e);
+    assert(draws == 1);               /* All Games page: no page icon */
+    drawMenuIcon(&pUsb, NULL, NULL, &e);
+    assert(draws == 2);               /* a tab that stays (Manual device) keeps its icon */
+    return 0;
+}
+"""
+with tempfile.TemporaryDirectory(prefix='ripps2-allgames-icon-') as temp:
+    src = Path(temp) / 'icon.c'
+    src.write_text(icon)
+    exe = Path(temp) / 'icon.exe'
+    subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', '-Wno-unused-parameter',
+                    '-fsanitize=address,undefined', str(src), '-o', str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
+print('ok   the All Games page draws no page icon; Favourites and the tabs that stay keep theirs')
 
 libview = (root / 'src/libview.c').read_text()
 ring = libview[libview.index('if (mode == FAV_MODE && gAllGames) {'):]
@@ -250,3 +372,19 @@ assert '(gFAVStartMode || gAllGames) && mod->support->mode != FAV_MODE' in opl, 
 assert 'if (!gFAVStartMode && !gAllGames) // Favourites and All Games both off' in opl, 'R3 must work with All Games on and Favourites off'
 assert 'if (gFAVStartMode || gAllGames)\n            menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);' in opl, 'the R3 hint must show with All Games on'
 print('ok   the page starts with the setting, boots first, and follows every source refresh')
+
+bdm = (root / 'src/bdmsupport.c').read_text()
+needs = function(bdm, 'static int bdmNeedsUpdate(item_list_t *itemList)')
+hide = needs[needs.index('if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0) {'):]
+hide = hide[:hide.index('\n        }\n')]
+assert 'if (gAllGames)\n                loadFavourites();' in hide, 'a page hidden for a switched-off transport must leave All Games'
+assert 'if (gAllGames && bdmTransportEnabled(pDeviceData->bdmDeviceType) != 0)\n            loadFavourites();' in bdm, \
+    'a reappearing slot rejoins All Games, unless its transport is Off'
+print('ok   a BDM page hidden for a switched-off transport, or shown again, rebuilds All Games')
+
+gui = (root / 'src/gui.c').read_text()
+apply = function(gui, 'static void guiApplyAllGamesChange(void)')
+assert apply.index('initSupport(favGetObject(0), FAV_MODE, 0);') < apply.index('oplGetModule(FAV_MODE)'), \
+    'the All Games page must be started or hidden before it is selected'
+assert gui.count('guiApplyAllGamesChange();') >= 4, 'Game Sources and Interface (Library) both apply the change'
+print('ok   Library under Interface starts or hides the All Games page like Game Sources does')

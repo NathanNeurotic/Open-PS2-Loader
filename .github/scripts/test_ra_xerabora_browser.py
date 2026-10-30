@@ -62,7 +62,12 @@ prefix = r"""
 #include <strings.h>
 #include "include/achievements.h"
 #include "include/ratls.h"
+#include "src/rahunt.c"
+#include <sys/stat.h>
+int unlink(const char *);
+int rmdir(const char *);
 #define RETROACHIEVEMENTS 1
+#define LOG(...) ((void)0)
 #define IO_OK 0
 #define IO_CUSTOM_SIMPLEACTION 1
 #define O_RDONLY 0
@@ -175,20 +180,43 @@ int main(void)
     achievementsForget();
     p = run('A', 0, 0, "19040"); assert(p.state == ACH_READY && gameGets == 2);
     /* From a game card: RAQ1 title -> library ID -> the set. */
-    assert(achievementsRequestImage("mass0:DVD/NFSU2.iso", "SLUS_210.65")); worker(); achievementsSnapshot(&p);
+    /* With the game's device, the set is also saved as RA/<startup>.ach for the in-game menu's LEFT TO HUNT. */
+    char dir[] = "/tmp/xera-achXXXXXX", prefixPath[64], achPath[96], text[4096];
+    assert(mkdtemp(dir));
+    snprintf(prefixPath, sizeof(prefixPath), "%s/", dir);
+    assert(achievementsRequestImage("mass0:DVD/NFSU2.iso", "SLUS_210.65", prefixPath)); worker(); achievementsSnapshot(&p);
     assert(hashed == 1 && p.state == ACH_READY && p.gameId == 19040 && p.total == 5);
+    {
+        static ra_hunt_t hunt[8];
+        FILE *f;
+        int n, i, unlocked = 0;
+        snprintf(achPath, sizeof(achPath), "%sRA/SLUS_210.65.ach", prefixPath);
+        f = fopen(achPath, "rb");
+        assert(f);
+        n = (int)fread(text, 1, sizeof(text) - 1, f);
+        fclose(f);
+        text[n] = 0;
+        assert(!strncmp(text, "RIPPS2 ACH 1\n", 13) && raHuntRead(text, n, hunt, 8) == 5);
+        for (i = 0; i < 5; i++)
+            unlocked += hunt[i].unlocked;
+        assert(unlocked == p.earned && hunt[0].points > 0 && hunt[0].title[0]);
+        unlink(achPath);
+        snprintf(achPath, sizeof(achPath), "%sRA", prefixPath);
+        rmdir(achPath);
+        rmdir(dir);
+    }
     /* Known to RetroAchievements but never played: say so, with title and count. */
     strcpy(idTitle, "Never Played Game");
-    assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+    assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker(); achievementsSnapshot(&p);
     assert(p.state == ACH_NOT_PLAYED && !strcmp(p.title, "Never Played Game") && p.maximum == 40);
     /* Unknown image, unreachable PC, unreadable document. */
-    idRc = 1; assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+    idRc = 1; assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker(); achievementsSnapshot(&p);
     assert(p.state == ACH_UNSUPPORTED);
     idRc = -2; p = run('G', 0, 0, "0"); assert(p.state == ACH_OFFLINE); idRc = 0;
     /* xera_identify_codes (#1062): still identifying is a retry, a held NIC says so. */
     idRc = -7; achievementsForget(); p = run('G', 0, 0, "0"); assert(p.state == ACH_ERROR);
     idRc = -8; achievementsForget(); p = run('G', 0, 0, "0"); assert(p.state == ACH_NET_BUSY);
-    idRc = -7; assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+    idRc = -7; assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker(); achievementsSnapshot(&p);
     assert(p.state == ACH_ERROR);
     idRc = 0;
     achievementsForget(); httpFail = 1; p = run('G', 0, 0, "0"); assert(p.state == ACH_OFFLINE); httpFail = 0;
@@ -206,7 +234,7 @@ int main(void)
     achievementsForget();
     {
         int lib = libraryGets, games = gameGets;
-        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker(); achievementsSnapshot(&p);
         assert(p.state == ACH_READY && p.gameId == 19040 && gameGets == games + 1 && libraryGets == lib);
         assert(!strcmp(httpsPath, "/dorequest.php?r=gameid&m=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
     }
@@ -214,36 +242,36 @@ int main(void)
     httpsDoc = "{\"Success\":true,\"GameID\":0}";
     {
         int games = gameGets;
-        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker(); achievementsSnapshot(&p);
         assert(p.state == ACH_UNSUPPORTED && gameGets == games);
     }
     /* https_failure_falls_back: the #926 title match, unchanged. */
     httpsRc = RATLS_ERR_NET;
-    assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+    assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker(); achievementsSnapshot(&p);
     assert(p.state == ACH_NOT_PLAYED && !strcmp(p.title, "Never Played Game") && !xeraClockNote);
     /* unreachable_once_per_session: no internet costs one attempt, not one per game card ... */
     {
         int calls = httpsCalls;
-        assert(achievementsRequestImage("mass0:DVD/Y.iso", "SLUS_000.02")); worker(); achievementsSnapshot(&p);
+        assert(achievementsRequestImage("mass0:DVD/Y.iso", "SLUS_000.02", NULL)); worker(); achievementsSnapshot(&p);
         assert(p.state == ACH_NOT_PLAYED && httpsCalls == calls);
         httpsRc = RATLS_ERR_TIMEOUT;
         achievementsForget(); /* ... until Select asks again */
-        assert(achievementsRequestImage("mass0:DVD/Y.iso", "SLUS_000.02")); worker();
+        assert(achievementsRequestImage("mass0:DVD/Y.iso", "SLUS_000.02", NULL)); worker();
         assert(httpsCalls == calls + 1);
         achievementsForget();
     }
     /* clock_unset_notes: fallback taken, and the browser says to set the clock. */
     httpsRc = RATLS_ERR_CLOCK;
-    assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
+    assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker(); achievementsSnapshot(&p);
     assert(p.state == ACH_NOT_PLAYED && xeraClockNote == 1 && achievementsClockUnset());
     /* gameid_rejects_bad_hash: nothing is sent for a malformed hash. */
     httpsRc = 0; httpsDoc = "{\"Success\":true,\"GameID\":19040}";
     {
         int calls = httpsCalls;
         hashOverride = "ABC";
-        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker();
+        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker();
         hashOverride = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbG";
-        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker();
+        assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01", NULL)); worker();
         hashOverride = NULL;
         assert(httpsCalls == calls);
     }

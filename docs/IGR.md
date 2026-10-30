@@ -170,6 +170,7 @@ Start + Select** no longer leaves the game at once: it **pauses** the game under
 |---|---|
 | **Resume** | Back to the game, exactly where it stopped. Start or the back button also resume. |
 | **Cheats** | Only when the game was started with cheats on. Every cheat of the game's `.cht` file, **ON** or **OFF**; the confirm button switches one, the back button returns. Changes apply when you resume. |
+| **Achievements** | RetroAchievements builds only. How many of the game's achievements you have unlocked and how many are left. The confirm button opens **Left To Hunt**: the locked ones one at a time, with points and how to earn each; Up and Down page through them. |
 | **Exit Game** | What the combo always did: leave for the **IGR Path** (or the PS2 browser). Press confirm twice. |
 | **Power Off** | Turns the console off. Press confirm twice. |
 
@@ -192,6 +193,17 @@ you play, without a restart. Things to know:
 * *Not applied yet* means the engine was in the middle of applying codes when you paused; resume and
   open the menu again.
 
+**Achievements, Left To Hunt.** RetroAchievements builds, *xeRAbora* mode. The menu cannot ask the PC while
+the game is paused, so it shows the list as the loader last saw it: open the game's achievements in the
+loader (*View achievements* in the game's menu) and the set it reads from the xeRAbora PC is also saved as
+`RA/<game ID>.ach` beside the game's watch list. The next launch of that game takes it into the menu.
+
+* Open the page again after a session to bring the list up to date. Unlocks earned since are not in it.
+* No list yet: the page says *No list for this game* and how to get one. Caduceus mode, HDLoader (APA)
+  games and PS1 games have no image the page can read, so they have no list either.
+* Up to 8 KB of descriptions travel with the game (several hundred achievements); a set bigger than that
+  shows the counts without *Left To Hunt*. Titles and descriptions are shown in capitals, wrapped to the panel.
+
 **Where it works.** Games on the **OPL core** only (USB, MX4SIO, iLink, exFAT and APA HDD, SMB, MMCE,
 UDPBD/UDPFS). Neutrino has no IGR at all, and PS1 games use POPStarter's or Ember's own. The menu draws
 into the picture the game is showing, which it finds through the same GS write breakpoint GSM uses:
@@ -199,17 +211,31 @@ into the picture the game is showing, which it finds through the same GS write b
 * **PCSX2 cannot show it** (it has no data breakpoints), so there the combo leaves the game as before.
 * A game that shows its picture in a way the menu cannot see, or in a format it cannot draw, also
   leaves at once, as before. Nothing is lost compared with the menu off.
-* Game sound keeps playing (looping) while the menu is open, and the panel stays on a still screen
-  until the game draws over it.
-* Not in the **RetroAchievements** builds, nor in the IGS (`EXTRA_FEATURES=1`) and freeze-report
-  (`INGAMEDIAG=1`) builds: `ee_core` has no room for both. Those keep the plain combo and have no
-  *In-Game Menu* row. `make IGR_MENU=0` leaves it out of a standard build too.
+* **The game goes quiet while the menu is open** and its sound goes on where it stopped when you resume:
+  a small IOP module (`igrmbox.irx`) turns the SPU2's volume down and holds every voice. It cannot hold a
+  game that streams PCM straight to the sound cores; that stream keeps running, silently, while you are paused.
+* **Resume gives back the exact picture.** The pixels under the panel are kept in IOP memory while the menu
+  is open and drawn back before the game runs again, so a still screen does not keep the panel. A game
+  that leaves the IOP too little free memory (up to 315 KB for a 640-wide picture) gets the old behaviour:
+  the panel stays until the game draws over it. If the IOP has no room for `igrmbox.irx` itself, the
+  menu still opens, but with neither the silent pause nor the exact picture.
+* With *In-Game Menu* off, `igrmbox.irx` is not packed or loaded at all, so a game sees exactly the modules
+  and memory it always did.
+* In the **RetroAchievements** builds (`RETROACHIEVEMENTS=1`) `ee_core` has no room for the menu beside RA,
+  so there the menu is a small program of its own, `igrovl.elf`, that the loader copies into the top 16 KB
+  of the module area (0xCC000 to 0xD0000) only for a launch with *In-Game Menu* on. With the menu off
+  nothing is copied and the module area is what it always was. A game whose modules are moved elsewhere
+  (`mod_storage_location_list`), or run past 0xCC000, gets the plain combo in those builds.
+* Not in the IGS (`EXTRA_FEATURES=1`) and freeze-report (`INGAMEDIAG=1`) builds: `ee_core` has no room
+  for both. Those keep the plain combo and have no *In-Game Menu* row. `make IGR_MENU=0` leaves it out of
+  a standard build too.
 * The CHEATS page needs a game whose modules sit at the usual address; a few games moved elsewhere
   (`mod_storage_location_list`) get the menu without it, and their cheats run as ticked before launch.
 
 The menu is **RIPPS2's** (by **akilluminati47**), itself built on ORBIT's Neutrino in-game menu
-(danielnuld/ps2-launcher, AFL-3.0); RIPPS2's Screenshot and Achievements pages are not ported yet, the
-Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.
+(danielnuld/ps2-launcher, AFL-3.0); the silent pause and the exact picture are RIPPS2's too (build 108,
+here as a module of their own instead of inside CDVDMAN), and so is Achievements with Left To Hunt (build 94).
+RIPPS2's Screenshot page is not ported yet; the Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.
 
 ---
 
@@ -247,6 +273,7 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 | `ee_core/src/igs_api.c` | Screenshot capture and BMP writing |
 | `ee_core/src/igrmenu.c` | The in-game menu: finding the shown frame, drawing the panel, the pages, the pad loop |
 | `ee_core/include/igrcheats.h` | The cheat list the launcher hands the menu, and how a code set is built from it |
+| `ee_core/src/igrmbox.c`, `modules/iopcore/igrmbox/` | The menu's IOP mailbox: the silent pause and the pixels held under the panel |
 | `ee_core/src/cheat_engine.S`, `cheat_api.c` | The cheat engine; `CheatLiveApply` swaps in the menu's code set |
 | `src/cheatman.c` | `igrCheatsPack` / `set_cheats_list_live`: the launcher's side of live cheats |
 | `ee_core/tests/test_igrmenu.cpp` | Host test: the pages as pictures, and the code set the Cheats page builds |

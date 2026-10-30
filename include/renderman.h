@@ -137,6 +137,9 @@ void rmStartFrame(void);
 /** Ends the frame - last to call every frame */
 void rmEndFrame(void);
 
+/** Frames finished by rmEndFrame, from every render loop (the menu's and each dialog's own). */
+extern volatile unsigned int rmFramesDrawn;
+
 /** Sets the display offset in units of pixels */
 void rmSetDisplayOffset(int x, int y);
 

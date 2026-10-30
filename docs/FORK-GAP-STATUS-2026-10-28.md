@@ -1,5 +1,7 @@
 # Fork-gap status: 2026-10-28
 
+> Historical snapshot. The [full late-October-29 refresh](FORK-GAP-FULL-REFRESH-2026-10-29.md) supersedes availability/release wording below; stable IDs and evidence remain preserved.
+
 > Historical snapshot. The [October 29 ecosystem reconciliation](FORK-GAP-ECOSYSTEM-AUDIT-2026-10-29.md)
 > supersedes availability wording below and pins both current editions, release/development
 > source, dependency gitlinks and open implementation PRs.

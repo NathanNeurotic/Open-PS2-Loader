@@ -7,6 +7,10 @@ import subprocess
 from urllib.parse import quote
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+# The RA kits ship ORBIT's pinned runtime in place of upstream Neutrino; their download text links it.
+ORBIT = json.loads((ROOT / "third_party/orbit-neutrino/release.json").read_text(encoding="utf-8"))
+ORBIT_LINK = (f"[ORBIT Neutrino RA runtime {ORBIT['tag']}]"
+              f"(https://github.com/{ORBIT['repository']}/releases/tag/{ORBIT['tag']})")
 
 
 def description(name):
@@ -30,7 +34,7 @@ def description(name):
     if name.endswith(".zip") and (name.endswith("-src.zip") or "-src-" in name):
         return "Source code snapshot."
     for prefix, text in (
-        ("RIPTOPL-RetroAchievements-", "Full RetroAchievements kit: loader, artwork, PSU, POPStarter, Ember and pinned ORBIT Neutrino v1.0.2 (RA-only); requires xeRAbora v1.0.1 or alpha.17+."),
+        ("RIPTOPL-RetroAchievements-", f"Full RetroAchievements kit: loader, artwork, PSU, POPStarter, Ember and the pinned {ORBIT_LINK} (RA-only, in place of upstream Neutrino); requires xeRAbora v1.0.1 or alpha.17+."),
         ("RIPTOPL-RA-", "RetroAchievements package."),
         ("RIPTOPL-VARIANTS-", "Alternative loaders with extra features, controller emulation and DualSense support."),
         ("RIPTOPL-DEBUG-", "Debug loaders for troubleshooting."),

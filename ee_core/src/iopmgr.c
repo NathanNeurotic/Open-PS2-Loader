@@ -16,6 +16,9 @@
 #include "util.h"
 #include "syshook.h"
 #include "coreconfig.h"
+#ifdef IGR_MENU
+#include "igrmbox.h"
+#endif
 #include "reset_arg_bounds.h"
 #ifdef INGAMEDIAG
 #include "freeze_diag_core.h"
@@ -294,6 +297,13 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
             break;
         }
     };
+
+#ifdef IGR_MENU
+    // the in-game menu's mailbox (igrmbox.irx: the silent pause, the frame held under the panel), while ee_core still
+    // drives the SIF. With In-Game Menu off the launcher did not even pack it, and nothing is loaded
+    if (config->IgrMenu)
+        IGR_MboxLink();
+#endif
 
 #ifdef RETROACHIEVEMENTS
     /* RetroAchievements telemetry, loaded LAST because it imports

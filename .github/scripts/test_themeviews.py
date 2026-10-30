@@ -368,7 +368,50 @@ int main(void)
         configFree(tmpl);
     }
 
-    puts("themeviews: view names, legacy names, scan, choice, prefixes, slot chains, inherit=0, scoped keys, SD/HD layouts, fallback views and key length passed");
+    // Coverflow (3) and Coverflow (5): one theme view, two picks.
+    {
+        int covers = 3, p, view;
+        unsigned int all = (1u << THM_VIEW_COUNT) - 1, cf = 1u << THM_VIEW_COVERFLOW;
+        assert(thmViewPickFor(-1, 5) == THM_VIEW_PICK_DEFAULT);
+        assert(thmViewPickFor(THM_VIEW_LIST, 5) == THM_VIEW_PICK_LIST);
+        assert(thmViewPickFor(THM_VIEW_COVERFLOW, 3) == THM_VIEW_PICK_COVERFLOW3);
+        assert(thmViewPickFor(THM_VIEW_COVERFLOW, 5) == THM_VIEW_PICK_COVERFLOW5);
+        assert(thmViewPickFor(THM_VIEW_COVERFLOW, 7) == THM_VIEW_PICK_COVERFLOW3); // hand-edited count
+        assert(thmViewPickFor(THM_VIEW_GRID, 3) == THM_VIEW_PICK_GRID);
+        assert(thmViewPickRequest(THM_VIEW_PICK_COVERFLOW5, &covers) == THM_VIEW_COVERFLOW && covers == 5);
+        assert(thmViewPickRequest(THM_VIEW_PICK_PSBBN, &covers) == THM_VIEW_PSBBN && covers == 5); // kept
+        assert(thmViewPickRequest(THM_VIEW_PICK_COVERFLOW3, &covers) == THM_VIEW_COVERFLOW && covers == 3);
+        assert(thmViewPickRequest(THM_VIEW_PICK_DEFAULT, &covers) == -1 && covers == 3);
+        assert(thmViewPickRequest(99, &covers) == -1);
+        for (p = THM_VIEW_PICK_LIST; p < THM_VIEW_PICK_COUNT; p++) {
+            int c = 3;
+            int r = thmViewPickRequest(p, &c);
+            assert(thmViewPickFor(r, c) == p);
+        }
+
+        // Hold L3 walks List, Coverflow (3), Coverflow (5), PSBBN Flow, Grid, List.
+        view = THM_VIEW_LIST;
+        covers = 5;
+        view = thmViewCycleNext(all, view, &covers);
+        assert(view == THM_VIEW_COVERFLOW && covers == 3);
+        view = thmViewCycleNext(all, view, &covers);
+        assert(view == THM_VIEW_COVERFLOW && covers == 5);
+        view = thmViewCycleNext(all, view, &covers);
+        assert(view == THM_VIEW_PSBBN && covers == 5);
+        view = thmViewCycleNext(all, view, &covers);
+        assert(view == THM_VIEW_GRID);
+        assert(thmViewCycleNext(all, view, &covers) == THM_VIEW_LIST);
+
+        // A Coverflow-only theme still toggles 3 and 5; a List-only theme has nothing to cycle.
+        covers = 3;
+        assert(thmViewCycleNext(cf, THM_VIEW_COVERFLOW, &covers) == THM_VIEW_COVERFLOW && covers == 5);
+        assert(thmViewCycleNext(cf, THM_VIEW_COVERFLOW, &covers) == THM_VIEW_COVERFLOW && covers == 3);
+        covers = 5;
+        assert(thmViewCycleNext(1u << THM_VIEW_LIST, THM_VIEW_LIST, &covers) == THM_VIEW_LIST && covers == 5);
+        assert(thmViewCycleNext((1u << THM_VIEW_LIST) | (1u << THM_VIEW_PSBBN), THM_VIEW_LIST, &covers) == THM_VIEW_PSBBN);
+    }
+
+    puts("themeviews: view names, legacy names, scan, choice, prefixes, slot chains, inherit=0, scoped keys, SD/HD layouts, fallback views, Coverflow (3)/(5) picks and key length passed");
     return 0;
 }
 '''

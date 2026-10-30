@@ -70,6 +70,11 @@
 
 extern unsigned char eecore_elf[];
 extern unsigned int size_eecore_elf;
+#ifdef IGR_OVERLAY
+#include "../ee_core/include/igrovl.h"
+extern unsigned char igrovl_elf[];
+extern unsigned int size_igrovl_elf;
+#endif
 
 extern unsigned char IOPRP_img[];
 extern unsigned int size_IOPRP_img;
@@ -775,6 +780,7 @@ int sysLaunchDisc(int (*progress)(void))
 #define CORE_IRX_UDPBD       0x800  // OPL-core UDPBD game: the smap_udpbd monolith
 #define CORE_IRX_UDPFS       0x1000 // OPL-core UDPFS (block) game: udpfs_smap + udpfs_ministack + udpfs_bd
 #define CORE_IRX_UDPFS_FILES 0x2000 // OPL-core UDPFS Files game: udpfs_smap + udpfs_ministack + udpfs_fhi
+#define CORE_IRX_IGRMBOX     0x4000 // the in-game menu's mailbox (IGR_MENU builds, menu on)
 
 // The OPL-core UDPBD / UDPFS modes (UDPFS Files included). Their driver owns the SMAP adapter in game,
 // so nothing else may put a network stack on it: no SMB/RA SMAP + SMSTCPIP pair, no udptty.
@@ -952,6 +958,13 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
     irxptr_tab[modcount++].ptr = (void *)&imgdrv_irx;
     irxptr_tab[modcount].info = size_resetspu_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_RESETSPU);
     irxptr_tab[modcount++].ptr = (void *)&resetspu_irx;
+#ifdef IGR_MENU
+    // The in-game menu's mailbox (silent pause, the exact frame back on RESUME): packed only for a launch with the menu on.
+    if (modules & CORE_IRX_IGRMBOX) {
+        irxptr_tab[modcount].info = size_igrmbox_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_IGRMBOX);
+        irxptr_tab[modcount++].ptr = (void *)&igrmbox_irx;
+    }
+#endif
 #ifdef INGAMEDIAG
     // In-game freeze report writer, loaded by IGR after a freeze (INGAMEDIAG flavour).
     irxptr_tab[modcount].info = size_freezediag_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_FREEZEDIAG);
@@ -2607,6 +2620,39 @@ void sysLaunchEmber(const char *emberElf, const char *gameFolder)
         LOG("[EMBER] keep-IOP handoff failed for %s\n", emberElf);
 }
 
+#ifdef IGR_OVERLAY
+// igrovl.elf's loadable segments to the addresses it was linked at, its bss zeroed: 1 when it is the overlay
+// ee_core expects (magic, ABI) and fits from IGROVL_BASE to 0xD0000
+static int sysPlaceIgrOverlay(void)
+{
+    const elf_header_t *eh = (const elf_header_t *)igrovl_elf;
+    const elf_pheader_t *ph = (const elf_pheader_t *)(igrovl_elf + eh->phoff);
+    const igrovl_hdr_t *h = (const igrovl_hdr_t *)IGROVL_BASE;
+    int i, placed = 0;
+
+    if (size_igrovl_elf < sizeof(*eh) || igrovl_elf[0] != 0x7f || igrovl_elf[1] != 'E' || igrovl_elf[2] != 'L' ||
+        igrovl_elf[3] != 'F')
+        return 0;
+    for (i = 0; i < eh->phnum; i++) {
+        if (ph[i].type != 1) // PT_LOAD
+            continue;
+        if ((u32)ph[i].vaddr < IGROVL_BASE || (u32)ph[i].vaddr + ph[i].memsz > IGROVL_BASE + IGROVL_SIZE ||
+            ph[i].offset + ph[i].filesz > size_igrovl_elf)
+            return 0;
+        memcpy(ph[i].vaddr, igrovl_elf + ph[i].offset, ph[i].filesz);
+        memset((u8 *)ph[i].vaddr + ph[i].filesz, 0, ph[i].memsz - ph[i].filesz);
+        placed = 1;
+    }
+    if (!placed || h->magic != IGROVL_MAGIC || h->abi != IGROVL_ABI || h->end > IGROVL_BASE + IGROVL_SIZE)
+        return 0;
+    for (i = 0; i < eh->phnum; i++) // a NOLOAD bss outside every segment: up to the end the header gives
+        if (ph[i].type == 1 && (u32)ph[i].vaddr + ph[i].memsz < h->end)
+            memset((u8 *)ph[i].vaddr + ph[i].memsz, 0, h->end - ((u32)ph[i].vaddr + ph[i].memsz));
+    FlushCache(0);
+    return 1;
+}
+#endif
+
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags)
 {
     unsigned int modules, ModuleStorageSize;
@@ -2675,6 +2721,11 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     if (!discMode && strcmp(mode_str, "BDM_CF_MODE") && size_mcemu_irx > 0)
         modules |= CORE_IRX_VMC;
 
+#ifdef IGR_MENU
+    if (gIgrMenu && !(compatflags & COMPAT_MODE_6))
+        modules |= CORE_IRX_IGRMBOX;
+#endif
+
     LOG("SYSTEM LaunchLoaderElf loading modules\n");
     ModuleStorageSize = (sendIrxKernelRAM(filename, mode_str, modules, ModuleStorage, size_cdvdman_irx, cdvdman_irx, size_mcemu_irx, mcemu_irx) + 0x3F) & ~0x3F;
 
@@ -2686,7 +2737,12 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     void *igrCheats = NULL;
     if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && !discMode && GetCheatsEnabled() && ModuleStorage == (void *)OPL_MOD_STORAGE) {
         u8 *at = (u8 *)ModuleStorage + ModuleStorageSize;
-        unsigned int room = (u32)at < 0xD0000 ? 0xD0000 - (u32)at : 0;
+#ifdef IGR_OVERLAY
+        const u32 top = IGROVL_BASE; // the menu itself goes above (RETROACHIEVEMENTS flavour)
+#else
+        const u32 top = 0xD0000;
+#endif
+        unsigned int room = (u32)at < top ? top - (u32)at : 0;
         int bytes = igrCheatsPack(at, room);
         if (bytes > 0) {
             igrCheats = at;
@@ -2700,6 +2756,38 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #ifdef RETROACHIEVEMENTS
     if (!sysModeHasNoRATelemetry(mode_str) && gRATelemetry && GetWatchCount() > 0)
         ModuleStorageEnd = PlaceWatchBlock(ModuleStorageEnd);
+#endif
+
+#ifdef IGR_OVERLAY
+    /* The menu's ACHIEVEMENTS page (RIPPS2 build 94): the game's locked achievements as RA/<startup>.ach had them, in
+       the menu's lines (sbGetRaHunt), after the cheats and the watch block and below the overlay. With no room for all
+       of it, the page gives the counts alone. */
+    const u8 *raHunt = NULL, *huntSrc;
+    int raHuntCount = 0, raHuntBytes = 0, raHuntTotal = 0, raHuntUnlocked = 0;
+    if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && ModuleStorage == (void *)OPL_MOD_STORAGE &&
+        (huntSrc = sbGetRaHunt(filename, &raHuntCount, &raHuntBytes, &raHuntTotal, &raHuntUnlocked)) != NULL) {
+        if (raHuntCount > 0 && (u32)ModuleStorageEnd + raHuntBytes <= IGROVL_BASE) {
+            raHunt = (const u8 *)ModuleStorageEnd;
+            memcpy((void *)raHunt, huntSrc, raHuntBytes);
+            ModuleStorageEnd = (void *)(((u32)ModuleStorageEnd + raHuntBytes + 0x3F) & ~0x3F);
+            LOG("IGR menu hunt: %d of %d locked, %d bytes at %p\n", raHuntCount, raHuntTotal - raHuntUnlocked, raHuntBytes, raHunt);
+        } else
+            raHuntCount = 0;
+    } else
+        raHuntTotal = 0;
+
+    /* RETROACHIEVEMENTS flavour: the menu itself is igrovl.elf (ee_core/include/igrovl.h), linked at the top of the
+       module storage region. It goes in only with the menu on, only at the default address and only when the modules,
+       the cheats and the watch block end below it; the storage then runs to its end so the kernel's erase leaves it
+       alone. Without it the launch is the menu-off one: config->IgrMenu goes to 0 below. */
+    int igrOvlPlaced = 0;
+    if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && ModuleStorage == (void *)OPL_MOD_STORAGE &&
+        (u32)ModuleStorageEnd <= IGROVL_BASE)
+        igrOvlPlaced = sysPlaceIgrOverlay();
+    if (igrOvlPlaced) {
+        ModuleStorageEnd = (void *)(IGROVL_BASE + IGROVL_SIZE);
+        LOG("IGR menu overlay at 0x%x\n", IGROVL_BASE);
+    }
 #endif
 
     // NB: LOADER.ELF is embedded
@@ -2771,6 +2859,14 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // The in-game menu (RIPPS2's, by akilluminati47; ee_core igrmenu.c). RetroAchievements builds and the IGS and
     // freeze-report builds make ee_core without it (no room), and leave these zero.
     config->IgrMenu = gIgrMenu && !(compatflags & COMPAT_MODE_6); // Mode 6 (Disable IGR) turns the menu off too
+#ifdef IGR_OVERLAY
+    if (!igrOvlPlaced) // no overlay for this launch: the combo leaves the game, as with the menu off
+        config->IgrMenu = 0;
+    config->IgrRaHunt = raHunt;
+    config->IgrRaHuntCount = raHunt != NULL ? raHuntCount : 0;
+    config->IgrRaTotal = raHuntTotal;
+    config->IgrRaUnlocked = raHuntUnlocked;
+#endif
     config->IgrConfirmCircle = gSelectButton == KEY_CIRCLE;
     if (igrCheats != NULL && config->gCheatList != NULL) {
         set_cheats_list_live(igrCheats); // every hook, and the ticked cheats as the menu builds them

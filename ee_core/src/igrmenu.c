@@ -18,40 +18,60 @@
   not saved; the game's next frames draw over them. Which frame is shown comes from GSM's record of the game's PMODE,
   SMODE2, DISPFB and DISPLAY writes (gsm_engine.S; the passive tracker when GSM itself is off).
 
+  SILENT PAUSE, EXACT FRAME (RIPPS2 build 108, without RIPSHOT's roll): while the menu is open igrmbox.irx holds the
+  SPU2 (master volumes 0, every voice's pitch 0), so the game's sound neither loops nor runs ahead, and goes on where
+  it stopped on RESUME. The pixels the panel covers are read back from the GS first (igrmRead, RIPPS2's rsRead) into
+  an IOP buffer the module lends for the pause, and drawn back before the game runs again, so a still screen comes
+  back exactly. When the IOP has no room for them (up to 315 KB) the game's next frame draws over the panel, as
+  before; without the module (no IOP room at the reset) the menu is as it was, sound and all.
+
   CHEATS: every cheat of the game's file, ON or OFF, changed with the confirm button and applied on RESUME through
   the engine's second code set (cheat_api.c CheatLiveApply). OFF stops a cheat writing; what it wrote stays until the
   game changes it.
 
+  ACHIEVEMENTS (RIPPS2 build 94), RetroAchievements editions only: how many of the game's achievements are unlocked
+  and how many are left, as RA/<startup>.ach had them at launch (the loader saves it when the game's Achievements
+  page reads its set from the xeRAbora PC). The confirm button opens LEFT TO HUNT: one locked achievement at a time,
+  its title, its points and how to earn it, in lines the launcher wrapped (src/rahunt.c).
+
   IGR_MENU_HOST_TEST builds only the renderer, for tests/ (a picture of the panel on the PC).
 */
 
-#if defined(IGR_MENU) || defined(IGR_MENU_HOST_TEST) // RetroAchievements builds leave it out: ee_core has no room
+#if defined(IGR_MENU) || defined(IGR_MENU_HOST_TEST) // not in IGS or freeze-report builds; RA runs it as igrovl.elf
 #ifndef IGR_MENU_HOST_TEST
 #include "ee_core.h"
 #include "coreconfig.h"
 #include "padhook.h"
 #include "cheat_api.h"
+#include "igrmbox.h"
+#include "util.h"
 #endif
 #include "../include/igrcheats.h"
 #include "../include/igrmenu.h"
+#ifdef IGR_OVERLAY_SIDE
+#include "igrovl_side.h" // built into igrovl.elf: what ee_core lends it, after every header (RA editions)
+#endif
 
 // ---- the panel, in its own units (one font pixel at scale 1): 160 x 126, or 320 x 252 at scale 2
-#define PW             160
-#define PH             126
-#define ROW_TITLE      4
-#define ROW_SEP1       14
-#define ROW_ITEM0      18
-#define ITEM_STEP      10
-#define ROW_SEP2       69
-#define ROW_INFO0      73
-#define INFO_STEP      10
-#define ROW_HINT       115
-#define IGRM_ITEMS_MAX 4 // RESUME, CHEATS, EXIT GAME, POWER OFF
-#define TEXT_X         8
-#define ITEM_X         20
-#define TEXT_CHARS     24 // (PW - 2 * TEXT_X) / 6
-#define CHEAT_ROWS     9  // the CHEATS page's rows, ITEM_STEP apart from ROW_ITEM0
-#define CHEAT_CHARS    18 // a cheat's name on its row, before ON / OFF
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU_HOST_TEST)
+#define IGRM_ACH // the ACHIEVEMENTS page
+#endif
+
+#define PW          160
+#define PH          126
+#define ROW_TITLE   4
+#define ROW_SEP1    14
+#define ROW_ITEM0   18
+#define ITEM_STEP   10
+#define ROW_SEP2    69
+#define ROW_INFO0   73
+#define INFO_STEP   10
+#define ROW_HINT    115
+#define TEXT_X      8
+#define ITEM_X      20
+#define TEXT_CHARS  24 // (PW - 2 * TEXT_X) / 6
+#define CHEAT_ROWS  9  // the CHEATS page's rows, ITEM_STEP apart from ROW_ITEM0
+#define CHEAT_CHARS 18 // a cheat's name on its row, before ON / OFF
 
 enum { C_PANEL,
        C_BORDER,
@@ -96,6 +116,12 @@ typedef struct
     igr_cheats_t *cheats; // the CHEATS page's list, or NULL (no page)
     int cheatsBusy;       // a change could not be applied (the engine was walking the set): try again later
     int cheatsIdle;       // the engine's hook has not run once this game: no cheat is being applied
+#ifdef IGRM_ACH
+    int raBuilt;             // the ACHIEVEMENTS page is listed
+    int raTotal, raUnlocked; // RA/<startup>.ach at launch (0 total: none)
+    const u8 *hunt;          // LEFT TO HUNT, raHuntBlob's entries, or NULL
+    int huntCount;
+#endif
 } igrm_info_t;
 
 #define IGRM_LINES 24
@@ -236,9 +262,17 @@ static void igrmPath(int y, const char *path)
 
 enum { IT_RESUME,
        IT_CHEATS,
+#ifdef IGRM_ACH
+       IT_ACH,
+#endif
        IT_EXIT,
        IT_POWER };
-static const char *const igrmName[4] = {"RESUME", "CHEATS", "EXIT GAME", "POWER OFF"};
+#define IGRM_ITEMS_MAX (IT_POWER + 1)
+static const char *const igrmName[IGRM_ITEMS_MAX] = {"RESUME", "CHEATS",
+#ifdef IGRM_ACH
+                                                     "ACHIEVEMENTS",
+#endif
+                                                     "EXIT GAME", "POWER OFF"};
 static u8 igrmIds[IGRM_ITEMS_MAX];
 static int igrmItems;
 
@@ -249,7 +283,10 @@ static void igrmListItems(const igrm_info_t *in)
     igrmItems = 0;
     for (i = IT_RESUME; i <= IT_POWER; i++)
         if (i != IT_CHEATS || in->cheats != NULL)
-            igrmIds[igrmItems++] = i;
+#ifdef IGRM_ACH
+            if (i != IT_ACH || in->raBuilt)
+#endif
+                igrmIds[igrmItems++] = i;
 }
 
 static int igrmCheatsOn(const igr_cheats_t *b)
@@ -309,6 +346,28 @@ static void igrmCompose(const igrm_info_t *in, int sel, int armed)
                 igrmText(y + 3 * INFO_STEP, TEXT_X, C_DIM, "WRITTEN VALUES STAY");
             }
             break;
+#ifdef IGRM_ACH
+        case IT_ACH:
+            if (in->raTotal <= 0) {
+                igrmText(y, TEXT_X, C_TEXT, "NO LIST FOR THIS GAME:");
+                igrmText(y + INFO_STEP, TEXT_X, C_TEXT, "OPEN ITS ACHIEVEMENTS");
+                igrmText(y + 2 * INFO_STEP, TEXT_X, C_TEXT, "IN THE LOADER FIRST");
+                igrmText(y + 3 * INFO_STEP, TEXT_X, C_DIM, "(XERABORA MODE)");
+                break;
+            }
+            p = igrmNum(s, in->raUnlocked);
+            p = igrmCat(p, " OF ");
+            igrmCat(igrmNum(p, in->raTotal), " UNLOCKED");
+            igrmText(y, TEXT_X, C_TEXT, s);
+            if (in->raUnlocked >= in->raTotal)
+                igrmText(y + INFO_STEP, TEXT_X, C_GOLD, "ALL OF THEM!");
+            else {
+                igrmCat(igrmNum(s, in->raTotal - in->raUnlocked), " LEFT TO HUNT");
+                igrmText(y + INFO_STEP, TEXT_X, C_GOLD, s);
+            }
+            igrmText(y + 3 * INFO_STEP, TEXT_X, C_DIM, "AS THE LOADER LAST SAW");
+            break;
+#endif
         case IT_POWER:
             if (!in->canPowerOff) {
                 igrmText(y, TEXT_X, C_TEXT, "A DISC GAME TURNS OFF");
@@ -339,9 +398,59 @@ static void igrmCompose(const igrm_info_t *in, int sel, int armed)
             break;
     }
 
-    igrmCat(igrmCat(igrmCat(igrmCat(s, ok), " SELECT   "), back), " RESUME");
+#ifdef IGRM_ACH
+    if (id == IT_ACH)
+        p = in->huntCount > 0 ? igrmCat(igrmCat(s, ok), " SEE THEM   ") : igrmCat(s, "");
+    else
+#endif
+        p = igrmCat(igrmCat(s, ok), " SELECT   ");
+    igrmCat(igrmCat(p, back), " RESUME");
     igrmText(ROW_HINT, TEXT_X, C_DIM, s);
 }
+
+#ifdef IGRM_ACH
+#define HUNT_STEP 9 // LEFT TO HUNT's rows: up to RA_HUNT_ROWS (8) of them from ROW_ITEM0, above the hint
+
+// LEFT TO HUNT, entry `at` of the hunt list. The launcher packed it in lines already (raHuntBlob,
+// src/rahunt.c): its points, how many title lines, how many description lines, then each line NUL
+// ended, in TEXT_CHARS. RIPPS2 build 94.
+static void igrmComposeHunt(const igrm_info_t *in, int at)
+{
+    char s[40], *p, back[2] = {(char)(in->confirmCircle ? 1 : 2), 0};
+    const u8 *e = in->hunt;
+    const char *l;
+    int i, k, y = ROW_ITEM0;
+
+    for (k = 0; k < at; k++)
+        for (i = e[1] + e[2], e += 3; i > 0; i--)
+            e += igrmLen((const char *)e) + 1;
+    igrmLines = 0;
+    igrmBarY = -100;
+    p = igrmNum(s, at + 1);
+    p = igrmCat(p, "/");
+    igrmNum(p, in->huntCount);
+    igrmTitle("LEFT TO HUNT", s);
+    igrmSep2 = -1;
+    l = (const char *)e + 3;
+    for (i = 0; i < e[1] + e[2]; i++) {
+        if (i == e[1]) { // under the title, its points
+            igrmCat(igrmNum(s, e[0]), e[0] == 1 ? " POINT" : " POINTS");
+            igrmText(y, TEXT_X, C_DIM, s);
+            y += HUNT_STEP;
+        }
+        igrmText(y, TEXT_X, i < e[1] ? C_GOLD : C_TEXT, l);
+        y += HUNT_STEP;
+        l += igrmLen(l) + 1;
+    }
+    if (e[2] == 0) {
+        igrmCat(igrmNum(s, e[0]), e[0] == 1 ? " POINT" : " POINTS");
+        igrmText(y, TEXT_X, C_DIM, s);
+        igrmText(y + HUNT_STEP, TEXT_X, C_DIM, "NO DESCRIPTION");
+    }
+    igrmCat(igrmCat(igrmCat(s, in->huntCount > 1 ? "UP DOWN MORE   " : ""), back), " BACK");
+    igrmText(ROW_HINT, TEXT_X, C_DIM, s);
+}
+#endif
 
 // The CHEATS page: CHEAT_ROWS rows from `top`, the cursor on `sel`; `full`: the last confirm could not turn a cheat
 // on because the ticked ones fill the engine's code set
@@ -448,6 +557,8 @@ int igrmTestPage(const igrm_info_t *in, int page, int sel, int armed, int sx, in
     igrmListItems(in);
     if (page == 1)
         igrmComposeCheats(in, armed < 0 ? 0 : armed, sel, armed < 0);
+    else if (page == 2)
+        igrmComposeHunt(in, sel);
     else
         igrmCompose(in, sel, armed);
     for (y = 0; y < PH * sy; y++)
@@ -459,8 +570,10 @@ int igrmTestPage(const igrm_info_t *in, int page, int sel, int armed, int sx, in
 // ---- on the console
 
 // the game's own GS writes as GSM recorded them (gsm_engine.S, gsm_defines.h Source_*): 0 = none seen
+#ifndef IGR_OVERLAY_SIDE
 extern u64 GSMSourceGSRegs[11];
 extern u16 GSMSourceSetGsCrt[3]; // the game's last SetGsCrt: interlace, mode, ffmd (Hook_SetGsCrt records it always)
+#endif
 #define SRC_PMODE    0
 #define SRC_SMODE2   2
 #define SRC_DISPFB1  7
@@ -626,6 +739,112 @@ static int igrmDraw(u32 *pkt)
     return 1;
 }
 
+// w pixels of frame line y from x into buf (64-byte aligned, w * bpp a multiple of 16): a GS local -> host transfer
+// read through the VIF1 FIFO, RIPPS2's rsRead (ripshot.c, written from the GS manual and ps2sdk's ee/debug
+// screenshot.c, AFL). The game is paused with its DMA idle; its GS state is left as found: FINISH is masked in IMR
+// while ours is raised and cleared again unless the game had it set. Returns 0 when the GS did not deliver.
+#define IGRM_GS_CSR    ((vu64 *)0x12001000)
+#define IGRM_GS_BUSDIR ((vu64 *)0x12001040)
+#define VIF_FDR        0x00800000
+#define CSR_FINISH     2
+#define IMR_FINISH     0x200
+
+static int igrmWaitFor(vu32 *reg, u32 bits, u32 want)
+{
+    int i;
+    for (i = 0; i < 10000000; i++)
+        if ((*reg & bits) == want)
+            return 1;
+    return 0;
+}
+
+static int igrmRead(void *buf, u32 x, u32 y, u32 w)
+{
+    u32 pkt[28] __attribute__((aligned(64)));
+    u64 *q = (u64 *)(pkt + 4);
+    u32 finishWas, ok;
+    u64 imr;
+
+    pkt[0] = VIF_NOP;
+    pkt[1] = VIF_NOP;
+    pkt[2] = VIF_FLUSHA;
+    pkt[3] = VIF_DIRECT(6);
+    q[0] = GIFTAG(5, 1, 0, 1);
+    q[1] = GIF_AD;
+    q[2] = (u64)igrmBp | (u64)igrmBw << 16 | (u64)igrmPsm << 24;
+    q[3] = GS_BITBLTBUF; // the source
+    q[4] = (u64)x | (u64)y << 16;
+    q[5] = GS_TRXPOS;
+    q[6] = (u64)w | (u64)1 << 32;
+    q[7] = GS_TRXREG;
+    q[8] = 0;
+    q[9] = 0x61; // FINISH: everything the game drew is in memory before the read
+    q[10] = 1;   // local -> host
+    q[11] = GS_TRXDIR;
+
+    finishWas = *(vu32 *)IGRM_GS_CSR & CSR_FINISH;
+    imr = GsPutIMR(GsGetIMR() | IMR_FINISH);
+    *IGRM_GS_CSR = CSR_FINISH;
+
+    FlushCache(0); // the packet out to memory, and no dirty line of buf left to land on the DMA's data
+    *IGRM_D1_QWC = 7;
+    *IGRM_D1_MADR = (u32)pkt;
+    *IGRM_D1_CHCR = 0x101; // from memory, normal mode, start
+    asm volatile("sync.l");
+    ok = igrmWaitFor(IGRM_D1_CHCR, CHCR_STR, 0) && igrmWaitFor((vu32 *)IGRM_GS_CSR, CSR_FINISH, CSR_FINISH) &&
+         igrmWaitFor(IGRM_VIF1_STAT, VIF_FQC, 0);
+    if (ok) {
+        *IGRM_VIF1_STAT = VIF_FDR; // the FIFO towards the EE
+        *IGRM_GS_BUSDIR = 1;       // and the GS bus towards the host
+        *IGRM_D1_QWC = w * igrmBpp / 16;
+        *IGRM_D1_MADR = (u32)buf;
+        *IGRM_D1_CHCR = 0x100; // to memory, normal mode, start
+        asm volatile("sync.l");
+        ok = igrmWaitFor(IGRM_D1_CHCR, CHCR_STR, 0);
+        if (!ok)
+            *IGRM_D1_CHCR = 0;
+        *IGRM_VIF1_STAT = 0;
+        *IGRM_GS_BUSDIR = 0;
+    } else
+        *IGRM_D1_CHCR = 0;
+
+    if (!finishWas)
+        *IGRM_GS_CSR = CSR_FINISH; // ours: the game's handler must not see it when the pause ends
+    GsPutIMR(imr);
+    asm volatile("sync.l");
+    FlushCache(0); // nothing cached of buf: the caller reads what the DMA wrote
+    return ok;
+}
+
+// The frame's pixels under the panel into an IOP buffer igrmbox.irx lends, a line at a time through pkt, so
+// RESUME can give the frame back as it was. Returns 0 when there is no buffer to spare or the GS failed.
+static int igrmHoldSave(u32 *pkt)
+{
+    u32 lb = PW * igrmSx * igrmBpp, h = PH * igrmSy, buf, y;
+
+    if ((buf = IGR_MboxBegin(lb * h)) == 0)
+        return 0;
+    for (y = 0; y < h; y++) {
+        if (!igrmRead(pkt, igrmX, igrmY + y, PW * igrmSx)) {
+            IGR_MboxEnd();
+            return 0;
+        }
+        CopyToIop(pkt, lb, (void *)(buf + y * lb));
+    }
+    return 1;
+}
+
+// The held pixels back over the panel, then the buffer back to the module
+static void igrmHoldBack(u32 *pkt)
+{
+    u32 lb = PW * igrmSx * igrmBpp, h = PH * igrmSy, y;
+
+    for (y = 0; y < h; y++)
+        if (IGR_MboxSend(y * lb, pkt + 28, lb) != (int)lb || !igrmSendLine(pkt, y))
+            break;
+    IGR_MboxEnd();
+}
+
 // GSM's data breakpoint (the passive tracker, or GSM itself) traps stores to GS registers. While the game is paused
 // nothing of the game's needs it, so it is off from the menu's first step to its last and BPC is put back as it was
 // (RIPPS2 build 108).
@@ -675,7 +894,10 @@ int IGR_MenuRun(u16 (*buttons)(void))
     u32 d1chcr, d1madr, d1qwc, d1tadr, gameDone, t, firstT = 0, bpc;
     u16 held, now, pressed, ok, back;
     int sel = 0, armed = 0, result = IGR_MENU_RESUME, presses = 0, power = 1, powerLatched = 0, i;
-    int page = 0, csel = 0, ctop = 0, full = 0, changed = 0;
+    int page = 0, csel = 0, ctop = 0, full = 0, changed = 0, frameHeld;
+#ifdef IGRM_ACH
+    int hunt = -1;
+#endif
     char gameId[CORE_GAME_ID_MAX_LEN + 1];
     igrm_line_t lines[IGRM_LINES];
     igrm_info_t info;
@@ -705,6 +927,10 @@ int IGR_MenuRun(u16 (*buttons)(void))
         gameId[i] = config->GameID[i];
     gameId[i] = '\0';
 
+    // silence first, then the pixels the panel will cover, so RESUME gives back the frame and the sound as they were
+    IGR_MboxHush();
+    frameHeld = igrmHoldSave(pkt);
+
     config->ExitPath[CORE_EXIT_PATH_MAX_LEN - 1] = '\0';
     info.confirmCircle = config->IgrConfirmCircle;
     info.gameId = gameId;
@@ -727,6 +953,13 @@ int IGR_MenuRun(u16 (*buttons)(void))
             info.cheatsIdle = codeentry == NULL;
         }
     }
+#ifdef IGRM_ACH
+    info.raBuilt = 1;
+    info.raTotal = config->IgrRaTotal;
+    info.raUnlocked = config->IgrRaUnlocked;
+    info.hunt = config->IgrRaHunt;
+    info.huntCount = config->IgrRaHunt != NULL ? config->IgrRaHuntCount : 0;
+#endif
     if (info.canPowerOff == 0)
         power = 0; // the ROM's CDVDMAN keeps the power button there, as the VBLANK handler leaves it
     ok = info.confirmCircle ? PAD_CIRCLE : PAD_CROSS;
@@ -768,6 +1001,17 @@ int IGR_MenuRun(u16 (*buttons)(void))
                 dirty = 1;
             } else if (pressed & PAD_START)
                 break;
+#ifdef IGRM_ACH
+        } else if (hunt >= 0) { // LEFT TO HUNT
+            if (pressed & (PAD_UP | PAD_DOWN | ok)) {
+                hunt = (hunt + ((pressed & PAD_UP) ? info.huntCount - 1 : 1)) % info.huntCount;
+                dirty = 1;
+            } else if (pressed & back) {
+                hunt = -1;
+                dirty = 1;
+            } else if (pressed & PAD_START)
+                break;
+#endif
         } else if (pressed & (PAD_UP | PAD_DOWN)) {
             sel = (sel + ((pressed & PAD_UP) ? igrmItems - 1 : 1)) % igrmItems;
             armed = 0;
@@ -779,6 +1023,13 @@ int IGR_MenuRun(u16 (*buttons)(void))
                 page = 1;
                 full = 0;
                 dirty = 1;
+#ifdef IGRM_ACH
+            } else if (id == IT_ACH) {
+                if (info.huntCount > 0) {
+                    hunt = 0;
+                    dirty = 1;
+                }
+#endif
             } else if (id == IT_EXIT || (id == IT_POWER && info.canPowerOff)) { // a second press: progress is lost
                 if (armed) {
                     result = id == IT_EXIT ? IGR_MENU_EXIT : IGR_MENU_POWEROFF;
@@ -802,6 +1053,10 @@ int IGR_MenuRun(u16 (*buttons)(void))
         if (dirty) {
             if (page)
                 igrmComposeCheats(&info, ctop, csel, full);
+#ifdef IGRM_ACH
+            else if (hunt >= 0)
+                igrmComposeHunt(&info, hunt);
+#endif
             else
                 igrmCompose(&info, sel, armed);
             igrmDraw(pkt); // a frame that took the first drawing takes this one; if not, the choice still works
@@ -817,6 +1072,9 @@ int IGR_MenuRun(u16 (*buttons)(void))
         t = igrmCount();
         while (buttons() && igrmCount() - t < 3 * IGRM_SECOND)
             ;
+        if (frameHeld) // the frame as it was, then the sound, as the game goes on
+            igrmHoldBack(pkt);
+        IGR_MboxWake();
     }
 
 done:

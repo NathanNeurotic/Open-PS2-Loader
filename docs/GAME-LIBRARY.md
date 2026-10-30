@@ -7,7 +7,7 @@ These library features came from [RIPPS2](https://github.com/akilluminati47/RIPP
 
 | Feature | Where | Saved as |
 | --- | --- | --- |
-| All Games list | Settings → Game Sources → **All Games List** | `all_games` (Off) |
+| All Games list | Settings → Interface → **Library: All Games List**, or Settings → Game Sources → **All Games List** | `all_games` (Off) |
 | Show hidden games | Settings → Game Sources → **Show Hidden Games** | `show_hidden` (Off) |
 | Sort order | Settings → Interface → **Sort Games**: Off, A to Z, Last played | `autosort` |
 | Random game | Start menu → **Random Game**, under Launch PS2 Disc | nothing |
@@ -17,11 +17,21 @@ These library features came from [RIPPS2](https://github.com/akilluminati47/RIPP
 
 ## All Games list
 
+Turn it on with **Settings → Interface → Library: All Games List** (right under Theme View, and it works
+with every view) or **Game Sources → All Games List**; both are the same setting.
 With **All Games List** on, the Favourites page becomes **All Games**: one list of the PS2 games,
-PS1 games and apps of every device that is started. Device tabs whose games are on it step aside.
-Tabs for devices set to Manual, and the network share picker, stay so those can still be started.
-When the same title is on two devices, each row shows its device's name. The menu opens on this
-page when the setting is on.
+PS1 games and apps of every device that is started. Device tabs whose games are on it step aside,
+and so does the Apps tab once the apps are on it. All Games starts the apps itself when
+Applications Page Start Mode is Manual, so that tab goes too; with it Off there are no apps and no
+tab. Tabs for devices set to Manual, and the network share picker, stay so those can still be
+started. A device that is pulled out, or whose start mode is switched Off, leaves the list with its
+tab. When the same title is on two devices, each row shows its device's name. The page draws no
+page icon, since it is not any one device. The menu opens on this page when the setting is on.
+
+Turning the setting off brings back every tab that is otherwise shown. A device that is pulled out,
+or whose start mode is Off, keeps its tab hidden until it comes back or is switched on. If Favourites Page Start Mode is Off, the Favourites
+page goes away with it and the menu moves to the startup page (Settings → Game Sources → Default
+Menu), or to the first tab when that page is not available.
 
 L3 on All Games cycles **All**, **PS2**, **PS1**, **Apps**, **Favourites** and **Recent**. R3 stars
 or unstars a row in place, and starred rows draw the favourite star. If the star cannot be saved,

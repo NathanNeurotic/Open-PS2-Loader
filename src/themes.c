@@ -3050,6 +3050,11 @@ static void drawMenuIcon(struct menu_list *menu, struct submenu_list *item, conf
 {
     if (thmElemSkipsDevice(elem, menu->item->icon_id))
         return; // devices= filter: not this page's element
+    // The All Games page is every device at once: the Favourites star (or any one device's icon)
+    // would say it is one of them, so it draws no page icon.
+    const item_list_t *support = (const item_list_t *)menu->item->userdata;
+    if (gAllGames && support != NULL && support->mode == FAV_MODE)
+        return;
     GSTEXTURE *menuIconTex = thmGetTexture(menu->item->icon_id);
     if (menuIconTex && menuIconTex->Mem)
         rmDrawPixmap(menuIconTex, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
@@ -5412,13 +5417,23 @@ int thmCycleView(void)
 {
     if (gTheme == NULL)
         return 0;
-    int step;
-    for (step = 1; step < THM_VIEW_COUNT; step++) {
-        int v = (gTheme->view + step) % THM_VIEW_COUNT;
-        if (gTheme->viewMask & (1u << v))
-            return thmSetView(v);
+    // Coverflow (3) and Coverflow (5) are two stops of one theme view: the count is read at draw time, so
+    // moving between them needs no reload.
+    int covers = gCoverflowCount;
+    int v = thmViewCycleNext(gTheme->viewMask, gTheme->view, &covers);
+    if (v == gTheme->view) {
+        if (covers == gCoverflowCount)
+            return 0; // the theme offers a single view
+        gCoverflowCount = covers;
+        return 1;
     }
-    return 0; // the theme offers a single view
+    int previousCovers = gCoverflowCount;
+    gCoverflowCount = covers;
+    if (!thmSetView(v) && gTheme->view != v) {
+        gCoverflowCount = previousCovers; // abandoned load: the old view is still on screen
+        return 0;
+    }
+    return 1;
 }
 
 int thmGetGuiValue(void)

@@ -1614,6 +1614,12 @@ static int favGatherPass(fav_rec_t *out, int cap, int shelf)
             favArmAppsScan(); // the apps join the list once their scan lands
         if (!src->enabled || src->itemGetCount == NULL || src->itemGetName == NULL)
             continue;
+        // A started source keeps its rows after its device goes away (a pulled USB stick, a page
+        // whose start mode was switched Off): only the page is hidden. Its page being shown is what
+        // says the games are still there, so a removed device leaves the list with its tab. The
+        // re-show path rebuilds the list, which gathers it again.
+        if (!mod->menuItem.visible)
+            continue;
         // A network share picker lists shares, not games.
         if (src->mode == ETH_MODE && gPCShareName[0] == '\0')
             continue;
