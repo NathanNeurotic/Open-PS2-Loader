@@ -545,6 +545,7 @@ static int outSema, inSema;
 // Shared between the BGM playback thread and the main thread; volatile so updates
 // are observed across threads rather than cached in a register.
 static volatile unsigned char terminateFlag, bgmIsPlaying;
+static unsigned char bgmResourcesLive; // semaphores, threads and decoder exist and bgmDeinit() has not run
 static volatile unsigned char rdPtr, wrPtr;
 static char bgmBuffer[BGM_RING_BUFFER_COUNT][BGM_RING_BUFFER_SIZE];
 static volatile unsigned char bgmThreadRunning, bgmIoThreadRunning;
@@ -1022,6 +1023,7 @@ static int bgmInit(void)
         bgmIoThreadID = CreateThread(&thread);
         if (bgmIoThreadID >= 0) {
             result = 0;
+            bgmResourcesLive = 1;
         } else {
             DeleteSema(inSema);
             DeleteSema(outSema);
@@ -1039,6 +1041,7 @@ static int bgmInit(void)
 
 static void bgmDeinit(void)
 {
+    bgmResourcesLive = 0;
     DeleteSema(inSema);
     DeleteSema(outSema);
     DeleteThread(bgmThreadID);
@@ -1064,6 +1067,15 @@ void bgmStart(void)
     if (!audio_initialized) {
         LOG("BGM: %s: ERROR: not initialized!\n", __FUNCTION__);
         return;
+    }
+
+    // Music that stopped on its own (a bad stream, BGM switched off) leaves its semaphores, threads and
+    // decoder behind. Release them before making new ones, or every restart leaks a set. If the old
+    // threads will not stop, do not start a second player on top of them.
+    if (bgmResourcesLive) {
+        bgmStop();
+        if (bgmResourcesLive)
+            return;
     }
 
     int ret = bgmInit();
@@ -1117,6 +1129,13 @@ void bgmStart(void)
 
         if (!terminateFlag && bgmIoThreadRunning)
             StartThread(bgmThreadID, NULL);
+        else {
+            // The feeder gave up before playback began, so the playback thread that would clear the
+            // playing flag never runs. Release everything now so the next start is not skipped.
+            LOG("BGM: no audio before playback started -- stopping.\n");
+            bgmStop();
+            bgmIsPlaying = 0;
+        }
     }
 }
 
