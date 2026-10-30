@@ -5023,6 +5023,43 @@ static int guiWrapText(const char *text, int innerW, char *out, int outSize)
     return fntWrapText(gTheme->fonts[0], text, innerW, out, outSize);
 }
 
+// Draws text already wrapped by guiWrapText, centred between the message rules. Lines are rendered
+// ONE AT A TIME: ALIGN_CENTER centres on the measured width of the WHOLE string, so handing it a
+// multi-line buffer would centre it as a single long run and leave every line off-centre. The block
+// is vertically centred on the old single-line position, so a one-line message stays where it was.
+// Returns the y of the last line, for anything drawn below the text.
+static int guiDrawWrappedLines(const char *wrapped, int lines)
+{
+    int lineH = MENU_ITEM_HEIGHT;
+    int ly = (gTheme->usedHeight >> 1) - ((lines - 1) * lineH) / 2;
+    int lastY = ly;
+    const char *ls = wrapped;
+    while (ls != NULL) {
+        const char *eol = strchr(ls, '\n');
+        char line[192];
+        int n = eol ? (int)(eol - ls) : (int)strlen(ls);
+        if (n > (int)sizeof(line) - 1)
+            n = (int)sizeof(line) - 1;
+        memcpy(line, ls, n);
+        line[n] = '\0';
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, ly, ALIGN_CENTER, 0, 0, line, gTheme->textColor);
+        lastY = ly;
+        ly += lineH;
+        ls = eol ? eol + 1 : NULL;
+    }
+    return lastY;
+}
+
+// Wraps and draws a message to the width guiMsgBox uses. For the screens that showed their text as
+// one unbounded line (text screen, warning, video-mode confirmation, remove-settings prompt): a long
+// translation ran past the rules and off the screen. Ported from YAOPL 6a091fc (Roman Kelesidis).
+static int guiDrawMsgText(const char *text)
+{
+    char wrapped[512];
+    int lines = guiWrapText(text, screenWidth - 120, wrapped, sizeof(wrapped));
+    return guiDrawWrappedLines(wrapped, lines);
+}
+
 // 1 once the interactive menu is up; 0 on the autolaunch path, where miniInit never runs thmInit.
 // The same test guiMsgBox and guiWarning use to stay quiet there, for callers that must not ASK a
 // question nobody can answer (an unanswered guiMsgBox reads as "back").
@@ -5071,26 +5108,7 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
-        // Render the wrapped lines ONE AT A TIME: ALIGN_CENTER centres on the measured width of the
-        // WHOLE string, so handing it a multi-line buffer would centre it as a single long run and
-        // leave every line off-centre. Block is vertically centred on the old single-line position.
-        {
-            int lineH = MENU_ITEM_HEIGHT;
-            int ly = (gTheme->usedHeight >> 1) - ((lines - 1) * lineH) / 2;
-            const char *ls = wrapped;
-            while (ls != NULL) {
-                const char *eol = strchr(ls, '\n');
-                char line[192];
-                int n = eol ? (int)(eol - ls) : (int)strlen(ls);
-                if (n > (int)sizeof(line) - 1)
-                    n = (int)sizeof(line) - 1;
-                memcpy(line, ls, n);
-                line[n] = '\0';
-                fntRenderString(gTheme->fonts[0], screenWidth >> 1, ly, ALIGN_CENTER, 0, 0, line, gTheme->textColor);
-                ly += lineH;
-                ls = eol ? eol + 1 : NULL;
-            }
-        }
+        guiDrawWrappedLines(wrapped, lines);
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
         if (addAccept)
             guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_ACCEPT, gTheme->fonts[0], 70, 417, gTheme->textColor);
@@ -5338,7 +5356,7 @@ void guiRenderTextScreen(const char *message)
     // background); the video-mode, remove-settings and cheat-selection screens went opaque too.
     rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
-    fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, message, gTheme->textColor);
+    guiDrawMsgText(message);
 
     guiDrawOverlays();
 
@@ -5522,7 +5540,7 @@ void guiWarning(const char *text, int count)
     rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
     rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
-    fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, screenWidth, screenHeight, text, gTheme->textColor);
+    guiDrawMsgText(text);
 
     guiEndFrame();
 
@@ -5587,7 +5605,7 @@ int guiConfirmVideoMode(void)
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
-        fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, _l(_STR_CFM_VMODE_CHG), gTheme->textColor);
+        int textBottom = guiDrawMsgText(_l(_STR_CFM_VMODE_CHG));
         // How long until the automatic revert (zackcage6's idea). Hidden during a hold. A hold does NOT
         // pause the deadline -- it only defers the revert check so a started hold can finish; let go
         // early after the deadline and the next pass reverts. Whole seconds rounded up, so it reads
@@ -5596,7 +5614,7 @@ int guiConfirmVideoMode(void)
             int leftMs = OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS - (int)((clock() - timeStart) / (CLOCKS_PER_SEC / 1000));
             char countdown[64];
             snprintf(countdown, sizeof(countdown), _l(_STR_CFM_VMODE_REVERT_IN), leftMs > 0 ? (leftMs + 999) / 1000 : 1);
-            fntRenderString(gTheme->fonts[0], screenWidth >> 1, (gTheme->usedHeight >> 1) + 32, ALIGN_CENTER, 0, 0, countdown, gTheme->textColor);
+            fntRenderString(gTheme->fonts[0], screenWidth >> 1, textBottom + 32, ALIGN_CENTER, 0, 0, countdown, gTheme->textColor);
         }
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_CFM_VMODE_HOLD_KEEP, gTheme->fonts[0], 70, 417, gTheme->textColor);
@@ -5650,7 +5668,7 @@ int guiGameShowRemoveSettings(config_set_t *configSet, config_set_t *configGame)
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
-        fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, _l(_STR_GAME_SETTINGS_PROMPT), gTheme->textColor);
+        guiDrawMsgText(_l(_STR_GAME_SETTINGS_PROMPT));
 
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
         guiDrawIconAndText(SQUARE_ICON, _STR_GLOBAL_SETTINGS, gTheme->fonts[0], 213, 417, gTheme->textColor);

@@ -158,6 +158,9 @@ static void fntRenderString(void *f, int x, int y, int a, int w, int h, const ch
 }
 static void guiDrawIconAndText(int i, int s, void *f, int x, int y, u64 c)
 { (void)i; (void)s; (void)f; (void)x; (void)y; (void)c; }
+/* The prompt text is wrapped by guiDrawMsgText; it returns the y of its last line. */
+static int guiDrawMsgText(const char *s)
+{ (void)s; return 224; }
 
 @CONFIRM@
 
