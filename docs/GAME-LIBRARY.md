@@ -7,7 +7,7 @@ These library features came from [RIPPS2](https://github.com/akilluminati47/RIPP
 
 | Feature | Where | Saved as |
 | --- | --- | --- |
-| All Games list | Settings → Game Sources → **All Games List** | `all_games` (Off) |
+| All Games list | Settings → Interface → **Library: All Games List**, or Settings → Game Sources → **All Games List** | `all_games` (Off) |
 | Show hidden games | Settings → Game Sources → **Show Hidden Games** | `show_hidden` (Off) |
 | Sort order | Settings → Interface → **Sort Games**: Off, A to Z, Last played | `autosort` |
 | Random game | Start menu → **Random Game**, under Launch PS2 Disc | nothing |
@@ -17,6 +17,8 @@ These library features came from [RIPPS2](https://github.com/akilluminati47/RIPP
 
 ## All Games list
 
+Turn it on with **Settings → Interface → Library: All Games List** (right under Theme View, and it works
+with every view) or **Game Sources → All Games List**; both are the same setting.
 With **All Games List** on, the Favourites page becomes **All Games**: one list of the PS2 games,
 PS1 games and apps of every device that is started. Device tabs whose games are on it step aside,
 and so does the Apps tab once the apps are on it. All Games starts the apps itself when

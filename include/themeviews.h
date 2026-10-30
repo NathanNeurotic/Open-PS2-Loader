@@ -53,6 +53,29 @@ void thmViewScan(config_set_t *themeConfig, thm_view_info_t *info);
 // The view to load: the requested one if the theme offers it, else its default.
 int thmViewChoose(const thm_view_info_t *info, int requested);
 
+// Coverflow is one theme view drawn with 3 or 5 covers (coverflow_count=, gCoverflowCount); the Theme View
+// picker and hold-L3 show the two as separate views, Coverflow (3) and Coverflow (5). A "pick" is one of
+// those user-facing views: THM_VIEW_PICK_* below, THM_VIEW_PICK_DEFAULT = the theme's default view.
+enum ThemeViewPick {
+    THM_VIEW_PICK_DEFAULT = 0,
+    THM_VIEW_PICK_LIST,
+    THM_VIEW_PICK_COVERFLOW3,
+    THM_VIEW_PICK_COVERFLOW5,
+    THM_VIEW_PICK_PSBBN,
+    THM_VIEW_PICK_GRID,
+    THM_VIEW_PICK_COUNT
+};
+
+// The pick for a view request (THM_VIEW_*, -1 = default) and a cover count.
+int thmViewPickFor(int request, int coverCount);
+// The view request behind a pick; *coverCount becomes 3 or 5 for a Coverflow pick and is left alone otherwise.
+int thmViewPickRequest(int pick, int *coverCount);
+
+// Hold L3: the next view after (view, *coverCount) among the offered ones, in the order List, Coverflow (3),
+// Coverflow (5), PSBBN Flow, Grid. Updates *coverCount when it lands on a Coverflow pick. Returns the
+// unchanged view when only one pick is offered.
+int thmViewCycleNext(unsigned int mask, int view, int *coverCount);
+
 // The block prefix for a chosen view: the view's name when the theme declares keys for it, else "" (the
 // base), so themes without views pay no extra lookups.
 const char *thmViewPrefix(const thm_view_info_t *info, int view);

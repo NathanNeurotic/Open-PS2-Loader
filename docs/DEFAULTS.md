@@ -10,7 +10,7 @@ another device.
 | Menu aspect ratio | 4:3; Widescreen off | Settings → Interface |
 | Menu video mode | Auto; regional interlaced output | Settings → Interface |
 | Theme | Built-in `<OPL>` | Settings → Interface → Theme |
-| Theme View | Default (List for `<OPL>`); Coverflow, PSBBN Flow and Grid are optional views | Settings → Interface → Theme View, or hold L3 |
+| Theme View | Default (List for `<OPL>`); Coverflow (3), Coverflow (5), PSBBN Flow and Grid are optional views | Settings → Interface → Theme View, or hold L3 |
 | Cover and disc artwork | On | Settings → Interface → Artwork Settings |
 | Notifications | On | Settings → Interface |
 | PS2 logo | On | Settings → Game Launching |
@@ -21,7 +21,7 @@ another device.
 | Confirm button | Circle; configurable | Settings → General & System |
 | Remember last played | Off | Settings → General & System |
 | Automatic VMC creation | Off | Settings → Game Launching |
-| All Games List | Off | Settings → Game Sources |
+| All Games List | Off | Settings → Interface → Library, or Settings → Game Sources |
 | Show Hidden Games | Off | Settings → Game Sources |
 | Sort Games | A to Z (an out-of-range saved value also reads as A to Z) | Settings → Interface |
 | Button Glyphs | Theme (the theme's own glyphs, or its `glyph_set` key) | Settings → Interface |
@@ -32,7 +32,7 @@ USB can still find its own files. This is a boot-path exception to the disabled
 storage defaults, not a different display preset.
 
 To use the previous widescreen/carousel presentation, select **Widescreen: On**
-and **Theme View: Coverflow** under **Settings → Interface** (theme `<OPL>`), apply the changes,
+and **Theme View: Coverflow (3)** or **Coverflow (5)** under **Settings → Interface** (theme `<OPL>`), apply the changes,
 then save. Coverflow works in both 4:3 and 16:9; selecting it does not enable
 widescreen. A theme supplied with a separate package may have a different name.
 

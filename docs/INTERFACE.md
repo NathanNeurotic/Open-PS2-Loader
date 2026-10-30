@@ -24,15 +24,22 @@ for installing translation files and fonts.
 ## Theme selection
 
 **Settings → Interface → Theme** picks the theme: `<OPL>` or a disk theme from `THM/`.
-**Theme View** picks how it draws your games: **List**, **Coverflow** (the centered carousel),
-**PSBBN Flow** (the PSBBN Definitive Project Game Collection look) or **Grid** (rows and columns of
-covers; Up/Down move one row). `<OPL>` offers all four; a disk
-theme offers the views its author declared, and shows its default view for any other pick. **Default**
+**Theme View** picks how it draws your games: **List**, **Coverflow (3)** or **Coverflow (5)** (the
+centered carousel with 3 or 5 covers), **PSBBN Flow** (the PSBBN Definitive Project Game Collection look) or **Grid** (rows and columns of
+covers; Up/Down move one row). `<OPL>` offers all of them; a disk
+theme offers the views its author declared (both Coverflow entries when it has a Coverflow view), and shows its default view for any other pick. **Default**
 uses the theme's own default. Holding **L3** for half a second on the main page switches to the next
-view the theme offers, without opening the settings. Apply and save to retain the choice. Fresh
+view the theme offers, in the order List, Coverflow (3), Coverflow (5), PSBBN Flow, Grid, without
+opening the settings. Apply and save to retain the choice. Fresh
 configurations start with `<OPL>` in the List view, 4:3 and Auto video mode; theme, view and aspect are
 separate settings. A configuration that saved the former `<Coverflow>` or `<PSBBN Flow>` theme loads
-`<OPL>` with that view.
+`<OPL>` with that view. The two Coverflow entries are saved as `theme_view=coverflow` plus
+`coverflow_count=3` or `5`, the keys earlier builds used, so an older configuration keeps its count
+and the Coverflow Settings page no longer has a Cover Count row.
+
+**Library**, right under Theme View, picks **Pages** (every device keeps its own tab) or **All Games
+List** (one page with the games of every started device; see [Game library](GAME-LIBRARY.md#all-games-list)).
+It works with every view and is the same `all_games` setting as **Game Sources → All Games List**.
 
 Both flow views rotate navigation on the main game list: Left/Right browse covers and Up/Down
 change sources. R3 remains Favorite, and info/settings screens keep their normal controls.

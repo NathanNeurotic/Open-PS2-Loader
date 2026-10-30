@@ -8,7 +8,7 @@ Two settings change what you read below, so check them first if the tables do no
   **Cross = confirm, Circle = back** as a reference layout. Fresh RiptOPL settings use
   **Circle to confirm**; saved preferences override that. Swap the two in these tables when
   Circle is selected, including on Settings screens, and follow the on-screen hints.
-* **Coverflow, PSBBN Flow and Grid** (*Settings → Interface → Theme View*, or hold L3) change the navigation on
+* **Coverflow (3), Coverflow (5), PSBBN Flow and Grid** (*Settings → Interface → Theme View*, or hold L3) change the navigation on
   the game list. The layouts are given below.
 
 ---

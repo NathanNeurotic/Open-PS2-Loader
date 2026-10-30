@@ -313,7 +313,8 @@ int thmGetGuiValue(void);
 // Ask for a view (THM_VIEW_*, -1 = the theme's default) and reload the active theme when that changes
 // what is shown. Returns 1 when the theme was reloaded. GUI thread, outside a frame.
 int thmSetView(int view);
-// Switch to the next view the active theme offers (hold L3). Returns 1 when the theme was reloaded.
+// Switch to the next view the active theme offers (hold L3), Coverflow (3) and Coverflow (5) counting as
+// two stops. Returns 1 when the view changed; a step between the two Coverflow stops does not reload.
 int thmCycleView(void);
 // Reload the active theme when the Widescreen setting no longer matches the layout it was built with (only
 // for themes with SD/HD variants). Returns 1 when the theme was reloaded.
