@@ -23,6 +23,7 @@
 #include "include/gui.h"
 #include "include/pad.h"
 #include "include/diaglog.h"
+#include "include/renderman.h"
 #include "include/menuwatch.h"
 
 #define MENUWATCH_POLL_US     (250 * 1000)
@@ -144,7 +145,11 @@ static int writeReport(const char *path, int len)
 
 static void watchThread(void *arg)
 {
-    int lastFrame = guiFrameId, lastStep = watchStep, stalledPolls = 0, stallLimit, len;
+    // Count frames at rmEndFrame, not guiFrameId: dialogs (About, Settings pages, message boxes) run
+    // their own rmStartFrame/rmEndFrame loop and never advance guiFrameId, so a dialog left open
+    // read as a frozen menu.
+    unsigned int lastFrame = rmFramesDrawn;
+    int lastStep = watchStep, stalledPolls = 0, stallLimit, len;
 
     (void)arg;
     for (;;) {
@@ -155,8 +160,8 @@ static void watchThread(void *arg)
                 stalledPolls = 0;
             lastStep = watchStep;
         }
-        if (guiFrameId != lastFrame) {
-            lastFrame = guiFrameId;
+        if (rmFramesDrawn != lastFrame) {
+            lastFrame = rmFramesDrawn;
             stalledPolls = 0;
             continue;
         }

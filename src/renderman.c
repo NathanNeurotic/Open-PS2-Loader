@@ -21,6 +21,7 @@ static int order;
 static short int vmode = -1;
 static u8 hires = 0;
 static u8 guiWakeupCount;
+volatile unsigned int rmFramesDrawn;
 static int vsync_id = -1;
 // The thread gsKit_hires_init_screen raised to priority 2, and the priority it had before (-1: none).
 static int hiresThread = -1;
@@ -160,6 +161,7 @@ void rmEndFrame(void)
     }
 
     gsKit_TexManager_nextFrame(gsGlobal);
+    rmFramesDrawn++;
 }
 
 static int rmOnVSync(int cause)
