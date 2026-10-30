@@ -58,6 +58,7 @@ class PackageTests(unittest.TestCase):
         self.assertIn("RETROACHIEVEMENTS EDITION", label)
         self.assertIn("NOT the standard RiptOPL", label)
         self.assertIn("Neutrino v1.8.0", label)
+        self.assertIn(f"https://github.com/{self.pin['repository']}/releases/tag/{self.pin['tag']}", label)
 
     def test_keeps_riptopl_ilink_drivers_over_orbit_stock(self):
         # #1065: the RA kit must not fall back to the stock i.LINK pair that loses its login (#1018).
