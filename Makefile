@@ -340,6 +340,8 @@ endif
 ifeq ($(IGR_MENU),1)
   EE_CFLAGS += -DIGR_MENU
   EECORE_EXTRA_FLAGS += IGR_MENU=1
+  # the menu's mailbox (the silent pause, the frame held under the panel), packed only with In-Game Menu on
+  IOP_OBJS += igrmbox.o
 endif
 
 ifeq ($(DEBUG),1)
@@ -497,6 +499,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/iopcore/cdvdfsv clean
 	echo " -resetspu"
 	$(MAKE) -C modules/iopcore/resetspu clean
+	echo " -igrmbox"
+	$(MAKE) -C modules/iopcore/igrmbox clean
 	$(MAKE) -C modules/iopcore/freezediag clean
 	echo "  -patches"
 	echo "   -iremsnd"
@@ -771,6 +775,12 @@ modules/iopcore/resetspu/resetspu.irx: modules/iopcore/resetspu
 	$(MAKE) -C $<
 
 $(EE_ASM_DIR)resetspu.c: modules/iopcore/resetspu/resetspu.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+modules/iopcore/igrmbox/igrmbox.irx: modules/iopcore/igrmbox
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)igrmbox.c: modules/iopcore/igrmbox/igrmbox.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 # The build string goes into the freeze report, so a report always names the ELF it came from.

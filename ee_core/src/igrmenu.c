@@ -18,6 +18,13 @@
   not saved; the game's next frames draw over them. Which frame is shown comes from GSM's record of the game's PMODE,
   SMODE2, DISPFB and DISPLAY writes (gsm_engine.S; the passive tracker when GSM itself is off).
 
+  SILENT PAUSE, EXACT FRAME (RIPPS2 build 108, without RIPSHOT's roll): while the menu is open igrmbox.irx holds the
+  SPU2 (master volumes 0, every voice's pitch 0), so the game's sound neither loops nor runs ahead, and goes on where
+  it stopped on RESUME. The pixels the panel covers are read back from the GS first (igrmRead, RIPPS2's rsRead) into
+  an IOP buffer the module lends for the pause, and drawn back before the game runs again, so a still screen comes
+  back exactly. When the IOP has no room for them (up to 315 KB) the game's next frame draws over the panel, as
+  before; without the module (no IOP room at the reset) the menu is as it was, sound and all.
+
   CHEATS: every cheat of the game's file, ON or OFF, changed with the confirm button and applied on RESUME through
   the engine's second code set (cheat_api.c CheatLiveApply). OFF stops a cheat writing; what it wrote stays until the
   game changes it.
@@ -31,6 +38,8 @@
 #include "coreconfig.h"
 #include "padhook.h"
 #include "cheat_api.h"
+#include "igrmbox.h"
+#include "util.h"
 #endif
 #include "../include/igrcheats.h"
 #include "../include/igrmenu.h"
@@ -626,6 +635,112 @@ static int igrmDraw(u32 *pkt)
     return 1;
 }
 
+// w pixels of frame line y from x into buf (64-byte aligned, w * bpp a multiple of 16): a GS local -> host transfer
+// read through the VIF1 FIFO, RIPPS2's rsRead (ripshot.c, written from the GS manual and ps2sdk's ee/debug
+// screenshot.c, AFL). The game is paused with its DMA idle; its GS state is left as found: FINISH is masked in IMR
+// while ours is raised and cleared again unless the game had it set. Returns 0 when the GS did not deliver.
+#define IGRM_GS_CSR    ((vu64 *)0x12001000)
+#define IGRM_GS_BUSDIR ((vu64 *)0x12001040)
+#define VIF_FDR        0x00800000
+#define CSR_FINISH     2
+#define IMR_FINISH     0x200
+
+static int igrmWaitFor(vu32 *reg, u32 bits, u32 want)
+{
+    int i;
+    for (i = 0; i < 10000000; i++)
+        if ((*reg & bits) == want)
+            return 1;
+    return 0;
+}
+
+static int igrmRead(void *buf, u32 x, u32 y, u32 w)
+{
+    u32 pkt[28] __attribute__((aligned(64)));
+    u64 *q = (u64 *)(pkt + 4);
+    u32 finishWas, ok;
+    u64 imr;
+
+    pkt[0] = VIF_NOP;
+    pkt[1] = VIF_NOP;
+    pkt[2] = VIF_FLUSHA;
+    pkt[3] = VIF_DIRECT(6);
+    q[0] = GIFTAG(5, 1, 0, 1);
+    q[1] = GIF_AD;
+    q[2] = (u64)igrmBp | (u64)igrmBw << 16 | (u64)igrmPsm << 24;
+    q[3] = GS_BITBLTBUF; // the source
+    q[4] = (u64)x | (u64)y << 16;
+    q[5] = GS_TRXPOS;
+    q[6] = (u64)w | (u64)1 << 32;
+    q[7] = GS_TRXREG;
+    q[8] = 0;
+    q[9] = 0x61; // FINISH: everything the game drew is in memory before the read
+    q[10] = 1;   // local -> host
+    q[11] = GS_TRXDIR;
+
+    finishWas = *(vu32 *)IGRM_GS_CSR & CSR_FINISH;
+    imr = GsPutIMR(GsGetIMR() | IMR_FINISH);
+    *IGRM_GS_CSR = CSR_FINISH;
+
+    FlushCache(0); // the packet out to memory, and no dirty line of buf left to land on the DMA's data
+    *IGRM_D1_QWC = 7;
+    *IGRM_D1_MADR = (u32)pkt;
+    *IGRM_D1_CHCR = 0x101; // from memory, normal mode, start
+    asm volatile("sync.l");
+    ok = igrmWaitFor(IGRM_D1_CHCR, CHCR_STR, 0) && igrmWaitFor((vu32 *)IGRM_GS_CSR, CSR_FINISH, CSR_FINISH) &&
+         igrmWaitFor(IGRM_VIF1_STAT, VIF_FQC, 0);
+    if (ok) {
+        *IGRM_VIF1_STAT = VIF_FDR; // the FIFO towards the EE
+        *IGRM_GS_BUSDIR = 1;       // and the GS bus towards the host
+        *IGRM_D1_QWC = w * igrmBpp / 16;
+        *IGRM_D1_MADR = (u32)buf;
+        *IGRM_D1_CHCR = 0x100; // to memory, normal mode, start
+        asm volatile("sync.l");
+        ok = igrmWaitFor(IGRM_D1_CHCR, CHCR_STR, 0);
+        if (!ok)
+            *IGRM_D1_CHCR = 0;
+        *IGRM_VIF1_STAT = 0;
+        *IGRM_GS_BUSDIR = 0;
+    } else
+        *IGRM_D1_CHCR = 0;
+
+    if (!finishWas)
+        *IGRM_GS_CSR = CSR_FINISH; // ours: the game's handler must not see it when the pause ends
+    GsPutIMR(imr);
+    asm volatile("sync.l");
+    FlushCache(0); // nothing cached of buf: the caller reads what the DMA wrote
+    return ok;
+}
+
+// The frame's pixels under the panel into an IOP buffer igrmbox.irx lends, a line at a time through pkt, so
+// RESUME can give the frame back as it was. Returns 0 when there is no buffer to spare or the GS failed.
+static int igrmHoldSave(u32 *pkt)
+{
+    u32 lb = PW * igrmSx * igrmBpp, h = PH * igrmSy, buf, y;
+
+    if ((buf = IGR_MboxBegin(lb * h)) == 0)
+        return 0;
+    for (y = 0; y < h; y++) {
+        if (!igrmRead(pkt, igrmX, igrmY + y, PW * igrmSx)) {
+            IGR_MboxEnd();
+            return 0;
+        }
+        CopyToIop(pkt, lb, (void *)(buf + y * lb));
+    }
+    return 1;
+}
+
+// The held pixels back over the panel, then the buffer back to the module
+static void igrmHoldBack(u32 *pkt)
+{
+    u32 lb = PW * igrmSx * igrmBpp, h = PH * igrmSy, y;
+
+    for (y = 0; y < h; y++)
+        if (IGR_MboxSend(y * lb, pkt + 28, lb) != (int)lb || !igrmSendLine(pkt, y))
+            break;
+    IGR_MboxEnd();
+}
+
 // GSM's data breakpoint (the passive tracker, or GSM itself) traps stores to GS registers. While the game is paused
 // nothing of the game's needs it, so it is off from the menu's first step to its last and BPC is put back as it was
 // (RIPPS2 build 108).
@@ -675,7 +790,7 @@ int IGR_MenuRun(u16 (*buttons)(void))
     u32 d1chcr, d1madr, d1qwc, d1tadr, gameDone, t, firstT = 0, bpc;
     u16 held, now, pressed, ok, back;
     int sel = 0, armed = 0, result = IGR_MENU_RESUME, presses = 0, power = 1, powerLatched = 0, i;
-    int page = 0, csel = 0, ctop = 0, full = 0, changed = 0;
+    int page = 0, csel = 0, ctop = 0, full = 0, changed = 0, frameHeld;
     char gameId[CORE_GAME_ID_MAX_LEN + 1];
     igrm_line_t lines[IGRM_LINES];
     igrm_info_t info;
@@ -704,6 +819,10 @@ int IGR_MenuRun(u16 (*buttons)(void))
     for (i = 0; i < CORE_GAME_ID_MAX_LEN && config->GameID[i]; i++)
         gameId[i] = config->GameID[i];
     gameId[i] = '\0';
+
+    // silence first, then the pixels the panel will cover, so RESUME gives back the frame and the sound as they were
+    IGR_MboxHush();
+    frameHeld = igrmHoldSave(pkt);
 
     config->ExitPath[CORE_EXIT_PATH_MAX_LEN - 1] = '\0';
     info.confirmCircle = config->IgrConfirmCircle;
@@ -817,6 +936,9 @@ int IGR_MenuRun(u16 (*buttons)(void))
         t = igrmCount();
         while (buttons() && igrmCount() - t < 3 * IGRM_SECOND)
             ;
+        if (frameHeld) // the frame as it was, then the sound, as the game goes on
+            igrmHoldBack(pkt);
+        IGR_MboxWake();
     }
 
 done:

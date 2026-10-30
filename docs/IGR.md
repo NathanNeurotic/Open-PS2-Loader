@@ -199,8 +199,15 @@ into the picture the game is showing, which it finds through the same GS write b
 * **PCSX2 cannot show it** (it has no data breakpoints), so there the combo leaves the game as before.
 * A game that shows its picture in a way the menu cannot see, or in a format it cannot draw, also
   leaves at once, as before. Nothing is lost compared with the menu off.
-* Game sound keeps playing (looping) while the menu is open, and the panel stays on a still screen
-  until the game draws over it.
+* **The game goes quiet while the menu is open** and its sound goes on where it stopped when you resume:
+  a small IOP module (`igrmbox.irx`) turns the SPU2's volume down and holds every voice. It cannot hold a
+  game that streams PCM straight to the sound cores; that stream keeps running, silently, while you are paused.
+* **Resume gives back the exact picture.** The pixels under the panel are kept in IOP memory while the menu
+  is open and drawn back before the game runs again, so a still screen does not keep the panel. A game
+  that leaves the IOP too little free memory (up to 315 KB for a 640-wide picture) gets the old behaviour:
+  the panel stays until the game draws over it.
+* With *In-Game Menu* off, `igrmbox.irx` is not packed or loaded at all, so a game sees exactly the modules
+  and memory it always did.
 * Not in the **RetroAchievements** builds, nor in the IGS (`EXTRA_FEATURES=1`) and freeze-report
   (`INGAMEDIAG=1`) builds: `ee_core` has no room for both. Those keep the plain combo and have no
   *In-Game Menu* row. `make IGR_MENU=0` leaves it out of a standard build too.
@@ -208,8 +215,9 @@ into the picture the game is showing, which it finds through the same GS write b
   (`mod_storage_location_list`) get the menu without it, and their cheats run as ticked before launch.
 
 The menu is **RIPPS2's** (by **akilluminati47**), itself built on ORBIT's Neutrino in-game menu
-(danielnuld/ps2-launcher, AFL-3.0); RIPPS2's Screenshot and Achievements pages are not ported yet, the
-Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.
+(danielnuld/ps2-launcher, AFL-3.0); the silent pause and the exact picture are RIPPS2's too (build 108,
+here as a module of their own instead of inside CDVDMAN). RIPPS2's Screenshot and Achievements pages are not
+ported yet, the Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.
 
 ---
 
@@ -247,6 +255,7 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 | `ee_core/src/igs_api.c` | Screenshot capture and BMP writing |
 | `ee_core/src/igrmenu.c` | The in-game menu: finding the shown frame, drawing the panel, the pages, the pad loop |
 | `ee_core/include/igrcheats.h` | The cheat list the launcher hands the menu, and how a code set is built from it |
+| `ee_core/src/igrmbox.c`, `modules/iopcore/igrmbox/` | The menu's IOP mailbox: the silent pause and the pixels held under the panel |
 | `ee_core/src/cheat_engine.S`, `cheat_api.c` | The cheat engine; `CheatLiveApply` swaps in the menu's code set |
 | `src/cheatman.c` | `igrCheatsPack` / `set_cheats_list_live`: the launcher's side of live cheats |
 | `ee_core/tests/test_igrmenu.cpp` | Host test: the pages as pictures, and the code set the Cheats page builds |

@@ -775,6 +775,7 @@ int sysLaunchDisc(int (*progress)(void))
 #define CORE_IRX_UDPBD       0x800  // OPL-core UDPBD game: the smap_udpbd monolith
 #define CORE_IRX_UDPFS       0x1000 // OPL-core UDPFS (block) game: udpfs_smap + udpfs_ministack + udpfs_bd
 #define CORE_IRX_UDPFS_FILES 0x2000 // OPL-core UDPFS Files game: udpfs_smap + udpfs_ministack + udpfs_fhi
+#define CORE_IRX_IGRMBOX     0x4000 // the in-game menu's mailbox (IGR_MENU builds, menu on)
 
 // The OPL-core UDPBD / UDPFS modes (UDPFS Files included). Their driver owns the SMAP adapter in game,
 // so nothing else may put a network stack on it: no SMB/RA SMAP + SMSTCPIP pair, no udptty.
@@ -952,6 +953,13 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
     irxptr_tab[modcount++].ptr = (void *)&imgdrv_irx;
     irxptr_tab[modcount].info = size_resetspu_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_RESETSPU);
     irxptr_tab[modcount++].ptr = (void *)&resetspu_irx;
+#ifdef IGR_MENU
+    // The in-game menu's mailbox (silent pause, the exact frame back on RESUME): packed only for a launch with the menu on.
+    if (modules & CORE_IRX_IGRMBOX) {
+        irxptr_tab[modcount].info = size_igrmbox_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_IGRMBOX);
+        irxptr_tab[modcount++].ptr = (void *)&igrmbox_irx;
+    }
+#endif
 #ifdef INGAMEDIAG
     // In-game freeze report writer, loaded by IGR after a freeze (INGAMEDIAG flavour).
     irxptr_tab[modcount].info = size_freezediag_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_FREEZEDIAG);
@@ -2674,6 +2682,11 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // with both VMC slots disabled. Keep the game's stack unless a consumer needs ours.
     if (!discMode && strcmp(mode_str, "BDM_CF_MODE") && size_mcemu_irx > 0)
         modules |= CORE_IRX_VMC;
+
+#ifdef IGR_MENU
+    if (gIgrMenu && !(compatflags & COMPAT_MODE_6))
+        modules |= CORE_IRX_IGRMBOX;
+#endif
 
     LOG("SYSTEM LaunchLoaderElf loading modules\n");
     ModuleStorageSize = (sendIrxKernelRAM(filename, mode_str, modules, ModuleStorage, size_cdvdman_irx, cdvdman_irx, size_mcemu_irx, mcemu_irx) + 0x3F) & ~0x3F;

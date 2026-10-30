@@ -76,7 +76,7 @@ endif
 # The menu costs ~9 KB of ram84, more than this build's stack can give (the 3 KB ASSERT in linkfile), so these builds
 # also drop ee_core's unreferenced code and data (dead util.c helpers and the libgcc they pull in): ~8 KB back.
 ifeq ($(IGR_MENU),1)
-EE_OBJS += igrmenu.o
+EE_OBJS += igrmenu.o igrmbox.o
 EE_CFLAGS += -DIGR_MENU -ffunction-sections -fdata-sections
 endif
 
