@@ -135,6 +135,8 @@ static int bdmEffectiveStartMode(void) { return START_MODE_AUTO; }
 static void bdmReportUnsupportedDrives(void) {}
 static int bdmTransportEnabled(int type) { (void)type; return 1; }
 static void moduleUpdateMenu(int mode, int a, int b) { (void)mode; (void)a; (void)b; }
+static int gAllGames;
+static void loadFavourites(void) {}
 static int libViewConsumeDirty(int mode) { (void)mode; int d = dirty; dirty = 0; return d; }
 static int folderConsumeDirty(int mode) { (void)mode; int d = folderDirty; folderDirty = 0; return d; }
 static int bdmShouldQueueModuleLoad(void) { return 0; }
