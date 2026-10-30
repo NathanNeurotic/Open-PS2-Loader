@@ -3373,8 +3373,9 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             moduleUpdateMenu(itemList->mode, 0, 0);
         }
         // All Games dropped this slot's rows when its page hid, and this pass rebuilds nothing, so
-        // ask for the one list again (one FAV rebuild, from the rows this slot already holds).
-        if (gAllGames)
+        // ask for the one list again (one FAV rebuild, from the rows this slot already holds). Not for a
+        // transport switched Off: the next poll hides this page again, and its rows must not rejoin.
+        if (gAllGames && bdmTransportEnabled(pDeviceData->bdmDeviceType) != 0)
             loadFavourites();
         pDeviceData->bdmMissCount = 0;
         // The one thing re-read: another server may now answer in this network slot, so its

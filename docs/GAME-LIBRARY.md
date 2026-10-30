@@ -26,7 +26,8 @@ started. A device that is pulled out, or whose start mode is switched Off, leave
 tab. When the same title is on two devices, each row shows its device's name. The page draws no
 page icon, since it is not any one device. The menu opens on this page when the setting is on.
 
-Turning the setting off brings every tab back. If Favourites Page Start Mode is Off, the Favourites
+Turning the setting off brings back every tab that is otherwise shown. A device that is pulled out,
+or whose start mode is Off, keeps its tab hidden until it comes back or is switched on. If Favourites Page Start Mode is Off, the Favourites
 page goes away with it and the menu moves to the startup page (Settings → Game Sources → Default
 Menu), or to the first tab when that page is not available.
 
