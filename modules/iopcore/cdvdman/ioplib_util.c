@@ -329,11 +329,35 @@ void hookMODLOAD(void)
 
 //--------------------------------------------------------------
 /* Per-game fix (IOPCORE_COMPAT_IOP_PAD, set by sbPrepare from a title list): some games write past the
-   end of the IOP buffers they allocate. .hack//Infection overruns three of them by up to 1792 bytes and
-   hangs loading into "The World" on USB, HDD and UDPBD alike (neutrino #92). As neutrino's p-membo2k
-   does, every allocation gets 2 KB more, so the overrun lands in memory nobody else owns. If the larger
-   block does not fit, the size asked for is used: the pad never makes an allocation fail. */
-#define IOP_PAD_SIZE 2048
+   end of the IOP buffers they allocate. .hack//Infection overruns three of them, 25344, 3328 and 2304
+   bytes long, by 1280, 768 and 1792 bytes and hangs loading into "The World" on USB, HDD and UDPBD alike
+   (neutrino #92). Those three get the overrun plus 256 bytes more, so it lands in memory nobody else
+   owns. Every other allocation gets 256 bytes, like neutrino's Mode 7: a flat 2 KB on every block
+   (neutrino p-membo2k) runs the IOP out of RAM on some setups and black-screens the game (neutrino #148).
+   If the larger block does not fit, the size asked for is used: the pad never makes an allocation fail. */
+#define IOP_PAD_SIZE 256
+
+static const struct
+{
+    int size; // the overrun block, rounded up to SYSMEM's 256-byte units
+    int pad;
+} iop_pad_blocks[] = {
+    {25344, 1280 + IOP_PAD_SIZE},
+    {3328, 768 + IOP_PAD_SIZE},
+    {2304, 1792 + IOP_PAD_SIZE},
+};
+
+static int iopPadFor(int size)
+{
+    int rounded = (size + 255) & ~255;
+    unsigned int i;
+
+    for (i = 0; i < sizeof(iop_pad_blocks) / sizeof(iop_pad_blocks[0]); i++) {
+        if (rounded == iop_pad_blocks[i].size)
+            return iop_pad_blocks[i].pad;
+    }
+    return IOP_PAD_SIZE;
+}
 
 static void *(*AllocSysMemory_org)(int mode, int size, void *ptr);
 
@@ -342,7 +366,7 @@ static void *Hook_AllocSysMemory(int mode, int size, void *ptr)
     void *result = NULL;
 
     if (size > 0)
-        result = AllocSysMemory_org(mode, size + IOP_PAD_SIZE, ptr);
+        result = AllocSysMemory_org(mode, size + iopPadFor(size), ptr);
     if (result == NULL)
         result = AllocSysMemory_org(mode, size, ptr);
 

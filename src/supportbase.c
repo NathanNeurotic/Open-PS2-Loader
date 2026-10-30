@@ -853,7 +853,7 @@ int sbGetCompatModes(config_set_t *configSet, int neutrino)
 }
 
 // Titles that write past the end of the IOP buffers they allocate. The OPL core's CDVDMAN gives each of
-// their IOP allocations 2 KB more (IOPCORE_COMPAT_IOP_PAD); Neutrino applies its own p-membo2k to the
+// their IOP allocations a pad sized to the overrun (IOPCORE_COMPAT_IOP_PAD); Neutrino applies its own p-membo2k to the
 // same games from its compat.toml.
 static const char *const sbIopPadTitles[] = {
     "SLUS_202.67", // .hack//Infection (USA): hangs loading into "The World" (neutrino #92; upstream OPL #106, #752, #1256)

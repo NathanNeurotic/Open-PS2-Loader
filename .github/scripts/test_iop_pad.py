@@ -1,9 +1,10 @@
-"""The IOP pad gamefix: .hack//Infection gets 2 KB more for every IOP allocation (neutrino #92).
+"""The IOP pad gamefix: .hack//Infection's IOP allocations get room past its known overruns (neutrino #92).
 
 The game writes past the end of IOP buffers it allocates and hangs loading into "The World" on USB,
 HDD and UDPBD. Compiles the real Hook_AllocSysMemory() from modules/iopcore/cdvdman/ioplib_util.c
-against a fake SYSMEM and checks it asks for 2 KB more, falls back to the size asked for when the larger
-block does not fit, and never pads a zero or negative size. Then checks the flag has a bit of its own,
+against a fake SYSMEM and checks the three overrun blocks get the overrun plus 256 bytes, every other
+block 256 bytes (a flat 2 KB runs the IOP out of RAM, neutrino #148), it falls back to the size asked
+for when the larger block does not fit, and never pads a zero or negative size. Then checks the flag has a bit of its own,
 CDVDMAN installs the hook only when the flag is set, and sbPrepare sets it for the listed titles only.
 """
 from pathlib import Path
@@ -33,6 +34,10 @@ cdvdman = read('modules/iopcore/cdvdman/cdvdman.c')
 support = read('src/supportbase.c')
 
 hook = function(util, r'^static void \*Hook_AllocSysMemory\(int mode, int size, void \*ptr\)\s*\{', 'ioplib_util.c')
+blocks_at = util.find('static const struct\n{\n    int size;')
+if blocks_at < 0:
+    sys.exit('ioplib_util.c: iop_pad_blocks not found')
+pad_for = util[blocks_at:util.index('static void *(*AllocSysMemory_org)', blocks_at)]
 pad = re.search(r'#define IOP_PAD_SIZE\s+(\d+)', util)
 if pad is None:
     sys.exit('ioplib_util.c: IOP_PAD_SIZE not defined')
@@ -52,6 +57,7 @@ static void *fake_alloc(int mode, int size, void *ptr)
     return size <= limit ? heap : NULL;
 }
 static void *(*AllocSysMemory_org)(int mode, int size, void *ptr) = fake_alloc;
+%(pad_for)s
 %(hook)s
 static void run(int lim, int size)
 {
@@ -64,10 +70,15 @@ static void run(int lim, int size)
 }
 int main(void)
 {
-    run(1 << 20, 25344); /* room: one call, padded */
+    run(1 << 20, 25344); /* overrun block: one call, overrun + 256 */
     run(25344, 25344);   /* only the size asked for fits: padded, then the size asked for */
     run(100, 25344);     /* nothing fits: both tried, NULL as SYSMEM would */
     run(1 << 20, 0);     /* nothing to pad */
+    run(1 << 20, 25200); /* rounds up to the 25344 block */
+    run(1 << 20, 3328);  /* overrun block */
+    run(1 << 20, 2304);  /* overrun block */
+    run(1 << 20, 4096);  /* any other block: 256 */
+    run(1 << 20, 25345); /* rounds past the 25344 block: 256 */
     return 0;
 }
 '''
@@ -75,19 +86,24 @@ int main(void)
 with tempfile.TemporaryDirectory() as tmp:
     src = Path(tmp) / 'pad.c'
     exe = Path(tmp) / 'pad'
-    src.write_text(HARNESS % {'pad': pad.group(1), 'hook': hook}, encoding='utf-8')
+    src.write_text(HARNESS % {'pad': pad.group(1), 'pad_for': pad_for, 'hook': hook}, encoding='utf-8')
     subprocess.run(['cc', '-std=gnu99', '-Wall', '-Werror', '-o', str(exe), str(src)], check=True)
     out = subprocess.run([str(exe)], check=True, capture_output=True, text=True).stdout.split('\n')
 
 p = int(pad.group(1))
 expected = [
-    '1 1 %d -1' % (25344 + p),
-    '1 2 %d 25344' % (25344 + p),
-    '0 2 %d 25344' % (25344 + p),
+    '1 1 %d -1' % (25344 + 1280 + p),
+    '1 2 %d 25344' % (25344 + 1280 + p),
+    '0 2 %d 25344' % (25344 + 1280 + p),
     '1 1 0 -1',
+    '1 1 %d -1' % (25200 + 1280 + p),
+    '1 1 %d -1' % (3328 + 768 + p),
+    '1 1 %d -1' % (2304 + 1792 + p),
+    '1 1 %d -1' % (4096 + p),
+    '1 1 %d -1' % (25345 + p),
 ]
-if p != 2048:
-    failures.append('ioplib_util.c: IOP_PAD_SIZE is %d, not the 2048 neutrino p-membo2k uses' % p)
+if p != 256:
+    failures.append('ioplib_util.c: IOP_PAD_SIZE is %d, not the 256 of neutrino Mode 7' % p)
 for i, want in enumerate(expected):
     if out[i] != want:
         failures.append('Hook_AllocSysMemory case %d: got "%s", want "%s"' % (i, out[i], want))
