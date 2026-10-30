@@ -72,6 +72,8 @@ theme_t *gTheme;
 // default when the theme does not offer it.
 int gThemeViewRequest = -1;
 
+static unsigned int thmLoadCount; // theme_t::artGeneration of the last load
+
 // Parse-time only: the "<view>" block prefix of the view thmLoad is building, "" for the base blocks.
 static const char *thmParseViewPrefix = "";
 static int thmParseViewInherit = 1; // 0 for a <view>.inherit=0 view: no fallback to the base blocks
@@ -1039,6 +1041,14 @@ static int isHiddenArtworkCache(const image_cache_t *cache)
            (!gEnableLogoArt && strcmp(cache->suffix, "LGO") == 0);
 }
 
+// The row's art pairs, ready for the theme on screen. The rows outlive a theme load: a view switch (Settings or
+// hold-L3) reloads the theme without rebuilding them, and Grid has more caches than List, so indexing a row's
+// pairs by the new theme's cache ids wrote past them (#211, a crash a few view switches later).
+static int thmItemArtPairsReady(struct submenu_item *item)
+{
+    return cacheRowPairsReady(&item->cache_id, &item->cache_uid, &item->cache_count, &item->cache_gen, gTheme->gameCacheCount, gTheme->artGeneration);
+}
+
 static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, struct submenu_item *item, int isPriority)
 {
     // Folder browsing: a folder row has no cover art (and no startup key). Never route it through the
@@ -1047,13 +1057,13 @@ static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, str
     if (item == NULL || item->isFolder)
         return NULL;
 
-    if (cache == NULL || cache->userId < 0 || item->cache_id == NULL || item->cache_uid == NULL)
+    if (cache == NULL || cache->userId < 0)
         return NULL;
 
     if (isHiddenArtworkCache(cache))
         return NULL;
 
-    if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount)
+    if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount || !thmItemArtPairsReady(item))
         return NULL;
 
     if (gEnableArt) {
@@ -1117,13 +1127,13 @@ static GSTEXTURE *getGameImageCached(image_cache_t *cache, struct submenu_item *
     if (item == NULL || item->isFolder || !gEnableArt)
         return NULL;
 
-    if (cache == NULL || cache->userId < 0 || item->cache_id == NULL || item->cache_uid == NULL)
+    if (cache == NULL || cache->userId < 0)
         return NULL;
 
     if (isHiddenArtworkCache(cache))
         return NULL;
 
-    if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount)
+    if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount || !thmItemArtPairsReady(item))
         return NULL;
 
     return cacheLookupTexture(cache, &item->cache_id[cache->userId], &item->cache_uid[cache->userId]);
@@ -1291,7 +1301,7 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
                             // request for that short window. A loaded cover, disabled art, or a confirmed
                             // absent cover (-2, or -3 for a PS1 row with neither art) releases the gate immediately.
                             if (gEnableArt && coverTexture == NULL && cfImg->cache->userId >= 0 &&
-                                cfImg->cache->userId < gTheme->gameCacheCount && item->item.cache_id != NULL &&
+                                cfImg->cache->userId < item->item.cache_count && item->item.cache_id != NULL &&
                                 item->item.cache_id[cfImg->cache->userId] >= -1)
                                 coverflowCoverSettled = 0;
                         }
@@ -4809,6 +4819,7 @@ static int thmLoad(const char *themePath)
     newT->favsAppsInfoElems.last = NULL;
     newT->parsingFavKindFamily = 0;
     newT->gameCacheCount = 0;
+    newT->artGeneration = ++thmLoadCount;
     newT->itemsList = NULL;
     newT->gamesItemsList = NULL;
     newT->appsItemsList = NULL;

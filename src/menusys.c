@@ -1193,6 +1193,8 @@ void submenuRebuildCache(submenu_list_t *submenu)
         free(submenu->item.cache_uid);
         submenu->item.cache_id = newId;
         submenu->item.cache_uid = newUid;
+        submenu->item.cache_count = newId != NULL ? count : 0;
+        submenu->item.cache_gen = newId != NULL ? gTheme->artGeneration : 0;
         submenu = submenu->next;
     }
 }
@@ -1250,6 +1252,8 @@ static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int tex
     it->item.id = id;
     it->item.cache_id = NULL;
     it->item.cache_uid = NULL;
+    it->item.cache_count = 0;
+    it->item.cache_gen = 0;
     it->item.favourited = 0;
     it->item.isFolder = 0;
     it->item.lastPlayed = 0;
