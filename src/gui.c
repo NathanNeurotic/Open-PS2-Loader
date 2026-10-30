@@ -855,6 +855,12 @@ static void guiRefreshCfgTitles(void);
 // their own view, the Favourites tab changes name and rows, and with it on the user lands there.
 static void guiApplyAllGamesChange(void)
 {
+    // All Games lives on the Favourites page, so start, show or hide that page for the new setting.
+    // The Game Sources apply did this already through applyConfig(..., 0); the Interface (Library)
+    // apply runs applyConfig(..., 1), which skips every device, so without this All Games had no page
+    // to open when Favourites was Off, and turning it off left a started Favourites page on screen.
+    initSupport(favGetObject(0), FAV_MODE, 0);
+
     opl_io_module_t *fav = oplGetModule(FAV_MODE);
 
     if (fav != NULL && fav->support != NULL) {
