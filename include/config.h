@@ -220,6 +220,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_COVERFLOW_SCALE      "coverflow_scale"
 #define CONFIG_OPL_COVERFLOW_ANIM       "coverflow_anim"
 #define CONFIG_OPL_COVERFLOW_DIM        "coverflow_dim"
+#define CONFIG_OPL_GRID_LAYOUT          "grid_layout"
 
 // RetroAchievements keys. Placed AFTER the block above, not inside it: an #ifdef in the middle
 // of a run of #defines splits clang-format's alignment group and reflows every line above it.

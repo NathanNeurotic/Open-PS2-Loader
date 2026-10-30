@@ -156,6 +156,7 @@ void menuRenderAchievements(void);
 void menuHandleInputAchievements(void);
 #endif
 void menuHandleInputMain();
+int menuGridSidebarFocused(void); // the Grid's device sidebar has the pad (themes.c draws it open)
 void menuHandleInputMenu();
 void menuHandleInputInfo();
 void menuHandleInputGameMenu();
