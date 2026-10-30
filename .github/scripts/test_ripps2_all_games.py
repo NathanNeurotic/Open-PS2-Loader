@@ -6,7 +6,9 @@
 3. Stars: a row is starred when favourites.bin holds it (BDM slots lenient, apps by title).
 4. R3 on an All Games row adds or removes the favourite and flips the star only when saved.
 5. L3 ring: All -> PS2 -> PS1 -> APP -> Favourites -> Recent; device pages read both lists.
-6. Tabs: a started device steps aside, a Manual one and a share picker stay.
+6. Tabs: a started device or Apps page steps aside, a Manual one and a share picker stay.
+7. Turning All Games off: a Favourites page left hidden sends the user to the startup page; a
+   device tab that hides for a poll keeps the user (#806).
 """
 from pathlib import Path
 import re
@@ -210,15 +212,20 @@ static char gPCShareName[32];
 ''' + function(menusys, 'int menuItemShown(const menu_item_t *item)') + r'''
 int main(void)
 {
-    item_list_t usb = {BDM_MODE + 2, 1}, hdd = {HDD_MODE, 1}, eth = {ETH_MODE, 1}, apps = {APP_MODE, 1}, fav = {FAV_MODE, 1}, manual = {MMCE_MODE, 0};
-    menu_item_t tUsb = {1, &usb}, tHdd = {1, &hdd}, tEth = {1, &eth}, tApps = {1, &apps}, tFav = {1, &fav}, tManual = {1, &manual}, gone = {0, &fav};
-    assert(menuItemShown(&tUsb) && menuItemShown(&tHdd) && !menuItemShown(&gone) && !menuItemShown(NULL));
+    item_list_t usb = {BDM_MODE + 2, 1}, hdd = {HDD_MODE, 1}, eth = {ETH_MODE, 1}, apps = {APP_MODE, 1}, fav = {FAV_MODE, 1}, manual = {MMCE_MODE, 0},
+                manualApps = {APP_MODE, 0};
+    menu_item_t tUsb = {1, &usb}, tHdd = {1, &hdd}, tEth = {1, &eth}, tApps = {1, &apps}, tFav = {1, &fav}, tManual = {1, &manual}, gone = {0, &fav},
+                tManualApps = {1, &manualApps};
+    assert(menuItemShown(&tUsb) && menuItemShown(&tHdd) && menuItemShown(&tApps) && !menuItemShown(&gone) && !menuItemShown(NULL));
     gAllGames = 1;
     assert(!menuItemShown(&tUsb) && !menuItemShown(&tHdd));       /* started devices step aside */
-    assert(menuItemShown(&tApps) && menuItemShown(&tFav) && menuItemShown(&tManual));
+    assert(!menuItemShown(&tApps));                                /* started apps are on the list too */
+    assert(menuItemShown(&tFav) && menuItemShown(&tManual) && menuItemShown(&tManualApps));
     assert(menuItemShown(&tEth));                                  /* share picker stays */
     gPCShareName[0] = 'g';
     assert(!menuItemShown(&tEth) && !menuItemShown(&gone));
+    gAllGames = 0;                                                 /* switched off: every tab is back */
+    assert(menuItemShown(&tUsb) && menuItemShown(&tHdd) && menuItemShown(&tApps) && menuItemShown(&tEth));
     return 0;
 }
 '''
@@ -232,7 +239,73 @@ with tempfile.TemporaryDirectory(prefix='ripps2-allgames-') as temp:
                         '-fsanitize=address,undefined', str(src), '-o', str(exe)], check=True)
         subprocess.run([str(exe)], check=True)
 print('ok   All Games gathers every started source, tags duplicates, stars favourites, R3 toggles')
-print('ok   started device tabs step aside; Manual devices, share pickers, Apps and the page stay')
+print('ok   started device and Apps tabs step aside; Manual ones, share pickers and the page stay')
+
+assert ('if (selected_item != NULL && !menuItemShown(selected_item->item) && (gAllGames || menuIsFavPage(selected_item)))\n'
+        '        refreshMenuPosition();') in menusys, 'the main page must leave a hidden All Games/Favourites page'
+rehome = r"""
+#include <assert.h>
+#include <stddef.h>
+enum { BDM_MODE = 0, BDM_MODE7 = 7, ETH_MODE, HDD_MODE, APP_MODE, MMCE_MODE, FAV_MODE, UDPFS_MODE, HTTP_MODE };
+#define BDM_MODE_LAST BDM_MODE7
+typedef struct { int mode, enabled; } item_list_t;
+typedef struct menu_item { int visible; void *userdata; } menu_item_t;
+typedef struct menu_list { menu_item_t *item; struct menu_list *next, *prev; } menu_list_t;
+static int gAllGames, gDefaultDevice = HDD_MODE;
+static char gPCShareName[32];
+static menu_list_t *menu, *selected_item;
+""" + function(menusys, 'int menuItemShown(const menu_item_t *item)') + \
+    function(menusys, 'static int menuIsFavPage(const menu_list_t *page)') + \
+    function(menusys, 'static void refreshMenuPosition(void)') + r"""
+static void frame(void) /* menuHandleInputMain's guard */
+{
+    if (selected_item != NULL && !menuItemShown(selected_item->item) && (gAllGames || menuIsFavPage(selected_item)))
+        refreshMenuPosition();
+}
+int main(void)
+{
+    item_list_t usb = {BDM_MODE, 1}, hdd = {HDD_MODE, 1}, apps = {APP_MODE, 1}, fav = {FAV_MODE, 1};
+    menu_item_t tUsb = {1, &usb}, tHdd = {1, &hdd}, tApps = {1, &apps}, tFav = {1, &fav};
+    menu_list_t pUsb = {&tUsb, NULL, NULL}, pHdd = {&tHdd, NULL, NULL}, pApps = {&tApps, NULL, NULL}, pFav = {&tFav, NULL, NULL};
+    pUsb.next = &pHdd; pHdd.prev = &pUsb; pHdd.next = &pApps; pApps.prev = &pHdd; pApps.next = &pFav; pFav.prev = &pApps;
+    menu = &pUsb;
+
+    gAllGames = 1;                    /* on: a device page steps aside, the user lands on All Games */
+    selected_item = &pHdd;
+    frame();
+    assert(selected_item == &pFav);
+
+    gAllGames = 0;                    /* off with Favourites Page Start Mode Off: the page hides */
+    tFav.visible = 0;
+    frame();
+    assert(selected_item == &pHdd);   /* the startup page, every tab shown again */
+    assert(menuItemShown(&tUsb) && menuItemShown(&tApps));
+
+    selected_item = &pFav;            /* no startup page: the first visible one */
+    gDefaultDevice = MMCE_MODE;
+    frame();
+    assert(selected_item == &pUsb);
+
+    tFav.visible = 1;                 /* off with Favourites on: the user stays where they are */
+    selected_item = &pFav;
+    frame();
+    assert(selected_item == &pFav);
+
+    selected_item = &pUsb;            /* a USB page hiding for a poll keeps the user on it (#806) */
+    tUsb.visible = 0;
+    frame();
+    assert(selected_item == &pUsb);
+    return 0;
+}
+"""
+with tempfile.TemporaryDirectory(prefix='ripps2-allgames-off-') as temp:
+    src = Path(temp) / 'rehome.c'
+    src.write_text(rehome)
+    exe = Path(temp) / 'rehome.exe'
+    subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', '-Wno-unused-parameter',
+                    '-fsanitize=address,undefined', str(src), '-o', str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
+print('ok   All Games off: a hidden Favourites page goes to the startup page, a polling device page stays')
 
 libview = (root / 'src/libview.c').read_text()
 ring = libview[libview.index('if (mode == FAV_MODE && gAllGames) {'):]

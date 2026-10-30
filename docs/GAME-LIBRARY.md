@@ -18,10 +18,14 @@ These library features came from [RIPPS2](https://github.com/akilluminati47/RIPP
 ## All Games list
 
 With **All Games List** on, the Favourites page becomes **All Games**: one list of the PS2 games,
-PS1 games and apps of every device that is started. Device tabs whose games are on it step aside.
-Tabs for devices set to Manual, and the network share picker, stay so those can still be started.
-When the same title is on two devices, each row shows its device's name. The menu opens on this
-page when the setting is on.
+PS1 games and apps of every device that is started. Device tabs whose games are on it step aside,
+and so does the Apps tab once the apps are on it. Tabs for devices or Apps set to Manual, and the
+network share picker, stay so those can still be started. When the same title is on two devices,
+each row shows its device's name. The menu opens on this page when the setting is on.
+
+Turning the setting off brings every tab back. If Favourites Page Start Mode is Off, the Favourites
+page goes away with it and the menu moves to the startup page (Settings → Game Sources → Default
+Menu), or to the first tab when that page is not available.
 
 L3 on All Games cycles **All**, **PS2**, **PS1**, **Apps**, **Favourites** and **Recent**. R3 stars
 or unstars a row in place, and starred rows draw the favourite star. If the star cannot be saved,
