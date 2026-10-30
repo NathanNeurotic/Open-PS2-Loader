@@ -829,12 +829,15 @@ main2:
 <p>The built-in configuration adds device text, hints, a loading icon and an info-page layout.
 See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/misc/theme_psbbn_flow.cfg"><code>misc/theme_psbbn_flow.cfg</code></a> for the full example.</p>
 <h2 id="grid">The Grid element</h2>
-<p>Use <code>type=Grid</code> for the page's covers in rows and columns, the selected cover framed in the selected-text colour
-and the others dimmed. Left/Right step one cover; Up/Down step one row and keep the column (a short last row takes its last
-cover). Up on the top row and Down on the bottom row switch to the previous or next device page, as Up/Down do in Coverflow.
-The selected row stays in the middle of the grid where the list allows, and the grid never scrolls past its last row. A
-position counter (<code>12/40</code>) sits under the grid's lower right corner. Idea: KrahJohlito (multi-view themes).
-Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1097">#1097</a>; NOT TESTED on hardware.</p>
+<p>Use <code>type=Grid</code> for the page's covers in rows and columns. The selected cover is drawn 12% larger and last,
+over its neighbours, inside a soft glow and a 2-pixel frame in the selected-text colour; the others are a step darker.
+Left/Right step one cover; Up/Down step one row and keep the column (a short last row takes its last cover). Up on the top
+row and Down on the bottom row switch to the previous or next device page, as Up/Down do in Coverflow. L1/R1 turn a whole
+page, the cursor keeping its place on it, and wrap at either end as they do in the list. The grid shows whole pages: the
+page holding the selection stays still while the cursor moves on it, and a short last page keeps its covers in their cells
+from the top. A position counter (<code>12/40</code>) sits under the grid's lower right corner. Idea: KrahJohlito
+(multi-view themes); the page, selection and glow follow RIPPS2's grid (akilluminati47).
+Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1097">#1097</a>; NOT TESTED on hardware. Pages, selection and the 4 × 2 built-in layout: NOT TESTED on hardware.</p>
 <table><thead><tr><th>Property</th><th>Grid behaviour</th></tr></thead><tbody>
 <tr><td><code>x</code>, <code>y</code></td><td>Centre of the whole grid; default is the screen centre.</td></tr>
 <tr><td><code>width</code>, <code>height</code></td><td>One cover; default 80 × 112. In widescreen the cover and the column pitch narrow with the aspect correction.</td></tr>
@@ -843,7 +846,13 @@ Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1097">#
 <tr><td><code>pattern</code>, <code>default</code>, <code>count</code></td><td>Native artwork suffix (default <code>COV</code>), missing-art asset and cache capacity, as for <code>Coverflow</code>.</td></tr>
 <tr><td><code>overlay</code>, <code>overlay2</code>, overlay corners</td><td>Native frame layers, scaled with each cover. Author corners against the element's <code>width</code> / <code>height</code>.</td></tr>
 <tr><td><code>font</code></td><td>Font for the position counter.</td></tr>
+<tr><td><code>&lt;block&gt;_counter</code></td><td><code>0</code> hides the position counter; default <code>1</code>. From the first <code>Grid</code> block.</td></tr>
+<tr><td><code>&lt;block&gt;_title</code></td><td><code>1</code> draws the selected title on its own line under the grid, centred and kept clear of the counter; default <code>0</code>. From the first <code>Grid</code> block.</td></tr>
+<tr><td><code>&lt;block&gt;_title_y</code>, <code>&lt;block&gt;_title_font</code></td><td>That line's centre (default: just under the grid) and font slot (default <code>0</code>).</td></tr>
 </tbody></table>
+<p>For a 16:9 picture, give the grid its own shape with the SD/HD keys (<code>_sd</code> / <code>_hd</code>): a cover
+draws at three quarters of its width there, so more columns fit, e.g. <code>columns_hd=6</code>. The built-in Grid view shows
+4 × 2 covers of 107 × 150, and 6 × 2 on 16:9.</p>
 <p>Keep a one-row <code>ItemsList</code> in the same family for the selected title. Left/Right step covers and Up/Down step rows
 on the pages whose family has a <code>Grid</code> element (a family without one, such as <code>appsMain</code> falling back to
 <code>main</code>, uses the family it falls back to); other pages keep their own navigation.</p>
