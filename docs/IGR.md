@@ -170,6 +170,7 @@ Start + Select** no longer leaves the game at once: it **pauses** the game under
 |---|---|
 | **Resume** | Back to the game, exactly where it stopped. Start or the back button also resume. |
 | **Cheats** | Only when the game was started with cheats on. Every cheat of the game's `.cht` file, **ON** or **OFF**; the confirm button switches one, the back button returns. Changes apply when you resume. |
+| **Achievements** | RetroAchievements builds only. How many of the game's achievements you have unlocked and how many are left. The confirm button opens **Left To Hunt**: the locked ones one at a time, with points and how to earn each; Up and Down page through them. |
 | **Exit Game** | What the combo always did: leave for the **IGR Path** (or the PS2 browser). Press confirm twice. |
 | **Power Off** | Turns the console off. Press confirm twice. |
 
@@ -191,6 +192,17 @@ you play, without a restart. Things to know:
   is being applied, ticked or not. Check the master code for your version of the game.
 * *Not applied yet* means the engine was in the middle of applying codes when you paused; resume and
   open the menu again.
+
+**Achievements, Left To Hunt.** RetroAchievements builds, *xeRAbora* mode. The menu cannot ask the PC while
+the game is paused, so it shows the list as the loader last saw it: open the game's achievements in the
+loader (*View achievements* in the game's menu) and the set it reads from the xeRAbora PC is also saved as
+`RA/<game ID>.ach` beside the game's watch list. The next launch of that game takes it into the menu.
+
+* Open the page again after a session to bring the list up to date. Unlocks earned since are not in it.
+* No list yet: the page says *No list for this game* and how to get one. Caduceus mode, HDLoader (APA)
+  games and PS1 games have no image the page can read, so they have no list either.
+* Up to 8 KB of descriptions travel with the game (several hundred achievements); a set bigger than that
+  shows the counts without *Left To Hunt*. Titles and descriptions are shown in capitals, wrapped to the panel.
 
 **Where it works.** Games on the **OPL core** only (USB, MX4SIO, iLink, exFAT and APA HDD, SMB, MMCE,
 UDPBD/UDPFS). Neutrino has no IGR at all, and PS1 games use POPStarter's or Ember's own. The menu draws
@@ -222,8 +234,8 @@ into the picture the game is showing, which it finds through the same GS write b
 
 The menu is **RIPPS2's** (by **akilluminati47**), itself built on ORBIT's Neutrino in-game menu
 (danielnuld/ps2-launcher, AFL-3.0); the silent pause and the exact picture are RIPPS2's too (build 108,
-here as a module of their own instead of inside CDVDMAN). RIPPS2's Screenshot and Achievements pages are not
-ported yet, the Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.
+here as a module of their own instead of inside CDVDMAN), and so is Achievements with Left To Hunt (build 94).
+RIPPS2's Screenshot page is not ported yet; the Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.
 
 ---
 

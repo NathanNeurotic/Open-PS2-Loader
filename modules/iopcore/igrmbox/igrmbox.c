@@ -124,6 +124,7 @@ static s32 mbDo(const igrmbox_req_t *r)
             return 0;
         case IGRMBOX_OP_WAKE:
             mbWake();
+            mbFree(); // the menu is gone: a buffer whose BEGIN ee_core gave up waiting on goes back too
             return 0;
     }
     return -1;

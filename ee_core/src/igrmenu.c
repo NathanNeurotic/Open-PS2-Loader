@@ -29,6 +29,11 @@
   the engine's second code set (cheat_api.c CheatLiveApply). OFF stops a cheat writing; what it wrote stays until the
   game changes it.
 
+  ACHIEVEMENTS (RIPPS2 build 94), RetroAchievements editions only: how many of the game's achievements are unlocked
+  and how many are left, as RA/<startup>.ach had them at launch (the loader saves it when the game's Achievements
+  page reads its set from the xeRAbora PC). The confirm button opens LEFT TO HUNT: one locked achievement at a time,
+  its title, its points and how to earn it, in lines the launcher wrapped (src/rahunt.c).
+
   IGR_MENU_HOST_TEST builds only the renderer, for tests/ (a picture of the panel on the PC).
 */
 
@@ -48,22 +53,25 @@
 #endif
 
 // ---- the panel, in its own units (one font pixel at scale 1): 160 x 126, or 320 x 252 at scale 2
-#define PW             160
-#define PH             126
-#define ROW_TITLE      4
-#define ROW_SEP1       14
-#define ROW_ITEM0      18
-#define ITEM_STEP      10
-#define ROW_SEP2       69
-#define ROW_INFO0      73
-#define INFO_STEP      10
-#define ROW_HINT       115
-#define IGRM_ITEMS_MAX 4 // RESUME, CHEATS, EXIT GAME, POWER OFF
-#define TEXT_X         8
-#define ITEM_X         20
-#define TEXT_CHARS     24 // (PW - 2 * TEXT_X) / 6
-#define CHEAT_ROWS     9  // the CHEATS page's rows, ITEM_STEP apart from ROW_ITEM0
-#define CHEAT_CHARS    18 // a cheat's name on its row, before ON / OFF
+#if defined(RETROACHIEVEMENTS) || defined(IGR_MENU_HOST_TEST)
+#define IGRM_ACH // the ACHIEVEMENTS page
+#endif
+
+#define PW          160
+#define PH          126
+#define ROW_TITLE   4
+#define ROW_SEP1    14
+#define ROW_ITEM0   18
+#define ITEM_STEP   10
+#define ROW_SEP2    69
+#define ROW_INFO0   73
+#define INFO_STEP   10
+#define ROW_HINT    115
+#define TEXT_X      8
+#define ITEM_X      20
+#define TEXT_CHARS  24 // (PW - 2 * TEXT_X) / 6
+#define CHEAT_ROWS  9  // the CHEATS page's rows, ITEM_STEP apart from ROW_ITEM0
+#define CHEAT_CHARS 18 // a cheat's name on its row, before ON / OFF
 
 enum { C_PANEL,
        C_BORDER,
@@ -108,6 +116,12 @@ typedef struct
     igr_cheats_t *cheats; // the CHEATS page's list, or NULL (no page)
     int cheatsBusy;       // a change could not be applied (the engine was walking the set): try again later
     int cheatsIdle;       // the engine's hook has not run once this game: no cheat is being applied
+#ifdef IGRM_ACH
+    int raBuilt;             // the ACHIEVEMENTS page is listed
+    int raTotal, raUnlocked; // RA/<startup>.ach at launch (0 total: none)
+    const u8 *hunt;          // LEFT TO HUNT, raHuntBlob's entries, or NULL
+    int huntCount;
+#endif
 } igrm_info_t;
 
 #define IGRM_LINES 24
@@ -248,9 +262,17 @@ static void igrmPath(int y, const char *path)
 
 enum { IT_RESUME,
        IT_CHEATS,
+#ifdef IGRM_ACH
+       IT_ACH,
+#endif
        IT_EXIT,
        IT_POWER };
-static const char *const igrmName[4] = {"RESUME", "CHEATS", "EXIT GAME", "POWER OFF"};
+#define IGRM_ITEMS_MAX (IT_POWER + 1)
+static const char *const igrmName[IGRM_ITEMS_MAX] = {"RESUME", "CHEATS",
+#ifdef IGRM_ACH
+                                                     "ACHIEVEMENTS",
+#endif
+                                                     "EXIT GAME", "POWER OFF"};
 static u8 igrmIds[IGRM_ITEMS_MAX];
 static int igrmItems;
 
@@ -261,7 +283,10 @@ static void igrmListItems(const igrm_info_t *in)
     igrmItems = 0;
     for (i = IT_RESUME; i <= IT_POWER; i++)
         if (i != IT_CHEATS || in->cheats != NULL)
-            igrmIds[igrmItems++] = i;
+#ifdef IGRM_ACH
+            if (i != IT_ACH || in->raBuilt)
+#endif
+                igrmIds[igrmItems++] = i;
 }
 
 static int igrmCheatsOn(const igr_cheats_t *b)
@@ -321,6 +346,28 @@ static void igrmCompose(const igrm_info_t *in, int sel, int armed)
                 igrmText(y + 3 * INFO_STEP, TEXT_X, C_DIM, "WRITTEN VALUES STAY");
             }
             break;
+#ifdef IGRM_ACH
+        case IT_ACH:
+            if (in->raTotal <= 0) {
+                igrmText(y, TEXT_X, C_TEXT, "NO LIST FOR THIS GAME:");
+                igrmText(y + INFO_STEP, TEXT_X, C_TEXT, "OPEN ITS ACHIEVEMENTS");
+                igrmText(y + 2 * INFO_STEP, TEXT_X, C_TEXT, "IN THE LOADER FIRST");
+                igrmText(y + 3 * INFO_STEP, TEXT_X, C_DIM, "(XERABORA MODE)");
+                break;
+            }
+            p = igrmNum(s, in->raUnlocked);
+            p = igrmCat(p, " OF ");
+            igrmCat(igrmNum(p, in->raTotal), " UNLOCKED");
+            igrmText(y, TEXT_X, C_TEXT, s);
+            if (in->raUnlocked >= in->raTotal)
+                igrmText(y + INFO_STEP, TEXT_X, C_GOLD, "ALL OF THEM!");
+            else {
+                igrmCat(igrmNum(s, in->raTotal - in->raUnlocked), " LEFT TO HUNT");
+                igrmText(y + INFO_STEP, TEXT_X, C_GOLD, s);
+            }
+            igrmText(y + 3 * INFO_STEP, TEXT_X, C_DIM, "AS THE LOADER LAST SAW");
+            break;
+#endif
         case IT_POWER:
             if (!in->canPowerOff) {
                 igrmText(y, TEXT_X, C_TEXT, "A DISC GAME TURNS OFF");
@@ -351,9 +398,59 @@ static void igrmCompose(const igrm_info_t *in, int sel, int armed)
             break;
     }
 
-    igrmCat(igrmCat(igrmCat(igrmCat(s, ok), " SELECT   "), back), " RESUME");
+#ifdef IGRM_ACH
+    if (id == IT_ACH)
+        p = in->huntCount > 0 ? igrmCat(igrmCat(s, ok), " SEE THEM   ") : igrmCat(s, "");
+    else
+#endif
+        p = igrmCat(igrmCat(s, ok), " SELECT   ");
+    igrmCat(igrmCat(p, back), " RESUME");
     igrmText(ROW_HINT, TEXT_X, C_DIM, s);
 }
+
+#ifdef IGRM_ACH
+#define HUNT_STEP 9 // LEFT TO HUNT's rows: up to RA_HUNT_ROWS (8) of them from ROW_ITEM0, above the hint
+
+// LEFT TO HUNT, entry `at` of the hunt list. The launcher packed it in lines already (raHuntBlob,
+// src/rahunt.c): its points, how many title lines, how many description lines, then each line NUL
+// ended, in TEXT_CHARS. RIPPS2 build 94.
+static void igrmComposeHunt(const igrm_info_t *in, int at)
+{
+    char s[40], *p, back[2] = {(char)(in->confirmCircle ? 1 : 2), 0};
+    const u8 *e = in->hunt;
+    const char *l;
+    int i, k, y = ROW_ITEM0;
+
+    for (k = 0; k < at; k++)
+        for (i = e[1] + e[2], e += 3; i > 0; i--)
+            e += igrmLen((const char *)e) + 1;
+    igrmLines = 0;
+    igrmBarY = -100;
+    p = igrmNum(s, at + 1);
+    p = igrmCat(p, "/");
+    igrmNum(p, in->huntCount);
+    igrmTitle("LEFT TO HUNT", s);
+    igrmSep2 = -1;
+    l = (const char *)e + 3;
+    for (i = 0; i < e[1] + e[2]; i++) {
+        if (i == e[1]) { // under the title, its points
+            igrmCat(igrmNum(s, e[0]), e[0] == 1 ? " POINT" : " POINTS");
+            igrmText(y, TEXT_X, C_DIM, s);
+            y += HUNT_STEP;
+        }
+        igrmText(y, TEXT_X, i < e[1] ? C_GOLD : C_TEXT, l);
+        y += HUNT_STEP;
+        l += igrmLen(l) + 1;
+    }
+    if (e[2] == 0) {
+        igrmCat(igrmNum(s, e[0]), e[0] == 1 ? " POINT" : " POINTS");
+        igrmText(y, TEXT_X, C_DIM, s);
+        igrmText(y + HUNT_STEP, TEXT_X, C_DIM, "NO DESCRIPTION");
+    }
+    igrmCat(igrmCat(igrmCat(s, in->huntCount > 1 ? "UP DOWN MORE   " : ""), back), " BACK");
+    igrmText(ROW_HINT, TEXT_X, C_DIM, s);
+}
+#endif
 
 // The CHEATS page: CHEAT_ROWS rows from `top`, the cursor on `sel`; `full`: the last confirm could not turn a cheat
 // on because the ticked ones fill the engine's code set
@@ -460,6 +557,8 @@ int igrmTestPage(const igrm_info_t *in, int page, int sel, int armed, int sx, in
     igrmListItems(in);
     if (page == 1)
         igrmComposeCheats(in, armed < 0 ? 0 : armed, sel, armed < 0);
+    else if (page == 2)
+        igrmComposeHunt(in, sel);
     else
         igrmCompose(in, sel, armed);
     for (y = 0; y < PH * sy; y++)
@@ -796,6 +895,9 @@ int IGR_MenuRun(u16 (*buttons)(void))
     u16 held, now, pressed, ok, back;
     int sel = 0, armed = 0, result = IGR_MENU_RESUME, presses = 0, power = 1, powerLatched = 0, i;
     int page = 0, csel = 0, ctop = 0, full = 0, changed = 0, frameHeld;
+#ifdef IGRM_ACH
+    int hunt = -1;
+#endif
     char gameId[CORE_GAME_ID_MAX_LEN + 1];
     igrm_line_t lines[IGRM_LINES];
     igrm_info_t info;
@@ -851,6 +953,13 @@ int IGR_MenuRun(u16 (*buttons)(void))
             info.cheatsIdle = codeentry == NULL;
         }
     }
+#ifdef IGRM_ACH
+    info.raBuilt = 1;
+    info.raTotal = config->IgrRaTotal;
+    info.raUnlocked = config->IgrRaUnlocked;
+    info.hunt = config->IgrRaHunt;
+    info.huntCount = config->IgrRaHunt != NULL ? config->IgrRaHuntCount : 0;
+#endif
     if (info.canPowerOff == 0)
         power = 0; // the ROM's CDVDMAN keeps the power button there, as the VBLANK handler leaves it
     ok = info.confirmCircle ? PAD_CIRCLE : PAD_CROSS;
@@ -892,6 +1001,17 @@ int IGR_MenuRun(u16 (*buttons)(void))
                 dirty = 1;
             } else if (pressed & PAD_START)
                 break;
+#ifdef IGRM_ACH
+        } else if (hunt >= 0) { // LEFT TO HUNT
+            if (pressed & (PAD_UP | PAD_DOWN | ok)) {
+                hunt = (hunt + ((pressed & PAD_UP) ? info.huntCount - 1 : 1)) % info.huntCount;
+                dirty = 1;
+            } else if (pressed & back) {
+                hunt = -1;
+                dirty = 1;
+            } else if (pressed & PAD_START)
+                break;
+#endif
         } else if (pressed & (PAD_UP | PAD_DOWN)) {
             sel = (sel + ((pressed & PAD_UP) ? igrmItems - 1 : 1)) % igrmItems;
             armed = 0;
@@ -903,6 +1023,13 @@ int IGR_MenuRun(u16 (*buttons)(void))
                 page = 1;
                 full = 0;
                 dirty = 1;
+#ifdef IGRM_ACH
+            } else if (id == IT_ACH) {
+                if (info.huntCount > 0) {
+                    hunt = 0;
+                    dirty = 1;
+                }
+#endif
             } else if (id == IT_EXIT || (id == IT_POWER && info.canPowerOff)) { // a second press: progress is lost
                 if (armed) {
                     result = id == IT_EXIT ? IGR_MENU_EXIT : IGR_MENU_POWEROFF;
@@ -926,6 +1053,10 @@ int IGR_MenuRun(u16 (*buttons)(void))
         if (dirty) {
             if (page)
                 igrmComposeCheats(&info, ctop, csel, full);
+#ifdef IGRM_ACH
+            else if (hunt >= 0)
+                igrmComposeHunt(&info, hunt);
+#endif
             else
                 igrmCompose(&info, sel, armed);
             igrmDraw(pkt); // a frame that took the first drawing takes this one; if not, the choice still works

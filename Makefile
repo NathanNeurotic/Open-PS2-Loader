@@ -312,7 +312,7 @@ ifeq ($(RETROACHIEVEMENTS),1)
   # ranet:   the menu-side PC client exchange (hash -> watch list over UDP).
   # rabadge: the "tracked game" badge cache behind the list mark and cover mark.
   # ratls:   the verified HTTPS game-ID lookup (portable TLS + HTTP, and its PS2 platform half).
-  FRONTEND_OBJS += rapopslaunch.o md5.o rawatch.o rahash.o ranet.o achievements.o rabadge.o discsupport.o ratls.o ratls_ps2.o
+  FRONTEND_OBJS += rapopslaunch.o md5.o rawatch.o rahash.o ranet.o achievements.o rahunt.o rabadge.o discsupport.o ratls.o ratls_ps2.o
   # The in-game telemetry sender. Hand-builds Ethernet/UDP frames and calls
   # SMAPSendPacket directly, so it deliberately bypasses the menu network stack.
   IOP_OBJS += raudp.o rapops.o

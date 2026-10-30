@@ -79,10 +79,8 @@ static int mbPost(u32 op, u32 offset, u32 size, void *ee)
     CopyToIop(&r, sizeof(r), (void *)mbIopReq);
     t = mbCount();
     while (MB_ACK->seq != mbSeq)
-        if (mbCount() - t > 3 * MB_SECOND) {
-            mbIopReq = 0; // the module's thread did not answer: no more waiting on it this pause or the next
-            return -1;
-        }
+        if (mbCount() - t > 3 * MB_SECOND)
+            return -1; // the module's thread did not answer yet: it still takes the next one (WAKE undoes a late HUSH)
     return MB_ACK->result;
 }
 

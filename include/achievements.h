@@ -24,7 +24,9 @@ int achievementsBusy(void);
 int achievementsRequest(char kind, int page, int filter, const char *target);
 void achievementsSnapshot(achievement_page_t *result);
 int achievementsParse(char *reply, achievement_page_t *result);
-int achievementsRequestImage(const char *path, const char *startup);
+// One ISO image's set. With a prefix (the game's device, as its launch reads RA/ under it), a set read from the
+// xeRAbora PC is also saved as <prefix>RA/<startup>.ach for the in-game menu.
+int achievementsRequestImage(const char *path, const char *startup, const char *prefix);
 int achievementsRequestVcd(const char *path);
 /* Xerabora mode: parse an xeRAbora /library ('G') or /game ('A') document
    into the cached list, serve one filtered page of it, and mark it stale so
