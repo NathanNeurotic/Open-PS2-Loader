@@ -46,10 +46,31 @@ jobs:
           #
           # So distinguish the two. Cancelled/skipped => this promote is obsolete, stand down
           # quietly. Anything else that is not success stays loud, because that IS a broken publish.
-          if gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
+          #
+          # A WATCH THAT DIES IS NOT A VERDICT EITHER. `gh run watch` also exits non-zero when the
+          # GitHub API itself errors mid-watch (an HTTP 500 on the jobs endpoint did exactly that on
+          # 2026-10-30, run 41042988785), while the Rolling Release is still running and goes on to
+          # succeed. So only judge a run once GitHub reports it `completed`; otherwise watch again.
+          concl=""
+          for attempt in $(seq 1 20); do
+            if gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
+              concl="success"
+              break
+            fi
+            state="$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json status,conclusion --jq '.status + " " + .conclusion' 2>/dev/null || echo "unknown ")"
+            status="${state%% *}"
+            concl="${state#* }"
+            if [ "$status" = "completed" ]; then
+              break
+            fi
+            echo "Watching Rolling Release $run_id stopped while it is '$status' (GitHub API error?); watching again (attempt $attempt)." >&2
+            concl=""
+            sleep 30
+          done
+
+          if [ "$concl" = "success" ]; then
             echo "Rolling Release $run_id succeeded."
           else
-            concl="$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json conclusion --jq .conclusion 2>/dev/null || echo unknown)"
             if [ "$concl" = "cancelled" ] || [ "$concl" = "skipped" ]; then
               echo "Rolling Release $run_id was $concl -- superseded by a newer push to $GITHUB_REF_NAME."
               echo "That push runs its own promote for the build that shipped; nothing to enforce here."
