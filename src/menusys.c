@@ -2232,7 +2232,7 @@ static int menuPageIsGrid(void)
 
 // L1/R1 on a Grid page turn a whole page of covers, the cursor keeping its place on the page (RIPPS2 build
 // 98, akilluminati47). Through the list's own paging they moved one cover: the grid's items list is one row
-// high. Past either end they wrap, as L1/R1 do in the list.
+// high. Past either end they wrap, as L1/R1 do in the list; on a single page they do nothing.
 static void menuGridPage(int dir)
 {
     submenu_list_t *cur = selected_item->item->current, *walk;
@@ -2244,7 +2244,7 @@ static void menuGridPage(int dir)
     }
     int target = cur != NULL ? gridPageStep(count, index, gTheme->gridRows, gTheme->gridColumns, dir) : -1;
     if (target < 0) {
-        if (count > 1) {
+        if (count > gTheme->gridRows * gTheme->gridColumns) { // a single page has nowhere to wrap to
             if (dir < 0)
                 menuLastPage();
             else

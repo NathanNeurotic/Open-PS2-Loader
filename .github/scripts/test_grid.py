@@ -32,6 +32,7 @@ assert MENUSYS.count('if (menuPageIsGrid())') == 4  # Up, Down, L1, R1
 # L1/R1 turn a whole page of covers on a Grid page (RIPPS2 build 98, akilluminati47).
 assert 'gridPageStep(count, index, gTheme->gridRows, gTheme->gridColumns, dir)' in MENUSYS
 assert 'menuGridPage(-1);' in MENUSYS and 'menuGridPage(1);' in MENUSYS
+assert 'if (count > gTheme->gridRows * gTheme->gridColumns) {' in MENUSYS  # L1/R1 never wrap on a single page
 # The selected cover is drawn last and larger; the counter and the title under the grid are theme keys.
 assert 'drawGridCell(menu, item, elem, selX, selY, gDefaultCol, GRID_SELECTED_SCALE, turn, selBack, 0);' in THEMES
 for key in ('counter', 'title', 'devices', 'vignette', 'flip'):
