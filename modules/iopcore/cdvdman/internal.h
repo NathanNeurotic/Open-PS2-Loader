@@ -154,6 +154,9 @@ extern u32 mediaLsnCount;
 
 extern freeze_diag_iop_t g_freeze_diag;
 
+// IOP heap record for ee_core's freeze report: see heapdiag.c and ../common/heap_diag.h.
+void heap_diag_install(void);
+
 // VMC sector I/O exported to MCEMU. A call that never returns stays marked busy in the report.
 static inline void freeze_diag_vmc_begin(unsigned int op, unsigned int lba)
 {

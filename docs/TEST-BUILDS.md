@@ -38,6 +38,26 @@ status includes that suspension. It also records the last disc reads and any rea
 and never finished, memory card (VMC) activity, and whether the I/O processor still answered.
 Its `hint=` line says which of those looks stuck.
 
+Since report v2 it also lists the game's IOP memory: CDVDMAN notes every block the game's IOP
+modules allocate and free, the allocations that failed, the lowest free IOP memory and the loaded
+modules. ee_core reads that record straight from IOP RAM, so it is there even when the I/O
+processor stopped answering. Each block line has `ff_after=`, the number of 0xFF bytes right
+after the block. Some games write past their own IOP buffers and fill the overrun with 0xFF
+(.hack//Infection, SLUS_202.67, per neutrino issue #92); a long run is marked `OVERRUN?` and its
+length is the guard a per-game fix needs. `heap_hint=` sums it up. The hooks pass every call
+through unchanged, but CDVDMAN is about 2 KB larger in this build, which shifts where the game's
+blocks land, so a freeze that stops happening in this build is a result worth reporting too.
+
+If the controller is dead (the analog light went out), press the **power button twice quickly**
+instead of the combo: that is IGR's reset too, and the main CPU reads that button itself. If the
+screen stays frozen after that, the IOP could not be reset either, and no file is written.
+
+If the combo does nothing, report that and confirm Compatibility Mode 6 was off. An unresponsive
+combo alone does not establish a main-CPU freeze: IGR can be disabled or fail to detect input.
+Compatibility Mode 6 turns IGR off, so it also turns this report off. The configuration is
+otherwise a normal Korium or IncebtIon build; it is refused for RetroAchievements, which runs
+IGR from VBLANK.
+
 If the combo does nothing, report that and confirm Compatibility Mode 6 was off. An unresponsive
 combo alone does not establish a main-CPU freeze: IGR can be disabled or fail to detect input.
 Compatibility Mode 6 turns IGR off, so it also turns this report off. The flavour is

@@ -1078,6 +1078,11 @@ int _start(int argc, char **argv)
     // hook MODLOAD's exports
     hookMODLOAD();
 
+#ifdef INGAMEDIAG
+    // Freeze report: note the game's IOP allocations (heapdiag.c). Every call passes through unchanged.
+    heap_diag_install();
+#endif
+
     // init disk type stuff
     cdvdman_initDiskType();
 

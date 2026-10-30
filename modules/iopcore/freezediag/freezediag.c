@@ -2,7 +2,8 @@
   In-game freeze report writer (INGAMEDIAG flavour only).
 
   ee_core loads this once, after the IGR IOP reboot, with ROM SIO2MAN and MCMAN already loaded.
-  argv[1] is the IOP address (eight hex digits) where ee_core copied its freeze_diag_report_t.
+  argv[1] is the IOP address (eight hex digits) where ee_core copied its freeze_diag_report_t, and
+  argv[2], when present, where it copied its heap_diag_snapshot_t (the game's IOP allocations).
   This formats it with the same formatter the host test covers and writes mc0:/RIPTFRZ.TXT
   (mc1 if slot 1 fails). The work lives on the IOP because ee_core has no room for the
   formatter or the EE file client.
@@ -18,7 +19,7 @@ IRX_ID(MODNAME, 1, 1);
 #define FREEZEDIAG_BUILD "unknown"
 #endif
 
-#define TEXT_CAP 4096
+#define TEXT_CAP 16384
 
 static unsigned int parse_hex8(const char *s)
 {
@@ -69,6 +70,9 @@ int _start(int argc, char *argv[])
         return MODULE_NO_RESIDENT_END;
 
     len = freeze_diag_format(report, FREEZEDIAG_BUILD, text, TEXT_CAP);
+    // argv[2]: ee_core's copy of CDVDMAN's IOP heap record (heap_diag.h).
+    if (argc >= 3 && argv[2] != NULL)
+        len += freeze_diag_format_heap((const heap_diag_snapshot_t *)parse_hex8(argv[2]), text + len, TEXT_CAP - len);
     if (!write_report("mc0:/RIPTFRZ.TXT", text, len))
         write_report("mc1:/RIPTFRZ.TXT", text, len);
 
