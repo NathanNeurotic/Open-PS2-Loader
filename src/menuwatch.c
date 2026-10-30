@@ -137,17 +137,24 @@ static int writeReport(const char *path, int len)
     if ((fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
         return 0;
     ok = write(fd, report, len) == len;
-    close(fd);
+    if (close(fd) < 0) // the card commits on close, so a failed close is a failed write
+        ok = 0;
     return ok;
 }
 
 static void watchThread(void *arg)
 {
-    int lastFrame = guiFrameId, stalledPolls = 0, stallLimit, len;
+    int lastFrame = guiFrameId, lastStep = watchStep, stalledPolls = 0, stallLimit, len;
 
     (void)arg;
     for (;;) {
         DelayThread(MENUWATCH_POLL_US);
+        // The menu limit counts from the first menu step, not from the last boot splash frame.
+        if (watchStep != lastStep) {
+            if (lastStep == MENUWATCH_BOOT)
+                stalledPolls = 0;
+            lastStep = watchStep;
+        }
         if (guiFrameId != lastFrame) {
             lastFrame = guiFrameId;
             stalledPolls = 0;
@@ -185,8 +192,10 @@ void menuWatchStart(void)
     thread.stack_size = sizeof(watchStack);
     thread.gp_reg = &_gp;
     thread.initial_priority = 1; // above everything: the GUI is 31, the IO worker 32, BGM 30/31
-    if ((id = CreateThread(&thread)) >= 0)
-        StartThread(id, NULL);
+    if ((id = CreateThread(&thread)) >= 0 && StartThread(id, NULL) < 0) {
+        DeleteThread(id);
+        id = -1;
+    }
     diagLog("menu watchdog %s (thread %d)", id >= 0 ? "on" : "failed", id);
 }
 
