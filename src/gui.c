@@ -18,6 +18,7 @@
 #include "include/ioman.h"
 #include "include/lang.h"
 #include "include/themes.h"
+#include "include/themeviews.h"
 #include "include/favsupport.h" // gFAVStartMode -- Favourites Start Mode row
 #include "include/gamemanage.h" // Hide Game and Delete everything (RIPPS2)
 #include "include/pad.h"
@@ -854,6 +855,12 @@ static void guiRefreshCfgTitles(void);
 // their own view, the Favourites tab changes name and rows, and with it on the user lands there.
 static void guiApplyAllGamesChange(void)
 {
+    // All Games lives on the Favourites page, so start, show or hide that page for the new setting.
+    // The Game Sources apply did this already through applyConfig(..., 0); the Interface (Library)
+    // apply runs applyConfig(..., 1), which skips every device, so without this All Games had no page
+    // to open when Favourites was Off, and turning it off left a started Favourites page on screen.
+    initSupport(favGetObject(0), FAV_MODE, 0);
+
     opl_io_module_t *fav = oplGetModule(FAV_MODE);
 
     if (fav != NULL && fav->support != NULL) {
@@ -1126,37 +1133,63 @@ static int guiReadAppsViewPicker(struct UIItem *ui)
     return 1;
 }
 
-// Theme View picker: 0 = the theme's default view, then THM_VIEW_LIST, _COVERFLOW, _PSBBN, _GRID. A theme
-// that does not offer the picked view shows its default one; the choice is kept for the themes that do.
-#define GUI_THEME_VIEW_PICKS 4
-
+// Theme View picker: THM_VIEW_PICK_* (include/themeviews.h): the theme's default view, then List,
+// Coverflow (3), Coverflow (5), PSBBN Flow and Grid. The two Coverflow entries are one theme view with 3 or 5
+// covers, so they replace the old Cover Count row. A theme that does not offer the picked view shows its
+// default one; the choice is kept for the themes that do.
 static int sThemeViewPickerShown; // the value guiSetThemeViewPicker put on the picker
 
 static void guiSetThemeViewPicker(struct UIItem *ui)
 {
-    static const char *names[GUI_THEME_VIEW_PICKS + 2];
-    names[0] = _l(_STR_DEFAULT);
-    names[1] = "List";
-    names[2] = "Coverflow";
-    names[3] = "PSBBN Flow";
-    names[4] = "Grid";
-    names[5] = NULL;
+    static const char *names[THM_VIEW_PICK_COUNT + 1];
+    names[THM_VIEW_PICK_DEFAULT] = _l(_STR_DEFAULT);
+    names[THM_VIEW_PICK_LIST] = "List";
+    names[THM_VIEW_PICK_COVERFLOW3] = "Coverflow (3)";
+    names[THM_VIEW_PICK_COVERFLOW5] = "Coverflow (5)";
+    names[THM_VIEW_PICK_PSBBN] = "PSBBN Flow";
+    names[THM_VIEW_PICK_GRID] = "Grid";
+    names[THM_VIEW_PICK_COUNT] = NULL;
     diaSetEnum(ui, UICFG_THEME_VIEW, names);
-    sThemeViewPickerShown = (gThemeViewRequest >= 0 && gThemeViewRequest < GUI_THEME_VIEW_PICKS) ? gThemeViewRequest + 1 : 0;
+    sThemeViewPickerShown = thmViewPickFor(gThemeViewRequest, gCoverflowCount);
     diaSetInt(ui, UICFG_THEME_VIEW, sThemeViewPickerShown);
 }
 
 // The view request the picker asks for. The caller hands it to thmSetView after applyConfig without
 // storing it first, so an abandoned reload keeps the request of the view still on screen. An untouched
-// picker keeps the current request.
+// picker keeps the current request. A Coverflow pick sets the cover count here: it is read at draw time.
 static int guiReadThemeViewPicker(struct UIItem *ui)
 {
-    int picker = 0;
+    int picker = THM_VIEW_PICK_DEFAULT;
 
     diaGetInt(ui, UICFG_THEME_VIEW, &picker);
     if (picker == sThemeViewPickerShown)
         return gThemeViewRequest;
-    return (picker >= 1 && picker <= GUI_THEME_VIEW_PICKS) ? picker - 1 : -1;
+    return thmViewPickRequest(picker, &gCoverflowCount);
+}
+
+// Library: Pages (a tab per device) or All Games (one list). Sits under Theme View because it changes how
+// the main page is laid out; it is the same all_games setting as the Game Sources row.
+static void guiSetLibraryPicker(struct UIItem *ui)
+{
+    static const char *names[3];
+    names[0] = _l(_STR_LIBRARY_PAGES);
+    names[1] = _l(_STR_ALL_GAMES_LIST);
+    names[2] = NULL;
+    diaSetEnum(ui, UICFG_LIBRARY, names);
+    diaSetInt(ui, UICFG_LIBRARY, gAllGames ? 1 : 0);
+}
+
+// 1 when the picker changed All Games; the caller applies it after applyConfig.
+static int guiReadLibraryPicker(struct UIItem *ui)
+{
+    int picker = gAllGames ? 1 : 0;
+
+    diaGetInt(ui, UICFG_LIBRARY, &picker);
+    picker = picker ? 1 : 0;
+    if (picker == (gAllGames ? 1 : 0))
+        return 0;
+    gAllGames = picker;
+    return 1;
 }
 
 static void guiRefreshGameViews(void)
@@ -1240,6 +1273,7 @@ reshow_ui:
     guiSetGameViewPicker(diaUIConfig);
     guiSetAppsViewPicker(diaUIConfig);
     guiSetThemeViewPicker(diaUIConfig);
+    guiSetLibraryPicker(diaUIConfig);
     diaSetEnum(diaUIConfig, UICFG_VMODE, vmodeNames);
     diaSetInt(diaUIConfig, UICFG_VMODE, gVMode);
     const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
@@ -1291,6 +1325,7 @@ reshow_ui:
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         int themeViewRequest = guiReadThemeViewPicker(diaUIConfig);
+        int allGamesChanged = guiReadLibraryPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
         screenPosModeChanged(previousVMode, openX, openY, openOver); // before applyConfig shows the mode
         diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
@@ -1304,7 +1339,9 @@ reshow_ui:
         applyConfig(themeID, -1, 1);
         if (themeViewRequest != gThemeViewRequest)
             thmSetView(themeViewRequest); // reloads only when the theme now shows a different view
-        if (cfgTitlesChanged) {
+        if (allGamesChanged) {
+            guiApplyAllGamesChange(); // rebuilds every game list too
+        } else if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
             // applyConfig(..., skipDeviceRefresh=1) deliberately avoids device scans. Queue after it
@@ -2664,15 +2701,12 @@ void guiShowCoverflowConfig(void)
     // Map index<->stored value: scale 0/15/30/45 is linear (idx*15); anim 0/100/200/400 is a lookup.
     static const int animValues[] = {0, 100, 200, 400};
 
-    const char *coverCounts[] = {"3", "5", NULL};
     const char *centerScales[] = {_l(_STR_NONE), _l(_STR_SMALL), _l(_STR_MEDIUM), _l(_STR_LARGE), NULL};
     const char *animSpeeds[] = {_l(_STR_OFF), _l(_STR_FAST), _l(_STR_NORMAL), _l(_STR_SLOW), NULL};
 
-    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_COUNT, coverCounts);
     diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_SCALE, centerScales);
     diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_ANIM, animSpeeds);
 
-    diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_COUNT, (gCoverflowCount == 5) ? 1 : 0);
 
     int scaleIdx = gCoverflowCenterScale / 15;
     if (scaleIdx < 0)
@@ -2692,8 +2726,6 @@ void guiShowCoverflowConfig(void)
 
     int result = diaExecuteDialog(diaCoverflowConfig, -1, 1, NULL);
     if (result) {
-        if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_COUNT, &value))
-            gCoverflowCount = (value == 1) ? 5 : 3;
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_SCALE, &value))
             gCoverflowCenterScale = ((value >= 0 && value <= 3) ? value : 0) * 15;
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_ANIM, &value))
@@ -3247,6 +3279,7 @@ static int guiSettingsShowInterface(void)
     int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
     int themeViewRequest = gThemeViewRequest;
+    int allGamesChanged = 0;
     int previousSort = gAutosort;
 
     if (ui == NULL)
@@ -3265,6 +3298,7 @@ static int guiSettingsShowInterface(void)
     guiSetGameViewPicker(ui);
     guiSetAppsViewPicker(ui);
     guiSetThemeViewPicker(ui);
+    guiSetLibraryPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
     const char *sortNames[] = {_l(_STR_OFF), _l(_STR_SORT_AZ), _l(_STR_SORT_LAST_PLAYED), NULL};
@@ -3334,6 +3368,7 @@ reshow_interface:
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         themeViewRequest = guiReadThemeViewPicker(ui);
+        allGamesChanged = guiReadLibraryPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);
         diaGetInt(ui, UICFG_FONT_SIZE, &gFontSize);
@@ -3355,7 +3390,9 @@ reshow_interface:
         applyConfig(themeID, -1, 1);
         if (themeViewRequest != gThemeViewRequest)
             thmSetView(themeViewRequest); // reloads only when the theme now shows a different view
-        if (cfgTitlesChanged) {
+        if (allGamesChanged) {
+            guiApplyAllGamesChange(); // rebuilds every game list too
+        } else if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
         } else if (gameViewChanged) {
             guiRefreshGameViews();

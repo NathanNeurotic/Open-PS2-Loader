@@ -2057,9 +2057,9 @@ gui_strings:
 - label: HINT_RA_BADGE_SUFFIX
   string: "Prefix puts \"RA \" before the name. Suffix puts \" [RA]\" after it. Both keep alphabetical order."
 
-- comment: Hint of Theme View. List, Coverflow, PSBBN Flow and Grid are the choices' names, shown untranslated.
+- comment: Hint of Theme View. List, Coverflow (3), Coverflow (5), PSBBN Flow and Grid are the choices' names, shown untranslated.
   label: HINT_THEME_VIEW
-  string: "How the theme draws your games: List, Coverflow, PSBBN Flow or Grid. Hold L3 on the main page to switch. Themes without that view use their default view."
+  string: "How the theme draws your games: List, Coverflow with 3 or 5 covers, PSBBN Flow or Grid. Hold L3 on the main page to switch. Themes without that view use their default view."
 
 - comment: Shown while an MMCE (SD2PSX) loads or creates the game's memory card after a Game ID switch. %d is seconds waited.
   label: MMCE_GAMEID_CARD_WAIT
@@ -2258,3 +2258,15 @@ gui_strings:
 
 - label: HINT_IGR_MENU
   string: "The IGR combo pauses the game under a menu: Resume, Cheats, Exit Game, Power Off. OPL core games on a real PS2 only; where it cannot draw, the combo leaves the game as before."
+
+- comment: Interface setting under Theme View. Its choices are LIBRARY_PAGES and ALL_GAMES_LIST.
+  label: LIBRARY
+  string: Library
+
+- comment: Library choice. Every device keeps its own page (tab).
+  label: LIBRARY_PAGES
+  string: Pages
+
+- comment: Hint of Library.
+  label: HINT_LIBRARY
+  string: "Pages gives every device its own tab. All Games List puts the games of every started device, PS2, PS1 and apps, on one page. Same setting as All Games List under Game Sources."

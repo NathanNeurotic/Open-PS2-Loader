@@ -171,6 +171,49 @@ int thmViewChoose(const thm_view_info_t *info, int requested)
     return info->defaultView;
 }
 
+static const signed char pickViews[THM_VIEW_PICK_COUNT] = {-1, THM_VIEW_LIST, THM_VIEW_COVERFLOW, THM_VIEW_COVERFLOW, THM_VIEW_PSBBN, THM_VIEW_GRID};
+static const signed char pickCovers[THM_VIEW_PICK_COUNT] = {0, 0, 3, 5, 0, 0};
+
+int thmViewPickFor(int request, int coverCount)
+{
+    int p;
+
+    if (request == THM_VIEW_COVERFLOW)
+        return coverCount == 5 ? THM_VIEW_PICK_COVERFLOW5 : THM_VIEW_PICK_COVERFLOW3;
+    for (p = THM_VIEW_PICK_LIST; p < THM_VIEW_PICK_COUNT; p++) {
+        if (pickViews[p] == request)
+            return p;
+    }
+    return THM_VIEW_PICK_DEFAULT;
+}
+
+int thmViewPickRequest(int pick, int *coverCount)
+{
+    if (pick <= THM_VIEW_PICK_DEFAULT || pick >= THM_VIEW_PICK_COUNT)
+        return -1;
+    if (pickCovers[pick] != 0 && coverCount != NULL)
+        *coverCount = pickCovers[pick];
+    return pickViews[pick];
+}
+
+int thmViewCycleNext(unsigned int mask, int view, int *coverCount)
+{
+    int covers = (coverCount != NULL && *coverCount == 5) ? 5 : 3;
+    int pick = thmViewPickFor(view, covers);
+    int step;
+
+    for (step = 1; step < THM_VIEW_PICK_COUNT - 1; step++) {
+        // Picks 1..COUNT-1 form the ring; Default is not a stop.
+        int p = (pick - 1 + step) % (THM_VIEW_PICK_COUNT - 1) + 1;
+        if (mask & (1u << pickViews[p])) {
+            if (pickCovers[p] != 0 && coverCount != NULL)
+                *coverCount = pickCovers[p];
+            return pickViews[p];
+        }
+    }
+    return view;
+}
+
 const char *thmViewPrefix(const thm_view_info_t *info, int view)
 {
     if (view < 0 || view >= THM_VIEW_COUNT || !(info->blocksMask & (1u << view)))
