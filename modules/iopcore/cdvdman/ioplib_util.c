@@ -250,6 +250,29 @@ static int Hook_ReferModuleStatus(int id, ModuleStatus_t *status)
 }
 
 //--------------------------------------------------------------
+// Point every module that imports the library at its export table again, after a hook changed it.
+static void relinkExports(modinfo_t *info)
+{
+    iop_library_t *lib = (iop_library_t *)((u32)info->exports - 0x14);
+
+    struct irx_import_table *table;
+    struct irx_import_stub *stub;
+
+    FlushDcache();
+
+    // go through each table that imports the library
+    for (table = lib->caller; table != NULL; table = table->next) {
+        // go through each import in the table
+        for (stub = (struct irx_import_stub *)table->stubs; stub->jump != 0; stub++) {
+            // patch the stub to jump to the address specified in the library export table for "fno"
+            stub->jump = 0x08000000 | (((u32)lib->exports[stub->fno] << 4) >> 6);
+        }
+    }
+
+    FlushIcache();
+}
+
+//--------------------------------------------------------------
 void hookMODLOAD(void)
 {
     struct FakeModule *modlist;
@@ -301,21 +324,44 @@ void hookMODLOAD(void)
     }
 
     // fix imports
-    iop_library_t *lib = (iop_library_t *)((u32)info.exports - 0x14);
+    relinkExports(&info);
+}
 
-    struct irx_import_table *table;
-    struct irx_import_stub *stub;
+//--------------------------------------------------------------
+/* Per-game fix (IOPCORE_COMPAT_IOP_PAD, set by sbPrepare from a title list): some games write past the
+   end of the IOP buffers they allocate. .hack//Infection overruns three of them by up to 1792 bytes and
+   hangs loading into "The World" on USB, HDD and UDPBD alike (neutrino #92). As neutrino's p-membo2k
+   does, every allocation gets 2 KB more, so the overrun lands in memory nobody else owns. If the larger
+   block does not fit, the size asked for is used: the pad never makes an allocation fail. */
+#define IOP_PAD_SIZE 2048
 
-    FlushDcache();
+static void *(*AllocSysMemory_org)(int mode, int size, void *ptr);
 
-    // go through each table that imports the library
-    for (table = lib->caller; table != NULL; table = table->next) {
-        // go through each import in the table
-        for (stub = (struct irx_import_stub *)table->stubs; stub->jump != 0; stub++) {
-            // patch the stub to jump to the address specified in the library export table for "fno"
-            stub->jump = 0x08000000 | (((u32)lib->exports[stub->fno] << 4) >> 6);
-        }
-    }
+static void *Hook_AllocSysMemory(int mode, int size, void *ptr)
+{
+    void *result = NULL;
 
-    FlushIcache();
+    if (size > 0)
+        result = AllocSysMemory_org(mode, size + IOP_PAD_SIZE, ptr);
+    if (result == NULL)
+        result = AllocSysMemory_org(mode, size, ptr);
+
+    return result;
+}
+
+void hookAllocSysMemory(void)
+{
+    modinfo_t info;
+    int oldstate;
+
+    if (!getModInfo("sysmem\0\0", &info))
+        return;
+
+    CpuSuspendIntr(&oldstate);
+    AllocSysMemory_org = (void *)info.exports[4];
+    info.exports[4] = (void *)Hook_AllocSysMemory;
+    CpuResumeIntr(oldstate);
+
+    // The modules already loaded (THREADMAN's thread stacks among them) take the pad too, as in neutrino.
+    relinkExports(&info);
 }

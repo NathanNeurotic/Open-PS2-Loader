@@ -15,5 +15,6 @@ typedef struct
 
 int getModInfo(char *modname, modinfo_t *info);
 void hookMODLOAD(void);
+void hookAllocSysMemory(void);
 
 #endif /* IOPLIB_UTIL_H */

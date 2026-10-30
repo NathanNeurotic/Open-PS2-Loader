@@ -852,6 +852,31 @@ int sbGetCompatModes(config_set_t *configSet, int neutrino)
     return compatModes;
 }
 
+// Titles that write past the end of the IOP buffers they allocate. The OPL core's CDVDMAN gives each of
+// their IOP allocations 2 KB more (IOPCORE_COMPAT_IOP_PAD); Neutrino applies its own p-membo2k to the
+// same games from its compat.toml.
+static const char *const sbIopPadTitles[] = {
+    "SLUS_202.67", // .hack//Infection (USA): hangs loading into "The World" (neutrino #92; upstream OPL #106, #752, #1256)
+    "SLES_522.37", // .hack//Infection (Europe)
+    "SLKA_250.80", // .hack//Infection (Korea)
+};
+
+static int sbNeedsIopPad(config_set_t *configSet)
+{
+    const char *startup = NULL;
+    unsigned int i;
+
+    if (configSet == NULL || !configGetStr(configSet, CONFIG_ITEM_STARTUP, &startup) || startup == NULL)
+        return 0;
+
+    for (i = 0; i < sizeof(sbIopPadTitles) / sizeof(sbIopPadTitles[0]); i++) {
+        if (!strcmp(startup, sbIopPadTitles[i]))
+            return 1;
+    }
+
+    return 0;
+}
+
 static const struct cdvdman_settings_common cdvdman_settings_common_sample = CDVDMAN_SETTINGS_DEFAULT_COMMON;
 
 // Translated text is data, not a format string: a .lng line arrives unvalidated, and a stray %n or
@@ -994,6 +1019,10 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
 
     if (compatmask & COMPAT_MODE_6) {
         settings->flags |= IOPCORE_ENABLE_POFF;
+    }
+
+    if (sbNeedsIopPad(configSet)) {
+        settings->flags |= IOPCORE_COMPAT_IOP_PAD;
     }
 
     settings->fakemodule_flags = 0;
