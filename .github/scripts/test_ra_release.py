@@ -224,7 +224,7 @@ class ReleaseTests(unittest.TestCase):
         self.assertTrue(all("--latest=false" in call for call in calls if call[:2] == ("release", "edit")))
 
 
-    def republish(self, draft_fails=False, stays_draft=False):
+    def republish(self, draft_fails=False, stays_draft=False, republish_fails=False):
         self.assets()
         old = dict(tag_name="rolling-ra", assets=[{"name": "old-kit.zip"}])
         calls = self.calls = []
@@ -242,11 +242,13 @@ class ReleaseTests(unittest.TestCase):
                 if draft_fails:
                     raise subprocess.CalledProcessError(1, "gh")
                 state["isDraft"] = True
+            elif args[:2] == ("release", "edit") and republish_fails and "--notes-file" not in args:
+                raise subprocess.CalledProcessError(1, "gh")
             elif args[:2] == ("release", "edit") and state["isDraft"] and not stays_draft:
                 state.update(isDraft=False, publishedAt="2026-10-30T06:00:00Z")
             return ""
 
-        with patch.object(publisher, "gh", side_effect=fake):
+        with patch.object(publisher, "gh", side_effect=fake), patch.object(publisher.time, "sleep"):
             publisher.publish(self.folder, Path("notes"), "owner/repo")
         return calls, state
 
@@ -260,10 +262,17 @@ class ReleaseTests(unittest.TestCase):
         # The tag moves only after the release is visible again.
         self.assertGreater(next(i for i, c in enumerate(calls) if "PATCH" in c), calls.index(edits[-1]))
 
-    def test_failed_draft_call_still_republishes_and_fails_the_run(self):
+    def test_failed_draft_call_costs_only_the_date(self):
+        calls, state = self.republish(draft_fails=True)
+        self.assertFalse(state["isDraft"])
+        self.assertTrue(any("PATCH" in call for call in calls))
+
+    def test_republish_gets_one_more_try_then_fails_before_the_tag_moves(self):
         with self.assertRaises(subprocess.CalledProcessError):
-            self.republish(draft_fails=True)
-        self.assertIn("--draft=false", self.calls[-1])
+            self.republish(republish_fails=True)
+        republishes = [c for c in self.calls if c[:2] == ("release", "edit") and "--notes-file" not in c and "--draft=false" in c]
+        self.assertEqual(len(republishes), 2)
+        self.assertFalse(any("PATCH" in call for call in self.calls))
 
     def test_release_left_a_draft_fails_the_run(self):
         with self.assertRaisesRegex(RuntimeError, "still a draft"):

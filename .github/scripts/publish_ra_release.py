@@ -15,6 +15,7 @@ THEMES = ("inceBtion", "Korium")
 # GitHub's release API intermittently answers 5xx (a 500 once cost the standard release its loose ELF
 # mid-publish, #855). Every call below is safe to repeat, so retry before giving up.
 RETRY_DELAYS = (5, 15)
+REPUBLISH_DELAY = 60
 
 
 def gh(*args):
@@ -65,8 +66,20 @@ def refresh_release_date(repository):
     before = json.loads(gh("release", "view", TAG, "--repo", repository, "--json", "publishedAt"))["publishedAt"]
     try:
         gh("release", "edit", TAG, "--repo", repository, "--draft=true")
-    finally:
-        gh("release", "edit", TAG, "--repo", repository, "--draft=false", "--prerelease", "--latest=false")
+    except subprocess.CalledProcessError as error:
+        # Only the date is lost; still republish, check the state and go on to the other channels.
+        print(f"{TAG}: could not switch to draft ({error}); checking it is still published", file=sys.stderr)
+    # A draft cannot hold the Latest marker, so the flags are asserted again. A hidden release is worse
+    # than a stale date, so the republish gets one more try after GitHub has had a minute to recover.
+    for delay in (REPUBLISH_DELAY, None):
+        try:
+            gh("release", "edit", TAG, "--repo", repository, "--draft=false", "--prerelease", "--latest=false")
+            break
+        except subprocess.CalledProcessError:
+            if delay is None:
+                raise
+            print(f"{TAG}: republish failed; retrying in {delay}s", file=sys.stderr)
+            time.sleep(delay)
     state = json.loads(gh("release", "view", TAG, "--repo", repository, "--json", "isDraft,publishedAt"))
     if state["isDraft"]:
         raise RuntimeError(f"{TAG} is still a draft after its date refresh; it is hidden from users")
