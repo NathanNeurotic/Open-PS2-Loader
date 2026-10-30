@@ -17,6 +17,9 @@
 #include "util.h"
 #include "igrmbox.h"
 #include "../../modules/iopcore/common/igrmbox.h"
+#ifdef IGR_OVERLAY_SIDE
+#include "igrovl_side.h" // built into igrovl.elf (RA editions)
+#endif
 
 #define MB_SECOND 294912000u // COP0 Count ticks
 

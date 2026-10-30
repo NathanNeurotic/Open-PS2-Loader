@@ -10,6 +10,7 @@
 # Standard Makefile
 
 EE_BIN = ee_core.elf
+.DEFAULT_GOAL := all
 EE_SRC_DIR = src/
 EE_OBJS_DIR = obj/
 
@@ -76,7 +77,15 @@ endif
 # The menu costs ~9 KB of ram84, more than this build's stack can give (the 3 KB ASSERT in linkfile), so these builds
 # also drop ee_core's unreferenced code and data (dead util.c helpers and the libgcc they pull in): ~8 KB back.
 ifeq ($(IGR_MENU),1)
+# IGR_OVERLAY=1 (the RETROACHIEVEMENTS flavour): RA leaves no room for the menu in ram84, so ee_core keeps only
+# igrovl_stub.o and the menu is built into igrovl.elf, an overlay the menu copies to IGROVL_BASE (0xCC000) only for
+# a launch with In-Game Menu on (include/igrovl.h).
+ifeq ($(IGR_OVERLAY),1)
+EE_OBJS += igrovl_stub.o
+EE_CFLAGS += -DIGR_OVERLAY
+else
 EE_OBJS += igrmenu.o igrmbox.o
+endif
 EE_CFLAGS += -DIGR_MENU -ffunction-sections -fdata-sections
 endif
 
@@ -109,12 +118,35 @@ $(EE_OBJS_DIR)%.o : $(EE_SRC_DIR)%.s
 $(EE_BIN) : $(EE_OBJS)
 	$(EE_CC) $(EE_CFLAGS) $(EE_LDFLAGS) -o $(EE_BIN) $(EE_OBJS) $(EE_LIBS)
 
+# The overlay: igrmenu.c and igrmbox.c as they are, with what they take from ee_core reached through igrovl_api_t
+# (include/igrovl_side.h). Same flags as ee_core, so it reads EECoreConfig_t with the same layout; no ee_core,
+# libc or libkernel is linked in.
+IGROVL_BIN = igrovl.elf
+IGROVL_OBJS_DIR = $(EE_OBJS_DIR)igrovl/
+IGROVL_OBJS = $(IGROVL_OBJS_DIR)igrovl_main.o $(IGROVL_OBJS_DIR)igrmenu.o $(IGROVL_OBJS_DIR)igrmbox.o
+
+$(IGROVL_OBJS_DIR)igrovl_main.o : igrovl/igrovl_main.c
+	@mkdir -p $(IGROVL_OBJS_DIR)
+	$(EE_CC) $(EE_CFLAGS) -DIGR_OVERLAY_SIDE -c $< -o $@
+
+$(IGROVL_OBJS_DIR)%.o : $(EE_SRC_DIR)%.c
+	@mkdir -p $(IGROVL_OBJS_DIR)
+	$(EE_CC) $(EE_CFLAGS) -DIGR_OVERLAY_SIDE -c $< -o $@
+
+$(IGROVL_BIN) : $(IGROVL_OBJS)
+	$(EE_CC) $(EE_CFLAGS) -nostartfiles -nostdlib -Tigrovl/linkfile -s -Wl,--gc-sections -Wl,-Map,igrovl.map \
+		-o $(IGROVL_BIN) $(IGROVL_OBJS) -lgcc
+
+ifeq ($(IGR_MENU)$(IGR_OVERLAY),11)
+all: $(EE_BIN) $(IGROVL_BIN)
+else
 all: $(EE_BIN)
+endif
 
 clean:
-	rm -f -r $(EE_OBJS_DIR) $(EE_BIN) $(MAPFILE)
+	rm -f -r $(EE_OBJS_DIR) $(EE_BIN) $(MAPFILE) $(IGROVL_BIN) igrovl.map
 
 clean_all:
-	rm -f -r $(EE_OBJS_DIR) $(EE_BIN) $(MAPFILE)
+	rm -f -r $(EE_OBJS_DIR) $(EE_BIN) $(MAPFILE) $(IGROVL_BIN) igrovl.map
 
 include $(PS2SDK)/samples/Makefile.pref

@@ -2252,7 +2252,7 @@ gui_strings:
   comment: Game menu VMC entry on a UDPBD/UDPFS IMG server that does not keep what is written. The game then uses the real memory card.
   string: "This UDPBD/UDPFS server is read-only, so no VMC can be used on it. The game saves to the real memory card."
 
-- comment: Game Launching setting. The in-game menu, ported from RIPPS2 (by akilluminati47). Not in RetroAchievements builds.
+- comment: Game Launching setting. The in-game menu, ported from RIPPS2 (by akilluminati47).
   label: IGR_MENU
   string: In-Game Menu (Beta)
 

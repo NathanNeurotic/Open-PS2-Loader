@@ -32,7 +32,7 @@
   IGR_MENU_HOST_TEST builds only the renderer, for tests/ (a picture of the panel on the PC).
 */
 
-#if defined(IGR_MENU) || defined(IGR_MENU_HOST_TEST) // RetroAchievements builds leave it out: ee_core has no room
+#if defined(IGR_MENU) || defined(IGR_MENU_HOST_TEST) // not in IGS or freeze-report builds; RA runs it as igrovl.elf
 #ifndef IGR_MENU_HOST_TEST
 #include "ee_core.h"
 #include "coreconfig.h"
@@ -43,6 +43,9 @@
 #endif
 #include "../include/igrcheats.h"
 #include "../include/igrmenu.h"
+#ifdef IGR_OVERLAY_SIDE
+#include "igrovl_side.h" // built into igrovl.elf: what ee_core lends it, after every header (RA editions)
+#endif
 
 // ---- the panel, in its own units (one font pixel at scale 1): 160 x 126, or 320 x 252 at scale 2
 #define PW             160
@@ -468,8 +471,10 @@ int igrmTestPage(const igrm_info_t *in, int page, int sel, int armed, int sx, in
 // ---- on the console
 
 // the game's own GS writes as GSM recorded them (gsm_engine.S, gsm_defines.h Source_*): 0 = none seen
+#ifndef IGR_OVERLAY_SIDE
 extern u64 GSMSourceGSRegs[11];
 extern u16 GSMSourceSetGsCrt[3]; // the game's last SetGsCrt: interlace, mode, ffmd (Hook_SetGsCrt records it always)
+#endif
 #define SRC_PMODE    0
 #define SRC_SMODE2   2
 #define SRC_DISPFB1  7

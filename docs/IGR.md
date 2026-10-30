@@ -208,9 +208,14 @@ into the picture the game is showing, which it finds through the same GS write b
   the panel stays until the game draws over it.
 * With *In-Game Menu* off, `igrmbox.irx` is not packed or loaded at all, so a game sees exactly the modules
   and memory it always did.
-* Not in the **RetroAchievements** builds, nor in the IGS (`EXTRA_FEATURES=1`) and freeze-report
-  (`INGAMEDIAG=1`) builds: `ee_core` has no room for both. Those keep the plain combo and have no
-  *In-Game Menu* row. `make IGR_MENU=0` leaves it out of a standard build too.
+* In the **RetroAchievements** builds (`RETROACHIEVEMENTS=1`) `ee_core` has no room for the menu beside RA,
+  so there the menu is a small program of its own, `igrovl.elf`, that the loader copies into the top 16 KB
+  of the module area (0xCC000 to 0xD0000) only for a launch with *In-Game Menu* on. With the menu off
+  nothing is copied and the module area is what it always was. A game whose modules are moved elsewhere
+  (`mod_storage_location_list`), or fill the area up to 0xCC000, gets the plain combo in those builds.
+* Not in the IGS (`EXTRA_FEATURES=1`) and freeze-report (`INGAMEDIAG=1`) builds: `ee_core` has no room
+  for both. Those keep the plain combo and have no *In-Game Menu* row. `make IGR_MENU=0` leaves it out of
+  a standard build too.
 * The CHEATS page needs a game whose modules sit at the usual address; a few games moved elsewhere
   (`mod_storage_location_list`) get the menu without it, and their cheats run as ticked before launch.
 

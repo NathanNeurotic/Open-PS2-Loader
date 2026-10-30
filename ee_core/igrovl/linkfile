@@ -1,0 +1,39 @@
+/*
+  igrovl.elf: the in-game menu outside ee_core (ee_core/include/igrovl.h). Linked at IGROVL_BASE, the top
+  IGROVL_SIZE bytes of the module storage region, which the launcher fills only with In-Game Menu on.
+  Built -G0 like ee_core, so nothing is reached through $gp.
+*/
+
+ENTRY(igrovlHeader);
+
+MEMORY {
+	ovl	: ORIGIN = 0x000CC000, LENGTH = 16K	/* IGROVL_BASE .. 0xD0000 */
+}
+
+PHDRS {
+  ovl PT_LOAD;
+}
+
+SECTIONS {
+	.text : {
+		KEEP(*(.igrovl.hdr))	/* igrovl_hdr_t first, at IGROVL_BASE */
+		*(.text .text.*)
+	} >ovl :ovl
+
+	.rodata ALIGN(16) : { *(.rodata .rodata.*) } >ovl :ovl
+	.data ALIGN(16) : { *(.data .data.*) } >ovl :ovl
+
+	.bss ALIGN(64) (NOLOAD) : {
+		_fbss = .;
+		*(.bss .bss.*)
+		*(COMMON)
+		. = ALIGN(16);
+		_end_bss = .;
+	} >ovl
+
+	_igrovl_end = .;
+
+	/DISCARD/ : { *(.reginfo) *(.MIPS.abiflags) *(.comment) *(.pdr) *(.mdebug.*) *(.gnu.attributes) *(.eh_frame) }
+
+	ASSERT(_igrovl_end <= 0xD0000, "igrovl: the menu does not fit in IGROVL_SIZE")
+}
