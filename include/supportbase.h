@@ -156,6 +156,10 @@ void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neut
 int sbLoadWatchList(const char *path, const char *file);
 /* Reads without raising a competing network stack (external ORBIT runtime). */
 int sbReadWatchList(const char *path, const char *file);
+// What the last of those read from <path>RA/<file>.ach, for the in-game menu: the locked achievements packed in its
+// lines (rahunt.h), *count of them in *bytes, of *total with *unlocked unlocked; NULL when there was no list, or it
+// was for another file than this one.
+const unsigned char *sbGetRaHunt(const char *file, int *count, int *bytes, int *total, int *unlocked);
 
 // RA: the hash log, <path>RA/hashes.txt. Open before hashing, close after:
 // raHashStep and ranet.c drop their crumbs into whatever log is open.

@@ -2759,6 +2759,23 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #endif
 
 #ifdef IGR_OVERLAY
+    /* The menu's ACHIEVEMENTS page (RIPPS2 build 94): the game's locked achievements as RA/<startup>.ach had them, in
+       the menu's lines (sbGetRaHunt), after the cheats and the watch block and below the overlay. With no room for all
+       of it, the page gives the counts alone. */
+    const u8 *raHunt = NULL, *huntSrc;
+    int raHuntCount = 0, raHuntBytes = 0, raHuntTotal = 0, raHuntUnlocked = 0;
+    if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && ModuleStorage == (void *)OPL_MOD_STORAGE &&
+        (huntSrc = sbGetRaHunt(filename, &raHuntCount, &raHuntBytes, &raHuntTotal, &raHuntUnlocked)) != NULL) {
+        if (raHuntCount > 0 && (u32)ModuleStorageEnd + raHuntBytes <= IGROVL_BASE) {
+            raHunt = (const u8 *)ModuleStorageEnd;
+            memcpy((void *)raHunt, huntSrc, raHuntBytes);
+            ModuleStorageEnd = (void *)(((u32)ModuleStorageEnd + raHuntBytes + 0x3F) & ~0x3F);
+            LOG("IGR menu hunt: %d of %d locked, %d bytes at %p\n", raHuntCount, raHuntTotal - raHuntUnlocked, raHuntBytes, raHunt);
+        } else
+            raHuntCount = 0;
+    } else
+        raHuntTotal = 0;
+
     /* RETROACHIEVEMENTS flavour: the menu itself is igrovl.elf (ee_core/include/igrovl.h), linked at the top of the
        module storage region. It goes in only with the menu on, only at the default address and only when the modules,
        the cheats and the watch block end below it; the storage then runs to its end so the kernel's erase leaves it
@@ -2845,6 +2862,10 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #ifdef IGR_OVERLAY
     if (!igrOvlPlaced) // no overlay for this launch: the combo leaves the game, as with the menu off
         config->IgrMenu = 0;
+    config->IgrRaHunt = raHunt;
+    config->IgrRaHuntCount = raHunt != NULL ? raHuntCount : 0;
+    config->IgrRaTotal = raHuntTotal;
+    config->IgrRaUnlocked = raHuntUnlocked;
 #endif
     config->IgrConfirmCircle = gSelectButton == KEY_CIRCLE;
     if (igrCheats != NULL && config->gCheatList != NULL) {
