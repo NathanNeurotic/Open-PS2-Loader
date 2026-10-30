@@ -1,5 +1,7 @@
 # Learning across PS2 loader projects
 
+Current comparison: [Full ecosystem fork-gap refresh - October 29, 2026](FORK-GAP-FULL-REFRESH-2026-10-29.md) (301 provenance records; 152 stable families). Source/branch/release evidence and console acceptance are recorded separately.
+
 RiptOPL and RIPPS2 exchange useful UI and backend work. Preserve attribution and compare the
 actual source and runtime contract before calling a difference a gap. Other projects, including
 LUNA, YAOPL and upstream OPL, can provide equally useful correctness and design references.

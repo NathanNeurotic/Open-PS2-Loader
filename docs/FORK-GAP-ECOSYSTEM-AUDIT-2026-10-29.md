@@ -1,5 +1,7 @@
 # Ecosystem fork-gap reconciliation — 2026-10-29
 
+> Historical snapshot. The [full late-October-29 refresh](FORK-GAP-FULL-REFRESH-2026-10-29.md) supersedes availability/release wording below; stable IDs and evidence remain preserved.
+
 The C++/ps2build RiptOPL line and the legacy C Open-PS2-Loader line are compared separately at pinned defaults. This reconciliation supersedes older availability wording while retaining every historical stable ID and its evidence. It is research and documentation, not a promise to port each difference.
 
 ## Baselines and coverage

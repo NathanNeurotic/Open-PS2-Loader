@@ -1,5 +1,7 @@
 # RiptOPL documentation
 
+Current comparison: [Full ecosystem fork-gap refresh - October 29, 2026](FORK-GAP-FULL-REFRESH-2026-10-29.md) (301 provenance records; 152 stable families). Source/branch/release evidence and console acceptance are recorded separately.
+
 Start with [installation and first boot](https://nathanneurotic.github.io/Open-PS2-Loader/install.html)
 and [your first game](https://nathanneurotic.github.io/Open-PS2-Loader/getting-started.html).
 The [website](https://nathanneurotic.github.io/Open-PS2-Loader/) provides searchable task guides;
