@@ -372,6 +372,18 @@ def check_pins():
                     r'value = configReadMulti\(types\);', retry_head) and
           'hddLoadSupportModules();' not in retry_head,
           'tryAlternateDevice: a drive that comes up on the retry must get the boot-time hybrid decision')
+    # A known-home recovery miss ends in configEnd/configInit, which discarded conf_game.cfg (global game
+    # settings), network and apps already read from that home -- e.g. a first run beside official OPL's
+    # files on a hybrid's exFAT volume. They must be read again and returned (CodeRabbit on RiptOPL #190).
+    known = function_text(text('src/opl.c'), 'static int tryKnownBootConfigRecovery(')
+    check(known is not None and
+          re.search(r'configEnd\(\);\s*configInit\(gBootDir\);\s*'
+                    r'return configReadMulti\(types & ~CONFIG_OPL\);\s*\}\s*$', known),
+          'tryKnownBootConfigRecovery: re-read the home\'s other sets after a recovery miss')
+    check(retry is not None and
+          re.search(r'value = tryKnownBootConfigRecovery\(types\);\s*if \(value & CONFIG_OPL\)\s*return value;\s*'
+                    r'showCfgPopup = 0;\s*return value;', retry),
+          'tryAlternateDevice: return the re-read sets from a known-home recovery miss')
     load = function_text(text('src/opl.c'), 'static void _loadConfig(')
     check(load is not None and
           re.search(r'gBootHomeHybridExfat && gBDMStartMode == START_MODE_DISABLED &&\s*'

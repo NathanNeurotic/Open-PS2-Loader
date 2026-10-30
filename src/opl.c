@@ -2662,10 +2662,13 @@ static int tryKnownBootConfigRecovery(int types)
     }
 
     // Failed recovery probes re-home every config set. Restore the known source before returning
-    // defaults so the first explicit save stays on that same device.
+    // defaults so the first explicit save stays on that same device. configEnd/configInit also
+    // discarded the sets the first pass had already read from this home (conf_game.cfg's global
+    // game settings, network, last played, apps -- e.g. an official OPL install on a hybrid's
+    // exFAT volume), so read them again; only the master stays at defaults.
     configEnd();
     configInit(gBootDir);
-    return 0;
+    return configReadMulti(types & ~CONFIG_OPL);
 }
 
 static void restoreRecoverySaveHome(const char *recoveredHome)
@@ -2886,7 +2889,7 @@ static int tryAlternateDevice(int types)
             return value;
 
         showCfgPopup = 0;
-        return 0;
+        return value; // the home's other sets, re-read after the recovery miss
     }
 
     // Bare, deferred-network, and otherwise unclassified boots retain the bounded read-only
