@@ -1,0 +1,82 @@
+{
+  "checked_at": "2026-10-30T06:11:17.956128+00:00",
+  "scopes": [
+    {
+      "project": "Both maintained editions",
+      "heads": [
+        "c136055c85157764d71e0b7122338a556d58e7e6",
+        "3e6b4ec96be338866aed08c9604084d82ec802f9"
+      ],
+      "depth": "merged source paths and docs; padhook, pad handoff and each message consumer inspected",
+      "paths": [
+        "ee_core/src/padhook.c",
+        "src/core/pad.cpp",
+        "src/ui/guimodal.cpp",
+        "src/pad.c",
+        "src/gui.c",
+        "docs/IGR.md",
+        "docs/THEME_ENGINE.md"
+      ]
+    },
+    {
+      "project": "RIPPS2",
+      "head": "5ebb5e0b4cc074742b184ed9892494d161e97e49",
+      "depth": "complete14-commit interval and unchanged75-patch queue; Media Studio source; b125 patch/codec source inspected separately",
+      "branch": "524c2cef7c40c3d75b70dfd1713a6c4726fff153",
+      "paths": [
+        "elf/patches",
+        "tools/media-studio/video_io.py",
+        "elf/patches/0125-ripps2-video-player-browser.patch",
+        "elf/libsmslite/src/smslite.c"
+      ]
+    },
+    {
+      "project": "YAOPL",
+      "head": "0889ac4d009567b168b283e6d6933af36df7c2e8",
+      "depth": "complete10-commit interval; removed pad reset, cache publication/hook lifetime and all message helper callers",
+      "paths": [
+        "src/pad.c",
+        "ee_core/src/padhook.c",
+        "src/gui.c"
+      ]
+    },
+    {
+      "project": "LUNA",
+      "head": "1c97889d34cecf580e20c5c8f2bbb48e92bb50a0",
+      "depth": "wrapper gitlinks and five frontend commits; menu/appearance/cache/VMC UI changes",
+      "paths": [
+        "src/ui/appearance.c",
+        "src/ui/options_menu.c",
+        "src/ui/art_cache.c",
+        "src/ui/vmc_manager.inc"
+      ]
+    },
+    {
+      "project": "Titan",
+      "head": "d442d58dc85849a0e6ccc7b9df5f07ddb8220f80",
+      "branch_only": true,
+      "depth": "scheduler quanta, asset buffers/publication and DEX snapshot contract; no upstream tests executed",
+      "paths": [
+        "kernel/src/services/titan_storage_scheduler.c",
+        "kernel/src/services/titan_asset_service.c",
+        "kernel/src/services/titan_diagnostics.c",
+        "docs/DEX_OPERATION_RIBBON.md"
+      ]
+    },
+    {
+      "project": "Launchstation",
+      "head": "2b1d95581a934c09940a5f014e877bbc24e50698",
+      "depth": "six-commit interval; staged card/PSU operations and direct-copy worker path",
+      "paths": [
+        "src/dash_card_tool.c",
+        "src/filer_copy.c"
+      ]
+    },
+    {
+      "project": "POPSLoader / PS2SP / following fork",
+      "depth": "full changed-path manifests, commit summaries and runtime-vs-packaging/catalogue scope; not all packaged apps reviewed"
+    }
+  ],
+  "executed_foreign_scripts": false,
+  "source_assessment_limits": "Unchanged per-ID assessments are carried forward with original dates; refs/releases alone do not revalidate every function"
+}

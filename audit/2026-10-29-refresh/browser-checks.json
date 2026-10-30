@@ -1,0 +1,172 @@
+{
+  "status": "passed",
+  "browser": "isolated headless Chrome over loopback",
+  "results": [
+    {
+      "site": "riptopl-site",
+      "initialRows": 301,
+      "directoryRows": 153,
+      "newIdSearch": true,
+      "combinedFilters": true,
+      "emptyState": true,
+      "hiddenAnchorNavigation": true,
+      "checkedStatuses": [
+        {
+          "status": "tracked",
+          "expected": 88,
+          "actual": 88
+        },
+        {
+          "status": "shipped",
+          "expected": 36,
+          "actual": 36
+        },
+        {
+          "status": "partial",
+          "expected": 35,
+          "actual": 35
+        },
+        {
+          "status": "historical",
+          "expected": 6,
+          "actual": 6
+        },
+        {
+          "status": "overlap",
+          "expected": 27,
+          "actual": 27
+        },
+        {
+          "status": "candidate",
+          "expected": 28,
+          "actual": 28
+        },
+        {
+          "status": "experimental",
+          "expected": 40,
+          "actual": 40
+        },
+        {
+          "status": "companion",
+          "expected": 32,
+          "actual": 32
+        },
+        {
+          "status": "limitation",
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "status": "planned",
+          "expected": 0,
+          "actual": 0
+        },
+        {
+          "status": "intentional",
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "status": "declined",
+          "expected": 1,
+          "actual": 1
+        }
+      ],
+      "sortingToggle": true,
+      "newCompanionFilter": true,
+      "globalSearchHits": 7,
+      "desktop": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "mobile": {
+        "viewport": 390,
+        "scrollWidth": 390
+      }
+    },
+    {
+      "site": "legacy-site",
+      "initialRows": 301,
+      "directoryRows": 153,
+      "newIdSearch": true,
+      "combinedFilters": true,
+      "emptyState": true,
+      "hiddenAnchorNavigation": true,
+      "checkedStatuses": [
+        {
+          "status": "tracked",
+          "expected": 88,
+          "actual": 88
+        },
+        {
+          "status": "shipped",
+          "expected": 36,
+          "actual": 36
+        },
+        {
+          "status": "partial",
+          "expected": 35,
+          "actual": 35
+        },
+        {
+          "status": "historical",
+          "expected": 6,
+          "actual": 6
+        },
+        {
+          "status": "overlap",
+          "expected": 27,
+          "actual": 27
+        },
+        {
+          "status": "candidate",
+          "expected": 28,
+          "actual": 28
+        },
+        {
+          "status": "experimental",
+          "expected": 40,
+          "actual": 40
+        },
+        {
+          "status": "companion",
+          "expected": 32,
+          "actual": 32
+        },
+        {
+          "status": "limitation",
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "status": "planned",
+          "expected": 0,
+          "actual": 0
+        },
+        {
+          "status": "intentional",
+          "expected": 4,
+          "actual": 4
+        },
+        {
+          "status": "declined",
+          "expected": 1,
+          "actual": 1
+        }
+      ],
+      "sortingToggle": true,
+      "newCompanionFilter": true,
+      "globalSearchHits": 7,
+      "desktop": {
+        "viewport": 1440,
+        "scrollWidth": 1440
+      },
+      "mobile": {
+        "viewport": 390,
+        "scrollWidth": 390
+      }
+    }
+  ],
+  "pageErrors": [],
+  "deployedSiteVerified": false
+}
