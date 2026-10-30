@@ -1,8 +1,20 @@
 name: ORBIT Neutrino RA Watch
 
+# The RetroAchievements edition's Neutrino is ORBIT's fork (danielnuld/ps2-launcher), pinned by tag and
+# archive SHA-256 in third_party/orbit-neutrino/release.json. Unlike Neutrino Watch and Ember Watch, this
+# one never updates anything: .github/scripts/package_orbit_neutrino.py refuses any archive but the pinned one, and a new
+# ORBIT runtime can change the -ra= handoff, the one-packet snapshot limit or pointer-chain support, so
+# a person reviews it first (third_party/orbit-neutrino/README.md).
+#
+# What it does: compare ORBIT's latest stable release with the pin. When they differ -- a newer tag, or
+# the same tag with a replaced archive -- open (or refresh) the "ORBIT Neutrino RA runtime update" issue
+# with both digests, a review checklist and a suggested release.json. When the pin matches again, close
+# that issue. Two or three read-only API calls per run; the archive is downloaded only if GitHub reports
+# no digest for it.
+
 on:
   schedule:
-    # Same schedule as neutrino-watch.yml. New runtimes need compatibility review.
+    # Same ticks as neutrino-watch.yml (1st, 11th and 21st, 05:41 UTC).
     - cron: "41 5 1,11,21 * *"
   workflow_dispatch:
 
@@ -16,37 +28,57 @@ concurrency:
 
 jobs:
   check:
+    if: github.repository == 'NathanNeurotic/Open-PS2-Loader'
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ORBIT_REPO: danielnuld/ps2-launcher
+      ISSUE_TITLE: ORBIT Neutrino RA runtime update
     steps:
       - uses: actions/checkout@v6
-      - name: Check the RA runtime pin against ORBIT's release
-        shell: bash
+        with:
+          persist-credentials: false
+      - name: Compare ORBIT's latest release with the RA runtime pin
         run: |
-          set -euo pipefail
-          gh api repos/danielnuld/ps2-launcher/releases/latest > "$RUNNER_TEMP/orbit-release.json"
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          pin = json.loads(Path('third_party/orbit-neutrino/release.json').read_text())
-          release = json.loads((Path(os.environ['RUNNER_TEMP']) / 'orbit-release.json').read_text())
-          assets = [a for a in release['assets'] if a['name'].startswith('ORBIT-') and a['name'].endswith('.zip')]
-          changed = release['tag_name'] != pin['tag'] or not any(a.get('digest') == 'sha256:' + pin['sha256'] for a in assets)
-          (Path(os.environ['RUNNER_TEMP']) / 'orbit-changed').write_text('1' if changed else '0')
-          (Path(os.environ['RUNNER_TEMP']) / 'orbit-update.md').write_text(
-              'An upstream ORBIT release differs from our pinned RA-only Neutrino runtime.\n\n'
-              + 'Pinned: ' + pin['tag'] + '\nLatest: ' + release['tag_name'] + '\n\n'
-              + release['html_url'] + '\n\n'
-              + 'Review the archive digest, runtime handoff, snapshot/pointer-chain limits, network module '
-              + 'ordering, IGR and ordinary-package isolation before updating third_party/orbit-neutrino/release.json. '
-              + 'Do not replace the ordinary upstream Neutrino bundle.\n')
-          PY
-          if [ "$(cat "$RUNNER_TEMP/orbit-changed")" = 1 ]; then
-            existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search '"ORBIT Neutrino RA runtime update" in:title' --json number --jq '.[0].number // empty')"
-            if [ -n "$existing" ]; then
-              gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/orbit-update.md"
-            else
-              gh issue create --repo "$GITHUB_REPOSITORY" --title 'ORBIT Neutrino RA runtime update' --body-file "$RUNNER_TEMP/orbit-update.md"
-            fi
+          set -eu
+          T="$RUNNER_TEMP/orbit"
+          mkdir -p "$T"
+          if ! gh api "repos/$ORBIT_REPO/releases/latest" > "$T/release.json"; then
+            echo "::warning::Could not read ORBIT's latest release (transient?); nothing to do."
+            exit 0
           fi
+          TAG="$(jq -r '.tag_name // empty' "$T/release.json")"
+          COMMIT="$(gh api "repos/$ORBIT_REPO/commits/$TAG" --jq .sha 2>/dev/null || true)"
+          python3 .github/scripts/orbit_neutrino_watch.py --release "$T/release.json" --tag-commit "$COMMIT" --out "$T"
+
+          if [ "$(cat "$T/status")" = unverified ]; then
+            # GitHub has no digest for this asset: hash the archive ourselves.
+            gh release download "$TAG" --repo "$ORBIT_REPO" --pattern "$(cat "$T/asset")" --dir "$T/dl" --clobber
+            SUM="$(sha256sum "$T/dl/$(cat "$T/asset")" | cut -d' ' -f1)"
+            python3 .github/scripts/orbit_neutrino_watch.py --release "$T/release.json" --tag-commit "$COMMIT" \
+              --asset-sha256 "$SUM" --out "$T"
+          fi
+
+          STATUS="$(cat "$T/status")"
+          EXISTING="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,title \
+            --jq "[.[] | select(.title == \"$ISSUE_TITLE\")][0].number // empty")"
+          case "$STATUS" in
+            changed)
+              if [ -n "$EXISTING" ]; then
+                gh issue edit "$EXISTING" --repo "$GITHUB_REPOSITORY" --body-file "$T/issue.md"
+                echo "Refreshed #$EXISTING."
+              else
+                gh issue create --repo "$GITHUB_REPOSITORY" --title "$ISSUE_TITLE" --body-file "$T/issue.md"
+              fi
+              ;;
+            current)
+              if [ -n "$EXISTING" ]; then
+                gh issue close "$EXISTING" --repo "$GITHUB_REPOSITORY" --reason completed \
+                  --comment "The RA runtime pin matches ORBIT's latest release ($TAG) again."
+                echo "Closed #$EXISTING."
+              fi
+              ;;
+            *)
+              echo "No decision this run ($STATUS); leaving any open issue as it is."
+              ;;
+          esac

@@ -22,5 +22,7 @@ ignored (xeRAbora PROTOCOL.md) and chain-based achievements do not unlock; the
 handoff passes direct entries only. It speaks the xeRAbora wire protocol, which is
 also what Caduceus's engine receives, so both RA modes use it. Console unlock
 cards are not claimed.
-Do not automatically replace this pin when a new release appears. The matching
-watch workflow reports upstream changes for a compatibility review.
+Do not automatically replace this pin when a new release appears.
+`.github/workflows/orbit-neutrino-watch.yml` checks ORBIT's latest release on Neutrino
+Watch's schedule and opens the "ORBIT Neutrino RA runtime update" issue when it differs
+from this pin (a newer tag, or the same tag with a replaced archive). It never edits the pin.
