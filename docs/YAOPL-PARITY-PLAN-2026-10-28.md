@@ -94,7 +94,7 @@ For every item, first write a failing host test or reproducible hardware case. I
 - [x] VGA/GSM mode-index bounds and safe default; gray/gray-alpha PNG; default theme `ItemsList` recovery; game-count label sizing.
 - [x] VMC creation error semaphore safety: RiptOPL releases the abort lock **before** I/O and checks seek errors; do not replace with YAOPL's narrower patch.
 - [x] CWD-first language discovery, short filename guards; conditional SDK SIO2MAN packing for necessary consumers; VBLANK-sampled IGR (including RA hooks). Do NOT replace RiptOPL's RA-sensitive IGR with a general upstream variant.
-- [ ] Legacy `SYSTEM.CNF` missing-`=` guard is **not** covered (YA-10 above).
+- [ ] Legacy `SYSTEM.CNF` missing-`=` guard is implemented in YA-10 (#1114), but console validation remains pending.
 
 ## Review/implementation contract for the next agent
 1. Establish baseline head SHA and tests; label each box **missing**, **partial**, **equivalent**, **invalid finding**, or **blocked on hardware**. Re-check YAOPL commit provenance, license and changed files. Record exact target paths.
@@ -117,7 +117,7 @@ For every item, first write a failing host test or reproducible hardware case. I
 
 - **YA-05:** [implementation #1112](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1112) stops at the first excess named cheat, preserving all accepted codes. Production-parser ASan/UBSan tests reproduce the base corruption and pass across capacity boundaries, multi-code entries, Auto/Select, duplicate names and line endings. Existing cheat-load and Neutrino tests pass. Full CI/review and console validation remain tracked on the PR.
 
-These PRs remain separate and unmerged. No checkbox is promoted to hardware-confirmed acceptance by these host results. Remaining YA tasks are still open.
+These implementation changes were later merged together through #1114 (see the status table above). No checkbox is promoted to hardware-confirmed acceptance by these host results. Remaining YA tasks are still open.
 
 ## Attribution
 Thank **[belomaxorka](https://github.com/belomaxorka)** and **[YAOPL](https://github.com/yaopl/yaopl)** for the compatibility investigations, backend fixes and host reproductions. Existing README/CREDITS and Applications/About acknowledgments are tracked separately; this plan neither changes those credits nor falsely claims that unmerged YAOPL patches are already in RiptOPL.
