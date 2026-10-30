@@ -292,7 +292,8 @@ extern theme_t *gTheme;
 extern int gThemeViewRequest;
 
 extern int gCoverflowCount, gCoverflowCenterScale, gCoverflowAnimSpeed, gCoverflowDimCovers;
-extern int gGridLayout; // Grid Layout: 0 the theme's, 1..GRID_LAYOUTS RIPPS2's presets (grid.h)
+void gridForgetItem(const void *item); // a list item is freed: drop its case-flip state (themes.c)
+extern int gGridLayout;                // Grid Layout: 0 the theme's, 1..GRID_LAYOUTS RIPPS2's presets (grid.h)
 void thmTriggerCoverflowAnim(int dir);
 int thmCoverflowIsAnimating(void);
 

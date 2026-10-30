@@ -46,7 +46,8 @@ assert 'padGetRightStick(&sx, &sy);' in THEMES
 assert 'gridSlideUpdate(menu, first)' in THEMES
 assert 'gridLayoutPreset(gGridLayout, theme->layoutWide, &preset)' in THEMES
 assert 'if (gTheme->gridDevices)\n            return;' in MENUSYS
-assert 'if (menuGridSidebarFocused()) {\n        menuGridSidebarInput();\n        return;\n    }' in MENUSYS
+assert 'if (menuGridSidebarFocused()) {' in MENUSYS and 'menuGridSidebarInput();\n        return;\n    }' in MENUSYS
+assert 'gridForgetItem(submenu);' in MENUSYS  # a freed row drops its case-flip state
 assert 'gridAtRowStart(count, index, gTheme->gridColumns)' in MENUSYS
 assert 'COVERFLOW_CFG_GRID_LAYOUT' in GUI and 'gTheme->coverflow != NULL || gTheme->grid != NULL' in GUI
 assert 'coverless=serial' in CFG

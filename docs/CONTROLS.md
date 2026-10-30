@@ -48,7 +48,7 @@ every menu keep the standard layout.
 
 In Grid's device sidebar, **Up / Down** switch device page (the grid follows at once) and **Right**, **Cross** or **Circle** go back to the covers. A theme can drop the sidebar (`<block>_devices=0`); Up/Down then switch device page from the top and bottom rows.
 
-Every other button is unchanged, including **R3 = toggle Favorite**. PSBBN Flow and Grid are picked under
+Every other button is unchanged, including **R3 = toggle Favorite**. While the Grid's device sidebar is open, only Up/Down, Right, Cross, Circle, START and R3 work; go back to the covers for the rest. PSBBN Flow and Grid are picked under
 Theme View; R3 does not switch displays. See [PSBBN Flow](THEME_ENGINE.md#psbbn-flow).
 
 ### Notes on individual buttons

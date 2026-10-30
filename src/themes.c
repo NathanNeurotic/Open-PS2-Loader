@@ -2114,8 +2114,8 @@ int gGridLayout = 0; // Settings > Interface > Coverflow Settings > Grid Layout 
 #define GRID_FLIP_TURN_S 0.55f
 #define GRID_FLIP_STICK  72 // how far the right stick leans before it turns a case
 #define GRID_FLIPS       32
-#define GRID_BACK_SLOTS  8 // back covers in memory: the selected case's and the ones left turned
-#define GRID_BACK_ELEMS  8 // Grid elements with a back cache (a theme's families, and the next theme while it loads)
+#define GRID_BACK_SLOTS  8  // back covers in memory: the selected case's and the ones left turned
+#define GRID_BACK_ELEMS  16 // Grid elements with a back cache (a theme's families, and the next theme while it loads)
 
 // The size of the cell a cover sits in: Grid Layout's preset, or the element's own size.
 static void gridCellSize(theme_element_t *elem, int *w, int *h)
@@ -2195,6 +2195,17 @@ static int gridFlipFind(const void *item, int make)
     gridFlips[i].target = 0;
     gridFlips[i].side = 1;
     return i;
+}
+
+// A list item is freed (menusys rebuilds a device's list on rename, hide, delete and refresh): a new item can
+// reuse its address, and must not inherit its turn or a half-done hold.
+void gridForgetItem(const void *item)
+{
+    for (int i = 0; i < GRID_FLIPS; i++)
+        if (gridFlips[i].item == item)
+            memset(&gridFlips[i], 0, sizeof(gridFlips[i]));
+    if (gridFlipHoldItem == item)
+        gridFlipHoldItem = NULL;
 }
 
 // The turn (radians) a case is drawn at: 0 its front, +-pi its back.
@@ -2559,8 +2570,13 @@ static void drawDeviceSidebar(struct menu_list *menu, int centerY)
 static void drawGrid(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     (void)config;
-    if (item == NULL || elem->extended == NULL || menu == NULL || menu->item == NULL || elem->width <= 0 || elem->height <= 0)
+    if (elem->extended == NULL || menu == NULL || menu->item == NULL || elem->width <= 0 || elem->height <= 0)
         return;
+    if (item == NULL) { // an empty device page: no covers, but the sidebar may hold the pad and must show
+        if (gTheme->gridDevices && gTheme->grid != NULL)
+            drawDeviceSidebar(menu, elem->posY);
+        return;
+    }
 
     int count = 0, index = 0;
     for (struct submenu_list *row = menu->item->submenu; row != NULL; row = row->next) {
@@ -2676,6 +2692,13 @@ static void endGrid(struct theme_element *elem)
     gridSlideFrom = -1;
     memset(gridFlips, 0, sizeof(gridFlips));
     gridFlipHoldItem = NULL;
+    // The theme loads again after a video-mode change, on a new GS context: drop the sidebar glyphs (and their
+    // VRAM binding) so the next draw uploads them afresh instead of reading the old mode's VRAM.
+    if (gridGlyphs.Mem != NULL) {
+        rmUnloadTexture(&gridGlyphs);
+        texFree(&gridGlyphs);
+    }
+    gridGlyphsTried = 0;
     endMutableImage(elem);
 }
 
@@ -2717,11 +2740,11 @@ static void initGrid(const char *themePath, config_set_t *themeConfig, theme_t *
 
     // Every visible cell needs its own cover slot, or the covers on screen evict each other on every frame;
     // two pages' worth while one slides out as the next slides in. A theme's <name>_count may ask for more
-    // slots, never for fewer than the grid shows.
+    // slots, never for fewer than two pages.
     int cells = rows * columns, count = 2 * cells > COVER_CACHE_SLOTS ? 2 * cells : COVER_CACHE_SLOTS;
     snprintf(key, sizeof(key), "%s_count", name);
-    if (configGetInt(themeConfig, key, &count) && count < cells)
-        configSetInt(themeConfig, key, cells);
+    if (configGetInt(themeConfig, key, &count) && count < 2 * cells)
+        configSetInt(themeConfig, key, 2 * cells);
 
     mutable_image_t *image = initMutableImage(themePath, themeConfig, theme, name, elem->type, "COV", count, NULL, NULL);
     elem->extended = image;
@@ -2739,7 +2762,8 @@ static void initGrid(const char *themePath, config_set_t *themeConfig, theme_t *
                 gridBacks[i].elem = elem;
                 gridBacks[i].cache = cacheInitCache(theme->gameCacheCount++, "ART", 1, "COV2", GRID_BACK_SLOTS);
                 break;
-            }
+            } else if (i == GRID_BACK_ELEMS - 1)
+                LOG("THEMES Grid %s: no back-cover slot left, case flip off for it\n", name);
     }
 
     if (theme->grid != NULL)

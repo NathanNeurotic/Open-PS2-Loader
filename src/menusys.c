@@ -1294,6 +1294,7 @@ submenu_list_t *submenuFindItemByIdAndText(submenu_list_t *submenu, int id, cons
 
 static void submenuDestroyItem(submenu_list_t *submenu)
 {
+    gridForgetItem(submenu);
 #ifdef RETROACHIEVEMENTS
     free(submenu->item.raText);
 #endif
@@ -2386,6 +2387,9 @@ void menuHandleInputMain()
     int viewPending = support != NULL && libViewPending(support->mode);
 
     if (menuGridSidebarFocused()) {
+        // R3 still marks the selected game (read before the sidebar can move to another device this frame)
+        if (getKeyOn(KEY_R3) && !viewPending && selected_item->item->fav)
+            selected_item->item->fav(selected_item->item);
         menuGridSidebarInput();
         return;
     }

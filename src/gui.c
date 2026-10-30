@@ -2711,8 +2711,8 @@ void guiShowCoverflowConfig(void)
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, &value))
             gGridLayout = (value >= 0 && value <= GRID_LAYOUTS) ? value : 0;
         // A new layout changes how many covers a page holds, and so the cover cache: the theme loads again.
-        if (gGridLayout != keepLayout && gTheme != NULL && gTheme->grid != NULL)
-            thmSetGuiValue(thmGetGuiValue(), 1);
+        if (gGridLayout != keepLayout && gTheme != NULL && gTheme->grid != NULL && !thmSetGuiValue(thmGetGuiValue(), 1))
+            gGridLayout = keepLayout; // abandoned load: the old grid is still on screen, keep the setting with it
     }
 }
 
