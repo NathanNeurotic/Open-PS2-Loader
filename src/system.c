@@ -2678,6 +2678,24 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     LOG("SYSTEM LaunchLoaderElf loading modules\n");
     ModuleStorageSize = (sendIrxKernelRAM(filename, mode_str, modules, ModuleStorage, size_cdvdman_irx, cdvdman_irx, size_mcemu_irx, mcemu_irx) + 0x3F) & ~0x3F;
 
+#ifdef IGR_MENU
+    /* The in-game menu's CHEATS page (ee_core igrmenu.c): every cheat of the game's file goes after the modules,
+       for the whole game, as RIPPS2 carries its menu's data. Only at the default address and only below 0xD0000
+       (above it some games keep data, see ee_core/linkfile): a game moved lower (mod_storage_location_list) or a
+       storage too full for it gets the menu without the page, and its cheats run as ticked before the launch. */
+    void *igrCheats = NULL;
+    if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && !discMode && GetCheatsEnabled() && ModuleStorage == (void *)OPL_MOD_STORAGE) {
+        u8 *at = (u8 *)ModuleStorage + ModuleStorageSize;
+        unsigned int room = (u32)at < 0xD0000 ? 0xD0000 - (u32)at : 0;
+        int bytes = igrCheatsPack(at, room);
+        if (bytes > 0) {
+            igrCheats = at;
+            ModuleStorageSize += (bytes + 0x3F) & ~0x3F;
+        }
+        LOG("IGR menu cheats: %d bytes at %p (room %u)\n", bytes, at, room);
+    }
+#endif
+
     ModuleStorageEnd = (void *)((u8 *)ModuleStorage + ModuleStorageSize);
 #ifdef RETROACHIEVEMENTS
     if (!sysModeHasNoRATelemetry(mode_str) && gRATelemetry && GetWatchCount() > 0)
@@ -2748,6 +2766,18 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
         config->gCheatList = GetCheatsList();
     } else
         config->gCheatList = NULL;
+
+#ifdef IGR_MENU
+    // The in-game menu (RIPPS2's, by akilluminati47; ee_core igrmenu.c). RetroAchievements builds and the IGS and
+    // freeze-report builds make ee_core without it (no room), and leave these zero.
+    config->IgrMenu = gIgrMenu && !(compatflags & COMPAT_MODE_6); // Mode 6 (Disable IGR) turns the menu off too
+    config->IgrConfirmCircle = gSelectButton == KEY_CIRCLE;
+    if (igrCheats != NULL && config->gCheatList != NULL) {
+        set_cheats_list_live(igrCheats); // every hook, and the ticked cheats as the menu builds them
+        config->gCheatList = GetCheatsList();
+        config->IgrCheats = igrCheats;
+    }
+#endif
 
     // PS2RD .img cheats (item 26). Without this the EE loads the .img into RAM and then never hands
     // the pointer to the core, so LinkImage() had nothing to link and the whole feature was dead.

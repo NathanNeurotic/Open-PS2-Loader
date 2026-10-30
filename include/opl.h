@@ -433,6 +433,7 @@ extern int gEnableDebug;
 
 extern int gPS2Logo;
 extern int gAutoCreateVmc;
+extern int gIgrMenu; // the in-game menu (ee_core igrmenu.c), off by default; not in RetroAchievements builds
 
 // Default device
 extern int gDefaultDevice;

@@ -92,6 +92,11 @@ OPLDIAG ?= 0
 # before exiting. Reaches ee_core, CDVDMAN and CDVDFSV only; the menu is unchanged. Not combined
 # with RETROACHIEVEMENTS: RA builds run IGR from VBLANK, which this does not hook.
 INGAMEDIAG ?= 0
+# In-game menu (beta; RIPPS2's, by akilluminati47): with the "In-Game Menu" setting on, the IGR combo
+# pauses the game under a panel (RESUME, CHEATS, EXIT GAME, POWER OFF) instead of leaving at once.
+# ee_core only. Left out of the RETROACHIEVEMENTS, IGS and INGAMEDIAG flavours: ee_core has no room
+# for it there (see docs/IGR.md).
+IGR_MENU ?= 1
 #How the TTY will reach developer: 'UDP', 'PPC_UART'.
 TTY_APPROACH ?= UDP
 
@@ -333,6 +338,14 @@ ifeq ($(INGAMEDIAG),1)
   EECORE_EXTRA_FLAGS += INGAMEDIAG=1
   CDVDMAN_DIAG_FLAGS = INGAMEDIAG=1
   IOP_OBJS += freezediag.o
+endif
+
+ifneq ($(RETROACHIEVEMENTS)$(IGS)$(INGAMEDIAG),000)
+  override IGR_MENU = 0
+endif
+ifeq ($(IGR_MENU),1)
+  EE_CFLAGS += -DIGR_MENU
+  EECORE_EXTRA_FLAGS += IGR_MENU=1
 endif
 
 ifeq ($(DEBUG),1)

@@ -1083,6 +1083,13 @@ struct UIItem diaLaunchConfig[] = {
     {UI_BOOL, CFG_AUTO_CREATE_VMC, 1, 1, _STR_HINT_AUTO_CREATE_VMC, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+#ifdef IGR_MENU // not in RA builds, nor in the IGS and freeze-report builds (no room in ee_core)
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_IGR_MENU}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_IGR_MENU, 1, 1, _STR_HINT_IGR_MENU, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+#endif
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEFAULT_CORE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_DEFAULT_CORE, 1, 1, _STR_HINT_DEFAULT_CORE, 0, 0, {.intvalue = {0, 0}}},

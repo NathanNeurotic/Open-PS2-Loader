@@ -362,6 +362,7 @@ char gCustomSettingsPath[64];
 int gEnableDebug;
 int gPS2Logo;
 int gAutoCreateVmc; // default-off: create + assign a per-game VMC on a PS2 game's first launch
+int gIgrMenu;       // default-off: the IGR combo pauses the game under the in-game menu (beta)
 int gDefaultDevice;
 int gEnableWrite;
 char gBDMPrefix[32];
@@ -3569,6 +3570,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, &gEnableDebug);
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, &gAutoCreateVmc);
+            configGetInt(configOPL, CONFIG_OPL_IGR_MENU, &gIgrMenu);
             configGetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, &gHDDGameListCache);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetStrCopy(configOPL, CONFIG_OPL_CUSTOM_SETTINGS_PATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
@@ -4219,6 +4221,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, gEnableDebug);
         configSetInt(configOPL, CONFIG_OPL_PS2LOGO, gPS2Logo);
         configSetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, gAutoCreateVmc);
+        configSetInt(configOPL, CONFIG_OPL_IGR_MENU, gIgrMenu);
         configSetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, gHDDGameListCache);
         configSetStr(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath);
         configSetStr(configOPL, CONFIG_OPL_CUSTOM_SETTINGS_PATH, gCustomSettingsPath);
@@ -5198,6 +5201,7 @@ static void setDefaults(void)
     gEnableDebug = 0;
     gPS2Logo = 1;       // opinionated defaults: the fork ships ready-to-use
     gAutoCreateVmc = 0; // off: never move someone's saves from their physical card unasked
+    gIgrMenu = 0;       // off: the in-game menu is a beta, opt in
     gHDDGameListCache = 0;
     gEnableWrite = 1;
     gRememberLastPlayed = 0;
