@@ -516,6 +516,7 @@ void sfxPlay(int id)
 #define BGM_RING_BUFFER_COUNT      192 // 768 KB buffer (~4.35s): extra headroom for long device/list bursts (#364)
 #define BGM_RING_BUFFER_SIZE       4096
 #define BGM_STOP_WAIT_SLICES       16
+#define BGM_MAX_EMPTY_READS        64 // ov_read calls in a row that give no PCM before the music stops
 #define BGM_IO_LOW_WATER_CHUNKS    48 // ~1.1 s: stop STARTING discretionary device reads
 #define BGM_IO_RESUME_WATER_CHUNKS 80 // ~1.8 s: hysteresis before artwork/cosmetic IO resumes
 // EE priorities are strict (lower number wins): playback=30, Vorbis I/O/decode=31. Playback is
@@ -708,7 +709,7 @@ static void bgmThread(void *arg)
 
 static void bgmIoThread(void *arg)
 {
-    int decodeTotal, bitStream;
+    int decodeTotal, bitStream, emptyReads = 0;
 
     bgmIoThreadRunning = 1;
     do {
@@ -725,7 +726,18 @@ static void bgmIoThread(void *arg)
             if (ret > 0) {
                 bufferPtr += ret;
                 decodeTotal -= ret;
-            } else if (ret == OV_HOLE) {
+                emptyReads = 0;
+                continue;
+            }
+            // This thread shares the GUI's priority and never sleeps inside this loop, so a stream that
+            // keeps answering without PCM (a hole after every packet, or a track that decodes to nothing
+            // and rewinds forever) would starve the menu. Give up on the music after a bounded run.
+            if (++emptyReads > BGM_MAX_EMPTY_READS) {
+                LOG("BGM: %d reads in a row without audio -- stopping.\n", emptyReads);
+                terminateFlag = 1;
+                break;
+            }
+            if (ret == OV_HOLE) {
                 // Recoverable Vorbis discontinuity. libvorbisfile explicitly permits callers to
                 // continue after OV_HOLE; treating it as a fatal device error made one stressed
                 // read permanently stop BGM instead of recovering on the next packet.
