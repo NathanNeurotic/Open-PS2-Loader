@@ -193,6 +193,9 @@ int LoadOPLModule(int id, int mode, int arg_len, const char *args)
 #ifdef INGAMEDIAG
                     && id != OPL_MODULE_ID_FREEZEDIAG
 #endif
+#ifdef IGR_MENU
+                    && id != OPL_MODULE_ID_IGRMBOX // no room: the menu just stays as loud as before
+#endif
                 ) {
                     DBGCOL_BLNK(1, 0x0000FF, true, MODMGR, "MODLOAD: out of IOP Memory"); // yellow blinking
                     while (1)
