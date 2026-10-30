@@ -139,6 +139,7 @@ void thmViewScan(config_set_t *themeConfig, thm_view_info_t *info)
     info->mask = 0;
     if (configGetStr(themeConfig, THM_VIEW_KEY_VIEWS, &value))
         info->mask = thmViewParseList(value);
+    info->listed = info->mask != 0;
     if (info->mask == 0)
         info->mask = (1u << info->native) | info->blocksMask;
 
@@ -277,4 +278,178 @@ int thmLayoutAutoFitX(int x, int screenWidth)
 {
     int centre = screenWidth / 2;
     return centre + (x - centre) * 3 / 4;
+}
+
+// ---- Fallback views ---------------------------------------------------------------------------------------
+
+// Highest block number looked at per family. The contiguous numbering rule keeps real themes far below it.
+#define THM_SYNTH_MAX_SLOTS 64
+
+struct thm_synth_family
+{
+    const char *name;
+    const char *tmplChain[3]; // where the template's presenter/list for this family is looked up, in order
+};
+
+static const struct thm_synth_family synthFamilies[] = {
+    {"main", {"main", NULL, NULL}},
+    {"appsMain", {"appsMain", "main", NULL}},
+    {"vcdMain", {"vcdMain", "main", NULL}},
+    {"favsMain", {"favsMain", "main", NULL}},
+    {"favsVcdMain", {"favsVcdMain", "vcdMain", "main"}},
+    {"favsAppsMain", {"favsAppsMain", "appsMain", "main"}},
+};
+
+static const char *const synthPresenter[THM_VIEW_COUNT] = {"ItemCover", "Coverflow", "PSBBNFlow", "Grid"};
+
+static const char *thmSynthType(config_set_t *cfg, const char *block)
+{
+    char key[CONFIG_KEY_NAME_LEN];
+    const char *type = NULL;
+
+    snprintf(key, sizeof(key), "%s_type", block);
+    return configGetStr(cfg, key, &type) ? type : NULL;
+}
+
+static int thmSynthIsPresenter(const char *type)
+{
+    if (type == NULL)
+        return 0;
+    for (int v = 0; v < THM_VIEW_COUNT; v++) {
+        if (strcmp(type, synthPresenter[v]) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+// The first block of the template's chain (one family name, else the next) whose type is `type`.
+static int thmSynthFindTemplate(config_set_t *tmpl, const char *const *chain, int chainLen, const char *type, char *out, size_t outSize)
+{
+    for (int c = 0; c < chainLen && chain[c] != NULL; c++) {
+        for (int j = 0; j < THM_SYNTH_MAX_SLOTS; j++) {
+            snprintf(out, outSize, "%s%d", chain[c], j);
+            const char *t = thmSynthType(tmpl, out);
+            if (t != NULL && strcmp(t, type) == 0)
+                return 1;
+        }
+    }
+    out[0] = '\0';
+    return 0;
+}
+
+// Copy every "<src>_<key>" of from as "<dst>_<key>" into to. dst never starts with src, so keys appended to
+// the list being walked (from == to) are not copied again.
+static void thmSynthCopyBlock(config_set_t *to, config_set_t *from, const char *src, const char *dst)
+{
+    char key[CONFIG_KEY_NAME_LEN], value[CONFIG_KEY_VALUE_LEN];
+    size_t n = strlen(src);
+
+    for (const struct config_value_t *it = from->head; it != NULL; it = it->next) {
+        if (strncmp(it->key, src, n) != 0 || it->key[n] != '_')
+            continue;
+        snprintf(key, sizeof(key), "%s_%s", dst, it->key + n + 1);
+        snprintf(value, sizeof(value), "%s", it->val);
+        configSetStr(to, key, value);
+    }
+}
+
+static void thmSynthSetKey(config_set_t *cfg, const char *block, const char *suffix, const char *value)
+{
+    char key[CONFIG_KEY_NAME_LEN];
+    snprintf(key, sizeof(key), "%s_%s", block, suffix);
+    configSetStr(cfg, key, value);
+}
+
+int thmViewSynthesize(config_set_t *themeConfig, config_set_t *tmpl, int view)
+{
+    static const char *const listKeys[] = {"x", "y", "width", "height", "aligned"};
+    const int familyCount = (int)(sizeof(synthFamilies) / sizeof(synthFamilies[0]));
+    char src[THM_VIEW_BLOCK_NAME_LEN], dst[THM_VIEW_BLOCK_NAME_LEN], tpl[THM_VIEW_BLOCK_NAME_LEN], tplList[THM_VIEW_BLOCK_NAME_LEN];
+    char key[CONFIG_KEY_NAME_LEN];
+    int hasPresenter[6] = {0, 0, 0, 0, 0, 0};
+    int presenterSlot = -1;
+
+    if (themeConfig == NULL || tmpl == NULL || view < 0 || view >= THM_VIEW_COUNT)
+        return 0;
+    const char *vn = viewNames[view];
+    const char *presenter = synthPresenter[view];
+    if (!thmSynthFindTemplate(tmpl, synthFamilies[0].tmplChain, 1, presenter, tpl, sizeof(tpl)))
+        return 0;
+
+    for (int f = 0; f < familyCount; f++) {
+        const struct thm_synth_family *fam = &synthFamilies[f];
+        int haveList = thmSynthFindTemplate(tmpl, fam->tmplChain, 3, "ItemsList", tplList, sizeof(tplList));
+
+        for (int j = 0; j < THM_SYNTH_MAX_SLOTS; j++) {
+            snprintf(src, sizeof(src), "%s%d", fam->name, j);
+            if (!thmViewBlockPresent(themeConfig, src))
+                continue;
+            snprintf(dst, sizeof(dst), "%s.%s", vn, src);
+            const char *type = thmSynthType(themeConfig, src);
+            int enabled = 1;
+            snprintf(key, sizeof(key), "%s_enabled", src);
+            configGetInt(themeConfig, key, &enabled);
+
+            if (!enabled) {
+                thmSynthSetKey(themeConfig, dst, "enabled", "0");
+            } else if (thmSynthIsPresenter(type)) {
+                if (!hasPresenter[f] && thmSynthFindTemplate(tmpl, fam->tmplChain, 3, presenter, tpl, sizeof(tpl))) {
+                    thmSynthCopyBlock(themeConfig, tmpl, tpl, dst);
+                    hasPresenter[f] = 1;
+                    if (f == 0)
+                        presenterSlot = j;
+                } else {
+                    thmSynthSetKey(themeConfig, dst, "enabled", "0");
+                }
+            } else {
+                thmSynthCopyBlock(themeConfig, themeConfig, src, dst);
+                const char *devices;
+                snprintf(key, sizeof(key), "%s_devices", src);
+                if (type != NULL && strcmp(type, "ItemsList") == 0 && haveList && !configGetStr(themeConfig, key, &devices)) {
+                    for (size_t l = 0; l < sizeof(listKeys) / sizeof(listKeys[0]); l++) {
+                        const char *k = listKeys[l];
+                        const char *value;
+                        snprintf(key, sizeof(key), "%s_%s", tplList, k);
+                        if (configGetStr(tmpl, key, &value)) {
+                            char copy[CONFIG_KEY_VALUE_LEN];
+                            snprintf(copy, sizeof(copy), "%s", value);
+                            thmSynthSetKey(themeConfig, dst, k, copy);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // main has no presenter of its own (a list-only theme): add the template's after its last block, where
+    // the contiguous numbering rule still reaches it.
+    if (presenterSlot < 0) {
+        for (presenterSlot = 0; presenterSlot < THM_SYNTH_MAX_SLOTS; presenterSlot++) {
+            snprintf(src, sizeof(src), "main%d", presenterSlot);
+            snprintf(dst, sizeof(dst), "%s.main%d", vn, presenterSlot);
+            if (!thmViewBlockPresent(themeConfig, src) && !thmViewBlockPresent(themeConfig, dst))
+                break;
+        }
+        if (presenterSlot >= THM_SYNTH_MAX_SLOTS)
+            return 0;
+        thmSynthFindTemplate(tmpl, synthFamilies[0].tmplChain, 1, presenter, tpl, sizeof(tpl));
+        snprintf(dst, sizeof(dst), "%s.main%d", vn, presenterSlot);
+        thmSynthCopyBlock(themeConfig, tmpl, tpl, dst);
+        hasPresenter[0] = 1;
+    }
+
+    // Apps and PS1 pages would otherwise inherit main's (game cover) presenter: give them the template's own
+    // in the same slot when the template has one and the theme put nothing of theirs there.
+    for (int f = 1; f <= 2; f++) {
+        const struct thm_synth_family *fam = &synthFamilies[f];
+        if (hasPresenter[f])
+            continue;
+        snprintf(src, sizeof(src), "%s%d", fam->name, presenterSlot);
+        snprintf(dst, sizeof(dst), "%s.%s%d", vn, fam->name, presenterSlot);
+        if (thmViewBlockPresent(themeConfig, src) || thmViewBlockPresent(themeConfig, dst))
+            continue;
+        if (thmSynthFindTemplate(tmpl, fam->tmplChain, 1, presenter, tpl, sizeof(tpl)))
+            thmSynthCopyBlock(themeConfig, tmpl, tpl, dst);
+    }
+    return 1;
 }

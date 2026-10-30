@@ -314,7 +314,7 @@ where neither the view nor the base has a block.
 
 | Key | Value | Meaning |
 |---|---|---|
-| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: the theme's own view (the first `PSBBNFlow`, `Coverflow` or `Grid` element among the base's contiguous `mainN` blocks gives psbbn, coverflow or grid, else list; `appsMain`, `vcdMain` and `favsMain` blocks do not count, so a theme that only draws its apps page as a Grid lists `grid` in `views=` or declares a `grid.` block) plus every view it declares a `<view>.` key for. |
+| `views` | comma list of `list`, `coverflow`, `psbbn`, `grid` | The views the theme offers, and only those. Holding L3 always steps through them in the fixed order list, coverflow, psbbn, grid, whatever order `views=` lists them in. Absent: **every** view; a view the theme does not declare is built for it (see [Fallback views](#fallback-views)). The theme's own view, its default, is the first `PSBBNFlow`, `Coverflow` or `Grid` element among the base's contiguous `mainN` blocks (psbbn, coverflow or grid), else list; `appsMain`, `vcdMain` and `favsMain` blocks do not count. |
 | `default_view` | a view name | The view used until the user picks one, and when the user's pick is not offered. Absent (or naming a view the theme does not offer): the theme's own view if `views=` offers it, else the first offered view in the order list, coverflow, psbbn, grid. |
 | `<view>.inherit` | `0` | That view never falls back to the base blocks: it brings its whole main and info layout. Use it when a view shares little with the base, instead of a long list of `<view>.mainN_enabled=0` lines. |
 | `<view>.<global key>` | as the key | Overrides `use_default`, `use_real_height`, `coverflow_cover_offset` and the colour keys in that view. |
@@ -322,7 +322,7 @@ where neither the view nor the base has a block.
 - Make the base the List view. Stock OPL and other forks ignore the prefixed blocks, so they still load
   the theme as a list.
 - The user's Theme View choice is one setting for every theme (saved as `theme_view=`). A theme that
-  does not offer it shows its `default_view`.
+  does not offer it (it limits itself with `views=`) shows its `default_view`.
 - Only the active view is built. Switching views reloads the theme, so it costs no extra memory.
 - Names stay within 47 characters. The longest prefixed key,
   `coverflow.favsVcdMain12_reflection_offset`, is 41.
@@ -330,6 +330,25 @@ where neither the view nor the base has a block.
   file (`misc/conf_theme_OPL.cfg`, `misc/theme_coverflow.cfg`, `misc/theme_psbbn_flow.cfg`,
   `misc/theme_grid.cfg`), which are
   good references for a view's blocks.
+
+#### Fallback views
+
+A theme without `views=` offers all four views, even when it only describes one. A view it does not
+declare is built from its own layout when the user picks it: background, colours, fonts, menu icons,
+hints, text and the whole info page stay the theme's; only the **presenter** is swapped for the one
+in the built-in `<OPL>` theme's file for that view (`misc/theme_coverflow.cfg`,
+`misc/theme_psbbn_flow.cfg`, `misc/theme_grid.cfg`, or `misc/conf_theme_OPL.cfg` for List).
+
+- In each of `main`, `appsMain`, `vcdMain`, `favsMain`, `favsVcdMain` and `favsAppsMain`, the first
+  `ItemCover`, `Coverflow`, `PSBBNFlow` or `Grid` block becomes that file's presenter for the family, in
+  the same slot (so it draws at the same depth); any further one is hidden.
+- An `ItemsList` without `devices=` keeps its font and colours but takes that file's list position and
+  size (the title strip in Coverflow and Grid, the right-hand column in PSBBN Flow, the left panel in
+  List).
+- A theme with no cover at all gets the presenter after its last `mainN` block. Apps and PS1 pages get
+  the file's own `appsMain`/`vcdMain` presenter in the same slot unless the theme put a block there.
+- Info blocks and the theme's own `<view>.` blocks are never touched. To keep a theme to the views
+  it was designed for, list them in `views=`.
 
 ### SD and HD layouts (`_sd` / `_hd`) — *this fork*
 
@@ -379,6 +398,8 @@ out for 16:9 already), and `scaled=0` images (16:9 still draws those full width)
 
 - Switching Widescreen in Settings reloads a theme that has any `_sd`/`_hd`/`wsX`/`hd_autofit` keys,
   once the settings page is closed. Other themes are not reloaded.
+- The 720p and 1080i video modes are 16:9 screens, so they always count as Widescreen on: `_hd` keys,
+  `hd_autofit` and the 3/4 width correction apply there even with the Widescreen setting off.
 - Keep the plain keys as your 4:3 layout: stock OPL and other forks ignore the variants and use them.
 - The background choice stays one setting for both modes (`bg_*`, `main0`) unless the theme gives it
   `_hd` variants.
