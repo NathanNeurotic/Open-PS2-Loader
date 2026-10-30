@@ -23,7 +23,12 @@
 
 #define MB_SECOND 294912000u // COP0 Count ticks
 
-static igrmbox_ack_t mbAck __attribute__((aligned(64))); // a cache line of its own: the IOP DMAs into it
+static union
+{
+    igrmbox_ack_t a;
+    u8 line[64];
+} mbAckLine __attribute__((aligned(64))); // a whole cache line of its own: the IOP DMAs into it
+#define mbAck (mbAckLine.a)
 static u32 mbIopReq, mbIopBuf, mbSeq;
 
 #define MB_ACK ((volatile igrmbox_ack_t *)UNCACHED_SEG(&mbAck))
