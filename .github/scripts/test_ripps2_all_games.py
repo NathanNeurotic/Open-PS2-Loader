@@ -312,6 +312,50 @@ with tempfile.TemporaryDirectory(prefix='ripps2-allgames-off-') as temp:
     subprocess.run([str(exe)], check=True)
 print('ok   All Games off: a hidden Favourites page goes to the startup page, a polling device page stays')
 
+iconSrc = (root / 'src/themes.c').read_text()
+icon = r"""
+#include <assert.h>
+#include <stddef.h>
+enum { BDM_MODE = 0, FAV_MODE = 12 };
+enum { FAV_ICON = 7, USB_ICON = 3 };
+typedef struct { int mode, enabled; } item_list_t;
+typedef struct menu_item { int visible, icon_id; void *userdata; } menu_item_t;
+struct menu_list { menu_item_t *item; };
+struct submenu_list { int unused; };
+typedef struct { int unused; } config_set_t;
+struct theme_element { int posX, posY, aligned, width, height, scaled; };
+typedef struct { void *Mem; } GSTEXTURE;
+static int gAllGames, draws, gDefaultCol;
+static GSTEXTURE tex = {&tex};
+static int thmElemSkipsDevice(struct theme_element *e, int id) { (void)e; (void)id; return 0; }
+static GSTEXTURE *thmGetTexture(int id) { (void)id; return &tex; }
+static void rmDrawPixmap(GSTEXTURE *t, int x, int y, int a, int w, int h, int s, int c, int z) { (void)t; (void)x; (void)y; (void)a; (void)w; (void)h; (void)s; (void)c; (void)z; draws++; }
+""" + function(iconSrc, 'static void drawMenuIcon(struct menu_list *menu') + r"""
+int main(void)
+{
+    item_list_t fav = {FAV_MODE, 1}, usb = {BDM_MODE, 1};
+    menu_item_t tFav = {1, FAV_ICON, &fav}, tUsb = {1, USB_ICON, &usb};
+    struct menu_list pFav = {&tFav}, pUsb = {&tUsb};
+    struct theme_element e = {0, 0, 0, 0, 0, 0};
+    drawMenuIcon(&pFav, NULL, NULL, &e);
+    assert(draws == 1);               /* Favourites page: its star */
+    gAllGames = 1;
+    drawMenuIcon(&pFav, NULL, NULL, &e);
+    assert(draws == 1);               /* All Games page: no page icon */
+    drawMenuIcon(&pUsb, NULL, NULL, &e);
+    assert(draws == 2);               /* a tab that stays (Manual device) keeps its icon */
+    return 0;
+}
+"""
+with tempfile.TemporaryDirectory(prefix='ripps2-allgames-icon-') as temp:
+    src = Path(temp) / 'icon.c'
+    src.write_text(icon)
+    exe = Path(temp) / 'icon.exe'
+    subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', '-Wno-unused-parameter',
+                    '-fsanitize=address,undefined', str(src), '-o', str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
+print('ok   the All Games page draws no page icon; Favourites and the tabs that stay keep theirs')
+
 libview = (root / 'src/libview.c').read_text()
 ring = libview[libview.index('if (mode == FAV_MODE && gAllGames) {'):]
 ring = ring[:ring.index('} else if (mode == FAV_MODE)')]

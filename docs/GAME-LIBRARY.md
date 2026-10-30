@@ -23,8 +23,8 @@ and so does the Apps tab once the apps are on it. All Games starts the apps itse
 Applications Page Start Mode is Manual, so that tab goes too; with it Off there are no apps and no
 tab. Tabs for devices set to Manual, and the network share picker, stay so those can still be
 started. A device that is pulled out, or whose start mode is switched Off, leaves the list with its
-tab. When the same title is on two devices, each row shows its device's name. The menu opens on
-this page when the setting is on.
+tab. When the same title is on two devices, each row shows its device's name. The page draws no
+page icon, since it is not any one device. The menu opens on this page when the setting is on.
 
 Turning the setting off brings every tab back. If Favourites Page Start Mode is Off, the Favourites
 page goes away with it and the menu moves to the startup page (Settings → Game Sources → Default
