@@ -100,7 +100,7 @@ static menu_list_t *selected_item;
 
 #ifdef RETROACHIEVEMENTS
 static void menuOpenAchievements(const char *hash);
-static char achImagePath[256], achImageStartup[16];
+static char achImagePath[256], achImageStartup[16], achImagePrefix[256];
 static int achImageVcd, achReturnScreen;
 #endif
 static int actionStatus;
@@ -2645,12 +2645,14 @@ void menuHandleInputGameMenu()
             } else {
                 base_game_info_t *g = support->itemGet(support, gid);
                 const char *prefix = support->itemGetPrefix(support);
+                const char *save = (support->flags & MODE_FLAG_READ_ONLY) ? "" : prefix; // no .ach write on a read-only device
                 char path[256];
                 if (g && prefix && (g->format == GAME_FORMAT_ISO || g->format == GAME_FORMAT_OLD_ISO)) {
                     sbCreatePath(g, path, prefix, "/", 0);
-                    if (achievementsRequestImage(path, g->startup)) {
+                    if (achievementsRequestImage(path, g->startup, save)) {
                         snprintf(achImagePath, sizeof(achImagePath), "%s", path);
                         snprintf(achImageStartup, sizeof(achImageStartup), "%s", g->startup);
+                        snprintf(achImagePrefix, sizeof(achImagePrefix), "%s", save);
                         menuOpenAchievements("image");
                     } else
                         guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
@@ -3065,7 +3067,7 @@ void menuHandleInputAchievements(void)
             if (achImageVcd)
                 achievementsRequestVcd(achImagePath);
             else
-                achievementsRequestImage(achImagePath, achImageStartup);
+                achievementsRequestImage(achImagePath, achImageStartup, achImagePrefix);
             return;
         }
         achievementsForget();

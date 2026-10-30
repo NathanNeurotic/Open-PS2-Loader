@@ -63,6 +63,8 @@ From a game card, RiptOPL hashes the image and looks the game up on retroachieve
 
 This browser needs TCP to reach xeRAbora's interface, which the UDPFS network module does not have, so it cannot open while **UDPFS** (Files or IMG) or **UDPBD** is the network protocol. The support check itself still works on UDPFS.
 
+A set opened from a game's **View achievements** is also saved as `<device>/RA/<serial>.ach` beside the watch list; with **In-Game Menu** on, the game's next launch shows it on the menu's Achievements page with what is left to hunt ([IGR.md](IGR.md)). Open it again to bring the list up to date.
+
 ### Caduceus achievement browser and in-game cards
 
 Choose **Caduceus achievements** from the main menu to browse account games and progress. Select a game to see its achievements, points, descriptions and unlock dates. **L1/R1** changes pages, **Square** cycles All / Earned / Locked / Hardcore, **Select** refreshes, and Back returns to the previous view. Hardcore is a filter for existing account history; it does not enable hardcore tracking.

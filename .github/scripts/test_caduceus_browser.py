@@ -11,7 +11,11 @@ prefix = r"""
 #include <string.h>
 #include "include/achievements.h"
 #include "include/ratls.h"
+#include "src/rahunt.c"
 #define RETROACHIEVEMENTS 1
+#define LOG(...) ((void)0)
+static int mkdir(const char *p, int m) { (void)p; (void)m; assert(!"Caduceus mode saves no RA/<startup>.ach"); return -1; }
+static int unlink(const char *p) { (void)p; return 0; }
 #define IO_OK 0
 #define IO_CUSTOM_SIMPLEACTION 1
 #define O_RDONLY 0
@@ -77,7 +81,7 @@ int main(void) {
  file_length=66;key_data[64]='\r';key_data[65]='\n';
  assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_READY);
  network_fail=1;assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_ERROR);network_fail=0;
- assert(achievementsRequestImage("mass0:DVD/Game.iso","SLUS_123.45"));worker();
+ assert(achievementsRequestImage("mass0:DVD/Game.iso","SLUS_123.45","mass0:"));worker();
  assert(hashed==1 && strstr(received," A 0 0 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "));
  assert(achievementsRequestVcd("mass0:/POPS/First.VCD"));worker();
  assert(hashed_vcd==1 && hashed==1 && strstr(received," A 0 0 cccccccccccccccccccccccccccccccc "));
@@ -223,7 +227,7 @@ ui=r"""
 enum {KEY_CROSS=1,KEY_CIRCLE,KEY_START,KEY_SELECT,KEY_SQUARE,KEY_L1,KEY_R1,KEY_UP,KEY_DOWN};
 enum {GUI_SCREEN_GAME_MENU=3,GUI_SCREEN_MENU=1,GUI_SCREEN_APP_MENU=4,SFX_CURSOR};
 static int achFromCard,achKind,achPage,achLibraryPage,achFilter,achSelected,achNeedsPage,achImageVcd,achReturnScreen;
-static char achTarget[33],achImagePath[256],achImageStartup[16];
+static char achTarget[33],achImagePath[256],achImageStartup[16],achImagePrefix[256];
 static int achIconIds[3],gSelectButton=KEY_CROSS,key,busy,screen,retries;
 static achievement_page_t current;
 static void achievementsSnapshot(achievement_page_t *out) {*out=current;}
@@ -235,7 +239,7 @@ static int getKey(int k) {return key==k;}
 static void guiSwitchScreen(int id) {screen=id;}
 static void menuInitMainMenu(void) {}
 static void sfxPlay(int effect) {}
-static int achievementsRequestImage(const char *p,const char *s) {retries++;return 1;}
+static int achievementsRequestImage(const char *p,const char *s,const char *x) {(void)x;retries++;return 1;}
 static int achievementsRequestVcd(const char *p) {retries+=10;return 1;}
 void achievementsForget(void) {}
 """.replace('static void achievementsSnapshot','void achievementsSnapshot').replace('static int achievementsBusy','int achievementsBusy').replace('static int achievementsRequestImage','int achievementsRequestImage').replace('static int achievementsRequestVcd','int achievementsRequestVcd')

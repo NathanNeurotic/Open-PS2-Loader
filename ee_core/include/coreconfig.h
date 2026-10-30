@@ -95,6 +95,16 @@ struct EECoreConfig_t
     int IgrMenu;
     int IgrConfirmCircle;
     void *IgrCheats;
+#ifdef RETROACHIEVEMENTS
+    /* The menu's ACHIEVEMENTS page (RIPPS2 build 94), RETROACHIEVEMENTS flavour: RA/<startup>.ach as the launch found
+       it. IgrRaTotal achievements, IgrRaUnlocked of them unlocked (0 total: no list). IgrRaHunt: IgrRaHuntCount of the
+       locked ones, after the IOP modules, packed in the menu's lines by raHuntBlob (src/rahunt.c): for each its
+       points, its title lines, its description lines (a byte each), then those lines NUL ended; or NULL. */
+    const u8 *IgrRaHunt;
+    int IgrRaHuntCount;
+    int IgrRaTotal;
+    int IgrRaUnlocked;
+#endif
 };
 
 #define USE_LOCAL_EECORE_CONFIG struct EECoreConfig_t *config = &g_ee_core_config;

@@ -116,7 +116,7 @@ jobs:
           /tmp/test_freeze_diag_format
       - name: Check the in-game menu's pages and its cheat list
         run: |
-          c++ -std=gnu++17 -Wall -Wextra -Werror -Iee_core/tests/stub -Iee_core/include ee_core/tests/test_igrmenu.cpp -o /tmp/test_igrmenu
+          c++ -std=gnu++17 -Wall -Wextra -Werror -Iee_core/tests/stub -Iee_core/include -I. ee_core/tests/test_igrmenu.cpp -o /tmp/test_igrmenu
           /tmp/test_igrmenu
       - name: Check IOP reset command bounds and payload offsets
         run: python3 .github/scripts/test_reset_arg_bounds.py

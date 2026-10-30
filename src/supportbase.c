@@ -18,6 +18,7 @@
 #include "include/rawatch.h" // RA watch lists, loaded next to the cheats
 #include "include/ranet.h"   // raAskPC/raNetTestLink -- the menu-side PC client exchange
 #include "include/rahash.h"  // raHashIsoDirect -- the image hash, no mounting
+#include "include/rahunt.h"  // RA/<startup>.ach, what is left to hunt, for the in-game menu
 #endif
 #include "include/pggsm.h"
 #include "include/cheatman.h"
@@ -2592,6 +2593,58 @@ void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neut
 }
 
 #ifdef RETROACHIEVEMENTS
+/* What is left to hunt, from RA/<file>.ach beside the watch list (achievements.c saves it when the game's
+   Achievements page reads its set from the xeRAbora PC), packed as the in-game menu reads it (rahunt.c). Static:
+   the launch copies it into module storage (system.c), which the game leaves alone. RIPPS2 build 94. */
+static unsigned char sbRaHunt[RA_HUNT_BLOB];
+static int sbRaHuntCount, sbRaHuntBytes, sbRaHuntTotal, sbRaHuntUnlocked;
+static char sbRaHuntFile[32];
+
+const unsigned char *sbGetRaHunt(const char *file, int *count, int *bytes, int *total, int *unlocked)
+{
+    if (file == NULL || strcmp(file, sbRaHuntFile)) // another game's: a launch path that reads no watch list
+        sbRaHuntTotal = 0;
+    *count = sbRaHuntCount;
+    *bytes = sbRaHuntBytes;
+    *total = sbRaHuntTotal;
+    *unlocked = sbRaHuntUnlocked;
+    return sbRaHuntTotal > 0 ? sbRaHunt : NULL;
+}
+
+static void sbLoadRaHunt(const char *path, const char *file)
+{
+    char achPath[256], *text;
+    ra_hunt_t *list;
+    FILE *f;
+    int len, n, i;
+
+    sbRaHuntCount = sbRaHuntBytes = sbRaHuntTotal = sbRaHuntUnlocked = 0;
+    snprintf(sbRaHuntFile, sizeof(sbRaHuntFile), "%s", file);
+    if (snprintf(achPath, sizeof(achPath), "%sRA/%s.ach", path, file) >= (int)sizeof(achPath) ||
+        (f = fopen(achPath, "rb")) == NULL)
+        return;
+    fseek(f, 0, SEEK_END);
+    len = (int)ftell(f);
+    fseek(f, 0, SEEK_SET);
+    text = len > 0 && len <= 256 * 1024 ? malloc(len + 1) : NULL;
+    list = text != NULL ? malloc(sizeof(ra_hunt_t) * RA_HUNT_MAX) : NULL;
+    if (list != NULL) {
+        len = (int)fread(text, 1, len, f);
+        text[len] = '\0';
+        if ((n = raHuntRead(text, len, list, RA_HUNT_MAX)) > 0) {
+            for (i = 0; i < n; i++)
+                sbRaHuntUnlocked += list[i].unlocked;
+            sbRaHuntTotal = n;
+            sbRaHuntBytes = raHuntBlob(list, n, sbRaHunt, sizeof(sbRaHunt), &sbRaHuntCount);
+            if (sbRaHuntCount < sbRaHuntTotal - sbRaHuntUnlocked)
+                sbRaHuntCount = sbRaHuntBytes = 0; // too many to carry: the counts only (docs/IGR.md)
+        }
+    }
+    free(list);
+    free(text);
+    fclose(f);
+}
+
 /*
   RA: load this game's watch list from <path>RA/<file>.wl.
 
@@ -2618,8 +2671,10 @@ int sbReadWatchList(const char *path, const char *file)
     unsigned int ext;
     int result = -1;
 
+    sbRaHuntCount = sbRaHuntTotal = 0;
     if (path == NULL || file == NULL)
         return -1;
+    sbLoadRaHunt(path, file);
 
     for (ext = 0; ext < sizeof(wlExt) / sizeof(wlExt[0]); ext++) {
         char wlPath[256];
