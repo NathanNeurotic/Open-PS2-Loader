@@ -44,9 +44,10 @@ struct pad_data_t
 
     char actAlign[6];
     int actuators;
-    int actAligned; // padSetActAlign confirmed; see padRumbleRealign()
-    int needsInit;  // reconnect-edge re-init pending; runs once the verified-idle gate opens (see readPads)
-    int readOk;     // the last native read delivered a sample (padGetRightStick trusts no older one)
+    int actAligned;  // padSetActAlign confirmed; see padRumbleRealign()
+    int needsInit;   // reconnect-edge re-init pending; runs once the verified-idle gate opens (see readPads)
+    int readOk;      // the last native read delivered a sample (padGetRightStick trusts no older one)
+    u32 sampleTicks; // cpu_ticks() of the last delivered sample (see PAD_MISS_HOLD_TICKS)
 };
 
 /// milliseconds between the last two polls (see padPollElapsedMs)
@@ -115,6 +116,8 @@ void padGetActuatorDiag(int *act0, int *aligned0, int *act1, int *aligned1)
 // gathered pad data
 static u32 paddata;
 static u32 oldpaddata;
+// Buttons in paddata only because a pad missed this poll (see PAD_MISS_HOLD_TICKS).
+static u32 padHeldUnknown;
 
 static int delaycnt[16];
 static int paddelay[16];
@@ -184,6 +187,19 @@ static int isPadReadyState(int state)
 #define PAD_SELF_HEAL_IDLE_MS     1000
 #define PAD_IDLE_MAX_CLEAN_GAP_MS 100
 static u32 padIdleMs = 0;
+
+// How long a connected pad that delivers no sample keeps what it last reported, in REAL time
+// (cpu_ticks() runs at 294,912 per millisecond; see CLOCKS_PER_MILISEC for why that one is half).
+//
+// A missed read is unknown, not a release. Treating it as a release (readPads() zeroes paddata each
+// poll and only a sample refills it) turns a held direction into release + press, so the cursor
+// takes an extra step and the hold restarts its initial delay. zackcage6's trace (RIPTOPL-NAVTRACE,
+// 2026-10-29) shows the gaps: freepad answers nothing for 80 ms after padSetActAlign, about 240-260 ms
+// while it re-reads a pad whose ANALOG button was pressed, and 230 ms after the reconnect re-init.
+// 300 ms covers those. A verified release, or the pad going to FINDPAD/ERROR/DISCONN (unplugged),
+// clears it at once, so an unplugged pad never keeps navigating. Same idea as RIPPS2's PAD_HOLD_MS
+// (akilluminati47).
+#define PAD_MISS_HOLD_TICKS (300u * 294912u)
 
 /*
  * waitPadReady()
@@ -419,6 +435,12 @@ static int readPad(struct pad_data_t *pad, int *pollClean)
     if ((pad->state == PAD_STATE_STABLE) || (pad->state == PAD_STATE_FINDCTP1)) {
         // pad is connected. Read pad button information.
         ret = padRead(pad->port, pad->slot, &pad->buttons); // port, slot, buttons
+        // The tracked state only follows DISCONN/FINDCTP1/STABLE, so it still says STABLE while freepad
+        // is mid-command (EXECCMD after an ANALOG press, a reconnect or a padSet* request). A reply
+        // taken then is not a sample: zackcage6's trace caught one with every button released while
+        // a direction was held, which read as a release and then a second press.
+        if (ret != 0 && !isPadReadyState(newState))
+            ret = 0;
         pad->readOk = ret != 0;
 
         if (ret != 0) {
@@ -499,9 +521,20 @@ static int readPad(struct pad_data_t *pad, int *pollClean)
 
         pad->oldpaddata = pad->paddata;
         pad->paddata = newpdata;
+        pad->sampleTicks = cpu_ticks();
 
         // merge into the global vars
         paddata |= pad->paddata;
+    } else if (pad->paddata && newState != PAD_STATE_DISCONN && newState != PAD_STATE_FINDPAD && newState != PAD_STATE_ERROR &&
+               (u32)(cpu_ticks() - pad->sampleTicks) <= PAD_MISS_HOLD_TICKS) {
+        // No sample from a pad that is still there: what it last reported stays held (see
+        // PAD_MISS_HOLD_TICKS). It cannot make an edge, and its repeat countdown waits (padHeldUnknown).
+        paddata |= pad->paddata;
+        padHeldUnknown |= pad->paddata;
+        rcode = 1;
+    } else {
+        // Unplugged (FINDPAD/ERROR/DISCONN), or the hold ran out: a release.
+        pad->paddata = 0;
     }
 
     return rcode;
@@ -581,7 +614,7 @@ static void padRumbleRealign(struct pad_data_t *pad)
     // permanently, with nothing logged and no way for the user to tell.
     //
     // padInfoAct() is an EE-local read of the pad buffer freepad has already DMA'd; it neither
-    // blocks nor touches SIO2, so asking again at the first pulse costs nothing. A genuinely
+    // blocks nor touches SIO2, so asking again in a quiet second costs nothing. A genuinely
     // actuator-less pad answers <= 0 every time and is simply skipped.
     if (pad->actuators == 0) {
         pad->actuators = padInfoAct(pad->port, pad->slot, -1, 0);
@@ -598,9 +631,18 @@ static void padRumbleRealign(struct pad_data_t *pad)
     pad->actAlign[4] = 0xff;
     pad->actAlign[5] = 0xff;
 
-    // No waitPadRequestComplete(): that blocks the GUI thread for up to ~150 ms, and this sits on
-    // the path readPads() drives. A refused request just retries on the next pulse -- pulses are
-    // user-driven and seconds apart, so an unbounded lazy retry costs nothing.
+    // ONLY while the user is verifiably idle: readPads() calls this from the same quiet gate as the
+    // reconnect re-init, never from a pulse. padSetActAlign is a configuration command, and freepad
+    // answers no reads while it runs (EXECCMD for ~80 ms in zackcage6's trace). Sent from the first
+    // pulse -- which is the first press's cursor sound -- it landed in the middle of that press: the
+    // held direction read as released, then pressed again, and the cursor moved twice. That was the
+    // first press after boot, and the first press after every re-init (the init can leave the
+    // alignment unconfirmed while the pad is busy switching modes). The pad must also be STABLE with
+    // no request in flight (RIPPS2, akilluminati47: a call into a busy pad stalled the GUI thread in
+    // the RPC). No waitPadRequestComplete(): that blocks this thread for up to ~150 ms. A refused
+    // request retries at the next quiet second.
+    if (padGetState(pad->port, pad->slot) != PAD_STATE_STABLE || padGetReqState(pad->port, pad->slot) == PAD_RSTAT_BUSY)
+        return;
     if (padSetActAlign(pad->port, pad->slot, pad->actAlign))
         pad->actAligned = 1;
 }
@@ -616,9 +658,8 @@ static void padActSet(struct pad_data_t *pad, int small, int large)
     if (!isPadReadyState(pad->state))
         return;
 
-    padRumbleRealign(pad);
-
-    // Still nothing to drive after the recovery attempt -- genuinely actuator-less pad.
+    // Not aligned yet: nothing to drive until readPads()' quiet gate runs padRumbleRealign(). An
+    // actuator-less pad stays at 0 here too.
     if (pad->actuators == 0)
         return;
 
@@ -793,6 +834,9 @@ static void padAdvanceRepeatTimers(u32 elapsedMs)
         elapsedMs = PAD_REPEAT_MAX_CREDIT_MS;
 
     for (i = 0; i < 16; ++i) {
+        // Held only because its pad missed this poll: no credit either way (see PAD_MISS_HOLD_TICKS).
+        if (padHeldUnknown & keyToPad[i + 1])
+            continue;
         if (getKeyPressed(i + 1))
             delaycnt[i] -= elapsedMs;
         else
@@ -809,6 +853,7 @@ int readPads()
     if (!edgeBaselineFrozen)
         oldpaddata = paddata;
     paddata = 0;
+    padHeldUnknown = 0;
 
     time_since_last = padPollElapsedMs();
 
@@ -831,6 +876,7 @@ int readPads()
     // One init per verified-quiet run: the reset makes the next pending pad re-earn a full quiet
     // second, so multiple reconnects cannot stack their bounded waits into one long blackout.
     if (pollClean && !paddata && padIdleMs >= PAD_SELF_HEAL_IDLE_MS) {
+        int quietUsed = 0;
         for (i = 0; i < pad_count; ++i) {
             if (pad_data[i].needsInit && isPadReadyState(pad_data[i].state)) {
                 pad_data[i].needsInit = 0;
@@ -849,11 +895,25 @@ int readPads()
                 // to fix.
                 if (pad_data[i].actuators > 0 && padInfoMode(pad_data[i].port, pad_data[i].slot, PAD_MODECURID, 0) == PAD_TYPE_DUALSHOCK) {
                     LOG("PAD port %d reconnect: already DualShock, skipping re-init\n", pad_data[i].port);
+                    quietUsed = 1;
                     break;
                 }
                 padIdleMs = 0;
                 initializePad(&pad_data[i]);
+                quietUsed = 1;
                 break;
+            }
+        }
+
+        // Rumble alignment, in the same quiet second and never in the middle of input (see
+        // padRumbleRealign). One request per quiet run, after any pending re-init has had its turn.
+        if (!quietUsed && gEnableRumble) {
+            for (i = 0; i < pad_count; ++i) {
+                if (!pad_data[i].needsInit && !pad_data[i].actAligned && isPadReadyState(pad_data[i].state)) {
+                    padIdleMs = 0;
+                    padRumbleRealign(&pad_data[i]);
+                    break;
+                }
             }
         }
     }
@@ -900,7 +960,8 @@ int getKey(int id)
         return 1;
     }
 
-    if (!getKeyPressed(id))
+    // A key held only because its pad missed this poll does not repeat (see PAD_MISS_HOLD_TICKS).
+    if (!getKeyPressed(id) || (padHeldUnknown & keyToPad[id]))
         return 0;
 
     if (delaycnt[kid] <= 0) {
