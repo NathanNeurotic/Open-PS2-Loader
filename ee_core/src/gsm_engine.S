@@ -497,7 +497,8 @@ have_some_write:                                    # Opcode is a write, so we m
 
 #if defined(RETROACHIEVEMENTS) || defined(IGR_MENU)
     /* RetroAchievements can reuse this handler as a passive recorder. In
-       TRACK_ONLY mode record the display values RA needs, then execute the
+       TRACK_ONLY mode record the display values RA and the in-game menu need
+       (PMODE, SMODE2, DISPFB1/2, DISPLAY1/2), then execute the
        game's write unchanged. Do not enter any GSM adaptation path. */
     lbu     $v1, TRACK_ONLY($s2)
     beqz    $v1, normal_GS_write
@@ -513,6 +514,8 @@ have_some_write:                                    # Opcode is a write, so we m
     beqz    $v1, track_DISPLAY1_write
     addi    $v1, $v0, -GS_DISPLAY2
     beqz    $v1, track_DISPLAY2_write
+    addi    $v1, $v0, -GS_SMODE2
+    beqz    $v1, track_SMODE2_write
     nop
     b       not_wanted_reg
     nop
@@ -532,6 +535,9 @@ track_DISPLAY1_write:
 track_DISPLAY2_write:
     b       not_wanted_reg
     sd      $a1, Source_DISPLAY2($s0)
+track_SMODE2_write:
+    b       not_wanted_reg
+    sd      $a1, Source_SMODE2($s0)
 
 normal_GS_write:
 #endif

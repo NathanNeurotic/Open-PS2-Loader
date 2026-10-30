@@ -460,6 +460,7 @@ int igrmTestPage(const igrm_info_t *in, int page, int sel, int armed, int sx, in
 
 // the game's own GS writes as GSM recorded them (gsm_engine.S, gsm_defines.h Source_*): 0 = none seen
 extern u64 GSMSourceGSRegs[11];
+extern u16 GSMSourceSetGsCrt[3]; // the game's last SetGsCrt: interlace, mode, ffmd (Hook_SetGsCrt records it always)
 #define SRC_PMODE    0
 #define SRC_SMODE2   2
 #define SRC_DISPFB1  7
@@ -523,6 +524,10 @@ static int igrmWaitClear(vu32 *reg, u32 bits) // bounded: a stuck path must not 
 static int igrmFindFrame(void)
 {
     const u64 *regs = GSMSourceGSRegs;
+    // SMODE2 INT (bit 0) and FFMD (bit 1): the game's own write, or else its SetGsCrt call, which sets the same
+    u32 smode2 = (u32)regs[SRC_SMODE2];
+    if (!smode2)
+        smode2 = (GSMSourceSetGsCrt[0] & 1) | ((GSMSourceSetGsCrt[2] & 1) << 1);
     u64 pmode = regs[SRC_PMODE], fb1 = regs[SRC_DISPFB1], fb2 = regs[SRC_DISPFB2];
     int c1 = (pmode & 1) || (!(pmode & 2) && fb1 != 0); // circuit 1 is on top
     u64 fb = c1 ? fb1 : fb2, disp = regs[c1 ? SRC_DISPLAY1 : SRC_DISPLAY2];
@@ -557,12 +562,12 @@ static int igrmFindFrame(void)
             w = dw;
         // interlaced, the TV shows its raster and no more, whatever DH asks (a game writing DH 959 shows 480 lines on
         // NTSC); a PAL picture starts lower (DY 72 against NTSC's 50)
-        if ((regs[SRC_SMODE2] & 1) && dh > ((((u32)(disp >> 12) & 0x7ff) >= 64) ? 576u : 480u))
+        if ((smode2 & 1) && dh > ((((u32)(disp >> 12) & 0x7ff) >= 64) ? 576u : 480u))
             dh = (((u32)(disp >> 12) & 0x7ff) >= 64) ? 576 : 480;
         if (dh > 0 && dh <= 1024)
             h = dh;
     }
-    if ((regs[SRC_SMODE2] & 3) == 3) // interlaced FRAME mode: the buffer holds one field
+    if ((smode2 & 3) == 3) // interlaced FRAME mode: the buffer holds one field
         h /= 2;
     x = (fb >> 32) & 0x7ff;
     y = (fb >> 43) & 0x7ff;
