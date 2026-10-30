@@ -398,6 +398,8 @@ out for 16:9 already), and `scaled=0` images (16:9 still draws those full width)
 
 - Switching Widescreen in Settings reloads a theme that has any `_sd`/`_hd`/`wsX`/`hd_autofit` keys,
   once the settings page is closed. Other themes are not reloaded.
+- The 720p and 1080i video modes are 16:9 screens, so they always count as Widescreen on: `_hd` keys,
+  `hd_autofit` and the 3/4 width correction apply there even with the Widescreen setting off.
 - Keep the plain keys as your 4:3 layout: stock OPL and other forks ignore the variants and use them.
 - The background choice stays one setting for both modes (`bg_*`, `main0`) unless the theme gives it
   `_hd` variants.

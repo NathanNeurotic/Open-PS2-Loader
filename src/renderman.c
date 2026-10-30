@@ -322,7 +322,7 @@ int rmSetMode(int force)
 
     rmSetDisplayOffset(gXOff, gYOff);
     rmSetOverscan(gOverscan);
-    rmSetAspectRatio((gWideScreen == 0) ? RM_ARATIO_4_3 : RM_ARATIO_16_9);
+    rmSetAspectRatio(rmIsWideDisplay() ? RM_ARATIO_16_9 : RM_ARATIO_4_3);
 
     return changed;
 }
@@ -703,6 +703,16 @@ void rmSetAspectRatio(enum rm_aratio dar)
             iAspectWidth = 3; // width = width * 3 / 4
             break;
     };
+}
+
+// 720p and 1080i are 16:9 with square pixels, so the 640x480 design grid is stretched across a 16:9
+// screen whatever the Widescreen setting says; treat them as wide so art keeps its shape there too.
+int rmIsWideDisplay(void)
+{
+    int mode = (vmode >= 0) ? vmode : gVMode;
+    if (mode < RM_VMODE_AUTO || mode >= NUM_RM_VMODES)
+        mode = RM_VMODE_AUTO;
+    return gWideScreen != 0 || rm_mode_table[mode].aratio == RM_ARATIO_16_9;
 }
 
 int rmWideScale(int x)

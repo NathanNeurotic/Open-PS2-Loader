@@ -150,6 +150,9 @@ void rmSetAspectRatio(enum rm_aratio dar);
 /** Widescreen scaling */
 int rmWideScale(int x);
 
+/** 1 when the screen is 16:9: the Widescreen setting is on, or the video mode is natively 16:9 (720p, 1080i) */
+int rmIsWideDisplay(void);
+
 /** Get Pixel Aspect Ratio of native resolution */
 float rmGetPAR();
 
