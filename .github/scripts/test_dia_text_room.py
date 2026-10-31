@@ -198,7 +198,7 @@ if not failures:
         if build.returncode != 0:
             failures.append('harness did not compile:\n' + build.stderr)
         else:
-            run = subprocess.run([str(exe)], capture_output=True, text=True, check=False)
+            run = subprocess.run([str(exe)], capture_output=True, text=True, check=False, timeout=10)
             sys.stdout.write(run.stdout)
             if run.returncode != 0:
                 failures.append('harness failed (exit %d):\n%s' % (run.returncode, run.stderr))
