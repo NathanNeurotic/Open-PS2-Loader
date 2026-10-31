@@ -314,6 +314,29 @@ out for 16:9 already), and <code>scaled=0</code> images.</p>
 </ul>
 <p>Full reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#sd-and-hd-layouts-_sd--_hd--this-fork">THEME_ENGINE.md, SD and HD layouts</a>.</p>
 
+<h3 id="alt-background">Alternate background (<code>alt=</code>) — <em>this fork</em></h3>
+<p>A theme can ship a second background in the same <code>conf_theme.cfg</code>, and the user picks it with
+<b>Settings → Interface → Alternate Background</b> (Off by default). Idea: <a href="https://github.com/KrahJohlito">KrahJohlito</a> ("one theme, a toggle switch").</p>
+<pre>alt=bg_night              # top level: the alternate picture for every Background element
+
+main0:
+	type=Background
+	default=background    # Alternate Background off (and in stock OPL)
+	alt=background_dark   # Alternate Background on; beats the top-level alt= for this element
+	alt_hd=background_dark_wide   # SD/HD variants work as for any key</pre>
+<table><thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>alt</code> (in a block)</td><td>image name, as <code>default</code></td><td>Used instead of the element's <code>default</code> while Alternate Background is on. Works on any element with <code>default=</code> (a <code>StaticImage</code> logo too) and in <code>&lt;view&gt;.</code> blocks.</td></tr>
+<tr><td><code>alt</code> (top level)</td><td>image name</td><td>The alternate picture for every <code>Background</code> element (base and <code>&lt;view&gt;.</code> blocks) that has no <code>alt=</code> of its own, and the Background OPL adds when a theme has none.</td></tr>
+</tbody></table>
+<ul>
+<li>With the setting off, or in a theme without any <code>alt</code> key, nothing changes. Stock OPL and other forks ignore <code>alt=</code>.</li>
+<li>A <code>Background</code> with <code>alt=</code> but no <code>default=</code> shows the plasma while the setting is off and the picture while it is on.</li>
+<li><code>alt_hd=</code>/<code>alt_sd=</code> pick the picture per display mode, and <a href="#fallback-views">fallback views</a> pick it up too.</li>
+<li>Per-game background art still replaces the theme's picture while a game with art is selected.</li>
+<li>Changing the setting reloads only a theme that has an <code>alt</code> key, once the settings page is closed.</li>
+</ul>
+<p>Full reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/THEME_ENGINE.md#alternate-background-alt--this-fork">THEME_ENGINE.md, Alternate background</a>. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1181">#1181</a>; NOT TESTED on hardware.</p>
+
 <h2 id="global-properties">3 · Global properties</h2>
 <p>These go at the <em>top</em> of the file, outside any block.</p>
 
