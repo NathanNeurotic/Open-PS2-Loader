@@ -1955,13 +1955,6 @@ gui_strings:
 - label: HINT_VMC_IMPORT
   string: "Copies the picked save folder or .psu file onto the card."
 
-- comment: VMC Saves dialog button (RIPPS2), copies the picked save from the card into the folder as one .psu file. PSU is a file format name, not translated.
-  label: VMC_EXPORT_PSU
-  string: Copy out as PSU
-
-- label: HINT_VMC_EXPORT_PSU
-  string: "Copies the picked save into the folder as one .psu file, the save file uLaunchELF, EMS and Apollo use. The card is not changed."
-
 - label: HINT_VMC_SAVE_DELETE
   string: "Deletes the picked save from the card."
 
@@ -1994,9 +1987,6 @@ gui_strings:
 
 - label: VMC_SAVES_ERR_WRITE
   string: "The save could not be written. Is the drive full or write-protected?"
-
-- label: VMC_SAVES_ERR_PSU
-  string: "This .psu file is cut short or is not a PS2 save."
 
 - label: VMC_SAVES_ERR_READ
   string: "The card image could not be read, or its tables are damaged."
@@ -2291,6 +2281,16 @@ gui_strings:
 - comment: Hint of Library.
   label: HINT_LIBRARY
   string: "Pages gives every device its own tab. All Games List puts the games of every started device, PS2, PS1 and apps, on one page. Same setting as All Games List under Game Sources."
+
+- comment: VMC Saves dialog button (RIPPS2), copies the picked save from the card into the folder as one .psu file. PSU is a file format name, not translated.
+  label: VMC_EXPORT_PSU
+  string: Copy out as PSU
+
+- label: HINT_VMC_EXPORT_PSU
+  string: "Copies the picked save into the folder as one .psu file, the save file uLaunchELF, EMS and Apollo use. The card is not changed."
+
+- label: VMC_SAVES_ERR_PSU
+  string: "This .psu file is cut short or is not a PS2 save."
 
 - comment: Main menu item and page title for the File Manager (after RIPPS2's Memory Files browser).
   label: FILE_MANAGER
