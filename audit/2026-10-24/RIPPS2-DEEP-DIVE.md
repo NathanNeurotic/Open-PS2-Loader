@@ -1,6 +1,6 @@
 # RIPPS2 collaboration and source review — October 24, 2026
 
-RIPPS2, maintained by **Akilluminati47**, is a collaborating RiptOPL-derived project. Ripto and Akilluminati47 share GUI and backend work while developing their projects in tandem. This comparison identifies work that can flow in either direction. Shared upstream changes are credited as shared work, rather than counted again as missing RiptOPL features.
+[RIPPS2](https://github.com/akilluminati47/RIPPS2), maintained by **[Akilluminati47](https://github.com/akilluminati47)**, is a collaborating RiptOPL-derived project. [Ripto](https://github.com/NathanNeurotic) and Akilluminati47 share GUI and backend work while developing their projects in tandem. This comparison identifies work that can flow in either direction. Shared upstream changes are credited as shared work, rather than counted again as missing [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) features.
 
 The RiptOPL comparison target is [`rebuild/main@55261de1`][ript], including the merged i.LINK, font-size, RA-badge and dedicated Language-page changes. The RIPPS2 review covers both its published line and its active development branch:
 

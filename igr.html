@@ -217,6 +217,58 @@ The RA loader (<code>RIPTOPL-RetroAchievements-*.zip</code>) is deliberately bui
 GSM 1080p plus IGS and RA will not both fit in the console's <code>ram84</code> region. You can have
 achievements or in-game screenshots, not both. See <a href="retroachievements.html">RetroAchievements</a>.</div>
 
+<h2 id="in-game-menu">The in-game menu (beta)</h2>
+<p><b>Settings → Game Launching → In-Game Menu (Beta)</b>, off by default. With it on,
+<b>L1 + L2 + R1 + R2 + Start + Select</b> no longer leaves the game at once: it <b>pauses</b> the game under a small panel.
+NOT TESTED on hardware yet: please report games where pausing misbehaves.</p>
+
+<table>
+<thead><tr><th>Item</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><b>Resume</b></td><td>Back to the game, exactly where it stopped. Start or the back button also resume.</td></tr>
+<tr><td><b>Cheats</b></td><td>Only when the game was started with cheats on. Every cheat of the game's <code>.cht</code> file, <b>ON</b> or <b>OFF</b>; the confirm button switches one, the back button returns. Changes apply when you resume.</td></tr>
+<tr><td><b>Achievements</b></td><td>RetroAchievements editions only. How many of the game's achievements you have unlocked and how many are left. The confirm button opens <b>Left To Hunt</b>: the locked ones one at a time, with points and how to earn each; Up and Down page through them.</td></tr>
+<tr><td><b>Exit Game</b></td><td>What the combination always did: leave for the <b>IGR Path</b> (or the PS2 browser). Press confirm twice.</td></tr>
+<tr><td><b>Power Off</b></td><td>Turns the console off. Press confirm twice.</td></tr>
+</tbody>
+</table>
+<p>Up and Down move; the confirm and back buttons are the ones the loader's own menus use. The console's power
+button still works while the menu is open: once powers off, twice exits.</p>
+
+<h3 id="live-cheats">Cheats, live</h3>
+<p>The game's <code>.cht</code> file is read when the game starts (<em>Cheats</em> on in the game's settings, as before);
+every cheat comes along, ticked or not, and the menu turns them on and off while you play, without a restart.</p>
+<ul>
+<li><b>OFF stops a cheat writing; it does not undo it.</b> A value it wrote (health, money) stays until the game changes it, and a cheat that patches the game's code (widescreen, "always run") stays patched until the game reloads that code.</li>
+<li>The <b>master code</b> (the <code>9…</code> hook line) is always in, ticked or not: the cheat engine can only plant its hook when the game starts.</li>
+<li>The ticked cheats must fit the engine's 250 codes. A cheat that would not fit stays OFF and the page says <em>FULL: TURN ONE OFF FIRST</em>. The page lists up to 64 cheats (512 codes in all).</li>
+<li><em>The cheat engine has not run in this game yet</em> means the master code's hook never matched: no cheat is being applied. Check the master code for your version of the game.</li>
+<li><em>Not applied yet</em> means the engine was applying codes when you paused; resume and open the menu again.</li>
+</ul>
+
+<h3 id="left-to-hunt">Achievements, Left To Hunt</h3>
+<p>RetroAchievements editions, <em>xeRAbora</em> mode. The menu cannot ask the PC while the game is paused, so it shows the
+list as the loader last saw it: open the game's achievements in the loader (<em>View achievements</em> in the game's menu)
+and the set is also saved as <code>RA/&lt;game ID&gt;.ach</code> beside the game's watch list (not on a read-only device).
+The next launch of that game takes it into the menu. Unlocks earned since are not in it. Caduceus mode, HDLoader (APA)
+games and PS1 games have no list. Up to 8 KB of descriptions travel with the game; a bigger set shows the counts without
+Left To Hunt. See <a href="retroachievements.html">RetroAchievements</a>.</p>
+
+<h3 id="in-game-menu-limits">Where it works</h3>
+<ul>
+<li>Games on the <b>OPL core</b> only (USB, MX4SIO, iLink, exFAT and APA HDD, SMB, MMCE, UDPBD/UDPFS). Neutrino has no IGR at all, and PS1 games use POPStarter's or Ember's own.</li>
+<li>The menu draws into the picture the game is showing, found through the same GS write breakpoint GSM uses. <b>PCSX2 cannot show it</b> (no data breakpoints), so there the combination leaves the game as before; so does a game whose picture the menu cannot see or draw.</li>
+<li><b>The game goes quiet while the menu is open</b> and its sound goes on where it stopped when you resume: a small IOP module, <code>igrmbox.irx</code>, turns the SPU2's volume down and holds every voice. A game that streams PCM straight to the sound cores keeps that stream running, silently.</li>
+<li><b>Resume gives back the exact picture</b>: the pixels under the panel are kept in IOP memory and drawn back. A game that leaves the IOP too little free memory (up to 315 KB for a 640-wide picture) keeps the panel until it draws over it.</li>
+<li>With <em>In-Game Menu</em> off, <code>igrmbox.irx</code> is not packed or loaded, so a game sees exactly the modules and memory it always did.</li>
+<li>In the <b>RetroAchievements</b> editions the menu is a small program of its own, <code>igrovl.elf</code>, copied into the top 16 KB of the module area (0xCC000 to 0xD0000) only for a launch with the menu on. A game whose modules are moved elsewhere, or run past 0xCC000, gets the plain combination there.</li>
+<li>Not in the IGS (<code>EXTRA_FEATURES=1</code>) and freeze-report (<code>INGAMEDIAG=1</code>) builds: those keep the plain combination and have no <em>In-Game Menu</em> row.</li>
+</ul>
+<p>The menu is <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a>'s, by <a href="https://github.com/akilluminati47">akilluminati47</a>, itself built on the <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> in-game menu of
+<a href="https://github.com/danielnuld">danielnuld</a>'s <a href="https://github.com/danielnuld/ps2-launcher">ps2-launcher</a> (ORBIT, AFL-3.0);
+the silent pause and the exact picture (RIPPS2 build 108) and Achievements with Left To Hunt (build 94) are RIPPS2's too.
+The Cheats page is new here; RIPPS2's Screenshot page is not ported yet. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1155">Open-PS2-Loader #1155</a>, <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1168">#1168</a>, <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1171">#1171</a>.</p>
+
 <h2 id="troubleshooting">Troubleshooting</h2>
 
 <p><b>Nothing happens when I press the combination.</b> Check, in order: the game has actually started (past

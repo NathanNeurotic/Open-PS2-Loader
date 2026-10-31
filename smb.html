@@ -331,7 +331,7 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
       <td>Samba sends a NetBIOS keepalive every few minutes. While the game reads nothing, each one waits in the in-game network stack's small buffer pool (8 buffers). After about eight of them the PS2 stops answering, and Samba closes the connection. Turn those keepalives off and let TCP keep the connection alive: in the <code>[global]</code> section of <code>smb.conf</code> set
         <pre>keepalive = 0
 socket options = SO_KEEPALIVE=1 TCP_NODELAY=1</pre>
-        and restart Samba. A reporter measured the eight keepalives with Wireshark and found these settings held for three hours; this is not yet verified on our side. A read cut off this way now fails instead of locking the game up for good, but the game still cannot continue, so the server settings are the real fix. Diagnosis and workaround documented by belomaxorka / YAOPL (36e07200).</td>
+        and restart Samba. A reporter measured the eight keepalives with Wireshark and found these settings held for three hours; this is not yet verified on our side. A read cut off this way now fails instead of locking the game up for good, but the game still cannot continue, so the server settings are the real fix. Diagnosis and workaround documented by <a href="https://github.com/belomaxorka">belomaxorka</a> / <a href="https://github.com/yaopl/yaopl">YAOPL</a> (36e07200).</td>
     </tr>
     <tr>
       <td>Windows: share works from PC but PS2 cannot connect</td>
