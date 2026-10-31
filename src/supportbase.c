@@ -822,6 +822,16 @@ static const struct
     {"SLUS_210.44", COMPAT_MODE_1, TITLE_CORE_ALL}, // Shadow Hearts: Covenant (USA) disc 2: same engine and streaming as disc 1
     {"SLUS_201.51", COMPAT_MODE_2, TITLE_CORE_OPL}, // Klonoa 2 (USA): gameplay micro-stutter on the OPL core, fixed by Synchronous reads (PSX-Place "Klonoa 2 & OPL"); smooth on Neutrino, so left alone there
     {"SLUS_217.23", COMPAT_MODE_6, TITLE_CORE_ALL}, // Fatal Fury: Battle Archives Volume 2 (USA): black screen with IGR's VBLANK_END handler (upstream OPL #1762, #984)
+    // Jak and Daxter: The Precursor Legacy, every region (USA, Europe and its re-release, Japan and its
+    // re-release): hangs on the "Sony presents" screen unless syscalls are unhooked and IGR is off
+    // (upstream OPL #1171: "only modes 3 and 6"; PSX-Place OPL game bug reports, page 43: "Unhook
+    // Syscalls, disable IGR"; a RiptOPL report of 2026-10-31). Neutrino unhooks the same IDs from its own
+    // compat.toml, so the default is for the OPL core only.
+    {"SCUS_971.24", COMPAT_MODE_3 | COMPAT_MODE_6, TITLE_CORE_OPL},
+    {"SCES_503.61", COMPAT_MODE_3 | COMPAT_MODE_6, TITLE_CORE_OPL},
+    {"SCES_506.14", COMPAT_MODE_3 | COMPAT_MODE_6, TITLE_CORE_OPL},
+    {"SCPS_150.21", COMPAT_MODE_3 | COMPAT_MODE_6, TITLE_CORE_OPL},
+    {"SCPS_550.04", COMPAT_MODE_3 | COMPAT_MODE_6, TITLE_CORE_OPL},
 };
 
 int sbTitleCompatDefault(config_set_t *configSet, int neutrino)

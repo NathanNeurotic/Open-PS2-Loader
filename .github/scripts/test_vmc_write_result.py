@@ -154,6 +154,9 @@ static Sio2McProc2 psio2_mc_transfer_init[2] = {lock_stub, lock_stub}, psio2_tra
 static int sio2TransferVersion;
 int DeviceWritePage(int mc_num, void *buf, u32 page_num);
 int DeviceReadPage(int mc_num, void *buf, u32 page_num);
+#ifdef BDM_DRIVER
+int DeviceWritePages(int mc_num, void *buf, u32 page_num, u32 count);
+#endif
 @MCEMU_PROTOTYPES@
 @HELPERS@
 @MC_CONFIGURE@
@@ -251,9 +254,35 @@ int main(void)
         memset(got, 0, sizeof(got));
         assert(OK(read_page(3, got)) && memcmp(got, data, PAGE) == 0);
         assert(DeviceReadPage(0, got, 4) == 1 && memcmp(got, data, PAGE) == 0);
+        int before = sim_writes();
         assert(OK(erase_block(16)));
         for (int p = 16; p < 32; p++)
             assert(memcmp(sim_page(p), ff, PAGE) == 0);
+        assert(memcmp(sim_page(15), ff, PAGE) != 0 && memcmp(sim_page(32), ff, PAGE) != 0); /* only the block */
+#ifdef BDM_DRIVER
+        assert(sim_writes() - before == 4); /* 16 pages, 4 sectors per device write */
+        /* MX4SIO ("sdc") gets one sector per device write (its multi-sector retry restarts at the
+           first sector, ps2sdk#936), and the whole block is still erased. */
+        sim_driver("sdc");
+        for (int p = 16; p < 32; p++) /* dirty the block again so a missed erase shows */
+            assert(OK(write_page(p, data)));
+        before = sim_writes();
+        assert(OK(erase_block(16)));
+        for (int p = 16; p < 32; p++)
+            assert(memcmp(sim_page(p), ff, PAGE) == 0);
+        assert(sim_writes() - before == 16);
+        sim_driver("mass");
+#else
+        assert(sim_writes() - before == 16); /* one write per page */
+#endif
+        /* A 0x00-erase card (flag 0x10) erases to zeroes on the batched path too. */
+        memcards[0].flags |= 0x10;
+        assert(OK(erase_block(48)));
+        u8 zero[PAGE];
+        memset(zero, 0, sizeof(zero));
+        for (int p = 48; p < 64; p++)
+            assert(memcmp(sim_page(p), zero, PAGE) == 0);
+        memcards[0].flags &= ~0x10;
 
         /* A failed device write is a failed page write, not an acknowledged save. */
         sim_fail(5, mode);
@@ -264,8 +293,12 @@ int main(void)
         assert(OK(write_page(5, data)) && memcmp(sim_page(5), data, PAGE) == 0); /* MCMAN's retry lands */
 
         /* A failed erase fails the erase transfer even though its 0x82 status follows. */
+        before = sim_writes();
         sim_fail(37, mode);
         assert(!OK(erase_block(32)));
+#ifdef BDM_DRIVER
+        assert(sim_writes() - before == 2); /* stops after the failed second batch (pages 36-39) */
+#endif
         sim_fail(-1, mode);
         assert(OK(erase_block(32)));
 
@@ -289,6 +322,8 @@ BDM_SIM = COMMON + r'''
 struct block_device {
     int (*read)(struct block_device *bd, u64 sector, void *buffer, u16 count);
     int (*write)(struct block_device *bd, u64 sector, const void *buffer, u16 count);
+    const char *name;
+    unsigned int sectorSize;
 };
 static int depth, waits;
 static void WaitSema(int s) { (void)s; assert(depth == 0); depth++; waits++; }
@@ -314,17 +349,21 @@ static int sim_read(struct block_device *bd, u64 sector, void *buffer, u16 count
     memcpy(buffer, disk[sector - BASE], count * 512u);
     return count;
 }
+static int writes;
+int sim_writes(void) { return writes; }
 static int sim_write(struct block_device *bd, u64 sector, const void *buffer, u16 count)
 {
     assert(bd == g_bd && depth == 1 && sector >= BASE && sector + count <= BASE + SIM_PAGES);
+    writes++;
     if (failed(sector, count))
         return fail_mode ? count - 1 : -5;
     memcpy(disk[sector - BASE], buffer, count * 512u);
     return count;
 }
-static struct block_device device = {sim_read, sim_write};
+static struct block_device device = {.read = sim_read, .write = sim_write, .name = "mass", .sectorSize = 512};
 @DRIVER@
-void sim_reset(void) { memset(disk, 0x5A, sizeof(disk)); fail_page = -1; g_bd = &device; }
+void sim_reset(void) { memset(disk, 0x5A, sizeof(disk)); fail_page = -1; g_bd = &device; device.name = "mass"; }
+void sim_driver(const char *name) { device.name = name; }
 void sim_fail(int page, int mode) { fail_page = page; fail_mode = mode; }
 const u8 *sim_page(int page) { return disk[page]; }
 int sim_balanced(void) { return depth == 0 && waits > 0; }
@@ -380,7 +419,9 @@ static int sim_io(int fd, int size, void *ptr, int write)
     return size;
 }
 static int sim_read(int fd, int size, void *ptr) { return sim_io(fd, size, ptr, 0); }
-static int sim_write(int fd, int size, void *ptr) { return sim_io(fd, size, ptr, 1); }
+static int writes;
+int sim_writes(void) { return writes; }
+static int sim_write(int fd, int size, void *ptr) { writes++; return sim_io(fd, size, ptr, 1); }
 @DRIVER@
 void sim_reset(void)
 {
@@ -415,6 +456,8 @@ void sim_fail(int page, int mode);
 const u8 *sim_page(int page);
 int sim_balanced(void);
 int sim_direct(void);
+int sim_writes(void);
+void sim_driver(const char *name);
 '''
 
 bdm_returns_int = header(cdvdman_bdm, 'bdm_writeSector').startswith('int ') and header(cdvdman_bdm, 'bdm_readSector').startswith('int ')
@@ -439,7 +482,8 @@ with tempfile.TemporaryDirectory() as directory:
                 .replace('@XORTABLE@', XORTABLE).replace('@MCEMU_PROTOTYPES@', MCEMU_PROTOTYPES)
                 .replace('@HELPERS@', HELPERS).replace('@MC_CONFIGURE@', definition(mcemu_io, 'mc_configure'))
                 .replace('@MCEMU_CODE@', MCEMU_CODE)
-                .replace('@DEVICE@', definition(read(device), 'DeviceWritePage') + '\n' + definition(read(device), 'DeviceReadPage'))
+                .replace('@DEVICE@', definition(read(device), 'DeviceWritePage') + '\n' + definition(read(device), 'DeviceReadPage')
+                          + ('\n' + definition(read(device), 'DeviceWritePages') if define == 'BDM_DRIVER' else ''))
                 .replace('@SETUP@', setup).replace('@NAME@', name)
                 .replace('@EXTRA@', 'assert(sim_direct()); /* multi-sector and missing-driver edges */'))
         side = side.replace('#include "sim.h"', '#include "sim.h"\n' + setup_decl + '\n#define SIM_MODES ' + str(modes), 1)
