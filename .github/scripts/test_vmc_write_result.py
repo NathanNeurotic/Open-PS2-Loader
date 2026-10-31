@@ -265,7 +265,7 @@ int main(void)
            first sector, ps2sdk#936), and the whole block is still erased. */
         sim_driver("sdc");
         for (int p = 16; p < 32; p++) /* dirty the block again so a missed erase shows */
-            memset(sim_page(p), 0xA5, PAGE);
+            assert(OK(write_page(p, data)));
         before = sim_writes();
         assert(OK(erase_block(16)));
         for (int p = 16; p < 32; p++)
