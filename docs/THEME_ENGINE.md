@@ -134,7 +134,7 @@ shows that device at once), and Right, Cross or Circle go back to the covers. Ho
 side for half a second and the selected case turns over to its back cover (`COV2`), the way the stick
 leans; it stays turned until the stick turns it home. *Settings → Interface → Coverflow Settings → Grid
 Layout* swaps the theme's shape for 4 x 2, 5 x 2, 3 x 2 Large or 6 x 3 Compact (6 x 2, 7 x 2, 5 x 2 and
-8 x 3 on a 16:9 picture), and *Dim Side Covers* there makes the vignette full strength. Idea: KrahJohlito
+8 x 3 on a 16:9 picture), and *Dim Side Covers* there makes the vignette full strength. Idea: [KrahJohlito](https://github.com/KrahJohlito)
 (multi-view themes); the pages, slide, selection, vignette, case flip, sidebar, tiles and layouts follow
 RIPPS2's grid (akilluminati47). NOT TESTED on hardware.
 
@@ -303,7 +303,7 @@ One `conf_theme.cfg` can describe several **views** of the main and info pages: 
 the next view the theme offers (a tap on L3 still cycles the library view). The picker and L3 list
 the `coverflow` view twice, as **Coverflow (3)** and **Coverflow (5)**: one view, drawn with 3 or 5
 covers (`coverflow_count`), so a theme declares `coverflow` once. Idea and design:
-KrahJohlito.
+[KrahJohlito](https://github.com/KrahJohlito).
 
 The unprefixed blocks are the **base**. A block named `<view>.<block>` replaces that block in that
 view only, and every block a view does not declare is inherited from the base:
@@ -380,7 +380,7 @@ in the built-in `<OPL>` theme's file for that view (`misc/theme_coverflow.cfg`,
 ### SD and HD layouts (`_sd` / `_hd`) — *this fork*
 
 One `conf_theme.cfg` can carry a 4:3 layout and a 16:9 layout, so a theme no longer needs separate
-"SD" and "HD/widescreen" packages. Ideas: KrahJohlito (uOPL/wOPL's `wsX` key) and Berion
+"SD" and "HD/widescreen" packages. Ideas: [KrahJohlito](https://github.com/KrahJohlito) (uOPL/wOPL's `wsX` key) and Berion
 (`_sd`/`_hd` suffixes that fall back to the plain key).
 
 Add `_hd` to **any** key to give the value used while **Settings → Interface → Widescreen** is on, or
@@ -436,7 +436,7 @@ out for 16:9 already), and `scaled=0` images (16:9 still draws those full width)
 ### Alternate background (`alt=`) — *this fork*
 
 A theme can ship a second background in the same `conf_theme.cfg`, and the user picks it with
-**Settings → Interface → Alternate Background** (Off by default). Idea: KrahJohlito ("one theme, a
+**Settings → Interface → Alternate Background** (Off by default). Idea: [KrahJohlito](https://github.com/KrahJohlito) ("one theme, a
 toggle switch").
 
 ```ini
