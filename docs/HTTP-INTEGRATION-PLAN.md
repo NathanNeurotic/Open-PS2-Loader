@@ -14,12 +14,12 @@ immediately below before picking anything up.
 
 | Phase | State |
 | --- | --- |
-| 1 — contract and fixtures | **done.** `pc/http/`: reference parser, fixtures, `expected.json`, server conformance harness. Docmine17's unmodified server passes it 14/0/1. |
+| 1 — contract and fixtures | **done.** `pc/http/`: reference parser, fixtures, `expected.json`, server conformance harness. [Docmine17](https://github.com/Docmine17)'s unmodified server passes it 14/0/1. |
 | 2 — shared TCP/IP stack | **done.** `src/netsupport.c` owns the stack; `ethsupport.c` keeps the SMB session. Every moved body diffs identical to its original. |
 | 3 — menu RPC, settings, source | **done.** Streaming GET (`STREAM_BEGIN`/`STREAM_READ`), `NET_PROTO_HTTP`, `HTTP_MODE`, the Network page rows and Test action, `src/httpsupport.c` as an `item_list_t`, `src/httpcatalog.c` as the parser. |
 | 4 — in-game driver | **written, unproven.** `device-http.c`, the `USE_HTTP` cdvdman target, `cdvdman_settings_http`, `HTTP_MODE` through ee_core, and the EE launch that fills all of it. |
 | 5 — library integration | **done.** OPL-only core pin (Favourites included), last-played, local per-game CFG/art/cheats, VMC refused at the menu door rather than shown inert, and the protocol-switch hint the other transports get. Favourites resolves generically through `list_support[HTTP_MODE]`. |
-| 6 — release validation and docs | **written.** `docs/HTTP.md`, the README entry, and Docmine17's server in the docs-sync External Tools template. Four-flavour CI passes. What remains is the console matrix in section 9 — hardware, not code. |
+| 6 — release validation and docs | **written.** `docs/HTTP.md`, the README entry, and [Docmine17](https://github.com/Docmine17)'s server in the docs-sync External Tools template. Four-flavour CI passes. What remains is the console matrix in section 9 — hardware, not code. |
 
 What is deliberately absent rather than missing: no VMC over HTTP, no Neutrino leg, no PS1/Ember,
 no ZSO (listed but refused by name), no HTTPS or authentication. `EnablePS2Logo` is always 0,
@@ -46,7 +46,7 @@ a normal feature of the default ELF.
 
 ### 0.1 Upstream source
 
-The upstream implementation is by **Docmine17**. The PC server is
+The upstream implementation is by **[Docmine17](https://github.com/Docmine17)**. The PC server is
 `pc/http_server.py` in the upstream tree, a ~90-line `ThreadingHTTPServer` subclass that serves the process
 working directory with byte-range support and defaults to **port 1100**
 (`pc/http_server.py:66-75` in the donor tree).
@@ -525,7 +525,7 @@ observed outcome. Keep a non-HTTP control on the same game where practical.
 * **Should HTTP be the first in-game driver with a bounded connect?** See §2.1. Either answer is
   defensible; it needs a decision, not a default.
 * **Additive catalog extensions** — a version marker, richer quoting — are worth proposing to
-  Docmine17, but only as extensions. Existing catalogs must never need conversion.
+  [Docmine17](https://github.com/Docmine17), but only as extensions. Existing catalogs must never need conversion.
 * **Remote ART/CFG/CHT over HTTP** is the obvious follow-up and is deliberately not in release one.
 * **PS2-Servers HTTP support**, if it ever lands, should reuse this catalog and range profile. The
   client must stay usable without it.
@@ -534,7 +534,7 @@ observed outcome. Keep a non-HTTP control on the same game where practical.
 
 ## Credits
 
-**Docmine17** — https://github.com/Docmine17/Open-PS2-Loader-HTTP
+**[Docmine17](https://github.com/Docmine17)** — https://github.com/Docmine17/Open-PS2-Loader-HTTP
 
 The design and the console implementation RiptOPL's HTTP support follows: serving a library from a
 plain static HTTP server, and streaming an ISO into the loader core with ordinary HTTP byte ranges.

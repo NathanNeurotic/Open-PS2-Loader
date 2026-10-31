@@ -8,8 +8,8 @@
 > documentation. For how to *use* the feature, see the [PS1 Games page](https://nathanneurotic.github.io/Open-PS2-Loader/ps1-vcd.html) and [VCD.md](VCD.md).
 
 **Status:** ordinary device PS1 pages and UDPFS Files ship both cores in one list.
-UDPFS Files prepares POPSTARTER VCD launches with Okeanos’s BDM-UDPFS Assault USB-first
-driver; UDPBD and UDPFS IMG remain Ember-only. See [POPS UDPFS setup](VCD.md#pops-udpfs-with-bdm-udpfs-assault). Ember handoffs
+UDPFS Files prepares [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) VCD launches with [Okeanos](https://github.com/Okeanos86)’s [BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases) USB-first
+driver; UDPBD and UDPFS IMG remain Ember-only. See [POPS UDPFS setup](VCD.md#pops-udpfs-with-bdm-udpfs-assault). [Ember](https://github.com/Gageformer/Ember) handoffs
 remain hardware-unproven unless a later test report says otherwise.
 **Base commit:** `291716d3` on `rebuild/main` (2026-08-27).
 
@@ -870,8 +870,8 @@ that wrong presents an empty tab that then overwrites the real list.
 
 ### Phase 5 — Network surface (landed; hardware pending)
 
-UDPFS Files now publishes a combined PS1 view and prepares POPSTARTER launches using
-Okeanos’s BDM-UDPFS Assault driver, with matching runtime configs on every USB volume.
+UDPFS Files now publishes a combined PS1 view and prepares [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) launches using
+[Okeanos](https://github.com/Okeanos86)’s [BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases) driver, with matching runtime configs on every USB volume.
 UDPBD and UDPFS IMG remain Ember-only (see VCD.md).
 RetroGEM game-ID parity and `settings.txt` display passthrough remain separate concerns.
 
@@ -911,8 +911,8 @@ RetroGEM game-ID parity and `settings.txt` display passthrough remain separate c
 
 ## Part 10 — Ember Beta 2 settings (updated 2026-09-28)
 
-The current Ember Beta 2 contract, confirmed by Gageformer and reflected in Ember's README, has five
-global keys. Four of them may also be overridden per game. RiptOPL mirrors that model instead of
+The current [Ember](https://github.com/Gageformer/Ember) Beta 2 contract, confirmed by [Gageformer](https://github.com/Gageformer) and reflected in Ember's README, has five
+global keys. Four of them may also be overridden per game. [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) mirrors that model instead of
 inventing a second settings scheme.
 
 ### What Ember reads

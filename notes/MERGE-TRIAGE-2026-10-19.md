@@ -91,7 +91,7 @@ Evidence grades:
      patch without hash-pinning the SDK source.
 
 8. **#977 PSBBN Flow theme (10-18): breaks the standing #733 hands-off rule.**
-   It adapted #733's code and **closed #733**, a contributor's PR (dnunezx, closed 2026-10-18 08:31Z). The
+   It adapted #733's code and **closed #733**, a contributor's PR ([dnunezx](https://github.com/dnunezx), closed 2026-10-18 08:31Z). The
    standing rule from 10-07 says no merge, no closing, no comments on #733. The theme itself is inert unless
    selected: 171 lines in `themes.c`, one in `gui.c`. **Nathan's call:** revert and reopen #733, or keep it.
 
@@ -174,7 +174,7 @@ Chronological. Size = prod / test / doc+ci. Beta numbers = `rev-list --count` + 
 | 1 | `e5071d13` direct 10-10 | Ember Watch CI weekly | — | none | 0/0/5 | no | no | n/a | KEEP |
 | 2 | `9e930bb6` #894 10-10 | USB PS1 RA, Caduceus, PS1 scan recovery, Favorites, IGR worker init, fresh defaults (198 commits) | Mixed. Vapor's Ember report unresolved | Many: PS1 RA, MODULE_9 prompts, fresh 4:3/Large art, power-button latch | 4989/2572/1750 | yes (POPS RA reader/sender, Caduceus) | yes: padhook, gsm (RA), POPS | none | KEEP RA; FIX `0ab450a1` scanner (#1005) |
 | 3 | `b2fb7909` direct 10-10 | README sync | — | docs | 0/0/4 | no | no | n/a | KEEP |
-| 4 | `a73fb2e4` #903 10-11 | Coverflow Favorites star alignment, remove toasts | Reproduced (zackcage6) | star position, remove toasts | 67/135/0 | no | no | none | KEEP |
+| 4 | `a73fb2e4` #903 10-11 | Coverflow Favorites star alignment, remove toasts | Reproduced ([zackcage6](https://github.com/zackcage6)) | star position, remove toasts | 67/135/0 | no | no | none | KEEP |
 | 5 | `e0add14b` #906 10-11 | RA snapshots under Mode 6 | Upstream alpha.17 proven | RA only | 48/70/19 | no | yes (RA) | none | KEEP |
 | 6 | `1c328567` direct 10-11 | README sync | — | docs | 0/0/2 | no | no | n/a | KEEP |
 | 7 | `906cdafe` #904 10-11 | UDPFS op serialization; Favorites default All; POPS UDPFS VCD + editor | UDPFS: maintainer console-confirmed. VCD path: none | Favorites opens on All; new POPS UDPFS settings page | 631/379/133 | yes (multi-volume transactional editor) | POPS driver pair | partial | KEEP fix; SIMPLIFY editor |
