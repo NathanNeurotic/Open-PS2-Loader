@@ -302,7 +302,7 @@ int bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *b
     // first sector again instead of the next one (ps2dev/ps2sdk#936, not merged), so the last sectors can
     // be left unwritten while the call reports success. Give it one sector per call; every other BDM
     // driver takes the whole run. Only mcemu's block erase writes more than one sector here.
-    unsigned short int step = (nsectors > 1 && g_bd->name != NULL && strcmp(g_bd->name, "sdc") == 0) ? 1 : nsectors;
+    unsigned short int step = (nsectors > 1 && g_bd->name != NULL && strncmp(g_bd->name, "sdc", 4) == 0) ? 1 : nsectors;
     unsigned short int done = 0;
     while (done < nsectors) {
         unsigned short int n = (nsectors - done < step) ? nsectors - done : step;
