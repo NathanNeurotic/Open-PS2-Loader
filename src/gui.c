@@ -469,9 +469,7 @@ static void guiShowNotifications(void)
         }
 
         if (showCfgPopup) {
-            // Official OPL's conf_opl.cfg is only a read-only seed (#545): say so, or "Config loaded"
-            // reads as the user's RiptOPL settings on a device that has none (CosmicScale, APA-Jail).
-            snprintf(notification, sizeof(notification), _l(configOplIsOfficialSeed() ? _STR_OFFICIAL_CFG_NOTIFICATION : _STR_CFG_NOTIFICATION), configGetLoadDir());
+            snprintf(notification, sizeof(notification), _l(_STR_CFG_NOTIFICATION), configGetLoadDir());
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
