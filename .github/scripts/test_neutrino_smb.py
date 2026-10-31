@@ -245,6 +245,11 @@ if "coreDefaultOpl = support != NULL && sourceMode == ETH_MODE;" not in gui:
 if not re.search(r"static int guiGameDialogCoreIsNeutrino\(int sourceMode,", gui) or "if (sourceMode == ETH_MODE)\n        return coreChoice == 1;" not in gui:
     failures.append("guigame: the title defaults follow the owning source's core (a Favourite of an SMB game)")
 
+menu = (ROOT / "src/menusys.c").read_text(encoding="utf-8")
+core = function("static int gameMenuCoreIsNeutrino(", menu)
+if "if (sourceMode == ETH_MODE) {" not in core or "return key == 1;" not in core:
+    failures.append("menusys: the game menu treats an SMB game as Neutrino only from its own key (Cheats/GSM/PADEMU/OSD)")
+
 if failures:
     print("Neutrino SMB checks FAILED:")
     for f in failures:

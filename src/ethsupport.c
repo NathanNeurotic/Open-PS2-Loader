@@ -774,7 +774,7 @@ static int ethMcemuSlots[2] = {-2, -2};
 // SMB through Neutrino (-bsd=smb -dvd=smb:<path>, ps2max32/neutrino PR #236 by Ronnie Sahlberg).
 // Only a game whose own Loader Core is Neutrino takes this leg: "Default" stays on the OPL core for SMB
 // whatever the global core is, because the OPL core is the SMB path everyone has today and Neutrino's
-// has limits the OPL core does not (port 445, SMB2 only, read-only, no VMC on the share). Each limit
+// has limits the OPL core does not (port 445, SMB 3.0 dialect only, read-only, no VMC on the share). Each limit
 // is checked here, before anything is prepared, and a miss says why and returns 0: the caller goes on
 // with the OPL core. 1 = handled (handed off to Neutrino, or the user backed out of a dialog).
 static int ethSmbNeutrinoRequested(config_set_t *configSet)

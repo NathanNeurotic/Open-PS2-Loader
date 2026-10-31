@@ -189,7 +189,7 @@ Unsupported cases fall back to the `<OPL>` core automatically with an on-screen 
 Neutrino is gaining an SMB backend in
 [ps2max32/neutrino PR #236](https://github.com/ps2max32/neutrino/pull/236) by
 [Ronnie Sahlberg (sahlberg)](https://github.com/sahlberg). It uses his
-[usmb2](https://github.com/sahlberg/usmb2), a minimal SMB2 client with its own small TCP/IP stack:
+[usmb2](https://github.com/sahlberg/usmb2), a minimal SMB client (dialect 3.0 only) with its own small TCP/IP stack:
 `smb_ioman.irx` reads the game in Neutrino's loader and `smb_fhi.irx` reads it in the game. The PR is
 **not merged yet**, so this needs a Neutrino build that has it; a Neutrino without the SMB modules
 falls back to `<OPL>` with a warning. **Not tested on hardware.**
@@ -217,7 +217,7 @@ Each of these keeps the game on `<OPL>`, with a warning saying why:
 | User or password over 31 characters, share over 63, or path on the share over 127 | the driver's own limits |
 | `bsd-smb.toml` missing, read-only or not in the stock shape | the settings could not be handed over |
 
-The server must speak **SMB2** with NTLM login (no signing or encryption). RetroAchievements are not
+The server must offer the **SMB 3.0** dialect (usmb2 asks for no other) with NTLM login, and no signing or encryption. OPL's **SMB Version** setting does not apply to this path. RetroAchievements are not
 carried on this path yet. `bsd-smb.toml` holds the SMB password in plain text, like
 `conf_network.cfg` already does.
 
@@ -357,7 +357,7 @@ reading, so an SMBv1-only server (including the bundled [PS2-Servers](https://gi
 | Choice | Wire protocol | On the PS2 | Core | PC server |
 |---|---|---|---|---|
 | **Network Connectivity: Off** | — | no network device (default) | — | — |
-| **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core; Neutrino per game (experimental, SMB2 on port 445) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
+| **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core; Neutrino per game (experimental, SMB 3.0 on port 445) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
 | **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Files and Image: Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
 | **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
 | **HTTP** | HTTP byte ranges | a `games.csv` catalog and ISO streams | OPL's own core | [Docmine17's server](https://github.com/Docmine17/Open-PS2-Loader-HTTP) or a server meeting the [HTTP profile](HTTP.md) |
