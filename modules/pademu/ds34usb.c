@@ -146,6 +146,13 @@ int usb_connect(int devId)
         epCount = 20; // ds4 v2 returns interface->bNumEndpoints as 0
     }
 
+    // An interface that reports no endpoints would leave epCount at -1, and the walk below would
+    // then run past the descriptors. Branches that set a fixed count are not affected.
+    if (epCount < 0) {
+        usb_release(pad);
+        return 1;
+    }
+
     endpoint = (UsbEndpointDescriptor *)UsbGetDeviceStaticDescriptor(devId, NULL, USB_DT_ENDPOINT);
 
     do {
