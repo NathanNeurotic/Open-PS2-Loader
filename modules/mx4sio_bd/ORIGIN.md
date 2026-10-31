@@ -25,3 +25,13 @@ acceptance. Use a disposable VMC with backups for real-card save/readback testin
 
 Build portability adjustments: use SDK u32 for WaitEventFlag result storage,
 and guard GCC optimization pragmas from Clang. No casts hide pointer-type errors.
+
+A local data-integrity correction also moves the transmit ISR's completed-sector
+count after the card's accepted token and programming completion. Rejected or
+unprogrammed sectors stay in the retry range. This is an additional fix beyond
+upstream #936. The regression compiles the production ISR, write transfer and
+retry chain, covering first/middle/last rejection and programming timeouts.
+Additional local bounds/ownership fixes: read the 18-byte CSD+CRC response into
+a temporary buffer and copy only its 16 CSD bytes; restore the caller's bit
+order on every nonzero write return, using the original buffer/count. Tests use
+the real reversal routine and verify original caller bytes after all outcomes.

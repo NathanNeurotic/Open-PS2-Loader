@@ -303,7 +303,7 @@ int spisd_get_card_info()
         return result;
     }
 
-    result = spisd_read_register(sdcard.csd, sizeof(reg_data));
+    result = spisd_read_register(reg_data, sizeof(reg_data));
 
     /* dummy write between reg reads */
     mx_sio2_write_dummy();
@@ -313,6 +313,10 @@ int spisd_get_card_info()
     }
 
     /* send CMD10, read CID */
+    /* The two CRC bytes belong to the response, not the 16-byte CSD array. */
+    for (unsigned int i = 0; i < sizeof(sdcard.csd); i++)
+        sdcard.csd[i] = reg_data[i];
+
     result = spisd_send_cmd(CMD10, 0);
 
     if (result != 0x0) {
@@ -686,6 +690,9 @@ int spisd_write(struct block_device *bd, uint64_t sector, const void *buffer, ui
     sdcard.used = 1;
 
     mx_sio2_unlock(INTR_TX);
+
+    /* The BDM caller owns this buffer and may reuse it after success or failure. */
+    reverse_buffer((uint32_t *)buffer, ((count * SECTOR_SIZE) / 4));
 
     return count - sectors_left;
 }

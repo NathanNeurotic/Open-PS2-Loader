@@ -101,8 +101,6 @@ int mx_sio2_dma_isr_tx(void *arg)
     mx_sio2_write_dummy();
     mx_sio2_write_dummy();
 
-    cmd.sectors_transferred++;
-
     /* get data response token */
     /* 0101 = data accepted */
     /* 1011 = data rejected, CRC error */
@@ -119,6 +117,10 @@ int mx_sio2_dma_isr_tx(void *arg)
         M_DEBUG("ERROR: failed to finish programming\n");
         cmd.abort = 1;
     }
+
+    /* Count only accepted, programmed data; a rejected sector must be retried. */
+    if (cmd.abort == 0)
+        cmd.sectors_transferred++;
 
     if (cmd.sectors_transferred < cmd.sector_count && cmd.abort == 0) {
         /* send write token */

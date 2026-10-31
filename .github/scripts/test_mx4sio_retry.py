@@ -7,6 +7,7 @@ from pathlib import Path
 import os
 import re
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -153,6 +154,7 @@ def main():
             result = subprocess.run([str(binary)], capture_output=True, timeout=30)
             assert result.returncode != 0, name + " regression was not detected"
         print("PASS: all three unpatched retry regressions are detected")
+    subprocess.run([sys.executable, str(Path(__file__).with_name("test_mx4sio_write_acceptance.py"))], check=True)
 
 
 if __name__ == "__main__":

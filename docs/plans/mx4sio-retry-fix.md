@@ -42,3 +42,12 @@ or console acceptance is claimed.
 
 Remove this temporary vendor once every supported SDK image/package includes
 the correction and equivalent regressions pass against its driver source.
+## SD write acceptance accounting
+
+The imported transmit ISR counted a sector before testing the response token and
+programming completion. It now counts only accepted, programmed sectors, so a
+rejection cannot be skipped or turn a last-sector failure into full success.
+The production ISR -> write transfer -> retry chain has 19 additional cases:
+CRC rejection, write rejection and programming timeout at the first, middle and
+last sectors, both transient and persistent. Restoring the old counting order
+fails the executable regression. Together the retry tests exercise 38 cases.
