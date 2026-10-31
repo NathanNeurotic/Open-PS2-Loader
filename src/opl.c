@@ -5458,12 +5458,23 @@ static void init(void)
 
     gSelectButton = (InitConsoleRegionData() == CONSOLE_REGION_JAPAN) ? KEY_CIRCLE : KEY_CROSS;
 
-    while (!padStatus)
+    // The menu needs a controller, so this still waits for one, but not on a black screen: after
+    // 10 s with no answer it draws the boot splash and logs it, then keeps waiting.
+    clock_t padWaitStart = clock(); // elapsed time, not a deadline: clock() can wrap
+    int padWaitShown = 0;
+    while (!padStatus) {
         padStatus = startPads();
+        if (!padStatus && !padWaitShown && clock() - padWaitStart > 10 * CLOCKS_PER_SEC) {
+            diagLog("boot: no controller answered for 10 s, still waiting");
+            guiRenderGreetingScreen();
+            padWaitShown = 1;
+        }
+    }
     readPads();
     menuWatchStep(MENUWATCH_BOOT_SETTINGS);
     gBootInProgress = 1; // gate the in-initAllSupport greeting redraws to the boot pass only (#297)
-    if (!getKeyPressed(KEY_START)) {
+    const int safeBoot = getKeyPressed(KEY_START);
+    if (!safeBoot) {
         // Show the boot splash (not guiRenderTextScreen(), which calls guiShow()
         // and would draw the not-yet-ready main menu as a garbled landing page
         // before the intro splash) while the config loads.
@@ -5490,7 +5501,9 @@ static void init(void)
     // _loadConfig may move the settings home away from the initial boot folder.
     // Resolve the optional title font only NOW, from the final settings owner.
     // No filesystem probes occur later on the rendering or game-list paths.
-    lngInitFallbackFont();
+    // START is the safe boot: it reads nothing optional from the card before the first frame.
+    if (!safeBoot)
+        lngInitFallbackFont();
     guiSetBootStatus(_l(_STR_BOOT_READY));
     guiRenderGreetingScreen();
     gBootInProgress = 0;
