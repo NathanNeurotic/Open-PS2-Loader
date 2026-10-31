@@ -24,7 +24,6 @@
 // DETCT is seen the FULL budget applies again, so a slow-but-working drive is unaffected.
 #define SYS_DISC_NODISC_MS   2000
 #include "include/opl.h"
-#include "include/menuwatch.h" // bootTrace: diagnostic builds print each IOP reset step
 #include "include/gui.h"
 #include "include/lang.h"       // _l(_STR_...) -- Neutrino preflight abort toasts
 #include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)

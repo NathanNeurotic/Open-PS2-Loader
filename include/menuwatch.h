@@ -17,7 +17,7 @@
   ran (the EE stopped inside reset() or crashed), or the launcher left no picture for the colour to
   show on. Other builds compile all of this away.
 
-  bootTrace() covers the part before the watchdog can run: from the first line of main() through
+  bootTrace() (diaglog.h) covers the part before the watchdog can run: from the first line of main() through
   the IOP reset, every module load and the boot stages up to the video setup, each step is printed
   on screen as it starts, so a boot that stops there leaves its last step on screen. From the video
   setup on, the stage colours take over.
@@ -48,16 +48,11 @@ enum MenuWatchStep {
 #ifdef __OPLDIAG
 void menuWatchStart(void);
 void menuWatchStep(int step);
-void bootTrace(const char *step);
 #else
 static inline void menuWatchStart(void)
 {
 }
 static inline void menuWatchStep(int step)
-{
-    (void)step;
-}
-static inline void bootTrace(const char *step)
 {
     (void)step;
 }
