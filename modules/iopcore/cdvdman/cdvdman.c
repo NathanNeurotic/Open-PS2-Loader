@@ -94,6 +94,7 @@ static struct cdvdman_cb_data cb_data;
 
 int cdrom_io_sema;
 static int cdrom_rthread_sema;
+static unsigned char cdread_for_stream; // the read queued for cdvdman_cdread_Thread is a stream fill (cdvdman_StreamRead)
 static int cdvdman_scmdsema;
 int cdvdman_searchfilesema;
 static int cdvdman_ReadingThreadID;
@@ -660,7 +661,7 @@ static int cdvdman_common_lock(int IntrContext)
     return 1;
 }
 
-int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
+static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int for_stream)
 {
     int IsIntrContext, OldState;
 
@@ -674,6 +675,7 @@ int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
         return 0;
     }
 
+    cdread_for_stream = for_stream ? 1 : 0;
     cdvdman_stat.cdread_lba = lsn;
     cdvdman_stat.cdread_sectors = sectors;
     cdvdman_stat.sector_size = sector_size;
@@ -687,6 +689,18 @@ int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
         SignalSema(cdrom_rthread_sema);
 
     return 1;
+}
+
+// The game's sceCdRead: its completion goes to the game's sceCdCallback.
+int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
+{
+    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 0);
+}
+
+// A stream fill (streaming.c): its completion goes to the stream channel's callback.
+int cdvdman_StreamRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
+{
+    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 1);
 }
 
 int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
@@ -956,22 +970,37 @@ static void cdvdman_signal_read_end_intr(void)
 static void cdvdman_cdread_Thread(void *args)
 {
     while (1) {
+        int for_stream;
+
         WaitSema(cdrom_rthread_sema);
+
+        // Set with the drive lock held, so it still describes this read: the next one cannot be queued before it ends.
+        for_stream = cdread_for_stream;
 
         cdvdman_read(cdvdman_stat.cdread_lba, cdvdman_stat.cdread_sectors, cdvdman_stat.sector_size, cdvdman_stat.cdread_buf);
 
         /* This streaming callback is not compatible with the original SONY stream channel 0 (IOP) callback's design.
        The original is run from the interrupt handler, but we want it to run
        from a threaded environment because our interrupt is emulated. */
-        if (Stm0Callback != NULL) {
+        if (for_stream && Stm0Callback != NULL) {
             cdvdman_signal_read_end();
 
             /* Check that the streaming callback was not cleared, as this pointer may get changed between function calls.
                As per the original semantics, once it is cleared, then it should not be called. */
             if (Stm0Callback != NULL)
                 Stm0Callback();
-        } else
-            cdvdman_cb_event(SCECdFuncRead); // Only runs if streaming is not in action.
+        } else {
+            /* A game read gets the game's callback even while a stream is open. Before, the stream callback took it
+               instead (StmCallback's "BUG!" note), so a game waiting on sceCdCallback for that read never heard back. */
+            cdvdman_cb_event(SCECdFuncRead);
+
+            /* A stream fill refused while the game held the drive restarts now rather than at its retry alarm.
+               Not through Stm0Callback: once the drive is free, the retry alarm can queue a fill before this line,
+               and StmCallback would count that fill as done before it is read. If the game's callback is still
+               pending, the drive is not free yet: the fill is refused again and keeps its alarm. */
+            if (!for_stream && Stm0Callback != NULL)
+                cdvdman_StreamRefill();
+        }
     }
 }
 
