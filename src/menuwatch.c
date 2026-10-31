@@ -136,19 +136,25 @@ static int add(int len, const char *fmt, ...)
 
 static int buildReport(int stalledFor, int frameAge, int frame)
 {
+    char frameNote[64];
     ee_thread_status_t status;
     ee_sema_t sema;
     u32 notReady = 0, empty = 0;
     int len = 0, id, logLen, wrapped = 0;
 
+    // Frame 0 means the boot never drew anything: say so rather than give a frame age.
+    if (frame == 0)
+        snprintf(frameNote, sizeof(frameNote), "no frame drawn yet");
+    else
+        snprintf(frameNote, sizeof(frameNote), "last frame drawn %d s ago (frame %d)", frameAge, frame);
     padGetFaultCounters(&notReady, &empty);
     len = add(len,
               "RiptOPL %s menu freeze report\r\n"
-              "%d s after boot, stuck for %d s, last frame drawn %d s ago (frame %d)\r\n"
+              "%d s after boot, stuck for %d s, %s\r\n"
               "GUI thread %d last entered: %s\r\n"
               "longest run of missed pad reads: %u polls; of empty reads: %u polls\r\n\r\n"
               "EE threads (id, state, priority, entry, wait type/id, wakeups):\r\n",
-              OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), stalledFor, frameAge, frame,
+              OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), stalledFor, frameNote,
               guiThreadId, stepName(watchStep), (unsigned)notReady, (unsigned)empty);
 
     for (id = 1; id < 256; id++) {
