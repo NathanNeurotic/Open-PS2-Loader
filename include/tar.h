@@ -77,10 +77,8 @@ TarEntryBase *tarFind(TarKind kind, const char *filename);
 TarEntryBase *tarFindPrefix(TarKind kind, const char *prefix);
 TarEntryBase *tarFindExact(TarKind kind, const char *filename);
 TarEntryBase *tarFindPrefixExact(TarKind kind, const char *prefix);
-void *tarGet(TarKind kind, const char *filename);
 u32 tarRead(TarKind kind, const TarEntryBase *entry, void *dst, u32 dstSize);
 
-int tarEnsureLoaded(TarKind kind);
 void tarInvalidate(TarKind kind);
 
 const char *tarGetDevicePrefix(TarKind kind);

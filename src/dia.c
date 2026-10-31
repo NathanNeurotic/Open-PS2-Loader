@@ -45,6 +45,8 @@ static int screenHeight;
 static struct UIItem *diaSettingsShellUI;
 static const char *diaSettingsIndicator;
 static int diaSettingsContext;
+static struct UIItem *diaListUI; // diaSetListKeys
+static int diaListKeyLast;
 
 // Right edge available to the keyboard's caret hint: CANCEL is drawn at x=500 on the same row.
 #define KEYB_HINT_END 490
@@ -1225,6 +1227,16 @@ void diaSetSettingsContext(int enabled)
     diaSettingsContext = enabled;
 }
 
+void diaSetListKeys(struct UIItem *ui)
+{
+    diaListUI = ui;
+}
+
+int diaListKey(void)
+{
+    return diaListKeyLast;
+}
+
 // The lowest pixel the dialog would reach (content space, from `top`) with rows `gap` apart. Walks the
 // items exactly as diaRenderUI lays them out, with diaItemHeight standing in for diaRenderItem's *h.
 static int diaLayoutBottom(struct UIItem *ui, int spacingH, int gap, int top)
@@ -1854,6 +1866,22 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
                 return DIA_RESULT_NEXT;
             }
 
+            // A list dialog (the File Manager): L1/R1 turn its pages, and Square/Triangle act on the row's button
+            if (ui == diaListUI) {
+                if (getKeyOn(KEY_L1) || getKeyOn(KEY_R1)) {
+                    diaRestoreScrollSpeed();
+                    sfxPlay(SFX_CURSOR);
+                    return getKeyOn(KEY_L1) ? DIA_RESULT_PREV : DIA_RESULT_NEXT;
+                }
+                if (cur->type == UI_BUTTON && (getKeyOn(KEY_SQUARE) || getKeyOn(KEY_TRIANGLE))) {
+                    diaListKeyLast = getKeyOn(KEY_SQUARE) ? DIA_KEY_SQUARE : DIA_KEY_TRIANGLE;
+                    diaRestoreScrollSpeed();
+                    sfxPlay(SFX_CONFIRM);
+                    diaReturnRemember(ui, cur->id);
+                    return cur->id;
+                }
+            }
+
             // the right stick peeks up or down a long page, silently; the cursor stays put
             {
                 int sx, sy;
@@ -1931,6 +1959,7 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
                 if (cur->type == UI_BUTTON) {
                     diaRestoreScrollSpeed();
                     diaReturnRemember(ui, cur->id);
+                    diaListKeyLast = DIA_KEY_CONFIRM;
                     return cur->id;
                 }
 

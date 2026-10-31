@@ -990,6 +990,34 @@ static const char *appBuildHddHandoffPath(char *out, size_t outSize, const char 
     return out;
 }
 
+// The File Manager's Run: the ELF at path starts the way an ordinary app does (the Reboot IOP question, the same
+// handoff), with no arguments. An ELF on the internal HDD is left to the Apps page, which knows its partition.
+// Returns only when nothing was started; the reason has been shown.
+void appLaunchElfPath(const char *path)
+{
+    char normFilename[256];
+    char *target_argv[1];
+    int rebootIop;
+
+    if (!strncasecmp(path, "pfs", 3) || !strncasecmp(path, "hdd", 3)) {
+        guiMsgBox(_l(_STR_FM_RUN_HDD), 0, NULL);
+        return;
+    }
+    // the child loader's 256-byte argument pool holds the load path, argv[0] and the reset flag
+    if (appNormalizeLaunchPath(normFilename, sizeof(normFilename), path) == NULL ||
+        strlen(normFilename) * 2 + 2 + sizeof("-reset-iop") > 256) {
+        guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+        return;
+    }
+    rebootIop = guiPromptRebootIop();
+    if (rebootIop < 0)
+        return; // the user backed out
+    mmceReset();
+    target_argv[0] = normFilename;
+    deinit(UNMOUNT_EXCEPTION | (rebootIop == 0 ? KEEPIOP_EXCEPTION : 0), IO_MODE_SELECTED_ALL_SPARE);
+    sysLoadELFApp(normFilename, "", 1, target_argv, rebootIop, 0);
+}
+
 static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int fd;

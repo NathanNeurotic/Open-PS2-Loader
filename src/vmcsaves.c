@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -43,6 +44,8 @@
 #define SAVE_FILES    64                // files in one save
 #define SAVE_MAX_SIZE (8 * 1024 * 1024) // a whole 8 MB card
 #define ICON_SYS_HEAD (0xC0 + 68)       // to the end of the title
+#define PSU_ALIGN     1024              // a PSU pads each file's data to a whole 1 KB
+#define PSU_EXT       ".psu"
 
 typedef unsigned char u8_t;
 typedef unsigned int u32_t;
@@ -747,6 +750,194 @@ static int vsWriteFolder(const vs_save_t *s, const char *parent)
     return 1;
 }
 
+// ---- a PSU file ----
+
+// PSU, the one-file save of EMS, uLaunchELF and Apollo (RIPPS2 build 51, ripps2saves.c): the save folder's
+// 512-byte entry, "." and "..", then each file's entry and its data, padded with 0xFF to a whole 1 KB.
+
+// The folder entry at the start of a PSU; 0 when the file is not one
+static int vsPsuHead(int fd, vs_ent_t *e)
+{
+    if (read(fd, e, ENT_SIZE) != ENT_SIZE)
+        return 0;
+    return (e->mode & MC_DIR) && e->length >= 2 && e->length <= DIR_MAX && e->name[0] != '\0';
+}
+
+// A name a card folder or file may take: 1 to 32 bytes, no '/', not "." or ".."
+static int vsNameOk(const char *name)
+{
+    return name[0] != '\0' && strlen(name) <= 32 && strchr(name, '/') == NULL && strcmp(name, ".") && strcmp(name, "..");
+}
+
+// The "." or ".." entry that follows a PSU's folder entry: a folder with that name
+static int vsPsuDot(int fd, const char *name)
+{
+    vs_ent_t e;
+
+    return read(fd, &e, ENT_SIZE) == ENT_SIZE && (e.mode & MC_DIR) && !strncmp(e.name, name, sizeof(e.name));
+}
+
+static int vsLoadPsu(vs_save_t *s, const char *path)
+{
+    vs_ent_t e;
+    u32_t total = 0;
+    int fd, i, j, n;
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return vsFail(VMCSAVES_ERR_NO_SAVE);
+    if (!vsPsuHead(fd, &e)) {
+        close(fd);
+        return vsFail(VMCSAVES_ERR_PSU);
+    }
+    snprintf(s->name, sizeof(s->name), "%.32s", e.name);
+    memcpy(s->created, e.created, 8);
+    memcpy(s->modified, e.modified, 8);
+    if (!vsNameOk(s->name)) {
+        close(fd);
+        return vsFail(VMCSAVES_ERR_NAME);
+    }
+    n = e.length - 2;
+    if (!vsPsuDot(fd, ".") || !vsPsuDot(fd, "..")) {
+        close(fd);
+        return vsFail(VMCSAVES_ERR_PSU);
+    }
+    for (i = 0; i < n; i++) {
+        vs_file_t *f;
+        if (read(fd, &e, ENT_SIZE) != ENT_SIZE) {
+            close(fd);
+            return vsFail(VMCSAVES_ERR_PSU); // cut short
+        }
+        if (!(e.mode & MC_FILE)) // a folder inside a save: nothing follows its entry
+            continue;
+        if (s->count >= SAVE_FILES || e.length > SAVE_MAX_SIZE || total + e.length > SAVE_MAX_SIZE) {
+            close(fd);
+            return vsFail(VMCSAVES_ERR_TOO_BIG);
+        }
+        f = &s->files[s->count];
+        snprintf(f->name, sizeof(f->name), "%.32s", e.name);
+        // a damaged or hand-made PSU could name a file twice, or give it a name no card takes
+        for (j = 0; j < s->count && strcmp(s->files[j].name, f->name); j++)
+            ;
+        if (!vsNameOk(f->name) || j < s->count) {
+            close(fd);
+            return vsFail(VMCSAVES_ERR_NAME);
+        }
+        f->size = e.length;
+        memcpy(f->created, e.created, 8);
+        memcpy(f->modified, e.modified, 8);
+        f->data = (u8_t *)malloc(f->size ? f->size : 1);
+        if (f->data == NULL) {
+            close(fd);
+            return vsFail(VMCSAVES_ERR_MEMORY);
+        }
+        s->count++;
+        total += f->size;
+        if (!vsReadAll(fd, f->data, f->size) || (f->size % PSU_ALIGN && lseek(fd, PSU_ALIGN - f->size % PSU_ALIGN, SEEK_CUR) < 0)) {
+            close(fd);
+            return vsFail(VMCSAVES_ERR_PSU);
+        }
+    }
+    close(fd);
+    return s->count > 0 ? 1 : vsFail(VMCSAVES_ERR_NO_SAVE);
+}
+
+static int vsWritePsuEnt(int fd, unsigned short mode, u32_t length, const u8_t created[8], const u8_t modified[8], const char *name)
+{
+    vs_ent_t e;
+
+    memset(&e, 0, sizeof(e));
+    e.mode = mode;
+    e.length = length;
+    memcpy(e.created, created, 8);
+    memcpy(e.modified, modified, 8);
+    strncpy(e.name, name, sizeof(e.name));
+    return write(fd, &e, ENT_SIZE) == ENT_SIZE;
+}
+
+// <parent><name>.psu; -1 when that file is already there. It is written to a .tmp beside it and renamed only
+// once whole, so a pulled drive or a full one never leaves a cut-short .psu that looks like a save.
+static int vsWritePsu(const vs_save_t *s, const char *parent)
+{
+    static u8_t pad[PSU_ALIGN];
+    char path[384], tmp[392];
+    int fd, i, ok;
+
+    mkdir(parent, 0777);    // the shared SAVES/ folder, as for a save folder
+    if (!vsNameOk(s->name)) // a name from a card ("../x") never leaves the folder
+        return vsFail(VMCSAVES_ERR_NAME);
+    if (snprintf(path, sizeof(path), "%s%s" PSU_EXT, parent, s->name) >= (int)sizeof(path))
+        return vsFail(VMCSAVES_ERR_NAME);
+    if ((fd = open(path, O_RDONLY)) >= 0) {
+        close(fd);
+        vsErr = VMCSAVES_ERR_EXISTS;
+        return -1;
+    }
+    snprintf(tmp, sizeof(tmp), "%s.tmp", path);
+    unlink(tmp); // left by an earlier cut
+    fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0)
+        return vsFail(VMCSAVES_ERR_WRITE);
+    memset(pad, 0xFF, sizeof(pad));
+    ok = vsWritePsuEnt(fd, MODE_DIR, s->count + 2, s->created, s->modified, s->name) &&
+         vsWritePsuEnt(fd, MODE_DIR, 0, s->created, s->modified, ".") &&
+         vsWritePsuEnt(fd, MODE_UP, 0, s->created, s->modified, "..");
+    for (i = 0; i < s->count && ok; i++) {
+        const vs_file_t *f = &s->files[i];
+        ok = vsWritePsuEnt(fd, MODE_FILE, f->size, f->created, f->modified, f->name) && vsWriteAll(fd, f->data, f->size);
+        if (ok && f->size % PSU_ALIGN)
+            ok = vsWriteAll(fd, pad, PSU_ALIGN - f->size % PSU_ALIGN);
+    }
+    if (close(fd) < 0)
+        ok = 0;
+    // The check above is only for the clear message. On FAT and exFAT (FatFs) and SMB, rename itself
+    // refuses a name that is already there, so a .psu that appears in between is kept.
+    if (!ok || rename(tmp, path) != 0) {
+        unlink(tmp);
+        if (ok && (fd = open(path, O_RDONLY)) >= 0) {
+            close(fd);
+            vsErr = VMCSAVES_ERR_EXISTS;
+            return -1;
+        }
+        return vsFail(VMCSAVES_ERR_WRITE);
+    }
+    return 1;
+}
+
+// A PSU's save name and the head of its icon.sys (zeroed when it has none); 0 when the file is not a PSU.
+// Only the entries are read: each file's data is skipped over.
+static int vsPsuPeek(const char *path, char *name, int nameSize, u8_t *sys, int sysSize)
+{
+    vs_ent_t e;
+    int fd, i, n, ok = 0;
+
+    memset(sys, 0, sysSize);
+    if ((fd = open(path, O_RDONLY)) < 0)
+        return 0;
+    if (vsPsuHead(fd, &e)) {
+        ok = 1;
+        snprintf(name, nameSize, "%.32s", e.name);
+        n = e.length - 2;
+        if (lseek(fd, 2 * ENT_SIZE, SEEK_CUR) < 0)
+            n = 0;
+        for (i = 0; i < n && read(fd, &e, ENT_SIZE) == ENT_SIZE; i++) {
+            u32_t skip;
+            if (!(e.mode & MC_FILE))
+                continue;
+            skip = e.length + (e.length % PSU_ALIGN ? PSU_ALIGN - e.length % PSU_ALIGN : 0);
+            if (!strncmp(e.name, "icon.sys", sizeof(e.name))) {
+                if (e.length >= (u32_t)sysSize && read(fd, sys, sysSize) != sysSize)
+                    memset(sys, 0, sysSize);
+                break;
+            }
+            if (e.length > SAVE_MAX_SIZE || lseek(fd, skip, SEEK_CUR) < 0)
+                break;
+        }
+    }
+    close(fd);
+    return ok;
+}
+
 // ---- titles ----
 
 // Shift-JIS from an icon.sys title to plain ASCII: full-width letters, digits and common punctuation map
@@ -909,6 +1100,7 @@ int vmcSavesList(const char *image, vmc_save_t *out, int max, unsigned int *free
         if (!(e.mode & MC_EXISTS) || !(e.mode & MC_DIR))
             continue;
         snprintf(out[n].name, sizeof(out[n].name), "%.32s", e.name);
+        out[n].file[0] = '\0';
         memset(sys, 0, sizeof(sys));
         if (vsReadIn(&v, &e, "icon.sys", sys, sizeof(sys)) == (int)sizeof(sys))
             vmcSavesTitle(sys, sizeof(sys), out[n].title, sizeof(out[n].title));
@@ -920,28 +1112,65 @@ int vmcSavesList(const char *image, vmc_save_t *out, int max, unsigned int *free
     return n;
 }
 
-static int vsCopy(int fromVmc, const char *from, const char *save, const char *to)
+enum {
+    VS_FOLDER, // a save folder on the drive
+    VS_VMC,    // a save in a card image
+    VS_PSU,    // a .psu file
+};
+
+static int vsCopy(int fromKind, const char *from, const char *save, int toKind, const char *to)
 {
     static vs_save_t s; // ~2.5 KB of names and pointers; one copy at a time (the GUI thread)
     int r;
 
     vsErr = VMCSAVES_OK;
     memset(&s, 0, sizeof(s));
-    r = fromVmc ? vsLoadVmc(&s, from, save) : vsLoadFolder(&s, from, save);
-    if (r)
-        r = fromVmc ? vsWriteFolder(&s, to) : vsWriteVmc(&s, to);
+    if (fromKind == VS_VMC)
+        r = vsLoadVmc(&s, from, save);
+    else if (fromKind == VS_PSU)
+        r = vsLoadPsu(&s, from);
+    else
+        r = vsLoadFolder(&s, from, save);
+    if (r) {
+        if (toKind == VS_VMC)
+            r = vsWriteVmc(&s, to);
+        else if (toKind == VS_PSU)
+            r = vsWritePsu(&s, to);
+        else
+            r = vsWriteFolder(&s, to);
+    }
     vsSaveFree(&s);
     return r;
 }
 
 int vmcSavesExport(const char *image, const char *save, const char *parent)
 {
-    return vsCopy(1, image, save, parent);
+    return vsCopy(VS_VMC, image, save, VS_FOLDER, parent);
 }
 
 int vmcSavesImport(const char *parent, const char *save, const char *image)
 {
-    return vsCopy(0, parent, save, image);
+    return vsCopy(VS_FOLDER, parent, save, VS_VMC, image);
+}
+
+int vmcSavesExportPsu(const char *image, const char *save, const char *parent)
+{
+    return vsCopy(VS_VMC, image, save, VS_PSU, parent);
+}
+
+int vmcSavesImportPsu(const char *psu, const char *image)
+{
+    return vsCopy(VS_PSU, psu, NULL, VS_VMC, image);
+}
+
+int vmcSavesFolderToPsu(const char *parent, const char *save, const char *outParent)
+{
+    return vsCopy(VS_FOLDER, parent, save, VS_PSU, outParent);
+}
+
+int vmcSavesPsuToFolder(const char *psu, const char *parent)
+{
+    return vsCopy(VS_PSU, psu, NULL, VS_FOLDER, parent);
 }
 
 int vmcSavesDelete(const char *image, const char *save)
@@ -978,6 +1207,13 @@ int vmcSavesDelete(const char *image, const char *save)
     return ok ? 1 : vsFail(VMCSAVES_ERR_WRITE);
 }
 
+// A .psu file name, in any case
+static int vsIsPsuName(const char *name)
+{
+    size_t len = strlen(name);
+    return len > 4 && !strcasecmp(name + len - 4, PSU_EXT);
+}
+
 int vmcSavesListFolder(const char *parent, vmc_save_t *out, int max)
 {
     char path[384];
@@ -990,12 +1226,24 @@ int vmcSavesListFolder(const char *parent, vmc_save_t *out, int max)
     if (d == NULL)
         return 0;
     while ((de = readdir(d)) != NULL && n < max) {
-        if (de->d_name[0] == '.' || strlen(de->d_name) > 32)
+        if (de->d_name[0] == '.' || strlen(de->d_name) >= sizeof(out[n].file))
             continue;
-        if (snprintf(path, sizeof(path), "%s%s", parent, de->d_name) >= (int)sizeof(path) || stat(path, &st) != 0 || !S_ISDIR(st.st_mode))
+        if (snprintf(path, sizeof(path), "%s%s", parent, de->d_name) >= (int)sizeof(path) || stat(path, &st) != 0)
+            continue;
+        out[n].title[0] = '\0';
+        out[n].file[0] = '\0';
+        if (!S_ISDIR(st.st_mode)) {
+            // a .psu beside the save folders (RIPPS2): listed by the save it holds, copied in by its file name
+            if (!vsIsPsuName(de->d_name) || !vsPsuPeek(path, out[n].name, sizeof(out[n].name), sys, sizeof(sys)))
+                continue;
+            snprintf(out[n].file, sizeof(out[n].file), "%.63s", de->d_name);
+            vmcSavesTitle(sys, sizeof(sys), out[n].title, sizeof(out[n].title));
+            n++;
+            continue;
+        }
+        if (strlen(de->d_name) > 32)
             continue;
         snprintf(out[n].name, sizeof(out[n].name), "%.32s", de->d_name);
-        out[n].title[0] = '\0';
         snprintf(path, sizeof(path), "%s%s/icon.sys", parent, de->d_name);
         if ((fd = open(path, O_RDONLY)) >= 0) {
             if (read(fd, sys, sizeof(sys)) == (int)sizeof(sys))

@@ -38,7 +38,6 @@ int ioPutRequestUnlessWaiting(int type, void *data);
 /** removes all requests of a given type from the queue
  * @param type the type of the requests to remove
  * @return the count of the requests removed */
-int ioRemoveRequests(int type);
 
 /** returns the count of pending requests */
 int ioGetPendingRequestCount(void);
@@ -52,7 +51,6 @@ int ioHasPendingRequests(void);
  * frozen (one request that never finishes). Unsynchronised reads, display only.
  */
 int ioGetPending(int type);
-unsigned int ioGetTotal(int type);
 
 
 /** Helper thread safe printf */

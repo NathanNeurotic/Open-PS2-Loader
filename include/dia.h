@@ -10,6 +10,12 @@
 #define DIA_RESULT_NEXT  (-3)
 #define DIA_RESULT_INDEX (-4)
 
+// A list dialog (diaSetListKeys): L1/R1 return these, and Square/Triangle on a button return its id with
+// diaListKey() telling which key it was (DIA_KEY_CONFIRM for the confirm button).
+#define DIA_KEY_CONFIRM  0
+#define DIA_KEY_SQUARE   1
+#define DIA_KEY_TRIANGLE 2
+
 // UI dialog item definition
 typedef enum {
     // terminates the definition of dialog. Mandatory
@@ -103,6 +109,10 @@ void diaSetSettingsShell(struct UIItem *ui, const char *indicator);
 // Marks ordinary child editors opened from a Settings page so they keep Settings' controller
 // semantics and footer wording without opting into peer-screen L1/R1 navigation.
 void diaSetSettingsContext(int enabled);
+// Opts one dialog into list keys: L1/R1 page (DIA_RESULT_PREV / DIA_RESULT_NEXT) and Square/Triangle on a
+// button (its id, with diaListKey()). NULL turns it off.
+void diaSetListKeys(struct UIItem *ui);
+int diaListKey(void);
 int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title);
 void diaSetEnabled(struct UIItem *ui, int id, int enabled);
 void diaSetShowDefaultWhenEmpty(struct UIItem *ui, int id, int show);

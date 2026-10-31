@@ -32,6 +32,7 @@ typedef struct
 } app_info_t;
 
 void appInit(item_list_t *itemList);
+void appLaunchElfPath(const char *path); // the File Manager's Run; returns only when nothing started
 item_list_t *appGetObject(int initOnly);
 int appIsReadOnly(item_list_t *itemList, int id); // 1 if the app is on a read-only server (no Rename or Delete)
 int appGetArtMode(const char *startup);

@@ -299,15 +299,17 @@ static int guiGameCreateVMC(item_list_t *support, char *name, int size, int core
     return support->itemCheckVMC(support, name, size);
 }
 
-// VMC > Saves (RIPPS2 builds 98-115, akilluminati47): the saves on the card beside the save folders in
-// <the card's folder>SAVES/, copied either way, or deleted off the card. vmcsaves.c does the card.
+// VMC > Saves (RIPPS2 builds 98-115, akilluminati47): the saves on the card beside the save folders and .psu
+// files in <the card's folder>SAVES/, copied either way (out as a folder or a .psu), or deleted off the card.
+// vmcsaves.c does the card.
 #define VMCSAVES_SHOWN 64
 
 static vmc_save_t vmcSavesCard[VMCSAVES_SHOWN], vmcSavesFolder[VMCSAVES_SHOWN];
 static const char *vmcSavesCardItems[VMCSAVES_SHOWN + 1], *vmcSavesFolderItems[VMCSAVES_SHOWN + 1];
+static char vmcSavesFolderLabels[VMCSAVES_SHOWN][sizeof(vmcSavesFolder[0].title) + 8];
 static int vmcSavesCardCount, vmcSavesFolderCount;
 
-static int guiGameVMCSavesErrorText(void)
+int guiGameVMCSavesErrorText(void)
 {
     switch (vmcSavesError()) {
         case VMCSAVES_ERR_NOT_CARD:
@@ -323,18 +325,25 @@ static int guiGameVMCSavesErrorText(void)
             return _STR_VMC_SAVES_ERR_TOO_BIG;
         case VMCSAVES_ERR_WRITE:
             return _STR_VMC_SAVES_ERR_WRITE;
+        case VMCSAVES_ERR_PSU:
+            return _STR_VMC_SAVES_ERR_PSU;
         default:
             return _STR_VMC_SAVES_ERR_READ;
     }
 }
 
-// A list's row: the save's title, or its folder name when it has none
-static void guiGameVMCSavesItems(vmc_save_t *saves, int count, const char **items)
+// A list's row: the save's title, or its folder name when it has none; a .psu file's row says so
+static void guiGameVMCSavesItems(vmc_save_t *saves, int count, const char **items, char (*labels)[sizeof(vmcSavesFolder[0].title) + 8])
 {
     int i;
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count; i++) {
         items[i] = saves[i].title[0] != '\0' ? saves[i].title : saves[i].name;
+        if (labels != NULL && saves[i].file[0] != '\0') {
+            snprintf(labels[i], sizeof(labels[i]), "%s (PSU)", items[i]);
+            items[i] = labels[i];
+        }
+    }
     items[count] = NULL;
 }
 
@@ -348,8 +357,8 @@ static void guiGameRefreshVMCSaves(const char *card, const char *folder, int car
     if (vmcSavesCardCount < 0)
         vmcSavesCardCount = 0;
     vmcSavesFolderCount = vmcSavesListFolder(folder, vmcSavesFolder, VMCSAVES_SHOWN);
-    guiGameVMCSavesItems(vmcSavesCard, vmcSavesCardCount, vmcSavesCardItems);
-    guiGameVMCSavesItems(vmcSavesFolder, vmcSavesFolderCount, vmcSavesFolderItems);
+    guiGameVMCSavesItems(vmcSavesCard, vmcSavesCardCount, vmcSavesCardItems, NULL);
+    guiGameVMCSavesItems(vmcSavesFolder, vmcSavesFolderCount, vmcSavesFolderItems, vmcSavesFolderLabels);
     diaSetEnum(diaVMCSaves, VMCSAVES_CARD, vmcSavesCardItems);
     diaSetEnum(diaVMCSaves, VMCSAVES_FOLDER, vmcSavesFolderItems);
     if (diaGetInt(diaVMCSaves, VMCSAVES_CARD, &cur) && cur >= vmcSavesCardCount)
@@ -360,6 +369,7 @@ static void guiGameRefreshVMCSaves(const char *card, const char *folder, int car
     diaSetLabel(diaVMCSaves, VMCSAVES_FREE, freeText);
     // copying out writes to the drive; copying in and deleting write to the card
     diaSetEnabled(diaVMCSaves, VMCSAVES_EXPORT, gEnableWrite && vmcSavesCardCount > 0);
+    diaSetEnabled(diaVMCSaves, VMCSAVES_EXPORT_PSU, gEnableWrite && vmcSavesCardCount > 0);
     diaSetEnabled(diaVMCSaves, VMCSAVES_IMPORT, cardWritable && vmcSavesFolderCount > 0);
     diaSetEnabled(diaVMCSaves, VMCSAVES_DELETE, cardWritable && vmcSavesCardCount > 0);
 }
@@ -402,16 +412,28 @@ static void guiGameShowVMCSaves(const char *card)
         guiMsgBox(_l(_STR_VMC_SAVES_ERR_READ_ONLY), 0, diaVMCSaves);
 
     while ((result = diaExecuteDialog(diaVMCSaves, result, 1, NULL)) > UIID_BTN_CANCEL) {
-        if (result == VMCSAVES_EXPORT && diaGetInt(diaVMCSaves, VMCSAVES_CARD, &pick) && pick < vmcSavesCardCount) {
-            r = vmcSavesExport(card, vmcSavesCard[pick].name, folder);
+        if ((result == VMCSAVES_EXPORT || result == VMCSAVES_EXPORT_PSU) && diaGetInt(diaVMCSaves, VMCSAVES_CARD, &pick) && pick < vmcSavesCardCount) {
+            char shown[48];
+            if (result == VMCSAVES_EXPORT_PSU) {
+                r = vmcSavesExportPsu(card, vmcSavesCard[pick].name, folder);
+                snprintf(shown, sizeof(shown), "%s.psu", vmcSavesCard[pick].name);
+            } else {
+                r = vmcSavesExport(card, vmcSavesCard[pick].name, folder);
+                snprintf(shown, sizeof(shown), "%s", vmcSavesCard[pick].name);
+            }
             guiGameVMCSavesSync(folder);
             if (r == 1) {
-                snprintf(msg, sizeof(msg), _l(_STR_VMC_SAVE_EXPORTED), vmcSavesCard[pick].name, folder);
+                snprintf(msg, sizeof(msg), _l(_STR_VMC_SAVE_EXPORTED), shown, folder);
                 guiMsgBox(msg, 0, diaVMCSaves);
             } else
                 guiMsgBox(_l(guiGameVMCSavesErrorText()), 0, diaVMCSaves);
         } else if (result == VMCSAVES_IMPORT && diaGetInt(diaVMCSaves, VMCSAVES_FOLDER, &pick) && pick < vmcSavesFolderCount) {
-            r = vmcSavesImport(folder, vmcSavesFolder[pick].name, card);
+            if (vmcSavesFolder[pick].file[0] != '\0') {
+                char psu[sizeof(folder) + sizeof(vmcSavesFolder[0].file)];
+                snprintf(psu, sizeof(psu), "%s%s", folder, vmcSavesFolder[pick].file);
+                r = vmcSavesImportPsu(psu, card);
+            } else
+                r = vmcSavesImport(folder, vmcSavesFolder[pick].name, card);
             guiGameVMCSavesSync(card);
             if (r == 1) {
                 snprintf(msg, sizeof(msg), _l(_STR_VMC_SAVE_IMPORTED), vmcSavesFolder[pick].name);
@@ -936,7 +958,7 @@ int guiGameShowGSConfig(int forceGlobal)
 
     if (forceGlobal) {
         // The per-game page is read back later by guiGameSaveConfig; the global one has no such
-        // caller, so it commits its own rows here. Only on OK -- matching guiShowNeutrinoDefaults().
+        // caller, so it commits its own rows here. Only on OK -- matching guiSettingsShowLaunch().
         if (ret)
             guiGameSaveGSMGlobalConfig(configGetByType(CONFIG_GAME));
         forceGlobalGSM = 0;
@@ -1700,7 +1722,7 @@ reshow_compat:
     result = diaExecuteDialog(diaCompatConfig, -1, 1, &guiGameCompatUpdater);
     if (result == COMPAT_NEUTRINO_ARGS) {
         // the "Neutrino Launch Args" button -> open the structured args sub-screen on the per-game
-        // args buffer, then re-enter the Compatibility dialog (mirrors guiShowConfig for the global).
+        // args buffer, then re-enter the Compatibility dialog (mirrors guiSettingsShowLaunch for the global).
         guiShowNeutrinoArgsConfig(neutrinoArgs, sizeof(neutrinoArgs));
         goto reshow_compat;
     }

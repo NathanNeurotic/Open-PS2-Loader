@@ -4554,7 +4554,7 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
     }
 
     // The bound is FAV_MODE, not APP_MODE. The Game Sources picker offers six entries and the last
-    // of them is Favourites (guiShowDeviceConfig deviceNames[], byte-identical to the fork), so an
+    // of them is Favourites (guiSettingsShowSources deviceNames[], byte-identical to the fork), so an
     // APP_MODE bound silently rewrote the two choices ABOVE it -- Favourites and MMCE -- back to
     // Apps, on every applyConfig AND every boot. Picking "Favourites" as the startup page snapped
     // the row back to Apps before the value was ever written to the config: the whole feature was
