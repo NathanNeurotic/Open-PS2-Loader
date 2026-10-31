@@ -152,6 +152,13 @@ Separate 4:3 and 16:9 layouts live in the same file through `_sd`/`_hd` key vari
 before the view is resolved, so they combine with every view rule above; see
 [THEME_ENGINE.md, SD and HD layouts](THEME_ENGINE.md#sd-and-hd-layouts-_sd--_hd--this-fork).
 
+## Alternate background
+
+A second theme background in the same file, picked by **Settings → Interface → Alternate Background**:
+`alt=` beside an element's `default=`, or once at the top level for every Background (idea:
+KrahJohlito). It is applied after the SD/HD pass, so it combines with views and `_hd` keys; see
+[THEME_ENGINE.md, Alternate background](THEME_ENGINE.md#alternate-background-alt--this-fork).
+
 ## Open questions
 
 - Remember the view per theme only, or per device page too (like the L3 ring)?

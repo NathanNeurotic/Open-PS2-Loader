@@ -2281,3 +2281,10 @@ gui_strings:
 - comment: Hint of Library.
   label: HINT_LIBRARY
   string: "Pages gives every device its own tab. All Games List puts the games of every started device, PS2, PS1 and apps, on one page. Same setting as All Games List under Game Sources."
+
+- comment: Interface setting under Library (KrahJohlito's alt= theme key). On shows the theme's alternate background.
+  label: ALT_BACKGROUND
+  string: Alternate Background
+
+- label: HINT_ALT_BACKGROUND
+  string: "Shows the theme's alternate background (alt= in its conf_theme.cfg) instead of its default one. Themes without one are not changed."

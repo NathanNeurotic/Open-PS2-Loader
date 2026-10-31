@@ -433,6 +433,37 @@ out for 16:9 already), and `scaled=0` images (16:9 still draws those full width)
 - Names stay within 47 characters including the suffix; `coverflow.favsVcdMain12_reflection_offset_hd`
   is 44.
 
+### Alternate background (`alt=`) — *this fork*
+
+A theme can ship a second background in the same `conf_theme.cfg`, and the user picks it with
+**Settings → Interface → Alternate Background** (Off by default). Idea: KrahJohlito ("one theme, a
+toggle switch").
+
+```ini
+alt=bg_night              # top level: the alternate picture for every Background element
+
+main0:
+	type=Background
+	default=background    # Alternate Background off (and in stock OPL)
+	alt=background_dark   # Alternate Background on; beats the top-level alt= for this element
+	alt_hd=background_dark_wide   # SD/HD variants work as for any key
+```
+
+| Key | Value | Meaning |
+|---|---|---|
+| `alt` (inside a block) | image name, as `default` | Used instead of the element's `default` while Alternate Background is on. Works on any element with `default=` (a `StaticImage` logo too), and in `<view>.` blocks. |
+| `alt` (top level) | image name | The alternate picture for every `Background` element (base and `<view>.` blocks) that has no `alt=` of its own. |
+
+- With the setting off, or in a theme without any `alt` key, nothing changes: `default=` is used as
+  always. Stock OPL and other forks ignore `alt=`.
+- A `Background` with `alt=` but no `default=` shows the plasma while the setting is off and the
+  picture while it is on.
+- The swap is applied right after the SD/HD pass, so `alt_hd=`/`alt_sd=` choose the picture per display
+  mode, and fallback views built from the theme's own blocks pick it up too.
+- Per-game background art (`pattern=BG`) still replaces the theme's picture while a game with art is
+  selected; `alt=` changes only the theme's own picture.
+- Changing the setting reloads only a theme that has an `alt` key, once the settings page is closed.
+
 ---
 
 ## 2. Global properties

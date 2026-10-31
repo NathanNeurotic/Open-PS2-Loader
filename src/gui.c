@@ -1263,6 +1263,7 @@ reshow_ui:
     guiSetGameViewPicker(diaUIConfig);
     guiSetAppsViewPicker(diaUIConfig);
     guiSetThemeViewPicker(diaUIConfig);
+    diaSetInt(diaUIConfig, UICFG_THEME_ALT_BG, gThemeAltBackground);
     guiSetLibraryPicker(diaUIConfig);
     diaSetEnum(diaUIConfig, UICFG_VMODE, vmodeNames);
     diaSetInt(diaUIConfig, UICFG_VMODE, gVMode);
@@ -1315,6 +1316,7 @@ reshow_ui:
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         int themeViewRequest = guiReadThemeViewPicker(diaUIConfig);
+        diaGetInt(diaUIConfig, UICFG_THEME_ALT_BG, &gThemeAltBackground); // applyConfig reloads a theme with alt= keys
         int allGamesChanged = guiReadLibraryPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
         screenPosModeChanged(previousVMode, openX, openY, openOver); // before applyConfig shows the mode
@@ -3302,6 +3304,7 @@ static int guiSettingsShowInterface(void)
     guiSetGameViewPicker(ui);
     guiSetAppsViewPicker(ui);
     guiSetThemeViewPicker(ui);
+    diaSetInt(ui, UICFG_THEME_ALT_BG, gThemeAltBackground);
     guiSetLibraryPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
@@ -3372,6 +3375,7 @@ reshow_interface:
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         themeViewRequest = guiReadThemeViewPicker(ui);
+        diaGetInt(ui, UICFG_THEME_ALT_BG, &gThemeAltBackground); // applyConfig reloads a theme with alt= keys
         allGamesChanged = guiReadLibraryPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);

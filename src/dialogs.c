@@ -879,6 +879,12 @@ struct UIItem diaUIConfig[] = {
     {UI_ENUM, UICFG_LIBRARY, 1, 1, _STR_HINT_LIBRARY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    // The theme's alt= background instead of its default one (KrahJohlito's idea). Themes without alt= ignore it.
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ALT_BACKGROUND}}},
+    {UI_SPACER},
+    {UI_BOOL, UICFG_THEME_ALT_BG, 1, 1, _STR_HINT_ALT_BACKGROUND, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_FONT_SIZE}}},
     {UI_SPACER},
     {UI_ENUM, UICFG_FONT_SIZE, 1, 1, _STR_HINT_FONT_SIZE, 0, 0, {.intvalue = {0, 0}}},

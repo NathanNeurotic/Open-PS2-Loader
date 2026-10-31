@@ -300,6 +300,46 @@ int main(void)
         assert(thmApplyDisplayLayout(only, 1) == 1 && configGetStr(only, "main6_type", &s) && !strcmp(s, "StaticText"));
         configFree(only);
 
+        // Alternate background (alt=).
+        static const char *alts = "alt=bg_top\n"
+                                  "main0:\n\ttype=Background\n\tdefault=bg\n\talt=bg_night\n"
+                                  "main1:\n\ttype=Background\n\tdefault=bg2\n"
+                                  "main2:\n\ttype=StaticImage\n\tdefault=logo\n"
+                                  "coverflow.main0:\n\ttype=Background\n\tdefault=cf\n";
+        config_set_t *off = parse(alts);
+        assert(thmApplyAltBackground(off, 0) == 1); // declared, setting off: nothing changes
+        assert(configGetStr(off, "main0_default", &s) && !strcmp(s, "bg"));
+        assert(configGetStr(off, "main1_default", &s) && !strcmp(s, "bg2"));
+        configFree(off);
+
+        config_set_t *on = parse(alts);
+        assert(thmApplyAltBackground(on, 1) == 1);
+        assert(configGetStr(on, "main0_default", &s) && !strcmp(s, "bg_night"));          // its own alt= wins
+        assert(configGetStr(on, "main1_default", &s) && !strcmp(s, "bg_top"));            // the top-level alt=
+        assert(configGetStr(on, "main2_default", &s) && !strcmp(s, "logo"));              // not a Background
+        assert(configGetStr(on, "coverflow.main0_default", &s) && !strcmp(s, "bg_top"));  // view blocks too
+        configFree(on);
+
+        config_set_t *plasma = parse("main0:\n\ttype=Background\n\talt=bg_night\n");
+        assert(thmApplyAltBackground(plasma, 1) == 1 && configGetStr(plasma, "main0_default", &s) && !strcmp(s, "bg_night"));
+        configFree(plasma);
+
+        config_set_t *althd = parse("main0:\n\ttype=Background\n\tdefault=bg\n\talt=night\n\talt_hd=night_wide\n");
+        thmApplyDisplayLayout(althd, 1);
+        assert(thmApplyAltBackground(althd, 1) == 1 && configGetStr(althd, "main0_default", &s) && !strcmp(s, "night_wide"));
+        configFree(althd);
+
+        config_set_t *plain = parse("main0:\n\ttype=Background\n\tdefault=bg\nmain1:\n\ttype=StaticImage\n\tx=12\n");
+        before = after = 0;
+        for (struct config_value_t *e = plain->head; e; e = e->next)
+            before++;
+        assert(thmApplyAltBackground(plain, 1) == 0);
+        for (struct config_value_t *e = plain->head; e; e = e->next)
+            after++;
+        assert(before == after && configGetStr(plain, "main0_default", &s) && !strcmp(s, "bg"));
+        configFree(plain);
+        assert(thmApplyAltBackground(NULL, 1) == 0);
+
         // hd_autofit: the 4:3 layout scaled by 3/4 about the centre.
         assert(thmLayoutAutoFitX(320, 640) == 320);
         assert(thmLayoutAutoFitX(0, 640) == 80);
