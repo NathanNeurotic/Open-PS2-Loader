@@ -38,7 +38,7 @@ void guiGameSavePadMacroGlobalConfig(config_set_t *configGame);
 void guiGameShowOSDLanguageConfig(int forceGlobal);
 void guiGameSaveOSDLanguageGlobalConfig(config_set_t *configGame);
 
-void guiGameLoadConfig(item_list_t *support, config_set_t *configSet);
+void guiGameLoadConfig(int id, item_list_t *support, config_set_t *configSet);
 int guiGameSaveConfig(config_set_t *configSet, item_list_t *support);
 void guiGameTestSettings(int id, item_list_t *support, config_set_t *configSet);
 

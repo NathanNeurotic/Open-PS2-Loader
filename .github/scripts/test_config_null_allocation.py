@@ -45,7 +45,7 @@ assert tri_slice.index("gameMenuLoadConfig(NULL)") < tri_slice.index("menuInitGa
 # Check guiGameSaveConfig and guiGameRemoveSettings NULL guards
 assert "int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)\n{\n    if (configSet == NULL)\n        return -1;" in guigame_c
 assert "void guiGameRemoveSettings(config_set_t *configSet)\n{\n    if (configSet == NULL)\n        return;" in guigame_c
-assert "void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)\n{\n    int i;\n    config_set_t *configGame;\n\n    if (configSet == NULL)\n        return;" in guigame_c
+assert "void guiGameLoadConfig(int id, item_list_t *support, config_set_t *configSet)\n{\n    int i;\n    config_set_t *configGame;\n\n    if (configSet == NULL)\n        return;" in guigame_c
 
 # Check menusys.c NULL guards in _menuSaveConfig and GAME_SAVE_CHANGES
 assert "WaitSema(menuSemaId);\n    if (itemConfig == NULL) {\n        actionStatus = 0;\n        menuSaveResult = 0;\n        SignalSema(menuSemaId);\n        return;\n    }" in menusys_c

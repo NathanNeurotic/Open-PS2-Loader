@@ -1576,7 +1576,7 @@ gui_strings:
 - label: HINT_SMBCACHE
   string: "Read-ahead cache for SMB in game."
 - label: HINT_CORE_LOADER
-  string: "Core for this game where both are supported. SMB/HTTP are <OPL>-only. Default follows Game Launching, except on UDPFS/UDPBD, where it means Neutrino."
+  string: "Core for this game where both are supported. HTTP is <OPL>-only. Default follows Game Launching, except on UDPFS/UDPBD (Neutrino) and SMB (<OPL>)."
 - label: HINT_DMA_MODE
   string: "Internal HDD transfer mode for this game. Lower it if the game stutters or freezes."
 - label: HINT_DNAS_GAMEID
@@ -2491,3 +2491,16 @@ gui_strings:
 
 - label: VMC_KIND_GENERIC
   string: "Generic card: shared by every game set to the same generic card."
+
+- comment: SMB game set to Neutrino, but the Neutrino found has no SMB modules or bsd-smb.toml.
+  label: NEUTRINO_SMB_UNSUPPORTED
+  string: This Neutrino has no SMB support -- launching with the OPL core.
+- comment: SMB game set to Neutrino, but the SMB port is not 445, the only one Neutrino uses.
+  label: NEUTRINO_SMB_PORT
+  string: Neutrino reaches SMB on port 445 only -- launching with the OPL core.
+- comment: SMB game set to Neutrino, but it has a VMC on the share, which Neutrino cannot write.
+  label: NEUTRINO_SMB_VMC
+  string: Neutrino cannot write a VMC on the SMB share -- launching with the OPL core.
+- comment: SMB game set to Neutrino, but a path, share, user or password is too long, or the addresses are unknown.
+  label: NEUTRINO_SMB_LIMITS
+  string: These SMB settings are beyond Neutrino's limits -- launching with the OPL core.
