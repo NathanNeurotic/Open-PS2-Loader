@@ -204,6 +204,8 @@ jobs:
         run: python3 .github/scripts/test_cheat_capacity.py
       - name: Check that a -bsdfs=bd launch without a device number is refused before teardown
         run: python3 .github/scripts/test_neutrino_bsdfs.py
+      - name: Check Neutrino SMB writes bsd-smb.toml safely and falls back to the OPL core
+        run: python3 .github/scripts/test_neutrino_smb.py
       - name: Check PSX DVR Neutrino discovery and safety gates
         run: python3 .github/scripts/test_neutrino_dvr.py
       - name: Check DVR refresh and Neutrino mount handoff

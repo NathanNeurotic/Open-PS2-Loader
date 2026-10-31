@@ -2615,15 +2615,21 @@ static int gameMenuCoreIsNeutrino(void)
         configGetInt(itemConfig, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     // VCD (PS1) games launch ONLY via POPSTARTER -- never Neutrino -- so a keyless VCD must not
     // inherit a Neutrino global default here, or its Cheats/GSM/OSD menu entries get blocked with
-    // the wrong "not available under Neutrino" message. SMB is the same shape: ethsupport has no
-    // Neutrino launch leg, the effective core is always <OPL>, so its panels ARE live and must not
-    // be blocked under a Neutrino global default.
+    // the wrong "not available under Neutrino" message. SMB takes Neutrino only from the game's own
+    // key (ethTryNeutrino): "Default" is the <OPL> core there, so a Neutrino global default must not
+    // block its panels, while a game set to Neutrino gets the Neutrino answers.
     if (selected_item != NULL && selected_item->item != NULL) {
         item_list_t *support = (item_list_t *)selected_item->item->userdata;
         if (support != NULL) {
             int sourceMode = support->mode == FAV_MODE ? (selected_item->item->current != NULL ? favGetItemSourceMode(selected_item->item->current->item.id) : -1) : support->mode;
-            if (menuSelectedRowView(support) == LIB_VIEW_PS1 || sourceMode == ETH_MODE || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
+            if (menuSelectedRowView(support) == LIB_VIEW_PS1 || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
                 return 0;
+            if (sourceMode == ETH_MODE) {
+                int key = 2;
+                if (itemConfig != NULL)
+                    configGetInt(itemConfig, CONFIG_ITEM_CORE_LOADER, &key);
+                return key == 1;
+            }
             // UDPFS (Files and IMG) and UDPBD are Neutrino unless the game's own key says <OPL>.
             if (sourceMode == UDPFS_MODE || bdmModeIsUDPBD(sourceMode))
                 return bdmNetBlockCoreLoader(itemConfig);
@@ -2820,13 +2826,13 @@ void menuHandleInputGameMenu()
             menuSetParentalLockCheckState(1);
             if (okItem && okGame)
                 guiMsgBox(_l(_STR_GAME_SETTINGS_SAVED), 0, NULL);
-            guiGameLoadConfig(selected_item->item->userdata, gameMenuLoadConfig(NULL));
+            guiGameLoadConfig(selected_item->item->current->item.id, selected_item->item->userdata, gameMenuLoadConfig(NULL));
         } else if (menuID == GAME_TEST_CHANGES) {
             guiGameTestSettings(selected_item->item->current->item.id, selected_item->item->userdata, itemConfig);
         } else if (menuID == GAME_REMOVE_CHANGES) {
             if (guiGameShowRemoveSettings(itemConfig, configGetByType(CONFIG_GAME))) {
                 menuSetParentalLockCheckState(1);
-                guiGameLoadConfig(selected_item->item->userdata, gameMenuLoadConfig(NULL));
+                guiGameLoadConfig(selected_item->item->current->item.id, selected_item->item->userdata, gameMenuLoadConfig(NULL));
             }
         } else if (menuID == GAME_RENAME_GAME) {
             menuRenameGame(&gameMenu);
