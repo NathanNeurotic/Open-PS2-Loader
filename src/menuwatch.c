@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <kernel.h>
 #include <delaythread.h>
+#include <debug.h>
 
 #include "include/opl.h"
 #include "include/gui.h"
@@ -185,6 +186,26 @@ static int writeReport(const char *path, int len)
     return ok;
 }
 
+// 1 until the watchdog starts: after that the screen belongs to the colours and the menu.
+static int traceOn = 1;
+
+// Each early boot step, printed on screen as it starts. The first call sets up the debug text screen,
+// which needs only the GS, so it works before the IOP is reset. A boot that stops here leaves its
+// last step on screen.
+void bootTrace(const char *step)
+{
+    static int count;
+
+    if (!traceOn)
+        return;
+    if (count == 0) {
+        init_scr();
+        scr_printf("\n  RiptOPL %s boot trace (diagnostic build)\n", OPL_VERSION);
+        scr_printf("  If the screen stops changing, the last line is where it stopped.\n\n");
+    }
+    scr_printf("  %2d  %s\n", ++count, step);
+}
+
 static void watchThread(void *arg)
 {
     // Count frames at rmEndFrame, not guiFrameId: dialogs (About, Settings pages, message boxes) run
@@ -249,6 +270,8 @@ void menuWatchStart(void)
     ee_thread_t thread;
     int id;
 
+    bootTrace("watchdog starting: from here a stop shows a colour");
+    traceOn = 0;
     guiThreadId = GetThreadId();
     memset(&thread, 0, sizeof(thread));
     thread.func = (void *)&watchThread;

@@ -324,6 +324,7 @@ endif
 
 ifeq ($(OPLDIAG),1)
   EE_CFLAGS += -D__OPLDIAG
+  EE_LIBS += -ldebug # boot trace text screen (menuwatch)
 endif
 
 ifeq ($(INGAMEDIAG),1)
