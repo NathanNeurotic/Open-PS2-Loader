@@ -18,6 +18,7 @@ here with Python's own file calls, never with the code under test.
 """
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -114,10 +115,10 @@ def check(cond, what):
         failures.append(what)
 
 
-def build(tmp, rename_fails=False, disk_fills=False):
+def build(tmp, rename_fails=False, disk_fills=False, rename_lies=False):
     drv = tmp / 'driver.c'
     drv.write_text(DRIVER)
-    exe = tmp / ('fm_norename' if rename_fails else 'fm_full' if disk_fills else 'fm')
+    exe = tmp / ('fm_norename' if rename_fails else 'fm_full' if disk_fills else 'fm_lies' if rename_lies else 'fm')
     compiler = 'g++' if CPP else 'cc'
     lang = ['-x', 'c++'] if CPP else []
     extra = []
@@ -127,6 +128,12 @@ def build(tmp, rename_fails=False, disk_fills=False):
         shim.write_text('#include <stdio.h>\n#include <errno.h>\nstatic int fakeRename(const char *a, const char *b)'
                         ' { (void)a; (void)b; errno = EXDEV; return -1; }\n#define rename fakeRename\n')
         extra = ['-include', str(shim)]
+    if rename_lies:
+        # a rename that moves the entry, then answers that it failed (as a card read back too soon can look)
+        shim = tmp / 'lies.h'
+        shim.write_text('#include <stdio.h>\n#include <errno.h>\nstatic int fakeRename(const char *a, const char *b)'
+                        ' { (void)rename(a, b); errno = EIO; return -1; }\n#define rename fakeRename\n')
+        extra = ['-include', str(shim)]
     if disk_fills:
         # a drive that fills after 100 KB: write() takes nothing more, as a full memory card answers
         shim = tmp / 'full.h'
@@ -135,7 +142,10 @@ def build(tmp, rename_fails=False, disk_fills=False):
                         '    if (fullWritten >= 100 * 1024) return 0;\n'
                         '    if (n > 4096) n = 4096; /* and takes only part of a block */\n'
                         '    ssize_t w = write(fd, b, n); if (w > 0) fullWritten += w; return w; }\n'
-                        '#define write fakeWrite\n')
+                        '#define write fakeWrite\n'
+                        '#include <stdio.h>\n#include <errno.h>\n'  # and is another drive, so a move there is a copy
+                        'static int fakeRename(const char *a, const char *b) { (void)a; (void)b; errno = EXDEV; return -1; }\n'
+                        '#define rename fakeRename\n')
         extra = ['-include', str(shim)]
     obj = tmp / (exe.name + '.o')
     subprocess.run([compiler, '-Wall', '-Wextra', '-Werror', '-DFILEMGR_HOST_TEST', '-I', str(root)] + extra + lang +
@@ -185,6 +195,7 @@ def main():
         exe = build(tmp)
         slow = build(tmp, rename_fails=True)
         full = build(tmp, disk_fills=True)
+        lies = build(tmp, rename_lies=True)
 
         # 1. paths
         for d, n, want in (('mass0:/', 'A', 'mass0:/A'), ('mass0:/A', 'B', 'mass0:/A/B'),
@@ -265,6 +276,11 @@ def main():
               (dst / 'big.bin').read_bytes() == want_files['big.bin'], 'a refused move leaves both sides as they were')
         r, err, *_ = result(run(exe, 'move', mv_src, 1, mv_src / 'sub'))
         check(r == 0 and err == ERR['INSIDE'] and tree(mv_src) == mv_files, 'a folder is never moved into itself')
+        r, err, *_ = result(run(lies, 'move', mv_src, 1, dst))
+        check(not mv_src.exists() and tree(dst / 'MOVEME') == mv_files,
+              'a rename that moves the folder but answers that it failed never costs the moved folder')
+        r, err, *_ = result(run(exe, 'move', dst / 'MOVEME', 1, tmp / 'drive'))
+        check(r == 1 and tree(mv_src) == mv_files, '(and it moves back)')
 
         # 5. rename and new folder
         r, err, *_ = result(run(exe, 'rename', mv_src / 'sub', 'renamed'))
@@ -343,6 +359,7 @@ def main():
                    'vmcSavesFolderToPsu(', 'vmcSavesPsuToFolder(', 'appLaunchElfPath(', 'guiMsgBox'):
         check(needle in gui, 'guifilemgr uses ' + needle)
     check('hdd0:' not in gui, 'no APA partition is ever listed or touched')
+    check(not re.search(r'#define\s+FM_PATH\s', gui), 'nothing in guifilemgr redefines the FM_PATH label id')
     for key in ('FILE_MANAGER', 'HINT_FM_ROW', 'FM_DELETE_CONFIRM', 'FM_ERR_EXISTS', 'FM_PASTE', 'FM_PASTE_PSU'):
         check(('label: %s\n' % key) in base, 'string ' + key)
     docs = (root / 'docs/FILE_MANAGER.md')

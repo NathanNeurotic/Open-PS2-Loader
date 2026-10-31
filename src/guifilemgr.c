@@ -49,17 +49,17 @@
 
 #define FM_MAX      512 // entries read from one folder
 #define FM_CLIP_MAX 128
-#define FM_PATH     320
+#define FM_PATH_LEN 320 // a path's buffer (FM_PATH is the path label's id)
 #define FM_ROW_TEXT 160
 #define FM_TITLE    48
 
-static char fmDir[FM_PATH];          // "" is the drive list
+static char fmDir[FM_PATH_LEN];      // "" is the drive list
 static fm_entry_t *fmList_;          // the folder's entries (or the drives, by their roots)
 static char (*fmLabel)[FM_ROW_TEXT]; // a drive's words, or a card save's title ("" for none)
 static unsigned char *fmMarked;
 static int fmCount, fmPage, fmOpenFailed;
 
-static char (*fmClip)[FM_PATH];
+static char (*fmClip)[FM_PATH_LEN];
 static unsigned char fmClipIsDir[FM_CLIP_MAX];
 static int fmClipCount, fmClipCut;
 
@@ -135,7 +135,7 @@ static const char *fmErrText(int err)
 
 static void fmShowFailure(const char *name, const char *why)
 {
-    char msg[FM_PATH + 200];
+    char msg[FM_PATH_LEN + 200];
     snprintf(msg, sizeof(msg), _l(_STR_FM_FAILED), name, why);
     guiMsgBox(msg, 0, NULL);
 }
@@ -224,7 +224,7 @@ static void fmScanDrives(void)
 // A memory card save folder's title, from its icon.sys ("" when it has none)
 static void fmCardTitle(const char *name, char *out, int size)
 {
-    char path[FM_PATH];
+    char path[FM_PATH_LEN];
     unsigned char iconSys[964];
     int fd, n;
 
@@ -262,14 +262,14 @@ static void fmLoad(void)
 
 static void fmOpen(const char *dir)
 {
-    char was[FM_PATH];
+    char was[FM_PATH_LEN];
 
     snprintf(was, sizeof(was), "%s", fmDir);
     snprintf(fmDir, sizeof(fmDir), "%s", dir);
     fmPage = 0;
     fmLoad();
     if (fmOpenFailed) {
-        char msg[FM_PATH + 64];
+        char msg[FM_PATH_LEN + 64];
         snprintf(msg, sizeof(msg), _l(_STR_FM_CANT_OPEN), dir);
         guiMsgBox(msg, 0, NULL);
         snprintf(fmDir, sizeof(fmDir), "%s", was);
@@ -280,7 +280,7 @@ static void fmOpen(const char *dir)
 // Up a folder; from a device root, back to the drives
 static void fmUp(void)
 {
-    char parent[FM_PATH];
+    char parent[FM_PATH_LEN];
 
     if (fmParent(parent, sizeof(parent), fmDir))
         fmOpen(parent);
@@ -348,7 +348,7 @@ static int fmLastPercent;
 
 static void fmProgressShow(const char *name, unsigned long long done, unsigned long long total)
 {
-    char text[FM_PATH];
+    char text[FM_PATH_LEN];
     int percent = total > 0 ? (int)(done * 100 / total) : 100;
     if (percent == fmLastPercent)
         return; // one frame a percent: drawing each 64 KB would slow the copy
@@ -377,7 +377,7 @@ static void fmToClipboard(int e, int cut)
     fmClipCount = 0;
     fmClipCut = cut;
     for (i = 0; i < n && fmClipCount < FM_CLIP_MAX; i++) {
-        fmPath(fmClip[fmClipCount], FM_PATH, sel[i]);
+        fmPath(fmClip[fmClipCount], FM_PATH_LEN, sel[i]);
         if (fmClip[fmClipCount][0] == '\0')
             continue;
         fmClipIsDir[fmClipCount++] = (unsigned char)fmList_[sel[i]].isDir;
@@ -388,7 +388,7 @@ static void fmToClipboard(int e, int cut)
 // A save folder (one with an icon.sys)
 static int fmIsSaveFolder(const char *path)
 {
-    char icon[FM_PATH];
+    char icon[FM_PATH_LEN];
     return fmJoin(icon, sizeof(icon), path, "icon.sys") && fmExists(icon);
 }
 
@@ -427,7 +427,7 @@ static const char *fmPsuWhy(int r)
 // rest still go; a name already here is never replaced.
 static void fmPaste(int asPsu)
 {
-    char target[FM_PATH], parent[FM_PATH], failedName[FM_NAME];
+    char target[FM_PATH_LEN], parent[FM_PATH_LEN], failedName[FM_NAME];
     const char *why = NULL, *firstWhy = NULL;
     int i, failed = 0, done = 0, ok;
 
@@ -478,7 +478,7 @@ static void fmPaste(int asPsu)
 static void fmDeleteSelection(int e)
 {
     static int sel[FM_MAX];
-    char msg[FM_PATH + 100], path[FM_PATH], failedName[FM_NAME];
+    char msg[FM_PATH_LEN + 100], path[FM_PATH_LEN], failedName[FM_NAME];
     int n = fmSelection(e, sel), i, failed = 0, firstErr = FM_OK;
 
     if (n == 0 || !fmCanWrite())
@@ -506,7 +506,7 @@ static void fmDeleteSelection(int e)
 
 static void fmRenameEntry(int e)
 {
-    char name[FM_NAME], path[FM_PATH];
+    char name[FM_NAME], path[FM_PATH_LEN];
 
     if (!fmCanWrite())
         return;
@@ -539,7 +539,7 @@ static void fmNewFolder(void)
 // Unpack PSU: the save in .psu e into its folder here (on a memory card that is the card's root, where saves live)
 static void fmUnpackPsu(int e)
 {
-    char psu[FM_PATH], here[FM_PATH];
+    char psu[FM_PATH_LEN], here[FM_PATH_LEN];
     const char *why;
 
     if (!fmCanWrite())
@@ -555,7 +555,7 @@ static void fmUnpackPsu(int e)
 
 static void fmActions(int e)
 {
-    char path[FM_PATH];
+    char path[FM_PATH_LEN];
     const fm_entry_t *f = &fmList_[e];
     int isElf = !f->isDir && fmHasSuffix(f->name, ".elf");
     int isPsu = !f->isDir && fmHasSuffix(f->name, ".psu");
@@ -639,7 +639,7 @@ void guiShowFileManager(void)
             focus = FM_NEW_FOLDER_BTN;
         } else if (ret >= FM_ROW_FIRST && ret <= FM_ROW_LAST) {
             int e = fmEntryAt(ret - FM_ROW_FIRST), key = diaListKey();
-            char path[FM_PATH];
+            char path[FM_PATH_LEN];
             if (e == -2)
                 continue;
             if (e == -1) {

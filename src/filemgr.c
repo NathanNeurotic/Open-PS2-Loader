@@ -219,7 +219,8 @@ int fmList(const char *dir, fm_entry_t *out, int max)
     return n;
 }
 
-// A folder's entries on the heap, for the walks below; NULL (and *count 0) for an empty or unreadable one
+// A folder's entries on the heap, for the walks below. *count is how many, -1 when there is no memory for them,
+// -2 when the folder cannot be read (then NULL).
 static fm_entry_t *fmChildren(const char *dir, int *count)
 {
     int cap = 64, n;
@@ -231,6 +232,11 @@ static fm_entry_t *fmChildren(const char *dir, int *count)
             return NULL;
         }
         n = fmList(dir, list, cap);
+        if (n < 0) {
+            free(list);
+            *count = -2;
+            return NULL;
+        }
         if (n < cap || cap >= 65536)
             break;
         free(list);
@@ -394,7 +400,7 @@ static int fmCopyTree(const char *src, const char *dst, int isDir, int depth, un
         return fmFail(fmExists(dst) ? FM_ERR_EXISTS : FM_ERR_WRITE);
     kids = fmChildren(src, &n);
     if (n < 0)
-        return fmFail(FM_ERR_MEMORY);
+        return fmFail(n == -1 ? FM_ERR_MEMORY : FM_ERR_READ);
     for (i = 0; i < n && ok; i++) {
         if (!fmJoin(s, sizeof(s), src, kids[i].name) || !fmJoin(d, sizeof(d), dst, kids[i].name))
             ok = fmFail(FM_ERR_NAME);
@@ -474,7 +480,7 @@ static int fmDeleteTree(const char *path, int isDir, int depth)
         return fmFail(FM_ERR_DEEP);
     kids = fmChildren(path, &n);
     if (n < 0)
-        return fmFail(FM_ERR_MEMORY);
+        return fmFail(n == -1 ? FM_ERR_MEMORY : FM_ERR_DELETE);
     for (i = 0; i < n; i++) {
         if (!fmJoin(child, sizeof(child), path, kids[i].name) || !fmDeleteTree(child, kids[i].isDir, depth + 1))
             ok = 0;
@@ -497,14 +503,19 @@ int fmDelete(const char *path, int isDir)
 static int fmSameDevice(const char *a, const char *b)
 {
     const char *ca = strchr(a, ':'), *cb = strchr(b, ':');
+#ifdef FILEMGR_HOST_TEST
+    if (ca == NULL && cb == NULL)
+        return 1; // the host test's plain paths: one device
+#endif
     return ca != NULL && cb != NULL && ca - a == cb - b && !strncasecmp(a, b, ca - a);
 }
 
 static int fmRenameDev(const char *from, const char *to)
 {
     char fbuf[FM_PATH], tbuf[FM_PATH];
+    // On FAT and exFAT a rename that only changes the case still finds the old name: it is the same entry
     return rename(fmDevPath(from, fbuf, sizeof(fbuf)), fmDevPath(to, tbuf, sizeof(tbuf))) == 0 && fmExists(to) &&
-           !fmExists(from);
+           (!strcasecmp(from, to) || !fmExists(from));
 }
 
 // A move as a copy, then the source removed only once the whole copy is made; a failed copy is taken back
@@ -512,7 +523,8 @@ static int fmCopyThenDelete(const char *src, int isDir, const char *dst, fm_prog
 {
     if (!fmCopyTo(src, isDir, dst, progress)) {
         int err = fmErr;
-        fmDeleteTree(dst, isDir, 0);
+        if (fmExists(src)) // gone: dst may be the original, moved by a rename that answered as if it failed
+            fmDeleteTree(dst, isDir, 0);
         return fmFail(err);
     }
     return fmDeleteTree(src, isDir, 0);
