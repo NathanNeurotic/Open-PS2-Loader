@@ -12,7 +12,7 @@ PC.
 Based on the RetroAchievements implementation by **[hacan359 (yoba)](https://github.com/hacan359/Open-PS2-Loader/pull/1)**.
 Use the upstream **[xeRAbora PC client](https://github.com/hacan359/xerabora)** with RiptOPL's RA build. Download the required **[v1.0.1 release](https://github.com/hacan359/xerabora/releases/tag/v1.0.1)**.
 
-RiptOPL's real-hardware stabilization was contributed by **[oMrRexD](https://github.com/oMrRexD)** through
+[RiptOPL](https://github.com/NathanNeurotic/RiptOPL)'s real-hardware stabilization was contributed by **[oMrRexD](https://github.com/oMrRexD)** through
 PRs **#702–#705**, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.
 
@@ -41,7 +41,7 @@ Both modes retain the existing restrictions: Ember and ordinary/custom Neutrino 
 
 ### Neutrino in the RA edition
 
-The full RetroAchievements kit includes the existing **[ORBIT v1.0.2 Neutrino runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **Daniel / danielnuld**, based on Neutrino by **Maximus32** and the achievement protocol by **hacan359 / xeRAbora**. Its AFL-3.0 license, exact source commit and archive SHA-256 ship beside the runtime. Standard builds and install kits retain ordinary upstream Neutrino. An ELF-only update does not install the external runtime; copy the RA kit's complete `neutrino/` folder to your chosen supported device.
+The full RetroAchievements kit includes the existing **[ORBIT v1.0.2 Neutrino runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **Daniel / [danielnuld](https://github.com/danielnuld)**, based on [Neutrino](https://github.com/rickgaiser/neutrino) by **[Maximus32](https://github.com/rickgaiser)** and the achievement protocol by **[hacan359](https://github.com/hacan359) / [xeRAbora](https://github.com/hacan359/xerabora)**. Its AFL-3.0 license, exact source commit and archive SHA-256 ship beside the runtime. Standard builds and install kits retain ordinary upstream Neutrino. An ELF-only update does not install the external runtime; copy the RA kit's complete `neutrino/` folder to your chosen supported device.
 
 The RA kit's `neutrino/` is ORBIT's **RA-Neutrino**, labelled by `neutrino/RA-EDITION-NEUTRINO.txt`. It keeps the usual folder name so RA setups find it, but it is **not** the standard kit's Neutrino: ORBIT v1.0.2 is built on **Neutrino v1.8.0**, so in the RA edition every Neutrino launch, tracked or not, uses that base and lacks later upstream changes, including Neutrino cheat support. Use the standard kit for Neutrino cheats. Keep each kit's `neutrino/` with its own loader rather than mixing them.
 
@@ -85,8 +85,8 @@ With cards Off, launches reserve no card workspace and install no extra GS track
 
 ## Status
 
-**Implemented, and telemetry has run end to end on real PS2 hardware** in oMrRexD's session for
-PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
+**Implemented, and telemetry has run end to end on real PS2 hardware** in [oMrRexD](https://github.com/oMrRexD)'s session for
+PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and [xeRAbora](https://github.com/hacan359/xerabora)
 v0.1.0-alpha.10. Launched from MMCE, Need for Speed: Underground 2 streamed 25,200 snapshots with none
 lost and unlocked an achievement with the overlay on screen; the same build also tracked the game from
 USB. That is one console, one game and a static address. DHCP, the other launch paths and the edge
@@ -98,8 +98,8 @@ as finished.
 | `RETROACHIEVEMENTS=1` build flavour | done |
 | In-game telemetry (`raudp`, ee_core snapshots) | **hardware-tested** from MMCE and USB, static IP (#702–#704) |
 | Watch-list loading from `<device>/RA/<serial>.wl` | done |
-| Image hashing (ISO9660 walk + MD5) | done; images on a share and on a USB stick hashed to matching values on hardware (hacan359, 2026-09-10) |
-| Menu actions: check game support, test PC link | both used on hardware: the support check's hashing by hacan359, the PC link test in #704 |
+| Image hashing (ISO9660 walk + MD5) | done; images on a share and on a USB stick hashed to matching values on hardware ([hacan359](https://github.com/hacan359), 2026-09-10) |
+| Menu actions: check game support, test PC link | both used on hardware: the support check's hashing by [hacan359](https://github.com/hacan359), the PC link test in #704 |
 | List badges and the cover mark | written, **not yet confirmed on hardware** |
 | Unlock overlay | **hardware-tested**: the gold overlay showed over the running game on an unlock (#704) |
 | Settings: RA telemetry, RA badges | done; on the **Network** page since #705, where switching telemetry off and on was checked on hardware |
@@ -209,9 +209,9 @@ Neutrino and Ember hand the console over to an external ELF and never load OPL's
 
 A game that streams its own disc over the NIC is competing with telemetry for that NIC. This build no
 longer *reads* from the network in play on such a launch — `raudp` stops walking the SMAP receive ring
-and stops polling the stack, because the game's disc stream arrives through both — but **hacan359
+and stops polling the stack, because the game's disc stream arrives through both — but **[hacan359](https://github.com/hacan359)
 reports on hardware (2026-09-05) that this is not enough: a game with an achievement set still stops
-loading about a minute in from a share, so the send path disturbs the stream on its own.** xeRAbora's
+loading about a minute in from a share, so the send path disturbs the stream on its own.** [xeRAbora](https://github.com/hacan359/xerabora)'s
 own documentation says the same, and names the USB stick and the original disc as the only tested ways
 to play.
 
@@ -243,7 +243,7 @@ server grants in compatibility mode.
 OPL now carries its own `smbman` (`modules/network/smbman-ra`, first in this flavour and now in every
 flavour) that tries NT create first and falls back to the legacy open **only** when the server says the file is held, and **only for a
 read** — reaching past another handle to write is not something worth asking for. If both are
-refused, the hash log names the image as held instead of saying nothing. hacan359 confirmed this on
+refused, the hash log names the image as held instead of saying nothing. [hacan359](https://github.com/hacan359) confirmed this on
 hardware on 2026-09-10: two images held open by earlier runs hashed anyway, and the hashes matched
 the ones taken from a USB stick.
 
@@ -374,10 +374,10 @@ both, and of every other SDK module the fork replaces.
 **The usbd swap is not a RetroAchievements feature.** ps2sdk rewrote its USB host driver on
 2024-09-04 (`b1f7ff96`: 28 files, +4446/−3336), and since then a CD-era game run off a USB stick
 loses its controller *and* its sound at the game's first IOP reboot — Dynasty Warriors 2 on real
-hardware, reported by hacan359 on 2026-09-10, reproducing **with official OPL as much as with this
+hardware, reported by [hacan359](https://github.com/hacan359) on 2026-09-10, reproducing **with official OPL as much as with this
 fork**. Swapping only that one module fixes it. `usbd_mini.irx` is not a separate source tree:
 `iop/usb/usbd_mini/Makefile` points `IOP_SRC_DIR` at `iop/usb/usbd/src` and adds `-DMINI_DRIVER`, so
-the rewrite lands squarely on the module every RiptOPL flavour embeds straight from its container.
+the rewrite lands squarely on the module every [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) flavour embeds straight from its container.
 
 It is therefore **not** gated: `USBD_MINI_IRX` sits outside the `RETROACHIEVEMENTS` conditional and
 every flavour gets the pre-rewrite driver. It is listed here only because this is where the module
@@ -386,12 +386,12 @@ came from; it is not a RetroAchievements feature and does not depend on the flag
 Hardware-checked by **Zack on 2026-09-10** before that promotion landed: no noticeable USB
 regressions on the promoted build. That is the check the promotion was waiting on — it is a
 no-regression result, not a confirmation that the Dynasty Warriors 2 case is cured here; that
-remains hacan359's finding on his own hardware. `backup/pre-usbd-forkwide-58fe5529` is the tree
+remains [hacan359](https://github.com/hacan359)'s finding on his own hardware. `backup/pre-usbd-forkwide-58fe5529` is the tree
 immediately before the swap, kept as a restore point.
 
 ## Before this is called finished
 
-Most of the list below is still open. oMrRexD's hardware session for #702–#705 covered the nearest
+Most of the list below is still open. [oMrRexD](https://github.com/oMrRexD)'s hardware session for #702–#705 covered the nearest
 thing to **3**, launched from MMCE rather than USB (25,200 snapshots with none lost after a cold boot
 and a straight launch; the same build also tracked the game from USB), and **13**, the unlock overlay
 over a running game; a launch with telemetry switched off sent nothing, which is part of **2**.
@@ -455,7 +455,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
   archive is the shipping loader plus achievements, not a variant. Before #702, RA and
   `EXTRA_FEATURES=1` together overflowed ram84 by roughly 6.5 KB; that pairing has not been
   re-measured since.
-* **PC integration uses xeRAbora**, maintained by hacan359.
+* **PC integration uses [xeRAbora](https://github.com/hacan359/xerabora)**, maintained by [hacan359](https://github.com/hacan359).
 * **Physical discs use an EESYNC-only reset image.** ROM CDVDMAN/CDVDFSV remain in place;
   standalone DEV9 and SMSUTILS load before the telemetry network stack. Do not call OPL CDVDMAN's
   shutdown RPC in this mode. Hash checks share the existing I/O worker; a launch refuses while a check
@@ -465,7 +465,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 
 ## Credits
 
-* **hacan359 (yoba)** — the RetroAchievements design, the console implementation this port follows,
+* **[hacan359 (yoba)](https://github.com/hacan359)** — the RetroAchievements design, the console implementation this port follows,
   and the PC client. Physical-disc integration follows the
   [upstream disc implementation](https://github.com/hacan359/Open-PS2-Loader/tree/cb713e686acb2fb63de20aa44b3fd4e8c59ca680).
 * **[oMrRexD](https://github.com/oMrRexD)** — the real-hardware RA stabilization work merged through

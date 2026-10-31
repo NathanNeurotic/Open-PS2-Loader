@@ -10,7 +10,7 @@ for range reads, and complete response bodies. Check it with the
 Use HTTP only on a trusted, isolated local network. It provides no encryption or server/content
 authentication; range and length validation detect malformed responses, not substituted game data.
 
-The design, the byte-range reader RiptOPL follows, and the PC server are
+The design, the byte-range reader [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) follows, and the PC server are
 **[Docmine17](https://github.com/Docmine17)**'s
 ([Open-PS2-Loader-HTTP](https://github.com/Docmine17/Open-PS2-Loader-HTTP)).
 
@@ -43,7 +43,7 @@ until that changes.
 ## Setting it up
 
 On the PC, run an HTTP server meeting the profile above, with your ISOs under its document root,
-and put a `games.csv` beside them. Docmine17's `http_server.py` does exactly this and defaults to
+and put a `games.csv` beside them. [Docmine17](https://github.com/Docmine17)'s `http_server.py` does exactly this and defaults to
 port **1100**.
 
 On the console, set **Network Connectivity** to **Manual** or **Auto** in **Game Sources**, then open **Settings → Network**:

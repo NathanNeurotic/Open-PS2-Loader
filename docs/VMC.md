@@ -60,7 +60,7 @@ Host tests run genvmc's real request, worker, copy and verify code and the loade
 
 ## Saves on a card
 
-*(From RIPPS2 builds 98 to 115, akilluminati47. NOT TESTED on hardware yet.)*
+*(From [RIPPS2](https://github.com/akilluminati47/RIPPS2) builds 98 to 115, [akilluminati47](https://github.com/akilluminati47). NOT TESTED on hardware yet.)*
 
 The per-game VMC dialog has a **Saves** button for a card that exists. It opens a page that treats the card like a
 folder:

@@ -349,7 +349,7 @@ computes for the same file. Confirm against the author's client, not against a l
    (`menuRenderMenu`, `if (cp == (MENU_ABOUT - 1 + 2))`). Skip both items in this phase — they
    are now included by Phase 5 (disc mode). The menu counts its entries; do not import the `+ 2`.
 4. **About dialog.** Upstream adds six rows (`UI_LABEL`/`UI_BREAK`/`UI_SPACER`...). `diaAbout` never
-   scrolls and has about one row of headroom. **Append "hacan359" to an existing credits line
+   scrolls and has about one row of headroom. **Append "[hacan359](https://github.com/hacan359)" to an existing credits line
    instead.** Add the full credit to `CREDITS` where there is room.
 5. **`LOG_ENABLE()`.** Upstream disables it because `debugSetActive()` → `ethInitApplyConfig()` waits
    for link for 30 s in an unbounded loop, ahead of `deferredInit` in the I/O queue, so
@@ -429,9 +429,9 @@ Upstream hardware results do not validate this port.
 2. `README.md` — the RA variant in the release-package listing. **Not** the External Tools
    section — that is generated.
 3. `.github/workflows/docs-sync.yml` — add the PC client to the `html_section` template (and its
-   README counterpart in the same file) once the author publishes it, crediting **hacan359** with a
+   README counterpart in the same file) once the author publishes it, crediting **[hacan359](https://github.com/hacan359)** with a
    link. Verify the licence he ships it under before writing one down.
-4. `CREDITS` — RetroAchievements integration, hacan359. Also the two vendored files and their
+4. `CREDITS` — RetroAchievements integration, [hacan359](https://github.com/hacan359). Also the two vendored files and their
    licences.
 5. `CHANGELOG` / rolling release notes.
 6. `ROLLING_RELEASE.md` — the new variant filenames.

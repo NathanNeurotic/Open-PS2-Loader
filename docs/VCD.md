@@ -50,9 +50,9 @@ L3-switched views, one combined list with filters, or a single locked library. T
 the same device page — with the same covers, favorites, and per-game settings — rather than extra
 device tabs.
 
-**RiptOPL’s UDPFS Files page lists Ember titles, uppercase `POPS/*.VCD` files and `POPS/*.cue` games.**
-Ember keeps the mounted network transport alive. POPSTARTER reads UDPFS VCDs through Okeanos’s
-separate UDPFS Assault BDMA variants; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
+**[RiptOPL](https://github.com/NathanNeurotic/RiptOPL)’s UDPFS Files page lists [Ember](https://github.com/Gageformer/Ember) titles, uppercase `POPS/*.VCD` files and `POPS/*.cue` games.**
+Ember keeps the mounted network transport alive. [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) reads UDPFS VCDs through [Okeanos](https://github.com/Okeanos86)’s
+separate [UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases) BDMA variants; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
 With **BDMA Apply on Launch**, RiptOPL equips the `.udpfs` pair from the game device before VCD handoff.
 An already usable matching manual pair also works. Without a valid pair, the network VCD launch
 is stopped. UDPBD remains outside this POPSTARTER driver's scope.
@@ -230,8 +230,8 @@ POPSTARTER also needs Sony's PS1 emulator in the same `POPS` folder: `POPS_IOX.P
 `POPS.PAK` or `POPS.ELF` with `IOPRP252.IMG`. They come from your own console's software and are in
 no PS2 ROM, so OPL cannot make them. Without them the game is a black screen, then the browser.
 
-Before a PS1 launch from USB, MX4SIO, iLink, an exFAT HDD or MMCE, OPL checks for them. *(From RIPPS2 builds 85, 89
-and 115, akilluminati47.)*
+Before a PS1 launch from USB, MX4SIO, iLink, an exFAT HDD or MMCE, OPL checks for them. *(From [RIPPS2](https://github.com/akilluminati47/RIPPS2) builds 85, 89
+and 115, [akilluminati47](https://github.com/akilluminati47).)*
 
 - **Another started drive has a full set.** OPL offers to copy them over. It looks at the drives it
   has already started: other BDM drives, both MMCE cards, and the internal HDD's `__common/POPS`
@@ -254,7 +254,7 @@ the filename lookup misses. For the example above, the fallback names are
 
 ### RetroGEM / PSBBN disc IDs — art and title metadata (both PS1 cores)
 
-Disc serials are normalized using CosmicScale's PSBBN convention: uppercase,
+Disc serials are normalized using [CosmicScale](https://github.com/CosmicScale)'s PSBBN convention: uppercase,
 remove existing `_`, `.` and `-` separators, and rebuild `AAAA_NNN.NN`.
 The `SLUSP` prefix maps to `SLUS`; `LSP` serials instead keep their first eight
 characters together followed by a dot (for example `LSP12345.67`). Normalization
@@ -434,8 +434,8 @@ inherited `udpfs:` backend; UDPBD and UDPFS IMG are outside this POPSTARTER feat
 POPS UDPFS RA is unsupported. Physical-console gameplay and save acceptance must
 be established separately from passing host checks and target builds.
 
-Credit goes to Okeanos, israpps, krHACKen, ps2max32 / rickgaiser, pcm720,
-Gageformer and PS2SDK contributors. Unmodified upstream instructions, license
+Credit goes to [Okeanos](https://github.com/Okeanos86), [israpps](https://github.com/israpps), [krHACKen](https://www.psx-place.com/members/krhacken.98/), ps2max32 / [rickgaiser](https://github.com/rickgaiser), [pcm720](https://github.com/pcm720),
+[Gageformer](https://github.com/Gageformer) and PS2SDK contributors. Unmodified upstream instructions, license
 notices and verified hashes are in `POPS/UDPFS-NOTICES/`.
 
 ## 6. PS1 over SMB — POPSTARTER network settings

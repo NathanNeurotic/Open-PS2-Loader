@@ -70,7 +70,7 @@ What the SDK sio2man does (ps2sdk `iop/sio/sio2man/src/sio2man.c`, unchanged sin
   It filters the MMCE port in `sio2_transfer`, and locks through the SDK v2 table's `pad_transfer_init`/`transfer_reset`, i.e. the single SDK semaphore.
   **Without the SDK v2.7 table its lock is a no-op.** That explains why the July rebuilt mmcedrv failed in-game, when no SDK sio2man was loaded in-game.
 
-**Games whose IOPRP/rom0 loads XSIO2MAN (non-MMCE):** the game's XSIO2MAN no longer stays resident, and its X-modules run on the SDK v1.2 table. This is upstream's design (uyjulian).
+**Games whose IOPRP/rom0 loads XSIO2MAN (non-MMCE):** the game's XSIO2MAN no longer stays resident, and its X-modules run on the SDK v1.2 table. This is upstream's design ([uyjulian](https://github.com/uyjulian)).
 The double-signal risk above applies to every mode, not just MMCE. Upstream has the same exposure. It is unverified on our side.
 
 **PADEMU:** pademu hooks #25/#49/#51 on both SDK tables (via the existing scan and the loadcore hook) and dispatches to the saved originals. That is safe on its own and matches upstream.

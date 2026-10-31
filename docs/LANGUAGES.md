@@ -127,9 +127,9 @@ see which are still English-only in a given language, run `make languages` and l
 
 The release builds **33 external languages**, all now supplied with fork-specific
 overlays. The upstream community's older strings remain intact. Many recently
-added labels were backfilled from Akilluminati47's
+added labels were backfilled from [Akilluminati47](https://github.com/akilluminati47)'s
 [RIPPS2 translations](https://github.com/akilluminati47/RIPPS2/tree/main/elf/lang),
-with existing RiptOPL translations retained. These translations are community
+with existing [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) translations retained. These translations are community
 and machine-assisted work and still need language-speaker and on-console review.
 Some newly introduced fork labels may still show English fallback: a complete
 `.lng` file is not proof that every string has been localized.
@@ -158,10 +158,10 @@ or missing font glyphs. Missing status is distinct from broken packaging.
 
 ## Translation provenance and review
 
-RIPPS2's keyed `labels:` maps contributed additional localized text for 32
-overlapping language names; Ryukyuan retains the existing RiptOPL overlay,
+[RIPPS2](https://github.com/akilluminati47/RIPPS2)'s keyed `labels:` maps contributed additional localized text for 32
+overlapping language names; Ryukyuan retains the existing [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) overlay,
 because RIPPS2 has no Ryukyuan source. The imported overlay files credit
-Akilluminati47 and preserve RiptOPL's existing keys. The language compiler
+[Akilluminati47](https://github.com/akilluminati47) and preserve RiptOPL's existing keys. The language compiler
 always prioritizes an already translated upstream community entry over the
 fork overlay. Compare source phrasing against the **current** `_base.yml`
 English definition before changing a translation: even correctly parsed
@@ -170,7 +170,7 @@ right-to-left rendering, and placeholders in each language on PS2 hardware.
 
 ## Right-to-left and CJK text
 
-Ported from RIPPS2 build 104 by akilluminati47 (`src/textshape.c`). NOT TESTED on hardware.
+Ported from [RIPPS2](https://github.com/akilluminati47/RIPPS2) build 104 by [akilluminati47](https://github.com/akilluminati47) (`src/textshape.c`). NOT TESTED on hardware.
 
 - **Arabic and Persian** letters are joined into their presentation forms (lam-alef as one
   letter), and each line is laid out right to left. Latin words and numbers keep their own order,
