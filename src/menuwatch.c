@@ -186,7 +186,7 @@ static int writeReport(const char *path, int len)
     return ok;
 }
 
-// 1 until the watchdog starts: after that the screen belongs to the colours and the menu.
+// 1 until the video setup: from there the screen belongs to the menu and the stage colours.
 static int traceOn = 1;
 
 // Each early boot step, printed on screen as it starts. The first call sets up the debug text screen,
@@ -260,8 +260,16 @@ static void watchThread(void *arg)
 
 void menuWatchStep(int step)
 {
-    if (step >= MENUWATCH_BOOT_DIR && step <= MENUWATCH_BOOT_INTRO)
+    if (step >= MENUWATCH_BOOT_DIR && step <= MENUWATCH_BOOT_INTRO) {
         diagLog("boot stage: %s", stepName(step)); // the order and timing of every stage, in the report
+        // The text screen lasts until the video setup takes the GS over; after that a stop shows the
+        // stage colour instead.
+        if (step == MENUWATCH_BOOT_VIDEO) {
+            bootTrace("video setup: from here a stop shows a colour");
+            traceOn = 0;
+        } else
+            bootTrace(stepName(step));
+    }
     watchStep = step;
 }
 
@@ -270,8 +278,7 @@ void menuWatchStart(void)
     ee_thread_t thread;
     int id;
 
-    bootTrace("watchdog starting: from here a stop shows a colour");
-    traceOn = 0;
+    bootTrace("watchdog started");
     guiThreadId = GetThreadId();
     memset(&thread, 0, sizeof(thread));
     thread.func = (void *)&watchThread;

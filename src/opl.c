@@ -5430,6 +5430,7 @@ static void init(void)
     // default variable values
     setDefaults();
 
+    bootTrace("pad driver");
     padInit(0);
     int padStatus = 0;
     menuWatchStep(MENUWATCH_BOOT_CONFIG);

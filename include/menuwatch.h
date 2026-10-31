@@ -18,8 +18,9 @@
   show on. Other builds compile all of this away.
 
   bootTrace() covers the part before the watchdog can run: from the first line of main() through
-  the IOP reset and every module load, each step is printed on screen as it starts, so a boot
-  that stops there leaves its last step on screen. It prints nothing once the watchdog starts.
+  the IOP reset, every module load and the boot stages up to the video setup, each step is printed
+  on screen as it starts, so a boot that stops there leaves its last step on screen. From the video
+  setup on, the stage colours take over.
 */
 
 enum MenuWatchStep {
