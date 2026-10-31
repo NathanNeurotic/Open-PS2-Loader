@@ -13,6 +13,11 @@
 #define DS4_PID_SLIM        0x09CC // PS4 Slim Controller
 #define GUITAR_HERO_PS3_PID 0x0100 // PS3 Guitar Hero Guitar
 #define ROCK_BAND_PS3_PID   0x0200 // PS3 Rock Band Guitar
+// ShanWan "PS3" clone pad in its generic HID mode. It answers neither the DS3 enable feature report
+// nor the DS3 LED/rumble output report, and its input report is a plain HID gamepad report (see
+// translate_pad_shanwan). Found and mapped by freergam3r: https://github.com/Fgr-35/Modified-drivers-for-usb-controller-in-opl
+#define SHANWAN_VID         0x2563 // ShenZhen ShanWan Technology
+#define SHANWAN_PS3_PID     0x0575 // fake PS3 pad, generic HID mode
 #ifdef DS5_ENABLE
 #define DS5_PID 0x0CE6 // PS5 DualSense Controller
 #endif
@@ -108,6 +113,52 @@ struct ds2report
     uint8_t PressureR2;
 
 } __attribute__((packed));
+
+/**
+ * Translate a ShanWan clone (SHANWAN_VID/SHANWAN_PS3_PID) input report into DS2 pad data.
+ * Report layout, as mapped on hardware by freergam3r (no report ID byte):
+ *   in[0]: bit0 Triangle, bit1 Circle, bit2 Cross, bit3 Square, bit4 L1, bit5 R1, bit6 L2, bit7 R2
+ *   in[1]: bit0 Select, bit1 Start, bit2 L3, bit3 R3
+ *   in[2]: low nibble hat switch, 0 = up, clockwise to 7 = up-left, 8 and above = released
+ *   in[3], in[4]: left stick X, Y      in[5], in[6]: right stick X, Y
+ * The pad has no pressure sensors: pressure is 255 while a button is held, as for the DS4.
+ */
+static inline void translate_pad_shanwan(const uint8_t *in, struct ds2report *out)
+{
+    static const uint8_t hat[9] = {0x10, 0x30, 0x20, 0x60, 0x40, 0xC0, 0x80, 0x90, 0x00}; // DS2 Up/Right/Down/Left bits
+    uint8_t b1 = in[0], b2 = in[1], dir = in[2] & 0x0F;
+    uint8_t low, high;
+
+    if (dir > 8)
+        dir = 8;
+
+    low = (b2 & 0x01) | ((b2 & 0x04) >> 1) | ((b2 & 0x08) >> 1) | ((b2 & 0x02) << 2) | hat[dir]; // Select, L3, R3, Start, d-pad
+    high = ((b1 & 0x40) >> 6) | ((b1 & 0x80) >> 6) | ((b1 & 0x10) >> 2) | ((b1 & 0x20) >> 2) |   // L2, R2, L1, R1
+           ((b1 & 0x01) << 4) | ((b1 & 0x02) << 4) | ((b1 & 0x04) << 4) | ((b1 & 0x08) << 4);    // Triangle, Circle, Cross, Square
+
+    out->nButtonStateL = ~low;
+    out->nButtonStateH = ~high;
+
+    out->RightStickX = in[5];
+    out->RightStickY = in[6];
+    out->LeftStickX = in[3];
+    out->LeftStickY = in[4];
+
+    out->PressureRight = (low & 0x20) ? 255 : 0;
+    out->PressureLeft = (low & 0x80) ? 255 : 0;
+    out->PressureUp = (low & 0x10) ? 255 : 0;
+    out->PressureDown = (low & 0x40) ? 255 : 0;
+
+    out->PressureTriangle = (b1 & 0x01) ? 255 : 0;
+    out->PressureCircle = (b1 & 0x02) ? 255 : 0;
+    out->PressureCross = (b1 & 0x04) ? 255 : 0;
+    out->PressureSquare = (b1 & 0x08) ? 255 : 0;
+
+    out->PressureL1 = (b1 & 0x10) ? 255 : 0;
+    out->PressureR1 = (b1 & 0x20) ? 255 : 0;
+    out->PressureL2 = (b1 & 0x40) ? 255 : 0;
+    out->PressureR2 = (b1 & 0x80) ? 255 : 0;
+}
 
 struct ds3report
 {

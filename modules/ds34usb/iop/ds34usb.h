@@ -5,9 +5,10 @@
 
 #include <ds34common.h>
 
-#define DS3 0
-#define DS4 1
-#define DS5 2 // PS5 DualSense; only reachable when built with DUALSENSE=1 (-DDS5_ENABLE)
+#define DS3     0
+#define DS4     1
+#define DS5     2 // PS5 DualSense; only reachable when built with DUALSENSE=1 (-DDS5_ENABLE)
+#define SHANWAN 3 // ShanWan PS3 clone in generic HID mode (SHANWAN_VID/SHANWAN_PS3_PID): input only
 
 #define MAX_BUFFER_SIZE 64 // Size of general purpose data buffer
 
