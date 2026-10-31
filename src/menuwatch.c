@@ -29,6 +29,7 @@
 #define MENUWATCH_POLL_US     (250 * 1000)
 #define MENUWATCH_STALL_S     8  // in the menu
 #define MENUWATCH_BOOT_S      20 // while booting, where a device wait can be long
+#define MENUWATCH_INTRO_S     60 // boot splash: counted from the stage start, frames or not
 #define MENUWATCH_STACK_SIZE  (16 * 1024)
 #define MENUWATCH_REPORT_SIZE (24 * 1024)
 #define MENUWATCH_LOG_SIZE    (12 * 1024)
@@ -196,12 +197,19 @@ static void watchThread(void *arg)
                 stalledPolls = 0;
             lastStep = watchStep;
         }
+        // The boot splash keeps drawing while it waits for the deferred device start-up, so its
+        // frames prove nothing: that stage counts from its start, with a longer limit.
         if (rmFramesDrawn != lastFrame) {
             lastFrame = rmFramesDrawn;
-            stalledPolls = 0;
-            continue;
+            if (watchStep != MENUWATCH_BOOT_INTRO) {
+                stalledPolls = 0;
+                continue;
+            }
         }
-        stallLimit = isBootStep(watchStep) ? MENUWATCH_BOOT_S : MENUWATCH_STALL_S;
+        if (watchStep == MENUWATCH_BOOT_INTRO)
+            stallLimit = MENUWATCH_INTRO_S;
+        else
+            stallLimit = isBootStep(watchStep) ? MENUWATCH_BOOT_S : MENUWATCH_STALL_S;
         if (++stalledPolls < stallLimit * (1000000 / MENUWATCH_POLL_US))
             continue;
 
