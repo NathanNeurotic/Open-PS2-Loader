@@ -11,7 +11,11 @@
   finished: the IOP or the memory card is not answering.
 
   menuWatchStep() marks where the GUI thread is inside its frame, so the report can name the step
-  it stopped in. Other builds compile all of this away.
+  it stopped in. Before the menu loop it marks the boot stage instead: a boot that never draws a
+  frame first shows that stage's colour for 5 seconds, so a tester can say where it stopped even
+  when the card write fails. A black screen that never shows any colour means the watchdog never
+  ran (the EE stopped inside reset() or crashed), or the launcher left no picture for the colour to
+  show on. Other builds compile all of this away.
 */
 
 enum MenuWatchStep {
@@ -25,6 +29,15 @@ enum MenuWatchStep {
     MENUWATCH_FRAME_END,
     MENUWATCH_INPUT,
     MENUWATCH_FRAME_HOOK,
+    // Boot stages, in order. A boot that stops before its first frame turns the screen this stage's
+    // colour for 5 seconds before the magenta/green/orange report colours (menuwatch.c bootColour).
+    MENUWATCH_BOOT_DIR,      // red: boot folder, memory card probes, pad driver
+    MENUWATCH_BOOT_CONFIG,   // yellow: settings file location, early video-mode read
+    MENUWATCH_BOOT_VIDEO,    // blue: video, language, theme, GUI setup
+    MENUWATCH_BOOT_DEVICES,  // cyan: IO thread, menu setup
+    MENUWATCH_BOOT_PADS,     // white: controller scan and wait
+    MENUWATCH_BOOT_SETTINGS, // grey: loading the settings (skipped with START)
+    MENUWATCH_BOOT_INTRO,    // purple: intro screen, device start-up
 };
 
 #ifdef __OPLDIAG

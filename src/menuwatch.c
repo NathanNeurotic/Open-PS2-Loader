@@ -50,9 +50,21 @@ static const char *stepName(int step)
 {
     static const char *const names[] = {"?", "boot (before the menu loop)", "frame start (GUI lock, render start)", "pad read",
                                         "screen draw and input", "overlays", "notifications", "deferred menu updates",
-                                        "frame end (render flush, vsync)", "input dispatch", "frame hook"};
+                                        "frame end (render flush, vsync)", "input dispatch", "frame hook",
+                                        "boot: pad driver, boot folder and memory card probes (red)",
+                                        "boot: settings file location and early video-mode read (yellow)",
+                                        "boot: video, language, theme and GUI setup (blue)",
+                                        "boot: IO thread and menu setup (cyan)",
+                                        "boot: controller scan and wait (white)",
+                                        "boot: loading the settings (grey)",
+                                        "boot: intro screen and device start-up (purple)"};
 
     return (step > 0 && step < (int)(sizeof(names) / sizeof(names[0]))) ? names[step] : names[0];
+}
+
+static int isBootStep(int step)
+{
+    return step == MENUWATCH_BOOT || (step >= MENUWATCH_BOOT_DIR && step <= MENUWATCH_BOOT_INTRO);
 }
 
 static const char *threadState(int status)
@@ -79,6 +91,29 @@ static void screen(u8 r, u8 g, u8 b)
 {
     *MW_GS_PMODE = 0;
     *MW_GS_BGCOLOR = (u64)r | ((u64)g << 8) | ((u64)b << 16);
+}
+
+// The boot stage's colour (include/menuwatch.h), so a boot that never drew a frame says where it
+// stopped without the card. Before rmInit() the screen is still set up by the launcher, which is
+// enough for the background colour to show.
+static void bootColour(int step)
+{
+    static const u8 colours[][3] = {
+        {0xFF, 0x00, 0x00}, // red: boot folder, memory card probes, pad driver
+        {0xFF, 0xFF, 0x00}, // yellow: settings file location, early video-mode read
+        {0x00, 0x00, 0xFF}, // blue: video, language, theme, GUI setup
+        {0x00, 0xFF, 0xFF}, // cyan: IO thread, menu setup
+        {0xFF, 0xFF, 0xFF}, // white: controller scan and wait
+        {0x80, 0x80, 0x80}, // grey: loading the settings
+        {0x80, 0x00, 0xFF}, // purple: intro screen, device start-up
+    };
+    int i;
+
+    if (step < MENUWATCH_BOOT_DIR || step > MENUWATCH_BOOT_INTRO)
+        return;
+    screen(colours[step - MENUWATCH_BOOT_DIR][0], colours[step - MENUWATCH_BOOT_DIR][1], colours[step - MENUWATCH_BOOT_DIR][2]);
+    for (i = 0; i < 5; i++)
+        DelayThread(1000 * 1000);
 }
 
 static int add(int len, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
@@ -154,9 +189,10 @@ static void watchThread(void *arg)
     (void)arg;
     for (;;) {
         DelayThread(MENUWATCH_POLL_US);
-        // The menu limit counts from the first menu step, not from the last boot splash frame.
+        // The menu limit counts from the first menu step, not from the last boot splash frame, and
+        // each boot stage gets its own limit: a boot that moves on is not stuck.
         if (watchStep != lastStep) {
-            if (lastStep == MENUWATCH_BOOT)
+            if (isBootStep(lastStep))
                 stalledPolls = 0;
             lastStep = watchStep;
         }
@@ -165,10 +201,12 @@ static void watchThread(void *arg)
             stalledPolls = 0;
             continue;
         }
-        stallLimit = watchStep == MENUWATCH_BOOT ? MENUWATCH_BOOT_S : MENUWATCH_STALL_S;
+        stallLimit = isBootStep(watchStep) ? MENUWATCH_BOOT_S : MENUWATCH_STALL_S;
         if (++stalledPolls < stallLimit * (1000000 / MENUWATCH_POLL_US))
             continue;
 
+        // A boot stage first shows its own colour for 5 s: that needs nothing but the GS.
+        bootColour(lastStep);
         // Magenta: the watchdog fired. Everything after this needs the IOP.
         screen(0xFF, 0x00, 0xFF);
         len = buildReport(stallLimit, lastFrame);
@@ -182,6 +220,8 @@ static void watchThread(void *arg)
 
 void menuWatchStep(int step)
 {
+    if (step >= MENUWATCH_BOOT_DIR && step <= MENUWATCH_BOOT_INTRO)
+        diagLog("boot stage: %s", stepName(step)); // the order and timing of every stage, in the report
     watchStep = step;
 }
 

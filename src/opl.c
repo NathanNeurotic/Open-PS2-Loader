@@ -5431,19 +5431,23 @@ static void init(void)
 
     padInit(0);
     int padStatus = 0;
+    menuWatchStep(MENUWATCH_BOOT_CONFIG);
     configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd), not a fixed MC default
 
     const int defaultVMode = gVMode, defaultWideScreen = gWideScreen;
     bootDisplayPeek(); // the saved mode before the first one is set (RIPPS2 build 120)
+    menuWatchStep(MENUWATCH_BOOT_VIDEO);
     rmInit();
     lngInit();
     thmInit();
     guiInit();
+    menuWatchStep(MENUWATCH_BOOT_DEVICES);
     ioInit();
     hiddenInit();
     bdmSetAutoLaunch(0);
     menuInit();
 
+    menuWatchStep(MENUWATCH_BOOT_PADS);
     startPads();
 
     bdmInitSemaphore();
@@ -5457,6 +5461,7 @@ static void init(void)
     while (!padStatus)
         padStatus = startPads();
     readPads();
+    menuWatchStep(MENUWATCH_BOOT_SETTINGS);
     gBootInProgress = 1; // gate the in-initAllSupport greeting redraws to the boot pass only (#297)
     if (!getKeyPressed(KEY_START)) {
         // Show the boot splash (not guiRenderTextScreen(), which calls guiShow()
@@ -6069,6 +6074,8 @@ int main(int argc, char *argv[])
     reset();
     ResetDeckardXParams();
     menuWatchStart(); // diagnostic builds: report a menu that stops drawing (needs the IOP that reset() set up)
+    // Diagnostic builds: from here each boot stage shows its own colour if the boot stops in it.
+    menuWatchStep(MENUWATCH_BOOT_DIR);
 
     // Settings live in the boot directory (cwd). Resolve it once, before any config init -- the
     // autolaunch path below calls miniInit() -> configInit(). argv[0] is the launcher's boot path;
@@ -6104,6 +6111,7 @@ int main(int argc, char *argv[])
     }
 
     init();
+    menuWatchStep(MENUWATCH_BOOT_INTRO);
 
     // until this point in the code is reached, only PREINIT_LOG macro should be used
     LOG_ENABLE();
