@@ -160,7 +160,8 @@ int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title)
 
         // Title
         if (title != NULL) {
-            fntRenderString(gTheme->fonts[0], 25, 20, ALIGN_NONE, 0, 0, title, gTheme->textColor);
+            // Ends where the separating line does: "..." when a long (translated) title would run past it
+            fntRenderStringFit(gTheme->fonts[0], 25, 20, ALIGN_NONE, 615 - 25, title, gTheme->textColor, 0);
             // separating line
             rmDrawLine(25, 38, 615, 38, gColWhite);
         }
@@ -921,15 +922,170 @@ static void diaDrawHint(int text_id)
     fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW, boxH - 5, wrapped, gTheme->textColor);
 }
 
-/// renders an ui item (either selected or not)
-/// sets width and height of the render into the parameters
+// A row's value starts at the value column, and nothing stopped it at the screen edge. In 4:3, where
+// glyphs are drawn at full width (widescreen draws them at 3/4), a long one ran off the right side:
+// "NTSC 640x448i @60Hz 24bit (FLICKER-F" (#732). Fit it to the room left instead. The selected row
+// scrolls through the whole value; any other row ends in "...". Returns the end x, like fntRenderString.
+#define DIA_VALUE_MARGIN 20 // the dialog's left margin (x0), mirrored on the right
+
+// The fit itself (scroll the selected value, "..." for the rest) is fntRenderStringFit, shared with theme text.
+static int diaRenderValue(int x, int y, const char *text, u64 color, int selected)
+{
+    return fntRenderStringFit(gTheme->fonts[0], x, y, ALIGN_NONE, screenWidth - DIA_VALUE_MARGIN - x, text, color, selected);
+}
+
+// A UI_SPACER's width at x: to the next UI_SPACER_WIDTH column, at least UI_SPACER_MINIMAL.
+static int diaSpacerWidth(int x)
+{
+    int w = UI_SPACER_WIDTH - x % UI_SPACER_WIDTH;
+
+    if (w < UI_SPACER_MINIMAL) {
+        x += w + UI_SPACER_MINIMAL;
+        w += UI_SPACER_WIDTH - x % UI_SPACER_WIDTH;
+    }
+    return w;
+}
+
+// The text a label, header or button shows: its string, or "<not set>" when it has none.
+static const char *diaLabelText(const struct UIItem *item)
+{
+    const char *txt = diaGetLocalisedText(item->label.text, item->label.stringId);
+    return (txt && txt[0]) ? txt : _l(_STR_NOT_SET);
+}
+
+static int diaMeasure(const char *text)
+{
+    return rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text));
+}
+
+// Settings text ran off the right edge wherever nothing fitted it there: a notice ("No existing POPStarter SMB
+// configuration was detected...") on one line about 900 wide, the About credits, a long translation pushing a
+// row's On/Off past the edge. Everything a dialog draws now ends at the right margin (DIA_VALUE_MARGIN):
+// - a label or header alone on its row (nothing but spacers before it, nothing after) wraps onto more lines;
+// - any other label leaves room for the rest of its row and ends in "..." when it would not;
+// - every value and button fits the room left, the selected one scrolling through its whole text.
+#define DIA_WRAP_MAX 1024
+static char diaWrapBuf[DIA_WRAP_MAX];
+
+// The room a row-leading label has to wrap in, or 0 when `item` is not one (diaRenderUI and diaLayoutBottom pass
+// lead = nothing but spacers drew on this row yet, and the x it starts at).
+static int diaWrapRoom(const struct UIItem *item, int x, int lead)
+{
+    const struct UIItem *next = item + 1;
+
+    if (!lead || (item->type != UI_LABEL && item->type != UI_HEADER) || !item->visible)
+        return 0;
+    if (next->type != UI_TERMINATOR && !diaShouldBreakLine((struct UIItem *)next))
+        return 0;
+    return screenWidth - DIA_VALUE_MARGIN - x;
+}
+
+// Lines `text` takes in `room` (1 when it fits). More than one leaves the wrapped text in diaWrapBuf.
+static int diaWrapLines(const char *text, int room)
+{
+    int lines;
+
+    if (room <= 0 || diaMeasure(text) <= room)
+        return 1;
+    lines = fntWrapText(gTheme->fonts[0], text, room, diaWrapBuf, sizeof(diaWrapBuf));
+    return lines > 1 ? lines : 1;
+}
+
+// The height a row-leading label's extra lines add (diaWrapRoom gave it wrapRoom): each is drawn MENU_ITEM_HEIGHT
+// below the one before it, as fntRenderString draws a "\n".
+static int diaWrapExtra(struct UIItem *item, int wrapRoom)
+{
+    if (wrapRoom <= 0)
+        return 0;
+    return (diaWrapLines(diaLabelText(item), wrapRoom) - 1) * MENU_ITEM_HEIGHT;
+}
+
+// The text an enum shows. A corrupt/out-of-range stored index (e.g. a hand-edited cfg) shows the first option:
+// count the NULL-terminated options, then index with a clamped copy so we never read past the array.
+static const char *diaEnumText(const struct UIItem *item)
+{
+    int ecount = 0, eidx = item->intvalue.current;
+
+    while (item->intvalue.enumvalues[ecount] != NULL)
+        ecount++;
+    if (eidx < 0 || eidx >= ecount)
+        eidx = 0;
+    if (ecount == 0 || item->intvalue.enumvalues[eidx] == NULL)
+        return _l(_STR_NO_ITEMS);
+    return item->intvalue.enumvalues[eidx];
+}
+
+// A value that fits itself to whatever room is left (an enum, a string, a button) asks a label in front of it for
+// no more than this much.
+#define DIA_TAIL_VALUE_W 100
+
+// How wide the rest of `item`'s row draws after it: its spacers, short labels and controls, as diaRenderItem
+// draws them. A label in front of them ends in "..." rather than push them past the edge.
+static int diaRowTailWidth(const struct UIItem *item)
+{
+    char tmp[16];
+    int x = 0;
+
+    for (item++; item->type != UI_TERMINATOR && !diaShouldBreakLine((struct UIItem *)item); item++) {
+        const char *txt = NULL;
+        int w = 0;
+
+        if (!item->visible && item->type >= UI_LABEL)
+            continue;
+        switch (item->type) {
+            case UI_SPACER:
+                w = UI_SPACER_WIDTH;
+                break;
+            case UI_LABEL:
+            case UI_HEADER:
+                txt = diaLabelText(item);
+                break;
+            case UI_INT:
+                snprintf(tmp, sizeof(tmp), "%d", item->intvalue.current);
+                txt = tmp;
+                break;
+            case UI_BOOL:
+                txt = _l(item->intvalue.current ? _STR_ON : _STR_OFF);
+                break;
+            case UI_PASSWORD:
+                txt = "********";
+                break;
+            case UI_COLOUR:
+                w = rmWideScale(25);
+                break;
+            case UI_BUTTON:
+            case UI_ENUM:
+            case UI_STRING:
+                txt = item->type == UI_ENUM ? diaEnumText(item) : (item->type == UI_BUTTON ? diaLabelText(item) : item->stringvalue.text);
+                w = diaMeasure(txt);
+                if (w > DIA_TAIL_VALUE_W)
+                    w = DIA_TAIL_VALUE_W;
+                txt = NULL;
+                break;
+            default:
+                break;
+        }
+        if (txt != NULL)
+            w = diaMeasure(txt);
+        if (item->fixedWidth != 0) {
+            int fixed = item->fixedWidth < 0 ? item->fixedWidth * screenWidth / -100 : item->fixedWidth;
+            if (w < fixed)
+                w = fixed;
+        }
+        if (w > 0)
+            x += w + UI_SPACING_V;
+    }
+    return x;
+}
+
 // The height diaRenderItem WOULD set for this item, computed without drawing. Kept byte-for-byte in
 // step with diaRenderItem's *h logic below: the default is the active spacing, UI_SPACER is 0, UI_COLOUR is
 // 17, an invisible controllable item is 0 (diaRenderItem early-returns leaving the caller's h=0), and
-// any non-zero fixedHeight overrides upward (negative = percent of screenHeight). *h never depends on
-// x/y or the text, so this is exact -- used to advance layout past a row the viewport clip skips (#195
-// scroll-bleed fix) so the on-screen rows below it keep their true positions.
-static int diaItemHeight(struct UIItem *item, int spacingH)
+// any non-zero fixedHeight overrides upward (negative = percent of screenHeight). A wrapped label adds its extra
+// lines (wrapExtra, from diaWrapExtra, which both callers work out the same way); nothing else depends on x/y or
+// the text, so this is exact -- used to advance layout past a row the viewport clip skips (#195 scroll-bleed
+// fix) so the on-screen rows below it keep their true positions.
+static int diaItemHeight(struct UIItem *item, int spacingH, int wrapExtra)
 {
     int h;
 
@@ -943,24 +1099,14 @@ static int diaItemHeight(struct UIItem *item, int spacingH)
     else
         h = spacingH;
 
+    h += wrapExtra; // a label's wrapped lines (diaWrapExtra)
+
     if (item->fixedHeight != 0) {
         int newSize = (item->fixedHeight < 0) ? item->fixedHeight * screenHeight / -100 : item->fixedHeight;
         if (h < newSize)
             h = newSize;
     }
     return h;
-}
-
-// A row's value starts at the value column, and nothing stopped it at the screen edge. In 4:3, where
-// glyphs are drawn at full width (widescreen draws them at 3/4), a long one ran off the right side:
-// "NTSC 640x448i @60Hz 24bit (FLICKER-F" (#732). Fit it to the room left instead. The selected row
-// scrolls through the whole value; any other row ends in "...". Returns the end x, like fntRenderString.
-#define DIA_VALUE_MARGIN 20 // the dialog's left margin (x0), mirrored on the right
-
-// The fit itself (scroll the selected value, "..." for the rest) is fntRenderStringFit, shared with theme text.
-static int diaRenderValue(int x, int y, const char *text, u64 color, int selected)
-{
-    return fntRenderStringFit(gTheme->fonts[0], x, y, ALIGN_NONE, screenWidth - DIA_VALUE_MARGIN - x, text, color, selected);
 }
 
 // A row that cannot be changed now (a setting another one switches off) reads at half strength: its control,
@@ -977,7 +1123,9 @@ static int diaRowDisabled(const struct UIItem *item)
     return 0;
 }
 
-static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int haveFocus, int spacingH, int *w, int *h)
+/// renders an ui item (either selected or not)
+/// sets width and height of the render into the parameters
+static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int haveFocus, int spacingH, int wrapRoom, int *w, int *h)
 {
     // Don't draw controllable items that are not visible.
     if (!item->visible && item->type >= UI_LABEL)
@@ -1003,17 +1151,32 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
         case UI_HEADER:
             // header: same layout as a label, just rendered in the accent (selected-text) colour
             txtcol = gTheme->selTextColor;
-        case UI_BUTTON:
         case UI_LABEL: {
             // width is text length in pixels...
-            const char *txt = diaGetLocalisedText(item->label.text, item->label.stringId);
-            if (txt && strlen(txt))
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, txt, txtcol) - x;
-            else
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, _l(_STR_NOT_SET), txtcol) - x;
+            const char *txt = diaLabelText(item);
+            int lines = wrapRoom > 0 ? diaWrapLines(txt, wrapRoom) : 1;
 
+            if (lines > 1) { // alone on its row: the lines diaWrapLines left in diaWrapBuf, MENU_ITEM_HEIGHT apart
+                // The width only bounds the drawing; the margin's worth of slack keeps a glyph whose bitmap is a
+                // pixel wider than its advance from stopping the text there (fntRenderString stops at the bound).
+                fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, wrapRoom + DIA_VALUE_MARGIN, lines * MENU_ITEM_HEIGHT, diaWrapBuf, txtcol);
+                *w = wrapRoom;
+                *h = spacingH + (lines - 1) * MENU_ITEM_HEIGHT;
+            } else if (x + diaMeasure(txt) <= screenWidth / 2) {
+                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, txt, txtcol) - x;
+            } else {
+                // Leave the rest of the row its room, but never cut the label below a quarter of the screen.
+                int room = screenWidth - DIA_VALUE_MARGIN - x - diaRowTailWidth(item);
+                if (room < screenWidth / 4)
+                    room = screenWidth / 4;
+                *w = fntRenderStringFit(gTheme->fonts[0], x, y, ALIGN_NONE, room, txt, txtcol, 0) - x;
+            }
             break;
         }
+
+        case UI_BUTTON:
+            *w = diaRenderValue(x, y, diaLabelText(item), txtcol, selected) - x;
+            break;
 
         case UI_SPLITTER: {
             // a line. Thanks to the font rendering, we need to shift up by one font line
@@ -1033,28 +1196,22 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
 
         case UI_SPACER: {
             // next column divisible by spacer
-            *w = (UI_SPACER_WIDTH - x % UI_SPACER_WIDTH);
-
-            if (*w < UI_SPACER_MINIMAL) {
-                x += *w + UI_SPACER_MINIMAL;
-                *w += (UI_SPACER_WIDTH - x % UI_SPACER_WIDTH);
-            }
-
+            *w = diaSpacerWidth(x);
             *h = 0;
             break;
         }
 
         case UI_OK: {
             const char *txt = _l(_STR_OK);
-            *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, txt, txtcol) - x;
+            *w = diaRenderValue(x, y, txt, txtcol, selected) - x;
             break;
         }
 
         case UI_INT: {
-            char tmp[10];
+            char tmp[12];
 
             snprintf(tmp, sizeof(tmp), "%d", item->intvalue.current);
-            *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, tmp, txtcol) - x;
+            *w = diaRenderValue(x, y, tmp, txtcol, selected) - x;
             break;
         }
 
@@ -1064,9 +1221,9 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
             else if (item->showDefaultWhenEmpty)
                 // Field has a built-in fallback when blank -- show a dim "Default" so it reads as
                 // intentional, not unset. The stored value stays empty, so the fallback still fires.
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, _l(_STR_DEFAULT), GS_SETREG_RGBA(0x60, 0x60, 0x60, 0x80)) - x;
+                *w = diaRenderValue(x, y, _l(_STR_DEFAULT), GS_SETREG_RGBA(0x60, 0x60, 0x60, 0x80), selected) - x;
             else
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, _l(_STR_NOT_SET), txtcol) - x;
+                *w = diaRenderValue(x, y, _l(_STR_NOT_SET), txtcol, selected) - x;
             break;
         }
 
@@ -1081,33 +1238,20 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
                     stars[i] = '*';
 
                 stars[i] = '\0';
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, stars, txtcol) - x;
+                *w = diaRenderValue(x, y, stars, txtcol, selected) - x;
             } else
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, _l(_STR_NOT_SET), txtcol) - x;
+                *w = diaRenderValue(x, y, _l(_STR_NOT_SET), txtcol, selected) - x;
             break;
         }
 
         case UI_BOOL: {
             const char *txtval = _l((item->intvalue.current) ? _STR_ON : _STR_OFF);
-            *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, txtval, txtcol) - x;
+            *w = diaRenderValue(x, y, txtval, txtcol, selected) - x;
             break;
         }
 
         case UI_ENUM: {
-            // Guard against a corrupt/out-of-range stored index (e.g. a hand-edited cfg): count the
-            // NULL-terminated options, then index with a clamped copy so we never read past the array.
-            int ecount = 0;
-            while (item->intvalue.enumvalues[ecount] != NULL)
-                ecount++;
-            int eidx = item->intvalue.current;
-            if (eidx < 0 || eidx >= ecount)
-                eidx = 0;
-            const char *tv = (ecount > 0) ? item->intvalue.enumvalues[eidx] : NULL;
-
-            if (!tv)
-                tv = _l(_STR_NO_ITEMS);
-
-            *w = diaRenderValue(x, y, tv, txtcol, selected) - x;
+            *w = diaRenderValue(x, y, diaEnumText(item), txtcol, selected) - x;
             break;
         }
 
@@ -1239,31 +1383,42 @@ int diaListKey(void)
 
 // The lowest pixel the dialog would reach (content space, from `top`) with rows `gap` apart. Walks the
 // items exactly as diaRenderUI lays them out, with diaItemHeight standing in for diaRenderItem's *h.
-static int diaLayoutBottom(struct UIItem *ui, int spacingH, int gap, int top)
+static int diaLayoutBottom(struct UIItem *ui, int spacingH, int gap, int top, int left)
 {
     int y = top, hmax = 0, bottom = top, rowHidden = 0, rowShown = 0;
+    int x = left, lead = 1; // only while nothing but spacers drew on the row: all a wrapping label needs (diaWrapRoom)
 
     for (; ui->type != UI_TERMINATOR; ui++) {
         int h;
 
         if (diaRowCollapses(ui, rowHidden, rowShown)) {
             rowHidden = rowShown = 0;
+            x = left;
+            lead = 1;
             continue;
         }
         if (diaShouldBreakLine(ui))
             rowHidden = rowShown = 0;
         diaRowState(ui, &rowHidden, &rowShown);
         if (diaShouldBreakLine(ui)) {
+            x = left;
+            lead = 1;
             if (hmax > 0)
                 y += hmax + gap;
             hmax = 0;
         }
-        h = diaItemHeight(ui, spacingH);
+        h = diaItemHeight(ui, spacingH, diaWrapExtra(ui, diaWrapRoom(ui, x, lead)));
+        if (ui->type == UI_SPACER)
+            x += diaSpacerWidth(x) + UI_SPACING_V;
+        else if (ui->type != UI_BREAK && (ui->visible || ui->type < UI_LABEL))
+            lead = 0;
         if (h > hmax)
             hmax = h;
         if (y + h > bottom)
             bottom = y + h;
         if (diaShouldBreakLineAfter(ui)) {
+            x = left;
+            lead = 1;
             if (hmax > 0)
                 y += hmax + gap;
             hmax = 0;
@@ -1276,12 +1431,12 @@ static int diaLayoutBottom(struct UIItem *ui, int spacingH, int gap, int top)
 // Interface, Network) put its OK below the hint bar and made the user scroll for it. Shrink the gap
 // between rows just enough to fit -- never below UI_SETTINGS_MIN_GAP -- and leave a page that already
 // fits exactly as it was. A page that still does not fit at the minimum keeps scrolling as before.
-static int diaSettingsFitGap(struct UIItem *ui, int spacingH, int top, int visibleBottom)
+static int diaSettingsFitGap(struct UIItem *ui, int spacingH, int top, int left, int visibleBottom)
 {
     int gap;
 
     for (gap = spacingH; gap > UI_SETTINGS_MIN_GAP; gap--) {
-        if (diaLayoutBottom(ui, spacingH, gap, top) <= visibleBottom)
+        if (diaLayoutBottom(ui, spacingH, gap, top, left) <= visibleBottom)
             break;
     }
     return gap;
@@ -1300,7 +1455,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int spacingH = settingsContext ? UI_SETTINGS_SPACING_H : UI_SPACING_H;
     spacingH += fntScaleFontSize(FNTSYS_DEFAULT_SIZE) - FNTSYS_DEFAULT_SIZE;
     // Rows keep their height (spacingH); only the gap between them tightens, and only on a Settings page.
-    int gapH = settingsContext ? diaSettingsFitGap(ui, spacingH, y0, gTheme->usedHeight - 40) : spacingH;
+    int gapH = settingsContext ? diaSettingsFitGap(ui, spacingH, y0, x0, gTheme->usedHeight - 40) : spacingH;
 
     // render all items (shifted up by the scroll offset for tall dialogs)
     struct UIItem *rc = ui;
@@ -1308,12 +1463,14 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int curTop = y0, curBot = y0;    // rendered extent of the focused row, for cursor-follow scroll
     int contentBottom = y0;          // lowest rendered pixel (screen-space), for the maxScroll upper clamp
     int rowHidden = 0, rowShown = 0; // a row of hidden controls takes no line (diaRowCollapses)
+    int lead = 1;                    // nothing but spacers drew on this row yet (diaWrapRoom, as diaLayoutBottom)
 
     while (rc->type != UI_TERMINATOR) {
         int w = 0, h = 0;
 
         if (diaRowCollapses(rc, rowHidden, rowShown)) {
             x = x0; // its spacer moved x along: the next row starts at the margin, on this same line
+            lead = 1;
             rowHidden = rowShown = 0;
             rc++;
             continue;
@@ -1324,6 +1481,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
 
         if (diaShouldBreakLine(rc)) {
             x = x0;
+            lead = 1;
 
             if (hmax > 0)
                 y += hmax + gapH;
@@ -1343,19 +1501,23 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
         // A skipped row is not drawn, but the layout must advance by its EXACT height (diaItemHeight,
         // which mirrors diaRenderItem's *h logic) so the on-screen rows below it keep their true
         // positions and contentBottom/cursor-follow stay correct. Width is irrelevant for an unshown
-        // row -- x resets on the next line break -- so w=0. The FOCUSED row is never skipped (the
-        // cursor-follow clamp keeps it inside the viewport by construction), so cursor tracking is exact.
-        int rowH = diaItemHeight(rc, spacingH);
+        // row -- x resets on the next line break -- so w=0, except a spacer's: a label after it wraps by the x it
+        // starts at. The FOCUSED row is never skipped (the cursor-follow clamp keeps it inside the viewport by
+        // construction), so cursor tracking is exact.
+        int wrapRoom = diaWrapRoom(rc, x, lead);
+        int rowH = diaItemHeight(rc, spacingH, diaWrapExtra(rc, wrapRoom));
         int viewBottom = gTheme->usedHeight - 40; // the same bound the scroll clamp below uses
         // A row is drawn whole or not at all: the right stick slides the page by the pixel, and a row only partly
         // in view drew over the page's header or the hints. A peek may leave the chosen row out of view too.
         if ((rc != cur || diaPeek) && (y < y0 || y + rowH > viewBottom)) {
-            w = 0;
+            w = rc->type == UI_SPACER ? diaSpacerWidth(x) : 0;
             h = rowH;
         } else {
             int renderX = x;
-            diaRenderItem(renderX, y, rc, rc == cur, haveFocus, spacingH, &w, &h);
+            diaRenderItem(renderX, y, rc, rc == cur, haveFocus, spacingH, wrapRoom, &w, &h);
         }
+        if (rc->type != UI_SPACER && rc->type != UI_BREAK && (rc->visible || rc->type < UI_LABEL))
+            lead = 0;
 
         if (rc == cur) {
             curTop = y;
@@ -1372,6 +1534,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
 
         if (diaShouldBreakLineAfter(rc)) {
             x = x0;
+            lead = 1;
 
             if (hmax > 0)
                 y += hmax + gapH;
@@ -1401,11 +1564,13 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     } else if (cur != NULL) {
         // Only scroll when a real viewport exists; guards degenerate small-usedHeight themes
         // where visibleBottom <= y0 would let the two edge corrections fight (jitter).
-        if (cur == diaGetFirstControl(ui)) {
+        if (cur == diaGetFirstControl(ui) && curBot + diaScrollOffset <= visibleBottom) {
             // Focus is on the FIRST navigable control: nothing selectable sits above it, only the
             // non-focusable header/title rows. Snap to the very top so the page title is visible,
             // instead of merely pulling the first control up to y0 and leaving the title clipped
             // off the top of the viewport (#48: page stays stuck shifted down at the first element).
+            // Not when the top would leave that control below the hints: a dialog whose only control is
+            // its OK (About) under text that wrapped onto more lines follows the cursor like any other.
             diaScrollOffset = 0;
         } else if (visibleBottom > y0) {
             if (curTop < y0)
