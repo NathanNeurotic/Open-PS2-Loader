@@ -4909,6 +4909,7 @@ static void reset(void)
     mmceIopWasReset();
     udpfsIopWasReset();
 
+    bootTrace("memory card library");
     mcInit(MC_TYPE_XMC);
 }
 
@@ -5444,21 +5445,26 @@ static void init(void)
     // default variable values
     setDefaults();
 
+    bootTrace("pad driver");
     padInit(0);
     int padStatus = 0;
+    menuWatchStep(MENUWATCH_BOOT_CONFIG);
     configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd), not a fixed MC default
 
     const int defaultVMode = gVMode, defaultWideScreen = gWideScreen;
     bootDisplayPeek(); // the saved mode before the first one is set (RIPPS2 build 120)
+    menuWatchStep(MENUWATCH_BOOT_VIDEO);
     rmInit();
     lngInit();
     thmInit();
     guiInit();
+    menuWatchStep(MENUWATCH_BOOT_DEVICES);
     ioInit();
     hiddenInit();
     bdmSetAutoLaunch(0);
     menuInit();
 
+    menuWatchStep(MENUWATCH_BOOT_PADS);
     startPads();
 
     bdmInitSemaphore();
@@ -5469,11 +5475,24 @@ static void init(void)
 
     gSelectButton = (InitConsoleRegionData() == CONSOLE_REGION_JAPAN) ? KEY_CIRCLE : KEY_CROSS;
 
-    while (!padStatus)
+    // This waits for the pad ports to open, not for a controller: a port with nothing plugged in
+    // still counts, so a boot with no controller carries on as before. The wait only lasts when no
+    // port will open; then it draws the boot splash after 10 s and logs it, and keeps waiting.
+    clock_t padWaitStart = clock(); // elapsed time, not a deadline: clock() can wrap
+    int padWaitShown = 0;
+    while (!padStatus) {
         padStatus = startPads();
+        if (!padStatus && !padWaitShown && clock() - padWaitStart > 10 * CLOCKS_PER_SEC) {
+            diagLog("boot: no pad port opened for 10 s, still waiting");
+            guiRenderGreetingScreen();
+            padWaitShown = 1;
+        }
+    }
     readPads();
+    menuWatchStep(MENUWATCH_BOOT_SETTINGS);
     gBootInProgress = 1; // gate the in-initAllSupport greeting redraws to the boot pass only (#297)
-    if (!getKeyPressed(KEY_START)) {
+    const int safeBoot = getKeyPressed(KEY_START);
+    if (!safeBoot) {
         // Show the boot splash (not guiRenderTextScreen(), which calls guiShow()
         // and would draw the not-yet-ready main menu as a garbled landing page
         // before the intro splash) while the config loads.
@@ -5500,7 +5519,9 @@ static void init(void)
     // _loadConfig may move the settings home away from the initial boot folder.
     // Resolve the optional title font only NOW, from the final settings owner.
     // No filesystem probes occur later on the rendering or game-list paths.
-    lngInitFallbackFont();
+    // START is the safe boot: it reads nothing optional from the card before the first frame.
+    if (!safeBoot)
+        lngInitFallbackFont();
     guiSetBootStatus(_l(_STR_BOOT_READY));
     guiRenderGreetingScreen();
     gBootInProgress = 0;
@@ -6076,6 +6097,7 @@ int main(int argc, char *argv[])
     sysInitDECI2();
 #endif
 
+    bootTrace("main() started");
     LOG_INIT();
     PREINIT_LOG("OPL GUI start!\n");
 
@@ -6083,8 +6105,11 @@ int main(int argc, char *argv[])
 
     // reset, load modules
     reset();
+    bootTrace("Deckard settings");
     ResetDeckardXParams();
     menuWatchStart(); // diagnostic builds: report a menu that stops drawing (needs the IOP that reset() set up)
+    // Diagnostic builds: from here each boot stage shows its own colour if the boot stops in it.
+    menuWatchStep(MENUWATCH_BOOT_DIR);
 
     // Settings live in the boot directory (cwd). Resolve it once, before any config init -- the
     // autolaunch path below calls miniInit() -> configInit(). argv[0] is the launcher's boot path;
@@ -6120,6 +6145,7 @@ int main(int argc, char *argv[])
     }
 
     init();
+    menuWatchStep(MENUWATCH_BOOT_INTRO);
 
     // until this point in the code is reached, only PREINIT_LOG macro should be used
     LOG_ENABLE();

@@ -23,4 +23,21 @@ int diagSave(const char *dir, char *path, int pathSize);
 // leaves its steps behind. Never to a memory card or an MMCE card, where a write could hold up the launch.
 void diagSaveBeforeLaunch(void);
 
+// Diagnostic builds: the early boot trace. From the first line of main() through the IOP reset, every module load
+// and the boot stages up to the video setup, each step is printed on screen as it starts, so a boot that stops there
+// leaves its last step on screen. bootTraceEnd() stops it where the video setup takes the GS over. Other builds
+// compile it away.
+#ifdef __OPLDIAG
+void bootTrace(const char *step);
+void bootTraceEnd(void);
+#else
+static inline void bootTrace(const char *step)
+{
+    (void)step;
+}
+static inline void bootTraceEnd(void)
+{
+}
+#endif
+
 #endif
