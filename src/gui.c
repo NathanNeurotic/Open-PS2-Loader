@@ -2912,6 +2912,7 @@ static int guiSettingsShowInterface(void)
     int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
     int themeViewRequest = gThemeViewRequest;
+    int altBackgroundRequest = gThemeAltBackground, viewPending = 0;
     int allGamesChanged = 0;
     int previousSort = gAutosort;
 
@@ -3002,7 +3003,11 @@ reshow_interface:
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         themeViewRequest = guiReadThemeViewPicker(ui);
-        diaGetInt(ui, UICFG_THEME_ALT_BG, &gThemeAltBackground); // applyConfig reloads a theme with alt= keys
+        diaGetInt(ui, UICFG_THEME_ALT_BG, &altBackgroundRequest);
+        // With a view change pending, the alt change waits for that reload so the theme loads once.
+        viewPending = themeViewRequest != gThemeViewRequest;
+        if (!viewPending)
+            gThemeAltBackground = altBackgroundRequest; // applyConfig reloads a theme with alt= keys
         allGamesChanged = guiReadLibraryPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);
@@ -3023,8 +3028,11 @@ reshow_interface:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
-        if (themeViewRequest != gThemeViewRequest)
-            thmSetView(themeViewRequest); // reloads only when the theme now shows a different view
+        if (viewPending) {
+            gThemeAltBackground = altBackgroundRequest;
+            if (!thmSetView(themeViewRequest)) // reloads only when the theme now shows a different view
+                thmRefreshDisplayLayout();     // same view: the alt change still needs its reload
+        }
         if (allGamesChanged) {
             guiApplyAllGamesChange(); // rebuilds every game list too
         } else if (cfgTitlesChanged) {
