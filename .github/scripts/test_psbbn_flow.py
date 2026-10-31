@@ -270,7 +270,8 @@ registry = r'''
 #define LOG(...) ((void)0)
 enum {THM_VIEW_LIST, THM_VIEW_COVERFLOW, THM_VIEW_PSBBN, THM_VIEW_GRID, THM_VIEW_COUNT};
 typedef struct {int view; unsigned int viewMask; int defaultView;} theme_t;
-static int nThemes=2,guiThemeID,gThemeViewRequest=-1;
+static int nThemes=2,guiThemeID,gThemeViewRequest=-1,gCoverflowCount=3;
+@PICKS@
 static const char **guiThemesNames;
 typedef struct {char *name,*filePath;} theme_file_t;
 static theme_file_t themes[8];
@@ -330,7 +331,14 @@ int main(void) {
  assert(thmSetView(THM_VIEW_PSBBN) && theme.view==THM_VIEW_PSBBN && loads==oldLoads+1 && gThemeViewRequest==THM_VIEW_PSBBN);
  assert(!thmSetView(THM_VIEW_PSBBN) && loads==oldLoads+1);
  assert(thmCycleView() && theme.view==THM_VIEW_LIST); // grid is not offered, so psbbn wraps to list
- assert(thmCycleView() && theme.view==THM_VIEW_COVERFLOW && gThemeViewRequest==THM_VIEW_COVERFLOW);
+ assert(thmCycleView() && theme.view==THM_VIEW_COVERFLOW && gThemeViewRequest==THM_VIEW_COVERFLOW && gCoverflowCount==3);
+ // Coverflow (5) is the next stop of the same view: the count changes, nothing reloads.
+ oldLoads=loads;
+ assert(thmCycleView() && theme.view==THM_VIEW_COVERFLOW && gCoverflowCount==5 && loads==oldLoads);
+ // A failed load on the way out keeps Coverflow (5) on screen and its count.
+ failLoad=1;assert(!thmCycleView() && theme.view==THM_VIEW_COVERFLOW && gCoverflowCount==5 && gThemeViewRequest==THM_VIEW_COVERFLOW);failLoad=0;
+ assert(thmCycleView() && theme.view==THM_VIEW_PSBBN && gCoverflowCount==5);
+ assert(thmCycleView() && thmCycleView() && theme.view==THM_VIEW_COVERFLOW && gCoverflowCount==3);
  failLoad=1;assert(!thmSetView(THM_VIEW_LIST) && gThemeViewRequest==THM_VIEW_COVERFLOW);failLoad=0;
  // A view the theme does not offer shows its default, and the choice is kept for themes that offer it.
  assert(thmSetView(THM_VIEW_GRID) && theme.view==THM_VIEW_LIST && gThemeViewRequest==THM_VIEW_GRID);
@@ -345,7 +353,13 @@ functions = '\n'.join(function(s) for s in (
     'int thmAddElements(',
     'char *thmGetFilePath(', 'void thmReinit(', 'int thmSetView(', 'int thmCycleView(',
 ))
-run('psbbn_registry', registry.replace('@FUNCTIONS@', functions))
+# The real pick helpers from src/themeviews.c, with the pick enum from include/themeviews.h.
+VIEWS_H = (ROOT / 'include/themeviews.h').read_text(encoding='utf-8')
+VIEWS_C = (ROOT / 'src/themeviews.c').read_text(encoding='utf-8')
+picks_enum = VIEWS_H[VIEWS_H.index('enum ThemeViewPick {'):VIEWS_H.index('};', VIEWS_H.index('enum ThemeViewPick {')) + 2]
+picks_start = VIEWS_C.index('static const signed char pickViews')
+picks_code = VIEWS_C[picks_start:VIEWS_C.index('\n}', VIEWS_C.index('int thmViewCycleNext(', picks_start)) + 2]
+run('psbbn_registry', registry.replace('@FUNCTIONS@', functions).replace('@PICKS@', picks_enum + '\n' + picks_code))
 
 # Native integration must not import Collection's screen, source snapshots or R3 remapping.
 cfg = (ROOT / 'misc/theme_psbbn_flow.cfg').read_text(encoding='utf-8')

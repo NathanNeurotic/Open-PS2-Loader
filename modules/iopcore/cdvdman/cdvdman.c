@@ -1078,6 +1078,15 @@ int _start(int argc, char **argv)
     // hook MODLOAD's exports
     hookMODLOAD();
 
+    // Per-game fix for games that overrun the IOP buffers they allocate (sbPrepare sets it).
+    if (cdvdman_settings.common.flags & IOPCORE_COMPAT_IOP_PAD)
+        hookAllocSysMemory();
+
+#ifdef INGAMEDIAG
+    // Freeze report: note the game's IOP allocations (heapdiag.c). Every call passes through unchanged.
+    heap_diag_install();
+#endif
+
     // init disk type stuff
     cdvdman_initDiskType();
 

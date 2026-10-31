@@ -143,7 +143,7 @@ ifneq ($(GIT_TAG),latest)
 endif
 endif
 
-FRONTEND_OBJS = pad.o xparam.o fntsys.o textshape.o diaglog.o drivestatus.o renderman.o menusys.o OSDHistory.o system.o elfldr_noreset.o elfldr.o lang.o lang_internal.o config.o hdd.o dialogs.o favsupport.o gamemanage.o \
+FRONTEND_OBJS = pad.o xparam.o fntsys.o textshape.o diaglog.o drivestatus.o menuwatch.o renderman.o menusys.o OSDHistory.o system.o elfldr_noreset.o elfldr.o lang.o lang_internal.o config.o hdd.o dialogs.o favsupport.o gamemanage.o \
 		dia.o ioman.o texcache.o themes.o themeviews.o supportbase.o bdmsupport.o netsupport.o ethsupport.o httpcatalog.o httpsupport.o udpfssupport.o hddsupport.o zso.o lz4.o launchdiag.o \
 		appsupport.o mmcesupport.o artindex.o vcdsupport.o cuesupport.o libview.o retrogem.o folderbrowse.o gui.o guigame.o vmcrebuild.o vmcsaves.o vmc_groups.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o cheatconfig.o sound.o ps2cnf.o tar.o saveicon.o cfgtitle.o
 
@@ -190,6 +190,10 @@ PNG_ASSETS += $(foreach set,standard white,$(foreach n,cross circle square trian
 # BdmIndex dots for two, three and four mass devices (tools/make_bdmindex.py), apart from the list above
 # for the same reason.
 PNG_ASSETS += Index2_0 Index2_1 Index3_0 Index3_1 Index3_2 Index4_0 Index4_1 Index4_2 Index4_3
+
+# The Grid's device sidebar glyphs (RIPPS2's sidebar atlas, akilluminati47; themes.c drawDeviceSidebar), apart
+# from the list above for the same reason.
+PNG_ASSETS += grid_devices
 
 GFX_OBJS = $(PNG_ASSETS:%=%_png.o) poeveticanew.o
 
@@ -306,7 +310,7 @@ ifeq ($(RETROACHIEVEMENTS),1)
   # ranet:   the menu-side PC client exchange (hash -> watch list over UDP).
   # rabadge: the "tracked game" badge cache behind the list mark and cover mark.
   # ratls:   the verified HTTPS game-ID lookup (portable TLS + HTTP, and its PS2 platform half).
-  FRONTEND_OBJS += rapopslaunch.o md5.o rawatch.o rahash.o ranet.o achievements.o rabadge.o discsupport.o ratls.o ratls_ps2.o
+  FRONTEND_OBJS += rapopslaunch.o md5.o rawatch.o rahash.o ranet.o achievements.o rahunt.o rabadge.o discsupport.o ratls.o ratls_ps2.o
   # The in-game telemetry sender. Hand-builds Ethernet/UDP frames and calls
   # SMAPSendPacket directly, so it deliberately bypasses the menu network stack.
   IOP_OBJS += raudp.o rapops.o

@@ -867,10 +867,16 @@ struct UIItem diaUIConfig[] = {
     {UI_ENUM, UICFG_THEME, 1, 1, _STR_HINT_THEME, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    // Multi-view themes: the look a theme draws (List, Coverflow, PSBBN Flow, Grid). Holding L3 cycles it too.
+    // Multi-view themes: the look a theme draws (List, Coverflow (3), Coverflow (5), PSBBN Flow, Grid). Holding L3 cycles it too.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_THEME_VIEW}}},
     {UI_SPACER},
     {UI_ENUM, UICFG_THEME_VIEW, 1, 1, _STR_HINT_THEME_VIEW, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    // Pages (a tab per device) or All Games (one list) -- the same all_games setting as Game Sources.
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LIBRARY}}},
+    {UI_SPACER},
+    {UI_ENUM, UICFG_LIBRARY, 1, 1, _STR_HINT_LIBRARY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_FONT_SIZE}}},
@@ -2058,11 +2064,7 @@ struct UIItem diaCoverflowConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_COVERFLOW_SETTINGS}}},
     {UI_SPLITTER},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_COUNT}}},
-    {UI_SPACER},
-    {UI_ENUM, COVERFLOW_CFG_COUNT, 1, 1, _STR_HINT_COVERFLOW_COUNT, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
+    // The cover count is a Theme View now: Coverflow (3) or Coverflow (5).
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_SCALE}}},
     {UI_SPACER},
     {UI_ENUM, COVERFLOW_CFG_SCALE, 1, 1, _STR_HINT_COVERFLOW_SCALE, 0, 0, {.intvalue = {0, 0}}},
@@ -2076,6 +2078,11 @@ struct UIItem diaCoverflowConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_DIM}}},
     {UI_SPACER},
     {UI_BOOL, COVERFLOW_CFG_DIM, 1, 1, _STR_HINT_COVERFLOW_DIM, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GRID_LAYOUT}}},
+    {UI_SPACER},
+    {UI_ENUM, COVERFLOW_CFG_GRID_LAYOUT, 1, 1, _STR_HINT_GRID_LAYOUT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // buttons

@@ -343,7 +343,7 @@ boot_norm = function(opl, 'static void normalizeMcBootDir(')
 if not (0 <= boot_norm.find('resolveMcWildcardBootDir();') < boot_norm.find('normalizeMcPath(gBootDir, sizeof(gBootDir));')):
     failures.append('opl.c normalizeMcBootDir must resolve an mc?: boot dir, then share normalizeMcPath')
 restore = function(opl, 'static void restoreRecoverySaveHome(')
-if 'sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed() && bootHomeIsMcRoot()' not in restore:
+if 'sameConcreteMcSlot(gBootDir, recoveredHome) && bootHomeIsMcRoot()' not in restore:
     failures.append('opl.c restoreRecoverySaveHome: only a bare mcN: boot may keep a recovered folder; others save beside the ELF')
 
 mkdirs = re.findall(r'^static [^\n]*?(\w+)\([^)]*\)\n\{(?:(?!\n\}).)*?mkdir\(', vcd, re.M | re.S)

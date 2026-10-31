@@ -46,6 +46,7 @@ struct gui_update_list_t {
     struct gui_update_list_t *next;
 };
 static int live, fail, appendFail, gSemaId, depth, gScheduledOps;
+static void gridForgetItem(const void *item) { (void)item; } /* themes.c: a freed row drops its case-flip state */
 static int gRememberLastPlayed, gAutoStartLastPlayed, KeyPressedOnce, DisableCron;
 static struct gui_update_list_t *gUpdateList, *gUpdateEnd;
 static void *take(size_t n) {

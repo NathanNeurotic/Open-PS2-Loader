@@ -118,22 +118,47 @@ See [`misc/theme_psbbn_flow.cfg`](../misc/theme_psbbn_flow.cfg) for the full exa
 
 ### Grid element properties
 
-Use `type=Grid` for the page's covers in rows and columns, the selected cover framed in the
-selected-text colour and the others dimmed. Left/Right step one cover; Up/Down step one row and keep
-the column (a short last row takes its last cover). Up on the top row and Down on the bottom row
-switch to the previous/next device page, as Up/Down do in Coverflow. The selected row stays in the
-middle of the grid where the list allows, and the grid never scrolls past its last row. A position
-counter (`12/40`) sits under the grid's lower right corner. Idea: KrahJohlito (multi-view themes).
+Use `type=Grid` for the page's covers in rows and columns. The selected cover is drawn 12% larger
+and last, over its neighbours, inside a soft glow and a 2-pixel frame in the selected-text colour; the
+others are a step darker under a vignette. Left/Right step one cover; Up/Down step one row and keep the
+column (a short last row takes its last cover), and stop at the top and bottom rows. L1/R1 turn a whole
+page, the cursor keeping its place on it, and wrap at either end as they do in the list. The grid shows
+whole pages: the page holding the selection stays still while the cursor moves on it, a new page slides
+in as the old one slides out (at Coverflow's Animation Speed; Off turns the slide off), and a short last
+page keeps its covers in their cells from the top. A position counter (`12/40`) sits under the grid's
+lower right corner.
+
+The devices sit in a slim sidebar on the left, one glyph each, the page on screen lit. Left from the
+grid's first column opens it into a drawer with the devices' names; Up/Down there switch device (the grid
+shows that device at once), and Right, Cross or Circle go back to the covers. Hold the right stick to one
+side for half a second and the selected case turns over to its back cover (`COV2`), the way the stick
+leans; it stays turned until the stick turns it home. *Settings → Interface → Coverflow Settings → Grid
+Layout* swaps the theme's shape for 4 x 2, 5 x 2, 3 x 2 Large or 6 x 3 Compact (6 x 2, 7 x 2, 5 x 2 and
+8 x 3 on a 16:9 picture), and *Dim Side Covers* there makes the vignette full strength. Idea: KrahJohlito
+(multi-view themes); the pages, slide, selection, vignette, case flip, sidebar, tiles and layouts follow
+RIPPS2's grid (akilluminati47). NOT TESTED on hardware.
 
 | Property | Grid behavior |
 | --- | --- |
 | `x`, `y` | Centre of the whole grid; default is the screen centre. |
 | `width`, `height` | One cover; default 80 x 112. In widescreen the cover and the column pitch narrow with the aspect correction. |
-| `<block>_rows`, `<block>_columns` | Grid shape, read from the theme's **first** `Grid` block only (navigation needs one column count): default 3 rows of 4, at most 6 columns and 4 rows, and never more than 16 covers (rows are dropped first). |
+| `<block>_rows`, `<block>_columns` | Grid shape, read from the theme's **first** `Grid` block only (navigation needs one column count): default 3 rows of 4, at most 8 columns and 4 rows, and never more than 24 covers (rows are dropped first). Grid Layout, when set, replaces them. |
 | `<block>_spacing` | Gap between covers in pixels, from the first `Grid` block; default 16. |
 | `pattern`, `default`, `count` | Native artwork suffix (default `COV`), missing-art asset and cache capacity, as for `Coverflow`. |
 | `overlay`, `overlay2`, overlay corners | Native frame layers, scaled with each cover. Author corners against the element's `width` / `height`. |
 | `font` | Font for the position counter. |
+| `<block>_counter` | `0` hides the position counter; default `1`. From the first `Grid` block. |
+| `<block>_title` | `1` draws the selected title on its own line under the grid, centred and kept clear of the counter; default `0`. From the first `Grid` block. |
+| `<block>_title_y`, `<block>_title_font` | That line's centre (default: just under the grid) and font slot (default `0`). |
+| `<block>_devices` | `0` drops the device sidebar: Up on the top row and Down on the bottom row then switch device page, as Up/Down do in Coverflow. Default `1`. From the first `Grid` block. |
+| `<block>_vignette` | The other covers' vignette: `0` off, `1` weak (default), `2` full. From the first `Grid` block. |
+| `<block>_coverless` | A game with no cover art: `default` shows the `default` image (the default), `name` a glass tile with its name, `serial` a glass tile with the serial its case prints (`SLUS-20482`; the name when it has none). From the first `Grid` block. |
+| `<block>_flip` | `0` turns the case flip off; default `1`. Each `Grid` block with it keeps a few back covers (`COV2`) in memory. |
+
+For a 16:9 picture, give the grid its own shape with the SD/HD keys (see
+[SD and HD layouts](#sd-and-hd-layouts-_sd--_hd--this-fork)): a cover draws at three quarters of its width there, so more
+columns fit, e.g. `columns_hd=6`. The built-in Grid view shows 4 x 2 covers of 107 x 150, and 6 x 2 on
+16:9, with serial tiles for games without art.
 
 Keep a one-row `ItemsList` in the same family for the selected title. Left/Right step covers and
 Up/Down step rows on the pages whose family has a `Grid` element (a family without one, such as
@@ -275,7 +300,9 @@ a block, **renumber** the ones after it so there are no holes.
 One `conf_theme.cfg` can describe several **views** of the main and info pages: `list`, `coverflow`,
 `psbbn` and `grid`. The user picks a view under
 **Settings → Interface → Theme View**, or holds **L3** for half a second on the main page to switch to
-the next view the theme offers (a tap on L3 still cycles the library view). Idea and design:
+the next view the theme offers (a tap on L3 still cycles the library view). The picker and L3 list
+the `coverflow` view twice, as **Coverflow (3)** and **Coverflow (5)**: one view, drawn with 3 or 5
+covers (`coverflow_count`), so a theme declares `coverflow` once. Idea and design:
 KrahJohlito.
 
 The unprefixed blocks are the **base**. A block named `<view>.<block>` replaces that block in that
@@ -897,7 +924,7 @@ element, including one in a custom theme. They can be edited before selecting th
 
 | Setting / key | Values | Effect |
 |---|---|---|
-| `coverflow_count` | 3 or 5 | Number of covers shown. |
+| `coverflow_count` | 3 or 5 | Number of covers shown. Set by the Theme View pick, Coverflow (3) or Coverflow (5); no longer on the Coverflow Settings page. |
 | `coverflow_scale` | px | How much the center cover grows. |
 | `coverflow_anim` | ms | Slide animation duration (0 = instant). |
 | `coverflow_dim` | 0/1 | Dim the non-center covers. |

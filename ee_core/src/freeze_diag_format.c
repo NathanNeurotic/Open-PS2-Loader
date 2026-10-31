@@ -154,7 +154,7 @@ int freeze_diag_format(const freeze_diag_report_t *r, const char *build, char *o
     if (iop_status == FREEZE_DIAG_IOP_ANSWERED && (iop->magic != FREEZE_DIAG_MAGIC || iop->version != FREEZE_DIAG_VERSION))
         iop_status = FREEZE_DIAG_IOP_BAD_RECORD;
 
-    put_str(&b, "RiptOPL in-game freeze report v1\n");
+    put_str(&b, "RiptOPL in-game freeze report v2\n");
     put_str(&b, "build=");
     put_str(&b, build != 0 ? build : "?");
     put_char(&b, '\n');
@@ -164,12 +164,18 @@ int freeze_diag_format(const freeze_diag_report_t *r, const char *build, char *o
         put_char(&b, r->game_id[i]);
     put_char(&b, '\n');
 
+    put_str(&b, "trigger=");
+    put_str(&b, r->trigger == FREEZE_DIAG_TRIGGER_STALL ? "stall" : r->trigger == FREEZE_DIAG_TRIGGER_POWER ? "power" :
+                                                                                                              "combo");
+    put_char(&b, '\n');
+
     put_str(&b, "mode=");
     put_dec(&b, r->game_mode);
     put_str(&b, " compat=");
     put_hex(&b, r->compat);
     put_field(&b, "cheats", r->cheats);
     put_field(&b, "gsm", r->gsm);
+    put_field(&b, "pademu", r->pademu);
     put_char(&b, '\n');
 
     put_str(&b, "iop_resets=");
@@ -289,6 +295,149 @@ int freeze_diag_format(const freeze_diag_report_t *r, const char *build, char *o
         put_dec(&b, r->threads_total - r->thread_count);
         put_char(&b, '\n');
     }
+
+    out[b.len] = '\0';
+    return b.len;
+}
+
+// The module whose image holds addr, as name+offset, else the bare address.
+static void put_where(fd_buf_t *b, const heap_diag_iop_t *h, unsigned int addr)
+{
+    unsigned int i, n = h->module_count < HEAP_DIAG_MODULES ? h->module_count : HEAP_DIAG_MODULES;
+    int c;
+
+    for (i = 0; i < n; i++) {
+        const heap_diag_module_t *m = &h->modules[i];
+
+        if (m->text_start != 0 && addr >= m->text_start && addr - m->text_start < m->size) {
+            for (c = 0; c < 8 && m->name[c] != '\0'; c++)
+                put_char(b, m->name[c]);
+            put_char(b, '+');
+            put_hex(b, addr - m->text_start);
+            return;
+        }
+    }
+    put_hex(b, addr);
+}
+
+// A run this long right after a block is past what a free area or the next block plausibly
+// starts with by chance: the game wrote past the end of the block.
+#define HEAP_DIAG_OVERRUN_MIN 64
+
+int freeze_diag_format_heap(const heap_diag_snapshot_t *h, char *out, int cap)
+{
+    fd_buf_t b;
+    const heap_diag_iop_t *iop;
+    unsigned char order[HEAP_DIAG_BLOCKS];
+    unsigned int i, j, n, worst = HEAP_DIAG_BLOCKS, overruns = 0;
+
+    if (out == 0 || cap <= 0)
+        return 0;
+    b.out = out;
+    b.cap = cap;
+    b.len = 0;
+
+    if (h == 0 || !h->found || h->iop.version != HEAP_DIAG_VERSION) {
+        put_str(&b, "heap=none (no IOP heap record found in IOP RAM)\n");
+        out[b.len] = '\0';
+        return b.len;
+    }
+    iop = &h->iop;
+
+    put_str(&b, "heap=found at=");
+    put_hex(&b, h->found_at);
+    put_field(&b, "allocs", iop->allocs);
+    put_field(&b, "frees", iop->frees);
+    put_field(&b, "failed", iop->fails);
+    put_field(&b, "unknown_frees", iop->unknown_frees);
+    put_field(&b, "evicted", iop->evicted);
+    put_char(&b, '\n');
+    put_str(&b, "heap_free now=");
+    put_dec(&b, iop->free_now);
+    put_field(&b, "lowest", iop->free_min);
+    put_field(&b, "largest_block_lowest", iop->largest_min);
+    put_char(&b, '\n');
+
+    n = iop->module_count < HEAP_DIAG_MODULES ? iop->module_count : HEAP_DIAG_MODULES;
+    for (i = 0; i < n; i++) {
+        const heap_diag_module_t *m = &iop->modules[i];
+        int c;
+
+        put_str(&b, "module name=");
+        for (c = 0; c < 8 && m->name[c] != '\0'; c++)
+            put_char(&b, m->name[c]);
+        put_str(&b, " text=");
+        put_hex(&b, m->text_start);
+        put_field(&b, "size", m->size);
+        put_char(&b, '\n');
+    }
+    if (iop->module_count > n) {
+        put_str(&b, "modules_not_listed=");
+        put_dec(&b, iop->module_count - n);
+        put_char(&b, '\n');
+    }
+
+    // Live blocks by address, so neighbours sit next to each other.
+    n = 0;
+    for (i = 0; i < HEAP_DIAG_BLOCKS; i++) {
+        if (iop->blocks[i].addr == 0)
+            continue;
+        for (j = n; j > 0 && iop->blocks[order[j - 1]].addr > iop->blocks[i].addr; j--)
+            order[j] = order[j - 1];
+        order[j] = (unsigned char)i;
+        n++;
+    }
+    for (j = 0; j < n; j++) {
+        const heap_diag_block_t *blk = &iop->blocks[order[j]];
+        unsigned int ff = h->tail_ff[order[j]];
+
+        put_str(&b, "block addr=");
+        put_hex(&b, blk->addr);
+        put_field(&b, "size", blk->size);
+        put_str(&b, " by=");
+        put_where(&b, iop, blk->ra);
+        put_field(&b, "seq", blk->seq);
+        put_field(&b, "ff_after", ff);
+        if (ff >= HEAP_DIAG_OVERRUN_MIN) {
+            put_str(&b, " OVERRUN?");
+            overruns++;
+            if (worst == HEAP_DIAG_BLOCKS || ff > h->tail_ff[worst])
+                worst = order[j];
+        }
+        put_char(&b, '\n');
+    }
+
+    for (i = 0; i < HEAP_DIAG_FAILS; i++) {
+        const heap_diag_block_t *f = &iop->failed[i];
+
+        if (f->size == 0 && f->ra == 0)
+            continue;
+        put_str(&b, "failed_alloc size=");
+        put_dec(&b, f->size);
+        put_field(&b, "mode", f->seq);
+        put_str(&b, " by=");
+        put_where(&b, iop, f->ra);
+        put_char(&b, '\n');
+    }
+
+    put_str(&b, "heap_hint=");
+    if (iop->fails != 0) {
+        put_dec(&b, iop->fails);
+        put_str(&b, " IOP allocation(s) failed: see failed_alloc for the mode and size (IOP RAM running out is one cause)");
+    } else if (overruns != 0) {
+        put_str(&b, "the ");
+        put_dec(&b, iop->blocks[worst].size);
+        put_str(&b, "-byte block from ");
+        put_where(&b, iop, iop->blocks[worst].ra);
+        put_str(&b, " is followed by ");
+        put_dec(&b, h->tail_ff[worst]);
+        put_str(&b, " bytes of 0xFF: likely written past its end (");
+        put_dec(&b, overruns);
+        put_str(&b, " block(s) marked OVERRUN?)");
+    } else {
+        put_str(&b, "no failed allocation and no 0xFF run after any tracked block");
+    }
+    put_char(&b, '\n');
 
     out[b.len] = '\0';
     return b.len;

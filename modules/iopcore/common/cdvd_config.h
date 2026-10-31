@@ -11,6 +11,7 @@
 #define IOPCORE_COMPAT_EMU_DVDDL     0x0004
 #define IOPCORE_COMPAT_ACCU_READS    0x0008
 #define IOPCORE_COMPAT_SLOW_READS    0x0010 // with ACCU_READS: DVD media at the CD rate (~900KB/s)
+#define IOPCORE_COMPAT_IOP_PAD       0x0020 // per-game fix: pad IOP allocations past a known overrun (ioplib_util.c)
 #define IOPCORE_ENABLE_POFF          0x0100
 #define IOPCORE_SMB_FORMAT_USBLD     0x0200
 
