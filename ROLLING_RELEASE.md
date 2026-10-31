@@ -61,8 +61,8 @@ The current UI presents the **PS2/PS1 Game Display** setting on Interface:
 Mixed → PS2 → PS1; **PS2** and **PS1** lock one library and make L3 fully inert. APPS is independent:
 it can remain one Mixed ELF list or split Apps / `[PS1]`-titled ELFs across L3. Favorites is also
 independent and always cycles **All in One → PS2 → PS1 → ELF**. Returning from Start/Settings retains
-the page the user paused on. UDPFS Files lists POPSTARTER VCDs alongside Ember titles and automatically
-selects Okeanos's [BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)
+the page the user paused on. UDPFS Files lists [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) VCDs alongside [Ember](https://github.com/Gageformer/Ember) titles and automatically
+selects [Okeanos](https://github.com/Okeanos86)'s [BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)
 `.udpfs` pair when VCD BDMA Apply on Launch is enabled. The supplied `POPS/IPCONFIG.DAT`
 and `POPS/UDPFSCONFIG.DAT` are editable in POPS UDPFS Network Settings; saving applies
 both files to every connected USB volume. Launch requires matching valid USB configs.

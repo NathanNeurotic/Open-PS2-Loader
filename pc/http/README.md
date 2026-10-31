@@ -46,7 +46,7 @@ python pc/http/http_conformance.py http://192.168.1.10:1100/ --iso "DVD/Game.iso
 It asks what the PS2 will ask, in the order it will ask it, over one persistent connection, and
 fails on the things that would corrupt a disc read rather than the things that merely look untidy.
 
-**Docmine17's unmodified `pc/http_server.py` must pass.** It does, as of donor commit
+**[Docmine17](https://github.com/Docmine17)'s unmodified `pc/http_server.py` must pass.** It does, as of donor commit
 `6fced11a` — 14 passed, 0 failed, with the 4 GiB read skipped for want of a large enough test image.
 That run also confirmed two behaviours the client has to accommodate: his server answers an
 out-of-range request with **416 and no `Content-Range` header**, and it sends `Accept-Ranges` on

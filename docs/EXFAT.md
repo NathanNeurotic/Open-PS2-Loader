@@ -38,7 +38,7 @@ The internal exFAT HDD mounts into the shared `massN:` namespace. `mass0:` does 
 
 ## APA-Jail: APA/PFS and exFAT on the same disk
 
-**APA-Jail is a hybrid layout, not another filesystem or an option you enable in RiptOPL.** It lets APA/PFS storage for PSBBN/system data coexist with an exFAT area for game files and homebrew. The [PSBBN Definitive Project](https://github.com/CosmicScale/PSBBN-Definitive-Project) uses APA-Jail, developed by Berion. Use that project's installation tools and instructions to create or maintain its layout; ordinary PC repartitioning can destroy the APA side.
+**APA-Jail is a hybrid layout, not another filesystem or an option you enable in [RiptOPL](https://github.com/NathanNeurotic/RiptOPL).** It lets APA/PFS storage for PSBBN/system data coexist with an exFAT area for game files and homebrew. The [PSBBN Definitive Project](https://github.com/CosmicScale/PSBBN-Definitive-Project) uses APA-Jail, developed by [Berion](https://www.psx-place.com/members/berion.1431). Use that project's installation tools and instructions to create or maintain its layout; ordinary PC repartitioning can destroy the APA side.
 
 RiptOPL recognizes the supported **APA+MBR hybrid** by a valid, checksummed APA header plus an MBR FAT/exFAT partition entry beyond the APA reserved area. An MBR signature alone does not make a plain APA disk an APA-Jail disk.
 

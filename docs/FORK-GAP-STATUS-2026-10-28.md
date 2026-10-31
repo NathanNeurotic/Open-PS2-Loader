@@ -22,7 +22,7 @@ the same register is on [RiptOPL's site](https://nathanneurotic.github.io/RiptOP
 | RiptOPL (C++ / ps2build, main line) | `rebuild/main` | [`4dab9cc0`](https://github.com/NathanNeurotic/RiptOPL/commit/4dab9cc0c79f1393f1f70ba80b954463e06a2803), merge of #96 |
 | Open-PS2-Loader (C, legacy edition) | `rebuild/main` | [`94e82f2b`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/94e82f2b2795fc8faf5ff87dce8e39d63030e073), merge of #1080 |
 | Korium skin branch (legacy) | `test/korium-audit-remediation` | `285b6f59` |
-| [RIPPS2](https://github.com/akilluminati47/RIPPS2) by akilluminati47 | `main` | `95299389`, build 119 (v1.1.8-beta) |
+| [RIPPS2](https://github.com/akilluminati47/RIPPS2) by [akilluminati47](https://github.com/akilluminati47) | `main` | `95299389`, build 119 (v1.1.8-beta) |
 
 **Evidence level.** Every status below comes from reading the source at those commits, host
 tests and CI builds. **Nothing on this page has been tested on real PS2 hardware.** A green
@@ -73,7 +73,7 @@ after three follow-ups (RiptOPL #96, #97 and Open-PS2-Loader #1080).
 | `test_mx4sio_host_boot.py` runs in CI | #1080 | [#96](https://github.com/NathanNeurotic/RiptOPL/pull/96) |
 | `DEFAULTS.md` GameID barcode row (the PS1 half ships on) | #1080 | [#92](https://github.com/NathanNeurotic/RiptOPL/pull/92) |
 | Neutrino kits replace the i.LINK manager too; no untracked warning after a declined preview | already present | [#90](https://github.com/NathanNeurotic/RiptOPL/pull/90) |
-| RA handoff marker, overflow launches untracked, RA kit keeps the i.LINK pair (#1065); Okeanos credit (#1069); RA sender check (#1071); compat default core (#1072) | [#1075](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1075) | in #77 |
+| RA handoff marker, overflow launches untracked, RA kit keeps the i.LINK pair (#1065); [Okeanos](https://github.com/Okeanos86) credit (#1069); RA sender check (#1071); compat default core (#1072) | [#1075](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1075) | in #77 |
 | Site page errors (#1073) | [#1076](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1076) (gh-pages) | in [#91](https://github.com/NathanNeurotic/RiptOPL/pull/91) |
 | Cheats page: Neutrino cheat runtime and the mastercode requirement | [#1078](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1078) (gh-pages) | #91, wording fixed in [#97](https://github.com/NathanNeurotic/RiptOPL/pull/97) |
 | One tap moving two rows on the first press after boot | [#1074](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1074) | `1c16f063` in #77 |
@@ -86,11 +86,11 @@ edition only.
 
 ## 3. RIPPS2
 
-[RIPPS2](https://github.com/akilluminati47/RIPPS2) is **akilluminati47**'s RiptOPL-derived
+[RIPPS2](https://github.com/akilluminati47/RIPPS2) is **[akilluminati47](https://github.com/akilluminati47)**'s RiptOPL-derived
 frontend. The findings in this section are theirs: the audit read RIPPS2's own source and
 changelog reasons and checked each one against our code. RIPPS2 is a patch stack (71 patches) on
 the legacy C tree (`65d4b89`, upstream mark `57c45b4`), so nothing cherry-picks into the C++
-edition; every item is a port by hand. RIPPS2 and RiptOPL share code freely. Every port carries
+edition; every item is a port by hand. RIPPS2 and [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) share code freely. Every port carries
 credit to akilluminati47 in its commits.
 
 **Rule for these ports:** each one lands in both RiptOPL and Open-PS2-Loader. An item that
@@ -134,7 +134,7 @@ only: NOT TESTED on hardware.
 | B | Art: JPG and JPEG, OPL Manager names (`_BG_00`, `_SCR_00`, `_SCR_01`), any letter case in listed `ART` folders | [Game library](GAME-LIBRARY.md#game-art-jpg-any-letter-case-and-opl-manager-names) |
 | C | All Games List (device tabs step aside, L3 cycles All/PS2/PS1/Apps/Favourites/Recent, duplicates tagged by device), Sort Games: Last played, Recent (last 10), Random Game in the Start menu | [Game library](GAME-LIBRARY.md) |
 | D | `hidden.txt` and Hide Game; Delete removes a game's parts, CFG, art and cheats (no APA partition delete) | [Game library](GAME-LIBRARY.md#hide-game) |
-| E | Arabic and Persian shaping, right-to-left lines, CJK/Thai/Lao line breaks; 13 missing translations from akilluminati47's language files | [Languages](LANGUAGES.md#right-to-left-and-cjk-text) |
+| E | Arabic and Persian shaping, right-to-left lines, CJK/Thai/Lao line breaks; 13 missing translations from [akilluminati47](https://github.com/akilluminati47)'s language files | [Languages](LANGUAGES.md#right-to-left-and-cjk-text) |
 | F | Drive Status page and `DIAG.TXT` | [Launch diagnostics](LAUNCH-DIAGNOSTICS.md#drive-status-and-diagtxt) |
 | G | Dimmed switched-off rows, scroll bar, right-stick peek, return to the opening button, button glyph sets, `<font>_weight` | [Controls](CONTROLS.md), [Interface](INTERFACE.md#button-glyphs), [Theme engine](THEME_ENGINE.md) |
 | H | Offer to copy Sony's POPS files from another drive; a Saves page that treats a VMC like a folder | [PS1](VCD.md#sonys-pops-files), [VMC](VMC.md#saves-on-a-card) |

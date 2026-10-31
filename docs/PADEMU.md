@@ -4,7 +4,7 @@
 PS2 pad; PADEMU translates for it. Connect over USB or Bluetooth, on either pad port, with optional
 vibration and multitap emulation.
 
-PADEMU is the work of **belek666**.
+PADEMU is the work of **[belek666](https://github.com/belek666)**.
 
 ---
 

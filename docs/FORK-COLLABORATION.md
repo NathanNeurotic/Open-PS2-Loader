@@ -45,9 +45,9 @@ handoffs; match mechanisms and merged commits, not unchecked boxes or numbers al
 
 Disc ripping, the CD player and HDD partition changes remain declined local scope.
 The magnified single-pass HD renderer and external-only runtime packaging are
-intentional design alternatives. The withdrawn YAOPL remap is deferred; read-only
-UDPBD requires coordinated capability/write/VMC policy. Preserve akilluminati47,
-belomaxorka, dnunezx, juankyt505, Blayr and other original authors in any future work.
+intentional design alternatives. The withdrawn [YAOPL](https://github.com/yaopl/yaopl) remap is deferred; read-only
+UDPBD requires coordinated capability/write/VMC policy. Preserve [akilluminati47](https://github.com/akilluminati47),
+[belomaxorka](https://github.com/belomaxorka), [dnunezx](https://github.com/dnunezx), juankyt505, Blayr and other original authors in any future work.
 
 ## Historical October 25 candidate triage
 
