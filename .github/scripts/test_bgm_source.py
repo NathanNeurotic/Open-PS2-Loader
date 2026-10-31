@@ -50,8 +50,8 @@ else:
     if 'bgmSourceClose(src)' not in load:
         failures.append('bgmTryLoadPath: a failed ov_open_callbacks leaves the source to the caller to close')
 
-names = ('static int bgmSourceReopen(', 'static size_t bgmSourceRead(', 'static int bgmSourceSeek(',
-         'static long bgmSourceTell(', 'static int bgmSourceClose(')
+names = ('static int bgmSourceReopen(', 'static size_t bgmSourceRawRead(', 'static size_t bgmSourceRead(',
+         'static long bgmSourceTell(', 'static int bgmSourceSeek(', 'static int bgmSourceClose(')
 functions = []
 for name in names:
     text = function_text(sound, name)
@@ -71,6 +71,13 @@ source_type = re.search(r'^typedef struct\n\{\n[ \t]*FILE \*f;.*?^\} bgm_source_
 if source_type is None:
     failures.append('src/sound.c: bgm_source_t not found')
 defines = '\n'.join(re.findall(r'^#define BGM_REOPEN_[A-Z_]+\b.*$', sound, re.M))
+# RIPPS2 build 98: the top-bit serial fix (bgm_fix_t, the CRC delta, bgmFixPages, bgmFixedRead) sits before the raw read
+fix_block = None
+if '#define OGG_HDR_MAX' in sound and 'static size_t bgmSourceRawRead(void *ptr' in sound:
+    start = sound.index('#define OGG_HDR_MAX')
+    fix_block = sound[start:sound.index('static size_t bgmSourceRawRead(void *ptr, size_t size, size_t nmemb, void *datasource)\n{', start)]
+else:
+    failures.append('the top-bit serial fix (OGG_HDR_MAX ... bgmSourceRawRead) not found')
 
 HARNESS = r'''
 #include <stdio.h>
@@ -85,6 +92,8 @@ typedef long long ogg_int64_t;
 #define CARD_FILES 16
 #define MUSIC_SIZE (300 * 1024 + 123)
 static unsigned char music[MUSIC_SIZE];
+static unsigned char *cardData = music;
+static long cardSize = MUSIC_SIZE;
 static int cardOpen[CARD_FILES];
 static long cardPos[CARD_FILES];
 static int opFd;             /* op_data->fd */
@@ -144,11 +153,11 @@ static size_t fake_fread(void *ptr, size_t size, size_t nmemb, FAKEFILE *f)
 
     if (h < 0)
         return 0; /* the IOP read comes back with 0 bytes and no error */
-    if (want > MUSIC_SIZE - cardPos[h])
-        want = MUSIC_SIZE - cardPos[h];
+    if (want > cardSize - cardPos[h])
+        want = cardSize - cardPos[h];
     if (want < 0)
         want = 0;
-    memcpy(ptr, music + cardPos[h], (size_t)want);
+    memcpy(ptr, cardData + cardPos[h], (size_t)want);
     cardPos[h] += want;
     return (size_t)want / size;
 }
@@ -160,7 +169,7 @@ static int fake_fseek(FAKEFILE *f, long offset, int whence)
 
     if (h < 0)
         return -1;
-    target = whence == SEEK_SET ? offset : (whence == SEEK_CUR ? cardPos[h] + offset : MUSIC_SIZE + offset);
+    target = whence == SEEK_SET ? offset : (whence == SEEK_CUR ? cardPos[h] + offset : cardSize + offset);
     if (target < 0)
         return -1;
     cardPos[h] = target;
@@ -224,8 +233,152 @@ static bgm_source_t *openMusic(void)
     src->f = fopen("mmce0:/THM/theme/sound/bgm.ogg", "rb");
     src->pos = 0;
     src->size = MUSIC_SIZE;
+    src->fix = NULL;
     snprintf(src->path, sizeof(src->path), "%s", "mmce0:/THM/theme/sound/bgm.ogg");
     return src;
+}
+/* ---- RIPPS2 build 98: a stream whose serial has its top bit set ---- */
+#define STREAM_MAX (1024 * 1024)
+static unsigned char stream[STREAM_MAX], expect[STREAM_MAX], seen[STREAM_MAX];
+static long streamSize;
+
+/* The Ogg CRC, bit by bit, written from the format and not shared with the code under test */
+static unsigned int crcBitwise(const unsigned char *p, long n)
+{
+    unsigned int c = 0;
+    long i;
+    int k;
+
+    for (i = 0; i < n; i++) {
+        c ^= (unsigned int)p[i] << 24;
+        for (k = 0; k < 8; k++)
+            c = (c & 0x80000000u) ? (c << 1) ^ 0x04C11DB7u : c << 1;
+    }
+    return c;
+}
+
+static void putCrc(unsigned char *page, long len)
+{
+    unsigned int c;
+
+    memset(page + 22, 0, 4);
+    c = crcBitwise(page, len);
+    page[22] = c & 0xFF;
+    page[23] = (c >> 8) & 0xFF;
+    page[24] = (c >> 16) & 0xFF;
+    page[25] = (c >> 24) & 0xFF;
+}
+
+static long makePage(unsigned char *at, const unsigned char *serial, int seq, int nseg, unsigned int seed)
+{
+    int k;
+    long body = 0, len, i;
+
+    memcpy(at, "OggS", 4);
+    at[4] = 0;
+    at[5] = seq == 0 ? 2 : 0;
+    for (k = 0; k < 8; k++)
+        at[6 + k] = (unsigned char)(seq * 3 + k);
+    memcpy(at + 14, serial, 4);
+    at[18] = seq & 0xFF;
+    at[19] = at[20] = at[21] = 0;
+    at[26] = (unsigned char)nseg;
+    for (k = 0; k < nseg; k++) {
+        at[27 + k] = (unsigned char)(k == nseg - 1 ? (seed * 7) % 255 : 255);
+        body += at[27 + k];
+    }
+    len = 27 + nseg + body;
+    for (i = 27 + nseg; i < len; i++)
+        at[i] = (unsigned char)((i * 37u + seed) ^ (i >> 5));
+    putCrc(at, len);
+    return len;
+}
+
+/* 60 pages of a top-bit stream, then 6 of a chained stream whose serial is plain: only the first changes */
+static void buildStream(void)
+{
+    static const unsigned char top[4] = {0x11, 0x22, 0x33, 0xC4}, plain[4] = {0x55, 0x66, 0x77, 0x08};
+    long at = 0, len;
+    int p;
+
+    for (p = 0; p < 66; p++) {
+        unsigned int seed = 2654435761u * (unsigned int)(p + 1);
+        /* two pages with the longest header there is (255 segments), one in each stream */
+        len = makePage(stream + at, p < 60 ? top : plain, p < 60 ? p : p - 60, (p == 10 || p == 61) ? 255 : 1 + (int)(seed % 40), seed);
+        memcpy(expect + at, stream + at, len);
+        if (p < 60) {
+            expect[at + 17] ^= 0x80;
+            putCrc(expect + at, len);
+        }
+        at += len;
+    }
+    streamSize = at;
+}
+
+static bgm_source_t *openFixed(void)
+{
+    bgm_source_t *src;
+
+    cardData = stream;
+    cardSize = streamSize;
+    src = openMusic();
+    src->size = streamSize;
+    src->fix = calloc(1, sizeof(*src->fix));
+    memcpy(src->fix->serial, stream + 14, 4);
+    return src;
+}
+
+static void fixedWhole(const char *test, size_t piece, int every)
+{
+    bgm_source_t *src = openFixed();
+    long total = 0;
+    int reads = 0;
+    size_t r;
+
+    for (;;) {
+        if (every > 0 && reads % every == every - 1)
+            failedLookup();
+        r = bgmSourceRead(seen + total, 1, piece, src);
+        reads++;
+        if (r == 0 || reads > 1000000)
+            break;
+        total += (long)r;
+    }
+    expectThat(total == streamSize, test, "bytes delivered", total);
+    expectThat(total == streamSize && memcmp(seen, expect, streamSize) == 0, test,
+               "every page of the top-bit stream fixed once, its CRC valid, the chained stream untouched", 0);
+    expectThat(bgmSourceTell(src) == streamSize, test, "position at the end", bgmSourceTell(src));
+    bgmSourceClose(src);
+    expectThat(cardHandlesOpen() <= 1, test, "descriptors left open", cardHandlesOpen());
+    printf("%-34s %6d reads: OK\n", test, reads);
+}
+
+static void fixedSeeks(void)
+{
+    bgm_source_t *src = openFixed();
+    size_t r;
+    long mid = streamSize / 3;
+
+    r = bgmSourceRead(seen, 1, 5000, src);
+    expectThat(r == 5000 && memcmp(seen, expect, 5000) == 0, "top-bit seeks", "the first read", (long long)r);
+    failedLookup();
+    expectThat(bgmSourceSeek(src, mid, SEEK_SET) == 0 && bgmSourceTell(src) == mid, "top-bit seeks", "SEEK_SET",
+               bgmSourceTell(src));
+    r = bgmSourceRead(seen, 1, 9000, src);
+    expectThat(r == 9000 && memcmp(seen, expect + mid, 9000) == 0, "top-bit seeks", "data after SEEK_SET", (long long)r);
+    expectThat(bgmSourceSeek(src, -3000, SEEK_CUR) == 0 && bgmSourceTell(src) == mid + 6000, "top-bit seeks",
+               "SEEK_CUR from the decoder's place, not the drive's", bgmSourceTell(src));
+    r = bgmSourceRead(seen, 1, 4000, src);
+    expectThat(r == 4000 && memcmp(seen, expect + mid + 6000, 4000) == 0, "top-bit seeks", "data after SEEK_CUR", (long long)r);
+    expectThat(bgmSourceSeek(src, -100, SEEK_END) == 0, "top-bit seeks", "SEEK_END", bgmSourceTell(src));
+    r = bgmSourceRead(seen, 1, 2048, src);
+    expectThat(r == 100 && memcmp(seen, expect + streamSize - 100, 100) == 0, "top-bit seeks", "data after SEEK_END",
+               (long long)r);
+    expectThat(bgmSourceSeek(src, 0, SEEK_SET) == 0, "top-bit seeks", "rewind", -1);
+    r = bgmSourceRead(seen, 1, 300, src);
+    expectThat(r == 300 && memcmp(seen, expect, 300) == 0, "top-bit seeks", "data after the rewind (the loop)", (long long)r);
+    bgmSourceClose(src);
+    printf("%-34s OK\n", "top-bit seeks");
 }
 
 static unsigned char got[MUSIC_SIZE];
@@ -338,16 +491,24 @@ int main(void)
     wholeFile("lost before every read", 1, 0);
     seeks();
     gone();
+    buildStream();
+    fixedWhole("top-bit serial, 1 byte reads", 1, 0);
+    fixedWhole("top-bit serial, 7 byte reads", 7, 0);
+    fixedWhole("top-bit serial, 2 KB reads", 2048, 0);
+    fixedWhole("top-bit serial, 9000 byte reads", 9000, 0);
+    fixedWhole("top-bit serial, lost every 5th", 2048, 5);
+    fixedWhole("top-bit serial, lost every read", 333, 1);
+    fixedSeeks();
     return fails != 0;
 }
 '''
 
 
 def run_source_harness():
-    if source_type is None or None in functions:
+    if source_type is None or None in functions or fix_block is None:
         return
     program = (HARNESS.replace('@DEFINES@', defines).replace('@TYPE@', source_type.group(0))
-               .replace('@FUNCTIONS@', '\n'.join(functions)))
+               .replace('@FUNCTIONS@', '\n'.join([functions[0], fix_block] + functions[1:])))
     with tempfile.TemporaryDirectory() as tmp:
         src = Path(tmp) / 'bgm_source.c'
         exe = Path(tmp) / 'bgm_source'
@@ -374,4 +535,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('bgm source: the music survives a lost descriptor and still ends where the file ends')
+print('bgm source: the music survives a lost descriptor and still ends where the file ends; a top-bit serial is fixed as it is read')

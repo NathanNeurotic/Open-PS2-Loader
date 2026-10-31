@@ -791,6 +791,7 @@ typedef struct
     long pos;  // where the decoder believes it is
     long size; // -1 when the size could not be read
     char path[256];
+    struct bgm_fix *fix; // a stream with a top-bit serial (bgmFixedRead); NULL for every other file
 } bgm_source_t;
 
 static int bgmSourceReopen(bgm_source_t *src)
@@ -816,7 +817,112 @@ static int bgmSourceReopen(bgm_source_t *src)
     return 0;
 }
 
-static size_t bgmSourceRead(void *ptr, size_t size, size_t nmemb, void *datasource)
+/* RIPPS2 build 98 (akilluminati47): an Ogg stream whose serial number has its top bit set was refused by the PS2's
+   Vorbis library at its first page ("not a valid Ogg bitstream"). ffmpeg picks the serial at random, so about half
+   of the music it makes never played. Such a stream is read through bgmFixedRead: every page header of the stream
+   has that bit cleared and its CRC corrected before the decoder sees it. The Ogg CRC (0x04C11DB7, no init, no final
+   XOR) is linear, so the correction is the CRC of a page of the same length that is all zero but the flipped bit:
+   it depends on the length alone. The file itself is never written.
+
+   Unlike RIPPS2, which reads each piece again with a header's worth before it, this reads the file straight on,
+   once: a header that might still run past the bytes read so far stays back (unfixed, not yet handed on) until the
+   next read completes it, so each header is fixed exactly once. */
+#define OGG_HDR_MAX   282  // 27 bytes and a segment table of up to 255
+#define BGM_FIX_CHUNK 8192 // one read of the drive; vorbisfile asks 2 KB at a time
+
+typedef struct bgm_fix
+{
+    long out;                // where the decoder is
+    long base;               // the file offset of buf[0]
+    int len, ready;          // bytes in buf; how many of them are fixed and may be handed on
+    unsigned char serial[4]; // the stream's serial, as the file has it
+    unsigned char buf[BGM_FIX_CHUNK + OGG_HDR_MAX];
+} bgm_fix_t;
+
+static unsigned int oggCrcTab[256];
+
+static unsigned int oggCrcDelta(unsigned int len)
+{
+    unsigned int i, c;
+
+    if (oggCrcTab[1] == 0) {
+        for (i = 0; i < 256; i++) {
+            int k;
+            for (c = i << 24, k = 0; k < 8; k++)
+                c = (c & 0x80000000u) ? (c << 1) ^ 0x04C11DB7u : c << 1;
+            oggCrcTab[i] = c;
+        }
+    }
+    c = oggCrcTab[0x80]; // bytes 0-16 zero leave it 0; byte 17 is the 0x80
+    for (i = 18; i < len; i++)
+        c = (c << 8) ^ oggCrcTab[(c >> 24) & 0xFF];
+    return c;
+}
+
+// Every page header of this stream that starts before limit in buf[0, len): its serial's top bit cleared, its CRC
+// corrected. A header that starts before limit is whole in buf (limit is at least OGG_HDR_MAX before len, or the end).
+static void bgmFixPages(unsigned char *buf, int len, int limit, const unsigned char *serial)
+{
+    int i;
+
+    for (i = 0; i < limit && i + 27 <= len; i++) {
+        unsigned int nseg, body = 0, k, d;
+        if (buf[i] != 'O' || buf[i + 1] != 'g' || buf[i + 2] != 'g' || buf[i + 3] != 'S' || buf[i + 4] != 0 ||
+            memcmp(buf + i + 14, serial, 4) != 0)
+            continue;
+        nseg = buf[i + 26];
+        if (i + 27 + (int)nseg > len)
+            continue; // cut off by the end of the file
+        for (k = 0; k < nseg; k++)
+            body += buf[i + 27 + k];
+        d = oggCrcDelta(27 + nseg + body);
+        buf[i + 17] ^= 0x80;
+        buf[i + 22] ^= d & 0xFF;
+        buf[i + 23] ^= (d >> 8) & 0xFF;
+        buf[i + 24] ^= (d >> 16) & 0xFF;
+        buf[i + 25] ^= (d >> 24) & 0xFF;
+        i += 26;
+    }
+}
+
+static size_t bgmSourceRawRead(void *ptr, size_t size, size_t nmemb, void *datasource);
+
+// The decoder's read of a top-bit stream: from buf while it has fixed bytes, else the next piece of the file
+static size_t bgmFixedRead(bgm_source_t *src, unsigned char *out, size_t want)
+{
+    bgm_fix_t *x = src->fix;
+    size_t done = 0;
+
+    while (done < want) {
+        int at = (int)(x->out - x->base), keep, eof;
+        size_t r;
+        if (at < x->ready) {
+            size_t n = (size_t)(x->ready - at) < want - done ? (size_t)(x->ready - at) : want - done;
+            memcpy(out + done, x->buf + at, n);
+            done += n;
+            x->out += (long)n;
+            continue;
+        }
+        // everything fixed is handed on: keep the bytes held back, and read on after them (src->pos is base + len)
+        keep = x->len - x->ready;
+        memmove(x->buf, x->buf + x->ready, keep);
+        x->base += x->ready;
+        x->len = keep;
+        x->ready = 0;
+        r = bgmSourceRawRead(x->buf + keep, 1, sizeof(x->buf) - keep, src);
+        x->len += (int)r;
+        eof = r == 0 || (src->size >= 0 && src->pos >= src->size);
+        x->ready = eof ? x->len : x->len - OGG_HDR_MAX;
+        if (x->ready < 0)
+            x->ready = 0; // a short read: read on
+        bgmFixPages(x->buf, x->len, x->ready, x->serial);
+        if (eof && x->ready == 0)
+            break; // the end of the file, or a drive that will not answer (the raw read has reopened it)
+    }
+    return done;
+}
+
+static size_t bgmSourceRawRead(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
     bgm_source_t *src = (bgm_source_t *)datasource;
     int tries = 0;
@@ -838,6 +944,24 @@ static size_t bgmSourceRead(void *ptr, size_t size, size_t nmemb, void *datasour
     }
 }
 
+static size_t bgmSourceRead(void *ptr, size_t size, size_t nmemb, void *datasource)
+{
+    bgm_source_t *src = (bgm_source_t *)datasource;
+
+    if (src->fix == NULL)
+        return bgmSourceRawRead(ptr, size, nmemb, datasource);
+    if (size == 0 || nmemb == 0)
+        return 0;
+    return bgmFixedRead(src, (unsigned char *)ptr, size * nmemb) / size;
+}
+
+static long bgmSourceTell(void *datasource)
+{
+    bgm_source_t *src = (bgm_source_t *)datasource;
+
+    return src->fix != NULL ? src->fix->out : src->pos;
+}
+
 static int bgmSourceSeek(void *datasource, ogg_int64_t offset, int whence)
 {
     bgm_source_t *src = (bgm_source_t *)datasource;
@@ -846,7 +970,7 @@ static int bgmSourceSeek(void *datasource, ogg_int64_t offset, int whence)
     if (whence == SEEK_SET)
         target = (long)offset;
     else if (whence == SEEK_CUR)
-        target = src->pos + (long)offset;
+        target = bgmSourceTell(src) + (long)offset;
     else if (whence == SEEK_END && src->size >= 0)
         target = src->size + (long)offset;
     else
@@ -863,12 +987,11 @@ static int bgmSourceSeek(void *datasource, ogg_int64_t offset, int whence)
         }
     }
     src->pos = target;
+    if (src->fix != NULL) { // nothing read ahead is kept: the next read starts at the target
+        src->fix->out = src->fix->base = target;
+        src->fix->len = src->fix->ready = 0;
+    }
     return 0;
-}
-
-static long bgmSourceTell(void *datasource)
-{
-    return ((bgm_source_t *)datasource)->pos;
 }
 
 static int bgmSourceClose(void *datasource)
@@ -876,6 +999,7 @@ static int bgmSourceClose(void *datasource)
     bgm_source_t *src = (bgm_source_t *)datasource;
     int ret = fclose(src->f);
 
+    free(src->fix);
     free(src);
     return ret;
 }
@@ -906,11 +1030,29 @@ static int bgmTryLoadPath(const char *bgmPath, const char *source)
     src->pos = 0;
     snprintf(src->path, sizeof(src->path), "%s", bgmPath);
     src->size = -1;
+    src->fix = NULL;
     if (fseek(bgmFile, 0, SEEK_END) == 0)
         src->size = ftell(bgmFile);
     if (fseek(bgmFile, 0, SEEK_SET) != 0) {
         bgmSourceClose(src);
         return 0;
+    }
+
+    // RIPPS2 build 98: the first page's serial; with its top bit set, every page's is cleared as it is read
+    {
+        unsigned char head[18];
+        if (fread(head, 1, sizeof(head), bgmFile) == sizeof(head) && !memcmp(head, "OggS", 4) && (head[17] & 0x80)) {
+            src->fix = (struct bgm_fix *)malloc(sizeof(bgm_fix_t));
+            if (src->fix != NULL) {
+                memset(src->fix, 0, sizeof(bgm_fix_t));
+                memcpy(src->fix->serial, head + 14, 4);
+                LOG("BGM: %s has a top-bit serial: cleared as it is read\n", bgmPath);
+            }
+        }
+        if (fseek(bgmFile, 0, SEEK_SET) != 0) {
+            bgmSourceClose(src);
+            return 0;
+        }
     }
 
     if (ov_open_callbacks(src, vorbisFile, NULL, 0, bgmSourceCallbacks) == 0) {
