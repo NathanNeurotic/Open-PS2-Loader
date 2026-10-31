@@ -309,7 +309,7 @@ static const char *vmcSavesCardItems[VMCSAVES_SHOWN + 1], *vmcSavesFolderItems[V
 static char vmcSavesFolderLabels[VMCSAVES_SHOWN][sizeof(vmcSavesFolder[0].title) + 8];
 static int vmcSavesCardCount, vmcSavesFolderCount;
 
-static int guiGameVMCSavesErrorText(void)
+int guiGameVMCSavesErrorText(void)
 {
     switch (vmcSavesError()) {
         case VMCSAVES_ERR_NOT_CARD:

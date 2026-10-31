@@ -43,6 +43,10 @@ int vmcSavesImport(const char *parent, const char *save, const char *image);
 int vmcSavesExportPsu(const char *image, const char *save, const char *parent);
 // The save in a PSU file into the card's root. 1 done, -1 a save of that name is on the card, 0 failed.
 int vmcSavesImportPsu(const char *psu, const char *image);
+// A save folder <parent><save>/ to the PSU file <outParent><save>.psu (the File Manager). 1, -1, 0 as above.
+int vmcSavesFolderToPsu(const char *parent, const char *save, const char *outParent);
+// The save in a PSU file to the folder <parent><save>/ (the File Manager). 1, -1, 0 as above.
+int vmcSavesPsuToFolder(const char *psu, const char *parent);
 // One save off the card. 1 done, 0 failed.
 int vmcSavesDelete(const char *image, const char *save);
 // An icon.sys head (at least 0xC0 + 68 bytes) to its title in ASCII.

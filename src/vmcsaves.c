@@ -1146,6 +1146,16 @@ int vmcSavesImportPsu(const char *psu, const char *image)
     return vsCopy(VS_PSU, psu, NULL, VS_VMC, image);
 }
 
+int vmcSavesFolderToPsu(const char *parent, const char *save, const char *outParent)
+{
+    return vsCopy(VS_FOLDER, parent, save, VS_PSU, outParent);
+}
+
+int vmcSavesPsuToFolder(const char *psu, const char *parent)
+{
+    return vsCopy(VS_PSU, psu, NULL, VS_FOLDER, parent);
+}
+
 int vmcSavesDelete(const char *image, const char *save)
 {
     vs_vmc_t v;
