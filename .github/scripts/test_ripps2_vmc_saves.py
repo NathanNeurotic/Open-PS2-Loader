@@ -14,6 +14,9 @@ chain ends, every entry's size fits its chain, and the free count adds up.
 5. A save bigger than the free space is refused before anything is written: the image is unchanged.
 6. An ECC image lists and exports, but refuses import and delete.
 7. Titles: full-width Shift-JIS letters become ASCII, kana are dropped, half-width katakana are one byte.
+8. PSU (RIPPS2): a save copied out as one .psu reads back with an independent reader (entries, 0xFF padding to
+   1 KB, nothing after); it lists beside the folders by the save inside it; it copies back in byte for byte, as
+   does a PSU written from the format alone; a cut-short, foreign or badly named PSU is refused untouched.
 """
 from pathlib import Path
 import hashlib
@@ -213,7 +216,7 @@ int main(int argc, char **argv)
         n = !strcmp(op, "list") ? vmcSavesList(argv[2], list, 16, &freeKb) : vmcSavesListFolder(argv[2], list, 16);
         printf("%d %u %d", n, freeKb, vmcSavesError());
         for (i = 0; i < n; i++)
-            printf("|%s=%s", list[i].name, list[i].title);
+            printf("|%s=%s%s%s", list[i].name, list[i].title, list[i].file[0] ? "@" : "", list[i].file);
         printf("\n");
     } else if (!strcmp(op, "probe"))
         printf("%d\n", vmcSavesProbe(argv[2]));
@@ -225,6 +228,16 @@ int main(int argc, char **argv)
     else if (!strcmp(op, "import"))
         {
         int r = vmcSavesImport(argv[2], argv[3], argv[4]);
+        printf("%d %d\n", r, vmcSavesError());
+    }
+    else if (!strcmp(op, "exportpsu"))
+        {
+        int r = vmcSavesExportPsu(argv[2], argv[3], argv[4]);
+        printf("%d %d\n", r, vmcSavesError());
+    }
+    else if (!strcmp(op, "importpsu"))
+        {
+        int r = vmcSavesImportPsu(argv[2], argv[3]);
         printf("%d %d\n", r, vmcSavesError());
     }
     else if (!strcmp(op, "delete"))
@@ -246,7 +259,49 @@ int main(int argc, char **argv)
 }
 '''
 
-ERR = {'READ_ONLY': 3, 'NO_ROOM': 6, 'EXISTS': 8}
+ERR = {'READ_ONLY': 3, 'NO_ROOM': 6, 'EXISTS': 8, 'NAME': 10, 'PSU': 12}
+
+
+def psu_entry(mode, length, name, stamp=struct.pack('<BBBBBBH', 0, 9, 8, 7, 6, 5, 2025)):
+    e = bytearray(512)
+    struct.pack_into('<HHI', e, 0, mode, 0, length)
+    e[8:16] = stamp
+    e[0x18:0x20] = stamp
+    e[0x40:0x40 + len(name)] = name.encode()
+    return bytes(e)
+
+
+def make_psu(save, files, extra_dir=False):
+    """A PSU the way uLaunchELF writes one, from the format alone: folder entry, ".", "..", then each file's
+    entry and its data padded with 0xFF to 1 KB."""
+    count = len(files) + (1 if extra_dir else 0)
+    out = psu_entry(0x8427, count + 2, save) + psu_entry(0x8427, 0, '.') + psu_entry(0x8427, 0, '..')
+    if extra_dir:
+        out += psu_entry(0x8427, 0, 'SUBDIR')  # a folder entry inside a save: no data follows it
+    for name, data in files:
+        out += psu_entry(0x8497, len(data), name) + data + b'\xFF' * ((-len(data)) % 1024)
+    return out
+
+
+def read_psu(blob):
+    """The independent reader: (save name, entry count, {file: bytes}), checking the padding."""
+    head = blob[:512]
+    mode, _, count = struct.unpack_from('<HHI', head, 0)
+    assert mode & 0x20 and count >= 2
+    name = head[0x40:0x60].split(b'\0')[0].decode()
+    assert blob[512 + 0x40:512 + 0x42] == b'.\0' and blob[1024 + 0x40:1024 + 0x43] == b'..\0'
+    at, files = 1536, {}
+    for _ in range(count - 2):
+        fmode, _, flen = struct.unpack_from('<HHI', blob, at)
+        assert fmode == 0x8497, hex(fmode)
+        fname = blob[at + 0x40:at + 0x60].split(b'\0')[0].decode()
+        at += 512
+        files[fname] = blob[at:at + flen]
+        pad = (-flen) % 1024
+        assert blob[at + flen:at + flen + pad] == b'\xFF' * pad, 'data padded with 0xFF to 1 KB'
+        at += flen + pad
+    assert at == len(blob), 'nothing after the last file'
+    return name, count, files
 
 with tempfile.TemporaryDirectory(prefix='vmcsaves-') as t:
     t = Path(t)
@@ -347,6 +402,54 @@ with tempfile.TemporaryDirectory(prefix='vmcsaves-') as t:
     assert run('title', sysf) == '[Line Two]', run('title', sysf)
     assert run('probe', sysf) == '0'
 
+    # 8. PSU (RIPPS2): copy out as one .psu file and back in, checked against an independent reader and writer
+    pcard = t / 'psu.bin'
+    pcard.write_bytes(make_card(8))
+    assert run('import', saves.as_posix() + '/', 'BASLUS-20062GAME', pcard) == '1 0'
+    pdir = t / 'PSUOUT'
+    assert run('exportpsu', pcard, 'BASLUS-20062GAME', pdir.as_posix() + '/') == '1 0'
+    psu = pdir / 'BASLUS-20062GAME.psu'
+    name, count, got = read_psu(psu.read_bytes())
+    assert (name, count, got) == ('BASLUS-20062GAME', len(files) + 2, files), (name, count, sorted(got))
+    assert sorted(p.name for p in pdir.iterdir()) == ['BASLUS-20062GAME.psu'], 'no .tmp left behind'
+    assert run('exportpsu', pcard, 'BASLUS-20062GAME', pdir.as_posix() + '/') == '-1 %d' % ERR['EXISTS']
+    # listed beside the folders by the save inside it, with its title, and copied in by its file name
+    (pdir / 'AFOLDER').mkdir()
+    (pdir / 'AFOLDER' / 'x').write_bytes(b'1')
+    (pdir / 'notes.txt').write_bytes(b'not a save')
+    (pdir / 'junk.psu').write_bytes(b'\0' * 100)
+    listed = run('folder', pdir.as_posix() + '/').split('|')
+    assert listed[0] == '2 0 0', listed
+    assert sorted(listed[1:]) == ['AFOLDER=', 'BASLUS-20062GAME=Grand Theft Auto 3@BASLUS-20062GAME.psu'], listed
+    before = hashlib.sha256(pcard.read_bytes()).hexdigest()
+    assert run('importpsu', psu, pcard) == '-1 %d' % ERR['EXISTS']
+    assert hashlib.sha256(pcard.read_bytes()).hexdigest() == before
+    assert run('delete', pcard, 'BASLUS-20062GAME') == '1 0'
+    assert run('importpsu', psu, pcard) == '1 0'
+    assert Card(pcard.read_bytes()).check() == {'BASLUS-20062GAME': files}
+    # a PSU written from the format alone (as uLaunchELF does, with a folder entry inside) imports too
+    ext = t / 'ext.psu'
+    ext_files = [('icon.sys', icon_sys(fullwidth('Okami'))), ('SAVE0', os.urandom(2048)), ('tiny', b'\x01')]
+    ext.write_bytes(make_psu('BASLUS-21115OKAMI', ext_files, extra_dir=True))
+    assert run('importpsu', ext, pcard) == '1 0'
+    assert Card(pcard.read_bytes()).check()['BASLUS-21115OKAMI'] == dict(ext_files)
+    # refused, card unchanged: cut short, not a PSU, a file named twice, a name no card takes
+    before = hashlib.sha256(pcard.read_bytes()).hexdigest()
+    whole = make_psu('BASLUS-11111CUT', [('a', os.urandom(5000))])
+    (t / 'cut.psu').write_bytes(whole[:-3000])
+    assert run('importpsu', t / 'cut.psu', pcard) == '0 %d' % ERR['PSU']
+    assert run('importpsu', pdir / 'junk.psu', pcard) == '0 %d' % ERR['PSU']
+    (t / 'dup.psu').write_bytes(make_psu('BASLUS-22222DUP', [('a', b'1'), ('a', b'2')]))
+    assert run('importpsu', t / 'dup.psu', pcard) == '0 %d' % ERR['NAME']
+    (t / 'dots.psu').write_bytes(make_psu('..', [('a', b'1')]))
+    assert run('importpsu', t / 'dots.psu', pcard) == '0 %d' % ERR['NAME']
+    good = make_psu('BASLUS-33333DOT', [('a', b'1')])
+    (t / 'nodot.psu').write_bytes(good[:512] + psu_entry(0x8497, 0, 'x') + good[1024:])  # "." is not a folder named "."
+    assert run('importpsu', t / 'nodot.psu', pcard) == '0 %d' % ERR['PSU']
+    (t / 'noup.psu').write_bytes(good[:1024] + b'\0' * 512 + good[1536:])  # ".." is blank
+    assert run('importpsu', t / 'noup.psu', pcard) == '0 %d' % ERR['PSU']
+    assert hashlib.sha256(pcard.read_bytes()).hexdigest() == before
+
 # the dialog: a delete is confirmed first, and an ECC image or a write-protected drive is never written
 GG = root / ('src/guigame.c' if (root / 'src/guigame.c').exists() else 'src/ui/guigame.cpp')
 gg = GG.read_text()
@@ -356,8 +459,8 @@ assert body.index('guiMsgBox(msg, 1, diaVMCSaves)') < body.index('vmcSavesDelete
 assert 'cardWritable = probe == 1 && gEnableWrite;' in body
 refresh = gg[gg.index('static void guiGameRefreshVMCSaves('):]
 refresh = refresh[:refresh.index('\n}\n')]
-for needle in ('VMCSAVES_EXPORT, gEnableWrite &&', 'VMCSAVES_IMPORT, cardWritable &&', 'VMCSAVES_DELETE, cardWritable &&'):
+for needle in ('VMCSAVES_EXPORT, gEnableWrite &&', 'VMCSAVES_EXPORT_PSU, gEnableWrite &&', 'VMCSAVES_IMPORT, cardWritable &&', 'VMCSAVES_DELETE, cardWritable &&'):
     assert needle in refresh, needle
 assert 'VMC_BUTTON_SAVES && vmc_operation == OPERATION_CREATE' in gg, 'never while a card is being made or rebuilt'
 
-print('ok   VMC saves: list, import, export, delete and ECC read-only, checked against an independent reader')
+print('ok   VMC saves: list, import, export (folder and PSU), delete and ECC read-only, checked against an independent reader')

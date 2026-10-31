@@ -60,18 +60,23 @@ Host tests run genvmc's real request, worker, copy and verify code and the loade
 
 ## Saves on a card
 
-*(From [RIPPS2](https://github.com/akilluminati47/RIPPS2) builds 98 to 115, [akilluminati47](https://github.com/akilluminati47). NOT TESTED on hardware yet.)*
+*(From [RIPPS2](https://github.com/akilluminati47/RIPPS2) builds 51 and 98 to 115, [akilluminati47](https://github.com/akilluminati47). NOT TESTED on hardware yet.)*
 
 The per-game VMC dialog has a **Saves** button for a card that exists. It opens a page that treats the card like a
 folder:
 
 - **On the card** lists the saves on the card by their titles, read from each save's `icon.sys`. A save without
   one is listed by its folder name. **Free** shows the card's free space.
-- **In the folder** lists the save folders in `SAVES/`, beside the card (for example `mass0:/VMC/SAVES/`).
+- **In the folder** lists the save folders and `.psu` files in `SAVES/`, beside the card (for example
+  `mass0:/VMC/SAVES/`). A `.psu` is listed by the save inside it, with **(PSU)** after its title.
 - **Copy out** copies the picked save into `SAVES/<save folder>/` as plain files. The card is not changed. A
   folder of that name already in `SAVES/` is never overwritten.
-- **Copy in** copies the picked folder from `SAVES/` onto the card as a new save. A save of that name already on
-  the card is never overwritten. A save that does not fit is refused before anything is written.
+- **Copy out as PSU** copies the picked save into one file, `SAVES/<save folder>.psu`, the single-file save
+  that uLaunchELF, EMS and Apollo read and write. It is written to a `.tmp` file first and renamed only once
+  whole. A `.psu` of that name already in `SAVES/` is never overwritten.
+- **Copy in** copies the picked folder or `.psu` file from `SAVES/` onto the card as a new save. A save of that
+  name already on the card is never overwritten. A save that does not fit is refused before anything is
+  written, and so is a `.psu` that is cut short, names a file twice or uses a name a card cannot hold.
 - **Delete** removes the picked save from the card after you confirm it.
 
 Because `SAVES/` is shared by every card in that `VMC` folder, this is also how to move a save from one card to

@@ -69,7 +69,9 @@ Favourites; see [Game library](GAME-LIBRARY.md).
 
 **Start** opens the main menu, which also holds **Random Game** (moves the cursor to a random game
 on this page; Cross launches it) and **Drive Status** (free space on every started drive, and
-**Save Diagnostics**; see [Launch diagnostics](LAUNCH-DIAGNOSTICS.md#drive-status-and-diagtxt)).
+**Save Diagnostics**; see [Launch diagnostics](LAUNCH-DIAGNOSTICS.md#drive-status-and-diagtxt)) and the
+**File Manager** (Square marks, Triangle shows the actions, L1/R1 turn pages, Circle goes up a folder; see
+[File Manager](FILE_MANAGER.md)).
 
 **Select / Refresh** is also the retry for a device page that failed to populate — a network share
 that was not up when RiptOPL started, for example. A USB, MX4SIO, iLink, UDPBD or BDM HDD page whose
