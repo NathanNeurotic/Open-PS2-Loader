@@ -26,7 +26,7 @@ Two settings change what you read below, so check them first if the tables do no
 | **L1 / R1** | Previous / next page of the list; both wrap around at the ends |
 | **L2** | Jump to the first page |
 | **R2** | Jump to the last page |
-| **L3** | Tap: cycle this page's library view (PS2 / PS1 / Both / …; All, PS2, PS1, Apps, Favourites and Recent on All Games). Hold it for half a second to switch to the next [theme view](THEME_ENGINE.md#views-multi-view-themes--this-fork) (List, Coverflow, PSBBN Flow, Grid) when the theme offers more than one; the tap then acts on release. |
+| **L3** | Tap: cycle this page's library view (PS2 / PS1 / Both / …; All, PS2, PS1, Apps, Favourites and Recent on All Games). Hold it for half a second to switch to the next [theme view](THEME_ENGINE.md#views-multi-view-themes--this-fork) (List, Coverflow (3), Coverflow (5), PSBBN Flow, Grid) when the theme offers more than one; the tap then acts on release. |
 | **R3** | Star or un-star the selected title as a Favorite (also on All Games and Recent rows) |
 | **Start** | Open the main menu |
 | **Select** | Refresh the current device list |
@@ -110,7 +110,7 @@ A row that cannot be changed right now is drawn at half strength, label included
 controls are all hidden takes no line. A page too long for the screen shows a scroll bar. The
 **right stick** slides the page to look further down without moving the cursor; the D-pad or the
 first confirm brings the cursor back into view. Backing out of a submenu lands on the button that
-opened it. These come from RIPPS2 by akilluminati47 and are NOT TESTED on hardware.
+opened it. These come from [RIPPS2](https://github.com/akilluminati47/RIPPS2) by [akilluminati47](https://github.com/akilluminati47) and are NOT TESTED on hardware.
 
 ### Settings screens
 

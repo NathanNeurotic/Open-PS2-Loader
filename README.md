@@ -10,7 +10,7 @@
   <img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" />
 </p>
 
-> **RiptOPL is developed in partnership and collaboration with the [RIPPS2 Project](https://github.com/akilluminati47/RIPPS2) by [Akilluminati47](https://github.com/akilluminati47).**
+> **[RiptOPL](https://github.com/NathanNeurotic/RiptOPL) is developed in partnership and collaboration with the [RIPPS2 Project](https://github.com/akilluminati47/RIPPS2) by [Akilluminati47](https://github.com/akilluminati47).**
 
 > **ps2build C++ Edition.** The [C++ Edition](https://github.com/NathanNeurotic/RiptOPL), built with ps2build in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**, is now the main line of RiptOPL.
 
@@ -29,9 +29,9 @@ For launch failures, use [Launch diagnostics](docs/LAUNCH-DIAGNOSTICS.md) to ide
 installed package, actual game core, transport and failing stage before changing settings.
 Our [fork collaboration review](docs/FORK-COLLABORATION.md) and
 [current comparison](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html)
-track shared improvements and candidates from RIPPS2 and other projects with their evidence limits.
+track shared improvements and candidates from [RIPPS2](https://github.com/akilluminati47/RIPPS2) and other projects with their evidence limits.
 The [October 28 fork-gap status](docs/FORK-GAP-STATUS-2026-10-28.md) records parity with the C++
-edition, the fixes that landed in both, akilluminati47's RIPPS2 findings and port plan, and what is
+edition, the fixes that landed in both, [akilluminati47](https://github.com/akilluminati47)'s RIPPS2 findings and port plan, and what is
 still not tested on hardware.
 
 For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves. For build flavours, app placement, Browser/OSDSYS and launch-failure reports, see [Setup questions](docs/SETUP-QUESTIONS.md).
@@ -54,7 +54,7 @@ A heartfelt thank you to developers who have contributed pull requests directly 
 # RiptOPL
 **An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
 <br>
-Based on Open PS2 Loader · Copyright 2013, Ifcaro & jimmikaelkael<br>
+Based on Open PS2 Loader · Copyright 2013, [Ifcaro](https://github.com/ifcaro) & [jimmikaelkael](https://github.com/jimmikaelkael)<br>
 Licensed under Academic Free License version 3.0<br>
 Review the LICENSE file for further details.<br><br>
 
@@ -92,7 +92,7 @@ Review the LICENSE file for further details.<br><br>
 
 > 📖 **Full documentation & guides:** **<https://nathanneurotic.github.io/Open-PS2-Loader/>** — searchable setup and reference guides covering storage backends, the Neutrino core, PS1/VCD, the Theme Engine (with worked examples and an annotated sample theme), a full settings reference, and troubleshooting. For Japanese game names with English menus, see [Optional Unicode/CJK font fallback](docs/UNICODE-GAME-TITLES.md) (copy a suitable `font_CJK.ttf` beside `settings_riptopl.cfg` and restart).
 
-> 🌙 **Our #1 recommended alternative: [LUNA](https://github.com/dnunezx/LUNA) by [darkladark](https://github.com/dnunezx).** *Lightweight Unified Neutrino Access* is a visual loader built on NHDDL and Neutrino for **lightweight, customized Neutrino gameplay**. If RiptOPL is more loader than you need, start there. darkladark also contributes to RiptOPL itself; see [Acknowledgements](#acknowledgements).
+> 🌙 **Our #1 recommended alternative: [LUNA](https://github.com/dnunezx/LUNA) by [darkladark](https://github.com/dnunezx).** *Lightweight Unified Neutrino Access* is a visual loader built on [NHDDL](https://github.com/pcm720/nhddl) and [Neutrino](https://github.com/rickgaiser/neutrino) for **lightweight, customized Neutrino gameplay**. If [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) is more loader than you need, start there. darkladark also contributes to RiptOPL itself; see [Acknowledgements](#acknowledgements).
 
 ## Contents
 
@@ -233,11 +233,11 @@ the core. **PS2/PS1 Game Display** controls separate, mixed or locked device vie
 and the optional Apps/PS1ELF split keep their own L3 cycles.
 
 Use [the PS1 reference](docs/VCD.md) for the complete folder layout, BIOS/runtime requirements,
-Ember global/per-game settings, APA containers, alternate POPSTARTER builds, BDMA selection,
-SMB and POPS UDPFS. POPS UDPFS uses Okeanos's separate USB-first driver and valid matching
+[Ember](https://github.com/Gageformer/Ember) global/per-game settings, APA containers, alternate [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) builds, BDMA selection,
+SMB and POPS UDPFS. POPS UDPFS uses [Okeanos](https://github.com/Okeanos86)'s separate USB-first driver and valid matching
 USB runtime configs; UDPBD and UDPFS IMG remain Ember-only for PS1. iLink POPSTARTER is
 wired, and its driver now waits out the drive's post-reset login hold (#1018), but it still awaits a
-passing hardware retest. Neutrino and OPL's PS2 core do not launch PS1 rows.
+passing hardware retest. [Neutrino](https://github.com/rickgaiser/neutrino) and OPL's PS2 core do not launch PS1 rows.
 
 ## Controls and In-Game Reset
 
@@ -253,6 +253,8 @@ For native OPL games, hold **L1 + L2 + R1 + R2**, then **Start + Select** to res
 unavailable under Neutrino, before the game opens its controller, or with Mode 6 enabled.
 PS1 cores have their own reset behavior. [IGR](docs/IGR.md) covers reset targets, USB driver
 requirements, the power button and optional screenshots.
+
+**In-Game Menu (beta)** (*Settings → Game Launching*, off by default; from [akilluminati47](https://github.com/akilluminati47)'s [RIPPS2](https://github.com/akilluminati47/RIPPS2)): with it on, the reset combination pauses an OPL-core game under a panel with **Resume**, **Cheats** (switch the game's cheats on or off while playing), **Achievements** (RetroAchievements editions), **Exit Game** and **Power Off**. The pause is silent and Resume gives back the exact picture. PCSX2 and games the menu cannot draw on keep the plain combination. NOT TESTED on hardware; see [docs/IGR.md](docs/IGR.md#the-in-game-menu-beta).
 
 <a name="game-list"></a>
 
@@ -655,18 +657,18 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)** by **[Ripto](https://github.com/NathanNeurotic)** — all-in-one PC server launcher for **SMB, UDPFS, UDPBD and HTTP**.
 - **[udpfs-server](https://github.com/YouKnow-sys/udpfs-server)** by **[YouKnow-sys](https://github.com/YouKnow-sys)** — the same idea **from a phone**: an Android app that shares folders and disk images to the PS2 over **UDPFS**, found by broadcast so there is no server address to type in on the console. Works over a router or a direct cable. Built on **[udpfsd](https://github.com/pcm720/udpfsd)** by **[pcm720](https://github.com/pcm720)**; MIT licensed. An `android-udpfs-server.url` shortcut ships in installable packages.
 - **[OrbitPS2 Manager](https://github.com/Luden02/OrbitPS2-Manager)** by **[Luden](https://github.com/Luden02)** — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management.
-- **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** — *Lightweight Unified Neutrino Access*, a visual PS2 loader built on NHDDL and Neutrino, and our **#1 recommended alternative** if RiptOPL is more loader than you need. darkladark also contributes to RiptOPL: the PSBBN Flow theme adapts LUNA's Collection display (#733, superseded by #977), preserving the normal R3 favorite action.
-- **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **Akilluminati47** — a PS2-inspired front end developed in collaboration with RiptOPL, with a **web-theme beta** at **[akilluminati47.github.io/RIPPS2](https://akilluminati47.github.io/RIPPS2/)**. It now offers a downloadable PS2 ELF; consult its own releases and compatibility notes for current builds.
+- **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** — *Lightweight Unified Neutrino Access*, a visual PS2 loader built on [NHDDL](https://github.com/pcm720/nhddl) and [Neutrino](https://github.com/rickgaiser/neutrino), and our **#1 recommended alternative** if [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) is more loader than you need. darkladark also contributes to RiptOPL: the PSBBN Flow theme adapts LUNA's Collection display (#733, superseded by #977), preserving the normal R3 favorite action.
+- **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **[Akilluminati47](https://github.com/akilluminati47)** — a PS2-inspired front end developed in collaboration with [RiptOPL](https://github.com/NathanNeurotic/RiptOPL), with a **web-theme beta** at **[akilluminati47.github.io/RIPPS2](https://akilluminati47.github.io/RIPPS2/)**. It now offers a downloadable PS2 ELF; consult its own releases and compatibility notes for current builds.
 - **[OPL PS1 AIO Converter GUI](https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI)** by **[shaan](https://github.com/shaanhomebrew-cloud)** — Windows all-in-one PS1/POPStarter preparation tool for converting BIN/CUE backups to VCDs and installing them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.
-- **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. Recommended client: **[v1.0.1](https://github.com/hacan359/xerabora/releases/tag/v1.0.1)** (alpha.17 or later). RiptOPL's RA build supports **xeRAbora v1.0.1** (alpha.17 or later) and its snapshot-only Mode 6 behavior. xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by **[oMrRexD](https://github.com/oMrRexD)**, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.
-- **[OPL HTTP PC server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)** by **[Docmine17](https://github.com/Docmine17)** — the PC side of RiptOPL’s **HTTP** protocol: a small static HTTP server with byte-range support that serves your `games.csv` catalog and streams the ISOs themselves. RiptOPL works with it **unmodified** — no new API, no catalog conversion, no changed folder layout — with host conformance checks against the upstream server. PS2 hardware validation is still pending.
-- **[PS2RD CHT Manager](https://github.com/TheRealNextria/PS2RD-CHT-Manager)** by **[TheRealNextria](https://github.com/TheRealNextria)** — PC manager for the PS2RD `.cht` cheat files RiptOPL reads from your device's `CHT` folder. A `PS2RD-CHT-Manager.url` shortcut ships in installable packages.
-- **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** — a PS1 emulator that runs natively on the PS2, used as RiptOPL's **second PS1 core** alongside POPSTARTER. Unlike the others this one is not just a shortcut: an `EMBER/` folder ships **inside** the release package, ready to drop onto a device. It is bundled unmodified under the Ember Public Beta Testing Licence (`EMBER/LICENSE-BETA.txt` in the package); releases: <https://github.com/Gageformer/Ember/releases>.
-- **[BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** by **[Okeanos](https://github.com/Okeanos86)** — POPSTARTER-specific BDMA drivers with read-only UDPFS fallback for VCDs, based on israpps' BDM Assault.
-- **[POPStarter](https://www.psx-place.com/resources/popstarter.683/)** by **krHACKen** — a PS1 launcher built around Sony's native **POPS** emulator for the PS2, used as RiptOPL's **primary PS1 core** alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains **no Sony emulator binaries, libraries, or BIOS files**; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on **[PSX-Place](https://www.psx-place.com/resources/popstarter.683/)**.
-- **[ORBIT Neutrino RA runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **[Daniel (danielnuld)](https://github.com/danielnuld)** — the existing RA-capable Neutrino runtime, bundled only in the RetroAchievements kit. Based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359; AFL-3.0. The exact release, archive digest and source commit ship in `neutrino/ORBIT-RA.json`. Standard kits retain ordinary upstream Neutrino.
-- **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular PS2 Device Emulator"*, and RiptOPL's **second PS2 loader core** alongside OPL's own. Like Ember it is not a shortcut: a ready-to-use `neutrino/` folder ships **inside** each installable ZIP, drag-and-drop to `mc?:/neutrino/`. Neutrino is deliberately **UI-agnostic** — it has no interface of its own, which is exactly what lets a front-end like RiptOPL drive it per game. Licensed **AFL-3.0**; releases: <https://github.com/rickgaiser/neutrino/releases>.
-- **[PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager)** by **techwritescode** — the CC0 PS2 save-container implementation used by RiptOPL release tooling to independently validate `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu`. The exact upstream core and license used by CI are preserved in `third_party/PSUManager/`.
+- **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. Recommended client: **[v1.0.1](https://github.com/hacan359/xerabora/releases/tag/v1.0.1)** (alpha.17 or later). [RiptOPL](https://github.com/NathanNeurotic/RiptOPL)'s RA build supports **xeRAbora v1.0.1** (alpha.17 or later) and its snapshot-only Mode 6 behavior. xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by **[oMrRexD](https://github.com/oMrRexD)**, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.
+- **[OPL HTTP PC server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)** by **[Docmine17](https://github.com/Docmine17)** — the PC side of [RiptOPL](https://github.com/NathanNeurotic/RiptOPL)’s **HTTP** protocol: a small static HTTP server with byte-range support that serves your `games.csv` catalog and streams the ISOs themselves. RiptOPL works with it **unmodified** — no new API, no catalog conversion, no changed folder layout — with host conformance checks against the upstream server. PS2 hardware validation is still pending.
+- **[PS2RD CHT Manager](https://github.com/TheRealNextria/PS2RD-CHT-Manager)** by **[TheRealNextria](https://github.com/TheRealNextria)** — PC manager for the PS2RD `.cht` cheat files [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) reads from your device's `CHT` folder. A `PS2RD-CHT-Manager.url` shortcut ships in installable packages.
+- **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** — a PS1 emulator that runs natively on the PS2, used as [RiptOPL](https://github.com/NathanNeurotic/RiptOPL)'s **second PS1 core** alongside [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/). Unlike the others this one is not just a shortcut: an `EMBER/` folder ships **inside** the release package, ready to drop onto a device. It is bundled unmodified under the Ember Public Beta Testing Licence (`EMBER/LICENSE-BETA.txt` in the package); releases: <https://github.com/Gageformer/Ember/releases>.
+- **[BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** by **[Okeanos](https://github.com/Okeanos86)** — POPSTARTER-specific BDMA drivers with read-only UDPFS fallback for VCDs, based on [israpps](https://github.com/israpps)' BDM Assault.
+- **[POPStarter](https://www.psx-place.com/resources/popstarter.683/)** by **[krHACKen](https://www.psx-place.com/members/krhacken.98/)** — a PS1 launcher built around Sony's native **POPS** emulator for the PS2, used as [RiptOPL](https://github.com/NathanNeurotic/RiptOPL)'s **primary PS1 core** alongside [Ember](https://github.com/Gageformer/Ember). POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains **no Sony emulator binaries, libraries, or BIOS files**; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on **[PSX-Place](https://www.psx-place.com/resources/popstarter.683/)**.
+- **[ORBIT Neutrino RA runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **[Daniel (danielnuld)](https://github.com/danielnuld)** — the existing RA-capable [Neutrino](https://github.com/rickgaiser/neutrino) runtime, bundled only in the RetroAchievements kit. Based on Neutrino by [Maximus32](https://github.com/rickgaiser) and [xeRAbora](https://github.com/hacan359/xerabora) protocol work by [hacan359](https://github.com/hacan359); AFL-3.0. The exact release, archive digest and source commit ship in `neutrino/ORBIT-RA.json`. Standard kits retain ordinary upstream Neutrino.
+- **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular PS2 Device Emulator"*, and [RiptOPL](https://github.com/NathanNeurotic/RiptOPL)'s **second PS2 loader core** alongside OPL's own. Like [Ember](https://github.com/Gageformer/Ember) it is not a shortcut: a ready-to-use `neutrino/` folder ships **inside** each installable ZIP, drag-and-drop to `mc?:/neutrino/`. Neutrino is deliberately **UI-agnostic** — it has no interface of its own, which is exactly what lets a front-end like RiptOPL drive it per game. Licensed **AFL-3.0**; releases: <https://github.com/rickgaiser/neutrino/releases>.
+- **[PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager)** by **[techwritescode](https://github.com/techwritescode)** — the CC0 PS2 save-container implementation used by [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) release tooling to independently validate `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu`. The exact upstream core and license used by CI are preserved in `third_party/PSUManager/`.
 ## Acknowledgements
 
 This fork stands entirely on the shoulders of the PS2 homebrew community. **None of this
@@ -697,24 +699,24 @@ With special and sincere thanks to:
   contributing extensive backend compatibility, reliability, and safety fixes
   throughout the OPL ecosystem. His work on controller handoff, MMCE, UDPBD/USB,
   ISO/ZSO parsing, game loading, and reproducible regression cases is an
-  important reference for RiptOPL development. Thank you for sharing this work.
+  important reference for [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) development. Thank you for sharing this work.
 
-- **KrahJohlito** — the legend, and the single biggest influence on this fork. Creator of
+- **[KrahJohlito](https://github.com/KrahJohlito)** — the legend, and the single biggest influence on this fork. Creator of
   **uOPL (Unofficial Open PS2 Loader)** and its continuation
-  **wOPL** (historical; its public repository is unavailable), where the modern OPL experience was
-  invented. The Neutrino external-core loader, the Coverflow interface, and the Favorites
-  tab — the features that define RiptOPL — were designed and pioneered by him, and everything
+  **[wOPL](https://github.com/KrahJohlito/wOPL)** (historical; its public repository is unavailable), where the modern OPL experience was
+  invented. The [Neutrino](https://github.com/rickgaiser/neutrino) external-core loader, the Coverflow interface, and the Favorites
+  tab — the features that define [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) — were designed and pioneered by him, and everything
   this fork does with them is a reimplementation of his work. We learned more reading his
   code than anywhere else, and RiptOPL is, above all, a tribute to it. Thank you.
-- **Wolf3s** — for contributions across the wOPL effort and the wider OPL scene, and for
+- **[Wolf3s](https://github.com/Wolf3s)** — for contributions across the [wOPL](https://github.com/KrahJohlito/wOPL) effort and the wider OPL scene, and for
   past work on an independent **uOPL** fork that kept
   unique features and unmerged work alive. Thank you.
-- **bbsan2k** — for the **MMCE (Memory Card Mass Storage) protocol** that makes SD-via-memory-card
+- **[bbsan2k](https://github.com/bbsan2k)** — for the **MMCE (Memory Card Mass Storage) protocol** that makes SD-via-memory-card
   loading through the PS2's memory-card slot possible. OPL's MMCE support builds directly on it.
-- **hacan359 (yoba)** — for **RetroAchievements on real PS2 hardware** and the
+- **[hacan359 (yoba)](https://github.com/hacan359)** — for **RetroAchievements on real PS2 hardware** and the
   **[xeRAbora PC client (v1.0.1)](https://github.com/hacan359/xerabora/releases/tag/v1.0.1)** (MIT). The console identifies the
-  game and streams the memory addresses its achievements watch; xeRAbora handles rcheevos, the
-  RetroAchievements service, and login. RiptOPL implements the published wire protocol in its
+  game and streams the memory addresses its achievements watch; [xeRAbora](https://github.com/hacan359/xerabora) handles rcheevos, the
+  RetroAchievements service, and login. [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) implements the published wire protocol in its
   `RIPTOPL-RetroAchievements-*.zip` build, which includes a shortcut to xeRAbora.
 - **[oMrRexD](https://github.com/oMrRexD)** — for the decisive **real-hardware RetroAchievements
   stabilization pass** behind PRs #702–#705: tracing the ee_core stack corruption, restoring MMCE's
@@ -722,14 +724,14 @@ With special and sincere thanks to:
   the RA controls back where they are actually read and saved. The fixes were narrow, well-tested,
   and explicitly kept from contaminating normal build behavior.
 - **[darkladark](https://github.com/dnunezx)** — creator of **[LUNA](https://github.com/dnunezx/LUNA)**
-  (*Lightweight Unified Neutrino Access*), his own visual loader built on NHDDL and Neutrino, with a
+  (*Lightweight Unified Neutrino Access*), his own visual loader built on [NHDDL](https://github.com/pcm720/nhddl) and [Neutrino](https://github.com/rickgaiser/neutrino), with a
   PS2-inspired glass interface and four switchable library views. LUNA is **our #1 recommended
-  alternative to RiptOPL** for lightweight, customized Neutrino gameplay. He also contributes to
+  alternative to [RiptOPL](https://github.com/NathanNeurotic/RiptOPL)** for lightweight, customized Neutrino gameplay. He also contributes to
   RiptOPL directly: his [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) contributed
   LUNA's Collection display, adapted as the native **PSBBN Flow** theme in
   [#977](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977) with the normal R3 favorite action. Thank you for sharing your work with us.
-- **[Okeanos](https://github.com/Okeanos86)** — for **[UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** (TEST 2026-10-28), giving POPSTARTER network read/write over UDPFS through BDMA, based on israpps’ BDM Assault.
-- **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
+- **[Okeanos](https://github.com/Okeanos86)** — for **[UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** (TEST 2026-10-28), giving [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) network read/write over UDPFS through BDMA, based on [israpps](https://github.com/israpps)’ BDM Assault.
+- **[saildot4k](https://github.com/saildot4k)** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
 - **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)** — for
   **PSUManager**, whose CC0 core documents the PS2 save container format and independently
@@ -737,13 +739,13 @@ With special and sincere thanks to:
   core and license are preserved in [third_party/PSUManager](third_party/PSUManager/README.md).
 - **eliminator1403** — for dedicated **testing, bug reports, and real-hardware feedback** that
   has repeatedly caught issues and shaped fixes across this fork. Invaluable QA.
-- **Berion** — for the artwork and theme design that has shaped how OPL *looks* for years.
+- **[Berion](https://www.psx-place.com/members/berion.1431)** — for the artwork and theme design that has shaped how OPL *looks* for years.
   The visual language this fork builds on owes a great deal to that craft.
-- **AdityaKumar7209** — whose [**Modulo-R1**](https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2)
+- **[AdityaKumar7209](https://github.com/AdityaKumar7209)** — whose [**Modulo-R1**](https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2)
   project inspired this fork's **folder browsing** in the game list.
-- **Irfanlesnar** — creator of [**PS2-Launcher**](https://github.com/Irfanlesnar/PS2-Launcher),
+- **[Irfanlesnar](https://github.com/Irfanlesnar)** — creator of [**PS2-Launcher**](https://github.com/Irfanlesnar/PS2-Launcher),
   for UI, feature ideas, and contributions across the OPL fork ecosystem.
-- **Ifcaro** and **jimmikaelkael** — the original Open PS2 Loader authors — and every
+- **[Ifcaro](https://github.com/ifcaro)** and **[jimmikaelkael](https://github.com/jimmikaelkael)** — the original Open PS2 Loader authors — and every
   contributor across OPL's long history.
 
 ### The wider Open PS2 Loader team
@@ -752,18 +754,18 @@ RiptOPL inherits the work of everyone who built Open PS2 Loader over the years. 
 credited in full in [CREDITS](CREDITS), and named here so this fork never obscures whose
 work it is built on:
 
-- **Core developers** — Ifcaro, volca, jimmikaelkael, polo35, izdubar, hominem.te.esse and
-  SP193, with the original main code based on **Polo**'s HD Project.
-- **Contributing developers** — BatRastard, crazyc, dlanor, doctorxyz, reprep, belek666,
-  Maximus32 and misfire.
+- **Core developers** — [Ifcaro](https://github.com/ifcaro), volca, [jimmikaelkael](https://github.com/jimmikaelkael), polo35, izdubar, hominem.te.esse and
+  [SP193](https://github.com/sp193), with the original main code based on **Polo**'s HD Project.
+- **Contributing developers** — [BatRastard](https://github.com/BatRastard), crazyc, dlanor, doctorxyz, reprep, [belek666](https://github.com/belek666),
+  [Maximus32](https://github.com/rickgaiser) and [misfire](https://github.com/mlafeldt).
 - **Module authors** — **Eugene Plotnikov** (SMSUTILS / SMSMAP / SMSTCPIP), **Marcus R. Brown**
-  (DEV9 / ATAD and the derived cdvdman code), **bbsan2k** (MMCE), **icyson55** (OPL-CL /
+  (DEV9 / ATAD and the derived cdvdman code), **[bbsan2k](https://github.com/bbsan2k)** (MMCE), **[icyson55](https://github.com/IcySon55)** (OPL-CL /
   network update), **Eric Young** (the DES algorithm in the SMB code), and the **ps2dev** team
   (USB / Network / PS2HDD modules from the PS2SDK).
-- **CI/CD** — **fjtrujy** (Docker + GitHub Actions).
-- **UI & artwork** — **Berion**.
-- **Quality assurance** — RandQalan, yoshi314, EP, LocalH, lee4, El_Patas, ShaolinAssassin,
-  algol, gledson999, jolek and zero35.
+- **CI/CD** — **[fjtrujy](https://github.com/fjtrujy)** (Docker + GitHub Actions).
+- **UI & artwork** — **[Berion](https://www.psx-place.com/members/berion.1431)**.
+- **Quality assurance** — [RandQalan](https://github.com/RandQalan), yoshi314, EP, LocalH, lee4, [El_Patas](https://github.com/ElPatas1), [ShaolinAssassin](https://github.com/ShaolinAssassin),
+  algol, gledson999, [jolek](https://github.com/J013k) and zero35.
 
 ### Real-hardware testing (this fork)
 
@@ -771,23 +773,20 @@ work it is built on:
   could leave a carriage return in a VMC filename; converting the config to LF restored VMC loading.
 
 Enormous thanks to the testers who run rolling builds on real consoles and file the
-reports that shape the fixes — **eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz,
-nuno6573, zackcage6, Blade1984, Vapor, V3ditata and Aislinn🏳️‍⚧️**.
+reports that shape the fixes — **eliminator1403, [lucaslmgv](https://github.com/lucaslmgv), [AndrewBento](https://github.com/AndrewBento), [AcidReach](https://github.com/AcidReach), bodvenomz,
+[nuno6573](https://github.com/nuno6573), [zackcage6](https://github.com/zackcage6), [Blade1984](https://github.com/Blade1984), Vapor, V3ditata and Aislinn🏳️‍⚧️**.
 
 ### The name (this fork)
 
-**RiptOPL is named by [Akilluminati47](https://github.com/akilluminati47)** — he came up with it
+**[RiptOPL](https://github.com/NathanNeurotic/RiptOPL) is named by [Akilluminati47](https://github.com/akilluminati47)** — he came up with it
 before the project existed, and it stuck. Every release, every build, every thread carries a name
 he thought of first.
 
-### Financial support (this fork)
-
-Heartfelt thanks to **Akilluminati47** for generously **funding this fork's development** — a
-kindness that keeps the rolling builds coming and is deeply appreciated.
+### The upstream project
 
 If you want the canonical, actively-maintained project, it lives at
 **[ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader)** — please
 support it. This fork is a downstream labor of love, not a replacement, and it exists only
 because that upstream work is open for everyone to learn from.
 
-Experimental early-model PC CARD CompactFlash support and opt-in DESR DVR discovery: see [hardware requirements and limits](docs/PC-CARD-CF.md). Both source toggles default to off; RiptOPL console acceptance remains outstanding. CF driver credit: mihhru / PS2CF.
+Experimental early-model PC CARD CompactFlash support and opt-in DESR DVR discovery: see [hardware requirements and limits](docs/PC-CARD-CF.md). Both source toggles default to off; [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) console acceptance remains outstanding. CF driver credit: [mihhru](https://github.com/mihhru) / [PS2CF](https://github.com/mihhru/PS2CF).

@@ -249,6 +249,10 @@ typedef struct theme
     int coverflowCoverOffset;
 
     int gameCacheCount;
+    // Which load this is (1, 2, ... for the whole run, never reused). A game row's (slot, UID) pairs are
+    // stamped with the load they were made for: cache user ids and UIDs start over in every load, so a
+    // row's pairs from an earlier one must not be read (#211, see cacheRowPairsReady).
+    unsigned int artGeneration;
 
     theme_element_t *itemsList;
     theme_element_t *loadingIcon;
