@@ -264,6 +264,8 @@ int main(void)
         /* MX4SIO ("sdc") gets one sector per device write (its multi-sector retry restarts at the
            first sector, ps2sdk#936), and the whole block is still erased. */
         sim_driver("sdc");
+        for (int p = 16; p < 32; p++) /* dirty the block again so a missed erase shows */
+            memset(sim_page(p), 0xA5, PAGE);
         before = sim_writes();
         assert(OK(erase_block(16)));
         for (int p = 16; p < 32; p++)
