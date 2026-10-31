@@ -936,7 +936,7 @@ int guiGameShowGSConfig(int forceGlobal)
 
     if (forceGlobal) {
         // The per-game page is read back later by guiGameSaveConfig; the global one has no such
-        // caller, so it commits its own rows here. Only on OK -- matching guiShowNeutrinoDefaults().
+        // caller, so it commits its own rows here. Only on OK -- matching guiSettingsShowLaunch().
         if (ret)
             guiGameSaveGSMGlobalConfig(configGetByType(CONFIG_GAME));
         forceGlobalGSM = 0;
@@ -1700,7 +1700,7 @@ reshow_compat:
     result = diaExecuteDialog(diaCompatConfig, -1, 1, &guiGameCompatUpdater);
     if (result == COMPAT_NEUTRINO_ARGS) {
         // the "Neutrino Launch Args" button -> open the structured args sub-screen on the per-game
-        // args buffer, then re-enter the Compatibility dialog (mirrors guiShowConfig for the global).
+        // args buffer, then re-enter the Compatibility dialog (mirrors guiSettingsShowLaunch for the global).
         guiShowNeutrinoArgsConfig(neutrinoArgs, sizeof(neutrinoArgs));
         goto reshow_compat;
     }

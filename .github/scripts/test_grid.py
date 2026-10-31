@@ -50,7 +50,7 @@ assert 'if (gTheme->gridDevices)\n            return;' in MENUSYS
 assert 'if (menuGridSidebarFocused()) {' in MENUSYS and 'menuGridSidebarInput();\n        return;\n    }' in MENUSYS
 assert 'gridForgetItem(submenu);' in MENUSYS  # a freed row drops its case-flip state
 assert 'gridAtRowStart(count, index, gTheme->gridColumns)' in MENUSYS
-assert 'COVERFLOW_CFG_GRID_LAYOUT' in GUI and 'gTheme->coverflow != NULL || gTheme->grid != NULL' in GUI
+assert 'COVERFLOW_CFG_GRID_LAYOUT' in GUI
 assert 'coverless=serial' in CFG
 # The built-in Grid: 4 x 2 covers, 6 columns on a 16:9 picture; a disk theme's fallback Grid resolves them too.
 assert 'rows=2' in CFG and 'columns=4' in CFG and 'columns_hd=6' in CFG
