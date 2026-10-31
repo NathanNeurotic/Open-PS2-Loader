@@ -60,7 +60,7 @@ For an APA launch on a recognized hybrid, RiptOPL normally adopts the mounted ex
 - Existing RiptOPL settings on exFAT are preferred first.
 - Otherwise, a **Custom Settings Path** saved in the APA data home keeps that explicit routing in force.
 - Without that redirect, older RiptOPL settings in `+OPL` or `__common/OPL/` are read as carry-over settings. The next save writes to the exFAT home; this is not a destructive move or deletion of the old settings.
-- On a first run, an official-OPL seed, or APA carry-over, the exFAT home enables the ATA BDM transport and starts a disabled BDM list on **Auto**. Once RiptOPL has saved its own settings there, your saved BDM start-mode choice is respected.
+- On a first run or APA carry-over, the exFAT home enables the ATA BDM transport and starts a disabled BDM list on **Auto**. Once RiptOPL has saved its own settings there, your saved BDM start-mode choice is respected.
 
 This depends on the exFAT volume mounting successfully. If it is not available during discovery, RiptOPL can use an accessible APA data home instead. Check the reported settings path and the actual volume before deleting configurations or assuming a save failed. RiptOPL's master file is `settings_riptopl.cfg`; official OPL's `conf_opl.cfg` is a separate file. Network, artwork, per-game files and other shared data still need their correct paths.
 

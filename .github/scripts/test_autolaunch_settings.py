@@ -304,19 +304,17 @@ def check_pins():
     check(free_body is not None and re.search(r'if \(configSet == NULL\)\s*return;', free_body),
           'configFree: miniDeinit(NULL) needs a NULL-safe configFree')
     read = function_text(config, 'int configRead(')
-    official = read[read.find('CONFIG_OPL_FILENAME_OFFICIAL'):] if read else ''
-    check(read is not None and 'CONFIG_OPL_FILENAME_OFFICIAL' in read and
-          'configMove(' not in official[:official.find('if (!fileBuffer)')],
-          'configRead: the official conf_opl.cfg seed must never re-home the set onto official\'s file')
-    translate = function_text(config, 'static void configTranslateOfficialOpl(')
-    check(translate is not None and 'ETH_MODE + (device - 5)' in translate and 'modified = 0' in translate,
-          'configTranslateOfficialOpl: official default_device 5/6/7 must map to ETH/HDD/APP')
-    # RiptOPL settings carried over from the APA home outrank official's seed, and neither re-homes the
-    # set: the first save must land in the current (exFAT) home, not back on APA.
+    # Official OPL's conf_opl.cfg is never read: RiptOPL starts from its own settings or defaults.
+    settings_sources = text('include/config.h') + config + text('src/opl.c')
+    check('conf_opl.cfg"' not in settings_sources and 'CONFIG_OPL_FILENAME_OFFICIAL' not in settings_sources and
+          'configOplIsOfficialSeed' not in settings_sources + text('src/gui.c'),
+          'settings: official OPL\'s conf_opl.cfg must not be imported')
+    # RiptOPL settings carried over from the APA home never re-home the set: the first save must land
+    # in the current (exFAT) home, not back on APA.
     carry = read.find('configOpenCarryOver(CONFIG_OPL_FILENAME)') if read else -1
-    check(read is not None and 0 <= carry < read.find('CONFIG_OPL_FILENAME_OFFICIAL') and
+    check(read is not None and 0 <= carry < read.find('if (!fileBuffer)') and
           'configMove(' not in read[carry:read.find('if (!fileBuffer)')],
-          'configRead: the APA carry-over must come before the official seed and never re-home the set')
+          'configRead: the APA carry-over must never re-home the set')
 
     # Retest of #545: a hybrid is homed on exFAT like official OPL. Only an explicit Custom Settings Path
     # in the APA home keeps APA; RiptOPL settings found there are carried over instead of winning.
@@ -331,7 +329,7 @@ def check_pins():
     # looked at, so the look must not create __common/OPL/, and a home that supplies nothing is let go
     # (no "__common partition mounted" toast). Settings carried over still need it mounted.
     carried = apa_home.find('"hybrid: exFAT, APA settings carried over"') if apa_home else -1
-    first_run = apa_home.find('"hybrid: exFAT (official seed or first run)"') if apa_home else -1
+    first_run = apa_home.find('"hybrid: exFAT (first run)"') if apa_home else -1
     unusable = apa_home.find('"hybrid: exFAT (APA data home unusable)"') if apa_home else -1
     check(apa_home is not None and
           re.search(r'if \(haveExfatHome\)\s*hddInspectSupportHome\(\);\s*else\s*hddLoadSupportModules\(\);', apa_home) and
@@ -358,9 +356,8 @@ def check_pins():
           'configPrepareLoadNotification(configOplCarryOver ? configCarryOverDir : configSet->filename);' in multi,
           'configReadMulti: the load toast must name the carry-over home when settings came from there')
     toast = function_text(text('src/gui.c'), 'static void guiShowNotifications(')
-    check(toast is not None and
-          'configOplIsOfficialSeed() ? _STR_OFFICIAL_CFG_NOTIFICATION : _STR_CFG_NOTIFICATION' in toast,
-          'guiShowNotifications: official OPL\'s seed must not be announced as RiptOPL settings')
+    check(toast is not None and '_l(_STR_CFG_NOTIFICATION), configGetLoadDir()' in toast,
+          'guiShowNotifications: the load toast names where RiptOPL\'s settings came from')
     # One decision for an on-time drive and a late one. A failed ATA load is retryable, so the drive can
     # first come up in tryAlternateDevice's retry; a bare PFS mount there skipped the hybrid check and homed
     # the hybrid on __common/OPL (CodeRabbit on #725).
@@ -375,16 +372,24 @@ def check_pins():
                     r'value = configReadMulti\(types\);', retry_head) and
           'hddLoadSupportModules();' not in retry_head,
           'tryAlternateDevice: a drive that comes up on the retry must get the boot-time hybrid decision')
+    # A known-home recovery miss ends in configEnd/configInit, which discarded conf_game.cfg (global game
+    # settings), network and apps already read from that home -- e.g. a first run beside official OPL's
+    # files on a hybrid's exFAT volume. They must be read again and returned (CodeRabbit on RiptOPL #190).
+    known = function_text(text('src/opl.c'), 'static int tryKnownBootConfigRecovery(')
+    check(known is not None and
+          re.search(r'configEnd\(\);\s*configInit\(gBootDir\);\s*'
+                    r'return configReadMulti\(types & ~CONFIG_OPL\);\s*\}\s*$', known),
+          'tryKnownBootConfigRecovery: re-read the home\'s other sets after a recovery miss')
+    check(retry is not None and
+          re.search(r'value = tryKnownBootConfigRecovery\(types\);\s*if \(value & CONFIG_OPL\)\s*return value;\s*'
+                    r'showCfgPopup = 0;\s*return value;', retry),
+          'tryAlternateDevice: return the re-read sets from a known-home recovery miss')
     load = function_text(text('src/opl.c'), 'static void _loadConfig(')
     check(load is not None and
           re.search(r'gBootHomeHybridExfat && gBDMStartMode == START_MODE_DISABLED &&\s*'
-                    r'\(!\(result & CONFIG_OPL\) \|\| configOplIsOfficialSeed\(\) \|\| configOplIsCarryOver\(\)\)', load) and
+                    r'\(!\(result & CONFIG_OPL\) \|\| configOplIsCarryOver\(\)\)', load) and
           'CONFIG_OPL_BDM_MODE, gBDMStartMode' in load,
           '_loadConfig: a hybrid exFAT home without its own RiptOPL settings must start the BDM page Auto')
-
-    iosupport = text('include/iosupport.h')
-    check(re.search(r'BDM_MODE7,\s*ETH_MODE,\s*HDD_MODE,\s*APP_MODE,', iosupport),
-          'iosupport.h: the official default_device mapping assumes ETH/HDD/APP follow BDM_MODE7')
 
     opl = text('src/opl.c')
     check(re.search(r'^static int tryAlternateDevice\(int types\)$', opl, re.M),
@@ -417,8 +422,8 @@ def check_pins():
     check(re.search(r'!\(result & CONFIG_NETWORK\) && !\(lscstatus & CONFIG_OPL\)', opl),
           '_loadConfig: a missing conf_network.cfg must not re-run discovery after the master load')
     restore = function_text(opl, 'static void restoreRecoverySaveHome(')
-    check(restore is not None and 'sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed()' in restore,
-          'restoreRecoverySaveHome: an official seed must not pick the save home')
+    check(restore is not None and 'sameConcreteMcSlot(gBootDir, recoveredHome) && bootHomeIsMcRoot()' in restore,
+          'restoreRecoverySaveHome: only a root-only MC boot keeps the recovered card folder')
     resolve = function_text(opl, 'static int resolveHybridExfatHome(')
     check(resolve is not None and 'bdmResolveBootDirBootstrap(home, homeLen, "", &bdmType)' in resolve,
           'resolveHybridExfatHome: pass no ELF name (the launcher ELF is on APA, not exFAT)')

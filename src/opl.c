@@ -2007,11 +2007,6 @@ static int checkLoadConfigHDD(int types)
         snprintf(path, sizeof(path), "%s%s", gHDDPrefix, CONFIG_OPL_FILENAME_LEGACY);
         value = open(path, O_RDONLY);
     }
-    if (value < 0) {
-        // Official OPL's own +OPL/__common home: configRead reads it as a read-only seed.
-        snprintf(path, sizeof(path), "%s%s", gHDDPrefix, CONFIG_OPL_FILENAME_OFFICIAL);
-        value = open(path, O_RDONLY);
-    }
     if (value >= 0) {
         close(value);
         configEnd();
@@ -2670,10 +2665,13 @@ static int tryKnownBootConfigRecovery(int types)
     }
 
     // Failed recovery probes re-home every config set. Restore the known source before returning
-    // defaults so the first explicit save stays on that same device.
+    // defaults so the first explicit save stays on that same device. configEnd/configInit also
+    // discarded the sets the first pass had already read from this home (conf_game.cfg's global
+    // game settings, network, last played, apps -- e.g. an official OPL install on a hybrid's
+    // exFAT volume), so read them again; only the master stays at defaults.
     configEnd();
     configInit(gBootDir);
-    return 0;
+    return configReadMulti(types & ~CONFIG_OPL);
 }
 
 static void restoreRecoverySaveHome(const char *recoveredHome)
@@ -2709,14 +2707,14 @@ static void restoreRecoverySaveHome(const char *recoveredHome)
             configSetMove((char *)mcHome);
         else
             configSetMove(NULL); // no concrete MC is reachable: keep the normal fail-visible wildcard home
-    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed() && bootHomeIsMcRoot()) {
+    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && bootHomeIsMcRoot()) {
         // A launcher that supplies only "mc1:" as the boot CWD leaves no folder to save beside, so a
         // configuration recovered from the same card (mc1:/OPL) keeps that folder rather than moving
         // to the card root (or to mc0 when both cards are inserted). Every other MC boot saves beside
         // its ELF like any other boot -- settings follow the CWD -- through the branch below: an
         // mc1:/APP_RIPTOPL boot that found older settings in mc1:/OPL reads them once and writes its
         // next save beside the ELF, instead of keeping mc1:/OPL as its home for good. This applies to
-        // RiptOPL's OWN settings only: an official conf_opl.cfg is a read-only seed and never our home.
+        // RiptOPL's OWN settings only; official OPL's conf_opl.cfg is never read.
         configSetMove((char *)recoveredHome);
     } else if (gBootDir[0] != '\0') {
         configSetMove(gBootDir);
@@ -2894,7 +2892,7 @@ static int tryAlternateDevice(int types)
             return value;
 
         showCfgPopup = 0;
-        return 0;
+        return value; // the home's other sets, re-read after the recovery miss
     }
 
     // Bare, deferred-network, and otherwise unclassified boots retain the bounded read-only
@@ -2946,8 +2944,7 @@ static int tryAlternateDevice(int types)
             // already serving this config -- sysCheckMC() gated the whole branch.
             if (gBootHomeDeferred)
                 homeLeftOnCard = 1;
-            else if (sameConcreteMcSlot(gBootDir, concreteMcHome) && !configOplIsOfficialSeed()) {
-                // Not for an official conf_opl.cfg seed: that is read-only and never our save home.
+            else if (sameConcreteMcSlot(gBootDir, concreteMcHome)) {
                 configSetMove(concreteMcHome); // MC legacy config remains at the exact discovered home
                 // configSetMove already made the exact MC1/MC0 home the notification/save owner.
                 // Do not overwrite that with a compact/root boot CWD below: failure reporting must
@@ -3256,7 +3253,7 @@ static int resolveApaBootHome(void)
                 } else {
                     if (!apaHomeWasMounted)
                         hddReleaseSupportHome();
-                    adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (official seed or first run)");
+                    adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (first run)");
                 }
                 return 1;
             }
@@ -3903,10 +3900,10 @@ static void _loadConfig()
         // The one place the rule above DOES grant the tab: an APA+exFAT hybrid homed on its exFAT volume,
         // where every game lives. Official OPL starts its BDM page Auto whenever it finds its config on a
         // BDM device, so there the games simply appear. Match that while the master is not the user's own
-        // RiptOPL file on exFAT -- defaults, official's seed, or settings carried over from the APA home,
+        // RiptOPL file on exFAT -- defaults, or settings carried over from the APA home,
         // which were saved when the home was APA. Once RiptOPL has saved on exFAT, that choice stands.
         if (gBootHomeHybridExfat && gBDMStartMode == START_MODE_DISABLED &&
-            (!(result & CONFIG_OPL) || configOplIsOfficialSeed() || configOplIsCarryOver())) {
+            (!(result & CONFIG_OPL) || configOplIsCarryOver())) {
             LOG("CONFIG hybrid exFAT home without RiptOPL settings of its own -- BDM start mode Auto\n");
             gBDMStartMode = START_MODE_AUTO;
             configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_BDM_MODE, gBDMStartMode);
@@ -3917,8 +3914,7 @@ static void _loadConfig()
         // A missing conf_network.cfg only means network defaults once the master load above has run:
         // that already did the whole discovery, or found the home. Re-running it re-reads every set --
         // and a recovery miss ends in configEnd/configInit, which wiped the global game settings, last
-        // played and apps that had just loaded (and, with the official seed, could swap in official's
-        // sets over ours). Official homes rarely have a network file, so this was no longer a corner.
+        // played and apps that had just loaded.
         // loadConfig() has no caller that asks for network alone; keep that shape working anyway.
         if (!(result & CONFIG_NETWORK) && !(lscstatus & CONFIG_OPL)) {
             result = tryAlternateDevice(lscstatus);
