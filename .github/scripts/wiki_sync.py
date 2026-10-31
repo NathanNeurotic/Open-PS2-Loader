@@ -69,6 +69,7 @@ SITE_GROUPS = {
         ("ps1-vcd", "PS1-Games", "PS1: POPStarter and Ember"),
         ("per-game-settings", "Per-Game-Settings", "Per-game settings"),
         ("vmc", "Virtual-Memory-Cards", "Virtual memory cards"),
+        ("file-manager", "File-Manager", "File Manager"),
         ("gsm", "GSM", "GSM video modes"),
         ("igr", "In-Game-Reset", "In-game reset"),
         ("cheats", "Cheats", "Cheats"),
