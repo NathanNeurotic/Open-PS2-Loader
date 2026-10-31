@@ -225,7 +225,10 @@ static void usb_release(int pad)
     SignalSema(ds34pad[pad].sema);
 }
 
-static int usb_resulCode;
+// 0 only once a report transfer has completed without error: ds34usb_get_data() resets it after each
+// read, and it starts unset, so a first transfer that times out never parses the untouched buffer
+// (all zeros, which the ShanWan parser would read as d-pad Up with both sticks at 0).
+static int usb_resulCode = 1;
 
 static void usb_data_cb(int resultCode, int bytes, void *arg)
 {
