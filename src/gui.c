@@ -3911,6 +3911,11 @@ static void guiRenderGreeting(int alpha)
 // menu (empty lists, no device selected) as a garbled landing page before the
 // intro splash. This keeps the OPL logo on screen across the config load so boot
 // shows the splash, never a half-drawn menu.
+int guiInitComplete(void)
+{
+    return gInitComplete;
+}
+
 void guiRenderGreetingScreen(void)
 {
     guiStartFrame();

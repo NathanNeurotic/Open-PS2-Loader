@@ -1,6 +1,7 @@
 #include <kernel.h>
 #include <sifrpc.h>
 #include <string.h>
+#include <time.h>
 
 #define DS34USB_INIT       1
 #define DS34USB_GET_STATUS 2
@@ -21,9 +22,16 @@ static u8 ds34usb_inited = 0;
 
 int ds34usb_init()
 {
+    // Bounded: a module that failed to link never registers its server, and an endless bind here
+    // stops the boot before the first frame (a black screen). Without the server the pad driver
+    // stays off and every other call here is a no-op.
+    clock_t start = clock(); // elapsed, not a deadline: clock() can wrap
+
     ds34usb.server = NULL;
 
     do {
+        if (clock() - start > 3 * CLOCKS_PER_SEC)
+            return 0;
         if (SifBindRpc(&ds34usb, DS34USB_BIND_RPC_ID, 0) < 0)
             return 0;
 

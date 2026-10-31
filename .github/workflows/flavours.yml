@@ -782,6 +782,12 @@ jobs:
           } > BUILD-MANIFEST.txt 2>/dev/null || true
           cat BUILD-MANIFEST.txt || true
 
+      # Diagnostic flavour: also ship the ELF before ps2-packer, so a boot that stops before main()
+      # can be tried without the unpacker stub in the way.
+      - name: Keep the unpacked ELF (${{ matrix.flavour }})
+        if: ${{ success() && matrix.opldiag == '1' }}
+        run: for f in RIPTOPL-*.ELF; do cp opl_stripped.elf "${f%.ELF}-UNPACKED.ELF"; done
+
       - name: Upload ELF (${{ matrix.flavour }})
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
