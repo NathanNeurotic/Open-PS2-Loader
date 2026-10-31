@@ -114,7 +114,10 @@ void diagSaveBeforeLaunch(void)
 }
 
 #ifdef __OPLDIAG
-#include <debug.h>
+// The SDK debug text screen (libdebug). Declared here rather than through <debug.h>: the project has its own
+// include/debug.h, and with the project include directory first that name can resolve to it instead.
+void init_scr(void);
+void scr_printf(const char *, ...) __attribute__((format(printf, 1, 2)));
 
 // 1 until bootTraceEnd(): from the video setup on the screen belongs to the menu and the stage colours.
 static int traceOn = 1;
