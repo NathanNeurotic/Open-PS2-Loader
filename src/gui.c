@@ -550,18 +550,6 @@ void guiShowRANotices(void)
 }
 #endif
 
-static int guiUpdater(int modified)
-{
-    int showAutoStartLast;
-
-    if (modified) {
-        diaGetInt(diaConfig, CFG_LASTPLAYED, &showAutoStartLast);
-        diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, showAutoStartLast);
-        diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, showAutoStartLast);
-    }
-    return 0;
-}
-
 int guiDeviceTypeToIoMode(int deviceType)
 {
     // Translates an index into deviceNames into an IO mode index used internally.
@@ -620,46 +608,6 @@ int guiExitPathHandler(char *text, int maxLen)
         return 0;
     snprintf(text, maxLen, "%s", exitPathEdit);
     return 1;
-}
-
-// Legacy standalone General editor. The Settings peer shell is the normal route, but this stays
-// functional for callers outside it and shares the same GSM backend.
-void guiShowConfig()
-{
-    int ret;
-
-    // Exit To auto-resolves a built-in default when blank, so show a dim "Default" placeholder
-    // rather than "<not set>" -- the empty value (and thus the fallback) is kept.
-    guiExitPathBegin(diaConfig);
-    // Custom Settings Path: blank = the normal boot-dir/discovery home, so it gets the same dim
-    // "Default" placeholder treatment rather than "<not set>".
-    diaSetShowDefaultWhenEmpty(diaConfig, CFG_CUSTOMCFGPATH, 1);
-    diaSetString(diaConfig, CFG_CUSTOMCFGPATH, gCustomSettingsPath);
-
-    diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
-    diaSetInt(diaConfig, CFG_FOLDERNAV, gEnableFolderNav);
-    diaSetInt(diaConfig, CFG_AUTOSTARTLAST, gAutoStartLastPlayed);
-    diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, gRememberLastPlayed);
-    diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, gRememberLastPlayed);
-
-reshow_config:
-    ret = diaExecuteDialog(diaConfig, -1, 1, &guiUpdater);
-    if (ret == GENERAL_GSM_DEFAULTS_BUTTON) {
-        guiGameShowGSConfig(1);
-        goto reshow_config;
-    }
-    if (ret) {
-        snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
-        diaGetString(diaConfig, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
-        diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
-        diaGetInt(diaConfig, CFG_FOLDERNAV, &gEnableFolderNav);
-        diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);
-
-        DisableCron = 1; // Disable Auto Start Last Played counter (we don't want to call it right after enable it on GUI)
-
-        applyConfig(-1, -1, 0);
-        menuReinitMainMenu();
-    }
 }
 
 // Game Sources page: device start modes, the default device, and the block-device enables
@@ -828,17 +776,6 @@ static void guiSourcesNetRowsRead(struct UIItem *ui)
     guiNetProtocolApplied(netProtocolWas);
 }
 
-// guiShowDeviceConfig is retained for the legacy entry point outside the Settings peer shell.
-// Keep its APA selector semantics identical to the shell: merely opening/saving another field
-// must not normalize a legacy custom hdd_partition, while an explicit selector interaction may.
-
-static int guiDeviceConfigUpdater(int modified)
-{
-    if (modified)
-        guiSourcesNetRowsUpdate(diaDeviceConfig);
-    return 0;
-}
-
 static void guiRefreshCfgTitles(void);
 
 // All Games switched on or off (Game Sources). The device pages now read both lists or go back to
@@ -864,96 +801,6 @@ static void guiApplyAllGamesChange(void)
         }
     }
     guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
-}
-
-void guiShowDeviceConfig(void)
-{
-    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
-    const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
-    static const char *hddOplHomes[] = {"__common/OPL/", "+OPL/", NULL};
-
-    // Devices & modes
-    diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
-    diaSetEnum(diaDeviceConfig, CFG_BDMMODE, deviceModes);
-    diaSetEnum(diaDeviceConfig, CFG_HDDMODE, deviceModes);
-    diaSetEnum(diaDeviceConfig, CFG_APPMODE, deviceModes);
-    diaSetEnum(diaDeviceConfig, CFG_FAVMODE, deviceModes);
-
-    int deviceModeIndex = guiIoModeToDeviceType(gDefaultDevice);
-    diaSetInt(diaDeviceConfig, CFG_DEFDEVICE, deviceModeIndex);
-    diaSetInt(diaDeviceConfig, CFG_BDMMODE, gBDMStartMode);
-    diaSetInt(diaDeviceConfig, CFG_HDDMODE, gHDDStartMode);
-    diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
-    diaSetInt(diaDeviceConfig, CFG_FAVMODE, gFAVStartMode);
-    diaSetInt(diaDeviceConfig, CFG_ALLGAMES, gAllGames);
-    diaSetInt(diaDeviceConfig, CFG_SHOWHIDDEN, gShowHidden);
-
-    // Block devices (inlined; interlocked with the APA HDD mode)
-    diaSetInt(diaDeviceConfig, CFG_ENABLEUSB, gEnableUSB);
-    diaSetInt(diaDeviceConfig, CFG_ENABLEILK, gEnableILK);
-    diaSetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, gEnableMX4SIO);
-    diaSetInt(diaDeviceConfig, CFG_ENABLEPCCF, gEnablePCCF);
-    diaSetInt(diaDeviceConfig, CFG_ENABLEDVR, gEnableDVR);
-    diaSetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
-    diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, 1); // coexists with APA
-    diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, 1);
-
-    // Network Start Mode (Off/Manual/Auto) == gNetStartMode (START_MODE_*); the SAME three options
-    // (and indices) as every other device's start row, so reuse the localized deviceModes.
-    // The indented Protocol row is the Network page's Protocol setting (guiSourcesNetRowsBegin).
-    guiSourcesNetRowsBegin(diaDeviceConfig, deviceModes);
-
-    // MMCE Start Mode
-    diaSetEnum(diaDeviceConfig, CFG_MMCEMODE, deviceModes);
-    diaSetInt(diaDeviceConfig, CFG_MMCEMODE, gMMCEStartMode);
-    diaSetEnabled(diaDeviceConfig, CFG_MMCEMODE, 1);
-
-    int ret;
-reshow_device:
-    ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceConfigUpdater);
-    if (ret == MMCE_SETTINGS_BUTTON) {
-        guiShowMmceConfig();
-        goto reshow_device;
-    }
-    if (ret) {
-        diaGetInt(diaDeviceConfig, CFG_DEFDEVICE, &deviceModeIndex);
-        gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
-        diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
-        diaGetInt(diaDeviceConfig, CFG_HDDMODE, &gHDDStartMode);
-        diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
-        diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
-        diaGetInt(diaDeviceConfig, CFG_FAVMODE, &gFAVStartMode);
-        int previousAllGames = gAllGames, previousShowHidden = gShowHidden;
-        diaGetInt(diaDeviceConfig, CFG_ALLGAMES, &gAllGames);
-        diaGetInt(diaDeviceConfig, CFG_SHOWHIDDEN, &gShowHidden);
-
-        diaGetInt(diaDeviceConfig, CFG_ENABLEUSB, &gEnableUSB);
-        diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
-        diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
-        int oldEnablePCCF = gEnablePCCF;
-        diaGetInt(diaDeviceConfig, CFG_ENABLEPCCF, &gEnablePCCF);
-        if (oldEnablePCCF != gEnablePCCF)
-            bdmRequestPccfProbe();
-        diaGetInt(diaDeviceConfig, CFG_ENABLEDVR, &gEnableDVR);
-        diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
-
-        // Network Connectivity + the indented Protocol row (shared with the Network page).
-        guiSourcesNetRowsRead(diaDeviceConfig);
-
-        // A BDM tab can be latched hidden (bdmNeedsUpdate short-circuits until the device generation
-        // bumps). Re-evaluate device visibility now so re-enabling a device here brings its tab back
-        // without a physical replug.
-        bdmForceDeviceRefresh();
-
-        applyConfig(-1, -1, 0);
-        menuReinitMainMenu();
-        if (previousAllGames != gAllGames)
-            guiApplyAllGamesChange();
-        else if (previousShowHidden != gShowHidden)
-            guiRefreshCfgTitles(); // rebuilds every game list, Favourites last
-        else if (gAllGames)
-            loadFavourites(); // a source switched Off or on: All Games drops or gathers its rows
-    }
 }
 
 // MMCE page (settings-layout restructure, was MMCE Settings): SD2PSX / MemCard PRO2 basics plus
@@ -1062,8 +909,8 @@ static void guiFreeNameList(const char **list)
     free((void *)list);
 }
 
-// The persisted four-mode PS2/PS1 picker lives on Interface only; both Interface entry points
-// (guiShowUIConfig, guiSettingsShowInterface) share this enum setup/readback so they cannot drift.
+// The persisted four-mode PS2/PS1 picker lives on Interface only; guiSettingsShowInterface uses
+// this enum setup/readback.
 // Saved values keep their historical ABI (Both=0, PS2=1, PS1=2, Mixed=3), while the picker uses
 // the user-facing order requested by the display model.
 static const char *guiGameViewNames[] = {"Both (L3)", "Mixed", "PS2", "PS1", NULL};
@@ -1222,140 +1069,6 @@ static void guiRefreshAppsView(void)
     item_list_t *apps = appGetObject(0);
     if (apps != NULL && apps->enabled)
         ioPutRequest(IO_MENU_UPDATE_DEFFERED, &apps->mode);
-}
-
-void guiShowUIConfig(void)
-{
-    int themeID = -1;
-    showCfgPopup = 0;
-    guiResetNotifications();
-
-    const char **themeNamesSnap = NULL;
-
-    int previousTheme, previousVMode;
-    const char *vmodeNames[] = {_l(_STR_AUTO), "PAL 640x512i @50Hz 24bit", "NTSC 640x448i @60Hz 24bit",
-                                "EDTV 640x448p @60Hz 24bit", "EDTV 640x512p @50Hz 24bit", "VGA 640x480p @60Hz 24bit",
-                                "PAL 704x576i @50Hz 24bit (HIRES)", "NTSC 704x480i @60Hz 24bit (HIRES)",
-                                "EDTV 704x480p @60Hz 24bit (HIRES)", "EDTV 704x576p @50Hz 24bit (HIRES)",
-                                "HDTV 1280x720p @60Hz 16bit (HIRES)", "HDTV 1920x1080i @60Hz 16bit (HIRES)",
-                                "PAL 640x256p @50Hz 24bit", "NTSC 640x224p @60Hz 24bit",
-                                "PAL 640x512i @50Hz 24bit (FLICKER-FREE)", "NTSC 640x448i @60Hz 24bit (FLICKER-FREE)", NULL};
-
-reshow_ui:
-    previousTheme = thmGetGuiValue();
-    previousVMode = gVMode;
-    int openX = gXOff, openY = gYOff, openOver = gOverscan; // the position kept for each video mode
-    // Keep a dialog-owned theme-name snapshot across deferred device discovery.
-    guiFreeNameList(themeNamesSnap);
-    guiLock(); // must cover the getter FETCH too, not just the copy (Gemini review of #165)
-    themeNamesSnap = guiCopyNameList((const char **)thmGetGuiList());
-    guiUnlock();
-    diaSetEnum(diaUIConfig, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
-    diaSetInt(diaUIConfig, UICFG_THEME, thmGetGuiValue());
-    const char *sortNames[] = {_l(_STR_OFF), _l(_STR_SORT_AZ), _l(_STR_SORT_LAST_PLAYED), NULL};
-    diaSetEnum(diaUIConfig, UICFG_AUTOSORT, sortNames);
-    diaSetInt(diaUIConfig, UICFG_AUTOSORT, gAutosort);
-    diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
-    diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
-    diaSetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
-    diaSetInt(diaUIConfig, UICFG_CFG_TITLES, gCfgTitlesInLists);
-    diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL || gTheme->grid != NULL);
-    guiSetGameViewPicker(diaUIConfig);
-    guiSetAppsViewPicker(diaUIConfig);
-    guiSetThemeViewPicker(diaUIConfig);
-    guiSetLibraryPicker(diaUIConfig);
-    diaSetEnum(diaUIConfig, UICFG_VMODE, vmodeNames);
-    diaSetInt(diaUIConfig, UICFG_VMODE, gVMode);
-    const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
-    diaSetEnum(diaUIConfig, UICFG_FONT_SIZE, fontSizeNames);
-    diaSetInt(diaUIConfig, UICFG_FONT_SIZE, gFontSize);
-    const char *glyphSetNames[] = {_l(_STR_THEME), _l(_STR_GLYPHS_BUILTIN), _l(_STR_GLYPHS_STANDARD), _l(_STR_GLYPHS_WHITE), NULL};
-    diaSetEnum(diaUIConfig, UICFG_GLYPH_SET, glyphSetNames);
-    diaSetInt(diaUIConfig, UICFG_GLYPH_SET, gGlyphSet);
-
-    int ret = diaExecuteDialog(diaUIConfig, -1, 1, NULL);
-
-    if (ret == UICFG_ARTWORK_BUTTON) {
-        guiShowArtworkConfig();
-        goto reshow_ui;
-    }
-    if (ret == UICFG_COVERFLOW_BUTTON) {
-        guiShowCoverflowConfig();
-        goto reshow_ui;
-    }
-    if (ret == UICFG_COLORS_BUTTON) {
-        guiShowColorsConfig();
-        goto reshow_ui;
-    }
-    if (ret == UICFG_GAME_LIST_BUTTON) {
-        guiShowVcdListConfig();
-        goto reshow_ui;
-    }
-
-    // Play out the confirm bump the dialog just armed, before applyConfig() below tears down and
-    // rebuilds the GS (rmSetMode), reloads the theme and its textures, and holds guiLock over a
-    // submenu-cache rebuild -- none of which polls readPads(), so the pulse would run for all of it
-    // (#172, "really intense ... after changing the resolution"). Deliberately HERE and not at the top
-    // of applyConfig(): applyConfig is ALSO reached off the GUI thread, from _loadConfig() on the IO
-    // worker (opl.c: guiHandleDeferedIO with IO_CUSTOM_SIMPLEACTION), and every libpad call in pad.c
-    // is GUI-thread-only. This call site is the GUI thread, always.
-    padRumbleFlush();
-
-    if (ret) {
-        diaGetInt(diaUIConfig, UICFG_THEME, &themeID);
-        int previousSort = gAutosort;
-        diaGetInt(diaUIConfig, UICFG_AUTOSORT, &gAutosort);
-        diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
-        diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
-        diaGetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
-        int previousCfgTitles = gCfgTitlesInLists;
-        diaGetInt(diaUIConfig, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-        // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
-        int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
-        int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
-        int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
-        int themeViewRequest = guiReadThemeViewPicker(diaUIConfig);
-        int allGamesChanged = guiReadLibraryPicker(diaUIConfig);
-        diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
-        screenPosModeChanged(previousVMode, openX, openY, openOver); // before applyConfig shows the mode
-        diaGetInt(diaUIConfig, UICFG_FONT_SIZE, &gFontSize);
-        diaGetInt(diaUIConfig, UICFG_GLYPH_SET, &gGlyphSet);
-
-        if (previousTheme != themeID && isBgmPlaying())
-            bgmStop();
-
-        if (previousVMode != gVMode)
-            guiFadeCurrentScreenToBlack();
-        applyConfig(themeID, -1, 1);
-        if (themeViewRequest != gThemeViewRequest)
-            thmSetView(themeViewRequest); // reloads only when the theme now shows a different view
-        if (allGamesChanged) {
-            guiApplyAllGamesChange(); // rebuilds every game list too
-        } else if (cfgTitlesChanged) {
-            guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
-        } else if (gameViewChanged) {
-            // applyConfig(..., skipDeviceRefresh=1) deliberately avoids device scans. Queue after it
-            // returns so HDD (which has no automatic refresh) cannot retain PS2 rows while rendering
-            // uses the new VCD view, without racing the theme/menu bookkeeping above.
-            guiRefreshGameViews();
-        }
-        if (appsViewChanged || (cfgTitlesChanged && previousSort != gAutosort))
-            guiRefreshAppsView();
-        sfxInit(0);
-
-        if (gEnableBGM && !isBgmPlaying())
-            bgmStart();
-
-        if (previousVMode != gVMode && guiConfirmVideoMode() == 0) {
-            gVMode = previousVMode;
-            gXOff = openX; // and its position with it
-            gYOff = openY;
-            gOverscan = openOver;
-            applyConfig(-1, -1, 1);
-        }
-    }
-
-    guiFreeNameList(themeNamesSnap);
 }
 
 static int httpTestBusy;
@@ -2417,60 +2130,6 @@ static void guiSaveAdvancedSettings(struct UIItem *ui)
     diaGetInt(ui, CFG_SMBCACHE, &smbCacheSize);
 }
 
-// Neutrino Defaults live-updater: the ":c" comp half is only ever emitted alongside a video mode
-// (-gsm=v:c grammar) -- grey it while the global Neutrino Video default is Off (same rule as the
-// per-game rows).
-static int guiNeutrinoDefaultsUpdater(int modified)
-{
-    int neutrinoVideoDef;
-
-    if (modified) {
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &neutrinoVideoDef);
-        diaSetEnabled(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, neutrinoVideoDef != 0);
-    }
-    return 0;
-}
-
-// Game Launching -> Neutrino Defaults: optional custom full path + video/gsm-comp defaults +
-// structured Advanced Arguments. Empty is the compatibility default: game device, then mc0/mc1.
-void guiShowNeutrinoDefaults(void)
-{
-    guiCorePathBegin(diaNeutrinoDefaults, CFG_NEUTRINO_PATH, neutrinoPathEdit, sizeof(neutrinoPathEdit), gNeutrinoPath);
-    // Global default Neutrino Video (-gsm) + comp half: same indices as the per-game picker
-    // (system.c gsmVideoTokens). static: literals only, and diaSetEnum stores the raw pointer.
-    static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
-    static const char *neutrinoGsmCompDefStrs[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
-    diaSetEnum(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, neutrinoVideoDefStrs);
-    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
-    diaSetEnum(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, neutrinoGsmCompDefStrs);
-    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
-    diaSetEnabled(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, gNeutrinoVideoDefault != 0);
-    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
-    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_SHOW_ARGS, gNeutrinoShowArgs);
-
-    int ret;
-reshow_neutrino:
-    ret = diaExecuteDialog(diaNeutrinoDefaults, -1, 1, &guiNeutrinoDefaultsUpdater);
-    if (ret == CFG_NEUTRINO_ARGS) {
-        // the "Advanced Arguments" button -> open the structured args sub-screen, then re-enter
-        guiShowNeutrinoArgsConfig(gNeutrinoArgs, sizeof(gNeutrinoArgs));
-        goto reshow_neutrino;
-    }
-    if (ret) {
-        // Editing the new field retires any hidden legacy APA picker state. Merely opening/saving
-        // an untouched <not set> field does not, so an upgraded APA setup remains compatible.
-        if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
-            gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-        snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_SHOW_ARGS, &gNeutrinoShowArgs);
-
-        applyConfig(-1, -1, 0);
-    }
-}
-
 // Neutrino Launch Args sub-screen: edit the user-settable Neutrino flags as structured fields and
 // reassemble them in a Neutrino-accepted order (--b last). Used for both the global args (here) and
 // the per-game args. argsBuf in/out is the stored "Launch Args" string.
@@ -2641,35 +2300,6 @@ void guiShowColorsConfig(void)
     }
 }
 
-// Display page live-updater: the geometry/aspect rows apply live so the user sees the change as
-// they adjust it (moved out of the old guiUIUpdater).
-static int guiDisplayUpdater(int modified)
-{
-    if (modified) {
-        int temp, x, y;
-        diaGetInt(diaDisplayConfig, UICFG_XOFF, &x);
-        diaGetInt(diaDisplayConfig, UICFG_YOFF, &y);
-        if ((x != gXOff) || (y != gYOff)) {
-            gXOff = x;
-            gYOff = y;
-            rmSetDisplayOffset(x, y);
-        }
-        diaGetInt(diaDisplayConfig, UICFG_OVERSCAN, &temp);
-        if (temp != gOverscan) {
-            gOverscan = temp;
-            rmSetOverscan(gOverscan);
-            guiUpdateScreenScale();
-        }
-        diaGetInt(diaDisplayConfig, UICFG_WIDESCREEN, &temp);
-        if (temp != gWideScreen) {
-            gWideScreen = temp;
-            rmSetAspectRatio(rmIsWideDisplay() ? RM_ARATIO_16_9 : RM_ARATIO_4_3);
-            guiUpdateScreenScale();
-        }
-    }
-
-    return 0;
-}
 static int guiGameIdModeFromGlobals(void)
 {
     if (gApplyGameID)
@@ -3137,7 +2767,6 @@ static int guiSettingsShowSources(void)
     const struct UIItem *parts[] = {diaDeviceConfig};
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
-    static const char *hddOplHomes[] = {"__common/OPL/", "+OPL/", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 1, NULL, 0, -1, 0);
     int deviceModeIndex;
     int result;

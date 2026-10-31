@@ -456,31 +456,6 @@ int SMAPStart(void)
     return 0;
 }
 
-void SMAPStop(void)
-{
-    volatile u8 *emac3_regbase;
-
-#if USE_GP_REGISTER
-    void *OldGP;
-
-    OldGP = SetModuleGP();
-#endif
-    SmapDriverData.NetDevStopFlag = 1;
-
-    if (SmapDriverData.SmapIsInitialized) {
-        emac3_regbase = SmapDriverData.emac3_regbase;
-
-        SpdIntrDisable(DEV9_SMAP_INTR_MASK2);
-        SMAP_EMAC3_SET32(SMAP_R_EMAC3_MODE0, 0);
-        SmapDriverData.NetDevStopFlag = 0;
-        SmapDriverData.SmapIsInitialized = 0;
-    }
-
-#if USE_GP_REGISTER
-    SetGP(OldGP);
-#endif
-}
-
 static int ParseSmapConfiguration(const char *cmd, unsigned int *configuration)
 {
     const char *CmdStart, *DigitStart;

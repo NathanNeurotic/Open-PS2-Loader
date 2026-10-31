@@ -1083,7 +1083,7 @@ int texLoadInternal(GSTEXTURE *texture, int texId)
     return texLoadAll(texture, NULL, texId, NULL, 0);
 }
 
-// Decode a PNG already resident in a RAM buffer (e.g. a .tar art entry pulled by tarGet). The buffer
+// Decode a PNG already resident in a RAM buffer (e.g. a .tar art entry read with tarRead). The buffer
 // stays owned by the caller (free it after this returns); the decoded pixels are copied into texture.
 int texLoadFromMemory(GSTEXTURE *texture, const void *buf, u32 size)
 {
