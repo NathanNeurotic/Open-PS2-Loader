@@ -35,7 +35,7 @@ devices, copy the matching `APPS/APP_RIPTOPL*/` directory instead. Install `ART/
 does not contain those shared folders. The labelled ELF folders are alternate builds, not
 additional PSU saves.
 
-The release packer writes R3Z3N's SAS timestamps into the PSU save folder and
+The release packer writes [R3Z3N](https://github.com/saildot4k)'s SAS timestamps into the PSU save folder and
 every direct file at packaging time. Its fixed schedule gives both
 `APP_RIPTOPL` and `APP_RIPTOPL-RA` **2098-12-31 14:17:22 UTC**; the two names
 share a one-second slot under the supplied ranking algorithm. The packer writes
