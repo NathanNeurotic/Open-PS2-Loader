@@ -5458,14 +5458,15 @@ static void init(void)
 
     gSelectButton = (InitConsoleRegionData() == CONSOLE_REGION_JAPAN) ? KEY_CIRCLE : KEY_CROSS;
 
-    // The menu needs a controller, so this still waits for one, but not on a black screen: after
-    // 10 s with no answer it draws the boot splash and logs it, then keeps waiting.
+    // This waits for the pad ports to open, not for a controller: a port with nothing plugged in
+    // still counts, so a boot with no controller carries on as before. The wait only lasts when no
+    // port will open; then it draws the boot splash after 10 s and logs it, and keeps waiting.
     clock_t padWaitStart = clock(); // elapsed time, not a deadline: clock() can wrap
     int padWaitShown = 0;
     while (!padStatus) {
         padStatus = startPads();
         if (!padStatus && !padWaitShown && clock() - padWaitStart > 10 * CLOCKS_PER_SEC) {
-            diagLog("boot: no controller answered for 10 s, still waiting");
+            diagLog("boot: no pad port opened for 10 s, still waiting");
             guiRenderGreetingScreen();
             padWaitShown = 1;
         }
