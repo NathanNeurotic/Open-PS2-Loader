@@ -114,10 +114,11 @@ int main()
             CHECK(fabsf(got - want) < 0.01f, "PAR %.4f, grid fill ratio %.4f", got, want);
         }
 
-        if (row.safeW || row.safeH) {
-            rmSetOverscan(100);
-            CHECK(iDisplayWidth < 640 && iDisplayHeight < row.safeH, "Overscan no longer shrinks the safe area");
-        }
+        // Overscan must shrink the drawn area in every mode, safe-area rows or not.
+        rmSetOverscan(0);
+        int w0 = iDisplayWidth, h0 = iDisplayHeight;
+        rmSetOverscan(100);
+        CHECK(iDisplayWidth < w0 && iDisplayHeight < h0, "Overscan 100 draws %dx%d, not smaller than %dx%d at Overscan 0", iDisplayWidth, iDisplayHeight, w0, h0);
     }
     if (ntscHeights != 3) {
         printf("FAIL: want both an NTSC 704x480i row drawing 480 lines and one drawing 448\n");
