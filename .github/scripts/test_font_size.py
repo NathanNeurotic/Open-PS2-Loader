@@ -210,13 +210,16 @@ print('PASS: both config load paths, save/defaults, live preview and LTR/RTL wir
 
 dialog_types = re.search(r'^typedef enum \{.*?\} UIItemType;', dia_header, re.M | re.S).group()
 dialog_types += re.search(r'^struct UIItem\s*\{.*?^\};', dia_header, re.M | re.S).group()
-dialog_defines = '\n'.join(re.findall(r'^#define UI_SETTINGS_(?:SPACING_H|MIN_GAP)\s+\d+', dia, re.M))
+dialog_defines = '\n'.join(re.findall(r'^#define UI_(?:SETTINGS_SPACING_H|SETTINGS_MIN_GAP|SPACING_V|SPACER_WIDTH|SPACER_MINIMAL)\s+\d+', dia, re.M))
 dialog_functions = '\n'.join(function(dia, signature) for signature in (
-    'static int diaShouldBreakLine(', 'static int diaShouldBreakLineAfter(',
+    'static int diaShouldBreakLine(', 'static int diaShouldBreakLineAfter(', 'static int diaSpacerWidth(',
     'static int diaItemHeight(', 'static void diaRowState(', 'static int diaRowCollapses(', 'static int diaLayoutBottom(', 'static int diaSettingsFitGap(',
 ))
 run('font_dialog', common + dialog_types + '\n' + dialog_defines + r'''
 static int screenHeight = 480;
+/* Label wrapping (diaWrapRoom/diaWrapExtra) has its own harness, test_dia_text_room.py: no label wraps here. */
+static int diaWrapRoom(const struct UIItem *item, int x, int lead) { (void)item; (void)x; (void)lead; return 0; }
+static int diaWrapExtra(struct UIItem *item, int wrapRoom) { (void)item; (void)wrapRoom; return 0; }
 ''' + dialog_functions + r'''
 int main(void)
 {
@@ -238,10 +241,10 @@ int main(void)
             }
             page[n].type = UI_OK; page[n++].visible = 1;
             page[n].type = UI_TERMINATOR;
-            int gap = diaSettingsFitGap(page, spacing, 20, 440);
+            int gap = diaSettingsFitGap(page, spacing, 20, 20, 440);
             assert(spacing + gap >= size); /* Raster rows never overlap, even at minimum gap. */
             assert(gap >= UI_SETTINGS_MIN_GAP && gap <= spacing);
-            if (gap > UI_SETTINGS_MIN_GAP) assert(diaLayoutBottom(page, spacing, gap, 20) <= 440);
+            if (gap > UI_SETTINGS_MIN_GAP) assert(diaLayoutBottom(page, spacing, gap, 20, 20) <= 440);
             if (rows == 30) assert(gap == UI_SETTINGS_MIN_GAP); /* Tall pages scroll. */
         }
         assert(MENU_ITEM_HEIGHT >= size + 2);
