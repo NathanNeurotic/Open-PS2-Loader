@@ -1935,7 +1935,7 @@ gui_strings:
   string: In the folder
 
 - label: HINT_VMC_IN_FOLDER
-  string: "Pick a save folder with Up and Down, then Copy in."
+  string: "Pick a save folder or .psu file with Up and Down, then Copy in."
 
 - comment: VMC Saves dialog row, the folder that holds the copied-out saves.
   label: VMC_FOLDER
@@ -1953,7 +1953,14 @@ gui_strings:
   string: Copy in
 
 - label: HINT_VMC_IMPORT
-  string: "Copies the picked save folder onto the card."
+  string: "Copies the picked save folder or .psu file onto the card."
+
+- comment: VMC Saves dialog button (RIPPS2), copies the picked save from the card into the folder as one .psu file. PSU is a file format name, not translated.
+  label: VMC_EXPORT_PSU
+  string: Copy out as PSU
+
+- label: HINT_VMC_EXPORT_PSU
+  string: "Copies the picked save into the folder as one .psu file, the save file uLaunchELF, EMS and Apollo use. The card is not changed."
 
 - label: HINT_VMC_SAVE_DELETE
   string: "Deletes the picked save from the card."
@@ -1987,6 +1994,9 @@ gui_strings:
 
 - label: VMC_SAVES_ERR_WRITE
   string: "The save could not be written. Is the drive full or write-protected?"
+
+- label: VMC_SAVES_ERR_PSU
+  string: "This .psu file is cut short or is not a PS2 save."
 
 - label: VMC_SAVES_ERR_READ
   string: "The card image could not be read, or its tables are damaged."
