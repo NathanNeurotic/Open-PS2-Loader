@@ -15,6 +15,14 @@ int DeviceWritePage(int mc_num, void *buf, u32 page_num)
     return bdm_writeSector(lba, 1, buf) ? 1 : 0;
 }
 
+int DeviceWritePages(int mc_num, void *buf, u32 page_num, u32 count)
+{
+    u64 lba = vmcSpec[mc_num].stsec + page_num;
+    DPRINTF("writing %lu pages from 0x%lx at lba 0x%08x%08x\n", count, page_num, ((u32 *)&lba)[1], ((u32 *)&lba)[0]);
+
+    return bdm_writeSector(lba, count, buf) ? 1 : 0;
+}
+
 int DeviceReadPage(int mc_num, void *buf, u32 page_num)
 {
     u64 lba = vmcSpec[mc_num].stsec + page_num;
