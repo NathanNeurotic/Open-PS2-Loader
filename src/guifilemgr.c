@@ -381,8 +381,8 @@ static void fmToClipboard(int e, int cut)
         if (fmClip[fmClipCount][0] == '\0')
             continue;
         fmClipIsDir[fmClipCount++] = (unsigned char)fmList_[sel[i]].isDir;
+        fmMarked[sel[i]] = 0; // only what is on the clipboard is unmarked; the rest stays marked for another go
     }
-    memset(fmMarked, 0, FM_MAX);
 }
 
 // A save folder (one with an icon.sys)
@@ -429,7 +429,7 @@ static void fmPaste(int asPsu)
 {
     char target[FM_PATH_LEN], parent[FM_PATH_LEN], failedName[FM_NAME];
     const char *why = NULL, *firstWhy = NULL;
-    int i, failed = 0, done = 0, ok;
+    int i, failed = 0, done = 0, ok, keep = 0;
 
     if (!fmCanWrite() || fmClipCount == 0)
         return;
@@ -461,13 +461,22 @@ static void fmPaste(int asPsu)
         }
         if (why == NULL)
             done++;
-        else if (failed++ == 0) {
-            firstWhy = why;
-            snprintf(failedName, sizeof(failedName), "%s", name);
+        else {
+            if (failed++ == 0) {
+                firstWhy = why;
+                snprintf(failedName, sizeof(failedName), "%s", name);
+            }
+            if (fmClipCut && !asPsu) { // not moved: kept for another paste
+                if (keep != i) {
+                    strcpy(fmClip[keep], fmClip[i]);
+                    fmClipIsDir[keep] = fmClipIsDir[i];
+                }
+                keep++;
+            }
         }
     }
     if (fmClipCut && !asPsu)
-        fmClipCount = 0; // what moved is gone from its old place; what did not is still there to cut again
+        fmClipCount = keep; // what moved is gone from its old place; what did not stays on the clipboard
     fmLoad();
     if (failed)
         fmShowFailure(failedName, firstWhy);

@@ -864,6 +864,8 @@ static int vsWritePsu(const vs_save_t *s, const char *parent)
     int fd, i, ok;
 
     mkdir(parent, 0777); // the shared SAVES/ folder, as for a save folder
+    if (!vsNameOk(s->name)) // a name from a card ("../x") never leaves the folder
+        return vsFail(VMCSAVES_ERR_NAME);
     if (snprintf(path, sizeof(path), "%s%s" PSU_EXT, parent, s->name) >= (int)sizeof(path))
         return vsFail(VMCSAVES_ERR_NAME);
     if ((fd = open(path, O_RDONLY)) >= 0) {

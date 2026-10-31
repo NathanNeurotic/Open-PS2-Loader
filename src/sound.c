@@ -885,6 +885,24 @@ static void bgmFixPages(unsigned char *buf, int len, int limit, const unsigned c
     }
 }
 
+// RIPPS2 build 98: the first page's serial; with its top bit set, every page's is cleared as it is read. Reads the
+// first 18 bytes of f; the caller seeks back to the start. NULL for every other file (or no memory: then played as is).
+static bgm_fix_t *bgmFixFor(FILE *f, const char *path)
+{
+    unsigned char head[18];
+    bgm_fix_t *x;
+
+    (void)path; // only for the log, which a release build may compile out
+    if (fread(head, 1, sizeof(head), f) != sizeof(head) || memcmp(head, "OggS", 4) || !(head[17] & 0x80))
+        return NULL;
+    if ((x = (bgm_fix_t *)malloc(sizeof(bgm_fix_t))) == NULL)
+        return NULL;
+    memset(x, 0, sizeof(bgm_fix_t));
+    memcpy(x->serial, head + 14, 4);
+    LOG("BGM: %s has a top-bit serial: cleared as it is read\n", path);
+    return x;
+}
+
 static size_t bgmSourceRawRead(void *ptr, size_t size, size_t nmemb, void *datasource);
 
 // The decoder's read of a top-bit stream: from buf while it has fixed bytes, else the next piece of the file
@@ -1038,21 +1056,10 @@ static int bgmTryLoadPath(const char *bgmPath, const char *source)
         return 0;
     }
 
-    // RIPPS2 build 98: the first page's serial; with its top bit set, every page's is cleared as it is read
-    {
-        unsigned char head[18];
-        if (fread(head, 1, sizeof(head), bgmFile) == sizeof(head) && !memcmp(head, "OggS", 4) && (head[17] & 0x80)) {
-            src->fix = (struct bgm_fix *)malloc(sizeof(bgm_fix_t));
-            if (src->fix != NULL) {
-                memset(src->fix, 0, sizeof(bgm_fix_t));
-                memcpy(src->fix->serial, head + 14, 4);
-                LOG("BGM: %s has a top-bit serial: cleared as it is read\n", bgmPath);
-            }
-        }
-        if (fseek(bgmFile, 0, SEEK_SET) != 0) {
-            bgmSourceClose(src);
-            return 0;
-        }
+    src->fix = bgmFixFor(bgmFile, bgmPath); // RIPPS2 build 98: a top-bit serial
+    if (fseek(bgmFile, 0, SEEK_SET) != 0) {
+        bgmSourceClose(src);
+        return 0;
     }
 
     if (ov_open_callbacks(src, vorbisFile, NULL, 0, bgmSourceCallbacks) == 0) {

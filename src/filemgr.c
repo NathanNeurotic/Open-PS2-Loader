@@ -447,6 +447,8 @@ static int fmCopyTo(const char *src, int isDir, const char *dst, fm_progress_t p
     return ok;
 }
 
+static int fmDeleteTree(const char *path, int isDir, int depth);
+
 int fmCopy(const char *src, int isDir, const char *dstDir, fm_progress_t progress)
 {
     char dst[FM_PATH];
@@ -454,7 +456,12 @@ int fmCopy(const char *src, int isDir, const char *dstDir, fm_progress_t progres
     fmErr = FM_OK;
     if (!fmTarget(src, isDir, dstDir, dst, sizeof(dst)))
         return 0;
-    return fmCopyTo(src, isDir, dst, progress);
+    if (!fmCopyTo(src, isDir, dst, progress)) {
+        int err = fmErr;
+        fmDeleteTree(dst, isDir, 0); // what was made of it (dst was not there before: fmTarget)
+        return fmFail(err);
+    }
+    return 1;
 }
 
 static int fmRemove(const char *path, int isDir)

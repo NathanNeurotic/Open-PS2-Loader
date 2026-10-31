@@ -323,9 +323,31 @@ static bgm_source_t *openFixed(void)
     cardSize = streamSize;
     src = openMusic();
     src->size = streamSize;
-    src->fix = calloc(1, sizeof(*src->fix));
-    memcpy(src->fix->serial, stream + 14, 4);
+    src->fix = bgmFixFor(src->f, src->path); /* chosen as the loader chooses it */
+    expectThat(src->fix != NULL && memcmp(src->fix->serial, stream + 14, 4) == 0, "top-bit first page",
+               "bgmFixFor picks the fix with the first page's serial", 0);
+    if (src->fix == NULL)
+        exit(1);
+    fseek(src->f, 0, SEEK_SET);
     return src;
+}
+
+/* a first page whose serial has no top bit gets no fix (and the file is read as is) */
+static void plainFirstPage(void)
+{
+    bgm_source_t *src;
+    bgm_fix_t *x;
+
+    cardData = stream;
+    cardSize = streamSize;
+    stream[17] &= 0x7f;
+    src = openMusic();
+    x = bgmFixFor(src->f, src->path);
+    expectThat(x == NULL, "plain first page", "bgmFixFor picks no fix", 0);
+    free(x);
+    bgmSourceClose(src);
+    stream[17] |= 0x80;
+    printf("%-34s: OK\n", "plain first page, no fix");
 }
 
 static void fixedWhole(const char *test, size_t piece, int every)
@@ -349,7 +371,8 @@ static void fixedWhole(const char *test, size_t piece, int every)
                "every page of the top-bit stream fixed once, its CRC valid, the chained stream untouched", 0);
     expectThat(bgmSourceTell(src) == streamSize, test, "position at the end", bgmSourceTell(src));
     bgmSourceClose(src);
-    expectThat(cardHandlesOpen() <= 1, test, "descriptors left open", cardHandlesOpen());
+    /* a lost descriptor (every > 0) may stay taken on the card, as it does there; a clean run leaves none */
+    expectThat(cardHandlesOpen() <= (every > 0 ? 1 : 0), test, "descriptors left open", cardHandlesOpen());
     printf("%-34s %6d reads: OK\n", test, reads);
 }
 
@@ -492,6 +515,7 @@ int main(void)
     seeks();
     gone();
     buildStream();
+    plainFirstPage();
     fixedWhole("top-bit serial, 1 byte reads", 1, 0);
     fixedWhole("top-bit serial, 7 byte reads", 7, 0);
     fixedWhole("top-bit serial, 2 KB reads", 2048, 0);

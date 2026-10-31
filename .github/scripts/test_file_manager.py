@@ -324,9 +324,12 @@ def main():
         r, err, *_ = result(run(full, 'copy', src / 'big.bin', 0, fill))
         check(r == 0 and err == ERR['WRITE'] and not (fill / 'big.bin').exists(),
               'a copy onto a drive that fills part way fails as a write error, the cut-short file removed')
-        r, err, *_ = result(run(full, 'copy', src / 'icon.sys', 0, fill))
-        check(r == 1 and (fill / 'icon.sys').read_bytes() == want_files['icon.sys'],
-              'writes that take part of a block are finished (a small file still copies whole)')
+        r, err, *_ = result(run(full, 'copy', src / 'sub' / 'deeper' / 'b.txt', 0, fill))
+        check(r == 1 and (fill / 'b.txt').read_bytes() == b'world' * 1000,
+              'writes that take part of a block are finished (a 5000-byte file copies whole)')
+        r, err, *_ = result(run(full, 'copy', src, 1, fill))
+        check(r == 0 and err == ERR['WRITE'] and not (fill / 'SAVE').exists(),
+              'a folder copy onto a drive that fills part way takes back what it made')
         r, err, *_ = result(run(full, 'move', src, 1, fill))
         check(r == 0 and err == ERR['WRITE'] and tree(src) == (want_files, want_dirs) and not (fill / 'SAVE').exists(),
               'a move across drives that fills keeps its source whole and takes back what it copied')
