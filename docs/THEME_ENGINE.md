@@ -452,7 +452,7 @@ main0:
 | Key | Value | Meaning |
 |---|---|---|
 | `alt` (inside a block) | image name, as `default` | Used instead of the element's `default` while Alternate Background is on. Works on any element with `default=` (a `StaticImage` logo too), and in `<view>.` blocks. |
-| `alt` (top level) | image name | The alternate picture for every `Background` element (base and `<view>.` blocks) that has no `alt=` of its own. |
+| `alt` (top level) | image name | The alternate picture for every `Background` element (base and `<view>.` blocks) that has no `alt=` of its own, and the Background OPL adds when a theme has none. |
 
 - With the setting off, or in a theme without any `alt` key, nothing changes: `default=` is used as
   always. Stock OPL and other forks ignore `alt=`.

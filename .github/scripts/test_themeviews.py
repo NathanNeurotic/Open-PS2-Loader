@@ -320,6 +320,17 @@ int main(void)
         assert(configGetStr(on, "coverflow.main0_default", &s) && !strcmp(s, "bg_top"));  // view blocks too
         configFree(on);
 
+        // No Background block: the one added at load ("bg") takes the top-level alt=; its own bg_alt= wins.
+        config_set_t *nobg = parse("alt=bg_top\nmain0:\n\ttype=StaticImage\n\tdefault=logo\n");
+        assert(thmApplyAltBackground(nobg, 1) == 1 && configGetStr(nobg, "bg_default", &s) && !strcmp(s, "bg_top"));
+        configFree(nobg);
+        nobg = parse("alt=bg_top\nbg_alt=bg_own\n");
+        assert(thmApplyAltBackground(nobg, 1) == 1 && configGetStr(nobg, "bg_default", &s) && !strcmp(s, "bg_own"));
+        configFree(nobg);
+        nobg = parse("alt=bg_top\n");
+        assert(thmApplyAltBackground(nobg, 0) == 1 && !configGetStr(nobg, "bg_default", &s));
+        configFree(nobg);
+
         config_set_t *plasma = parse("main0:\n\ttype=Background\n\talt=bg_night\n");
         assert(thmApplyAltBackground(plasma, 1) == 1 && configGetStr(plasma, "main0_default", &s) && !strcmp(s, "bg_night"));
         configFree(plasma);

@@ -365,6 +365,9 @@ int thmApplyAltBackground(config_set_t *themeConfig, int alt)
             snprintf(base, sizeof(base), "%.*s_default", (int)(len - typeLen), it->key);
             configSetStr(themeConfig, base, value);
         }
+        // A theme with no Background block gets one added at load (validateBackgroundElems, read as "bg").
+        if (!configGetStr(themeConfig, "bg" THM_ALT_SUFFIX, &own))
+            configSetStr(themeConfig, "bg_default", value);
     }
     return declared;
 }
