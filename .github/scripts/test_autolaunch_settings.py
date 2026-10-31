@@ -378,12 +378,29 @@ def check_pins():
     known = function_text(text('src/opl.c'), 'static int tryKnownBootConfigRecovery(')
     check(known is not None and
           re.search(r'configEnd\(\);\s*configInit\(gBootDir\);\s*'
-                    r'return configReadMulti\(types & ~CONFIG_OPL\);\s*\}\s*$', known),
+                    r'value = configReadMulti\(types & ~CONFIG_OPL\);', known),
           'tryKnownBootConfigRecovery: re-read the home\'s other sets after a recovery miss')
+    # Each probe also discarded the previous probe's sets, so a legacy home with no master (mc0:/OPL on
+    # an mc0:/APPS boot) lost its conf_game.cfg/network/apps. Fill only the sets the boot home lacks from
+    # the legacy home that had them, then point everything back at the boot home (CodeRabbit on OPL #1159).
+    check(known is not None and
+          re.search(r'int missing = legacyFound\[i\] & types & ~CONFIG_OPL & ~value;\s*'
+                    r'if \(missing == 0\)\s*continue;\s*'
+                    r'configSetMove\(legacyHome\[i\]\);\s*'
+                    r'value \|= configReadMulti\(missing\);\s*'
+                    r'configSetMove\(gBootDir\);\s*\}\s*return value;\s*\}\s*$', known),
+          'tryKnownBootConfigRecovery: keep a legacy home\'s other sets the boot home lacks')
     check(retry is not None and
           re.search(r'value = tryKnownBootConfigRecovery\(types\);\s*if \(value & CONFIG_OPL\)\s*return value;\s*'
                     r'showCfgPopup = 0;\s*return value;', retry),
           'tryAlternateDevice: return the re-read sets from a known-home recovery miss')
+    # The legacy mc?:OPL fallback can load conf_network.cfg (or other sets) with no master beside it --
+    # a deferred network boot keeping its home on the card. Returning 0 hid them from _loadConfig, which
+    # then never applied the network settings (CodeRabbit on OPL #1159).
+    legacy_tail = retry[retry.find('int homeLeftOnCard = 0;'):] if retry else ''
+    check(re.search(r'if \(!homeLeftOnCard\)\s*configPrepareNotifications\(gBootDir\);\s*'
+                    r'showCfgPopup = 0;\s*(?://[^\n]*\n\s*)*return value;', legacy_tail),
+          'tryAlternateDevice: return the sets the legacy card fallback loaded without a master')
     load = function_text(text('src/opl.c'), 'static void _loadConfig(')
     check(load is not None and
           re.search(r'gBootHomeHybridExfat && gBDMStartMode == START_MODE_DISABLED &&\s*'

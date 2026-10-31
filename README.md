@@ -254,6 +254,8 @@ unavailable under Neutrino, before the game opens its controller, or with Mode 6
 PS1 cores have their own reset behavior. [IGR](docs/IGR.md) covers reset targets, USB driver
 requirements, the power button and optional screenshots.
 
+**In-Game Menu (beta)** (*Settings → Game Launching*, off by default; from [akilluminati47](https://github.com/akilluminati47)'s [RIPPS2](https://github.com/akilluminati47/RIPPS2)): with it on, the reset combination pauses an OPL-core game under a panel with **Resume**, **Cheats** (switch the game's cheats on or off while playing), **Achievements** (RetroAchievements editions), **Exit Game** and **Power Off**. The pause is silent and Resume gives back the exact picture. PCSX2 and games the menu cannot draw on keep the plain combination. NOT TESTED on hardware; see [docs/IGR.md](docs/IGR.md#the-in-game-menu-beta).
+
 <a name="game-list"></a>
 
 For controller emulation use [PADEMU](docs/PADEMU.md); for menu vibration, folders and audio,
@@ -780,10 +782,7 @@ nuno6573, zackcage6, Blade1984, Vapor, V3ditata and Aislinn🏳️‍⚧️**.
 before the project existed, and it stuck. Every release, every build, every thread carries a name
 he thought of first.
 
-### Financial support (this fork)
-
-Heartfelt thanks to **Akilluminati47** for generously **funding this fork's development** — a
-kindness that keeps the rolling builds coming and is deeply appreciated.
+### The upstream project
 
 If you want the canonical, actively-maintained project, it lives at
 **[ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader)** — please

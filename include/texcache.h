@@ -128,6 +128,14 @@ image_cache_t *cacheInitCache(int userId, const char *prefix, int isPrefixRelati
  */
 void cacheDestroyCache(image_cache_t *cache);
 
+/** A game row's (slot, UID) pairs, one per cache of the theme on screen, made ready for that theme: `count`
+ * pairs (theme_t::gameCacheCount) made for load `generation` (theme_t::artGeneration). Pairs from another load
+ * are reset to -1, and grown when that load has more caches -- a view switch reloads the theme without
+ * rebuilding the rows, and Grid brings more caches than List (#211). GUI thread, inside the frame lock, like
+ * the readers. Returns 0 when the pairs cannot be made (no memory): the row then draws without art.
+ */
+int cacheRowPairsReady(int **ids, int **uids, int *capacity, unsigned int *rowGeneration, int count, unsigned int generation);
+
 GSTEXTURE *cacheGetTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value);
 GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value, int isPriority);
 

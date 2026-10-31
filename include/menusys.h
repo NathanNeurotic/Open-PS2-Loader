@@ -28,6 +28,9 @@ typedef struct submenu_item
 
     int *cache_id;
     int *cache_uid;
+    /// entries in cache_id/cache_uid, and the theme load (theme_t::artGeneration) they were made for
+    int cache_count;
+    unsigned int cache_gen;
 
     /// 1 when the item is marked as a favourite (a star is drawn next to it) -- checklist item 33
     int favourited;

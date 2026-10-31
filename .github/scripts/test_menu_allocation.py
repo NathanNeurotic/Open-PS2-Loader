@@ -48,13 +48,15 @@ typedef struct submenu_item {
     char *text;
     int text_id, id;
     int *cache_id, *cache_uid;
+    int cache_count;
+    unsigned int cache_gen;
     int favourited, isFolder, lastPlayed;
 } submenu_item_t;
 typedef struct submenu_list {
     struct submenu_list *prev, *next;
     submenu_item_t item;
 } submenu_list_t;
-typedef struct { int gameCacheCount; } theme_t;
+typedef struct { int gameCacheCount; unsigned int artGeneration; } theme_t;
 static theme_t theme;
 static theme_t *gTheme = &theme;
 static menu_list_t *menu, *selected_item;
@@ -86,6 +88,7 @@ int main(void) {
     menu_item_t device1 = {1, NULL}, device2 = {0, NULL};
     submenu_list_t *entries = NULL;
     theme.gameCacheCount = 3;
+    theme.artGeneration = 5;
 
     startFail(1);
     menuAppendItem(&device1);
@@ -114,6 +117,7 @@ int main(void) {
         startFail(n);
         entries = submenuAppendItem(&entries, -1, NULL, 7, 8);
         assert(entries && entries->item.cache_id == NULL && entries->item.cache_uid == NULL);
+        assert(entries->item.cache_count == 0 && entries->item.cache_gen == 0);
         assert(live == 1);
         free(entries);
         entries = NULL;
@@ -124,6 +128,7 @@ int main(void) {
     startFail(0);
     entries = submenuAppendItem(&entries, -1, NULL, 7, 8);
     assert(entries && live == 3);
+    assert(entries->item.cache_count == 3 && entries->item.cache_gen == 5);
     for (int i = 0; i < 3; i++) {
         assert(entries->item.cache_id[i] == -1 && entries->item.cache_uid[i] == -1);
     }
