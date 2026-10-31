@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <kernel.h>
 #include <delaythread.h>
+#include <debug.h>
 
 #include "include/opl.h"
 #include "include/gui.h"
@@ -29,6 +30,7 @@
 #define MENUWATCH_POLL_US     (250 * 1000)
 #define MENUWATCH_STALL_S     8  // in the menu
 #define MENUWATCH_BOOT_S      20 // while booting, where a device wait can be long
+#define MENUWATCH_INTRO_S     60 // boot splash: counted from the stage start, frames or not
 #define MENUWATCH_STACK_SIZE  (16 * 1024)
 #define MENUWATCH_REPORT_SIZE (24 * 1024)
 #define MENUWATCH_LOG_SIZE    (12 * 1024)
@@ -50,9 +52,21 @@ static const char *stepName(int step)
 {
     static const char *const names[] = {"?", "boot (before the menu loop)", "frame start (GUI lock, render start)", "pad read",
                                         "screen draw and input", "overlays", "notifications", "deferred menu updates",
-                                        "frame end (render flush, vsync)", "input dispatch", "frame hook"};
+                                        "frame end (render flush, vsync)", "input dispatch", "frame hook",
+                                        "boot: pad driver, boot folder and memory card probes (red)",
+                                        "boot: settings file location and early video-mode read (yellow)",
+                                        "boot: video, language, theme and GUI setup (blue)",
+                                        "boot: IO thread and menu setup (cyan)",
+                                        "boot: controller scan and wait (white)",
+                                        "boot: loading the settings (grey)",
+                                        "boot: intro screen and device start-up (purple)"};
 
     return (step > 0 && step < (int)(sizeof(names) / sizeof(names[0]))) ? names[step] : names[0];
+}
+
+static int isBootStep(int step)
+{
+    return step == MENUWATCH_BOOT || (step >= MENUWATCH_BOOT_DIR && step <= MENUWATCH_BOOT_INTRO);
 }
 
 static const char *threadState(int status)
@@ -81,6 +95,29 @@ static void screen(u8 r, u8 g, u8 b)
     *MW_GS_BGCOLOR = (u64)r | ((u64)g << 8) | ((u64)b << 16);
 }
 
+// The boot stage's colour (include/menuwatch.h), so a boot that never drew a frame says where it
+// stopped without the card. Before rmInit() the screen is still set up by the launcher, which is
+// enough for the background colour to show.
+static void bootColour(int step)
+{
+    static const u8 colours[][3] = {
+        {0xFF, 0x00, 0x00}, // red: boot folder, memory card probes, pad driver
+        {0xFF, 0xFF, 0x00}, // yellow: settings file location, early video-mode read
+        {0x00, 0x00, 0xFF}, // blue: video, language, theme, GUI setup
+        {0x00, 0xFF, 0xFF}, // cyan: IO thread, menu setup
+        {0xFF, 0xFF, 0xFF}, // white: controller scan and wait
+        {0x80, 0x80, 0x80}, // grey: loading the settings
+        {0x80, 0x00, 0xFF}, // purple: intro screen, device start-up
+    };
+    int i;
+
+    if (step < MENUWATCH_BOOT_DIR || step > MENUWATCH_BOOT_INTRO)
+        return;
+    screen(colours[step - MENUWATCH_BOOT_DIR][0], colours[step - MENUWATCH_BOOT_DIR][1], colours[step - MENUWATCH_BOOT_DIR][2]);
+    for (i = 0; i < 5; i++)
+        DelayThread(1000 * 1000);
+}
+
 static int add(int len, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 static int add(int len, const char *fmt, ...)
 {
@@ -98,21 +135,27 @@ static int add(int len, const char *fmt, ...)
     return len < MENUWATCH_REPORT_SIZE - 1 ? len : MENUWATCH_REPORT_SIZE - 1;
 }
 
-static int buildReport(int stalledFor, int frame)
+static int buildReport(int stalledFor, int frameAge, int frame)
 {
+    char frameNote[64];
     ee_thread_status_t status;
     ee_sema_t sema;
     u32 notReady = 0, empty = 0;
     int len = 0, id, logLen, wrapped = 0;
 
+    // Frame 0 means the boot never drew anything: say so rather than give a frame age.
+    if (frame == 0)
+        snprintf(frameNote, sizeof(frameNote), "no frame drawn yet");
+    else
+        snprintf(frameNote, sizeof(frameNote), "last frame drawn %d s ago (frame %d)", frameAge, frame);
     padGetFaultCounters(&notReady, &empty);
     len = add(len,
               "RiptOPL %s menu freeze report\r\n"
-              "%d s after boot, no frame drawn for %d s (frame %d)\r\n"
+              "%d s after boot, stuck for %d s, %s\r\n"
               "GUI thread %d last entered: %s\r\n"
               "longest run of missed pad reads: %u polls; of empty reads: %u polls\r\n\r\n"
               "EE threads (id, state, priority, entry, wait type/id, wakeups):\r\n",
-              OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), stalledFor, frame,
+              OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), stalledFor, frameNote,
               guiThreadId, stepName(watchStep), (unsigned)notReady, (unsigned)empty);
 
     for (id = 1; id < 256; id++) {
@@ -143,35 +186,70 @@ static int writeReport(const char *path, int len)
     return ok;
 }
 
+// 1 until the video setup: from there the screen belongs to the menu and the stage colours.
+static int traceOn = 1;
+
+// Each early boot step, printed on screen as it starts. The first call sets up the debug text screen,
+// which needs only the GS, so it works before the IOP is reset. A boot that stops here leaves its
+// last step on screen.
+void bootTrace(const char *step)
+{
+    static int count;
+
+    if (!traceOn)
+        return;
+    if (count == 0) {
+        init_scr();
+        scr_printf("\n  RiptOPL %s boot trace (diagnostic build)\n", OPL_VERSION);
+        scr_printf("  If the screen stops changing, the last line is where it stopped.\n\n");
+    }
+    scr_printf("  %2d  %s\n", ++count, step);
+}
+
 static void watchThread(void *arg)
 {
     // Count frames at rmEndFrame, not guiFrameId: dialogs (About, Settings pages, message boxes) run
     // their own rmStartFrame/rmEndFrame loop and never advance guiFrameId, so a dialog left open
     // read as a frozen menu.
     unsigned int lastFrame = rmFramesDrawn;
-    int lastStep = watchStep, stalledPolls = 0, stallLimit, len;
+    int lastStep = watchStep, stalledPolls = 0, framePolls = 0, stallLimit, countFrames, len;
 
     (void)arg;
     for (;;) {
         DelayThread(MENUWATCH_POLL_US);
-        // The menu limit counts from the first menu step, not from the last boot splash frame.
+        // The menu limit counts from the first menu step, not from the last boot splash frame, and
+        // each boot stage gets its own limit: a boot that moves on is not stuck.
         if (watchStep != lastStep) {
-            if (lastStep == MENUWATCH_BOOT)
+            if (isBootStep(lastStep))
                 stalledPolls = 0;
             lastStep = watchStep;
         }
+        // The boot splash keeps drawing while it waits for the deferred device start-up, so until
+        // that finishes its frames prove nothing: the stage counts from its start, with a longer
+        // limit. After it, the splash is only playing the boot sound or holding for the theme,
+        // which can take as long as a theme likes, so frames count again.
+        countFrames = watchStep != MENUWATCH_BOOT_INTRO || guiInitComplete();
         if (rmFramesDrawn != lastFrame) {
             lastFrame = rmFramesDrawn;
-            stalledPolls = 0;
-            continue;
-        }
-        stallLimit = watchStep == MENUWATCH_BOOT ? MENUWATCH_BOOT_S : MENUWATCH_STALL_S;
+            framePolls = 0;
+            if (countFrames) {
+                stalledPolls = 0;
+                continue;
+            }
+        } else
+            framePolls++;
+        if (watchStep == MENUWATCH_BOOT_INTRO)
+            stallLimit = MENUWATCH_INTRO_S;
+        else
+            stallLimit = isBootStep(watchStep) ? MENUWATCH_BOOT_S : MENUWATCH_STALL_S;
         if (++stalledPolls < stallLimit * (1000000 / MENUWATCH_POLL_US))
             continue;
 
+        // A boot stage first shows its own colour for 5 s: that needs nothing but the GS.
+        bootColour(lastStep);
         // Magenta: the watchdog fired. Everything after this needs the IOP.
         screen(0xFF, 0x00, 0xFF);
-        len = buildReport(stallLimit, lastFrame);
+        len = buildReport(stallLimit, framePolls / (1000000 / MENUWATCH_POLL_US), lastFrame);
         if (writeReport("mc0:/RIPTOPL-FREEZE.TXT", len) || writeReport("mc1:/RIPTOPL-FREEZE.TXT", len))
             screen(0x00, 0xFF, 0x00); // green: the report is on the card
         else
@@ -182,6 +260,16 @@ static void watchThread(void *arg)
 
 void menuWatchStep(int step)
 {
+    if (step >= MENUWATCH_BOOT_DIR && step <= MENUWATCH_BOOT_INTRO) {
+        diagLog("boot stage: %s", stepName(step)); // the order and timing of every stage, in the report
+        // The text screen lasts until the video setup takes the GS over; after that a stop shows the
+        // stage colour instead.
+        if (step == MENUWATCH_BOOT_VIDEO) {
+            bootTrace("video setup: from here a stop shows a colour");
+            traceOn = 0;
+        } else
+            bootTrace(stepName(step));
+    }
     watchStep = step;
 }
 
@@ -190,6 +278,7 @@ void menuWatchStart(void)
     ee_thread_t thread;
     int id;
 
+    bootTrace("watchdog started");
     guiThreadId = GetThreadId();
     memset(&thread, 0, sizeof(thread));
     thread.func = (void *)&watchThread;
