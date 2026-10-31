@@ -995,10 +995,11 @@ static void cdvdman_cdread_Thread(void *args)
             cdvdman_cb_event(SCECdFuncRead);
 
             /* A stream fill refused while the game held the drive restarts now rather than at its retry alarm.
-               StmCallback leaves the stream's counters alone when no fill was in flight. If the game's callback is
-               still pending, the drive is not free yet: the fill is refused again and keeps its alarm. */
+               Not through Stm0Callback: once the drive is free, the retry alarm can queue a fill before this line,
+               and StmCallback would count that fill as done before it is read. If the game's callback is still
+               pending, the drive is not free yet: the fill is refused again and keeps its alarm. */
             if (!for_stream && Stm0Callback != NULL)
-                Stm0Callback();
+                cdvdman_StreamRefill();
         }
     }
 }

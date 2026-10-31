@@ -20,7 +20,7 @@ static void StmCallback(void)
 {
     int OldState;
 
-    // Only update parameters if the streaming system was reading: a game read that ends during streaming also restarts the fill (cdvdman_cdread_Thread).
+    // Runs only for a finished stream fill (cdvdman_cdread_Thread), so StIsReading here means that fill has been read.
     if (cdvdman_stat.StreamingData.StIsReading) {
         CpuSuspendIntr(&OldState);
         cdvdman_stat.StreamingData.Stlsn += cdvdman_stat.StreamingData.StBanksize;
@@ -97,6 +97,13 @@ static void StStartFillStreamBuffer(void)
         StmScheduleClock.hi = 0;
         SetAlarm(&StmScheduleClock, &StmScheduleCb, &cdvdman_stat.StreamingData);
     }
+}
+
+// After a game read ends during streaming: restart a fill the game's read held off. StFillStreamBuffer does nothing
+// while a fill is in flight, and touches none of the stream's counters.
+void cdvdman_StreamRefill(void)
+{
+    StStartFillStreamBuffer();
 }
 
 int sceCdStInit(u32 bufmax, u32 bankmax, void *iop_bufaddr)
