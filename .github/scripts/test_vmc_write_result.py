@@ -261,6 +261,15 @@ int main(void)
         assert(memcmp(sim_page(15), ff, PAGE) != 0 && memcmp(sim_page(32), ff, PAGE) != 0); /* only the block */
 #ifdef BDM_DRIVER
         assert(sim_writes() - before == 4); /* 16 pages, 4 sectors per device write */
+        /* MX4SIO ("sdc") gets one sector per device write (its multi-sector retry restarts at the
+           first sector, ps2sdk#936), and the whole block is still erased. */
+        sim_driver("sdc");
+        before = sim_writes();
+        assert(OK(erase_block(16)));
+        for (int p = 16; p < 32; p++)
+            assert(memcmp(sim_page(p), ff, PAGE) == 0);
+        assert(sim_writes() - before == 16);
+        sim_driver("mass");
 #else
         assert(sim_writes() - before == 16); /* one write per page */
 #endif
@@ -307,6 +316,8 @@ BDM_SIM = COMMON + r'''
 struct block_device {
     int (*read)(struct block_device *bd, u64 sector, void *buffer, u16 count);
     int (*write)(struct block_device *bd, u64 sector, const void *buffer, u16 count);
+    const char *name;
+    unsigned int sectorSize;
 };
 static int depth, waits;
 static void WaitSema(int s) { (void)s; assert(depth == 0); depth++; waits++; }
@@ -343,9 +354,10 @@ static int sim_write(struct block_device *bd, u64 sector, const void *buffer, u1
     memcpy(disk[sector - BASE], buffer, count * 512u);
     return count;
 }
-static struct block_device device = {sim_read, sim_write};
+static struct block_device device = {.read = sim_read, .write = sim_write, .name = "mass", .sectorSize = 512};
 @DRIVER@
-void sim_reset(void) { memset(disk, 0x5A, sizeof(disk)); fail_page = -1; g_bd = &device; }
+void sim_reset(void) { memset(disk, 0x5A, sizeof(disk)); fail_page = -1; g_bd = &device; device.name = "mass"; }
+void sim_driver(const char *name) { device.name = name; }
 void sim_fail(int page, int mode) { fail_page = page; fail_mode = mode; }
 const u8 *sim_page(int page) { return disk[page]; }
 int sim_balanced(void) { return depth == 0 && waits > 0; }
@@ -439,6 +451,7 @@ const u8 *sim_page(int page);
 int sim_balanced(void);
 int sim_direct(void);
 int sim_writes(void);
+void sim_driver(const char *name);
 '''
 
 bdm_returns_int = header(cdvdman_bdm, 'bdm_writeSector').startswith('int ') and header(cdvdman_bdm, 'bdm_readSector').startswith('int ')
