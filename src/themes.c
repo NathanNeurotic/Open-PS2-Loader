@@ -1140,6 +1140,17 @@ static GSTEXTURE *getGameImageCached(image_cache_t *cache, struct submenu_item *
 // been requested yet (the Coverflow gate in drawGameImage can hold the BG request back until the cover settles).
 #define BG_HOLD_GRACE_FRAMES 30
 
+// Touch the background on screen BEFORE the next one is requested. The eviction scan skips an entry used this
+// frame, so the new request takes the other slot instead of the picture holdLastBackground is about to keep.
+static void keepLastBackground(mutable_image_t *gameImage)
+{
+    image_cache_t *cache = gameImage->cache;
+    if (cache == NULL || cache->userId < 0 || gameImage->lastCacheId < 0)
+        return;
+    int lastId = gameImage->lastCacheId, lastUid = gameImage->lastUid;
+    cacheLookupTexture(cache, &lastId, &lastUid);
+}
+
 // A Background keeps the last game art it drew on screen while the selected game's art is still coming, instead of
 // dropping to the default picture on every step through the list and showing the new art only once it is read (a
 // grey flash per step with Background Art on). Once the game is known to have no art, or once nothing is coming for
@@ -1310,6 +1321,9 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
         int isBackground = (drawElem->type == ELEM_TYPE_BACKGROUND);
         GSTEXTURE *texture;
         int coverflowCoverSettled = 1;
+
+        if (isBackground)
+            keepLastBackground(gameImage);
 
         if (isBackground) {
             // Prioritize the highlighted game's cover before the background so the small cover

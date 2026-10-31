@@ -48,8 +48,11 @@ assert "state >= 0 || (state == -1" in hb, "known-absent art (-2/-3) draws the d
 assert "mutableImage->lastCacheId = -1;" in elems
 assert "gameImage->lastCacheId = -1;" in hb, "a game with nothing coming drops the kept art"
 
+assert "keepLastBackground(gameImage);" in elems, "the background on screen is touched before the next request"
+assert elems.index("keepLastBackground(gameImage);") < elems.index("texture = holdLastBackground(gameImage, menu, &item->item, texture);")
 splash = read("src/gui.c")
 assert "#define THEME_HOLD_MS 6000" in splash
+assert "if (themeHold && gFrameHook)\n            gFrameHook();" in splash, "the hold runs the menu update hook so a late drive is seen"
 assert "thmSavedThemePending()" in splash and "(clock() - tInitDone) <" in splash, "the hold must be bounded"
 pend = themes[themes.index("int thmSavedThemePending(void)") :]
 pend = pend[: pend.index("\n}\n")]

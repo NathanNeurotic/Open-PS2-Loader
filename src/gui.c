@@ -4898,6 +4898,11 @@ void guiIntroLoop(void)
 
         if (!screenHandlerTarget && screenHandler)
             screenHandler->handleInput();
+
+        // While the greeting waits for the saved theme, run the menu update hook as the main loop would: a drive that
+        // comes up late is only picked up there (BdmGeneration), so without it the hold could never see the theme.
+        if (themeHold && gFrameHook)
+            gFrameHook();
     }
     gIntroSplashActive = 0;
 }
