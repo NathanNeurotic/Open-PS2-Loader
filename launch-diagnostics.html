@@ -191,11 +191,11 @@ comparison is more useful than repeatedly recreating cards. For POPStarter and E
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md">PS1 core and device restrictions</a> rather than applying PS2-core options.</p>
 <h3 id="mmce-game-id-waiting-for-the-card">MMCE Game ID: waiting for the card</h3>
 <p>With Game ID on, sd2psXtd starts the card switch a moment after it is asked, so a launch could
-read "not busy" before the switch began and start the game mid-switch (RIPPS2's report: Burnout 3
+read "not busy" before the switch began and start the game mid-switch (<a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a>'s report: Burnout 3
 hung). The launch now waits up to 2 seconds to see the card go busy, then shows
 <em>The MMCE is getting this game's memory card ready (N s)</em> until it is done, up to 180 seconds.
 <strong>START</strong> launches at once. A failed busy query never counts as ready; three in a row end the wait
-unconfirmed, and the launch goes ahead. Ported from RIPPS2 by akilluminati47. NOT TESTED on
+unconfirmed, and the launch goes ahead. Ported from RIPPS2 by <a href="https://github.com/akilluminati47">akilluminati47</a>. NOT TESTED on
 hardware: it needs an SD2PSX with sd2psXtd firmware.</p>
 <h2 id="drive-status-and-diagtxt">Drive Status and DIAG.TXT</h2>
 <p><strong>Drive Status</strong> in the main menu (above About) lists, without changing anything:</p>
@@ -211,7 +211,7 @@ switch and its wait, each launch, the boot, and failed settings saves. <strong>S
 Drive Status page writes it to <code>DIAG.TXT</code> in the settings folder. Attach that file to a bug report
 with the steps above. With <strong>Debug</strong> on, an MMCE launch saves <code>DIAG.TXT</code> before the game starts
 and again after the Game ID wait, never to a memory card or an MMCE card.</p>
-<p>Drive Status and the log are ported from RIPPS2 builds 114 and 115 by akilluminati47. NOT TESTED
+<p>Drive Status and the log are ported from <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> builds 114 and 115 by <a href="https://github.com/akilluminati47">akilluminati47</a>. NOT TESTED
 on hardware.</p>
 <h2 id="a-useful-controlled-comparison">A useful controlled comparison</h2>
 <ol>
@@ -229,8 +229,8 @@ confirms the affected setup, unless the maintainer explicitly decides otherwise.
 <h2 id="reading-the-fork-comparison">Reading the fork comparison</h2>
 <p>The <a href="https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html">fork-gap report</a>
 tracks source mechanisms, release descriptions, development work and design alternatives.
-RIPPS2's Recent Games, artwork aliases, MMCE Game ID wait, Drive Status and DIAG.TXT were ported
-on 2026-10-28 (Open-PS2-Loader #1084, RiptOPL #99) with credit to akilluminati47; see
+<a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a>'s Recent Games, artwork aliases, MMCE Game ID wait, Drive Status and DIAG.TXT were ported
+on 2026-10-28 (Open-PS2-Loader #1084, <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a> #99) with credit to <a href="https://github.com/akilluminati47">akilluminati47</a>; see
 <a href="library.html">Game Library</a> and the sections above. RIPPS2's Trust Cache was not ported.
 See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/ef323f5cb7a333217465c6a37526d1ea2058370b/docs/FORK-COLLABORATION.md">collaboration review practice</a> for how candidates become small,
 credited changes with appropriate checks.</p>

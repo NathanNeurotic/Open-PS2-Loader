@@ -400,7 +400,7 @@ HDD and network boot at the same time.</li>
 <li><strong>PS1 uses a separate runtime:</strong> place VCDs in <code>POPS/</code> and use the matching BDMA exFAT setup for POPSTARTER. PS2 exFAT support alone does not install that runtime. See <a href="ps1-vcd.html">VCD setup</a>.</li>
 </ul>
 <h2 id="guide-apa-jail-apapfs-and-exfat-on-the-same-disk">APA-Jail: APA/PFS and exFAT on the same disk</h2>
-<p><strong>APA-Jail is a hybrid layout, not another filesystem or an option you enable in RiptOPL.</strong> It lets APA/PFS storage for PSBBN/system data coexist with an exFAT area for game files and homebrew. The <a href="https://github.com/CosmicScale/PSBBN-Definitive-Project">PSBBN Definitive Project</a> uses APA-Jail, developed by Berion. Use that project's installation tools and instructions to create or maintain its layout; ordinary PC repartitioning can destroy the APA side.</p>
+<p><strong>APA-Jail is a hybrid layout, not another filesystem or an option you enable in <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a>.</strong> It lets APA/PFS storage for PSBBN/system data coexist with an exFAT area for game files and homebrew. The <a href="https://github.com/CosmicScale/PSBBN-Definitive-Project">PSBBN Definitive Project</a> uses APA-Jail, developed by <a href="https://www.psx-place.com/members/berion.1431">Berion</a>. Use that project's installation tools and instructions to create or maintain its layout; ordinary PC repartitioning can destroy the APA side.</p>
 <p>RiptOPL recognizes the supported <strong>APA+MBR hybrid</strong> by a valid, checksummed APA header plus an MBR FAT/exFAT partition entry beyond the APA reserved area. An MBR signature alone does not make a plain APA disk an APA-Jail disk.</p>
 <table>
 <thead>
