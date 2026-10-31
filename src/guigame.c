@@ -455,21 +455,28 @@ static void guiGameShowVMCSaves(const char *card)
 
 // Under the name, say who shares the card the name points at, so a series ID such as
 // XEBP_100.01_0 (the whole Jak and Daxter series) does not read as a typo of the game's own ID.
-// startup is the game's ID; an unknown or custom name shows nothing.
+// startup is the game's ID. Only the generated names count (<ID>_0 / <ID>_1, generic_0 / generic_1):
+// a custom name such as XEBP_100.01_backup is not shared by the series, so it shows nothing.
+static int guiGameIsVMCSlotName(const char *name, const char *prefix)
+{
+    size_t len = strlen(prefix);
+
+    return !strncmp(name, prefix, len) && name[len] == '_' && (name[len + 1] == '0' || name[len + 1] == '1') && name[len + 2] == '\0';
+}
+
 static void guiGameRefreshVMCKind(const char *startup, const char *name)
 {
     int text = -1;
 
     if (startup != NULL && startup[0] != '\0') {
         const char *group = getGroupIdForTitleId(startup);
-        size_t groupLen = strlen(group), startupLen = strlen(startup);
 
-        if (group != startup && !strncmp(name, group, groupLen) && name[groupLen] == '_')
+        if (group != startup && guiGameIsVMCSlotName(name, group))
             text = _STR_VMC_KIND_SERIES;
-        else if (!strncmp(name, startup, startupLen) && name[startupLen] == '_')
+        else if (guiGameIsVMCSlotName(name, startup))
             text = _STR_VMC_KIND_GAME;
     }
-    if (text < 0 && !strncmp(name, "generic_", 8))
+    if (text < 0 && guiGameIsVMCSlotName(name, "generic"))
         text = _STR_VMC_KIND_GENERIC;
 
     if (text >= 0)
