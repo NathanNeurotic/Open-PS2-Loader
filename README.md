@@ -782,10 +782,7 @@ nuno6573, zackcage6, Blade1984, Vapor, V3ditata and Aislinn🏳️‍⚧️**.
 before the project existed, and it stuck. Every release, every build, every thread carries a name
 he thought of first.
 
-### Financial support (this fork)
-
-Heartfelt thanks to **Akilluminati47** for generously **funding this fork's development** — a
-kindness that keeps the rolling builds coming and is deeply appreciated.
+### The upstream project
 
 If you want the canonical, actively-maintained project, it lives at
 **[ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader)** — please
