@@ -633,37 +633,6 @@ u32 tarRead(TarKind kind, const TarEntryBase *entry, void *dst, u32 dstSize)
     return total;
 }
 
-void *tarGet(TarKind kind, const char *filename)
-{
-    if (s_inactive[kind])
-        return NULL;
-
-    TarEntryBase *entry = tarFind(kind, filename);
-    if (!entry)
-        return NULL;
-
-    void *buf = memalign(64, entry->rawSize);
-    if (!buf)
-        return NULL;
-
-    if (tarRead(kind, entry, buf, entry->rawSize) != entry->rawSize) {
-        free(buf);
-        return NULL;
-    }
-
-    return buf;
-}
-
-int tarEnsureLoaded(TarKind kind)
-{
-    if (s_inactive[kind])
-        return -1;
-
-    if (!s_index[kind] || s_count[kind] == 0)
-        return tarLoadFromAnyDevice(kind);
-    return 0;
-}
-
 void tarInvalidate(TarKind kind)
 {
     tarCloseInternal(kind);

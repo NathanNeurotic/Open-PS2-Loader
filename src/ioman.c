@@ -103,11 +103,6 @@ int ioGetPending(int type)
     return (type > 0 && type < IO_REQ_TYPE_COUNT) ? gIoPending[type] : 0;
 }
 
-unsigned int ioGetTotal(int type)
-{
-    return (type > 0 && type < IO_REQ_TYPE_COUNT) ? gIoTotal[type] : 0;
-}
-
 int ioRegisterHandler(int type, io_request_handler_t handler)
 {
     WaitSema(gProcSemaId);
@@ -371,45 +366,6 @@ int ioPutRequestUnlessWaiting(int type, void *data)
     if (!found && result == IO_OK)
         WakeupThread(gIOThreadId);
     return result;
-}
-
-int ioRemoveRequests(int type)
-{
-    // lock the deletion sema and the queue end sema as well
-    WaitSema(gProcSemaId);
-    WaitSema(gEndSemaId);
-
-    int count = 0;
-    struct io_request_t *req = gReqList;
-    struct io_request_t *last = NULL;
-
-    while (req) {
-        if (req->type == type) {
-            struct io_request_t *next = req->next;
-
-            if (last)
-                last->next = next;
-
-            if (req == gReqList)
-                gReqList = next;
-
-            if (req == gReqEnd)
-                gReqEnd = last;
-
-            count++;
-            free(req);
-
-            req = next;
-        } else {
-            last = req;
-            req = req->next;
-        }
-    }
-
-    SignalSema(gEndSemaId);
-    SignalSema(gProcSemaId);
-
-    return count;
 }
 
 void ioEnd(void)

@@ -32,7 +32,7 @@ DRAW = 'src/themes.c'
 START_FRAME = 'void guiStartFrame('
 GUI_LOCK = 'guiLock();'
 GLYPH_SETTINGS = ('configSetInt(configOPL, CONFIG_OPL_GLYPH_SET, gGlyphSet);', 'configReadGlyphSet(configOPL);',
-                  'diaGetInt(ui, UICFG_GLYPH_SET, &gGlyphSet);', 'diaGetInt(diaUIConfig, UICFG_GLYPH_SET, &gGlyphSet);')
+                  'diaGetInt(ui, UICFG_GLYPH_SET, &gGlyphSet);')
 SETTINGS_FILES = ('src/opl.c', 'src/gui.c')
 
 
