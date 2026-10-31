@@ -1799,6 +1799,36 @@ GSTEXTURE *cacheGetTextureIdOrName(image_cache_t *cache, item_list_t *list, int 
     return nameTex;
 }
 
+int cacheRowPairsReady(int **ids, int **uids, int *capacity, unsigned int *rowGeneration, int count, unsigned int generation)
+{
+    if (*rowGeneration == generation && *ids != NULL && *uids != NULL && *capacity >= count)
+        return 1;
+    if (count <= 0 || (size_t)count > (size_t)-1 / sizeof(int))
+        return 0;
+    if (*ids == NULL || *uids == NULL || *capacity < count) {
+        // Allocate before freeing: on failure the row keeps its old pairs, still stamped as stale, and is
+        // never indexed past them.
+        size_t bytes = (size_t)count * sizeof(int);
+        int *newId = malloc(bytes);
+        int *newUid = newId != NULL ? malloc(bytes) : NULL;
+        if (newId == NULL || newUid == NULL) {
+            free(newId);
+            return 0;
+        }
+        free(*ids);
+        free(*uids);
+        *ids = newId;
+        *uids = newUid;
+        *capacity = count;
+    }
+    // A pair from another load names a slot and UID of a cache that is gone; the new cache with the same
+    // user id hands out the same small UIDs again, so keeping it could show another game's cover.
+    memset(*ids, -1, (size_t)*capacity * sizeof(int));
+    memset(*uids, -1, (size_t)*capacity * sizeof(int));
+    *rowGeneration = generation;
+    return 1;
+}
+
 GSTEXTURE *cacheGetTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value)
 {
     return cacheGetTextureEx(cache, list, cacheId, UID, value, 0);

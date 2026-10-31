@@ -446,6 +446,8 @@ jobs:
         run: python3 .github/scripts/test_page_animation.py
       - name: Check menu allocation failure leaves no stale art indices
         run: python3 .github/scripts/test_menu_allocation.py
+      - name: Check row art pairs follow every theme view switch
+        run: python3 .github/scripts/test_row_art_pairs.py
       - name: Check queue snapshot and submenu backward links after mutations
         run: python3 .github/scripts/test_io_menu_lifetime.py
       - name: Check tab selection and async config snapshots share a lock

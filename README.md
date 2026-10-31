@@ -254,6 +254,8 @@ unavailable under Neutrino, before the game opens its controller, or with Mode 6
 PS1 cores have their own reset behavior. [IGR](docs/IGR.md) covers reset targets, USB driver
 requirements, the power button and optional screenshots.
 
+**In-Game Menu (beta)** (*Settings → Game Launching*, off by default; from [akilluminati47](https://github.com/akilluminati47)'s [RIPPS2](https://github.com/akilluminati47/RIPPS2)): with it on, the reset combination pauses an OPL-core game under a panel with **Resume**, **Cheats** (switch the game's cheats on or off while playing), **Achievements** (RetroAchievements editions), **Exit Game** and **Power Off**. The pause is silent and Resume gives back the exact picture. PCSX2 and games the menu cannot draw on keep the plain combination. NOT TESTED on hardware; see [docs/IGR.md](docs/IGR.md#the-in-game-menu-beta).
+
 <a name="game-list"></a>
 
 For controller emulation use [PADEMU](docs/PADEMU.md); for menu vibration, folders and audio,
