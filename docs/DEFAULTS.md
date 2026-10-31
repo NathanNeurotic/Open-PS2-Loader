@@ -11,6 +11,7 @@ another device.
 | Menu video mode | Auto; regional interlaced output | Settings → Interface |
 | Theme | Built-in `<OPL>` | Settings → Interface → Theme |
 | Theme View | Default (List for `<OPL>`); Coverflow (3), Coverflow (5), PSBBN Flow and Grid are optional views | Settings → Interface → Theme View, or hold L3 |
+| Alternate Background | Off (the theme's `default=` background) | Settings → Interface → Alternate Background |
 | Cover and disc artwork | On | Settings → Interface → Artwork Settings |
 | Notifications | On | Settings → Interface |
 | PS2 logo | On | Settings → Game Launching |

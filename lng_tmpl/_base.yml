@@ -2475,6 +2475,13 @@ gui_strings:
 - comment: File Manager, Run on an ELF on the internal HDD.
   label: FM_RUN_HDD
   string: An ELF on the internal HDD starts from the Apps page.
+
+- comment: Interface setting under Library (KrahJohlito's alt= theme key). On shows the theme's alternate background.
+  label: ALT_BACKGROUND
+  string: Alternate Background
+
+- label: HINT_ALT_BACKGROUND
+  string: "Shows the theme's alternate background (alt= in its conf_theme.cfg) instead of its default one. Themes without one are not changed."
 - comment: SMB game set to Neutrino, but the Neutrino found has no SMB modules or bsd-smb.toml.
   label: NEUTRINO_SMB_UNSUPPORTED
   string: This Neutrino has no SMB support -- launching with the OPL core.

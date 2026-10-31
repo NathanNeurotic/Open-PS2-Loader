@@ -52,10 +52,14 @@ HARNESS = r'''
 typedef unsigned long long u64;
 @TYPES@
 static int screenHeight = 480;
+/* Label wrapping (diaWrapRoom/diaWrapExtra) has its own harness, test_dia_text_room.py: no label wraps here. */
+static int diaWrapRoom(const struct UIItem *item, int x, int lead) { (void)item; (void)x; (void)lead; return 0; }
+static int diaWrapExtra(struct UIItem *item, int wrapRoom) { (void)item; (void)wrapRoom; return 0; }
 @DEFINES@
 @FUNCTIONS@
 
 #define TOP 20
+#define LEFT 20 /* x0, as diaRenderUI passes it */
 #define BOTTOM 440 /* usedHeight 480 - 40, as diaRenderUI passes it */
 static struct UIItem page[400];
 
@@ -83,8 +87,8 @@ static void expect(const char *what, int rows, int hidden, int wantGap, int want
 {
     int gap, bottom;
     build(rows, hidden);
-    gap = diaSettingsFitGap(page, UI_SETTINGS_SPACING_H, TOP, BOTTOM);
-    bottom = diaLayoutBottom(page, UI_SETTINGS_SPACING_H, gap, TOP);
+    gap = diaSettingsFitGap(page, UI_SETTINGS_SPACING_H, TOP, LEFT, BOTTOM);
+    bottom = diaLayoutBottom(page, UI_SETTINGS_SPACING_H, gap, TOP, LEFT);
     if ((wantGap >= 0 && gap != wantGap) || (bottom <= BOTTOM) != wantFits) {
         printf("FAIL %s: gap %d, bottom %d (want gap %d, fits %d)\n", what, gap, bottom, wantGap, wantFits);
         fails++;
@@ -98,12 +102,12 @@ int main(void)
     /* the tallest page that fits at the normal gap keeps it; one row more starts to tighten */
     for (rows = 14; rows < 40; rows++) {
         build(rows, 0);
-        if (diaLayoutBottom(page, UI_SETTINGS_SPACING_H, UI_SETTINGS_SPACING_H, TOP) > BOTTOM)
+        if (diaLayoutBottom(page, UI_SETTINGS_SPACING_H, UI_SETTINGS_SPACING_H, TOP, LEFT) > BOTTOM)
             break;
     }
     expect("one row more than fits: tightens, and fits", rows, 0, -1, 1);
     build(rows, 0);
-    if (diaSettingsFitGap(page, UI_SETTINGS_SPACING_H, TOP, BOTTOM) >= UI_SETTINGS_SPACING_H) {
+    if (diaSettingsFitGap(page, UI_SETTINGS_SPACING_H, TOP, LEFT, BOTTOM) >= UI_SETTINGS_SPACING_H) {
         printf("FAIL an overflowing page kept the full gap\n");
         fails++;
     }
@@ -119,10 +123,11 @@ int main(void)
 
 item_enum = re.search(r'^typedef enum \{.*?\} UIItemType;', dia_h, re.M | re.S)
 item_struct = re.search(r'^struct UIItem\s*\{.*?^\};', dia_h, re.M | re.S)
-defines = '\n'.join(re.findall(r'^#define UI_SETTINGS_(?:SPACING_H|MIN_GAP)\s+\d+', dia_c, re.M))
+defines = '\n'.join(re.findall(r'^#define UI_(?:SETTINGS_SPACING_H|SETTINGS_MIN_GAP|SPACING_V|SPACER_WIDTH|SPACER_MINIMAL)\s+\d+', dia_c, re.M))
 functions = ''.join(function_text(dia_c, 'src/dia.c', sig) for sig in (
     'static int diaShouldBreakLine(',
     'static int diaShouldBreakLineAfter(',
+    'static int diaSpacerWidth(',
     'static int diaItemHeight(',
     'static void diaRowState(',
     'static int diaRowCollapses(',
@@ -131,8 +136,8 @@ functions = ''.join(function_text(dia_c, 'src/dia.c', sig) for sig in (
 ))
 if item_enum is None or item_struct is None:
     failures.append('include/dia.h: UIItemType / struct UIItem not found')
-elif defines.count('#define') != 2:
-    failures.append('src/dia.c: UI_SETTINGS_SPACING_H / UI_SETTINGS_MIN_GAP not found')
+elif defines.count('#define') != 5:
+    failures.append('src/dia.c: UI_SETTINGS_SPACING_H / UI_SETTINGS_MIN_GAP / UI_SPACING_V / UI_SPACER_* not found')
 elif not failures:
     program = (HARNESS.replace('@TYPES@', item_enum.group(0) + '\n' + item_struct.group(0))
                .replace('@DEFINES@', defines).replace('@FUNCTIONS@', functions))
@@ -152,7 +157,7 @@ elif not failures:
 
 render = function_text(dia_c, 'src/dia.c', 'void diaRenderUI(')
 if render:
-    if 'int gapH = settingsContext ? diaSettingsFitGap(ui, spacingH, y0, gTheme->usedHeight - 40) : spacingH;' not in render:
+    if 'int gapH = settingsContext ? diaSettingsFitGap(ui, spacingH, y0, x0, gTheme->usedHeight - 40) : spacingH;' not in render:
         failures.append('diaRenderUI: Settings pages must take their row gap from diaSettingsFitGap')
     if render.count('y += hmax + gapH;') != 2 or 'y += hmax + spacingH;' in render:
         failures.append('diaRenderUI: both line advances must use gapH (rows keep spacingH as their height)')
