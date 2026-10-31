@@ -244,7 +244,10 @@ if 'fntRenderStringFit(gTheme->fonts[0], 25, 20, ALIGN_NONE, 615 - 25, title, gT
 # old ones ran 599-611. Keep every coder row to at most 64 characters as a cheap guard against regrowing them.
 about = dialogs[dialogs.index('struct UIItem diaAbout[]'):]
 about = about[:about.index('{UI_TERMINATOR}};')]
-for row in re.findall(r'\{UI_LABEL, 0, 1, 1, -1, 0, 15, \{\.label = \{"([^"]+)", -1\}\}\}', about):
+rows = re.findall(r'\{UI_LABEL, 0, 1, 1, -1, 0, 15, \{\.label = \{"([^"]+)", -1\}\}\}', about)
+if not [row for row in rows if ' - ' in row]:
+    failures.append('diaAbout: no coder rows matched; the row pattern no longer fits diaAbout')
+for row in rows:
     if ' - ' in row and len(row) > 64:
         failures.append('diaAbout: coder row too long for 4:3 SD (%d characters): %s' % (len(row), row))
 
