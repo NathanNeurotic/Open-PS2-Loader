@@ -24,8 +24,6 @@ typedef struct
 } pcdiag_cis_info_t;
 
 /* 0: END/link=FF; -1: truncated tuple; -2: byte/tuple bound reached. */
-int pcdiag_cis_dump(pcdiag_cis_read_t read_byte, void *context,
-                    pcdiag_cis_trace_t trace);
 int pcdiag_cis_dump_info(pcdiag_cis_read_t read_byte, void *context,
                          pcdiag_cis_trace_t trace, pcdiag_cis_info_t *info);
 int pcdiag_cis_cf_candidate(const pcdiag_cis_info_t *info);

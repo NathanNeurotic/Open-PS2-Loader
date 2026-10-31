@@ -187,13 +187,6 @@ int pcdiag_cis_dump_info(pcdiag_cis_read_t read_byte, void *context,
     return -2;
 }
 
-int pcdiag_cis_dump(pcdiag_cis_read_t read_byte, void *context,
-                    pcdiag_cis_trace_t trace)
-{
-    pcdiag_cis_info_t info;
-    return pcdiag_cis_dump_info(read_byte, context, trace, &info);
-}
-
 int pcdiag_cis_cf_candidate(const pcdiag_cis_info_t *info)
 {
     return info->complete && !info->malformed && !info->linked &&

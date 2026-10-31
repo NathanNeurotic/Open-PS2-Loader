@@ -27,7 +27,6 @@ struct SmapDriverData
 /* Function prototypes */
 int smap_init(int argc, char *argv[]);
 int SMAPStart(void);
-void SMAPStop(void);
 int SMAPGetMACAddress(unsigned char *buffer);
 
 void SMapLowLevelInput(struct pbuf *pBuf);
