@@ -6,8 +6,11 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 source = (root / 'src/gui.c').read_text(encoding='utf-8')
-start = source.index('int guiMsgBox(')
-function = source[start:source.index('\n}', start) + 2]
+# guiMsgBox draws its lines through the shared guiDrawWrappedLines helper; compile both.
+function = ''
+for signature in ('static int guiDrawWrappedLines(', 'int guiMsgBox('):
+    start = source.index(signature)
+    function += source[start:source.index('\n}', start) + 2] + '\n'
 harness = r'''
 #include <assert.h>
 #include <stdio.h>
