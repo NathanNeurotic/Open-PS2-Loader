@@ -2484,7 +2484,7 @@ gui_strings:
   string: "Shows the theme's alternate background (alt= in its conf_theme.cfg) instead of its default one. Themes without one are not changed."
 
 - label: VMC_KIND_SERIES
-  string: "Series card: shared by every game in this series, so saves can carry over between them."
+  string: "Series card: the games in this series use this name by default, so saves on it can carry over between them."
 
 - label: VMC_KIND_GAME
   string: "Game card: named after this game's ID."

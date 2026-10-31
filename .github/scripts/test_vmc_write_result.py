@@ -291,8 +291,12 @@ int main(void)
         assert(OK(write_page(5, data)) && memcmp(sim_page(5), data, PAGE) == 0); /* MCMAN's retry lands */
 
         /* A failed erase fails the erase transfer even though its 0x82 status follows. */
+        before = sim_writes();
         sim_fail(37, mode);
         assert(!OK(erase_block(32)));
+#ifdef BDM_DRIVER
+        assert(sim_writes() - before == 2); /* stops after the failed second batch (pages 36-39) */
+#endif
         sim_fail(-1, mode);
         assert(OK(erase_block(32)));
 
