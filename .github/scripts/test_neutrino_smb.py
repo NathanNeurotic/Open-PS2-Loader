@@ -178,6 +178,17 @@ int main() {
     check(sysNeutrinoSmbPreflight(ELF, &a) == 0, "an extra module does not stop the hand-over");
     check(files[TOML].find("[\"ip=1.2.3.4\", \"user=keep\"]") != std::string::npos, "another module's args untouched");
     check(count(files[TOML], "\"ip=10.0.0.7\"") == 3, "ip= written in the three modules it belongs to");
+    // Only the args line counts: the key in another field of the same module table does not.
+    std::string field = R"(@STOCK@)";
+    {
+        size_t fhi = field.find("file = \"smb_fhi.irx\"");
+        size_t user = field.find(", \"user=guest\"", fhi);
+        field.erase(user, 14);
+        field.insert(field.find("env = [\"EE\"]", fhi), "note = \"user=guest\"\n");
+    }
+    install(field.c_str(), true);
+    check(sysNeutrinoSmbPreflight(ELF, &a) == -2, "user= only in another field of smb_fhi: refused");
+    check(files[TOML] == field, "refused file untouched");
     install("args = [\"ip=1\n", true);
     check(sysNeutrinoSmbPreflight(ELF, &a) == -2, "unterminated string: refused");
 

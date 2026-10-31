@@ -2134,7 +2134,7 @@ static int sysTomlEscape(const char *in, char *out, int outSize)
 }
 
 // Rewrite the value of every basic string in `in` that starts with one of the keys, inside the
-// [[module]] table of a module that key belongs to. A small lexer, not a search, so a key inside a
+// `args = [...]` line of the [[module]] table of a module that key belongs to. A small lexer, not a search, so a key inside a
 // comment or inside another string is never taken for an arg: comments, basic strings (with escapes)
 // and literal strings are copied through whole. The module is the one named by the table's
 // `file = "..."` line; any table header starts a new one. Multi-line strings are not in the stock
@@ -2186,10 +2186,16 @@ static int sysTomlRewriteSmbArgs(const char *in, int len, char *out, int outSize
             if (i + 2 < len && in[i + 1] == '"' && in[i + 2] == '"')
                 return -1;
             TOML_PUT(in[i++]);
-            // `file = "x.irx"`: this table's module.
-            int j = lineStart, isFile = 0;
+            // `file = "x.irx"`: this table's module. `args = [...]`: its args, the only strings rewritten.
+            int j = lineStart, isFile = 0, isArgs = 0;
             while (j < i && (in[j] == ' ' || in[j] == '\t'))
                 j++;
+            if (i - j >= 5 && !strncmp(in + j, "args", 4)) {
+                int a = j + 4;
+                while (a < i && (in[a] == ' ' || in[a] == '\t'))
+                    a++;
+                isArgs = a < i && in[a] == '=';
+            }
             if (i - j >= 5 && !strncmp(in + j, "file", 4)) {
                 j += 4;
                 while (j < i && (in[j] == ' ' || in[j] == '\t'))
@@ -2210,7 +2216,7 @@ static int sysTomlRewriteSmbArgs(const char *in, int len, char *out, int outSize
                 }
             }
             int k = keyCount;
-            if (!isFile && module != 0) {
+            if (isArgs && module != 0) {
                 for (k = 0; k < keyCount; k++) {
                     int kl = (int)strlen(keys[k].key);
                     if ((keys[k].modules & module) && i + kl <= len && !strncmp(in + i, keys[k].key, kl))
