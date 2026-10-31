@@ -44,6 +44,11 @@ struct rm_mode
     short int aratio;
     short int PAR1; // Pixel Aspect Ratio 1 (For video modes with non-square pixels, like PAL/NTSC)
     short int PAR2; // Pixel Aspect Ratio 2 (For video modes with non-square pixels, like PAL/NTSC)
+    // 4:3 safe area: the part of the framebuffer the 640x480 design grid is drawn into, centred,
+    // before the user's Overscan setting is applied. 0 = the whole framebuffer. Rows that leave
+    // these out get 0 from aggregate initialisation.
+    short int safeW;
+    short int safeH;
 };
 
 // clang-format off
@@ -56,8 +61,16 @@ static struct rm_mode rm_mode_table[NUM_RM_VMODES] = {
     {GS_MODE_DTV_576P,   31,  640,  512,  1, 2, GS_NONINTERLACED, GS_FRAME, RM_ARATIO_4_3, 16, 15}, // DTV576P@50Hz
     {GS_MODE_VGA_640_60, 31,  640,  480,  1, 2, GS_NONINTERLACED, GS_FRAME, RM_ARATIO_4_3,  1,  1}, // VGA640x480@60Hz
     // 24 bit color mode full screen, multi-pass (2 passes, HIRES)
-    {GS_MODE_PAL,        16,  704,  576,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3, 12, 11}, // PAL@50Hz
-    {GS_MODE_NTSC,       16,  704,  480,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3, 10, 11}, // NTSC@60Hz
+    // The 480i/576i HIRES rows fill all 704 samples x every active line, which is the WHOLE 4:3
+    // raster -- on a CRT a good part of it sits under the bezel (overscan), so the menu was cut off
+    // at the edges. Draw the design grid into the same footprint as the standard 640-wide
+    // rows instead: 640 wide (1:1 horizontally, exactly the width the 640x448i/640x512i rows show
+    // with MagH 4) and, vertically, 480 lines for NTSC (1:1, the full design grid) and 512 lines
+    // for PAL (the 640x512i row's height). PAR is then the grid's fill ratio, as for every other
+    // row: (640/640)/(480/480) = 1/1 and (640/640)/(512/480) = 15/16. The 480p/576p HIRES rows
+    // are left full-raster: they are for digital/component displays that do not overscan.
+    {GS_MODE_PAL,        16,  704,  576,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3, 16, 15, 640, 512}, // PAL@50Hz
+    {GS_MODE_NTSC,       16,  704,  480,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3,  1,  1, 640, 480}, // NTSC@60Hz
     {GS_MODE_DTV_480P,   31,  704,  480,  2, 2, GS_NONINTERLACED, GS_FRAME, RM_ARATIO_4_3, 10, 11}, // DTV480P@60Hz
     {GS_MODE_DTV_576P,   31,  704,  576,  2, 2, GS_NONINTERLACED, GS_FRAME, RM_ARATIO_4_3, 12, 11}, // DTV576P@50Hz
     // 16 bit color mode full screen, multi-pass (3 passes, HIRES)
@@ -787,8 +800,17 @@ int rmUnScaleY(int y)
 
 void rmSetOverscan(int overscan)
 {
-    iDisplayXOff = (gsGlobal->Width * overscan) / (2 * 1000);
-    iDisplayYOff = (gsGlobal->Height * overscan) / (2 * 1000);
+    // Start from the mode's 4:3 safe area (centred), then shrink it by the user's Overscan setting.
+    // The safe area is in full-height lines; an interlaced FRAME framebuffer holds half of them.
+    int safeW = rm_mode_table[vmode].safeW;
+    int safeH = rm_mode_table[vmode].safeH;
+    if (rmGetInterlacedFrameMode() == 1)
+        safeH /= 2;
+    int baseW = (safeW > 0 && safeW <= gsGlobal->Width) ? safeW : gsGlobal->Width;
+    int baseH = (safeH > 0 && safeH <= gsGlobal->Height) ? safeH : gsGlobal->Height;
+
+    iDisplayXOff = (gsGlobal->Width - baseW) / 2 + (baseW * overscan) / (2 * 1000);
+    iDisplayYOff = (gsGlobal->Height - baseH) / 2 + (baseH * overscan) / (2 * 1000);
     iDisplayWidth = gsGlobal->Width - (2 * iDisplayXOff);
     iDisplayHeight = gsGlobal->Height - (2 * iDisplayYOff);
 
