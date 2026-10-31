@@ -1,0 +1,215 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>File Manager · RiptOPL Docs</title>
+<meta name="description" content="Browse every started drive and copy, move, rename and delete files, or back up saves as PSU, from Start &gt; File Manager.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="legacy-notice" id="legacy-notice" role="note"><b>This is the legacy version of RiptOPL.</b> We have moved over to ps2build's C++ Edition at <a href="https://github.com/NathanNeurotic/RiptOPL">NathanNeurotic/RiptOPL</a>, where new development now happens.</div>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="game-formats.html"><span class="icon icon-zso"></span>Game Image Formats</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow &amp; PSBBN Flow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="library.html"><span class="icon icon-apps"></span>Game Library</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="file-manager.html" class="active"><span class="icon icon-apps"></span>File Manager</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="ps2sdk-notes.html"><span class="icon icon-book"></span>Notes for ps2sdk</a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="launch-diagnostics.html"><span class="icon icon-troubleshoot"></span>Launch diagnostics</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1 id="file-manager">File Manager</h1>
+<p><strong>Start → File Manager</strong> browses every drive the loader has started and copies, moves, renames and deletes
+files on them, without booting a separate file manager. It is a port of the Memory Files browser from
+<a href="https://github.com/akilluminati47">akilluminati47</a>'s <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a>
+(builds 91 to 125), redrawn as an ordinary dialog.</p>
+<p><em>NOT TESTED on hardware yet.</em></p>
+<h2 id="drives">Drives</h2>
+<p>The first page lists what is started now. Nothing is loaded just to fill the list: start a device from its
+page (or set it to Auto in Settings) and it appears here.</p>
+<table>
+<thead>
+<tr>
+<th>Shown as</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mass0:/</code> … with USB, MX4SIO, iLink, UDPBD or internal HDD (exFAT)</td>
+<td>each started BDM drive</td>
+</tr>
+<tr>
+<td><code>mmce0:/</code>, <code>mmce1:/</code></td>
+<td>MMCE cards</td>
+</tr>
+<tr>
+<td><code>mc0:/</code>, <code>mc1:/</code> with the free space</td>
+<td>formatted PS2 memory cards</td>
+</tr>
+<tr>
+<td><code>pfs0:/</code></td>
+<td>the loader's own partition on an APA internal HDD (the APA disk itself and its other partitions are never listed or touched)</td>
+</tr>
+<tr>
+<td><code>udpfs:/</code></td>
+<td>the UDPFS server, when UDPFS is running</td>
+</tr>
+<tr>
+<td><code>smb0:\</code></td>
+<td>the SMB share, when it is connected</td>
+</tr>
+</tbody>
+</table>
+<h2 id="controls">Controls</h2>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>On a row</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cross</td>
+<td>opens a folder or drive; on a file, shows what can be done with it</td>
+</tr>
+<tr>
+<td>Square</td>
+<td>marks or unmarks the entry (marked rows start with <code>*</code>)</td>
+</tr>
+<tr>
+<td>Triangle</td>
+<td>shows what can be done with the entry</td>
+</tr>
+<tr>
+<td>L1 / R1</td>
+<td>the previous / next page (12 entries a page)</td>
+</tr>
+<tr>
+<td>Circle</td>
+<td>up one folder; from the drive list, closes the File Manager</td>
+</tr>
+</tbody>
+</table>
+<p>A folder lists <code>..</code> first, then its folders, then its files with their sizes, each by name. In a memory
+card's root each save folder shows the title from its <code>icon.sys</code>. The line under the path says the page,
+how many entries the folder has, what is on the clipboard and how many are marked.</p>
+<h2 id="what-can-be-done">What can be done</h2>
+<p>The actions menu (Triangle, or Cross on a file) offers what fits the entry:</p>
+<ul>
+<li><strong>Open</strong> (a folder) and <strong>Run</strong> (an <code>.elf</code>). Run starts the ELF the way an app on the Apps page starts:
+the Reboot IOP question, then the same handoff. An ELF on the internal HDD (<code>pfs0:/</code>) is left to the Apps
+page, which knows its partition.</li>
+<li><strong>Mark</strong> / <strong>Unmark</strong>.</li>
+<li><strong>Copy</strong> and <strong>Cut</strong> put the marked entries, or this one if none are marked, on the clipboard.</li>
+<li><strong>Rename</strong>, typed on the keyboard.</li>
+<li><strong>Delete</strong> the marked entries, or this one, folders with everything in them. You are asked first.</li>
+<li><strong>Unpack PSU here</strong> (a <code>.psu</code> file) unpacks the save into its folder here. On a memory card it goes in
+the card's root, where games look for saves.</li>
+</ul>
+<p>Under the list:</p>
+<ul>
+<li><strong>Paste here</strong> copies or moves the clipboard into this folder. A save folder pasted onto a memory card
+goes in the card's root, and a <code>.psu</code> pasted onto a memory card unpacks into its save.</li>
+<li><strong>Paste as PSU</strong> turns each save folder on the clipboard (a folder with an <code>icon.sys</code>) into one <code>.psu</code>
+file here, the save file uLaunchELF, EMS and Apollo use. The saves themselves are not changed. Copy a
+save on a memory card, open a USB folder and Paste as PSU to back it up.</li>
+<li><strong>New folder</strong>, named on the keyboard.</li>
+</ul>
+<p>PSU files are read and written by the same code as <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VMC.md#saves-on-a-card">VMC Saves</a>, so the same checks
+apply (a cut-short or badly named <code>.psu</code> is refused, a PSU is written whole before it gets its name).</p>
+<h2 id="safety">Safety</h2>
+<ul>
+<li>Everything that changes a drive needs <strong>Write Operations</strong> on (Settings). With it off the File Manager
+only browses, copies to the clipboard and runs ELFs.</li>
+<li>The File Manager asks for the Parental Lock password when one is set.</li>
+<li>A name already in the target folder is never replaced: that entry is skipped, the rest still go, and the
+first one skipped is named afterwards.</li>
+<li>A copied file is read back for its size before it counts; a copy that stops part way (a full drive, a
+pulled card) removes the cut-short file.</li>
+<li>A move is a rename on the same drive. Across drives it is a copy, and the source is removed only once the
+whole copy is made; a copy that fails is taken back and the source stays.</li>
+<li>A folder is never copied or moved into itself, and a drive's root is never deleted.</li>
+<li>A file over 4 GB is refused before it starts on a FAT32 drive, and so is a file bigger than a BDM
+drive's free space.</li>
+</ul>
+<h2 id="different-from-ripps2">Different from RIPPS2</h2>
+<p>RIPPS2 draws its own screen with a grid of tiles, a search, a <code>.tar</code> browser, card-image (VMC) browsing and
+ISO/CUE launching. This port keeps the file manager itself and leaves those out: card images have their own
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VMC.md#saves-on-a-card">VMC Saves</a> page, and games start from their pages. RIPPS2 asks before replacing a
+name that is already there; here nothing is ever replaced.</p>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

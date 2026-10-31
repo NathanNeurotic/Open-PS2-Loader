@@ -209,15 +209,18 @@ step on BDM and PFS; <b>the rebuild has NOT been run on hardware.</b> See the
 
 <h2 id="saves">Saves on a card</h2>
 <p>The per-game VMC dialog has a <b>Saves</b> button for a card that exists. It opens a page that treats the
-card like a folder. From <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> builds 98 to 115 by <a href="https://github.com/akilluminati47">akilluminati47</a>; NOT TESTED on hardware.</p>
+card like a folder. From <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> builds 51 and 98 to 115 by <a href="https://github.com/akilluminati47">akilluminati47</a>; NOT TESTED on hardware. To copy saves between real memory cards and other drives, see <a href="file-manager.html">File Manager</a>.</p>
 <ul>
 <li><b>On the card</b> lists the saves by their titles, read from each save's <code>icon.sys</code>; <b>Free</b>
 shows the card's free space.</li>
-<li><b>In the folder</b> lists the save folders in <code>SAVES/</code>, beside the card (for example
-<code>mass0:/VMC/SAVES/</code>).</li>
-<li><b>Copy out</b> copies the picked save into <code>SAVES/&lt;save folder&gt;/</code>. <b>Copy in</b> copies a
-folder from <code>SAVES/</code> onto the card as a new save; one that does not fit is refused before anything is
-written. Neither ever overwrites a save or folder of the same name.</li>
+<li><b>In the folder</b> lists the save folders and <code>.psu</code> files in <code>SAVES/</code>, beside the card (for example
+<code>mass0:/VMC/SAVES/</code>). A <code>.psu</code> is listed by the save inside it, with <b>(PSU)</b> after its title.</li>
+<li><b>Copy out</b> copies the picked save into <code>SAVES/&lt;save folder&gt;/</code>. <b>Copy out as PSU</b>
+copies it into one file, <code>SAVES/&lt;save folder&gt;.psu</code>, the single-file save uLaunchELF, EMS and Apollo
+read and write; it is written to a <code>.tmp</code> file first and renamed only once whole. <b>Copy in</b> copies a
+folder or <code>.psu</code> from <code>SAVES/</code> onto the card as a new save; one that does not fit is refused before
+anything is written, and so is a <code>.psu</code> that is cut short, names a file twice or uses a name a card cannot
+hold. None of them ever overwrites a save, folder or <code>.psu</code> of the same name.</li>
 <li><b>Delete</b> removes the picked save from the card after you confirm it.</li>
 </ul>
 <p><code>SAVES/</code> is shared by every card in that <code>VMC</code> folder, so this is also how a save moves
