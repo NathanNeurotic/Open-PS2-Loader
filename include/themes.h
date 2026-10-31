@@ -233,6 +233,10 @@ typedef struct theme
     // setting reloads it (thmRefreshDisplayLayout).
     int layoutWide;
     int layoutDependsOnWide;
+    // Alternate background (thmApplyAltBackground): the Alternate Background setting this theme was built
+    // with, and whether it declares any alt= key -- then a change of the setting reloads it too.
+    int altBackground;
+    int altDeclared;
 
     theme_element_t *coverflow;
     theme_element_t *psbbnFlow;
@@ -335,7 +339,8 @@ int thmSetView(int view);
 // two stops. Returns 1 when the view changed; a step between the two Coverflow stops does not reload.
 int thmCycleView(void);
 // Reload the active theme when the Widescreen setting no longer matches the layout it was built with (only
-// for themes with SD/HD variants). Returns 1 when the theme was reloaded.
+// for themes with SD/HD variants), or the Alternate Background setting no longer matches the pictures it was
+// built with (only for themes with alt= keys). Returns 1 when the theme was reloaded.
 int thmRefreshDisplayLayout(void);
 int thmFindGuiID(const char *theme);
 int thmSavedThemePending(void); // the saved disk theme's drive has not offered it yet

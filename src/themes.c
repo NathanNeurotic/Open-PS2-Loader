@@ -4967,6 +4967,10 @@ static int thmLoad(const char *themePath)
     // reads the cfg, so the rest of the load sees one layout. Themes without them are untouched.
     newT->layoutWide = rmIsWideDisplay();
     newT->layoutDependsOnWide = thmApplyDisplayLayout(themeConfig, newT->layoutWide);
+    // Alternate background (alt= keys): after the SD/HD pass so an alt_hd= resolves first. Themes without
+    // alt keys are untouched.
+    newT->altBackground = gThemeAltBackground != 0;
+    newT->altDeclared = thmApplyAltBackground(themeConfig, newT->altBackground);
 
     // Pick the view to build (docs/MULTI-VIEW-THEMES-PLAN.md). Only that view is parsed; switching views
     // reloads the theme. A theme that declares no "<view>." keys parses exactly as before.
@@ -5528,7 +5532,11 @@ int thmSetView(int view)
 
 int thmRefreshDisplayLayout(void)
 {
-    if (gTheme == NULL || !gTheme->layoutDependsOnWide || gTheme->layoutWide == rmIsWideDisplay())
+    if (gTheme == NULL)
+        return 0;
+    int wideChanged = gTheme->layoutDependsOnWide && gTheme->layoutWide != rmIsWideDisplay();
+    int altChanged = gTheme->altDeclared && gTheme->altBackground != (gThemeAltBackground != 0);
+    if (!wideChanged && !altChanged)
         return 0;
     return thmSetGuiValue(guiThemeID, 1);
 }
