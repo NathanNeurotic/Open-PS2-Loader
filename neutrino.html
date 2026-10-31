@@ -161,7 +161,7 @@ case-sensitive. The other old choices load as <em>&lt;not set&gt;</em>.</p>
 <tr><td>Internal HDD (APA partition &rarr; HDL)</td><td>Yes</td></tr>
 <tr><td>MMCE (SD2PSX / MemCard PRO2)</td><td>Yes</td></tr>
 <tr><td>UDPBD / UDPFS (network block device)</td><td>Yes — the default. UDPBD and UDPFS (Files and IMG) can also run on <code>&lt;OPL&gt;</code> per game (see <a href="network-boot.html#neutrino-only">Network Boot</a>). Both work on a real PS2; the UDPBD test (2026-09-26) used every Neutrino setting at its default.</td></tr>
-<tr><td>SMB / Ethernet</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
+<tr><td>SMB / Ethernet</td><td>Experimental, only for a game whose own Loader Core is Neutrino, and only with a Neutrino build that has the SMB backend from <a href="https://github.com/sahlberg">Ronnie Sahlberg</a>'s <a href="https://github.com/ps2max32/neutrino/pull/236">ps2max32/neutrino PR #236</a> (not merged yet). <b>Default</b> keeps SMB games on <code>&lt;OPL&gt;</code>; a share not on port 445, a game with a VMC, or a Neutrino without the SMB modules falls back to <code>&lt;OPL&gt;</code> with a warning. See <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/NEUTRINO.md#smb-through-neutrino-experimental">SMB through Neutrino</a>. NOT TESTED on hardware.</td></tr>
 <tr><td>USB Extreme split images (<code>.ul</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
 <tr><td>Compressed ISO (<code>.zso</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
 </tbody>
