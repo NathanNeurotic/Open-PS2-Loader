@@ -58,6 +58,10 @@ jobs:
         run: python3 .github/scripts/test_ripps2_all_games.py
       - name: Check the RIPPS2 Hide Game and Delete everything (hidden.txt, rows, files that go)
         run: python3 .github/scripts/test_ripps2_game_manage.py
+      - name: Check the About page (full version, NathanNeurotic credited, row count kept)
+        run: python3 .github/scripts/test_about_credits_layout.py
+      - name: Check the YAOPL theme fixes, the Background art hold and the RIPPS2 boot theme hold
+        run: python3 .github/scripts/test_yaopl_ripps2_b125_ports.py
       - name: Check the RIPPS2 right-to-left and CJK text (Arabic joining, line order, CJK/Thai breaks, wrap)
         run: python3 .github/scripts/test_ripps2_text_port.py
       - name: Check the RIPPS2 boot video mode (saved mode read before the screen starts)

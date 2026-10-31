@@ -731,14 +731,19 @@ static void initAttributeText(const char *themePath, config_set_t *themeConfig, 
 
 // Common functions for Image ///////////////////////////////////////////////////////////////////////////////////////////////
 
-static void findDuplicate(theme_element_t *first, const char *cachePattern, const char *defaultTexture, const char *overlayTexture, const char *overlayTexture2, mutable_image_t *target)
+static void findDuplicate(theme_element_t *first, int type, const char *cachePattern, const char *defaultTexture, const char *overlayTexture, const char *overlayTexture2, mutable_image_t *target)
 {
     theme_element_t *elem = first;
     while (elem) {
         if ((elem->type == ELEM_TYPE_STATIC_IMAGE) || (elem->type == ELEM_TYPE_ATTRIBUTE_IMAGE) || (elem->type == ELEM_TYPE_GAME_IMAGE) || (elem->type == ELEM_TYPE_BACKGROUND)) {
             mutable_image_t *source = (mutable_image_t *)elem->extended;
 
-            if (cachePattern && source->cache && !strcmp(cachePattern, source->cache->suffix)) {
+            // An AttributeImage cache holds the theme's own pictures of an attribute (<theme>/<value>_<attribute>.png,
+            // userId -1); every other image cache holds game art and its userId indexes the item's cache_id[]. Sharing
+            // one across the two made a game image index cache_id[-1] (theme with attribute=X before pattern=X), or an
+            // attribute load its picture from ART. Only share within the same kind (YAOPL cc3d59f0, Roman Kelesidis).
+            if (cachePattern && source->cache && ((type == ELEM_TYPE_ATTRIBUTE_IMAGE) == (elem->type == ELEM_TYPE_ATTRIBUTE_IMAGE)) &&
+                !strcmp(cachePattern, source->cache->suffix)) {
                 target->cache = source->cache;
                 target->cacheLinked = 1;
                 LOG("THEMES Re-using a cache for pattern %s\n", cachePattern);
@@ -906,6 +911,8 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
     mutable_image_t *mutableImage = (mutable_image_t *)malloc(sizeof(mutable_image_t));
     mutableImage->currentCacheId = -1; // -1 = the cache API's "no entry" sentinel (see themes.h)
     mutableImage->currentUid = -1;
+    mutableImage->lastCacheId = -1;
+    mutableImage->lastUid = -1;
     mutableImage->currentConfigId = 0;
     mutableImage->currentValue = NULL;
     mutableImage->cache = NULL;
@@ -960,18 +967,18 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
         configGetStr(themeConfig, elemProp, &overlayTexture2);
     }
 
-    findDuplicate(theme->mainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->infoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->appsMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->appsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->favsMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->favsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->vcdMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->vcdInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->favsVcdMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->favsVcdInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->favsAppsMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
-    findDuplicate(theme->favsAppsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->mainElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->infoElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->appsMainElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->appsInfoElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsMainElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsInfoElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->vcdMainElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->vcdInfoElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsVcdMainElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsVcdInfoElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsAppsMainElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsAppsInfoElems.first, type, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
 
     if (cachePattern && !mutableImage->cache) {
         if (type == ELEM_TYPE_ATTRIBUTE_IMAGE)
@@ -1129,6 +1136,62 @@ static GSTEXTURE *getGameImageCached(image_cache_t *cache, struct submenu_item *
     return cacheLookupTexture(cache, &item->cache_id[cache->userId], &item->cache_uid[cache->userId]);
 }
 
+// Frames past the art delay that a Background keeps showing the previous game's art while the selected one has not
+// been requested yet (the Coverflow gate in drawGameImage can hold the BG request back until the cover settles).
+#define BG_HOLD_GRACE_FRAMES 30
+
+// Touch the background on screen BEFORE the next one is requested. The eviction scan skips an entry used this
+// frame, so the new request takes the other slot instead of the picture holdLastBackground is about to keep.
+static void keepLastBackground(mutable_image_t *gameImage)
+{
+    image_cache_t *cache = gameImage->cache;
+    if (cache == NULL || cache->userId < 0 || gameImage->lastCacheId < 0)
+        return;
+    int lastId = gameImage->lastCacheId, lastUid = gameImage->lastUid;
+    cacheLookupTexture(cache, &lastId, &lastUid);
+}
+
+// A Background keeps the last game art it drew on screen while the selected game's art is still coming, instead of
+// dropping to the default picture on every step through the list and showing the new art only once it is read (a
+// grey flash per step with Background Art on). Once the game is known to have no art, or once nothing is coming for
+// it, the default is drawn as before. The kept entry is the cache's own: cacheLookupTexture only returns it while it
+// still holds that same picture (same UID, not reloading), and touching it keeps it out of the eviction scan, so the
+// next load takes the cache's other slot (BG caches have at least 2). (YAOPL 2bc4d161, Roman Kelesidis.)
+static GSTEXTURE *holdLastBackground(mutable_image_t *gameImage, struct menu_list *menu, struct submenu_item *item, GSTEXTURE *texture, int requestDeferred)
+{
+    image_cache_t *cache = gameImage->cache;
+    if (cache == NULL || cache->userId < 0 || gTheme == NULL || cache->userId >= gTheme->gameCacheCount ||
+        item->cache_id == NULL || item->cache_uid == NULL)
+        return texture;
+
+    const int userId = cache->userId;
+    if (texture != NULL && texture->Mem != NULL) {
+        gameImage->lastCacheId = item->cache_id[userId];
+        gameImage->lastUid = item->cache_uid[userId];
+        return texture;
+    }
+
+    // Art switched off (or BG art off), a folder, or art known to be absent: nothing is coming, so nothing is held. The
+    // default is what is on screen now, so the kept entry is dropped too: the next pending game must not bring back an
+    // older game's art.
+    const item_list_t *list = (const item_list_t *)menu->item->userdata;
+    const int state = item->cache_id[userId];
+    // A request Coverflow is still holding back (state -1 while its selected cover settles) is coming too, however long
+    // the cover takes; the known-absent states (-2, -3) are not.
+    const int pending = state >= 0 ||
+                        (state == -1 && (requestDeferred || (list != NULL && guiInactiveFrames <= list->delay + BG_HOLD_GRACE_FRAMES)));
+    if (!gEnableArt || item->isFolder || (cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0 && !gEnableBGArt) ||
+        !pending) {
+        gameImage->lastCacheId = -1;
+        gameImage->lastUid = -1;
+        return texture;
+    }
+
+    int lastId = gameImage->lastCacheId, lastUid = gameImage->lastUid;
+    GSTEXTURE *last = cacheLookupTexture(cache, &lastId, &lastUid);
+    return last != NULL ? last : texture;
+}
+
 // Favourites element redirection (defined in the Coverflow section below; used by both draw
 // paths so an APP favourite renders with the apps element, not the game cover element).
 static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem);
@@ -1262,6 +1325,9 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
         GSTEXTURE *texture;
         int coverflowCoverSettled = 1;
 
+        if (isBackground)
+            keepLastBackground(gameImage);
+
         if (isBackground) {
             // Prioritize the highlighted game's cover before the background so the small cover
             // is read and displayed first before starting the larger background read.
@@ -1313,6 +1379,9 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
             texture = getGameImageTextureEx(gameImage->cache, menu->item->userdata, &item->item, 1);
         }
 
+        if (isBackground)
+            texture = holdLastBackground(gameImage, menu, &item->item, texture, !coverflowCoverSettled);
+
         if (!texture || !texture->Mem) {
             // Keep the configured/default cover visible when art is absent. This is also the
             // placeholder path for Favorites, so all list views keep the same no-art affordance.
@@ -1343,6 +1412,10 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
 
     } else if (elem->type == ELEM_TYPE_BACKGROUND) {
         mutable_image_t *gameImage = (mutable_image_t *)elem->extended;
+        // Nothing is selected, so the default is on screen: drop the kept entry so the next pending game cannot bring
+        // back art from before this page.
+        gameImage->lastCacheId = -1;
+        gameImage->lastUid = -1;
         if (gameImage->defaultTexture)
             rmDrawPixmap(&gameImage->defaultTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
         else
@@ -4515,8 +4588,28 @@ static int thmLoadResource(GSTEXTURE *texture, int texId, const char *themePath,
     return success;
 }
 
+// The other screens' elements (info, apps, favourites, PS1 and their info pages) are re-coloured only where they
+// still carry the colour the settings gave them, so an element whose colour the theme cfg sets keeps it. Images
+// keep theirs too. Without this a Colours change reached the main list alone and the other screens kept the old
+// colour until the theme was loaded again (YAOPL d21b3bc5, Roman Kelesidis).
+static void thmRecolorFollowers(theme_elems_t *elems, u64 oldText, u64 oldTitle, const theme_t *theme)
+{
+    theme_element_t *elem;
+    for (elem = elems->first; elem != NULL; elem = elem->next) {
+        if (elem->type == ELEM_TYPE_ATTRIBUTE_IMAGE || elem->type == ELEM_TYPE_GAME_IMAGE || elem->type == ELEM_TYPE_STATIC_IMAGE ||
+            elem->type == ELEM_TYPE_BACKGROUND || elem->type == ELEM_TYPE_MENU_ICON || elem->type == ELEM_TYPE_BDM_INDEX)
+            continue;
+        if (elem->color == oldTitle && (elem->type == ELEM_TYPE_ITEMS_LIST || elem->type == ELEM_TYPE_ITEM_TEXT))
+            elem->color = theme->titleColor;
+        else if (elem->color == oldText)
+            elem->color = theme->textColor;
+    }
+}
+
 static void thmSetColors(theme_t *theme)
 {
+    const u64 oldText = theme->textColor, oldTitle = theme->titleColor;
+
     memcpy(theme->bgColor, gDefaultBgColor, 3);
     memcpy(theme->plasBlendColor, gDefaultPlasBlendColor, 3);
     theme->textColor = GS_SETREG_RGBA(gDefaultTextColor[0], gDefaultTextColor[1], gDefaultTextColor[2], 0x80);
@@ -4541,6 +4634,13 @@ static void thmSetColors(theme_t *theme)
         elem->color = (elem->type == ELEM_TYPE_ITEMS_LIST || elem->type == ELEM_TYPE_ITEM_TEXT) ? theme->titleColor : theme->textColor;
         elem = elem->next;
     }
+
+    theme_elems_t *others[11] = {&theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems, &theme->favsMainElems,
+                                 &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems, &theme->favsVcdMainElems,
+                                 &theme->favsVcdInfoElems, &theme->favsAppsMainElems, &theme->favsAppsInfoElems};
+    int g;
+    for (g = 0; g < 11; g++)
+        thmRecolorFollowers(others[g], oldText, oldTitle, theme);
 }
 
 static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme_t *theme)
@@ -5452,6 +5552,19 @@ int thmFindGuiID(const char *theme)
         }
     }
     return 0;
+}
+
+// The saved theme is a disk theme (not one of the built-in names) that is not on screen yet: its drive is still coming
+// up, its theme is still loading, or the drive is gone. The boot greeting waits a bounded time for it (RIPPS2 build
+// 125, AK). Only the built-in names are skipped, so a disk theme whose folder name starts with '<' still waits.
+int thmSavedThemePending(void)
+{
+    const char *temp = NULL;
+    if (!configGetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, &temp) || temp == NULL || temp[0] == '\0' ||
+        strcasecmp(temp, "<OPL>") == 0 || strcasecmp(temp, "<Coverflow>") == 0 || strcasecmp(temp, "<PSBBN Flow>") == 0)
+        return 0;
+    const int id = thmFindGuiID(temp);
+    return id == 0 || thmGetGuiValue() != id;
 }
 
 const char **thmGetGuiList(void)
