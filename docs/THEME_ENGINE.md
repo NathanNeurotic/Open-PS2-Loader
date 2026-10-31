@@ -23,7 +23,7 @@ ELF update. See [Fresh-start defaults](DEFAULTS.md).
 
 With the `<OPL>` theme, select **PSBBN Flow** under **Settings → Interface → Theme View** (or hold L3 on the
 main page until it appears), then apply and save.
-It recreates the Game Collection of CosmicScale's
+It recreates the Game Collection of [CosmicScale](https://github.com/CosmicScale)'s
 [PSBBN Definitive Project](https://github.com/CosmicScale/PSBBN-Definitive-Project): black header
 and button-hint bands with thin rules, a blue star-field nebula between them, the page list where
 PSBBN lists Collection and Disc, and a rounded square focal cover with a soft white rim. The game
@@ -31,7 +31,7 @@ title sits above that cover and the count (`3/12`) under its lower right corner.
 turned away into the distance, recedes on the left. When you browse, the outgoing cover swells
 toward the viewer and fades while the next one turns to face you; the title and count return once
 the covers settle. The layout was measured from the project's published videos; no PSBBN code or
-artwork is used. The glide keeps the 25-frame cubic timing of dnunezx's LUNA Collection display
+artwork is used. The glide keeps the 25-frame cubic timing of [dnunezx](https://github.com/dnunezx)'s [LUNA](https://github.com/dnunezx/LUNA) Collection display
 ([PR #733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)), which this theme started from.
 
 PSBBN Flow uses the same native device pages, current selection, artwork cache, palette settings,
@@ -136,7 +136,7 @@ leans; it stays turned until the stick turns it home. *Settings → Interface �
 Layout* swaps the theme's shape for 4 x 2, 5 x 2, 3 x 2 Large or 6 x 3 Compact (6 x 2, 7 x 2, 5 x 2 and
 8 x 3 on a 16:9 picture), and *Dim Side Covers* there makes the vignette full strength. Idea: [KrahJohlito](https://github.com/KrahJohlito)
 (multi-view themes); the pages, slide, selection, vignette, case flip, sidebar, tiles and layouts follow
-RIPPS2's grid (akilluminati47). NOT TESTED on hardware.
+[RIPPS2](https://github.com/akilluminati47/RIPPS2)'s grid ([akilluminati47](https://github.com/akilluminati47)). NOT TESTED on hardware.
 
 | Property | Grid behavior |
 | --- | --- |
@@ -380,7 +380,7 @@ in the built-in `<OPL>` theme's file for that view (`misc/theme_coverflow.cfg`,
 ### SD and HD layouts (`_sd` / `_hd`) — *this fork*
 
 One `conf_theme.cfg` can carry a 4:3 layout and a 16:9 layout, so a theme no longer needs separate
-"SD" and "HD/widescreen" packages. Ideas: [KrahJohlito](https://github.com/KrahJohlito) (uOPL/wOPL's `wsX` key) and Berion
+"SD" and "HD/widescreen" packages. Ideas: [KrahJohlito](https://github.com/KrahJohlito) (uOPL/wOPL's `wsX` key) and [Berion](https://www.psx-place.com/members/berion.1431)
 (`_sd`/`_hd` suffixes that fall back to the plain key).
 
 Add `_hd` to **any** key to give the value used while **Settings → Interface → Widescreen** is on, or
@@ -507,7 +507,7 @@ embedded font for a slot.
 
 ### Button hints and glyphs
 
-These keys come from RIPPS2 (akilluminati47, build 90). A theme that sets none of them draws the hint bar
+These keys come from [RIPPS2](https://github.com/akilluminati47/RIPPS2) ([akilluminati47](https://github.com/akilluminati47), build 90). A theme that sets none of them draws the hint bar
 exactly as before.
 
 | Key | Value | Meaning |

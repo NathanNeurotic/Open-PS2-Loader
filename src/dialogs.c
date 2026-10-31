@@ -5,6 +5,7 @@
 #include "include/gui.h"
 #include "include/guigame.h"
 #include "include/drivestatus.h"
+#include "include/guifilemgr.h"
 
 #include <stdio.h>
 
@@ -1449,6 +1450,8 @@ struct UIItem diaVMCSaves[] = {
     // buttons
     {UI_BUTTON, VMCSAVES_EXPORT, 1, 1, _STR_HINT_VMC_EXPORT, 0, 0, {.label = {NULL, _STR_VMC_EXPORT}}},
     {UI_SPACER},
+    {UI_BUTTON, VMCSAVES_EXPORT_PSU, 1, 1, _STR_HINT_VMC_EXPORT_PSU, 0, 0, {.label = {NULL, _STR_VMC_EXPORT_PSU}}},
+    {UI_BREAK},
     {UI_BUTTON, VMCSAVES_IMPORT, 1, 1, _STR_HINT_VMC_IMPORT, 0, 0, {.label = {NULL, _STR_VMC_IMPORT}}},
     {UI_SPACER},
     {UI_BUTTON, VMCSAVES_DELETE, 1, 1, _STR_HINT_VMC_SAVE_DELETE, 0, 0, {.label = {NULL, _STR_DELETE}}},
@@ -1835,6 +1838,81 @@ struct UIItem diaPadMacroConfig[] = {
     // end of dialog
     {UI_TERMINATOR}};
 #endif
+
+// File Manager (main menu; after RIPPS2's Memory Files browser by akilluminati47): one button per entry on the
+// page, set by guifilemgr.c; rows past the folder's end are hidden and take no room
+struct UIItem diaFileManager[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_FILE_MANAGER}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, FM_PATH, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_LABEL, FM_STATUS, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_SPLITTER},
+
+    {UI_BUTTON, FM_ROW_FIRST + 0, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 1, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 2, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 3, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 4, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 5, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 6, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 7, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 8, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 9, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 10, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+    {UI_BUTTON, FM_ROW_FIRST + 11, 1, 1, _STR_HINT_FM_ROW, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+
+    {UI_SPLITTER},
+    {UI_BUTTON, FM_PASTE_BTN, 1, 1, _STR_HINT_FM_PASTE, 0, 0, {.label = {NULL, _STR_FM_PASTE}}},
+    {UI_SPACER},
+    {UI_BUTTON, FM_PASTE_PSU_BTN, 1, 1, _STR_HINT_FM_PASTE_PSU, 0, 0, {.label = {NULL, _STR_FM_PASTE_PSU}}},
+    {UI_SPACER},
+    {UI_BUTTON, FM_NEW_FOLDER_BTN, 1, 1, _STR_HINT_FM_NEW_FOLDER, 0, 0, {.label = {NULL, _STR_FM_NEW_FOLDER}}},
+    {UI_BREAK},
+
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
+    {UI_BREAK},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
+// What can be done with one File Manager entry (Triangle on a row, or Cross on a file); the title is the entry
+struct UIItem diaFileActions[] = {
+    {UI_HEADER, FMA_TITLE, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_SPLITTER},
+
+    {UI_BUTTON, FMA_OPEN, 1, 1, _STR_HINT_FM_OPEN, 0, 0, {.label = {NULL, _STR_FM_OPEN}}},
+    {UI_BREAK},
+    {UI_BUTTON, FMA_RUN, 1, 1, _STR_HINT_FM_RUN, 0, 0, {.label = {NULL, _STR_RUN}}},
+    {UI_BREAK},
+    {UI_BUTTON, FMA_MARK, 1, 1, _STR_HINT_FM_MARK, 0, 0, {.label = {NULL, _STR_FM_MARK}}},
+    {UI_BREAK},
+    {UI_BUTTON, FMA_COPY, 1, 1, _STR_HINT_FM_COPY, 0, 0, {.label = {NULL, _STR_FM_COPY}}},
+    {UI_BREAK},
+    {UI_BUTTON, FMA_CUT, 1, 1, _STR_HINT_FM_CUT, 0, 0, {.label = {NULL, _STR_FM_CUT}}},
+    {UI_BREAK},
+    {UI_BUTTON, FMA_RENAME, 1, 1, _STR_HINT_FM_RENAME, 0, 0, {.label = {NULL, _STR_RENAME}}},
+    {UI_BREAK},
+    {UI_BUTTON, FMA_DELETE, 1, 1, _STR_HINT_FM_DELETE, 0, 0, {.label = {NULL, _STR_DELETE}}},
+    {UI_BREAK},
+    {UI_BUTTON, FMA_UNPACK, 1, 1, _STR_HINT_FM_UNPACK_PSU, 0, 0, {.label = {NULL, _STR_FM_UNPACK_PSU}}},
+    {UI_BREAK},
+
+    // end of dialog
+    {UI_TERMINATOR}};
 
 // Drive Status (main menu; RIPPS2 build 114 by akilluminati47): one line per drive, set by guiShowDriveStatus; unused
 // lines are hidden and take no room

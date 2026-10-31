@@ -1935,7 +1935,7 @@ gui_strings:
   string: In the folder
 
 - label: HINT_VMC_IN_FOLDER
-  string: "Pick a save folder with Up and Down, then Copy in."
+  string: "Pick a save folder or .psu file with Up and Down, then Copy in."
 
 - comment: VMC Saves dialog row, the folder that holds the copied-out saves.
   label: VMC_FOLDER
@@ -1953,7 +1953,7 @@ gui_strings:
   string: Copy in
 
 - label: HINT_VMC_IMPORT
-  string: "Copies the picked save folder onto the card."
+  string: "Copies the picked save folder or .psu file onto the card."
 
 - label: HINT_VMC_SAVE_DELETE
   string: "Deletes the picked save from the card."
@@ -2281,6 +2281,200 @@ gui_strings:
 - comment: Hint of Library.
   label: HINT_LIBRARY
   string: "Pages gives every device its own tab. All Games List puts the games of every started device, PS2, PS1 and apps, on one page. Same setting as All Games List under Game Sources."
+
+- comment: VMC Saves dialog button (RIPPS2), copies the picked save from the card into the folder as one .psu file. PSU is a file format name, not translated.
+  label: VMC_EXPORT_PSU
+  string: Copy out as PSU
+
+- label: HINT_VMC_EXPORT_PSU
+  string: "Copies the picked save into the folder as one .psu file, the save file uLaunchELF, EMS and Apollo use. The card is not changed."
+
+- label: VMC_SAVES_ERR_PSU
+  string: "This .psu file is cut short or is not a PS2 save."
+
+- comment: Main menu item and page title for the File Manager (after RIPPS2's Memory Files browser).
+  label: FILE_MANAGER
+  string: File Manager
+
+- comment: File Manager, the top of the drive list.
+  label: FM_DRIVES
+  string: Drives
+
+- comment: File Manager, the row that goes up one folder.
+  label: FM_UP
+  string: ".. (up one folder)"
+
+- comment: File Manager, under the path. 1st %d the page shown, 2nd %d how many pages, 3rd %d the entries in this folder.
+  label: FM_PAGE
+  string: "Page %d of %d, %d entries"
+
+- comment: File Manager, a folder with nothing in it.
+  label: FM_EMPTY
+  string: This folder is empty.
+
+- comment: File Manager. %s is the folder or drive that could not be read.
+  label: FM_CANT_OPEN
+  string: "%s could not be opened."
+
+- comment: File Manager, the clipboard line. %d is how many entries are on it, to copy.
+  label: FM_CLIP_COPY
+  string: "Clipboard: %d to copy"
+
+- comment: File Manager, the clipboard line. %d is how many entries are on it, to move.
+  label: FM_CLIP_CUT
+  string: "Clipboard: %d to move"
+
+- comment: File Manager, after the clipboard line. %d is how many entries are marked.
+  label: FM_MARKED
+  string: "%d marked"
+
+- comment: File Manager button.
+  label: FM_PASTE
+  string: Paste here
+
+- comment: File Manager button and keyboard title.
+  label: FM_NEW_FOLDER
+  string: New folder
+
+- comment: File Manager actions menu.
+  label: FM_OPEN
+  string: Open
+
+- comment: File Manager actions menu.
+  label: FM_COPY
+  string: Copy
+
+- comment: File Manager actions menu.
+  label: FM_CUT
+  string: Cut
+
+- comment: File Manager actions menu.
+  label: FM_MARK
+  string: Mark
+
+- comment: File Manager actions menu.
+  label: FM_UNMARK
+  string: Unmark
+
+- comment: File Manager button.
+  label: FM_PASTE_PSU
+  string: Paste as PSU
+
+- comment: File Manager, Paste as PSU with no save folder on the clipboard.
+  label: FM_NO_SAVES
+  string: Nothing on the clipboard is a save folder (a folder with an icon.sys).
+
+- comment: File Manager actions menu, on a .psu file.
+  label: FM_UNPACK_PSU
+  string: Unpack PSU here
+
+- comment: Hint of a File Manager row.
+  label: HINT_FM_ROW
+  string: "Cross opens a folder, or shows what can be done with a file. Square marks it. Triangle shows what can be done with it. L1/R1 turn the page, Circle goes up a folder."
+
+- comment: Hint of Paste here.
+  label: HINT_FM_PASTE
+  string: "Copies or moves what is on the clipboard into this folder. A name already here is never replaced: it is skipped and named. A save folder pasted onto a memory card goes in the card's root, and a .psu pasted onto one unpacks into its save."
+
+- comment: Hint of New folder.
+  label: HINT_FM_NEW_FOLDER
+  string: Makes a folder here, with a name you type.
+
+- comment: Hint of Copy.
+  label: HINT_FM_COPY
+  string: "Puts the marked entries, or this one if none are marked, on the clipboard. Paste here copies them."
+
+- comment: Hint of Cut.
+  label: HINT_FM_CUT
+  string: "Puts the marked entries, or this one if none are marked, on the clipboard. Paste here moves them; each one leaves its old place only once it is whole in the new one."
+
+- comment: Hint of Rename in the File Manager.
+  label: HINT_FM_RENAME
+  string: Gives this entry a new name, typed on the keyboard.
+
+- comment: Hint of Delete in the File Manager.
+  label: HINT_FM_DELETE
+  string: "Deletes the marked entries, or this one if none are marked, folders with everything in them. You are asked first."
+
+- comment: Hint of Paste as PSU.
+  label: HINT_FM_PASTE_PSU
+  string: "Makes one .psu file here from each save folder on the clipboard (a folder with an icon.sys): the save file uLaunchELF, EMS and Apollo use. The saves themselves are not changed."
+
+- comment: Hint of Unpack PSU here.
+  label: HINT_FM_UNPACK_PSU
+  string: "Unpacks this .psu into its save folder here. On a memory card the save goes in the card's root, where games look for it."
+
+- comment: Hint of Open in the File Manager.
+  label: HINT_FM_OPEN
+  string: Opens this folder.
+
+- comment: Hint of Run in the File Manager.
+  label: HINT_FM_RUN
+  string: Starts this ELF, the way an app on the Apps page starts.
+
+- comment: Hint of Mark and Unmark.
+  label: HINT_FM_MARK
+  string: "Marks this entry, so Copy, Cut and Delete act on every marked one. Square on a row does the same."
+
+- comment: File Manager. %s is the name of the one entry to delete.
+  label: FM_DELETE_CONFIRM
+  string: "Delete %s? This cannot be undone."
+
+- comment: File Manager. %d is how many marked entries will be deleted.
+  label: FM_DELETE_MARKED_CONFIRM
+  string: "Delete the %d marked entries? This cannot be undone."
+
+- comment: File Manager, while copying. %s is the file, %d the percent done.
+  label: FM_WORKING
+  string: "Copying %s... %d%%"
+
+- comment: File Manager, while deleting. %s is the entry.
+  label: FM_DELETING
+  string: "Deleting %s..."
+
+- comment: File Manager, when one entry fails. 1st %s the entry's name, 2nd %s why (one of the FM_ERR strings).
+  label: FM_FAILED
+  string: "%s: %s"
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_EXISTS
+  string: Something with that name is already there.
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_INSIDE
+  string: A folder cannot go inside itself.
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_NAME
+  string: That name cannot be used here.
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_READ
+  string: It could not be read.
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_WRITE
+  string: It could not be written. Is the drive full or write-protected?
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_DELETE
+  string: It could not be removed.
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_DEEP
+  string: Its folders go too deep.
+
+- comment: File Manager, why something failed.
+  label: FM_ERR_MEMORY
+  string: There is not enough memory.
+
+- comment: File Manager, a change asked for while Write Operations is off.
+  label: FM_READ_ONLY
+  string: Turn on Write Operations in Settings to change files.
+
+- comment: File Manager, Run on an ELF on the internal HDD.
+  label: FM_RUN_HDD
+  string: An ELF on the internal HDD starts from the Apps page.
 
 - comment: Interface setting under Library (KrahJohlito's alt= theme key). On shows the theme's alternate background.
   label: ALT_BACKGROUND

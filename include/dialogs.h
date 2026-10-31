@@ -298,6 +298,7 @@ enum UI_ITEMS {
     VMCSAVES_EXPORT,
     VMCSAVES_IMPORT,
     VMCSAVES_DELETE,
+    VMCSAVES_EXPORT_PSU,
 
     OSD_LANGUAGE_SOURCE,
     OSD_LANGUAGE_ENABLE,
@@ -413,6 +414,8 @@ extern struct UIItem diaCheatConfig[];
 extern struct UIItem diaConfig[];
 extern struct UIItem diaAbout[];
 extern struct UIItem diaDriveStatus[];
+extern struct UIItem diaFileManager[];
+extern struct UIItem diaFileActions[];
 extern struct UIItem diaVMC[];
 extern struct UIItem diaVMCSaves[];
 

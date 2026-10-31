@@ -35,6 +35,7 @@
 #include "include/cfgtitle.h"     // cfgTitleDisplayName: optional CFG Title shown for a row (#918)
 #include "include/bdmsupport.h"   // bdmSupportIsUDPBD() / bdmNetBlockCoreLoader() -- UDPBD games default to Neutrino
 #include "include/drivestatus.h"  // Drive Status (RIPPS2 build 114)
+#include "include/guifilemgr.h"   // File Manager (after RIPPS2's Memory Files)
 #include "include/diaglog.h"      // the hardware log, DIAG.TXT (RIPPS2 build 115)
 #include <assert.h>
 #include <time.h> // clock(): hold L3 to switch theme views
@@ -59,6 +60,7 @@ enum MENU_IDs {
     MENU_RA_ACHIEVEMENTS,
     MENU_RA_DISC_LAUNCH,
 #endif
+    MENU_FILE_MANAGER, // after RIPPS2's Memory Files browser (akilluminati47)
 };
 
 enum GAME_MENU_IDs {
@@ -849,6 +851,7 @@ static void menuInitMainMenu(void)
     submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_SETTINGS);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_NBD, _STR_STARTNBD);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_DRIVE_STATUS, _STR_DRIVE_STATUS);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_FILE_MANAGER, _STR_FILE_MANAGER);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_ABOUT, _STR_ABOUT);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_EXIT, _STR_EXIT);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_POWER_OFF, _STR_POWEROFF);
@@ -1193,6 +1196,8 @@ void submenuRebuildCache(submenu_list_t *submenu)
         free(submenu->item.cache_uid);
         submenu->item.cache_id = newId;
         submenu->item.cache_uid = newUid;
+        submenu->item.cache_count = newId != NULL ? count : 0;
+        submenu->item.cache_gen = newId != NULL ? gTheme->artGeneration : 0;
         submenu = submenu->next;
     }
 }
@@ -1250,6 +1255,8 @@ static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int tex
     it->item.id = id;
     it->item.cache_id = NULL;
     it->item.cache_uid = NULL;
+    it->item.cache_count = 0;
+    it->item.cache_gen = 0;
     it->item.favourited = 0;
     it->item.isFolder = 0;
     it->item.lastPlayed = 0;
@@ -1993,6 +2000,9 @@ void menuHandleInputMenu()
                 handleLwnbdSrv();
         } else if (id == MENU_DRIVE_STATUS) {
             guiShowDriveStatus();
+        } else if (id == MENU_FILE_MANAGER) {
+            if (menuCheckParentalLock() == 0) // it can delete and run anything
+                guiShowFileManager();
         } else if (id == MENU_ABOUT) {
             guiShowAbout();
         } else if (id == MENU_SAVE_CHANGES) {

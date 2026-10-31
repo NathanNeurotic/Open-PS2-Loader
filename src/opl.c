@@ -2639,7 +2639,8 @@ static int tryKnownBootConfigRecovery(int types)
 {
     const char *colon = strchr(gBootDir, ':');
     char root[16];
-    char home[32];
+    char legacyHome[2][32];
+    int legacyFound[2];
     int value;
     int n;
 
@@ -2652,18 +2653,18 @@ static int tryKnownBootConfigRecovery(int types)
     memcpy(root, gBootDir, n);
     root[n] = '\0';
 
-    snprintf(home, sizeof(home), "%s/OPL", root);
-    value = tryReadRecoveryConfigHome(types, home);
-    if (value & CONFIG_OPL) {
-        restoreRecoverySaveHome(home);
-        return value;
+    snprintf(legacyHome[0], sizeof(legacyHome[0]), "%s/OPL", root);
+    legacyFound[0] = tryReadRecoveryConfigHome(types, legacyHome[0]);
+    if (legacyFound[0] & CONFIG_OPL) {
+        restoreRecoverySaveHome(legacyHome[0]);
+        return legacyFound[0];
     }
 
-    snprintf(home, sizeof(home), "%s/", root);
-    value = tryReadRecoveryConfigHome(types, home);
-    if (value & CONFIG_OPL) {
-        restoreRecoverySaveHome(home);
-        return value;
+    snprintf(legacyHome[1], sizeof(legacyHome[1]), "%s/", root);
+    legacyFound[1] = tryReadRecoveryConfigHome(types, legacyHome[1]);
+    if (legacyFound[1] & CONFIG_OPL) {
+        restoreRecoverySaveHome(legacyHome[1]);
+        return legacyFound[1];
     }
 
     // Failed recovery probes re-home every config set. Restore the known source before returning
@@ -2673,7 +2674,22 @@ static int tryKnownBootConfigRecovery(int types)
     // exFAT volume), so read them again; only the master stays at defaults.
     configEnd();
     configInit(gBootDir);
-    return configReadMulti(types & ~CONFIG_OPL);
+    value = configReadMulti(types & ~CONFIG_OPL);
+
+    // Each probe also discarded the previous probe's sets, so a legacy home with no master but its
+    // own conf_game.cfg/network/apps (mc0:/OPL on an mc0:/APPS boot) was read and then thrown
+    // away. Read the sets the boot home lacks from the legacy home that had them -- same order as
+    // the probes, files in the boot home always win -- then point every set back at the boot home
+    // so the first explicit save writes them beside the ELF: read-old, write-new.
+    for (int i = 0; i < 2; i++) {
+        int missing = legacyFound[i] & types & ~CONFIG_OPL & ~value;
+        if (missing == 0)
+            continue;
+        configSetMove(legacyHome[i]);
+        value |= configReadMulti(missing);
+        configSetMove(gBootDir);
+    }
+    return value;
 }
 
 static void restoreRecoverySaveHome(const char *recoveredHome)
@@ -2964,7 +2980,10 @@ static int tryAlternateDevice(int types)
         if (!homeLeftOnCard)
             configPrepareNotifications(gBootDir);
         showCfgPopup = 0;
-        return 0;
+        // The card read above can still fill other sets with no master beside them (a deferred
+        // network boot's conf_network.cfg, say). They are loaded either way; returning 0 hid them,
+        // so the caller never applied the network settings and the next save overwrote them.
+        return value;
     }
 
     // Bare ELF launch without boot directory context: try Memory Card first.
@@ -4539,7 +4558,7 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
     }
 
     // The bound is FAV_MODE, not APP_MODE. The Game Sources picker offers six entries and the last
-    // of them is Favourites (guiShowDeviceConfig deviceNames[], byte-identical to the fork), so an
+    // of them is Favourites (guiSettingsShowSources deviceNames[], byte-identical to the fork), so an
     // APP_MODE bound silently rewrote the two choices ABOVE it -- Favourites and MMCE -- back to
     // Apps, on every applyConfig AND every boot. Picking "Favourites" as the startup page snapped
     // the row back to Apps before the value was ever written to the config: the whole feature was

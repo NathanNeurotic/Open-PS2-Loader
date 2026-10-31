@@ -11,7 +11,7 @@ checks:
 - switching back to a mode brings back the position it had;
 - moving the position in the same dialog that changed the mode gives the new mode that position;
 - the positions survive a save and a load, and a reset forgets them;
-- both video-mode dialogs call screenPosModeChanged and put the position back when the mode is reverted;
+- the video-mode dialog calls screenPosModeChanged and puts the position back when the mode is reverted;
 - the settings load, save and defaults paths call screenPosLoad, screenPosSave and screenPosReset;
 - the three hints say the position is kept for each video mode.
 """
@@ -134,11 +134,11 @@ with tempfile.TemporaryDirectory() as tmp:
             failures.append('harness failed:\n' + run.stdout + run.stderr)
 
 gui = read(GUI)
-if gui.count('screenPosModeChanged(previousVMode, openX, openY, openOver);') != 2:
-    failures.append('%s: both video-mode dialogs must call screenPosModeChanged' % GUI.relative_to(root))
-if gui.count('int openX = gXOff, openY = gYOff, openOver = gOverscan;') != 2:
-    failures.append('%s: both dialogs must note the position they opened with' % GUI.relative_to(root))
-if len(re.findall(r'gVMode = previousVMode;\n\s*gXOff = openX;[^\n]*\n\s*gYOff = openY;\n\s*gOverscan = openOver;', gui)) != 2:
+if gui.count('screenPosModeChanged(previousVMode, openX, openY, openOver);') != 1:
+    failures.append('%s: the video-mode dialog must call screenPosModeChanged' % GUI.relative_to(root))
+if gui.count('int openX = gXOff, openY = gYOff, openOver = gOverscan;') != 1:
+    failures.append('%s: the dialog must note the position it opened with' % GUI.relative_to(root))
+if len(re.findall(r'gVMode = previousVMode;\n\s*gXOff = openX;[^\n]*\n\s*gYOff = openY;\n\s*gOverscan = openOver;', gui)) != 1:
     failures.append('%s: a reverted mode change must put the position back too' % GUI.relative_to(root))
 
 load = read(LOAD)

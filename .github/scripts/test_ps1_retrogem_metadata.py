@@ -432,6 +432,8 @@ static GSTEXTURE *cacheGetTextureEx(image_cache_t *c, item_list_t *l, int *slot,
         if (!strcmp(c->content[i].key, v)) { *slot = i; *uid = c->content[i].UID; return &c->content[i].texture; }
     return NULL;
 }
+/* The row's pairs are the test's own (slot, uid): ready while present, as for the current theme load (#211). */
+static int thmItemArtPairsReady(struct submenu_item *i) { return i->cache_id != NULL && i->cache_uid != NULL; }
 @PROBE@
 @ART@
 typedef struct { const char *title; int modified, setting; } config_set_t;

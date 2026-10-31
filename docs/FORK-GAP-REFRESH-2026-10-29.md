@@ -6,7 +6,7 @@ This is a source comparison of newly changed YAOPL code and OPL-JUMP, not a new 
 
 | Project | Compared revision |
 | --- | --- |
-| YAOPL, by belomaxorka / Roman Kelesidis | [`fc5426469c04`](https://github.com/yaopl/yaopl/commit/fc5426469c04c9a46a936c4d89fba9c80e7c9e30), changes since previously reviewed `b0f8c2ecaa11` |
+| [YAOPL](https://github.com/yaopl/yaopl), by [belomaxorka / Roman Kelesidis](https://github.com/belomaxorka) | [`fc5426469c04`](https://github.com/yaopl/yaopl/commit/fc5426469c04c9a46a936c4d89fba9c80e7c9e30), changes since previously reviewed `b0f8c2ecaa11` |
 | OPL-JUMP, by juankyt505 | [`414674c24485`](https://github.com/juankyt505/OPL-JUMP/commit/414674c2448533ec3d386a31d035deb3e5b31687); implementation published in [`1e98bbf`](https://github.com/juankyt505/OPL-JUMP/commit/1e98bbf) |
 | RiptOPL C++ / ps2build | `rebuild/main@b4c23bdac8f983a4b4e3456d4036b8645cf95842` |
 | Open-PS2-Loader legacy C | `rebuild/main@29826585edd960b312ba58d2f6987ac345eae3a9` |
