@@ -243,11 +243,7 @@ do not assume it is always <code>mc0:/OPL/</code>.</p>
 <p>If you previously used an older RiptOPL build that saved as <code>conf_riptopl.cfg</code>, the new build automatically migrates your settings the next time it saves — you do not need to rename anything manually.</p>
 
 <h3 id="from-official-opl">Coming from official OPL</h3>
-<p>If the place RiptOPL reads its settings from has no RiptOPL settings but does have official OPL's
-<code>conf_opl.cfg</code>, RiptOPL starts from that file. Swapping <code>RIPTOPL.ELF</code> in for
-<code>OPNPS2LD.ELF</code> (in a PSBBN, OSDMenu or HDD-OSD launcher, or a plain memory card or USB install)
-therefore keeps the devices and options you already set. RiptOPL only <b>reads</b> that file and never writes it:
-the first save writes <code>settings_riptopl.cfg</code> to RiptOPL's own settings home.</p>
+<p>RiptOPL does <b>not</b> read official OPL's <code>conf_opl.cfg</code> (changed 2026-10-29, <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1159">Open-PS2-Loader #1159</a>). When the place RiptOPL reads its settings from has no RiptOPL settings, it starts from its own defaults, even with official OPL's file beside it, and the first save writes <code>settings_riptopl.cfg</code>; official OPL's file is never written. The files the two loaders share, such as <code>conf_game.cfg</code>, <code>conf_network.cfg</code>, the apps list and last played, are still read, so after swapping <code>RIPTOPL.ELF</code> in for <code>OPNPS2LD.ELF</code> (in a PSBBN, OSDMenu or HDD-OSD launcher, or a plain memory card or USB install) the global game settings and the network setup carry over. Set the device start modes and menu options once in RiptOPL's <a href="settings.html">Settings</a> and save. NOT TESTED on hardware.</p>
 
 <p><b>Auto Loading</b> (a game started straight from PSBBN, OSDMenu or another launcher) reads the same settings
 home as the menu, so global game settings apply the same way, and it starts the game on the core you chose: the game's own <b>Loader Core</b>, or the <b>Default Loader Core</b> when the game is set to Default, Neutrino included. If such a launch cannot go ahead, because the ISO
