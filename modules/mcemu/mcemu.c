@@ -720,6 +720,33 @@ int MceEraseBlock(MemoryCard *mcd, int page)
 
     /* creating clear buffer */
     r = (mcd->flags & 0x10) ? 0x0 : 0xFF;
+
+#ifdef BDM_DRIVER
+    /* A BDM card is contiguous sectors, one page per sector, so the block's erased pages go out a
+       few sectors per device write instead of one write per page. A block is 16 pages: 4 writes
+       instead of 16, which on an SD card (MX4SIO) is most of an erase's cost, since every write
+       command waits for the card to program. The same bytes land, and the erase is finished before
+       MCMAN hears back, as before. 2 KB of IOP RAM, not a whole 8 KB block: some games (Jak and
+       Daxter) are tight on IOP memory with mcemu resident. */
+    if (mcd->cspec.PageSize == 0x200) {
+        static u8 erase_buf[4 * 0x200] __attribute__((aligned(64)));
+        int n;
+
+        mips_memset(erase_buf, r, sizeof(erase_buf));
+        for (i = 0; i < mcd->cspec.BlockSize; i += n) {
+            n = mcd->cspec.BlockSize - i;
+            if (n > (int)(sizeof(erase_buf) / 0x200))
+                n = sizeof(erase_buf) / 0x200;
+            if (!DeviceWritePages(mcd->mcnum, erase_buf, page + i, n)) {
+                DPRINTF("erase error\n");
+                return 0;
+            }
+        }
+
+        return 1;
+    }
+#endif
+
     mips_memset(mcd->dbufp, r, mcd->cspec.PageSize);
 
     for (i = 0; i < mcd->cspec.BlockSize; i++) {

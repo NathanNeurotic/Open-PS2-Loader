@@ -22,6 +22,10 @@ for disc in ('SLUS_210.41', 'SLUS_210.44'):
     assert entries.get(disc) == ('COMPAT_MODE_1', 'TITLE_CORE_ALL'), disc
 # Klonoa 2 (USA): Synchronous reads on the OPL core only; it already runs smoothly on Neutrino.
 assert entries.get('SLUS_201.51') == ('COMPAT_MODE_2', 'TITLE_CORE_OPL')
+# Jak and Daxter: The Precursor Legacy, every region: Unhook Syscalls + Disable IGR on the OPL core
+# (upstream OPL #1171, PSX-Place). Neutrino unhooks it from its own compat.toml, so nothing there.
+for jak in ('SCUS_971.24', 'SCES_503.61', 'SCES_506.14', 'SCPS_150.21', 'SCPS_550.04'):
+    assert entries.get(jak) == ('COMPAT_MODE_3 | COMPAT_MODE_6', 'TITLE_CORE_OPL'), jak
 
 # A core-limited default must not apply on the other core.
 assert '(sbTitleCompatDefaults[i].cores & core) ? sbTitleCompatDefaults[i].compatModes : 0' in src['src/supportbase.c']
