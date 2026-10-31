@@ -443,6 +443,11 @@ with tempfile.TemporaryDirectory(prefix='vmcsaves-') as t:
     assert run('importpsu', t / 'dup.psu', pcard) == '0 %d' % ERR['NAME']
     (t / 'dots.psu').write_bytes(make_psu('..', [('a', b'1')]))
     assert run('importpsu', t / 'dots.psu', pcard) == '0 %d' % ERR['NAME']
+    good = make_psu('BASLUS-33333DOT', [('a', b'1')])
+    (t / 'nodot.psu').write_bytes(good[:512] + psu_entry(0x8497, 0, 'x') + good[1024:])  # "." is not a folder named "."
+    assert run('importpsu', t / 'nodot.psu', pcard) == '0 %d' % ERR['PSU']
+    (t / 'noup.psu').write_bytes(good[:1024] + b'\0' * 512 + good[1536:])  # ".." is blank
+    assert run('importpsu', t / 'noup.psu', pcard) == '0 %d' % ERR['PSU']
     assert hashlib.sha256(pcard.read_bytes()).hexdigest() == before
 
 # the dialog: a delete is confirmed first, and an ECC image or a write-protected drive is never written

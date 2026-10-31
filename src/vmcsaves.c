@@ -769,6 +769,14 @@ static int vsNameOk(const char *name)
     return name[0] != '\0' && strlen(name) <= 32 && strchr(name, '/') == NULL && strcmp(name, ".") && strcmp(name, "..");
 }
 
+// The "." or ".." entry that follows a PSU's folder entry: a folder with that name
+static int vsPsuDot(int fd, const char *name)
+{
+    vs_ent_t e;
+
+    return read(fd, &e, ENT_SIZE) == ENT_SIZE && (e.mode & MC_DIR) && !strncmp(e.name, name, sizeof(e.name));
+}
+
 static int vsLoadPsu(vs_save_t *s, const char *path)
 {
     vs_ent_t e;
@@ -790,7 +798,7 @@ static int vsLoadPsu(vs_save_t *s, const char *path)
         return vsFail(VMCSAVES_ERR_NAME);
     }
     n = e.length - 2;
-    if (lseek(fd, 2 * ENT_SIZE, SEEK_CUR) < 0) { // "." and ".."
+    if (!vsPsuDot(fd, ".") || !vsPsuDot(fd, "..")) {
         close(fd);
         return vsFail(VMCSAVES_ERR_PSU);
     }
@@ -880,8 +888,15 @@ static int vsWritePsu(const vs_save_t *s, const char *parent)
     }
     if (close(fd) < 0)
         ok = 0;
+    // The check above is only for the clear message. On FAT and exFAT (FatFs) and SMB, rename itself
+    // refuses a name that is already there, so a .psu that appears in between is kept.
     if (!ok || rename(tmp, path) != 0) {
         unlink(tmp);
+        if (ok && (fd = open(path, O_RDONLY)) >= 0) {
+            close(fd);
+            vsErr = VMCSAVES_ERR_EXISTS;
+            return -1;
+        }
         return vsFail(VMCSAVES_ERR_WRITE);
     }
     return 1;
