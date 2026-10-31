@@ -35,7 +35,7 @@ Both editions have the merged RIPPS2 A–H integration: All Games, last-10 Recen
 
 The YAOPL hardening batches ([RiptOPL #142](https://github.com/NathanNeurotic/RiptOPL/pull/142), [legacy #1114](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1114)) merged history bounds, font terminators, cheat capacity, synchronous disc-key ownership and VMC fragment diagnostics. C++ already had the CNF equals guard; its regression and the legacy guard are present. Native OPL UDPBD/UDPFS IMG launches and the 16 KiB read cap are merged in [#153](https://github.com/NathanNeurotic/RiptOPL/pull/153) / [#1123](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1123). Default still selects Neutrino on those sources. UDPFS Files games can also use the OPL core in both editions (RiptOPL [#161](https://github.com/NathanNeurotic/RiptOPL/pull/161), legacy [#1134](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1134)). Not tested on hardware.
 
-Current POPS packages use Okeanos UDPFS Assault TEST with BIN/CUE support. This supersedes the earlier network-only 1.0.0 snapshot, not a restoration of the obsolete USB-first translator. Published driver-release metadata and packaging commits are distinct evidence from a passing network game/save test.
+Current POPS packages use [Okeanos](https://github.com/Okeanos86) [UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases) TEST with BIN/CUE support. This supersedes the earlier network-only 1.0.0 snapshot, not a restoration of the obsolete USB-first translator. Published driver-release metadata and packaging commits are distinct evidence from a passing network game/save test.
 
 ## Batch merged after the first snapshot
 
@@ -93,7 +93,7 @@ The latest 30 upstream OPL forks and latest 30 RiptOPL forks were enumerated. Ne
 | PS2-Servers | Current 81ff0956 adds bounded opt-in recursive metadata indexing, startup guidance, DREAD skip-on-stat-failure and address hints. Unmerged compressed-image identity/achievements work is not called shipped. |
 | OdysseyLauncher | Development 347671c0 adds Vita3K/title-ID launch after 0.20.0, console models, PDF manuals and presentation work. Desktop scope; not a PS2 runtime gap. |
 | PS2SP | 93 commits since October 25 and 3,512 changed paths, mostly catalogue/discovery/deployment data. This is a manifest/commit-summary review, not exhaustive review of every packaged app. |
-| DKWDRV / Okeanos releases | DKWDRV 1.7.6u retains explicit instability cautions. Okeanos TEST is a prerelease even though the release collection lists stable 1.0.0 first. Release names/collection order are not tested compatibility. |
+| DKWDRV / [Okeanos](https://github.com/Okeanos86) releases | DKWDRV 1.7.6u retains explicit instability cautions. Okeanos TEST is a prerelease even though the release collection lists stable 1.0.0 first. Release names/collection order are not tested compatibility. |
 
 ## Evidence files and review limits
 

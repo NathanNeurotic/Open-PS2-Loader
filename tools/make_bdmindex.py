@@ -6,6 +6,11 @@ dot every 11 rows from the top. The n-dot pictures use the same canvas, palette 
 centred on the five dots' span, the lit dot cut from Index_0 and the others from its second dot. Before it
 writes anything the script checks that it rebuilds Index_0..Index_4 exactly.
 
+The Korium theme's Index_0..Index_4 are a row instead (128x16, RGBA): five 20-column cells from column 14,
+the lit dot a 14x14 disc and the others 8x8. A picture wider than it is tall is drawn the same way along
+its columns. An RGBA picture is read into a palette of its own colours, so the pictures written are exact
+8-bit palette copies of its pixels.
+
 After belomaxorka / YAOPL f84b227d (labs/bdmindex/make_bdmindex.py), which does the same for upstream's
 horizontal pictures. Run from anywhere: python3 tools/make_bdmindex.py
 """
@@ -20,6 +25,11 @@ LIT = 0     # first row of the lit dot's cell in Index_0
 DIM = 11    # first row of an unlit dot's cell in Index_0
 SPAN = 5 * PITCH - (PITCH - 8)  # rows the five dots take: 8-row dots, 3-row gaps
 
+# A row of five dots (Korium): one 20-column cell per dot, the first from column 14. The cells are whole,
+# so the lit cell and an unlit one are cut from Index_0 as they are.
+HPITCH = 20  # columns from one cell to the next
+HFIRST = 14  # first column of the first cell
+
 
 def chunks(data):
     i = 8
@@ -30,28 +40,31 @@ def chunks(data):
 
 
 def read_png(path):
-    """Width, height, rows of palette indexes, PLTE and tRNS of an 8-bit palette PNG."""
+    """Width, height, rows of palette indexes, PLTE and tRNS of an 8-bit palette or RGBA PNG. An RGBA
+    picture gets a palette of its colours in the order they first appear."""
     data = open(path, 'rb').read()
     idat = plte = trns = b''
     for kind, body in chunks(data):
         if kind == b'IHDR':
             w, h, depth, ctype, _, _, interlace = struct.unpack('>IIBBBBB', body)
-            assert (depth, ctype, interlace) == (8, 3, 0), path
+            assert depth == 8 and ctype in (3, 6) and interlace == 0, path
         elif kind == b'PLTE':
             plte = body
         elif kind == b'tRNS':
             trns = body
         elif kind == b'IDAT':
             idat += body
+    bpp = 1 if ctype == 3 else 4
+    stride = w * bpp
     raw = zlib.decompress(idat)
-    rows, prev = [], bytearray(w)
+    lines, prev = [], bytearray(stride)
     for y in range(h):
-        f = raw[y * (w + 1)]
-        line = bytearray(raw[y * (w + 1) + 1:(y + 1) * (w + 1)])
-        for x in range(w):
-            a = line[x - 1] if x else 0
+        f = raw[y * (stride + 1)]
+        line = bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
+        for x in range(stride):
+            a = line[x - bpp] if x >= bpp else 0
             b = prev[x]
-            c = prev[x - 1] if x else 0
+            c = prev[x - bpp] if x >= bpp else 0
             if f == 1:
                 line[x] = (line[x] + a) & 0xFF
             elif f == 2:
@@ -62,9 +75,23 @@ def read_png(path):
                 p = a + b - c
                 pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
                 line[x] = (line[x] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 0xFF
-        rows.append(line)
+        lines.append(line)
         prev = line
-    return w, h, rows, plte, trns
+    if ctype == 3:
+        return w, h, lines, plte, trns
+
+    index, rows = {}, []
+    for line in lines:
+        row = bytearray()
+        for x in range(w):
+            colour = bytes(line[4 * x:4 * x + 4])
+            if colour not in index:
+                index[colour] = len(index)
+            row.append(index[colour])
+        rows.append(row)
+    assert len(index) <= 256, path + ': more than 256 colours'
+    colours = sorted(index, key=index.get)
+    return w, h, rows, b''.join(c[:3] for c in colours), bytes(c[3] for c in colours)
 
 
 def rgba(rows, plte, trns):
@@ -91,6 +118,8 @@ def write_png(path, w, h, rows, plte, trns):
 
 def dots(src, w, h, count, selected):
     """Rows of a picture with `count` dots centred on the five dots' span, dot `selected` lit."""
+    if w > h:
+        return row_dots(src, w, h, count, selected)
     clear = src[h - 1][0]
     rows = [bytearray([clear]) * w for _ in range(h)]
     start = (SPAN - (count * PITCH - (PITCH - 8))) // 2
@@ -99,6 +128,19 @@ def dots(src, w, h, count, selected):
         for y in range(PITCH):
             if start + k * PITCH + y < h and cell + y < h:
                 rows[start + k * PITCH + y] = bytearray(src[cell + y])
+    return rows
+
+
+def row_dots(src, w, h, count, selected):
+    """The same for a row of five dots: whole cells, centred on the five cells."""
+    clear = src[h - 1][0]
+    rows = [bytearray([clear]) * w for _ in range(h)]
+    start = HFIRST + (5 - count) * HPITCH // 2
+    for k in range(count):
+        cell = HFIRST if k == selected else HFIRST + HPITCH
+        x = start + k * HPITCH
+        for y in range(h):
+            rows[y][x:x + HPITCH] = src[y][cell:cell + HPITCH]
     return rows
 
 

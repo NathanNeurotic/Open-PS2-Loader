@@ -1,7 +1,7 @@
 # Game library: All Games, recents, hiding, deleting and art
 
 These library features came from [RIPPS2](https://github.com/akilluminati47/RIPPS2) by
-**akilluminati47** (builds 95 to 118) and landed in RiptOPL #99 and Open-PS2-Loader #1084 on
+**[akilluminati47](https://github.com/akilluminati47)** (builds 95 to 118) and landed in [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) #99 and Open-PS2-Loader #1084 on
 2026-10-28. Both editions behave the same way. They have passed host tests only and are
 **NOT TESTED on hardware**.
 

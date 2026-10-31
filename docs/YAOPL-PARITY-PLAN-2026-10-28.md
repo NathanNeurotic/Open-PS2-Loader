@@ -2,7 +2,7 @@
 
 > **Status:** reviewable implementation checklist for another coding agent; no runtime fix is implemented by this planning PR.
 > **Audit baseline:** 2026-10-28. Re-compare current default branches before editing: they are moving. A checked box means **implemented AND tested**, not merely coded.
-> **Credit:** belomaxorka — [YAOPL](https://github.com/yaopl/yaopl). Preserve original provenance and reference originating YAOPL commits in implementation PRs.
+> **Credit:** [belomaxorka](https://github.com/belomaxorka) — [YAOPL](https://github.com/yaopl/yaopl). Preserve original provenance and reference originating YAOPL commits in implementation PRs.
 
 YAOPL master: https://github.com/yaopl/yaopl (initial audit at `3ea3a521a0e9`; follow-up through [`b0f8c2ec`](https://github.com/yaopl/yaopl/commit/b0f8c2ecaa112ac89372bf40448eb9da5224ffc9)); changelog: https://github.com/yaopl/yaopl/blob/master/CHANGELOG.md; regression corpus: https://github.com/yaopl/yaopl/tree/master/labs/host-repro; YAOPL author: https://github.com/belomaxorka.
 
@@ -120,4 +120,4 @@ For every item, first write a failing host test or reproducible hardware case. I
 These implementation changes were later merged together through #1114 (see the status table above). No checkbox is promoted to hardware-confirmed acceptance by these host results. Remaining YA tasks are still open.
 
 ## Attribution
-Thank **[belomaxorka](https://github.com/belomaxorka)** and **[YAOPL](https://github.com/yaopl/yaopl)** for the compatibility investigations, backend fixes and host reproductions. Existing README/CREDITS and Applications/About acknowledgments are tracked separately; this plan neither changes those credits nor falsely claims that unmerged YAOPL patches are already in RiptOPL.
+Thank **[belomaxorka](https://github.com/belomaxorka)** and **[YAOPL](https://github.com/yaopl/yaopl)** for the compatibility investigations, backend fixes and host reproductions. Existing README/CREDITS and Applications/About acknowledgments are tracked separately; this plan neither changes those credits nor falsely claims that unmerged YAOPL patches are already in [RiptOPL](https://github.com/NathanNeurotic/RiptOPL).

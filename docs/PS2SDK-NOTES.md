@@ -104,7 +104,7 @@ flavour did. Only the menu loads it; in-game SMB access uses OPL's own driver in
   software behaves this way is not recorded.
 - **Our change:** on `STATUS_SHARING_VIOLATION` (or ERRDOS/ERRbadshare), a read retries with the legacy
   open.
-- **Evidence:** hardware: hacan359 on 2026-09-10. Images an earlier run held open
+- **Evidence:** hardware: [hacan359](https://github.com/hacan359) on 2026-09-10. Images an earlier run held open
   [hashed correctly](RETROACHIEVEMENTS.md#an-image-an-earlier-run-left-open-on-the-share-can-still-be-hashed).
   The console model, the server software, and whether the build tested was ours or hacan359's own are
   not recorded. No host test. Not tried: asking for a wider NT share mode instead.
@@ -167,7 +167,7 @@ hardware no-regression run (below) found no problem.
   then shows a black screen), and [PR #911](https://github.com/ps2dev/ps2sdk/pull/911) proposes restoring
   FreeUsbd for usbd_mini. On 2026-10-27 #908 was open and #911 was not merged.
 - **Our change:** we replaced the whole module; nothing inside the rewrite was patched.
-- **Evidence:** hardware: hacan359 on 2026-09-10, also with official OPL. The console model and OPL
+- **Evidence:** hardware: [hacan359](https://github.com/hacan359) on 2026-09-10, also with official OPL. The console model and OPL
   version are not recorded. Zack's hardware run on 2026-09-10 is a no-regression check only. No host test.
 
 ### The endpoint number is masked with 0x1F
