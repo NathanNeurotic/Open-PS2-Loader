@@ -106,6 +106,8 @@ jobs:
         run: python3 .github/scripts/test_smbman_ra_write_count.py
       - name: Check BDM and MMCE VMC writes, reads and erases report device failures
         run: python3 .github/scripts/test_vmc_write_result.py
+      - name: Check MX4SIO partial-transfer retries
+        run: python3 .github/scripts/test_mx4sio_retry.py
       - name: Check IGR and power-off let an in-flight VMC save finish, bounded
         run: python3 .github/scripts/test_igr_vmc_drain.py
       - name: Check a failed ZSO device read is a read error, through the sector cache too, and an SMB image's last sector reads
@@ -206,6 +208,8 @@ jobs:
         run: python3 .github/scripts/test_cheat_capacity.py
       - name: Check that a -bsdfs=bd launch without a device number is refused before teardown
         run: python3 .github/scripts/test_neutrino_bsdfs.py
+      - name: Check Neutrino SMB writes bsd-smb.toml safely and falls back to the OPL core
+        run: python3 .github/scripts/test_neutrino_smb.py
       - name: Check PSX DVR Neutrino discovery and safety gates
         run: python3 .github/scripts/test_neutrino_dvr.py
       - name: Check DVR refresh and Neutrino mount handoff

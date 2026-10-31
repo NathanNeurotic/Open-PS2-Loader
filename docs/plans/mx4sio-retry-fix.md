@@ -1,26 +1,44 @@
-# Plan: MX4SIO partial-transfer retry fix (deferred)
+# MX4SIO partial-transfer retry fix
 
-Status: planned, not implemented. NOT TESTED.
+Status: implemented; host regressions and target driver builds pass.
+**Not tested on a physical PS2 or SD card.**
 
-## Problem
+The local driver applies PS2HomeDeveloper's [ps2dev/ps2sdk#936](https://github.com/ps2dev/ps2sdk/pull/936),
+head `a67be52bb285dd72998c86aba476d5fa3c516c57`. Partial reads and writes advance
+the sector alongside the buffer, and write setup uses the remaining count.
+Source revision, license and build portability adjustments are recorded in
+[ORIGIN.md](../../modules/mx4sio_bd/ORIGIN.md).
 
-`mx4sio_bd` (`iop/sio/mx4sio_bd/src/spi_sdcard_driver.c`) retries a partial multi-sector
-transfer at the original sector with the buffer advanced. Writes can land on the wrong
-sectors and still report success; reads can fill the buffer from the wrong sectors.
-Upstream fix: [ps2dev/ps2sdk#936](https://github.com/ps2dev/ps2sdk/pull/936) by
-[PS2HomeDeveloper](https://github.com/PS2HomeDeveloper), not merged.
+Make builds local full/mini drivers in separate object directories instead of
+embedding the SDK IRX. RiptOPL's ps2build also embeds the local mini driver in
+release and full driver in debug configurations. With the embedded driver fixed,
+CDVDMAN permits four-sector MX4SIO VMC erase batches and still rejects short
+counts. POPStarter's separate BDM Assault binaries and external Neutrino
+installations are outside this change.
 
-Because of this, `bdm_writeSector` in `modules/iopcore/cdvdman/device-bdm.c` gives MX4SIO
-("sdc") one sector per write, so MX4SIO gets no batched VMC erase.
+## Automated evidence
 
-## Plan
+- `test_mx4sio_retry.py` compiles the actual production retry functions over a
+  fault-injected sector device: 19 partial/zero-progress, exhaustion, recovery,
+  begin/stop failure and zero-count scenarios. Restoring each of the three
+  original bugs makes the executable test fail.
+- `test_vmc_write_result.py` exercises the production MCEMU/CDVDMAN chain,
+  including MX4SIO erase batches, negative errors and short counts.
+- Both tests run in CI, with ASan/UBSan on Linux.
+- Full/mini IRXs build with ps2build GCC and LLVM and the ps2homebrew Make SDK.
+- The existing host: boot gate remains unchanged.
 
-1. Build `mx4sio_bd.irx` and `mx4sio_bd_mini.irx` from source in our tree with the three
-   #936 lines applied (`sector += results;` in both retry paths, `sectors_left` passed to
-   `spisd_write_multi_begin`), instead of taking the prebuilt IRX from `$(PS2SDK)/iop/irx`.
-   Keep provenance (upstream commit) next to the vendored source.
-2. Remove the "sdc" single-sector special case in `bdm_writeSector` and update
-   `.github/scripts/test_vmc_write_result.py` to expect batched erases on every BDM driver.
-3. Drop the vendored copy once the fix reaches the SDK images we build with.
+## Remaining console acceptance
 
-Deferred until tokens reset.
+Use a disposable VMC with backed-up saves. Record console, adapter, SD card,
+exact ELF and build flavor. Create/format the VMC, save in a game, reboot and
+load it again. Repeat saves/erases, verify neighboring saves, and copy the VMC
+back to inspect filesystem/content integrity. Test existing and new VMCs.
+Compare timings with the single-sector build separately from correctness.
+
+Physical partial-transfer failure injection was unavailable. Host tests verify
+retry bookkeeping, not SIO2 timing or real-card recovery. No speed improvement
+or console acceptance is claimed.
+
+Remove this temporary vendor once every supported SDK image/package includes
+the correction and equivalent regressions pass against its driver source.

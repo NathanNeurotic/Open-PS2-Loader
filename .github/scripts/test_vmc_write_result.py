@@ -261,8 +261,7 @@ int main(void)
         assert(memcmp(sim_page(15), ff, PAGE) != 0 && memcmp(sim_page(32), ff, PAGE) != 0); /* only the block */
 #ifdef BDM_DRIVER
         assert(sim_writes() - before == 4); /* 16 pages, 4 sectors per device write */
-        /* MX4SIO ("sdc") gets one sector per device write (its multi-sector retry restarts at the
-           first sector, ps2sdk#936), and the whole block is still erased. */
+        /* The embedded MX4SIO retry fix permits the same four-sector batches. */
         sim_driver("sdc");
         for (int p = 16; p < 32; p++) /* dirty the block again so a missed erase shows */
             assert(OK(write_page(p, data)));
@@ -270,7 +269,7 @@ int main(void)
         assert(OK(erase_block(16)));
         for (int p = 16; p < 32; p++)
             assert(memcmp(sim_page(p), ff, PAGE) == 0);
-        assert(sim_writes() - before == 16);
+        assert(sim_writes() - before == 4);
         sim_driver("mass");
 #else
         assert(sim_writes() - before == 16); /* one write per page */

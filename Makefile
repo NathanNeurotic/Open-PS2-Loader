@@ -549,6 +549,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/httpclient clean
 	echo " -bdm"
 	$(MAKE) -C modules/bdm clean
+	$(MAKE) -C modules/mx4sio_bd clean
 	echo " -IEEE1394_bd"
 	$(MAKE) -C modules/ilink/IEEE1394_bd clean
 	$(MAKE) -C modules/ilink/iLinkman clean
@@ -921,6 +922,16 @@ modules/pademu/usb_pademu.irx: modules/pademu
 $(EE_ASM_DIR)usb_pademu.c: modules/pademu/usb_pademu.irx
 	$(BIN2C) $< $@ $(*F)_irx
 
+# Always enter the driver sub-make, including after a header or build-variant change.
+.PHONY: mx4sio-submake
+mx4sio-submake:
+
+modules/mx4sio_bd/mx4sio_bd.irx: mx4sio-submake
+	$(MAKE) -C modules/mx4sio_bd MINI=0
+
+modules/mx4sio_bd/mx4sio_bd_mini.irx: mx4sio-submake
+	$(MAKE) -C modules/mx4sio_bd MINI=1
+
 # FORK-VENDORED Block Device Manager (modules/bdm, see its ORIGIN.txt): ps2sdk's bdm + libbdm with the
 # block-cache refill fix. Always enter the sub-make so an edited source rebuilds the IRX.
 .PHONY: bdm-submake
@@ -965,7 +976,7 @@ $(EE_ASM_DIR)usbmass_bd.c: $(PS2SDK)/iop/irx/usbmass_bd.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)IEEE1394_bd.c: modules/ilink/IEEE1394_bd/IEEE1394_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)mx4sio_bd.c: $(PS2SDK)/iop/irx/mx4sio_bd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)mx4sio_bd.c: modules/mx4sio_bd/mx4sio_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 else
 # block device drivers without printf's
@@ -975,7 +986,7 @@ $(EE_ASM_DIR)usbmass_bd.c: $(PS2SDK)/iop/irx/usbmass_bd_mini.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)IEEE1394_bd.c: modules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)mx4sio_bd.c: $(PS2SDK)/iop/irx/mx4sio_bd_mini.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)mx4sio_bd.c: modules/mx4sio_bd/mx4sio_bd_mini.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 endif
 
