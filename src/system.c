@@ -2097,12 +2097,21 @@ void sysNeutrinoWarnPadEmu(config_set_t *configSet)
 // smb_ioman.irx and smb_fhi.irx (both "ip= mask= gw= srv= user= pass= share="). Nothing on the
 // command line sets them, so the launch writes this game's values into every such string first.
 
-// One "key=" a module arg may start with, the value to give it and how many strings carried it.
+// The modules whose args the hand-over writes, as bits: a key is only rewritten in the args of a
+// module it belongs to, and the preflight checks each of those modules carried it.
+#define NEUTRINO_SMB_MOD_MINISTACK 0x1
+#define NEUTRINO_SMB_MOD_IOMAN     0x2
+#define NEUTRINO_SMB_MOD_FHI       0x4
+static const char *const neutrinoSmbModuleFiles[] = {"ministack.irx", "smb_ioman.irx", "smb_fhi.irx"};
+
+// One "key=" a module arg may start with, the value to give it, the modules it belongs to and the
+// modules whose args carried it.
 typedef struct
 {
     const char *key; // with its '=': "ip="
     char value[2 * NEUTRINO_SMB_SHARE_MAX + 2];
-    int seen;
+    unsigned char modules; // NEUTRINO_SMB_MOD_* it is written in
+    unsigned char seenIn;  // NEUTRINO_SMB_MOD_* whose args held it
 } neutrino_smb_key_t;
 
 // Escape `in` for a TOML basic string. -1 for a character a basic string cannot hold as typed
@@ -2124,14 +2133,16 @@ static int sysTomlEscape(const char *in, char *out, int outSize)
     return 0;
 }
 
-// Rewrite the value of every basic string in `in` that starts with one of the keys. A small lexer,
-// not a search, so a key inside a comment or inside another string is never taken for an arg:
-// comments, basic strings (with escapes) and literal strings are copied through whole. Multi-line
-// strings are not in the stock file; one makes the result -1 and the file is left alone.
+// Rewrite the value of every basic string in `in` that starts with one of the keys, inside the
+// [[module]] table of a module that key belongs to. A small lexer, not a search, so a key inside a
+// comment or inside another string is never taken for an arg: comments, basic strings (with escapes)
+// and literal strings are copied through whole. The module is the one named by the table's
+// `file = "..."` line; any table header starts a new one. Multi-line strings are not in the stock
+// file; one makes the result -1 and the file is left alone.
 // Returns the new length, or -1 (malformed, or it would not fit).
 static int sysTomlRewriteSmbArgs(const char *in, int len, char *out, int outSize, neutrino_smb_key_t *keys, int keyCount)
 {
-    int i = 0, n = 0;
+    int i = 0, n = 0, lineStart = 0, module = 0;
 #define TOML_PUT(ch)          \
     do {                      \
         if (n >= outSize - 1) \
@@ -2141,6 +2152,20 @@ static int sysTomlRewriteSmbArgs(const char *in, int len, char *out, int outSize
 
     while (i < len) {
         char c = in[i];
+        if (c == '\n') {
+            TOML_PUT(in[i++]);
+            lineStart = i;
+            continue;
+        }
+        if (c == '[') {
+            int j = lineStart;
+            while (j < i && (in[j] == ' ' || in[j] == '\t'))
+                j++;
+            if (j == i)
+                module = 0; // a table header: the next file = names its module
+            TOML_PUT(in[i++]);
+            continue;
+        }
         if (c == '#') {
             while (i < len && in[i] != '\n')
                 TOML_PUT(in[i++]);
@@ -2161,18 +2186,43 @@ static int sysTomlRewriteSmbArgs(const char *in, int len, char *out, int outSize
             if (i + 2 < len && in[i + 1] == '"' && in[i + 2] == '"')
                 return -1;
             TOML_PUT(in[i++]);
-            int k;
-            for (k = 0; k < keyCount; k++) {
-                int kl = (int)strlen(keys[k].key);
-                if (i + kl <= len && !strncmp(in + i, keys[k].key, kl))
-                    break;
+            // `file = "x.irx"`: this table's module.
+            int j = lineStart, isFile = 0;
+            while (j < i && (in[j] == ' ' || in[j] == '\t'))
+                j++;
+            if (i - j >= 5 && !strncmp(in + j, "file", 4)) {
+                j += 4;
+                while (j < i && (in[j] == ' ' || in[j] == '\t'))
+                    j++;
+                if (j < i && in[j] == '=') {
+                    j++;
+                    while (j < i && (in[j] == ' ' || in[j] == '\t'))
+                        j++;
+                    isFile = j == i - 1;
+                }
+            }
+            if (isFile) {
+                module = 0;
+                for (int m = 0; m < 3; m++) {
+                    int ml = (int)strlen(neutrinoSmbModuleFiles[m]);
+                    if (i + ml < len && !strncmp(in + i, neutrinoSmbModuleFiles[m], ml) && in[i + ml] == '"')
+                        module = 1 << m;
+                }
+            }
+            int k = keyCount;
+            if (!isFile && module != 0) {
+                for (k = 0; k < keyCount; k++) {
+                    int kl = (int)strlen(keys[k].key);
+                    if ((keys[k].modules & module) && i + kl <= len && !strncmp(in + i, keys[k].key, kl))
+                        break;
+                }
             }
             if (k < keyCount) {
                 for (const char *p = keys[k].key; *p != '\0'; p++)
                     TOML_PUT(*p);
                 for (const char *p = keys[k].value; *p != '\0'; p++)
                     TOML_PUT(*p);
-                keys[k].seen++;
+                keys[k].seenIn |= module;
                 // Skip the old value, up to the closing quote.
                 while (i < len && in[i] != '"' && in[i] != '\n') {
                     if (in[i] == '\\' && i + 1 < len)
@@ -2243,14 +2293,15 @@ int sysNeutrinoSmbPreflight(const char *neutrinoPath, const neutrino_smb_args_t 
     }
     toml[len] = '\0';
 
+    const unsigned char smbMods = NEUTRINO_SMB_MOD_IOMAN | NEUTRINO_SMB_MOD_FHI;
     neutrino_smb_key_t keys[] = {
-        {"ip=", "", 0},
-        {"mask=", "", 0},
-        {"gw=", "", 0},
-        {"srv=", "", 0},
-        {"user=", "", 0},
-        {"pass=", "", 0},
-        {"share=", "", 0}};
+        {"ip=", "", NEUTRINO_SMB_MOD_MINISTACK | smbMods, 0},
+        {"mask=", "", smbMods, 0},
+        {"gw=", "", smbMods, 0},
+        {"srv=", "", smbMods, 0},
+        {"user=", "", smbMods, 0},
+        {"pass=", "", smbMods, 0},
+        {"share=", "", smbMods, 0}};
     enum { K_IP,
            K_MASK,
            K_GW,
@@ -2270,13 +2321,16 @@ int sysNeutrinoSmbPreflight(const char *neutrinoPath, const neutrino_smb_args_t 
     }
 
     int newLen = sysTomlRewriteSmbArgs(toml, len, updated, sizeof(updated), keys, K_COUNT);
-    // The stock file names ip= three times (ministack, smb_ioman, smb_fhi) and the rest twice. A file
-    // missing one would boot with that module's default (a /24 mask, no gateway is fine; an empty
-    // login or another ip is not), so the ones that matter must be there.
-    if (newLen < 0 || keys[K_IP].seen < 3 || keys[K_SRV].seen < 2 || keys[K_USER].seen < 2 ||
-        keys[K_PASS].seen < 2 || keys[K_SHARE].seen < 2) {
-        LOG("[NEUTRINO] %s not in the stock shape (ip %d, srv %d, user %d, pass %d, share %d) -- not written\n", path,
-            keys[K_IP].seen, keys[K_SRV].seen, keys[K_USER].seen, keys[K_PASS].seen, keys[K_SHARE].seen);
+    // The stock file gives ip= to ministack, smb_ioman and smb_fhi, and the rest to both SMB modules.
+    // A module missing one would boot with its own default (a /24 mask, no gateway is fine; an empty
+    // login or another ip is not), so each module must carry the ones that matter.
+    static const int required[] = {K_IP, K_SRV, K_USER, K_PASS, K_SHARE};
+    int missing = newLen < 0;
+    for (int r = 0; r < 5 && !missing; r++)
+        missing = keys[required[r]].seenIn != keys[required[r]].modules;
+    if (missing) {
+        LOG("[NEUTRINO] %s not in the stock shape (modules with ip %x, srv %x, user %x, pass %x, share %x) -- not written\n",
+            path, keys[K_IP].seenIn, keys[K_SRV].seenIn, keys[K_USER].seenIn, keys[K_PASS].seenIn, keys[K_SHARE].seenIn);
         return -2;
     }
     if (newLen == len && !memcmp(toml, updated, len))

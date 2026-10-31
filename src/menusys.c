@@ -2820,13 +2820,13 @@ void menuHandleInputGameMenu()
             menuSetParentalLockCheckState(1);
             if (okItem && okGame)
                 guiMsgBox(_l(_STR_GAME_SETTINGS_SAVED), 0, NULL);
-            guiGameLoadConfig(selected_item->item->userdata, gameMenuLoadConfig(NULL));
+            guiGameLoadConfig(selected_item->item->current->item.id, selected_item->item->userdata, gameMenuLoadConfig(NULL));
         } else if (menuID == GAME_TEST_CHANGES) {
             guiGameTestSettings(selected_item->item->current->item.id, selected_item->item->userdata, itemConfig);
         } else if (menuID == GAME_REMOVE_CHANGES) {
             if (guiGameShowRemoveSettings(itemConfig, configGetByType(CONFIG_GAME))) {
                 menuSetParentalLockCheckState(1);
-                guiGameLoadConfig(selected_item->item->userdata, gameMenuLoadConfig(NULL));
+                guiGameLoadConfig(selected_item->item->current->item.id, selected_item->item->userdata, gameMenuLoadConfig(NULL));
             }
         } else if (menuID == GAME_RENAME_GAME) {
             menuRenameGame(&gameMenu);

@@ -925,7 +925,7 @@ static void itemExecTriangle(struct menu_item *curMenu)
                     return;
                 menuInitGameMenu(support);
                 guiSwitchScreen(GUI_SCREEN_GAME_MENU);
-                guiGameLoadConfig(support, configSet);
+                guiGameLoadConfig(curMenu->current->item.id, support, configSet);
             }
         } else {
             // The app menu has only Rename and Delete, which a read-only server would drop

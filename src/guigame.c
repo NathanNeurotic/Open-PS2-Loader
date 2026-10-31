@@ -1590,7 +1590,8 @@ static void guiGameSaveGSMGlobalConfig(config_set_t *configGame)
 }
 
 // The core the compatibility dialog's Loader row selects, resolving "Default" to the global core.
-static int guiGameDialogCoreIsNeutrino(item_list_t *support, int neverNeutrino)
+// sourceMode: the mode of the source that launches the game (a Favourite's owner, not FAV_MODE).
+static int guiGameDialogCoreIsNeutrino(int sourceMode, item_list_t *support, int neverNeutrino)
 {
     int coreChoice = 0;
 
@@ -1599,10 +1600,10 @@ static int guiGameDialogCoreIsNeutrino(item_list_t *support, int neverNeutrino)
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreChoice);
     // UDPFS (Files and IMG) and UDPBD: "Default" means Neutrino there, whatever the global core is
     // (bdmNetBlockCoreLoader).
-    if (support != NULL && (support->mode == UDPFS_MODE || bdmSupportIsUDPBD(support)))
+    if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
         return coreChoice != 0;
     // SMB: "Default" means the OPL core there (ethTryNeutrino).
-    if (support != NULL && support->mode == ETH_MODE)
+    if (sourceMode == ETH_MODE)
         return coreChoice == 1;
     return (coreChoice == 1) || (coreChoice == 2 && gDefaultCoreLoader == 1);
 }
@@ -1702,7 +1703,7 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // this). HTTP likewise has no Neutrino launch leg. CF is also native-core only: external Neutrino
     // cannot restore the CF bus. SMB has one now (ethTryNeutrino), taken only from the game's own choice.
     coreNeverNeutrino = (support != NULL && ((libViewActive(support->mode) == LIB_VIEW_PS1) || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode)));
-    coreDefaultOpl = support != NULL && support->mode == ETH_MODE;
+    coreDefaultOpl = support != NULL && sourceMode == ETH_MODE;
 
     // UDPFS (Files: UDPFS_MODE, also for a Favourite that points back to it) and the UDP block device
     // (UDPBD and UDPFS block: bdmSupportIsUDPBD for its page, bdmModeIsUDPBD for a Favourite of it) boot
@@ -2396,7 +2397,7 @@ static void guiGameLoadOSDLanguageConfig(config_set_t *configSet, config_set_t *
 // OSD Language
 
 // loads defaults if no config found
-void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
+void guiGameLoadConfig(int id, item_list_t *support, config_set_t *configSet)
 {
     int i;
     config_set_t *configGame;
@@ -2429,9 +2430,13 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
 
     // Includes a title default for the selected core, so the screen matches what launches.
     // coreNeverNeutrino belongs to the last dialog, so work out the sources that only boot the OPL core here.
+    // A Favourite launches through the source it points back to, so its core follows that source.
+    int sourceMode = support == NULL           ? -1 :
+                     support->mode == FAV_MODE ? favGetItemSourceMode(id) :
+                                                 support->mode;
     int neverNeutrino = support != NULL && (libViewActive(support->mode) == LIB_VIEW_PS1 ||
-                                            support->mode == HTTP_MODE || bdmModeIsPCCF(support->mode));
-    compatShownNeutrino = guiGameDialogCoreIsNeutrino(support, neverNeutrino);
+                                            sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode));
+    compatShownNeutrino = guiGameDialogCoreIsNeutrino(sourceMode, support, neverNeutrino);
     compatMode = sbGetCompatModes(configSet, compatShownNeutrino);
     for (i = 0; i < COMPAT_MODE_COUNT; ++i)
         diaSetInt(diaCompatConfig, COMPAT_MODE_BASE + i, (compatMode & (1 << i)) > 0 ? 1 : 0);

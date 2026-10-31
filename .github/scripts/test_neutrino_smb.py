@@ -29,7 +29,7 @@ def block(start_marker, end_marker, text):
 
 functions = "\n".join([
     function("static const char *sysLastPathSeparator("),
-    block("typedef struct\n{\n    const char *key;", "} neutrino_smb_key_t;", source),
+    block("#define NEUTRINO_SMB_MOD_MINISTACK", "} neutrino_smb_key_t;", source),
     function("static int sysTomlEscape("),
     function("static int sysTomlRewriteSmbArgs("),
     function("int sysNeutrinoSmbPreflight("),
@@ -162,6 +162,22 @@ int main() {
     install(nopass.c_str(), true);
     check(sysNeutrinoSmbPreflight(ELF, &a) == -2, "no pass= args: refused");
     check(files[TOML] == nopass, "refused file untouched");
+    // Each module must carry its own: a key moved into another module does not count, and is not written.
+    std::string moved = R"(@STOCK@)";
+    {
+        size_t fhi = moved.find("file = \"smb_fhi.irx\"");
+        size_t user = moved.find(", \"user=guest\"", fhi);
+        moved.erase(user, 14);
+        moved += "[[module]]\nfile = \"other.irx\"\nargs = [\"user=guest\"]\n";
+    }
+    install(moved.c_str(), true);
+    check(sysNeutrinoSmbPreflight(ELF, &a) == -2, "user= only in another module, not smb_fhi: refused");
+    check(files[TOML] == moved, "refused file untouched");
+    std::string extra = std::string(R"(@STOCK@)") + "[[module]]\nfile = \"other.irx\"\nargs = [\"ip=1.2.3.4\", \"user=keep\"]\n";
+    install(extra.c_str(), true);
+    check(sysNeutrinoSmbPreflight(ELF, &a) == 0, "an extra module does not stop the hand-over");
+    check(files[TOML].find("[\"ip=1.2.3.4\", \"user=keep\"]") != std::string::npos, "another module's args untouched");
+    check(count(files[TOML], "\"ip=10.0.0.7\"") == 3, "ip= written in the three modules it belongs to");
     install("args = [\"ip=1\n", true);
     check(sysNeutrinoSmbPreflight(ELF, &a) == -2, "unterminated string: refused");
 
@@ -213,8 +229,10 @@ if not re.search(r'snprintf\(partname, sizeof\(partname\), "smb:%s", sharePath\)
 gui = (ROOT / "src/guigame.c").read_text(encoding="utf-8")
 if re.search(r"coreNeverNeutrino = [^;]*ETH_MODE", gui):
     failures.append("guigame: the SMB Loader Core row must not be locked to the OPL core any more")
-if "coreDefaultOpl = support != NULL && support->mode == ETH_MODE;" not in gui:
-    failures.append("guigame: SMB's Default row means the OPL core")
+if "coreDefaultOpl = support != NULL && sourceMode == ETH_MODE;" not in gui:
+    failures.append("guigame: SMB's Default row means the OPL core, for a Favourite of an SMB game too")
+if not re.search(r"static int guiGameDialogCoreIsNeutrino\(int sourceMode,", gui) or "if (sourceMode == ETH_MODE)\n        return coreChoice == 1;" not in gui:
+    failures.append("guigame: the title defaults follow the owning source's core (a Favourite of an SMB game)")
 
 if failures:
     print("Neutrino SMB checks FAILED:")
