@@ -323,6 +323,55 @@ int thmLayoutAutoFitX(int x, int screenWidth)
     return centre + (x - centre) * 3 / 4;
 }
 
+int thmApplyAltBackground(config_set_t *themeConfig, int alt)
+{
+    char base[CONFIG_KEY_NAME_LEN], value[CONFIG_KEY_VALUE_LEN];
+    const size_t altLen = strlen(THM_ALT_SUFFIX);
+    const char *topAlt = NULL;
+    int declared = 0;
+
+    if (themeConfig == NULL)
+        return 0;
+
+    // A copied "<block>_default" never ends in _alt, so the entries appended while walking are skipped.
+    for (const struct config_value_t *it = themeConfig->head; it != NULL; it = it->next) {
+        size_t len = strlen(it->key);
+        if (strcmp(it->key, THM_ALT_KEY) == 0) {
+            declared = 1;
+            continue;
+        }
+        if (!thmKeyEndsWith(it->key, len, THM_ALT_SUFFIX))
+            continue;
+        declared = 1;
+        if (!alt)
+            continue;
+        snprintf(base, sizeof(base), "%.*s_default", (int)(len - altLen), it->key);
+        snprintf(value, sizeof(value), "%s", it->val);
+        configSetStr(themeConfig, base, value);
+    }
+
+    // The top-level alt= goes to every Background block (base and "<view>.") that has no alt= of its own.
+    if (alt && configGetStr(themeConfig, THM_ALT_KEY, &topAlt) && topAlt != NULL && topAlt[0] != '\0') {
+        const char *own;
+        const size_t typeLen = strlen("_type");
+        snprintf(value, sizeof(value), "%s", topAlt);
+        for (const struct config_value_t *it = themeConfig->head; it != NULL; it = it->next) {
+            size_t len = strlen(it->key);
+            if (!thmKeyEndsWith(it->key, len, "_type") || strcmp(it->val, "Background") != 0)
+                continue;
+            snprintf(base, sizeof(base), "%.*s%s", (int)(len - typeLen), it->key, THM_ALT_SUFFIX);
+            if (configGetStr(themeConfig, base, &own))
+                continue;
+            snprintf(base, sizeof(base), "%.*s_default", (int)(len - typeLen), it->key);
+            configSetStr(themeConfig, base, value);
+        }
+        // A theme with no Background block gets one added at load (validateBackgroundElems, read as "bg").
+        if (!configGetStr(themeConfig, "bg" THM_ALT_SUFFIX, &own))
+            configSetStr(themeConfig, "bg_default", value);
+    }
+    return declared;
+}
+
 // ---- Fallback views ---------------------------------------------------------------------------------------
 
 // Highest block number looked at per family. The contiguous numbering rule keeps real themes far below it.

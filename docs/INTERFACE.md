@@ -41,6 +41,13 @@ and the Coverflow Settings page no longer has a Cover Count row.
 List** (one page with the games of every started device; see [Game library](GAME-LIBRARY.md#all-games-list)).
 It works with every view and is the same `all_games` setting as **Game Sources → All Games List**.
 
+**Alternate Background**, under Library, shows the theme's second background when its author gave one
+(`alt=` in `conf_theme.cfg`; idea: [KrahJohlito](https://github.com/KrahJohlito)), so one theme can ship two looks. It is Off on fresh
+configurations and saved as `theme_alt_bg=1`. A theme without `alt=` looks the same either way, and only
+a theme with `alt=` is reloaded when the setting changes. Per-game background art still wins over the
+theme's picture while a game is selected. See
+[THEME_ENGINE.md, Alternate background](THEME_ENGINE.md#alternate-background-alt--this-fork).
+
 Both flow views rotate navigation on the main game list: Left/Right browse covers and Up/Down
 change sources. R3 remains Favorite, and info/settings screens keep their normal controls.
 **Coverflow Settings** tunes the `Coverflow` renderer; PSBBN Flow uses its fixed layout and

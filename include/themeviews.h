@@ -115,6 +115,19 @@ int thmApplyDisplayLayout(config_set_t *themeConfig, int wide);
 // the alignment (left edge, centre and right edge all move by the same rule).
 int thmLayoutAutoFitX(int x, int screenWidth);
 
+// Alternate background in one conf_theme.cfg (idea: KrahJohlito). A theme names a second picture for an
+// element with "alt=" next to its "default=" (main0: type=Background, default=bg, alt=bg_night), or once at
+// the top level with "alt=<image>" for every Background element that has no alt= of its own. The Interface
+// setting Alternate Background picks it: on, each "<block>_alt" (or the top-level alt) is copied over
+// "<block>_default"; off, the theme loads exactly as before. Like the SD/HD variants this runs once, right
+// after the cfg is read and after thmApplyDisplayLayout, so "alt_hd=" works and "<view>." blocks follow too.
+#define THM_ALT_SUFFIX "_alt"
+#define THM_ALT_KEY    "alt"
+
+// Apply the alternate pictures when alt is non-zero. Returns 1 when the theme declares any alt key, i.e.
+// when it looks different with the setting flipped and must be reloaded if it changes.
+int thmApplyAltBackground(config_set_t *themeConfig, int alt);
+
 // Fallback views. A theme without views= offers every view: one it does not declare is built from its own
 // List (or flow) layout, keeping its background, colours, fonts, icons, hints and info page, and swapping
 // only the presenter for the one in the built-in template of that view (tmpl: the <OPL> theme's cfg for
