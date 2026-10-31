@@ -154,6 +154,9 @@ static Sio2McProc2 psio2_mc_transfer_init[2] = {lock_stub, lock_stub}, psio2_tra
 static int sio2TransferVersion;
 int DeviceWritePage(int mc_num, void *buf, u32 page_num);
 int DeviceReadPage(int mc_num, void *buf, u32 page_num);
+#ifdef BDM_DRIVER
+int DeviceWritePages(int mc_num, void *buf, u32 page_num, u32 count);
+#endif
 @MCEMU_PROTOTYPES@
 @HELPERS@
 @MC_CONFIGURE@
@@ -251,9 +254,22 @@ int main(void)
         memset(got, 0, sizeof(got));
         assert(OK(read_page(3, got)) && memcmp(got, data, PAGE) == 0);
         assert(DeviceReadPage(0, got, 4) == 1 && memcmp(got, data, PAGE) == 0);
+        int before = sim_writes();
         assert(OK(erase_block(16)));
         for (int p = 16; p < 32; p++)
             assert(memcmp(sim_page(p), ff, PAGE) == 0);
+        assert(memcmp(sim_page(15), ff, PAGE) != 0 && memcmp(sim_page(32), ff, PAGE) != 0); /* only the block */
+#ifdef BDM_DRIVER
+        assert(sim_writes() - before == 4); /* 16 pages, 4 sectors per device write */
+#else
+        assert(sim_writes() - before == 16); /* one write per page */
+#endif
+        /* A 0x00-erase card (flag 0x10) erases to zeroes on the batched path too. */
+        memcards[0].flags |= 0x10;
+        assert(OK(erase_block(48)));
+        for (int p = 48; p < 64; p++)
+            assert(sim_page(p)[0] == 0 && memcmp(sim_page(p), sim_page(48), PAGE) == 0);
+        memcards[0].flags &= ~0x10;
 
         /* A failed device write is a failed page write, not an acknowledged save. */
         sim_fail(5, mode);
@@ -314,9 +330,12 @@ static int sim_read(struct block_device *bd, u64 sector, void *buffer, u16 count
     memcpy(buffer, disk[sector - BASE], count * 512u);
     return count;
 }
+static int writes;
+int sim_writes(void) { return writes; }
 static int sim_write(struct block_device *bd, u64 sector, const void *buffer, u16 count)
 {
     assert(bd == g_bd && depth == 1 && sector >= BASE && sector + count <= BASE + SIM_PAGES);
+    writes++;
     if (failed(sector, count))
         return fail_mode ? count - 1 : -5;
     memcpy(disk[sector - BASE], buffer, count * 512u);
@@ -380,7 +399,9 @@ static int sim_io(int fd, int size, void *ptr, int write)
     return size;
 }
 static int sim_read(int fd, int size, void *ptr) { return sim_io(fd, size, ptr, 0); }
-static int sim_write(int fd, int size, void *ptr) { return sim_io(fd, size, ptr, 1); }
+static int writes;
+int sim_writes(void) { return writes; }
+static int sim_write(int fd, int size, void *ptr) { writes++; return sim_io(fd, size, ptr, 1); }
 @DRIVER@
 void sim_reset(void)
 {
@@ -415,6 +436,7 @@ void sim_fail(int page, int mode);
 const u8 *sim_page(int page);
 int sim_balanced(void);
 int sim_direct(void);
+int sim_writes(void);
 '''
 
 bdm_returns_int = header(cdvdman_bdm, 'bdm_writeSector').startswith('int ') and header(cdvdman_bdm, 'bdm_readSector').startswith('int ')
@@ -439,7 +461,8 @@ with tempfile.TemporaryDirectory() as directory:
                 .replace('@XORTABLE@', XORTABLE).replace('@MCEMU_PROTOTYPES@', MCEMU_PROTOTYPES)
                 .replace('@HELPERS@', HELPERS).replace('@MC_CONFIGURE@', definition(mcemu_io, 'mc_configure'))
                 .replace('@MCEMU_CODE@', MCEMU_CODE)
-                .replace('@DEVICE@', definition(read(device), 'DeviceWritePage') + '\n' + definition(read(device), 'DeviceReadPage'))
+                .replace('@DEVICE@', definition(read(device), 'DeviceWritePage') + '\n' + definition(read(device), 'DeviceReadPage')
+                          + ('\n' + definition(read(device), 'DeviceWritePages') if define == 'BDM_DRIVER' else ''))
                 .replace('@SETUP@', setup).replace('@NAME@', name)
                 .replace('@EXTRA@', 'assert(sim_direct()); /* multi-sector and missing-driver edges */'))
         side = side.replace('#include "sim.h"', '#include "sim.h"\n' + setup_decl + '\n#define SIM_MODES ' + str(modes), 1)
