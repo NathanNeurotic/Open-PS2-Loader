@@ -205,13 +205,13 @@ def check_card_info(source, flags, path):
     c, binary = path / "card.c", path / "card.exe"
     harness = CARD_HARNESS.replace("@INFO@", function(source, "spisd_get_card_info"))
     c.write_text(harness, encoding="utf-8")
-    subprocess.run([os.environ.get("CC", "gcc"), *flags, "-I"+str(path), str(c), "-o", str(binary)], check=True)
+    subprocess.run([os.environ.get("CC", "gcc"), *flags, "-I"+str(path), str(c), "-o", str(binary)], check=True, timeout=120)
     subprocess.run([str(binary)], check=True, timeout=30)
     mutant = harness.replace("spisd_read_register(reg_data, sizeof(reg_data))",
                              "spisd_read_register(sdcard.csd, sizeof(reg_data))", 1)
     assert mutant != harness
     c.write_text(mutant, encoding="utf-8")
-    subprocess.run([os.environ.get("CC", "gcc"), *flags, "-I"+str(path), str(c), "-o", str(binary)], check=True)
+    subprocess.run([os.environ.get("CC", "gcc"), *flags, "-I"+str(path), str(c), "-o", str(binary)], check=True, timeout=120)
     result = subprocess.run([str(binary)], capture_output=True, timeout=30)
     assert result.returncode != 0, "CSD response overwrite was not detected"
     print("PASS: CSD response overwrite is detected")
@@ -229,7 +229,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         c, binary = Path(tmp) / "accept.c", Path(tmp) / "accept.exe"
         c.write_text(harness, encoding="utf-8")
-        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True)
+        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True, timeout=120)
         subprocess.run([str(binary)], check=True, timeout=30)
         # Restore the upstream counting order: the executable must reject it.
         mutant = harness.replace(
@@ -238,14 +238,14 @@ def main():
                                 "    cmd.sectors_transferred++;\n    /* get data response token */")
         assert mutant != harness
         c.write_text(mutant, encoding="utf-8")
-        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True)
+        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True, timeout=120)
         result = subprocess.run([str(binary)], capture_output=True, timeout=30)
         assert result.returncode != 0, "premature ISR write accounting was not detected"
         print("PASS: premature ISR write accounting is detected")
         mutant = harness.replace("reverse_buffer((uint32_t *)buffer, ((count * SECTOR_SIZE) / 4));", "")
         assert mutant != harness
         c.write_text(mutant, encoding="utf-8")
-        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True)
+        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True, timeout=120)
         result = subprocess.run([str(binary)], capture_output=True, timeout=30)
         assert result.returncode != 0, "caller buffer mutation was not detected"
         print("PASS: caller buffer mutation is detected")

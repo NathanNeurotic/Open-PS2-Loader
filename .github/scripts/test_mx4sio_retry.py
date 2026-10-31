@@ -138,7 +138,7 @@ def main():
         path = Path(tmp)
         c, binary = path / "retry.c", path / "retry.exe"
         c.write_text(harness, encoding="utf-8")
-        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True)
+        subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True, timeout=120)
         subprocess.run([str(binary)], check=True, timeout=30)
         # Prove that each upstream bug is actually caught by this executable test.
         for name, mutant in (
@@ -150,11 +150,11 @@ def main():
             if isinstance(mutant, list):
                 mutant = "".join(mutant)
             c.write_text(mutant, encoding="utf-8")
-            subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True)
+            subprocess.run([os.environ.get("CC", "gcc"), *flags, str(c), "-o", str(binary)], check=True, timeout=120)
             result = subprocess.run([str(binary)], capture_output=True, timeout=30)
             assert result.returncode != 0, name + " regression was not detected"
         print("PASS: all three unpatched retry regressions are detected")
-    subprocess.run([sys.executable, str(Path(__file__).with_name("test_mx4sio_write_acceptance.py"))], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("test_mx4sio_write_acceptance.py"))], check=True, timeout=900)
 
 
 if __name__ == "__main__":
