@@ -207,7 +207,7 @@ sharing its cover cache. Give it a fourth and it gets its own.</details>
 <code>coverflow</code>, <code>psbbn</code> and <code>grid</code>. The user picks a view
 under <b>Settings → Interface → <a href="settings.html#theme-view">Theme View</a></b>, or holds <b>L3</b> for half a second on the
 main page to switch to the next view the theme offers (a tap on L3 still cycles the library view). Idea and design:
-KrahJohlito. Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1092">#1092</a>; NOT TESTED on hardware.</p>
+<a href="https://github.com/KrahJohlito">KrahJohlito</a>. Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1092">#1092</a>; NOT TESTED on hardware.</p>
 <p>The unprefixed blocks are the <b>base</b>. A block named <code>&lt;view&gt;.&lt;block&gt;</code> replaces that block in that
 view only, and every block a view does not declare is inherited from the base:</p>
 <pre>views=list,coverflow           # the views this theme offers
@@ -257,7 +257,7 @@ references for a view's blocks.</li>
 theme does not declare, it is built from the theme's own layout. The background, colours, fonts, menu icons, hints, text and
 the whole info page stay the theme's. Only the <b>presenter</b> is swapped, for the one in the built-in <code>&lt;OPL&gt;</code>
 theme's file for that view (<code>misc/theme_coverflow.cfg</code>, <code>misc/theme_psbbn_flow.cfg</code>,
-<code>misc/theme_grid.cfg</code>, or <code>misc/conf_theme_OPL.cfg</code> for List). Design: KrahJohlito. Added in
+<code>misc/theme_grid.cfg</code>, or <code>misc/conf_theme_OPL.cfg</code> for List). Design: <a href="https://github.com/KrahJohlito">KrahJohlito</a>. Added in
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1154">Open-PS2-Loader #1154</a>; NOT TESTED on hardware or with community themes.</p>
 <ul>
 <li>In each of <code>main</code>, <code>appsMain</code>, <code>vcdMain</code>, <code>favsMain</code>, <code>favsVcdMain</code> and
@@ -273,7 +273,7 @@ built view can overlap it. To keep a theme to the views it was designed for, lis
 
 <h3 id="sd-hd-layouts">SD and HD layouts (<code>_sd</code> / <code>_hd</code>) — <em>this fork</em></h3>
 <p>One <code>conf_theme.cfg</code> can carry a 4:3 layout and a 16:9 layout, so a theme no longer needs separate SD and
-HD/widescreen packages. Ideas: KrahJohlito (uOPL/wOPL's <code>wsX</code> key) and Berion (<code>_sd</code>/<code>_hd</code>
+HD/widescreen packages. Ideas: <a href="https://github.com/KrahJohlito">KrahJohlito</a> (uOPL/wOPL's <code>wsX</code> key) and <a href="https://www.psx-place.com/members/berion.1431">Berion</a> (<code>_sd</code>/<code>_hd</code>
 suffixes that fall back to the plain key). Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1152">Open-PS2-Loader #1152</a>; NOT TESTED on hardware.</p>
 <p>Add <code>_hd</code> to <b>any</b> key for the value used while <b>Settings → Interface → Widescreen</b> is on, or
 <code>_sd</code> for the value used while it is off. A key without a variant for the current mode keeps its plain value, so a
@@ -359,7 +359,7 @@ all, since font loading is skipped for buffer-loaded built-in themes).</p>
 </tbody>
 </table>
 <h3 id="hint-glyphs">Button hints and glyphs</h3>
-<p>These keys come from RIPPS2 (akilluminati47, build 90). A theme that sets none of them draws the hint bar
+<p>These keys come from <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> (<a href="https://github.com/akilluminati47">akilluminati47</a>, build 90). A theme that sets none of them draws the hint bar
 exactly as before. NOT TESTED on hardware.</p>
 <table data-sortable>
 <thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead>
@@ -843,8 +843,8 @@ Right, Cross or Circle go back to the covers. Hold the right stick to one side f
 over to its back cover (<code>COV2</code>), the way the stick leans; it stays turned until the stick turns it home.
 <i>Settings → Interface → Coverflow Settings → Grid Layout</i> swaps the theme's shape for 4 × 2, 5 × 2, 3 × 2 Large or
 6 × 3 Compact (6 × 2, 7 × 2, 5 × 2 and 8 × 3 on a 16:9 picture), and <i>Dim Side Covers</i> there makes the vignette full
-strength. Idea: KrahJohlito (multi-view themes); the pages, slide, selection, vignette, case flip, sidebar, tiles and layouts
-follow RIPPS2's grid (akilluminati47).
+strength. Idea: <a href="https://github.com/KrahJohlito">KrahJohlito</a> (multi-view themes); the pages, slide, selection, vignette, case flip, sidebar, tiles and layouts
+follow <a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a>'s grid (<a href="https://github.com/akilluminati47">akilluminati47</a>).
 Added in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1097">#1097</a>; NOT TESTED on hardware. Sidebar, slide, flip, vignette, tiles and Grid Layout: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1164">Open-PS2-Loader #1164</a>; NOT TESTED on hardware.</p>
 <table><thead><tr><th>Property</th><th>Grid behaviour</th></tr></thead><tbody>
 <tr><td><code>x</code>, <code>y</code></td><td>Centre of the whole grid; default is the screen centre.</td></tr>

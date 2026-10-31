@@ -79,11 +79,11 @@
 <h1>MMCE (SD2PSX / MemCard PRO2)</h1>
 <p class="lead">MMCE — <b>Memory Card Mass Storage Emulation</b> — lets OPL load PS2 games from an SD card inserted
 into a device (SD2PSX or MemCard PRO2) sitting in the PS2's memory-card slot. The protocol was created by
-<b>bbsan2k</b>; OPL's MMCE driver builds directly on that work. The device mounts as <code>mmce0:</code> or
+<b><a href="https://github.com/bbsan2k">bbsan2k</a></b>; OPL's MMCE driver builds directly on that work. The device mounts as <code>mmce0:</code> or
 <code>mmce1:</code> and uses the same folder layout as USB.</p>
 
 <div class="callout info"><div class="h">MMCE vs MX4SIO</div>
-Both SD2PSX and MemCard PRO2 appear in OPL as MMCE devices (the bbsan2k protocol). <b>MX4SIO</b> is a different
+Both SD2PSX and MemCard PRO2 appear in OPL as MMCE devices (the <a href="https://github.com/bbsan2k">bbsan2k</a> protocol). <b>MX4SIO</b> is a different
 SD-in-memory-card-slot adapter that uses a separate OPL driver and mounts into the BDM <code>massN:</code>
 namespace alongside USB. If your adapter does not expose the MMCE protocol, see the
 <a href="usb.html">USB / MX4SIO / iLink</a> page instead.
@@ -174,11 +174,11 @@ Useful when your SD card serves multiple purposes and you want to keep OPL files
 
 <h3 id="gameid-wait">Send GameID on Launch: waiting for the card</h3>
 <p>sd2psXtd starts the card switch a moment after it is asked, so a launch could start the game while the card
-was still switching (RIPPS2 reported a Burnout 3 hang). RiptOPL now waits up to 2 seconds to see the card go
+was still switching (<a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> reported a Burnout 3 hang). <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a> now waits up to 2 seconds to see the card go
 busy, then shows <em>The MMCE is getting this game's memory card ready (N s)</em> until it is done, up to
 180 seconds. <b>START</b> launches at once. A failed busy query never counts as ready; three in a row end the
 wait and the launch goes ahead. The bundled mmceman also takes upstream fix <code>21dbc0a</code> ("don't block
-mc1"), pinned at <code>de28936f</code>. Both from RIPPS2 by akilluminati47; NOT TESTED on hardware.</p>
+mc1"), pinned at <code>de28936f</code>. Both from RIPPS2 by <a href="https://github.com/akilluminati47">akilluminati47</a>; NOT TESTED on hardware.</p>
 
 <h2 id="igr">IGR Bootcard Slot(s)</h2>
 <p>MMCE devices support <b>In-Game Reset (IGR)</b> — they can send a "switch to bootcard" command to the device on
@@ -273,13 +273,13 @@ OPLUtil, USBUtil).</li>
 folders under the MMCE root (or the Prefix Path subdirectory if set).</li>
 <li>The config file (<code>settings_riptopl.cfg</code>) can be stored on the MMCE card. OPL probes MMCE before
 BDM devices during config discovery, so an MMCE-resident config is found reliably.</li>
-<li>MMCE is <b>not</b> MX4SIO. If your adapter uses the MX4SIO driver (rather than the bbsan2k MMCE protocol),
+<li>MMCE is <b>not</b> MX4SIO. If your adapter uses the MX4SIO driver (rather than the <a href="https://github.com/bbsan2k">bbsan2k</a> MMCE protocol),
 it mounts as <code>massN:</code> via BDM — enable it with the USB/MX4SIO toggle in Game Sources, not the
 MMCE Start Mode. See <a href="usb.html">USB / MX4SIO / iLink</a>.</li>
 </ul>
 
 <details class="deep"><summary>What is the MMCE protocol and how does it differ from MX4SIO?</summary>
-<p>MMCE (Memory Card Mass Storage Emulation) is a protocol created by <b>bbsan2k</b> for SD-card adapters that
+<p>MMCE (Memory Card Mass Storage Emulation) is a protocol created by <b><a href="https://github.com/bbsan2k">bbsan2k</a></b> for SD-card adapters that
 plug into the PS2's memory-card slot. The device presents itself as a mass-storage device to a dedicated IOP
 driver (<code>mmcedrv.irx</code>) using a custom command set that OPL speaks natively. The SD2PSX and MemCard
 PRO2 both implement this protocol.</p>

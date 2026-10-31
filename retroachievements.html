@@ -86,7 +86,7 @@ else — talking to the RetroAchievements servers, deciding what unlocked, your 
 PC.</p>
 <p>Based on the RetroAchievements implementation by <strong><a href="https://github.com/hacan359/Open-PS2-Loader/pull/1">hacan359 (yoba)</a></strong>.
 Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora PC client</a></strong> with RiptOPL's RA build. Download the required <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v1.0.1">v1.0.1 release</a></strong>.</p>
-<p>RiptOPL's real-hardware stabilization was contributed by <strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> through
+<p><a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a>'s real-hardware stabilization was contributed by <strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> through
 PRs <strong>#702–#705</strong>, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
 <h2 id="mode-6-igr-disabled">Mode 6 (IGR disabled)</h2>
@@ -117,7 +117,7 @@ bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
 <p>The wire format follows <a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts">Caduceus's bridge implementation</a>. Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; <strong>Caduceus end-to-end console tracking remains unverified</strong>. The Xerabora hardware results below apply only to the tested Xerabora configuration.</p>
 <p>Both modes retain the existing restrictions: Ember and ordinary/custom Neutrino launches do not load RiptOPL's telemetry core (USB POPStarter uses its own IOP reader), UDP storage owns the NIC and blocks menu RA queries <strong>and clears loaded telemetry before an incompatible UDP-backed launch</strong>, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh peer discovery, SMB/HTTP passive telemetry uses an explicitly configured RA companion IP if provided, otherwise the existing verified peer or legacy SMB/HTTP game server fallback. <strong>In passive SMB/HTTP mode a queued receive FIFO defers telemetry snapshots</strong>, leaving the disc stream's pending receive traffic ahead of achievement traffic. The send path is still hardware-unverified and may still interfere during continuous streaming. Choosing Caduceus does not bypass these guards or add hardcore support.</p>
 <h3 id="neutrino-in-the-ra-edition">Neutrino in the RA edition</h3>
-<p>The full RetroAchievements kit includes the existing <strong><a href="https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2">ORBIT v1.0.2 Neutrino runtime</a></strong> by <strong>Daniel / danielnuld</strong>, based on Neutrino by <strong>Maximus32</strong> and the achievement protocol by <strong>hacan359 / xeRAbora</strong>. Its AFL-3.0 license, exact source commit and archive SHA-256 ship beside the runtime. Standard builds and install kits retain ordinary upstream Neutrino. An ELF-only update does not install the external runtime; copy the RA kit's complete <code>neutrino/</code> folder to your chosen supported device.</p>
+<p>The full RetroAchievements kit includes the existing <strong><a href="https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2">ORBIT v1.0.2 Neutrino runtime</a></strong> by <strong>Daniel / <a href="https://github.com/danielnuld">danielnuld</a></strong>, based on <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> by <strong><a href="https://github.com/rickgaiser">Maximus32</a></strong> and the achievement protocol by <strong><a href="https://github.com/hacan359">hacan359</a> / <a href="https://github.com/hacan359/xerabora">xeRAbora</a></strong>. Its AFL-3.0 license, exact source commit and archive SHA-256 ship beside the runtime. Standard builds and install kits retain ordinary upstream Neutrino. An ELF-only update does not install the external runtime; copy the RA kit's complete <code>neutrino/</code> folder to your chosen supported device.</p>
 <p>The RA kit's <code>neutrino/</code> is ORBIT's <strong>RA-Neutrino</strong>, labelled by <code>neutrino/RA-EDITION-NEUTRINO.txt</code>. It keeps the usual folder name so RA setups find it, but it is <strong>not</strong> the standard kit's Neutrino: ORBIT v1.0.2 is built on <strong>Neutrino v1.8.0</strong>, so in the RA edition every Neutrino launch, tracked or not, uses that base and lacks later upstream changes, including Neutrino cheat support. Use the standard kit for Neutrino cheats. Keep each kit's <code>neutrino/</code> with its own loader rather than mixing them.</p>
 <p>Either RA mode works. With <strong>RA Mode: Xerabora</strong>, set <strong>RA companion IP</strong> to the signed-in xeRAbora PC. With <strong>RA Mode: Caduceus</strong>, the in-game agent reports to the engine on the Caduceus PC: Caduceus adds a session bridge, but its game telemetry is xeRAbora's wire protocol. Local-storage launches recheck the Caduceus session first and launch without achievements if it reports OFFLINE, exactly as OPL-core launches do. ORBIT is a loader runtime, so it does not need a third RA protocol mode; its agent matches xeRAbora's current wire protocol (unchanged since alpha.10, the version ORBIT copied is identical to alpha.17's). Run <strong>RA: check game support</strong> for a local image or APA install to identify that exact image and save <code>RA/&lt;serial&gt;.wl</code> under its support-file prefix. xeRAbora alpha.17 persists the serial-to-hash mapping in its own configuration; keep that mapping with the companion profile. A watch list copied from another PC does not identify the game to a fresh profile. Recheck support after replacing an image, especially another revision with the same serial.</p>
 <p>On launch, RiptOPL writes <code>ript-ra.wl</code> and <code>ript-ra.toml</code> into the selected Neutrino configuration directory, honoring its effective <code>-cwd</code> and chaining the user's <code>-cfg</code> and generated cheat configuration (the v1.8.0-based runtime has no cheat engine, so the codes do not apply). That directory must be writable and remain accessible to Neutrino. The runtime can reside on any supported mounted device; a raw <code>hdd0:</code> partition path is not a filesystem directory. RiptOPL adds the RA arguments only after preparation succeeds and validates the full launch argument budget before teardown. A game without a saved watch list launches without a notice. If the two RA arguments would push the launch past Neutrino's 256-byte budget, the game launches without achievements and shows the untracked notice instead of being refused.</p>
@@ -139,8 +139,8 @@ bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
 <p>With cards Off, launches reserve no card workspace and install no extra GS tracker. An opted-in tracked Caduceus launch reserves about 30 KiB in protected module storage and observes display-register writes without forcing a video mode. If there is insufficient room, unlock and reset events fall back to the existing pulse handler. The renderer skips blocked GIF states and unsupported framebuffers, but these guards do not prove graphics compatibility; a card may not appear for an unsupported display. Current-build console card rendering and real unlock acceptance remain unverified. The existing network-share stability warning still applies.</p>
 <hr/>
 <h2 id="status">Status</h2>
-<p><strong>Implemented, and telemetry has run end to end on real PS2 hardware</strong> in oMrRexD's session for
-PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
+<p><strong>Implemented, and telemetry has run end to end on real PS2 hardware</strong> in <a href="https://github.com/oMrRexD">oMrRexD</a>'s session for
+PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and <a href="https://github.com/hacan359/xerabora">xeRAbora</a>
 v0.1.0-alpha.10. Launched from MMCE, Need for Speed: Underground 2 streamed 25,200 snapshots with none
 lost and unlocked an achievement with the overlay on screen; the same build also tracked the game from
 USB. That is one console, one game and a static address. DHCP, the other launch paths and the edge
@@ -168,11 +168,11 @@ as finished.</p>
 </tr>
 <tr>
 <td>Image hashing (ISO9660 walk + MD5)</td>
-<td>done; images on a share and on a USB stick hashed to matching values on hardware (hacan359, 2026-09-10)</td>
+<td>done; images on a share and on a USB stick hashed to matching values on hardware (<a href="https://github.com/hacan359">hacan359</a>, 2026-09-10)</td>
 </tr>
 <tr>
 <td>Menu actions: check game support, test PC link</td>
-<td>both used on hardware: the support check's hashing by hacan359, the PC link test in #704</td>
+<td>both used on hardware: the support check's hashing by <a href="https://github.com/hacan359">hacan359</a>, the PC link test in #704</td>
 </tr>
 <tr>
 <td>List badges and the cover mark</td>
@@ -342,9 +342,9 @@ path. Disc boot, telemetry across game IOP resets and the IGR return path still 
 <h3 id="do-not-expect-a-game-with-achievements-to-run-from-a-network-share">Do not expect a game with achievements to run from a network share</h3>
 <p>A game that streams its own disc over the NIC is competing with telemetry for that NIC. This build no
 longer <em>reads</em> from the network in play on such a launch — <code>raudp</code> stops walking the SMAP receive ring
-and stops polling the stack, because the game's disc stream arrives through both — but <strong>hacan359
+and stops polling the stack, because the game's disc stream arrives through both — but <strong><a href="https://github.com/hacan359">hacan359</a>
 reports on hardware (2026-09-05) that this is not enough: a game with an achievement set still stops
-loading about a minute in from a share, so the send path disturbs the stream on its own.</strong> xeRAbora's
+loading about a minute in from a share, so the send path disturbs the stream on its own.</strong> <a href="https://github.com/hacan359/xerabora">xeRAbora</a>'s
 own documentation says the same, and names the USB stick and the original disc as the only tested ways
 to play.</p>
 <p>That defect is upstream's and ours alike; we have not reproduced or ruled it out on our own hardware.
@@ -371,7 +371,7 @@ server grants in compatibility mode.</p>
 <p>OPL now carries its own <code>smbman</code> (<code>modules/network/smbman-ra</code>, first in this flavour and now in every
 flavour) that tries NT create first and falls back to the legacy open <strong>only</strong> when the server says the file is held, and <strong>only for a
 read</strong> — reaching past another handle to write is not something worth asking for. If both are
-refused, the hash log names the image as held instead of saying nothing. hacan359 confirmed this on
+refused, the hash log names the image as held instead of saying nothing. <a href="https://github.com/hacan359">hacan359</a> confirmed this on
 hardware on 2026-09-10: two images held open by earlier runs hashed anyway, and the hashes matched
 the ones taken from a USB stick.</p>
 <p>Note this fixes <em>hashing</em>, not play: a game with an achievement set still stops about a minute in
@@ -527,20 +527,20 @@ both, and of every other SDK module the fork replaces.</p>
 <p><strong>The usbd swap is not a RetroAchievements feature.</strong> ps2sdk rewrote its USB host driver on
 2024-09-04 (<code>b1f7ff96</code>: 28 files, +4446/−3336), and since then a CD-era game run off a USB stick
 loses its controller <em>and</em> its sound at the game's first IOP reboot — Dynasty Warriors 2 on real
-hardware, reported by hacan359 on 2026-09-10, reproducing <strong>with official OPL as much as with this
+hardware, reported by <a href="https://github.com/hacan359">hacan359</a> on 2026-09-10, reproducing <strong>with official OPL as much as with this
 fork</strong>. Swapping only that one module fixes it. <code>usbd_mini.irx</code> is not a separate source tree:
 <code>iop/usb/usbd_mini/Makefile</code> points <code>IOP_SRC_DIR</code> at <code>iop/usb/usbd/src</code> and adds <code>-DMINI_DRIVER</code>, so
-the rewrite lands squarely on the module every RiptOPL flavour embeds straight from its container.</p>
+the rewrite lands squarely on the module every <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a> flavour embeds straight from its container.</p>
 <p>It is therefore <strong>not</strong> gated: <code>USBD_MINI_IRX</code> sits outside the <code>RETROACHIEVEMENTS</code> conditional and
 every flavour gets the pre-rewrite driver. It is listed here only because this is where the module
 came from; it is not a RetroAchievements feature and does not depend on the flag.</p>
 <p>Hardware-checked by <strong>Zack on 2026-09-10</strong> before that promotion landed: no noticeable USB
 regressions on the promoted build. That is the check the promotion was waiting on — it is a
 no-regression result, not a confirmation that the Dynasty Warriors 2 case is cured here; that
-remains hacan359's finding on his own hardware. <code>backup/pre-usbd-forkwide-58fe5529</code> is the tree
+remains <a href="https://github.com/hacan359">hacan359</a>'s finding on his own hardware. <code>backup/pre-usbd-forkwide-58fe5529</code> is the tree
 immediately before the swap, kept as a restore point.</p>
 <h2 id="before-this-is-called-finished">Before this is called finished</h2>
-<p>Most of the list below is still open. oMrRexD's hardware session for #702–#705 covered the nearest
+<p>Most of the list below is still open. <a href="https://github.com/oMrRexD">oMrRexD</a>'s hardware session for #702–#705 covered the nearest
 thing to <strong>3</strong>, launched from MMCE rather than USB (25,200 snapshots with none lost after a cold boot
 and a straight launch; the same build also tracked the game from USB), and <strong>13</strong>, the unlock overlay
 over a running game; a launch with telemetry switched off sent nothing, which is part of <strong>2</strong>.
@@ -705,7 +705,7 @@ archive is the shipping loader plus achievements, not a variant. Before #702, RA
 re-measured since.</p>
 </li>
 <li>
-<p><strong>PC integration uses xeRAbora</strong>, maintained by hacan359.</p>
+<p><strong>PC integration uses <a href="https://github.com/hacan359/xerabora">xeRAbora</a></strong>, maintained by <a href="https://github.com/hacan359">hacan359</a>.</p>
 </li>
 <li>
 <p><strong>Physical discs use an EESYNC-only reset image.</strong> ROM CDVDMAN/CDVDFSV remain in place;
@@ -717,7 +717,7 @@ is pending, before probing or tearing down devices.</p>
 <hr/>
 <h2 id="credits">Credits</h2>
 <ul>
-<li><strong>hacan359 (yoba)</strong> — the RetroAchievements design, the console implementation this port follows,
+<li><strong><a href="https://github.com/hacan359">hacan359 (yoba)</a></strong> — the RetroAchievements design, the console implementation this port follows,
 and the PC client. Physical-disc integration follows the
 <a href="https://github.com/hacan359/Open-PS2-Loader/tree/cb713e686acb2fb63de20aa44b3fd4e8c59ca680">upstream disc implementation</a>.</li>
 <li><strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> — the real-hardware RA stabilization work merged through
