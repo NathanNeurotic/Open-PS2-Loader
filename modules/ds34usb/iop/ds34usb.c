@@ -96,6 +96,9 @@ int usb_probe(int devId)
                                          ))
         return 1;
 
+    if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID)
+        return 1;
+
     return 0;
 }
 
@@ -131,7 +134,10 @@ int usb_connect(int devId)
     config = (UsbConfigDescriptor *)UsbGetDeviceStaticDescriptor(devId, device, USB_DT_CONFIG);
     interface = (UsbInterfaceDescriptor *)((char *)config + config->bLength);
 
-    if (device->idProduct == DS3_PID) {
+    if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID) {
+        ds34pad[pad].type = SHANWAN;
+        epCount = interface->bNumEndpoints - 1;
+    } else if (device->idProduct == DS3_PID) {
         ds34pad[pad].type = DS3;
         epCount = interface->bNumEndpoints - 1;
 #ifdef DS5_ENABLE
@@ -142,6 +148,13 @@ int usb_connect(int devId)
     } else {
         ds34pad[pad].type = DS4;
         epCount = 20; // ds4 v2 returns interface->bNumEndpoints as 0
+    }
+
+    // An interface that reports no endpoints would leave epCount at -1, and the walk below would
+    // then run past the descriptors. Branches that set a fixed count are not affected.
+    if (epCount < 0) {
+        usb_release(pad);
+        return 1;
     }
 
     endpoint = (UsbEndpointDescriptor *)UsbGetDeviceStaticDescriptor(devId, NULL, USB_DT_ENDPOINT);
@@ -162,7 +175,8 @@ int usb_connect(int devId)
 
     } while (epCount--);
 
-    if (ds34pad[pad].interruptEndp < 0 || ds34pad[pad].outEndp < 0) {
+    // The clone is never sent an output report, so it needs only its input endpoint.
+    if (ds34pad[pad].interruptEndp < 0 || (ds34pad[pad].outEndp < 0 && ds34pad[pad].type != SHANWAN)) {
         usb_release(pad);
         return 1;
     }
@@ -211,7 +225,10 @@ static void usb_release(int pad)
     SignalSema(ds34pad[pad].sema);
 }
 
-static int usb_resulCode;
+// 0 only once a report transfer has completed without error: ds34usb_get_data() resets it after each
+// read, and it starts unset, so a first transfer that times out never parses the untouched buffer
+// (all zeros, which the ShanWan parser would read as d-pad Up with both sticks at 0).
+static int usb_resulCode = 1;
 
 static void usb_data_cb(int resultCode, int bytes, void *arg)
 {
@@ -241,6 +258,14 @@ static void usb_config_set(int result, int count, void *arg)
     PollSema(ds34pad[pad].sema);
 
     ds34pad[pad].status |= DS34USB_STATE_CONFIGURED;
+
+    if (ds34pad[pad].type == SHANWAN) {
+        // It answers neither the DS3 enable report nor the LED/rumble report, and sending them can
+        // stall the bus for the USB storage that shares it (freergam3r). It reports without them.
+        ds34pad[pad].status |= DS34USB_STATE_RUNNING;
+        SignalSema(ds34pad[pad].sema);
+        return;
+    }
 
     if (ds34pad[pad].type == DS3) {
         DS3USB_init(pad);
@@ -274,6 +299,11 @@ static void DS3USB_init(int pad)
 
 static void readReport(u8 *data, int pad)
 {
+    if (ds34pad[pad].type == SHANWAN) { // no report ID: data[0] is a button byte and can be 0
+        translate_pad_shanwan(data, &ds34pad[pad].ds2);
+        return;
+    }
+
     if (data[0]) {
 
         if (ds34pad[pad].type == DS3) {
@@ -625,7 +655,10 @@ static int LEDRUM(u8 *led, u8 lrum, u8 rrum, int pad)
 
     WaitSema(ds34pad[pad].sema);
 
-    if (ds34pad[pad].update_rum) {
+    if (ds34pad[pad].type == SHANWAN) { // no LED, no motors: keep the request, send nothing
+        ds34pad[pad].lrum = lrum;
+        ds34pad[pad].rrum = rrum;
+    } else if (ds34pad[pad].update_rum) {
         ret = LEDRumble(led, lrum, rrum, pad);
 
         if (ret == USB_RC_OK)
@@ -700,6 +733,9 @@ int ds34usb_get_bdaddr(u8 *data, int port)
     if (port >= MAX_PADS)
         return 0;
 
+    if (ds34pad[port].type == SHANWAN) // not a Bluetooth pad: no pairing address to read
+        return 0;
+
     if (ds34pad[port].update_rum) {
         ds34pad[port].update_rum = 0;
         return 0;
@@ -767,7 +803,7 @@ void ds34usb_set_bdaddr(u8 *data, int port)
 {
     int i, ret;
 
-    if (port >= MAX_PADS)
+    if (port >= MAX_PADS || ds34pad[port].type == SHANWAN) // not a Bluetooth pad: nothing to pair
         return;
 
     WaitSema(ds34pad[port].sema);

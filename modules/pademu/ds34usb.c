@@ -91,6 +91,9 @@ int usb_probe(int devId)
     if (device->idVendor == DS34_VID && (device->idProduct == DS3_PID || device->idProduct == DS4_PID || device->idProduct == DS4_PID_SLIM))
         return 1;
 
+    if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID)
+        return 1;
+
     return 0;
 }
 
@@ -126,7 +129,10 @@ int usb_connect(int devId)
     config = (UsbConfigDescriptor *)UsbGetDeviceStaticDescriptor(devId, device, USB_DT_CONFIG);
     interface = (UsbInterfaceDescriptor *)((char *)config + config->bLength);
 
-    if (device->idProduct == DS3_PID) {
+    if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID) {
+        ds34pad[pad].type = SHANWAN; // checked first: its PID would otherwise fall through to DS4
+        epCount = interface->bNumEndpoints - 1;
+    } else if (device->idProduct == DS3_PID) {
         ds34pad[pad].type = DS3;
         epCount = interface->bNumEndpoints - 1;
     } else if (device->idProduct == GUITAR_HERO_PS3_PID) {
@@ -138,6 +144,13 @@ int usb_connect(int devId)
     } else {
         ds34pad[pad].type = DS4;
         epCount = 20; // ds4 v2 returns interface->bNumEndpoints as 0
+    }
+
+    // An interface that reports no endpoints would leave epCount at -1, and the walk below would
+    // then run past the descriptors. Branches that set a fixed count are not affected.
+    if (epCount < 0) {
+        usb_release(pad);
+        return 1;
     }
 
     endpoint = (UsbEndpointDescriptor *)UsbGetDeviceStaticDescriptor(devId, NULL, USB_DT_ENDPOINT);
@@ -158,7 +171,8 @@ int usb_connect(int devId)
 
     } while (epCount--);
 
-    if (ds34pad[pad].interruptEndp < 0 || ds34pad[pad].outEndp < 0) {
+    // The clone is never sent an output report, so it needs only its input endpoint.
+    if (ds34pad[pad].interruptEndp < 0 || (ds34pad[pad].outEndp < 0 && ds34pad[pad].type != SHANWAN)) {
         usb_release(pad);
         return 1;
     }
@@ -239,6 +253,14 @@ static void usb_config_set(int result, int count, void *arg)
 
     ds34pad[pad].status |= DS34USB_STATE_CONFIGURED;
 
+    if (ds34pad[pad].type == SHANWAN) {
+        // It answers neither the DS3 enable report nor the LED/rumble report, and sending them can
+        // stall the bus for the USB storage that shares it (freergam3r). It reports without them.
+        ds34pad[pad].status |= DS34USB_STATE_RUNNING;
+        SignalSema(ds34pad[pad].sema);
+        return;
+    }
+
     if (ds34pad[pad].type == DS3) {
         DS3USB_init(pad);
         DelayThread(10000);
@@ -278,6 +300,11 @@ static void readReport(u8 *data, int pad_idx)
 
         translate_pad_guitar(report, &pad->ds2, pad->type == GUITAR_GH);
         padMacroPerform(&pad->ds2, report->PSButton);
+    }
+    if (pad->type == SHANWAN) { // no report ID: data[0] is a button byte and can be 0
+        translate_pad_shanwan(data, &pad->ds2);
+        padMacroPerform(&pad->ds2, 0); // its PS/Home bit is not mapped yet
+        return;
     }
     if (data[0]) {
 
@@ -481,7 +508,9 @@ int ds34usb_get_data(u8 *dst, int size, int port)
     mips_memcpy(dst, ds34pad[port].data, size);
     ret = ds34pad[port].analog_btn & 1;
 
-    if (ds34pad[port].update_rum) {
+    if (ds34pad[port].type == SHANWAN) { // no LED, no motors: nothing to send
+        ds34pad[port].update_rum = 0;
+    } else if (ds34pad[port].update_rum) {
         ret = LEDRumble(ds34pad[port].oldled, ds34pad[port].lrum, ds34pad[port].rrum, port);
         if (ret == USB_RC_OK)
             TransferWait(ds34pad[port].cmd_sema);
