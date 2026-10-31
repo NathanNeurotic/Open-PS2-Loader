@@ -206,6 +206,7 @@ def statement_start(code, pos):
 
 
 LEGS = (('src/bdmsupport.c', 'void bdmLaunchGame('), ('src/ethsupport.c', 'static void ethLaunchGame('),
+        ('src/ethsupport.c', 'static int ethTryNeutrino('),
         ('src/hddsupport.c', 'void hddLaunchGame('), ('src/httpsupport.c', 'static void httpLaunchGame('),
         ('src/mmcesupport.c', 'void mmceLaunchGame('), ('src/udpfssupport.c', 'static void udpfsLaunchGame('))
 
@@ -244,9 +245,9 @@ for path, signature in LEGS:
     lead = code[max(code.rfind(c, start, prep) for c in ';{}') + 1:prep]
     assigned = re.fullmatch(r'\s*(\w+) = ', lead)
     if assigned:
-        guard = re.match(r';\s*if \(' + assigned.group(1) + r' < 0\)\s*(?:\{\s*)?return;', code[after:])
+        guard = re.match(r';\s*if \(' + assigned.group(1) + r' < 0\)\s*(?:\{\s*)?return(?: \d+)?;', code[after:])
     else:
-        guard = re.match(r' < 0\)\s*(?:\{\s*)?return;', code[after:]) if re.fullmatch(r'\s*if \(', lead) else None
+        guard = re.match(r' < 0\)\s*(?:\{\s*)?return(?: \d+)?;', code[after:]) if re.fullmatch(r'\s*if \(', lead) else None
     if guard is None:
         failures.append('%s: check sbPrepare\'s result (< 0) and return before `%s` is used' % (line(prep), index))
         guarded = after

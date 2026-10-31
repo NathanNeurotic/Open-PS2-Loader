@@ -699,7 +699,7 @@ static void httpLaunchGame(item_list_t *itemList, int id, config_set_t *configSe
         return;
     }
 
-    // $CoreLoader honesty, exactly as SMB does it: there is no Neutrino launch leg here, so a
+    // $CoreLoader honesty, as SMB had it before its Neutrino leg: there is no Neutrino launch leg here, so a
     // per-game or global Neutrino selection resolves to the OPL core. Say so rather than leaving
     // the setting looking honoured. Covers Favourites-origin launches, which the compat-dialog
     // lock in guigame.c cannot reach.

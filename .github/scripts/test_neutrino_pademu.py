@@ -105,7 +105,9 @@ int main(void) {
                             if (udpbd && pccf) continue;
                             view=0;
                             int expected=choice<0 ? defaultCore : choice;
-                            if (mode==ETH_MODE || mode==HTTP_MODE || (mode==BDM_MODE && pccf)) expected=0;
+                            if (mode==HTTP_MODE || (mode==BDM_MODE && pccf)) expected=0;
+                            /* SMB is Neutrino only from its own key; Default stays on the OPL core */
+                            if (mode==ETH_MODE) expected=choice==1;
                             /* UDPFS and UDPBD default to Neutrino; only their own <OPL> key picks the OPL core */
                             if (mode==UDPFS_MODE || (mode==BDM_MODE && udpbd)) expected=choice!=0;
                             assert(gameMenuCoreIsNeutrino()==expected);
