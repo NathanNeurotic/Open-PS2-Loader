@@ -1387,6 +1387,10 @@ struct UIItem diaVMC[] = {
     {UI_STRING, VMC_NAME, 1, 1, _STR_HINT_VMC_NAME, 0, 0, {.stringvalue = {"", "", &guiGameVmcNameHandler}}},
     {UI_BREAK},
 
+    // Who shares the card, from its name: the game's series, the game alone, or every generic user.
+    {UI_LABEL, VMC_KIND, 0, 0, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_SIZE}}},
     {UI_SPACER},
     {UI_ENUM, VMC_SIZE, 1, 1, _STR_HINT_VMC_SIZE, 0, 0, {.intvalue = {0, 0}}},
