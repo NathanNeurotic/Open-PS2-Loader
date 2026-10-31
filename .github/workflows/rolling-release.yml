@@ -720,7 +720,7 @@ jobs:
           #                                      Ships WITHOUT a PS1 BIOS: bios.bin is copyrighted and
           #                                      user-supplied, and the placeholder filename in the folder
           #                                      says so. Peer of POPS/ -- both go to the device ROOT.
-          #   neutrino/                       -- the official latest Neutrino core (rickgaiser/neutrino), extracted for drag-and-drop.
+          #   neutrino/                       -- the official latest Neutrino core (ps2max32/neutrino), extracted for drag-and-drop.
           #   APPS/APP_RIPTOPL/               -- ready-to-install app, with artwork in ART/.
           #   APP_RIPTOPL.psu                 -- memory-card save containing only direct app files.
           #   PS2-Servers.url                 -- link to the UDPFS / SMB / UDPBD all-in-one PC server.
@@ -876,11 +876,11 @@ jobs:
           fi
           NEUTRINO_VER=""
           NEUTRINO_ARCHIVE=""
-          NEU_TAG="$(gh release list --repo rickgaiser/neutrino --limit 10 --json tagName,isPrerelease,isDraft \
+          NEU_TAG="$(gh release list --repo ps2max32/neutrino --limit 10 --json tagName,isPrerelease,isDraft \
             --jq '[.[] | select(.isPrerelease and (.isDraft | not))][0].tagName' 2>/dev/null || true)"
           [ -z "$NEU_TAG" ] && NEU_TAG="latest"
           for attempt in 1 2 3; do
-            if gh release download "$NEU_TAG" --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
+            if gh release download "$NEU_TAG" --repo ps2max32/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
               NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
               [ -n "$NEUTRINO_ARCHIVE" ] && break
             fi

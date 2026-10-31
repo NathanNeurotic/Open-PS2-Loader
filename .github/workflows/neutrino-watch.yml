@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      NEUTRINO_REPO: rickgaiser/neutrino
+      NEUTRINO_REPO: ps2max32/neutrino
     steps:
       - name: Compare upstream Neutrino against the bundled build; rebuild rolling if newer
         run: |
