@@ -267,8 +267,10 @@ int main(void)
         /* A 0x00-erase card (flag 0x10) erases to zeroes on the batched path too. */
         memcards[0].flags |= 0x10;
         assert(OK(erase_block(48)));
+        u8 zero[PAGE];
+        memset(zero, 0, sizeof(zero));
         for (int p = 48; p < 64; p++)
-            assert(sim_page(p)[0] == 0 && memcmp(sim_page(p), sim_page(48), PAGE) == 0);
+            assert(memcmp(sim_page(p), zero, PAGE) == 0);
         memcards[0].flags &= ~0x10;
 
         /* A failed device write is a failed page write, not an acknowledged save. */
