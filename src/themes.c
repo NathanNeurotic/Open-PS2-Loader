@@ -1157,7 +1157,7 @@ static void keepLastBackground(mutable_image_t *gameImage)
 // it, the default is drawn as before. The kept entry is the cache's own: cacheLookupTexture only returns it while it
 // still holds that same picture (same UID, not reloading), and touching it keeps it out of the eviction scan, so the
 // next load takes the cache's other slot (BG caches have at least 2). (YAOPL 2bc4d161, Roman Kelesidis.)
-static GSTEXTURE *holdLastBackground(mutable_image_t *gameImage, struct menu_list *menu, struct submenu_item *item, GSTEXTURE *texture)
+static GSTEXTURE *holdLastBackground(mutable_image_t *gameImage, struct menu_list *menu, struct submenu_item *item, GSTEXTURE *texture, int requestDeferred)
 {
     image_cache_t *cache = gameImage->cache;
     if (cache == NULL || cache->userId < 0 || gTheme == NULL || cache->userId >= gTheme->gameCacheCount ||
@@ -1176,7 +1176,10 @@ static GSTEXTURE *holdLastBackground(mutable_image_t *gameImage, struct menu_lis
     // older game's art.
     const item_list_t *list = (const item_list_t *)menu->item->userdata;
     const int state = item->cache_id[userId];
-    const int pending = state >= 0 || (state == -1 && list != NULL && guiInactiveFrames <= list->delay + BG_HOLD_GRACE_FRAMES);
+    // A request Coverflow is still holding back (state -1 while its selected cover settles) is coming too, however long
+    // the cover takes; the known-absent states (-2, -3) are not.
+    const int pending = state >= 0 ||
+                        (state == -1 && (requestDeferred || (list != NULL && guiInactiveFrames <= list->delay + BG_HOLD_GRACE_FRAMES)));
     if (!gEnableArt || item->isFolder || (cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0 && !gEnableBGArt) ||
         !pending) {
         gameImage->lastCacheId = -1;
@@ -1377,7 +1380,7 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
         }
 
         if (isBackground)
-            texture = holdLastBackground(gameImage, menu, &item->item, texture);
+            texture = holdLastBackground(gameImage, menu, &item->item, texture, !coverflowCoverSettled);
 
         if (!texture || !texture->Mem) {
             // Keep the configured/default cover visible when art is absent. This is also the
@@ -1409,6 +1412,10 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
 
     } else if (elem->type == ELEM_TYPE_BACKGROUND) {
         mutable_image_t *gameImage = (mutable_image_t *)elem->extended;
+        // Nothing is selected, so the default is on screen: drop the kept entry so the next pending game cannot bring
+        // back art from before this page.
+        gameImage->lastCacheId = -1;
+        gameImage->lastUid = -1;
         if (gameImage->defaultTexture)
             rmDrawPixmap(&gameImage->defaultTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
         else

@@ -39,20 +39,24 @@ rf = rf[: rf.index("\n}\n")]
 assert "ELEM_TYPE_BACKGROUND" in rf and "continue;" in rf, "images keep their colour"
 assert "elem->color == oldText" in rf, "theme-set colours are left alone"
 
-assert "texture = holdLastBackground(gameImage, menu, &item->item, texture);" in elems
+assert "texture = holdLastBackground(gameImage, menu, &item->item, texture, !coverflowCoverSettled);" in elems
 hb = elems[elems.index("static GSTEXTURE *holdLastBackground(") :]
 hb = hb[: hb.index("\n}\n")]
 assert "cacheLookupTexture(cache, &lastId, &lastUid)" in hb, "the kept art must be revalidated against the cache"
 assert "!gEnableBGArt" in hb and "!gEnableArt" in hb, "art switched off holds nothing"
-assert "state >= 0 || (state == -1" in hb, "known-absent art (-2/-3) draws the default"
+assert "state >= 0 ||" in hb and "(state == -1 && (" in hb, "known-absent art (-2/-3) draws the default"
+assert "(state == -1 && (requestDeferred ||" in hb, "a background Coverflow holds back is still coming"
 assert "mutableImage->lastCacheId = -1;" in elems
+empty = elems[elems.index("} else if (elem->type == ELEM_TYPE_BACKGROUND) {") :]
+assert empty.index("gameImage->lastCacheId = -1;") < empty.index("rmDrawPixmap("), "an empty page drops the kept art"
 assert "gameImage->lastCacheId = -1;" in hb, "a game with nothing coming drops the kept art"
 
 assert "keepLastBackground(gameImage);" in elems, "the background on screen is touched before the next request"
-assert elems.index("keepLastBackground(gameImage);") < elems.index("texture = holdLastBackground(gameImage, menu, &item->item, texture);")
+assert elems.index("keepLastBackground(gameImage);") < elems.index("texture = holdLastBackground(gameImage, menu, &item->item, texture, !coverflowCoverSettled);")
 splash = read("src/gui.c")
 assert "#define THEME_HOLD_MS 6000" in splash
-assert "if (themeHold && gFrameHook)\n            gFrameHook();" in splash, "the hold runs the menu update hook so a late drive is seen"
+assert "if (themeHold && gFrameHook) {\n            guiInactiveFrames++;\n            gFrameHook();" in splash, \
+    "the hold runs the menu update hook, idle, so a late drive is seen"
 assert "thmSavedThemePending()" in splash and "(clock() - tInitDone) <" in splash, "the hold must be bounded"
 pend = themes[themes.index("int thmSavedThemePending(void)") :]
 pend = pend[: pend.index("\n}\n")]
