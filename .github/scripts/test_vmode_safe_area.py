@@ -9,7 +9,8 @@ This compiles the real rm_mode_table, rmSetOverscan, rmGetPAR and rmGetInterlace
 (src/renderman.c) on the host and checks, for every mode:
 
 - the drawn area is centred, inside the framebuffer, and never larger than it;
-- 704x480i draws into 640x480 (1:1 on both axes) and 704x576i into 640x512 (the 640x512i row's footprint);
+- 704x480i draws into 640x480 (1:1 on both axes), its appended twin into 640x448 (the 640x448i row's footprint),
+  and 704x576i into 640x512 (the 640x512i row's footprint);
 - every other row is unchanged: Overscan 0 still means the whole framebuffer;
 - PAR stays the grid's fill ratio, (drawW/640)/(drawH/480), so fonts keep the same proportions as the layout;
 - Overscan still shrinks the drawn area, symmetrically, in every mode.
@@ -54,7 +55,7 @@ enum { GS_INTERLACED = 1, GS_NONINTERLACED = 0, GS_FIELD = 0, GS_FRAME = 1 };
 enum rm_aratio { RM_ARATIO_4_3 = 0, RM_ARATIO_16_9 = 1 };
 struct GSGLOBAL { int Width, Height, Interlace, Field; };
 static GSGLOBAL globalStore, *gsGlobal = &globalStore;
-constexpr int NUM_RM_VMODES = 16;
+constexpr int NUM_RM_VMODES = 17;
 @STRUCT@
 @TABLE@
 static short int vmode = -1;
@@ -66,7 +67,7 @@ int rmGetInterlacedFrameMode();
 @GET_PAR@
 @FRAME_MODE@
 
-static int failures;
+static int failures, ntscHeights;
 #define CHECK(c, ...) do { if (!(c)) { printf("FAIL mode %d: ", m); printf(__VA_ARGS__); printf("\n"); failures++; } } while (0)
 
 int main()
@@ -92,9 +93,12 @@ int main()
         rmSetOverscan(0);
         int fullW = gsGlobal->Width, fullH = gsGlobal->Height;
         int lines = (gsGlobal->Interlace == GS_INTERLACED && gsGlobal->Field == GS_FRAME) ? 2 : 1;
-        if (row.mode == GS_MODE_NTSC && row.width == 704) {
-            CHECK(iDisplayWidth == 640 && iDisplayHeight == 480, "704x480i draws %dx%d, want 640x480", iDisplayWidth, iDisplayHeight);
-        } else if (row.mode == GS_MODE_PAL && row.width == 704) {
+        if (row.mode == GS_MODE_NTSC && row.width == 704 && row.interlace == GS_INTERLACED) {
+            CHECK(iDisplayWidth == 640 && (iDisplayHeight == 480 || iDisplayHeight == 448),
+                  "704x480i draws %dx%d, want 640x480 or 640x448", iDisplayWidth, iDisplayHeight);
+            CHECK(iDisplayHeight == row.safeH, "704x480i draws %d lines, its row says %d", iDisplayHeight, row.safeH);
+            ntscHeights |= (iDisplayHeight == 480) ? 1 : 2;
+        } else if (row.mode == GS_MODE_PAL && row.width == 704 && row.interlace == GS_INTERLACED) {
             CHECK(iDisplayWidth == 640 && iDisplayHeight == 512, "704x576i draws %dx%d, want 640x512", iDisplayWidth, iDisplayHeight);
         } else {
             CHECK(iDisplayWidth == fullW && iDisplayHeight == fullH, "unchanged row draws %dx%d, want the whole %dx%d",
@@ -114,6 +118,10 @@ int main()
             rmSetOverscan(100);
             CHECK(iDisplayWidth < 640 && iDisplayHeight < row.safeH, "Overscan no longer shrinks the safe area");
         }
+    }
+    if (ntscHeights != 3) {
+        printf("FAIL: want both an NTSC 704x480i row drawing 480 lines and one drawing 448\n");
+        failures++;
     }
     if (failures)
         return 1;

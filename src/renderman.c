@@ -27,7 +27,7 @@ static int vsync_id = -1;
 static int hiresThread = -1;
 static int hiresPriority = -1;
 
-#define NUM_RM_VMODES 16
+#define NUM_RM_VMODES 17
 #define RM_VMODE_AUTO 0
 
 // RM Vmode -> GS Vmode conversion table
@@ -97,6 +97,11 @@ static struct rm_mode rm_mode_table[NUM_RM_VMODES] = {
     // the FIELD rows' because rmGetPAR applies the x2 for the twice-as-tall pixels itself.
     {GS_MODE_PAL,        16,  640,  512,  1, 4, GS_INTERLACED,    GS_FRAME, RM_ARATIO_4_3, 16, 15}, // PAL@50Hz flicker-filtered
     {GS_MODE_NTSC,       16,  640,  448,  1, 4, GS_INTERLACED,    GS_FRAME, RM_ARATIO_4_3, 14, 15}, // NTSC@60Hz flicker-filtered
+    // NTSC 704x480i HIRES with the menu in 640x448, the exact footprint of the 640x448i row, for a CRT
+    // whose top and bottom edges hide part of the full-height 480-line area of the row above. It
+    // trades the 1:1 vertical mapping for that fit (the 480-line grid is squeezed to 448 lines).
+    // Appended at the tail for the same stored-index reason as the flicker-free rows.
+    {GS_MODE_NTSC,       16,  704,  480,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3, 14, 15, 640, 448}, // NTSC@60Hz HIRES, 448-line area
 };
 // clang-format on
 

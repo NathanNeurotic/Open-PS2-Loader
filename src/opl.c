@@ -263,7 +263,7 @@ int gOverscan;
 // The screen position for each video mode, so 1080i and 480i each keep their own centring (RIPPS2 build 124,
 // akilluminati47). A mode never set takes the shared xoff/yoff/overscan, which are still written as the mode in
 // use's, so an older build reads what it always did.
-#define SCREEN_POS_MODES 16
+#define SCREEN_POS_MODES 17
 static int gPosX[SCREEN_POS_MODES], gPosY[SCREEN_POS_MODES], gPosOver[SCREEN_POS_MODES];
 static unsigned char gPosSet[SCREEN_POS_MODES];
 
