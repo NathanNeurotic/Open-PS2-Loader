@@ -62,9 +62,9 @@ struct GSGLOBAL { int Mode, Width, Height, Interlace, Field, PSM, PSMZ, ZBufferi
 static GSGLOBAL globalStore, *gsGlobal;
 static u64 gColBlack, gDefaultAlpha;
 static int gVMode, gXOff, gYOff, gOverscan, gWideScreen;
-constexpr int NUM_RM_VMODES = 16;
+constexpr int NUM_RM_VMODES = 17;
 constexpr int RM_VMODE_AUTO = 0;
-struct rm_mode { char mode; char hsync; short int width, height, passes, VCK, interlace, field, aratio, PAR1, PAR2; };
+struct rm_mode { char mode; char hsync; short int width, height, passes, VCK, interlace, field, aratio, PAR1, PAR2, safeW, safeH; };
 @TABLE@
 
 // The scripted kernel: thread 1 is the GUI thread (31, as main sets it), thread 2 the IO worker (40).
