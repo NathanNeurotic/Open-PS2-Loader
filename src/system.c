@@ -1369,6 +1369,10 @@ static const char *getDeviceName(const char *driver)
         // config/bsd-udpfs.toml (the FHI filesystem driver), then opens -dvd=udpfs:<path> by name -- no
         // massN: block device and no fraglist. Distinct from the "udp" block tokens above.
         return "udpfs";
+    if (!strcmp(driver, "smb"))
+        // SMB share (ethsupport): -bsd=smb loads config/bsd-smb.toml (smb_ioman + smb_fhi, ps2max32/neutrino
+        // PR #236) and opens -dvd=smb:<path on the share> by name. Like udpfs it has no filesystem layer.
+        return "smb";
     return "unsupported";
 }
 
@@ -1484,7 +1488,7 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
 // Read the user tokens the way Neutrino parses them: the global args, then the per-game args (the
 // order appendArgTokens adds them), last one wins, a $-prefixed token is switched off, and --b
 // ends Neutrino options within each scope. Their ELF tails are appended after both scopes. A typed
-// -bsdfs= found that way beats the per-game picker. mmce/udpfs are fileid backends with no fs layer.
+// -bsdfs= found that way beats the per-game picker. mmce/udpfs/smb are backends with no fs layer.
 // Returns 1 exfat / 2 hdl / 3 bd; 0 = Neutrino's own default (exfat) or a typed value it does not
 // name.
 static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, const char *extraArgs)
@@ -1514,7 +1518,7 @@ static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, con
             p = end;
         }
     }
-    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "dvr"))
+    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "smb") || !strcmp(deviceName, "dvr"))
         return 0;
     if (typed)
         return value;
@@ -2085,6 +2089,219 @@ void sysNeutrinoWarnPadEmu(config_set_t *configSet)
 #else
     (void)configSet;
 #endif
+}
+
+// ---- Neutrino over SMB (-bsd=smb) ------------------------------------------------------------
+// ps2max32/neutrino PR #236 (Ronnie Sahlberg, usmb2) reads the PS2's address, the server, the login
+// and the share from the args of three modules in config/bsd-smb.toml: ministack.irx ("ip="),
+// smb_ioman.irx and smb_fhi.irx (both "ip= mask= gw= srv= user= pass= share="). Nothing on the
+// command line sets them, so the launch writes this game's values into every such string first.
+
+// One "key=" a module arg may start with, the value to give it and how many strings carried it.
+typedef struct
+{
+    const char *key; // with its '=': "ip="
+    char value[2 * NEUTRINO_SMB_SHARE_MAX + 2];
+    int seen;
+} neutrino_smb_key_t;
+
+// Escape `in` for a TOML basic string. -1 for a character a basic string cannot hold as typed
+// (a control character): the leg falls back instead of writing a login Neutrino would read wrong.
+static int sysTomlEscape(const char *in, char *out, int outSize)
+{
+    int n = 0;
+    for (; *in != '\0'; in++) {
+        unsigned char c = (unsigned char)*in;
+        if (c < 0x20 || c == 0x7f)
+            return -1;
+        if ((c == '"' || c == '\\') && n < outSize - 1)
+            out[n++] = '\\';
+        if (n >= outSize - 1)
+            return -1;
+        out[n++] = (char)c;
+    }
+    out[n] = '\0';
+    return 0;
+}
+
+// Rewrite the value of every basic string in `in` that starts with one of the keys. A small lexer,
+// not a search, so a key inside a comment or inside another string is never taken for an arg:
+// comments, basic strings (with escapes) and literal strings are copied through whole. Multi-line
+// strings are not in the stock file; one makes the result -1 and the file is left alone.
+// Returns the new length, or -1 (malformed, or it would not fit).
+static int sysTomlRewriteSmbArgs(const char *in, int len, char *out, int outSize, neutrino_smb_key_t *keys, int keyCount)
+{
+    int i = 0, n = 0;
+#define TOML_PUT(ch)          \
+    do {                      \
+        if (n >= outSize - 1) \
+            return -1;        \
+        out[n++] = (ch);      \
+    } while (0)
+
+    while (i < len) {
+        char c = in[i];
+        if (c == '#') {
+            while (i < len && in[i] != '\n')
+                TOML_PUT(in[i++]);
+            continue;
+        }
+        if (c == '\'') {
+            if (i + 2 < len && in[i + 1] == '\'' && in[i + 2] == '\'')
+                return -1;
+            TOML_PUT(in[i++]);
+            while (i < len && in[i] != '\'' && in[i] != '\n')
+                TOML_PUT(in[i++]);
+            if (i >= len || in[i] != '\'')
+                return -1;
+            TOML_PUT(in[i++]);
+            continue;
+        }
+        if (c == '"') {
+            if (i + 2 < len && in[i + 1] == '"' && in[i + 2] == '"')
+                return -1;
+            TOML_PUT(in[i++]);
+            int k;
+            for (k = 0; k < keyCount; k++) {
+                int kl = (int)strlen(keys[k].key);
+                if (i + kl <= len && !strncmp(in + i, keys[k].key, kl))
+                    break;
+            }
+            if (k < keyCount) {
+                for (const char *p = keys[k].key; *p != '\0'; p++)
+                    TOML_PUT(*p);
+                for (const char *p = keys[k].value; *p != '\0'; p++)
+                    TOML_PUT(*p);
+                keys[k].seen++;
+                // Skip the old value, up to the closing quote.
+                while (i < len && in[i] != '"' && in[i] != '\n') {
+                    if (in[i] == '\\' && i + 1 < len)
+                        i++;
+                    i++;
+                }
+            } else {
+                while (i < len && in[i] != '"' && in[i] != '\n') {
+                    if (in[i] == '\\' && i + 1 < len)
+                        TOML_PUT(in[i++]);
+                    TOML_PUT(in[i++]);
+                }
+            }
+            if (i >= len || in[i] != '"')
+                return -1;
+            TOML_PUT(in[i++]);
+            continue;
+        }
+        TOML_PUT(in[i++]);
+    }
+#undef TOML_PUT
+    out[n] = '\0';
+    return n;
+}
+
+int sysNeutrinoSmbPreflight(const char *neutrinoPath, const neutrino_smb_args_t *args)
+{
+    static char toml[4096];
+    static char updated[4096 + 512];
+    char path[320];
+    int fd, len;
+
+    const char *slash = sysLastPathSeparator(neutrinoPath);
+    if (slash == NULL || args == NULL)
+        return -1; // a flat custom path: no folder to find config/ and modules/ in
+    int dirLen = (int)(slash - neutrinoPath) + 1;
+    char sep = *slash;
+
+    // This Neutrino must have the SMB modules: a build from before PR #236 has none of them.
+    static const char *const modules[] = {"smb_ioman.irx", "smb_fhi.irx"};
+    for (int m = 0; m < 2; m++) {
+        snprintf(path, sizeof(path), "%.*smodules%c%s", dirLen, neutrinoPath, sep, modules[m]);
+        fd = open(path, O_RDONLY);
+        if (fd < 0) {
+            LOG("[NEUTRINO] no %s -- this Neutrino has no SMB support\n", path);
+            return -1;
+        }
+        close(fd);
+    }
+
+    snprintf(path, sizeof(path), "%.*sconfig%cbsd-smb.toml", dirLen, neutrinoPath, sep);
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        LOG("[NEUTRINO] no %s -- this Neutrino has no SMB support\n", path);
+        return -1;
+    }
+    len = 0;
+    for (int got; len < (int)sizeof(toml) - 1 && (got = read(fd, toml + len, sizeof(toml) - 1 - len)) != 0; len += got) {
+        if (got < 0) {
+            len = got;
+            break;
+        }
+    }
+    close(fd);
+    if (len <= 0 || len >= (int)sizeof(toml) - 1) {
+        LOG("[NEUTRINO] %s unreadable, empty or larger than %d\n", path, (int)sizeof(toml) - 1);
+        return -2;
+    }
+    toml[len] = '\0';
+
+    neutrino_smb_key_t keys[] = {
+        {"ip=", "", 0},
+        {"mask=", "", 0},
+        {"gw=", "", 0},
+        {"srv=", "", 0},
+        {"user=", "", 0},
+        {"pass=", "", 0},
+        {"share=", "", 0}};
+    enum { K_IP,
+           K_MASK,
+           K_GW,
+           K_SRV,
+           K_USER,
+           K_PASS,
+           K_SHARE,
+           K_COUNT };
+    const unsigned char *const addrs[] = {args->ip, args->mask, args->gw, args->srv};
+    for (int k = K_IP; k <= K_SRV; k++)
+        snprintf(keys[k].value, sizeof(keys[k].value), "%u.%u.%u.%u", addrs[k][0], addrs[k][1], addrs[k][2], addrs[k][3]);
+    if (sysTomlEscape(args->user, keys[K_USER].value, sizeof(keys[K_USER].value)) < 0 ||
+        sysTomlEscape(args->pass, keys[K_PASS].value, sizeof(keys[K_PASS].value)) < 0 ||
+        sysTomlEscape(args->share, keys[K_SHARE].value, sizeof(keys[K_SHARE].value)) < 0) {
+        LOG("[NEUTRINO] SMB login holds a control character -- not written\n");
+        return -2;
+    }
+
+    int newLen = sysTomlRewriteSmbArgs(toml, len, updated, sizeof(updated), keys, K_COUNT);
+    // The stock file names ip= three times (ministack, smb_ioman, smb_fhi) and the rest twice. A file
+    // missing one would boot with that module's default (a /24 mask, no gateway is fine; an empty
+    // login or another ip is not), so the ones that matter must be there.
+    if (newLen < 0 || keys[K_IP].seen < 3 || keys[K_SRV].seen < 2 || keys[K_USER].seen < 2 ||
+        keys[K_PASS].seen < 2 || keys[K_SHARE].seen < 2) {
+        LOG("[NEUTRINO] %s not in the stock shape (ip %d, srv %d, user %d, pass %d, share %d) -- not written\n", path,
+            keys[K_IP].seen, keys[K_SRV].seen, keys[K_USER].seen, keys[K_PASS].seen, keys[K_SHARE].seen);
+        return -2;
+    }
+    if (newLen == len && !memcmp(toml, updated, len))
+        return 0; // already this game's values
+
+    // mcman truncates an existing file only in its O_CREAT branch.
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0) {
+        LOG("[NEUTRINO] cannot write %s (%d)\n", path, fd);
+        return -2;
+    }
+    int written = write(fd, updated, newLen);
+    close(fd);
+    if (written != newLen) {
+        // Put the old file back, as the udpfs sync does: no worse off than before.
+        LOG("[NEUTRINO] short write to %s (%d/%d) -- restoring it\n", path, written, newLen);
+        fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        if (fd >= 0) {
+            write(fd, toml, len);
+            close(fd);
+        }
+        return -2;
+    }
+    LOG("[NEUTRINO] wrote %s (srv %s, share %s)\n", path, keys[K_SRV].value, keys[K_SHARE].value);
+    return 0;
 }
 
 // Δ6 (NHDDL parity): everything that can FAIL a Neutrino launch and is checkable pre-teardown runs

@@ -112,7 +112,9 @@ int main(void)
     scenario("global -bsdfs= wins over bd",              "usb",  3,   "-bsdfs=exfat", NULL,              -1,   0, 0);
     scenario("$-disabled -bsdfs= does not win",          "usb",  3,   "",             "$-bsdfs=exfat",   -1,   1, 3);
     scenario("mmce leg (no block device)",               "mmce", 0,   "",             NULL,              -1,   0, 0);
-    scenario("smb is still unsupported",                 "smb",  0,   "",             NULL,              -1,   1, 1);
+    scenario("an unknown driver is unsupported",         "nope", 0,   "",             NULL,              -1,   1, 1);
+    scenario("smb leg (no block device)",                "smb",  0,   "",             NULL,              -1,   0, 0);
+    scenario("typed bd on smb (no fs layer)",            "smb",  0,   "",             "-bsdfs=bd",       -1,   0, 0);
     /* bd typed into the args (CodeRabbit on #762) */
     scenario("typed per-game bd, picker Auto",           "usb",  0,   "",             "-bsdfs=bd",       -1,   1, 3);
     scenario("typed global bd, picker Auto",             "usb",  0,   "-bsdfs=bd",    NULL,              -1,   1, 3);

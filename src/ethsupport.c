@@ -771,6 +771,155 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
 // Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
 static int ethMcemuSlots[2] = {-2, -2};
 
+// SMB through Neutrino (-bsd=smb -dvd=smb:<path>, ps2max32/neutrino PR #236 by Ronnie Sahlberg).
+// Only a game whose own Loader Core is Neutrino takes this leg: "Default" stays on the OPL core for SMB
+// whatever the global core is, because the OPL core is the SMB path everyone has today and Neutrino's
+// has limits the OPL core does not (port 445, SMB2 only, read-only, no VMC on the share). Each limit
+// is checked here, before anything is prepared, and a miss says why and returns 0: the caller goes on
+// with the OPL core. 1 = handled (handed off to Neutrino, or the user backed out of a dialog).
+static int ethSmbNeutrinoRequested(config_set_t *configSet)
+{
+    int coreLoader = 0;
+    return configSet != NULL && configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader) && coreLoader == 1;
+}
+
+static int ethTryNeutrino(item_list_t *itemList, base_game_info_t *game, config_set_t *configSet)
+{
+    neutrino_smb_args_t smb;
+    neutrino_vmc_args_t neutrinoVmc = {0};
+    char sharePath[256], partname[256 + 8];
+    int compatmask, index, result, EnablePS2Logo = 0;
+
+    if (!ethSmbNeutrinoRequested(configSet))
+        return 0;
+
+    // Neutrino reads one plain ISO: no USBExtreme parts and no ZSO.
+    if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
+        guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
+        return 0;
+    }
+    // neutrino.elf, its config/ and its modules/ must be on a device that outlives the SMB teardown, so
+    // the share itself is not searched (NULL), and a custom path pointing at it is refused.
+    const char *neutrinoPath = sbResolveNeutrinoPath(NULL);
+    if (neutrinoPath == NULL || !strncmp(neutrinoPath, "smb", 3)) {
+        guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+        return 0;
+    }
+    // usmb2 always dials port 445.
+    if (gPCPort != NEUTRINO_SMB_PORT) {
+        guiWarning(_l(_STR_NEUTRINO_SMB_PORT), 6);
+        return 0;
+    }
+    // smb_ioman/smb_fhi are read-only: a VMC on the share cannot be written. An enabled VMC keeps the game
+    // on the OPL core, whose smb_mcemu writes it.
+    sbBuildVmcNeutrinoArgs(configSet, ethPrefix, &neutrinoVmc);
+    if (neutrinoVmc.arg[0][0] || neutrinoVmc.arg[1][0]) {
+        guiWarning(_l(_STR_NEUTRINO_SMB_VMC), 6);
+        return 0;
+    }
+
+    // The game's path on the share, "<prefix>/DVD/<name>.iso" (the scan's own composer, with no device).
+    char gamePath[256];
+    sbCreatePath(game, gamePath, "", "/", 0);
+    if (gETHPrefix[0] != '\0')
+        snprintf(sharePath, sizeof(sharePath), "%s/%s", gETHPrefix, gamePath);
+    else
+        snprintf(sharePath, sizeof(sharePath), "%s", gamePath);
+
+    memset(&smb, 0, sizeof(smb));
+    if (strlen(sharePath) > NEUTRINO_SMB_PATH_MAX || strlen(gPCUserName) > NEUTRINO_SMB_USER_MAX ||
+        strlen(gPCPassword) > NEUTRINO_SMB_PASS_MAX || strlen(gPCShareName) > NEUTRINO_SMB_SHARE_MAX) {
+        guiWarning(_l(_STR_NEUTRINO_SMB_LIMITS), 6);
+        return 0;
+    }
+    strcpy(smb.user, gPCUserName);
+    strcpy(smb.pass, gPCPassword);
+    strcpy(smb.share, gPCShareName);
+
+    // The server's address: Neutrino has no name lookup, so a NetBIOS name is resolved now, as smbConnect does.
+    if (gPCShareAddressIsNetBIOS) {
+        if (nbnsFindName(gPCShareNBAddress, smb.srv) != 0) {
+            guiWarning(_l(_STR_NEUTRINO_SMB_LIMITS), 6);
+            return 0;
+        }
+    } else {
+        for (int k = 0; k < 4; k++)
+            smb.srv[k] = (unsigned char)pc_ip[k];
+    }
+    // The PS2's address as the stack has it now: the static one, or the DHCP lease (ministack has no DHCP
+    // client, so it keeps this address for the game).
+    if (ethGetNetConfig(smb.ip, smb.mask, smb.gw) < 0 || !(smb.ip[0] | smb.ip[1] | smb.ip[2] | smb.ip[3])) {
+        guiWarning(_l(_STR_NEUTRINO_SMB_LIMITS), 6);
+        return 0;
+    }
+
+    // Before any preparation: this Neutrino build must carry the SMB modules, and bsd-smb.toml must take
+    // this game's values. Either miss leaves the OPL core to run the game.
+    result = sysNeutrinoSmbPreflight(neutrinoPath, &smb);
+    if (result < 0) {
+        guiWarning(_l(result == -1 ? _STR_NEUTRINO_SMB_UNSUPPORTED : _STR_NEUTRINO_TOML_SYNC_FAILED), 6);
+        return 0;
+    }
+    if (sysNeutrinoPreflight("smb", neutrinoPath, 0, NULL, -1) < 0)
+        return 0; // it has shown its toast
+
+    if (gRememberLastPlayed) {
+        configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
+        saveConfig(CONFIG_LAST, 0);
+    }
+
+    // The compat modes, as the udpfs leg resolves them: sbPrepare needs a patch zone, smb_cdvdman_irx is
+    // the scratch target, and it is restored before anything below can return.
+    compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index);
+    if (compatmask < 0)
+        return 1;
+    compatmask = sbGetCompatModes(configSet, 1);
+    if ((result = sbLoadCheats(ethPrefix, game->startup, configSet)) < 0) {
+        if (!sbCheatsMissingContinue((u8 *)(&smb_cdvdman_irx) + index, result))
+            return 1;
+    }
+    sbUnprepare((u8 *)(&smb_cdvdman_irx) + index);
+    sbLoadImage(ethPrefix, game->startup);
+
+    if (gPS2Logo) {
+        sbCreatePath(game, partname, ethPrefix, "\\", 0);
+        int fd = open(partname, O_RDONLY, 0666);
+        if (fd >= 0) {
+            EnablePS2Logo = CheckPS2Logo(fd, 0);
+            close(fd);
+        }
+    }
+    char neutrinoExtraArgs[256] = "";
+    int neutrinoVideo = gNeutrinoVideoDefault, neutrinoGsmComp = gNeutrinoGsmCompDefault;
+    configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
+
+    snprintf(partname, sizeof(partname), "smb:%s", sharePath);
+
+    if (sysNeutrinoHandCheats(game->startup, neutrinoPath, neutrinoExtraArgs) < 0)
+        return 1;
+#ifdef RETROACHIEVEMENTS
+    // Not carried on SMB yet: smb_fhi's ministack owns the adapter in the game. A NULL prefix only
+    // disarms any earlier hand-over.
+    sysNeutrinoPrepareRA(NULL, NULL, "smb", NULL, NULL);
+#endif
+    if (sysNeutrinoArgsPreflight("smb", partname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
+        return 1;
+
+    sysNeutrinoWarnPadEmu(configSet);
+    mmceSendGameID(game->startup, neutrinoPath, 0);
+
+    int neutrinoDevMode = oplPath2Mode(neutrinoPath);
+    char gameStartup[GAME_STARTUP_MAX + 1];
+    snprintf(gameStartup, sizeof(gameStartup), "%s", game->startup);
+    // Neutrino logs in again with its own client, so the SMB session is closed with the rest; only the
+    // device neutrino.elf is on stays mounted.
+    deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);
+    sysLaunchNeutrino("smb", partname, gameStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc);
+    return 1;
+}
+
 static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
 #ifdef RETROACHIEVEMENTS
@@ -813,19 +962,10 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
         return;
     }
 
-    // $CoreLoader honesty: SMB has no Neutrino launch leg (nothing here builds -bsd/-dvd args),
-    // so a per-game Neutrino selection -- or a Neutrino global default -- silently resolves to the
-    // OPL core. Toast once at launch instead of leaving the setting looking honored. Pre-deinit,
-    // so the toast renders; the launch then proceeds normally. Covers Favourites-origin launches
-    // too (they delegate to this leg), which the compat-dialog lock in guigame.c cannot reach.
-    {
-        int coreLoader = gDefaultCoreLoader;
-        configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
-        if (coreLoader == 2)                 // "Default" sentinel: the dialog never persists it (index 2 removes the
-            coreLoader = gDefaultCoreLoader; // key), but a hand-edited cfg can carry it (Gemini, #161)
-        if (coreLoader)
-            guiWarning(_l(_STR_NEUTRINO_SMB_FALLBACK), 6);
-    }
+    // A game set to Neutrino goes there when Neutrino can run it from this share (ethTryNeutrino);
+    // otherwise, and for every game on "Default" or <OPL>, the OPL core below.
+    if (ethTryNeutrino(itemList, game, configSet))
+        return;
 
     char vmc_name[32];
     int vmc_id, size_mcemu_irx = 0;
@@ -988,7 +1128,7 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
         strcpy(filename, game->startup);
     // MMCE cross-device game-id (#261): push the disc id to a present MMCE card before the SMB teardown
     // (self-probes mmce0/mmce1; no-ops if no card / feature off). Read `game` before deinit frees it.
-    mmceSendGameID(game->startup, NULL, 0); // SMB has no Neutrino branch -> nothing to protect, no -mc args
+    mmceSendGameID(game->startup, NULL, 0); // the OPL-core leg: nothing to protect, no -mc args
     deinit(NO_EXCEPTION, ETH_MODE);         // CAREFUL: deinit will call ethCleanUp, so ethGames/game will be freed
 
     settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_DEV9;

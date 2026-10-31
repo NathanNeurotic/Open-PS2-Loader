@@ -307,7 +307,7 @@ if not re.search(r'if \(sysNeutrinoHandCheats\([^;]+\) < 0\)\s*return;', udpfs):
 support = text('src/supportbase.c')
 calls = re.findall(r'sbLoadCheats\(([^;]*?)\)\) < 0', '\n'.join(text('src/' + f) for f in (
     'bdmsupport.c', 'ethsupport.c', 'hddsupport.c', 'httpsupport.c', 'mmcesupport.c', 'udpfssupport.c')))
-if len(calls) != 7 or any(not c.rstrip().endswith('configSet') for c in calls):
+if len(calls) != 8 or any(not c.rstrip().endswith('configSet') for c in calls):
     failures.append('every sbLoadCheats caller must pass the game config (found %r)' % calls)
 select = function(support, 'static void sbCheatsSelect(')
 if (select.find('cheatConfigLoadSelections(configSet);') < 0 or select.find('guiManageCheats(configSet);') <

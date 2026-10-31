@@ -159,7 +159,7 @@ paths are no longer limited to 31 characters.
 | MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
 | UDPFS (network boot — Files or Image) | ✅ **default** for Files and Image — Neutrino unless the game's Loader Core is `<OPL>` (see §4). On `<OPL>`, Files reads the ISO through the in-game `udpfs_fhi` module and keeps VMCs on the server (`udpfs_mcemu`); **not tested on hardware** | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail. Same rule on `<OPL>`: a VMC the server will not open read-write offers the usual skip prompt |
 | UDPBD (network boot — served disk image) | ✅ **default** — Neutrino unless the game's Loader Core is `<OPL>` (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
-| SMB / ETH | ❌ (always launches with `<OPL>`; the core selector is locked and a stale Neutrino selection warns at launch) | n/a (OPL-core VMC works normally) |
+| SMB / ETH | ⚠️ **experimental, needs a Neutrino build with SMB support** — only a game whose own Loader Core is **Neutrino**; **Default** stays `<OPL>` on SMB whatever the global core is. See [SMB through Neutrino](#smb-through-neutrino-experimental). **Not tested on hardware** | ❌ the SMB driver is read-only: a game with a VMC launches with `<OPL>` and a warning |
 | USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) | n/a |
 | Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) | n/a |
 
@@ -184,6 +184,43 @@ Unsupported cases fall back to the `<OPL>` core automatically with an on-screen 
 > **PS2/PS1 Game Display** setting) always boot through **POPSTARTER.ELF** — never OPL's core and never Neutrino
 > — so the per-game Loader Core selector is locked/inert for them. See **[VCD.md](VCD.md)**.
 
+### SMB through Neutrino (experimental)
+
+Neutrino is gaining an SMB backend in
+[ps2max32/neutrino PR #236](https://github.com/ps2max32/neutrino/pull/236) by
+[Ronnie Sahlberg (sahlberg)](https://github.com/sahlberg). It uses his
+[usmb2](https://github.com/sahlberg/usmb2), a minimal SMB2 client with its own small TCP/IP stack:
+`smb_ioman.irx` reads the game in Neutrino's loader and `smb_fhi.irx` reads it in the game. The PR is
+**not merged yet**, so this needs a Neutrino build that has it; a Neutrino without the SMB modules
+falls back to `<OPL>` with a warning. **Not tested on hardware.**
+
+How a game gets there:
+
+1. Set the game's **Loader Core** to **Neutrino** (Game Settings → Compatibility). **Default** keeps
+   SMB games on `<OPL>`, even when the global core is Neutrino, because `<OPL>` is the SMB path that
+   works today and Neutrino's has the limits below.
+2. At launch, the PS2's address, mask and gateway (the static ones, or the DHCP lease the menu got),
+   the server's address (a NetBIOS name is looked up first), the user, the password and the share are
+   written into every module argument in `<neutrino folder>/config/bsd-smb.toml`, because that file
+   is the only place Neutrino reads them from. The file is rewritten only when a value changed.
+3. Neutrino starts with `-bsd=smb -dvd=smb:<SMB prefix>/DVD/<name>.iso`, after its own IOP reset, so
+   the menu's SMB session is closed first and Neutrino logs in with its own client.
+
+Each of these keeps the game on `<OPL>`, with a warning saying why:
+
+| Limit | Why |
+|---|---|
+| SMB port is not **445** | usmb2 always dials 445. The bundled PS2-Servers defaults (SMBv1 on 1111, SMB2 on 1445) need to be moved to 445 for this |
+| A VMC is set for the game | the driver is read-only, so it cannot write the card |
+| `.zso` or USB Extreme (`ul.*`) images | Neutrino reads one plain ISO |
+| neutrino.elf only on the SMB share | Neutrino loads its modules after the share is closed; keep it on a memory card or USB |
+| User or password over 31 characters, share over 63, or path on the share over 127 | the driver's own limits |
+| `bsd-smb.toml` missing, read-only or not in the stock shape | the settings could not be handed over |
+
+The server must speak **SMB2** with NTLM login (no signing or encryption). RetroAchievements are not
+carried on this path yet. `bsd-smb.toml` holds the SMB password in plain text, like
+`conf_network.cfg` already does.
+
 ## 3. Launch arguments
 
 OPL always builds the **mandatory** Neutrino arguments for you from the game and its
@@ -191,7 +228,7 @@ settings:
 
 | Auto argument | When |
 |---|---|
-| `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpfs\|udpfsbd\|udpbd>` | always (the storage backend). APA HDD maps to `ata` (+ `-bsdfs=hdl`), so no separate `apa` token is ever emitted. OPL emits this unconditionally for every backend, including `udpfs` — nightly Neutrino builds that auto-detect the backend simply ignore the explicit token, so there is no version split on OPL's side |
+| `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpfs\|udpfsbd\|udpbd\|smb>` | always (the storage backend). APA HDD maps to `ata` (+ `-bsdfs=hdl`), so no separate `apa` token is ever emitted. OPL emits this unconditionally for every backend, including `udpfs` — nightly Neutrino builds that auto-detect the backend simply ignore the explicit token, so there is no version split on OPL's side |
 | `-bsdfs=hdl` | internal HDD (APA) only |
 | `-bsdfs=<exfat\|hdl\|bd>` | only if the per-game **Neutrino Filesystem** picker (Compatibility screen) is set off Auto; block-backed devices only (never mmce/udpfs — no filesystem layer there). `hdl`/`bd` also reshape `-dvd` to `hdl:`/`bdfs:`. A hand-typed `-bsdfs=` in the args wins over the picker (per-game args over global ones, last one wins) and reshapes `-dvd` the same way; a hand-typed `-dvd=` wins when forwarded; an over-budget interactive launch is refused. `bd` names the drive as `<driver><N>p0` (a second USB stick is `usb1p0`), using the device number the drive reported; if it never reported one, the launch is refused while the menu is still up, not guessed as device 0 -- whether `bd` came from the picker or was typed, and even beside a typed `-dvd=`. ATA is exempt (one device, always 0) |
 | `-dvd=<path>` / `-dvd=hdl:<partition>` | always (the game image/partition) |
@@ -311,7 +348,7 @@ UDPBD / HTTP** — shown indented under it and on **Network** (one setting, both
 network-boot protocol ([Rick Gaiser](https://github.com/rickgaiser)'s **UDPRDMA** transport); **UDPBD** is the older SUDPBDv2 protocol,
 kept for users still running the `udpbd-server`. Both appear in OPL as their own games list — with
 covers and per-game settings — and boot via the external [Neutrino](https://github.com/rickgaiser/neutrino) core. **SMB** uses
-a mounted SMB file share served by OPL's **own** core (no Neutrino), and it keeps its own address /
+a mounted SMB file share served by OPL's **own** core (Neutrino only per game, experimental: see below), and it keeps its own address /
 port / share / credentials fields plus an **SMB Version** row (**SMBv1** default, or **SMB2**).
 Changing the version only takes effect on the next boot — OPL shows the usual restart notice when a
 network stack is already up — and it warns first that SMB2 changes **both** browsing and in-game
@@ -320,7 +357,7 @@ reading, so an SMBv1-only server (including the bundled [PS2-Servers](https://gi
 | Choice | Wire protocol | On the PS2 | Core | PC server |
 |---|---|---|---|---|
 | **Network Connectivity: Off** | — | no network device (default) | — | — |
-| **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core (not Neutrino) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
+| **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core; Neutrino per game (experimental, SMB2 on port 445) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
 | **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Files and Image: Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
 | **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
 | **HTTP** | HTTP byte ranges | a `games.csv` catalog and ISO streams | OPL's own core | [Docmine17's server](https://github.com/Docmine17/Open-PS2-Loader-HTTP) or a server meeting the [HTTP profile](HTTP.md) |

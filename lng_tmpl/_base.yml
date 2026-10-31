@@ -1011,6 +1011,18 @@ gui_strings:
   string: Missing POPSTARTER SMB requirements
 - label: NEUTRINO_SMB_FALLBACK
   string: SMB games have no Neutrino support -- launching with the OPL core.
+- comment: SMB game set to Neutrino, but the Neutrino found has no SMB modules or bsd-smb.toml.
+  label: NEUTRINO_SMB_UNSUPPORTED
+  string: This Neutrino has no SMB support -- launching with the OPL core.
+- comment: SMB game set to Neutrino, but the SMB port is not 445, the only one Neutrino uses.
+  label: NEUTRINO_SMB_PORT
+  string: Neutrino reaches SMB on port 445 only -- launching with the OPL core.
+- comment: SMB game set to Neutrino, but it has a VMC on the share, which Neutrino cannot write.
+  label: NEUTRINO_SMB_VMC
+  string: Neutrino cannot write a VMC on the SMB share -- launching with the OPL core.
+- comment: SMB game set to Neutrino, but a path, share, user or password is too long, or the addresses are unknown.
+  label: NEUTRINO_SMB_LIMITS
+  string: These SMB settings are beyond Neutrino's limits -- launching with the OPL core.
 - label: NEUTRINO_VMC_HDD_UNSUPPORTED
   string: Neutrino cannot use a VMC on APA HDD (no pfs support) -- launching without it.
 - label: VCD
