@@ -456,26 +456,58 @@ static void guiGameShowVMCSaves(const char *card)
     }
 }
 
+// Under the name, say who shares the card the name points at, so a series ID such as
+// XEBP_100.01_0 (the whole Jak and Daxter series) does not read as a typo of the game's own ID.
+// startup is the game's ID. Only the generated names count (<ID>_0 / <ID>_1, generic_0 / generic_1):
+// a custom name such as XEBP_100.01_backup is not shared by the series, so it shows nothing.
+static int guiGameIsVMCSlotName(const char *name, const char *prefix)
+{
+    size_t len = strlen(prefix);
+
+    return !strncmp(name, prefix, len) && name[len] == '_' && (name[len + 1] == '0' || name[len + 1] == '1') && name[len + 2] == '\0';
+}
+
+static void guiGameRefreshVMCKind(const char *startup, const char *name)
+{
+    int text = -1;
+
+    if (startup != NULL && startup[0] != '\0') {
+        const char *group = getGroupIdForTitleId(startup);
+
+        if (group != startup && guiGameIsVMCSlotName(name, group))
+            text = _STR_VMC_KIND_SERIES;
+        else if (guiGameIsVMCSlotName(name, startup))
+            text = _STR_VMC_KIND_GAME;
+    }
+    if (text < 0 && guiGameIsVMCSlotName(name, "generic"))
+        text = _STR_VMC_KIND_GENERIC;
+
+    if (text >= 0)
+        diaSetLabel(diaVMC, VMC_KIND, _l(text));
+    diaSetVisible(diaVMC, VMC_KIND, text >= 0);
+}
+
 static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *configSet, char *VMCName, int slot, int validate)
 {
     int result = validate ? VMC_BUTTON_CREATE : 0;
-    char vmc[32];
+    char vmc[32], startup[64] = "";
 
     if (strlen(VMCName))
         strncpy(vmc, VMCName, sizeof(vmc));
-    else {
-        if (validate)
-            return 1; // nothing to validate if no user input
+    else if (validate)
+        return 1; // nothing to validate if no user input
 
-        guiLock();
-        char *startup = support->itemGetStartup(support, id);
-        if (startup == NULL || startup[0] == '\0') {
-            guiUnlock();
+    // A copy: the dialog below can outlive a source refresh that frees the row's storage.
+    guiLock();
+    const char *now = support->itemGetStartup(support, id);
+    if (now != NULL)
+        snprintf(startup, sizeof(startup), "%s", now);
+    guiUnlock();
+    if (!strlen(VMCName)) {
+        if (startup[0] == '\0')
             return 1;
-        }
         const char *vmcTitle = getGroupIdForTitleId(startup);
         snprintf(vmc, sizeof(vmc), "%s_%d", vmcTitle, slot);
-        guiUnlock();
     }
 
     vmc_refresh = 0;
@@ -490,6 +522,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
     int size = guiGameRefreshVMCConfig(support, vmc);
     guiGameRefreshVMCRebuild(id, support, configSet, vmc, validate ? 0 : size); // never offered while validating
     diaSetString(diaVMC, VMC_NAME, vmc);
+    guiGameRefreshVMCKind(startup, vmc);
 
     do {
         if (result == VMC_BUTTON_CREATE) {
@@ -588,6 +621,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
             }
         } else if (result == VMC_REFRESH) { // User changed the VMC name
             diaGetString(diaVMC, VMC_NAME, vmc, sizeof(vmc));
+            guiGameRefreshVMCKind(startup, vmc);
             size = guiGameRefreshVMCConfig(support, vmc);
             guiGameRefreshVMCRebuild(id, support, configSet, vmc, size);
         }

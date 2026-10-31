@@ -112,3 +112,35 @@ void diagSaveBeforeLaunch(void)
         return;
     diagSave(NULL, path, sizeof(path));
 }
+
+#ifdef __OPLDIAG
+// The SDK debug text screen (libdebug). Declared here rather than through <debug.h>: the project has its own
+// include/debug.h, and with the project include directory first that name can resolve to it instead.
+void init_scr(void);
+void scr_printf(const char *, ...) __attribute__((format(printf, 1, 2)));
+
+// 1 until bootTraceEnd(): from the video setup on the screen belongs to the menu and the stage colours.
+static int traceOn = 1;
+
+// Each early boot step, printed on screen as it starts. The first call sets up the debug text screen,
+// which needs only the GS, so it works before the IOP is reset. A boot that stops here leaves its
+// last step on screen.
+void bootTrace(const char *step)
+{
+    static int count;
+
+    if (!traceOn)
+        return;
+    if (count == 0) {
+        init_scr();
+        scr_printf("\n  RiptOPL %s boot trace (diagnostic build)\n", OPL_VERSION);
+        scr_printf("  If the screen stops changing, the last line is where it stopped.\n\n");
+    }
+    scr_printf("  %2d  %s\n", ++count, step);
+}
+
+void bootTraceEnd(void)
+{
+    traceOn = 0;
+}
+#endif

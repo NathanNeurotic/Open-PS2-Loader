@@ -88,6 +88,7 @@ void guiUnlock();
 
 /** invokes the intro loop */
 void guiIntroLoop();
+int guiInitComplete(void); // the deferred boot ops have all run
 
 /** invokes the main loop */
 void guiMainLoop();
