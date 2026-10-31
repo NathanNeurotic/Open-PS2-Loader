@@ -1160,15 +1160,18 @@ static GSTEXTURE *holdLastBackground(mutable_image_t *gameImage, struct menu_lis
         return texture;
     }
 
-    // Art switched off (or BG art off): nothing is coming, so nothing is held either
-    if (!gEnableArt || item->isFolder || (cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0 && !gEnableBGArt))
-        return texture;
-
+    // Art switched off (or BG art off), a folder, or art known to be absent: nothing is coming, so nothing is held. The
+    // default is what is on screen now, so the kept entry is dropped too: the next pending game must not bring back an
+    // older game's art.
     const item_list_t *list = (const item_list_t *)menu->item->userdata;
     const int state = item->cache_id[userId];
     const int pending = state >= 0 || (state == -1 && list != NULL && guiInactiveFrames <= list->delay + BG_HOLD_GRACE_FRAMES);
-    if (!pending)
+    if (!gEnableArt || item->isFolder || (cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0 && !gEnableBGArt) ||
+        !pending) {
+        gameImage->lastCacheId = -1;
+        gameImage->lastUid = -1;
         return texture;
+    }
 
     int lastId = gameImage->lastCacheId, lastUid = gameImage->lastUid;
     GSTEXTURE *last = cacheLookupTexture(cache, &lastId, &lastUid);
@@ -4979,14 +4982,17 @@ int thmFindGuiID(const char *theme)
     return 0;
 }
 
-// The saved theme is a disk theme (by name, not a built-in "<...>") that no drive has offered yet: its drive is still
-// coming up, or is gone. The boot greeting waits a bounded time for it (RIPPS2 build 125, AK).
+// The saved theme is a disk theme (not one of the built-in names) that is not on screen yet: its drive is still coming
+// up, its theme is still loading, or the drive is gone. The boot greeting waits a bounded time for it (RIPPS2 build
+// 125, AK). Only the built-in names are skipped, so a disk theme whose folder name starts with '<' still waits.
 int thmSavedThemePending(void)
 {
     const char *temp = NULL;
-    if (!configGetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, &temp) || temp == NULL || temp[0] == '\0' || temp[0] == '<')
+    if (!configGetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, &temp) || temp == NULL || temp[0] == '\0' ||
+        strcasecmp(temp, "<OPL>") == 0 || strcasecmp(temp, "<Coverflow>") == 0 || strcasecmp(temp, "<PSBBN Flow>") == 0)
         return 0;
-    return thmFindGuiID(temp) == 0;
+    const int id = thmFindGuiID(temp);
+    return id == 0 || thmGetGuiValue() != id;
 }
 
 const char **thmGetGuiList(void)

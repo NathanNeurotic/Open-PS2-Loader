@@ -46,12 +46,16 @@ assert "cacheLookupTexture(cache, &lastId, &lastUid)" in hb, "the kept art must 
 assert "!gEnableBGArt" in hb and "!gEnableArt" in hb, "art switched off holds nothing"
 assert "state >= 0 || (state == -1" in hb, "known-absent art (-2/-3) draws the default"
 assert "mutableImage->lastCacheId = -1;" in elems
+assert "gameImage->lastCacheId = -1;" in hb, "a game with nothing coming drops the kept art"
 
 splash = read("src/gui.c")
 assert "#define THEME_HOLD_MS 6000" in splash
 assert "thmSavedThemePending()" in splash and "(clock() - tInitDone) <" in splash, "the hold must be bounded"
 pend = themes[themes.index("int thmSavedThemePending(void)") :]
 pend = pend[: pend.index("\n}\n")]
-assert "temp[0] == '<'" in pend, "built-in themes never hold the boot"
+for name in ("<OPL>", "<Coverflow>", "<PSBBN Flow>"):
+    assert 'strcasecmp(temp, "%s") == 0' % name in pend, "built-in themes never hold the boot"
+assert "temp[0] == '<'" not in pend, "a disk theme named <...> still holds"
+assert "thmGetGuiValue() != id" in pend, "the hold lasts until the saved theme is the active one"
 
 print("PASS: YAOPL About/theme fixes, Background hold and the RIPPS2 boot theme hold are in place")

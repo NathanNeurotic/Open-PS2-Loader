@@ -35,5 +35,8 @@ print("PASS: About dialog layout has testers under QA, no financial section, and
 assert '"NathanNeurotic - techwritescode"' in dia_about, "NathanNeurotic should be credited in diaAbout"
 assert '"Akilluminati47 - belomaxorka - darkladark - mihhru"' in dia_about
 net = dia_about.find("_STR_NET_UPDATE")
-assert net != -1 and dia_about.find("UI_BREAK", net) > dia_about.find('"icyson55"', net), "Network update and icyson55 share a row"
+assert net != -1, "Network update row is present"
+icyson = dia_about.find('"icyson55"', net)
+assert icyson != -1, "icyson55 is credited on the Network update row"
+assert icyson < dia_about.find("UI_BREAK", net), "Network update and icyson55 share a row"
 print("PASS: NathanNeurotic credited; About keeps its row count")
