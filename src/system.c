@@ -299,6 +299,7 @@ void sysReset(int modload_mask)
     bootTrace("IOP reset: RPC");
     SifInitRpc(0);
 
+    bootTrace("IOP reset: reboot");
 #ifdef _DTL_T10000
     while (!SifIopReset("rom0:UDNL", 0))
         ;
@@ -307,7 +308,6 @@ void sysReset(int modload_mask)
     while (!SifIopRebootBuffer(&deci2_img, size_deci2_img))
         ;
 #else
-    bootTrace("IOP reset: reboot");
     while (!SifIopReset("", 0))
         ;
 #endif
