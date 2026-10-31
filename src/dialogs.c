@@ -1965,28 +1965,36 @@ struct UIItem diaAbout[] = {
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_DEVS}}},
     {UI_BREAK},
 
+    // Each coder row fits the 4:3 SD screen at the default font size (about 570 wide after the indent): measured
+    // with the menu font, the rows that ended in "hacan359", "KrahJohlito" and "volca" ran 10 to 40 past the
+    // right edge. hacan359 authored the RA design/client and oMrRexD supplied the hardware stabilization fixes;
+    // CREDITS has the full provenance for both, and the standard ELF's rows leave them out.
     {UI_SPACER},
-#ifdef RETROACHIEVEMENTS
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"BatRastard - bbsan2k - belek666 - crazyc - dlanor - doctorxyz - hacan359", -1}}},
-#else
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"BatRastard - bbsan2k - belek666 - crazyc - dlanor - doctorxyz", -1}}},
-#endif
     {UI_BREAK},
 
     {UI_SPACER},
 #ifdef RETROACHIEVEMENTS
-    // hacan359 authored the RA design/client and oMrRexD supplied the hardware stabilization fixes.
-    // diaAbout never scrolls, so both credits are rebalanced across existing coder rows rather than
-    // adding a row. Guarded so the standard ELF's About strings remain unchanged; CREDITS has the
-    // full provenance for both contributors.
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"oMrRexD - hominem.te.esse - ifcaro - izdubar - jimmikaelkael - KrahJohlito", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"hacan359 - oMrRexD - hominem.te.esse - ifcaro - izdubar", -1}}},
 #else
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"hominem.te.esse - ifcaro - izdubar - jimmikaelkael - KrahJohlito", -1}}},
 #endif
     {UI_BREAK},
 
     {UI_SPACER},
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"kr_ps2 - Maximus32 - misfire - Polo35 - reprep - saildot4k - SP193 - volca", -1}}},
+#ifdef RETROACHIEVEMENTS
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"jimmikaelkael - KrahJohlito - kr_ps2 - Maximus32 - misfire", -1}}},
+#else
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"kr_ps2 - Maximus32 - misfire - Polo35 - reprep - saildot4k", -1}}},
+#endif
+    {UI_BREAK},
+
+    {UI_SPACER},
+#ifdef RETROACHIEVEMENTS
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Polo35 - reprep - saildot4k - SP193 - volca", -1}}},
+#else
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"SP193 - volca", -1}}},
+#endif
     {UI_BREAK},
 
     {UI_SPACER},
