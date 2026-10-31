@@ -134,7 +134,7 @@ static int add(int len, const char *fmt, ...)
     return len < MENUWATCH_REPORT_SIZE - 1 ? len : MENUWATCH_REPORT_SIZE - 1;
 }
 
-static int buildReport(int stalledFor, int frame)
+static int buildReport(int stalledFor, int frameAge, int frame)
 {
     ee_thread_status_t status;
     ee_sema_t sema;
@@ -144,11 +144,11 @@ static int buildReport(int stalledFor, int frame)
     padGetFaultCounters(&notReady, &empty);
     len = add(len,
               "RiptOPL %s menu freeze report\r\n"
-              "%d s after boot, no frame drawn for %d s (frame %d)\r\n"
+              "%d s after boot, stuck for %d s, last frame drawn %d s ago (frame %d)\r\n"
               "GUI thread %d last entered: %s\r\n"
               "longest run of missed pad reads: %u polls; of empty reads: %u polls\r\n\r\n"
               "EE threads (id, state, priority, entry, wait type/id, wakeups):\r\n",
-              OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), stalledFor, frame,
+              OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), stalledFor, frameAge, frame,
               guiThreadId, stepName(watchStep), (unsigned)notReady, (unsigned)empty);
 
     for (id = 1; id < 256; id++) {
@@ -185,7 +185,7 @@ static void watchThread(void *arg)
     // their own rmStartFrame/rmEndFrame loop and never advance guiFrameId, so a dialog left open
     // read as a frozen menu.
     unsigned int lastFrame = rmFramesDrawn;
-    int lastStep = watchStep, stalledPolls = 0, stallLimit, len;
+    int lastStep = watchStep, stalledPolls = 0, framePolls = 0, stallLimit, countFrames, len;
 
     (void)arg;
     for (;;) {
@@ -197,15 +197,20 @@ static void watchThread(void *arg)
                 stalledPolls = 0;
             lastStep = watchStep;
         }
-        // The boot splash keeps drawing while it waits for the deferred device start-up, so its
-        // frames prove nothing: that stage counts from its start, with a longer limit.
+        // The boot splash keeps drawing while it waits for the deferred device start-up, so until
+        // that finishes its frames prove nothing: the stage counts from its start, with a longer
+        // limit. After it, the splash is only playing the boot sound or holding for the theme,
+        // which can take as long as a theme likes, so frames count again.
+        countFrames = watchStep != MENUWATCH_BOOT_INTRO || guiInitComplete();
         if (rmFramesDrawn != lastFrame) {
             lastFrame = rmFramesDrawn;
-            if (watchStep != MENUWATCH_BOOT_INTRO) {
+            framePolls = 0;
+            if (countFrames) {
                 stalledPolls = 0;
                 continue;
             }
-        }
+        } else
+            framePolls++;
         if (watchStep == MENUWATCH_BOOT_INTRO)
             stallLimit = MENUWATCH_INTRO_S;
         else
@@ -217,7 +222,7 @@ static void watchThread(void *arg)
         bootColour(lastStep);
         // Magenta: the watchdog fired. Everything after this needs the IOP.
         screen(0xFF, 0x00, 0xFF);
-        len = buildReport(stallLimit, lastFrame);
+        len = buildReport(stallLimit, framePolls / (1000000 / MENUWATCH_POLL_US), lastFrame);
         if (writeReport("mc0:/RIPTOPL-FREEZE.TXT", len) || writeReport("mc1:/RIPTOPL-FREEZE.TXT", len))
             screen(0x00, 0xFF, 0x00); // green: the report is on the card
         else
