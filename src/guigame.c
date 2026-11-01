@@ -1585,13 +1585,24 @@ static int compatShownNeutrino = 0;
 // when the user actually chose 1080p AND left GSM enabled.
 // Shared by the per-game and the global save legs -- the global one is the wider blast radius of
 // the two, since it is what every game with no GSM keys of its own inherits.
+//
+// Only asks when the (GSM on, 1080p mode) pair is NEW compared with what the page loaded. A game that
+// follows a global already set to 1080p shows that mode in its picker, and saving any unrelated
+// setting of that game must not re-ask -- and declining must not write mode 0 into the global, which
+// every other game inherits. Declining restores what the page loaded instead.
+static int sLoadedEnableGSM;
+static int sLoadedGSMVMode;
+
 static void guiGameConfirmGSM1080p(void)
 {
     if (EnableGSM != 0 && (GSMVMode == GSM_VMODE_1080P_IDX || GSMVMode == GSM_VMODE_1080P_43_IDX)) {
+        if (sLoadedEnableGSM != 0 && sLoadedGSMVMode == GSMVMode)
+            return; // unchanged since the page was loaded: already confirmed when it was chosen
         if (!guiMsgBox(_l(_STR_GSM_1080P_WARNING), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_PROCEED), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_SURE), 1, NULL)) {
-            GSMVMode = 0; // cancelled at some step -> do not apply 1080p
+            // cancelled at some step -> keep the mode the page loaded, never the 1080p one
+            GSMVMode = (sLoadedGSMVMode == GSM_VMODE_1080P_IDX || sLoadedGSMVMode == GSM_VMODE_1080P_43_IDX) ? 0 : sLoadedGSMVMode;
             diaSetInt(diaGSConfig, GSMCFG_GSMVMODE, GSMVMode);
         }
     }
@@ -2184,6 +2195,12 @@ static void guiGameLoadGSMConfig(config_set_t *configSet, config_set_t *configGa
         if (!configGetInt(configSet, CONFIG_ITEM_GSMFIELDFIX, &GSMFIELDFix))
             GSMFIELDFix = 0;
     }
+
+#ifdef GSM_1080P
+    // What the 1080p confirmation compares against at save time.
+    sLoadedEnableGSM = EnableGSM;
+    sLoadedGSMVMode = GSMVMode;
+#endif
 
     // set gui settings.
     diaSetInt(diaGSConfig, GSMCFG_GSMSOURCE, gGSMSource);
