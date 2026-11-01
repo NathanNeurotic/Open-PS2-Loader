@@ -83,7 +83,7 @@ features, code, and ideas from:
 
 Bundled third-party software, shipped in the release package and NOT part of RiptOPL:
 
-  - Neutrino, by rickgaiser          https://github.com/rickgaiser/neutrino
+  - Neutrino, by rickgaiser          https://github.com/ps2max32/neutrino
     A small, fast, modular PS2 device emulator, and RiptOPL's second PS2 loader
     core. Bundled as a ready-to-use neutrino/ folder under the AFL-3.0 licence.
     Deliberately UI-agnostic -- having no interface of its own is precisely what

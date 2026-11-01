@@ -232,7 +232,7 @@ into the picture the game is showing, which it finds through the same GS write b
 * The CHEATS page needs a game whose modules sit at the usual address; a few games moved elsewhere
   (`mod_storage_location_list`) get the menu without it, and their cheats run as ticked before launch.
 
-The menu is **[RIPPS2](https://github.com/akilluminati47/RIPPS2)'s** (by **[akilluminati47](https://github.com/akilluminati47)**), itself built on ORBIT's [Neutrino](https://github.com/rickgaiser/neutrino) in-game menu
+The menu is **[RIPPS2](https://github.com/akilluminati47/RIPPS2)'s** (by **[akilluminati47](https://github.com/akilluminati47)**), itself built on ORBIT's [Neutrino](https://github.com/ps2max32/neutrino) in-game menu
 (danielnuld/ps2-launcher, AFL-3.0); the silent pause and the exact picture are RIPPS2's too (build 108,
 here as a module of their own instead of inside CDVDMAN), and so is Achievements with Left To Hunt (build 94).
 RIPPS2's Screenshot page is not ported yet; the Cheats page is new here. **NOT TESTED on hardware** yet: please report games where pausing misbehaves.

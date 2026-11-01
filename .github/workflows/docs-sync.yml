@@ -59,7 +59,7 @@ jobs:
           xerabora = "https://github.com/hacan359/xerabora/releases/tag/v1.0.1"
           ember = "https://github.com/Gageformer/Ember"
           popstarter = "https://www.psx-place.com/resources/popstarter.683/"
-          neutrino = "https://github.com/rickgaiser/neutrino"
+          neutrino = "https://github.com/ps2max32/neutrino"
           psumanager = "https://git.techwritescode.dev/techwritescode/PSUManager"
           badge = "[![CI](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/flavours.yml/badge.svg?branch=rebuild/main)](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/flavours.yml)"
 
