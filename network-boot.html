@@ -85,8 +85,8 @@ The old <b>Network Boot</b> ON/OFF toggle and the separate <b>Net Boot Protocol<
 placeholders. The network is now four rows. <b>Network Connectivity</b>, on Game Sources, is an
 <b>Off / Manual / Auto</b> start mode and defaults to <b>Off</b> (no network device).
 <b>Protocol</b> chooses <b>SMB / UDPFS / UDPBD / HTTP</b>; it sits indented under Network Connectivity on
-Game Sources and on the Network page, as one setting. <b>SMB Version</b> and <b>Access</b>, on the Network
-page, qualify the chosen protocol. Turning Connectivity <b>Off</b> keeps your protocol for when you turn it
+Game Sources and on the Network page, as one setting. <b>Access</b>, on the Network page, qualifies the chosen
+protocol (<b>SMB Version</b> is shown for SMB, but this edition offers SMBv1 only). Turning Connectivity <b>Off</b> keeps your protocol for when you turn it
 back on. UDPFS needs a static PS2 IP and a matching
 PC-side server. Pick a protocol only when you have those pieces in place. Local devices
 (USB / internal HDD / MMCE) are independent and browse alongside whichever network protocol you choose.
@@ -94,7 +94,7 @@ PC-side server. Pick a protocol only when you have those pieces in place. Local 
 
 <h2 id="protocols">The Network rows</h2>
 
-<p><b>Game Sources</b> holds <b>Network Connectivity</b> with <b>Protocol</b> indented under it. <b>Network</b> holds the same <b>Protocol</b> row, plus <b>SMB Version</b> and <b>Access</b>. The SMB version is editable for SMB. Access is Files/IMG for UDPFS, locked to Files for SMB/HTTP and IMG for UDPBD. The first protocol can start while the NIC is unused; switching an already loaded protocol requires restarting RiptOPL.</p>
+<p><b>Game Sources</b> holds <b>Network Connectivity</b> with <b>Protocol</b> indented under it. <b>Network</b> holds the same <b>Protocol</b> row, plus <b>SMB Version</b> and <b>Access</b>. SMB Version shows SMBv1 and stays greyed (this edition speaks SMBv1 only). Access is Files/IMG for UDPFS, locked to Files for SMB/HTTP and IMG for UDPBD. The first protocol can start while the NIC is unused; switching an already loaded protocol requires restarting RiptOPL.</p>
 
 <table data-sortable>
 <thead><tr><th>Choice</th><th>Wire protocol</th><th>On the PS2</th><th>PC server</th><th>Core</th></tr></thead>
@@ -108,10 +108,10 @@ PC-side server. Pick a protocol only when you have those pieces in place. Local 
 </tr>
 <tr>
   <td><b>SMB</b></td>
-  <td>SMBv1 or SMB2 (Network &rarr; SMB Version; default SMBv1)</td>
+  <td>SMBv1 on OPL's core; SMB 3.0 on TCP 445 on the Neutrino core</td>
   <td>a mounted file share</td>
   <td><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> (recommended) / Samba</td>
-  <td>OPL's <b>own</b> core (not Neutrino)</td>
+  <td>OPL's <b>own</b> core; Neutrino per game or by global Loader Core (experimental, <a href="smb.html#smb-neutrino">SMB through Neutrino</a>)</td>
 </tr>
 <tr>
   <td><b>UDPFS</b></td>
@@ -165,20 +165,9 @@ game's <b>Neutrino Filesystem</b> on <b>Auto</b>: <code>bd</code> treats the who
 which only fits a server exporting a single raw ISO.
 </div>
 
-<h2 id="smb-version">SMB Version — SMBv1 or SMB2</h2>
+<h2 id="smb-version">SMB Version</h2>
 
-<p>When <b>Protocol</b> = <b>SMB</b>, the <b>SMB Version</b> row selects the wire dialect: <b>SMBv1</b>
-(the default) or <b>SMB2</b>. It applies to <b>both</b> halves of SMB — browsing the share from the menu
-and reading the game in-game. The row is greyed unless Protocol is SMB, and its value is <i>preserved</i>
-while greyed, so flipping away to UDPFS and back does not silently reset you to SMBv1.</p>
-
-<p><b>SMB3 is not offered.</b> It is reserved internally but deliberately absent from the picker, because
-it mandates packet signing that this tree does not implement.</p>
-
-<div class="callout amber"><div class="h">Your server must speak the dialect you pick</div>
-An SMBv1-only server lists <b>nothing</b> under <b>SMB2</b>. If your share stops listing after you
-switch to SMB2, switch back to SMBv1 or point RiptOPL at a server that speaks SMB2.
-</div>
+<p>Since the rebuild this loader speaks <b>SMBv1</b> only, for browsing the share and for reading the game in game. When <b>Protocol</b> = <b>SMB</b>, the <b>SMB Version</b> row shows <b>SMBv1</b> and stays greyed until the SMB2 driver is re-added, so point RiptOPL at a server that answers SMBv1, such as the PS2 Servers SMBv1 card or Samba with <code>min protocol = NT1</code>. A game on the Neutrino core does not use this row: Neutrino logs in with its own SMB 3.0 client on TCP 445 (see <a href="smb.html#smb-neutrino">SMB through Neutrino</a>).</p>
 
 <h2 id="saved-protocol-switching">Switching protocols with saved settings</h2>
 <p>UDPFS remembers its own Files/IMG choice independently of UDPBD, which always uses IMG. Switching to UDPBD and back should restore your previous UDPFS choice; a fresh configuration defaults to Files. Set Access on the Network page and make sure the PC server serves the matching folder or disk image.</p>
@@ -323,8 +312,8 @@ way to acquire a lease later.</p>
 <p>In <b>Settings &rarr; Game Sources</b>, set <b>Network Connectivity</b> to <b>Manual</b> or
 <b>Auto</b>, and set the <b>Protocol</b> under it (or on <b>Settings &rarr; Network</b>) to <b>SMB</b>,
 <b>UDPFS</b>, <b>UDPBD</b> or <b>HTTP</b>. Set Network Connectivity back to <b>Off</b> to disable networking;
-the protocol is kept for when you turn it back on. When Protocol = <b>SMB</b>, pick the <b>SMB Version</b> — <b>SMBv1</b>
-(default) or <b>SMB2</b>. The <b>Access</b> row (<b>Files</b> / <b>IMG</b>) is always present, but it is
+the protocol is kept for when you turn it back on. Under <b>SMB</b> the <b>SMB Version</b> row shows <b>SMBv1</b>, the
+only dialect this edition speaks. The <b>Access</b> row (<b>Files</b> / <b>IMG</b>) is always present, but it is
 only free to change under <b>UDPFS</b>: under SMB it is locked to <b>Files</b> and under UDPBD to
 <b>IMG</b>, greyed in both cases. Because the PS2 has a single
 NIC, choosing one excludes the others automatically. Save settings. When UDPFS is selected, SMB's server / port / share / credentials fields on the
@@ -407,7 +396,7 @@ loads a SMAP driver on it. Only one can own the adapter at a time, so RiptOPL ex
 mutually exclusive <b>values of one Protocol row</b> rather than independent toggles. That replaces the
 old model, where a separate <b>Network Boot</b> toggle and an <b>Ethernet (SMB)</b> mode had to be greyed
 against each other. <b>Network Connectivity</b> decides whether the stack starts at all, and on the Network page the chosen
-protocol qualifies its own sub-rows (SMB Version is live only under
+protocol qualifies its own sub-rows (SMB Version is shown only under
 SMB; Access is free only under UDPFS, and is value-locked to <b>Files</b> under SMB and to <b>IMG</b>
 under UDPBD). Switching between SMB, UDPFS and UDPBD is just changing the <b>Protocol</b> value and
 saving. (The same one-transport-per-boot rule is why Access = Files vs IMG is a config-time choice,
@@ -426,7 +415,7 @@ independent of these rows and browse alongside whichever network protocol you pi
 <tr><td><code>network_protocol</code></td><td>int (0–5)</td><td><code>0</code></td><td><b>Authoritative selector.</b> User-facing: <code>0</code>=Off, <code>1</code>=SMB, <code>2</code>=UDPFS (Access = Files), <code>5</code>=HTTP. <code>3</code>=UDPFSBD is the internal value for Access = IMG — the picker maps both <code>2</code> and <code>3</code> onto the single "UDPFS" menu entry, and the <b>Access</b> row picks between them. <code>4</code>=UDPBD is a <b>first-class value</b> for the retained UDPBD (SUDPBDv2) choice: it is <b>preserved as-is on load</b>, never migrated, so users still on the old <code>udpbd-server</code> keep it.</td></tr>
 <tr><td><code>net_protocol_pick</code></td><td>int (1–5)</td><td><code>1</code></td><td>The protocol last <b>chosen</b> (never Off), using the <code>network_protocol</code> values. <code>network_protocol</code> is <code>0</code> while Network Connectivity is Off; this is what the Protocol rows show then, and what turning Connectivity back on restores.</td></tr>
 <tr><td><code>net_start_mode</code></td><td>int (0–2)</td><td><code>0</code></td><td><b>Network Connectivity</b>: <code>0</code>=Off, <code>1</code>=Manual, <code>2</code>=Auto. Reconciled with <code>network_protocol</code> on load — a protocol of Off forces this to Off, and a live protocol with an Off (or out-of-range) start mode is floored to Manual.</td></tr>
-<tr><td><code>smb_dialect</code></td><td>int (0/1)</td><td><code>0</code></td><td>Row 3 <b>SMB Version</b>: <code>0</code>=SMBv1 (default), <code>1</code>=SMB2. Only meaningful while the protocol is SMB; the value is kept (not reset) when the row is greyed. SMB3 is reserved internally and is not a selectable value.</td></tr>
+<tr><td><code>smb_dialect</code></td><td>int (0/1)</td><td><code>0</code></td><td>Written by builds before the rebuild (<code>1</code>=SMB2). Current builds neither read nor write it: they speak SMBv1 until the SMB2 driver is re-added.</td></tr>
 <tr><td><code>enable_udpbd</code></td><td>bool (0/1)</td><td><code>0</code></td><td><b>Legacy back-compat shadow</b> (superseded by <code>network_protocol</code>). Still dual-written: <code>1</code> whenever the protocol resolves to UDPFSBD (IMG) <em>or</em> UDPBD — both block-device transports set it.</td></tr>
 <tr><td><code>net_boot_protocol</code></td><td>int (0/1)</td><td><code>0</code></td><td><b>Legacy back-compat shadow</b> (superseded). Derived from the selector; only meaningful when the legacy <code>enable_udpbd=1</code>. Selecting <b>UDPBD</b> sets <code>enable_udpbd=1</code> with the classic UDPBD encoding, so a fresh UDPBD config still produces the legacy UDPBD shadow values.</td></tr>
 <tr><td><code>eth_mode</code></td><td>int</td><td>—</td><td><b>Legacy back-compat shadow</b> of the old ETH/SMB start mode; the unified selector supersedes it. Still written for older readers.</td></tr>
