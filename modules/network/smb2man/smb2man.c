@@ -67,7 +67,12 @@ struct smb2man_file
 {
     struct smb2fh *fh;
     int used;
+    unsigned gen; // bumped on every open of this slot; privdata carries it (see smb2man_slot)
 };
+
+// privdata = slot | gen << SMB2MAN_SLOT_BITS. MAX_OPEN_FILES must fit in the slot bits.
+#define SMB2MAN_SLOT_BITS 4
+#define SMB2MAN_GEN_MASK  (0x7FFFFFFFu >> SMB2MAN_SLOT_BITS)
 
 static struct smb2man_file file_table[MAX_OPEN_FILES];
 
@@ -241,14 +246,20 @@ static void smb2man_drop_broken_session(int rv)
     share_open = 0;
 }
 
+/*
+  A handle whose slot was cleared (share change, logoff, a dropped session) and then reused by a
+  later open must not reach the new file: the slot's generation no longer matches the one stored
+  in the stale handle's privdata, so it gets -EBADF instead.
+*/
 static int smb2man_slot(iop_file_t *f)
 {
-    int slot = (int)(intptr_t)f->privdata;
+    unsigned v = (unsigned)(uintptr_t)f->privdata;
+    unsigned slot = v & ((1u << SMB2MAN_SLOT_BITS) - 1);
 
-    if (slot < 0 || slot >= MAX_OPEN_FILES || !file_table[slot].used)
+    if (slot >= MAX_OPEN_FILES || !file_table[slot].used || file_table[slot].gen != (v >> SMB2MAN_SLOT_BITS))
         return -1;
 
-    return slot;
+    return (int)slot;
 }
 
 /*
@@ -314,7 +325,8 @@ static int smb2man_open(iop_file_t *f, const char *filename, int flags, int mode
 
     file_table[slot].fh = fh;
     file_table[slot].used = 1;
-    f->privdata = (void *)(intptr_t)slot;
+    file_table[slot].gen = (file_table[slot].gen + 1) & SMB2MAN_GEN_MASK;
+    f->privdata = (void *)(uintptr_t)((unsigned)slot | (file_table[slot].gen << SMB2MAN_SLOT_BITS));
 
     UNLOCK();
 

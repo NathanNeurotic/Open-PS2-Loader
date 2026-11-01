@@ -11,7 +11,9 @@ What is here
 - lib/*.h, include/: upstream headers, unmodified.
 - lib/config.h: the config.h that upstream's own CMake generates for the PS2 IOP
   target (cmake -DCMAKE_TOOLCHAIN_FILE=$PS2DEV/share/ps2dev_iop.cmake -DBUILD_IRX=1),
-  committed so ps2build does not need CMake.
+  committed so ps2build does not need CMake. One local addition, at its end: the
+  `_U_` (unused) define, which upstream's CMake passes as a compiler flag instead
+  and which aes128ccm.c, init.c, ntlmssp.c and sha384-512.c need.
 
 What is omitted
 - examples/, tests/, utils/, the other platform ports, and upstream's lib/ps2/
@@ -19,4 +21,5 @@ What is omitted
   ps2smb.h devctl interface OPL's network menu already uses.
 
 To update: copy the same file list from a newer upstream commit, regenerate
-lib/config.h the same way, and update the commit above.
+lib/config.h the same way, append the `_U_` block from the current config.h again,
+and update the commit above.

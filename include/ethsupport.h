@@ -22,6 +22,11 @@ int ethGetModulesLoaded(void);       // 1 if the SMB NIC stack is loaded (UDPBD 
 // The SMB dialect (enum SMB_DIALECT) of the browse driver now resident, or -1 when none is. The
 // Network page compares it with gSMBDialect: smbman and smb2man cannot be swapped live.
 int ethGetLoadedSmbDialect(void);
+// The dialect that load asked for (gSMBDialect at the time), or -1 when no driver is resident. It
+// differs from the loaded one only after an SMB2 -> SMBv1 fallback. The restart offer compares
+// gSMBDialect with THIS, so a fallback is not mistaken for a pending change (which would offer the
+// same failing restart forever and block the Network page's live reconnect).
+int ethGetRequestedSmbDialect(void);
 // True only after OPENSHARE succeeded and the active smb0: prefix is usable. This is deliberately
 // stronger than "Network Protocol == SMB": callers must not turn a read-only import into a long
 // connection attempt or consume stale saved values.

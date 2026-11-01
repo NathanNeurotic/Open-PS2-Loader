@@ -193,6 +193,12 @@ int ethGetModulesLoaded(void)
 
 // Which browse driver smbLoadModules() actually put on the IOP; -1 while none is resident.
 static int ethLoadedSmbDialect = -1;
+static int ethRequestedSmbDialect = -1;
+
+int ethGetRequestedSmbDialect(void)
+{
+    return ethRequestedSmbDialect;
+}
 
 int ethGetLoadedSmbDialect(void)
 {
@@ -237,6 +243,7 @@ static void ethProtocolTeardown(void)
     nbnsDeinit();
     ethSmbModuleLoaded = 0;
     ethLoadedSmbDialect = -1;
+    ethRequestedSmbDialect = -1;
     gNetworkStartup = ERROR_ETH_NOT_STARTED;
 }
 
@@ -302,12 +309,13 @@ static void smbLoadModules(void)
           resident -- and every path in OPL stays identical whichever one it is.
 
             smbman  -- PS2SDK's SMB1 driver, consumed prebuilt. Unchanged, still the default.
-            smb2man -- our SMB2/SMB3 driver over vendored libsmb2 (modules/network/smb2man).
+            smb2man -- our SMB2 (2.0.2/2.1) driver over vendored libsmb2 (modules/network/smb2man).
 
           Anything other than an explicit SMB2 selection falls back to smbman: losing SMB2 is
           recoverable, booting with no filesystem driver at all is not.
         */
         int dialect = (gSMBDialect == SMB_DIALECT_V2) ? SMB_DIALECT_V2 : SMB_DIALECT_V1;
+        int requested = dialect;
         int loaded = -1;
         if (dialect == SMB_DIALECT_V2) {
             LOG("[SMB2MAN]:\n");
@@ -324,6 +332,7 @@ static void smbLoadModules(void)
         if (loaded >= 0) {
             ethSmbModuleLoaded = 1;
             ethLoadedSmbDialect = dialect;
+            ethRequestedSmbDialect = requested;
             LOG("[NBNS]:\n");
             sysLoadModuleBuffer(&nbns_irx, size_nbns_irx, 0, NULL);
             nbnsInit();

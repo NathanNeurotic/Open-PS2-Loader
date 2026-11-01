@@ -181,6 +181,14 @@ int main(int argc, char **argv)
     fd = OPS->open(&f, iso, FIO_O_RDONLY, 0);
     CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_LOGOFF, NULL, 0, NULL, 0) == 0, "logoff with a handle open");
     CHECK(OPS->read(&f, a, 16) < 0, "stale handle after logoff is refused");
+    /* ...and stays refused once a new session reuses its slot for another open */
+    CHECK(logon(ip, port, user, pw) == 0 && openshare(share) == 0, "logon + openshare after logoff");
+    iop_file_t g = {0};
+    CHECK(OPS->open(&g, iso, FIO_O_RDONLY, 0) >= 0, "reopen the iso in a fresh session");
+    CHECK(OPS->read(&f, a, 16) == -EBADF, "stale handle does not reach the file now in its slot");
+    CHECK(OPS->close(&f) == -EBADF, "stale close leaves the new file open");
+    CHECK(OPS->read(&g, a, 16) == 16, "the new handle still reads");
+    OPS->close(&g);
     printf("%s (%d failures)\n", fails ? "FAILED" : "ALL PASSED", fails);
     return fails != 0;
 }

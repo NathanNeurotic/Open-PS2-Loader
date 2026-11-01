@@ -641,10 +641,12 @@ int guiNetProtocolNeedsRestart(void)
         return 0;
 
     // smbman and smb2man both register the "smb" device and neither unloads, so a change of SMB
-    // dialect while one of them is resident is a restart too, exactly like a protocol change.
+    // dialect while one of them is resident is a restart too, exactly like a protocol change. The
+    // comparison is with the dialect the load ASKED for: after an SMB2 -> SMBv1 fallback the saved
+    // SMB2 choice is unchanged, and a restart would only fail the same way again.
     if (resident == NET_PROTO_SMB && gNetworkProtocol == NET_PROTO_SMB) {
-        int loadedDialect = ethGetLoadedSmbDialect();
-        if (loadedDialect >= 0 && loadedDialect != gSMBDialect)
+        int requestedDialect = ethGetRequestedSmbDialect();
+        if (requestedDialect >= 0 && requestedDialect != gSMBDialect)
             return 1;
     }
 
