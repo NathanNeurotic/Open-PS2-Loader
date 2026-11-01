@@ -2854,8 +2854,18 @@ void menuRenderAppMenu()
     if (guiDrawBGSettings() == 0)
         guiDrawBGPlasma();
 
-    if (!appMenu)
+    if (!appMenu) {
+        guiSwitchScreen(GUI_SCREEN_MAIN);
         return;
+    }
+
+    // The IO thread clears the apps list when it rereads it (a device plugged in, SMB coming up, a refresh), so
+    // the app this menu was opened for is gone. Go back to the list, as the game menu does when its device goes
+    // away, instead of dereferencing NULL here. (YAOPL c6fc06f, Roman Kelesidis)
+    if (selected_item == NULL || selected_item->item == NULL || selected_item->item->current == NULL) {
+        guiSwitchScreen(GUI_SCREEN_MAIN);
+        return;
+    }
 
     // draw the animated menu
     if (!appMenuCurrent)
@@ -2949,8 +2959,12 @@ static void menuOpenSelectedVcdAchievements(void)
 
 void menuHandleInputAppMenu()
 {
-    if (!appMenu)
+    // Same guard as the render path: the app list can be reread between frames, and the actions below
+    // dereference the selected row.
+    if (!appMenu || selected_item == NULL || selected_item->item == NULL || selected_item->item->current == NULL) {
+        guiSwitchScreen(GUI_SCREEN_MAIN);
         return;
+    }
 
     if (!appMenuCurrent)
         appMenuCurrent = appMenu;
