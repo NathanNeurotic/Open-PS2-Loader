@@ -2903,7 +2903,9 @@ static int guiSettingsShowInterface(void)
                                 "HDTV 1280x720p @60Hz 16bit (HIRES)", "HDTV 1920x1080i @60Hz 16bit (HIRES)",
                                 "PAL 640x256p @50Hz 24bit", "NTSC 640x224p @60Hz 24bit",
                                 "PAL 640x512i @50Hz 24bit (FLICKER-FREE)", "NTSC 640x448i @60Hz 24bit (FLICKER-FREE)",
-                                "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines)", NULL};
+                                "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines)",
+                                "PAL 704x576i @50Hz 24bit (HIRES, FLICKER FILTER)", "NTSC 704x480i @60Hz 24bit (HIRES, FLICKER FILTER)",
+                                "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines, FLICKER FILTER)", NULL};
     // Video Mode stays in diaDisplayConfig for the legacy standalone Display editor, but the
     // composed Interface page supplies its one copy at the top of diaUIConfig.
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, 1, 1);
