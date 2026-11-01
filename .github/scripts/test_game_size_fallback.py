@@ -77,13 +77,15 @@ with tempfile.TemporaryDirectory(prefix="size-fallback-") as tmp:
     subprocess.run(["cc", "-Wall", "-Werror", str(src), "-o", str(exe)], check=True)
     subprocess.run([str(exe), str(tmp)], check=True)
 
-for sig in ("void sbResolvePs1Size(", "config_set_t *sbPopulateConfigIn("):
+# sbResolvePs1Size has one size read (VCD); sbPopulateConfigIn two (ISO, then old ISO).
+for sig, reads in (("void sbResolvePs1Size(", 1), ("config_set_t *sbPopulateConfigIn(", 2)):
     body = function(base, sig)
-    assert "sbFileSizeMB(gamepath)" in body, sig
+    assert body.count("sbFileSizeMB(gamepath)") == reads, sig
     assert "game->sizeMB = st.st_size >> 20" not in body, sig + " still stats only"
 
 theme = read("theme")
 draw = function(theme, "static void drawAttributeText(")
 assert 'strcmp(mutableText->value, CONFIG_ITEM_SIZE)' in draw and 'strcmp(mutableText->currentValue, "0")' in draw
+assert 'strcmp(mutableText->currentValue, "0.00")' in draw, "apps write an unmeasured size as 0.00"
 assert draw.index('"0")') < draw.index("%s MiB"), "an unmeasured size returns before the MiB line is built"
 print("PASS: ISO, old-ISO and PS1 VCD sizes use the fallback; the info page hides an unmeasured size")

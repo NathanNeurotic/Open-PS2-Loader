@@ -1068,19 +1068,24 @@ static int ps1ScanIncomplete;
 
 /* Interface > PS1 Duplicates (from RIPPS2 build 126): a game kept both as a POPSTARTER VCD and as an
    Ember image shows once, as the one picked. Two rows are twins when their names match ignoring
-   letter case and a leading disc ID ("SLUS_005.94."), which POPSTARTER VCD names often carry.
-   Display only: nothing on the device changes, and Both (the default) keeps both rows. */
+   letter case, a POPSTARTER prefix ("XX.", "SB.", "EL.", "SM.") and a leading disc ID ("SLUS_005.94."
+   followed by '.', '_', ' ' or '-'), the same forms the VCD list parser recognises. Display only:
+   nothing on the device changes, and Both (the default) keeps both rows. */
 static const char *ps1TwinKey(const char *name)
 {
-    size_t n = strlen(name);
-    if (n > 12 && name[4] == '_' && name[8] == '.' && (name[11] == '.' || name[11] == '_' || name[11] == ' '))
+    if (strlen(name) > 3 && name[2] == '.' &&
+        (!strncasecmp(name, "XX", 2) || !strncasecmp(name, "SB", 2) || !strncasecmp(name, "EL", 2) || !strncasecmp(name, "SM", 2)))
+        name += 3;
+    if (strlen(name) > 12 && name[4] == '_' && name[8] == '.' &&
+        (name[11] == '.' || name[11] == '_' || name[11] == ' ' || name[11] == '-'))
         return name + 12;
     return name;
 }
 
 // rows holds vcdCount VCD rows, then cueCount Ember rows. Returns the number of rows kept, packed at
-// the front in their order. Out of memory keeps every row (the setting is cosmetic, the list is not).
-static int ps1DropTwins(base_game_info_t *rows, int vcdCount, int cueCount, int prefer)
+// the front in their order; `parallel` (stride bytes per row, may be NULL) is packed the same way.
+// Out of memory keeps every row (the setting is cosmetic, the list is not).
+int ps1DropTwins(base_game_info_t *rows, void *parallel, size_t stride, int vcdCount, int cueCount, int prefer)
 {
     int i, j, out = 0, total = vcdCount + cueCount;
     unsigned char *drop;
@@ -1101,8 +1106,11 @@ static int ps1DropTwins(base_game_info_t *rows, int vcdCount, int cueCount, int 
     }
     for (i = 0; i < total; i++) {
         if (!drop[i]) {
-            if (out != i)
+            if (out != i) {
                 rows[out] = rows[i];
+                if (parallel != NULL)
+                    memcpy((char *)parallel + (size_t)out * stride, (char *)parallel + (size_t)i * stride, stride);
+            }
             out++;
         }
     }
@@ -1192,7 +1200,7 @@ int ps1FillGameList(const char *devPrefix, base_game_info_t **outGames)
     free(vcdGames);
     free(cueGames);
 
-    total = ps1DropTwins(merged, vcdCount, cueCount, gPs1Duplicates);
+    total = ps1DropTwins(merged, NULL, 0, vcdCount, cueCount, gPs1Duplicates);
 
     // Gated on the same Automatic Sorting switch every other list honours. With it off the halves
     // stay concatenated in scan order, which is the "raw directory order" the setting promises.

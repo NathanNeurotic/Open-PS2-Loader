@@ -3006,6 +3006,8 @@ reshow_interface:
             diaGetInt(ui, UICFG_PS1_DUPLICATES, &gPs1Duplicates);
             // A Sort Games or PS1 Duplicates change rebuilds every list; the CFG Title rebuild already does exactly that.
             cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort || previousPs1Dup != gPs1Duplicates;
+            if (previousPs1Dup != gPs1Duplicates)
+                hddVcdInvalidateCache(); // the HDD PS1 list applies the setting when it is built
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);

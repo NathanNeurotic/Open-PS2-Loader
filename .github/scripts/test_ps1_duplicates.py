@@ -29,7 +29,7 @@ def function(source, signature):
 
 cue = read("src/cuesupport.c", "src/sources/cuesupport.cpp")
 pieces = "\n".join(function(cue, sig) for sig in (
-    "static const char *ps1TwinKey(", "static int ps1DropTwins(", "int ps1FillGameList("))
+    "static const char *ps1TwinKey(", "int ps1DropTwins(", "int ps1FillGameList("))
 program = r'''
 #include <assert.h>
 #include <stdio.h>
@@ -42,8 +42,8 @@ static int gPs1Duplicates, gAutosort, ps1ScanIncomplete;
 #define LOG(...) ((void)0)
 static int ps1RowCmp(const void *a, const void *b) { (void)a; (void)b; return 0; }
 static void *memalign(int a, size_t n) { (void)a; return malloc(n); }
-static const char *vcdNames[] = {"SLUS_005.94.Crash Bandicoot", "Spyro the Dragon", "Only VCD", NULL};
-static const char *cueNames[] = {"crash bandicoot", "Spyro the Dragon", "Only Ember", NULL};
+static const char *vcdNames[] = {"SLUS_005.94.Crash Bandicoot", "Spyro the Dragon", "Only VCD", "XX.SCUS_944.26.Ape Escape", "SLES_123.45-Medievil", NULL};
+static const char *cueNames[] = {"crash bandicoot", "Spyro the Dragon", "Only Ember", "Ape Escape", "MediEvil", NULL};
 static int half(const char **names, int ember, base_game_info_t **out) {
     int n = 0;
     while (names[n]) n++;
@@ -62,19 +62,28 @@ static int has(base_game_info_t *rows, int n, const char *name, int ember) {
 int main(void) {
     base_game_info_t *rows = NULL;
     gPs1Duplicates = PS1_DUP_BOTH;
-    assert(ps1FillGameList("mass0:/", &rows) == 6);
+    assert(ps1FillGameList("mass0:/", &rows) == 10);
     gPs1Duplicates = PS1_DUP_EMBER;
-    assert(ps1FillGameList("mass0:/", &rows) == 4);
-    assert(has(rows, 4, "crash bandicoot", 1) && has(rows, 4, "Spyro the Dragon", 1));
-    assert(has(rows, 4, "Only VCD", 0) && has(rows, 4, "Only Ember", 1));
-    assert(!has(rows, 4, "SLUS_005.94.Crash Bandicoot", 0));
+    assert(ps1FillGameList("mass0:/", &rows) == 6);
+    assert(has(rows, 6, "Ape Escape", 1) && has(rows, 6, "MediEvil", 1) && !has(rows, 6, "XX.SCUS_944.26.Ape Escape", 0));
+    assert(has(rows, 6, "crash bandicoot", 1) && has(rows, 6, "Spyro the Dragon", 1));
+    assert(has(rows, 6, "Only VCD", 0) && has(rows, 6, "Only Ember", 1));
+    assert(!has(rows, 6, "SLUS_005.94.Crash Bandicoot", 0));
     gPs1Duplicates = PS1_DUP_POPSTARTER;
-    assert(ps1FillGameList("mass0:/", &rows) == 4);
-    assert(has(rows, 4, "SLUS_005.94.Crash Bandicoot", 0) && has(rows, 4, "Spyro the Dragon", 0));
-    assert(has(rows, 4, "Only VCD", 0) && has(rows, 4, "Only Ember", 1));
-    assert(!has(rows, 4, "crash bandicoot", 1));
+    assert(ps1FillGameList("mass0:/", &rows) == 6);
+    assert(has(rows, 6, "XX.SCUS_944.26.Ape Escape", 0) && has(rows, 6, "SLES_123.45-Medievil", 0) && !has(rows, 6, "MediEvil", 1));
+    assert(has(rows, 6, "SLUS_005.94.Crash Bandicoot", 0) && has(rows, 6, "Spyro the Dragon", 0));
+    assert(has(rows, 6, "Only VCD", 0) && has(rows, 6, "Only Ember", 1));
+    assert(!has(rows, 6, "crash bandicoot", 1));
     free(rows);
-    puts("PASS: PS1 Duplicates keeps both, the Ember twin or the VCD twin; a disc ID prefix and case are ignored");
+
+    /* The HDD list keeps each row's partition in a parallel array: it moves with its row. */
+    base_game_info_t hdd[3] = {{"SLUS_005.94.Crash Bandicoot", 0}, {"Only VCD", 0}, {"Crash Bandicoot", 1}};
+    char parts[3][33] = {"__.POPS", "__.POPS1", "__.EMBER"};
+    assert(ps1DropTwins(hdd, parts, sizeof(parts[0]), 2, 1, PS1_DUP_EMBER) == 2);
+    assert(!strcmp(hdd[0].name, "Only VCD") && !strcmp(parts[0], "__.POPS1"));
+    assert(!strcmp(hdd[1].name, "Crash Bandicoot") && !strcmp(parts[1], "__.EMBER"));
+    puts("PASS: PS1 Duplicates keeps both, the Ember twin or the VCD twin; a POPSTARTER prefix, a disc ID and case are ignored");
     return 0;
 }
 '''
@@ -95,6 +104,9 @@ assert '"ps1_duplicates"' in (root / "include/config.h").read_text(encoding="utf
 gui = read("src/gui.c", "src/ui/guisettings.cpp")
 assert "diaGetInt(ui, UICFG_PS1_DUPLICATES, &gPs1Duplicates)" in gui
 assert "previousPs1Dup != gPs1Duplicates" in gui, "a change rebuilds the lists"
+assert re.search(r"if \(previousPs1Dup != gPs1Duplicates\)\s*hddVcdInvalidateCache\(\);", gui), "and rescans the cached HDD list"
+hdd = read("src/hddsupport.c", "src/sources/hddsupport.cpp")
+assert "ps1DropTwins(newGames, newParts, sizeof(*newParts), vcdRows, total - vcdRows, gPs1Duplicates)" in hdd, "HDD honours it"
 base = (root / ("lng/tmpl/_base.yml" if CPP else "lng_tmpl/_base.yml")).read_text(encoding="utf-8")
 for label in ("PS1_DUPLICATES", "HINT_PS1_DUPLICATES", "PS1_DUPLICATES_BOTH"):
     assert "label: " + label + "\n" in base, label

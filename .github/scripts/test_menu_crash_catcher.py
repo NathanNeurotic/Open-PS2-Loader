@@ -64,13 +64,16 @@ if CPP:
     sys.path.insert(0, str(root / "tools"))
     import build_edition as editions
 
-    def libs(configuration):
+    def main_target(configuration):
         targets = {t["name"]: t for t in editions.definition("korium", configuration)["targets"]}
-        return targets["riptopl"]["libs"]
+        return targets["riptopl"]
 
-    for configuration in ("diag", "debug", "debug_uart", "ingame_debug"):
-        assert "eedebug" in libs(configuration), configuration + " links libeedebug"
-    assert "eedebug" not in libs("standard"), "release builds stay without it"
+    # Every configuration: libeedebug is linked exactly when __OPLDIAG compiles the catcher in.
+    for configuration in editions.CONFIGURATIONS:
+        main = main_target(configuration)
+        diag = "__OPLDIAG" in main.get("defines", [])
+        assert ("eedebug" in main["libs"]) == diag, configuration + ": libeedebug iff __OPLDIAG"
+    assert "eedebug" not in main_target("standard")["libs"], "release builds stay without it"
 else:
     make = (root / "Makefile").read_text(encoding="utf-8")
     block = make[make.index("ifeq ($(OPLDIAG),1)"):]
