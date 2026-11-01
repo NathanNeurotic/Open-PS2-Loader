@@ -1576,7 +1576,7 @@ gui_strings:
 - label: HINT_SMBCACHE
   string: "Read-ahead cache for SMB in game."
 - label: HINT_CORE_LOADER
-  string: "Core for this game where both are supported. HTTP is <OPL>-only. Default follows Game Launching, except on UDPFS/UDPBD (Neutrino) and SMB (<OPL>)."
+  string: "Core for this game where both are supported. HTTP is <OPL>-only. Default follows Game Launching, except on UDPFS/UDPBD, where it means Neutrino."
 - label: HINT_DMA_MODE
   string: "Internal HDD transfer mode for this game. Lower it if the game stutters or freezes."
 - label: HINT_DNAS_GAMEID

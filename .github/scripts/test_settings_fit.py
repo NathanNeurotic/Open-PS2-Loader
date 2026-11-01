@@ -200,7 +200,7 @@ if load and old_pair not in load:
 # --- loader-core scope stays honest ---------------------------------------------------------------
 
 if ('SMB/HTTP always use <OPL>; UDPFS/UDPBD use Neutrino unless the game picks <OPL>.' not in lang_base or
-        'HTTP is <OPL>-only. Default follows Game Launching, except on UDPFS/UDPBD (Neutrino) and SMB (<OPL>).' not in lang_base):
+        'HTTP is <OPL>-only. Default follows Game Launching, except on UDPFS/UDPBD, where it means Neutrino.' not in lang_base):
     failures.append('lng_tmpl/_base.yml: loader-core hints must name the forced-core network sources and the UDPBD default')
 # UDPFS Files has no OPL-core backend, so its Loader row stays locked; the UDP block device (UDPBD and
 # UDPFS IMG) boots either core and keeps the row, defaulting to Neutrino (bdmNetBlockCoreLoader).
