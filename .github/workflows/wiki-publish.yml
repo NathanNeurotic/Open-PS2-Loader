@@ -60,6 +60,24 @@ jobs:
           set -euo pipefail
           git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki
 
+      # wiki_sync.py refuses to run while the wiki holds a page it does not generate, so a renamed or
+      # removed document would block every later publish. Drop only the pages the previous run
+      # generated (its manifest lists them); a hand-written page still stops the sync for review.
+      - name: Remove previously generated pages
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          wiki = Path("wiki")
+          manifest = wiki / "_tools" / "manifest.json"
+          if manifest.exists():
+              for page in json.loads(manifest.read_text(encoding="utf-8")).get("pages", {}):
+                  target = (wiki / f"{page}.md").resolve()
+                  if target.parent != wiki.resolve():
+                      raise SystemExit(f"Manifest page outside the wiki: {page}")
+                  target.unlink(missing_ok=True)
+
       - name: Build wiki
         run: |
           set -euo pipefail
