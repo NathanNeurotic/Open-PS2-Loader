@@ -54,6 +54,26 @@ hung). The launch now waits up to 2 seconds to see the card go busy, then shows
 unconfirmed, and the launch goes ahead. Ported from RIPPS2 by [akilluminati47](https://github.com/akilluminati47). NOT TESTED on
 hardware: it needs an SD2PSX with sd2psXtd firmware.
 
+## Bug-report build
+
+Every rolling release carries `RIPTOPL-BUGREPORT-<version>.zip`. It holds `RIPTOPL-BUGREPORT.ELF`,
+the release's field-diagnostics build (`OPLDIAG=1`), and a README on what to send. Use it when
+RiptOPL will not start, stops on a black screen or freezes in the menu:
+
+- each start-up step is printed on screen as a numbered line, so a start-up that stops leaves its
+  last step on screen; after the video setup, a start-up that never reaches the menu turns the
+  screen one colour per stage;
+- a menu that stops drawing writes `RIPTOPL-FREEZE.TXT`, and a crash writes `RIPTOPL-CRASH.TXT`, to
+  `mc0:` (`mc1:` if that fails);
+- Drive Status and DIAG.TXT work as in the normal build.
+
+The ELF is not compressed (`NOT_PACKED=1`) and its program starts 0x80 bytes into the file, like
+every ps2sdk link. Volventura's console starts that layout from uLaunchELF on `mmce0:` where the
+compressed builds showed a black screen, so the bug-report build starts there too; the publisher
+refuses a loader with any other layout. It is built by the official ps2homebrew container when that
+build succeeds, else by ps2dev:latest; the README names which. Copy it next to the normal
+`RIPTOPL.ELF`; both share settings. Requested by Volventura on 2026-11-01. NOT TESTED on hardware.
+
 ## Drive Status and DIAG.TXT
 
 **Drive Status** in the main menu (above About) lists, without changing anything:
