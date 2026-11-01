@@ -162,6 +162,10 @@ static inline void cdvd_readee(void *buf)
 
     while (1) {
         do {
+            /* A break (sceCdBreak) that lands while a chunk is in flight ends it with SCECdErABRT and stops the
+               read here. A break that lands in the gap between this check and the next sceCdRead is lost: no read
+               is in flight, so cdvdman takes its idle path and the next chunk starts with err reset. Sony's
+               cdvdfsv has the same window. */
             if ((sectors_to_read == 0) || (sceCdGetError() == SCECdErABRT)) {
                 sysmemSendEE((void *)&readee, (void *)r->eeaddr1, sizeof(cdvdfsv_readee_t));
 
