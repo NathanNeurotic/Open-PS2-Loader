@@ -189,9 +189,11 @@ print('ok   bdmIopWasReset clears every latch and asks CF to probe again')
 # MMCE Game ID, run against scripted busy-query answers (-1 = the devctl failed).
 wait = mmce[mmce.index('static int mmceWaitCardReady('):]
 wait = wait[:wait.index('\n}\n') + 3]
+swapOn = mmce[mmce.index('static void mmceWaitSwapDoneOn('):]
+swapOn = swapOn[:swapOn.index('\n}\n') + 3]
 swap = mmce[mmce.index('void mmceWaitSwapDone('):]
 swap = swap[:swap.index('\n}\n') + 3]
-hist = mmce[mmce.index('void mmceWaitHistorySwitch('):]
+hist = mmce[mmce.index('int mmceWaitHistorySwitch('):]
 hist = hist[:hist.index('\n}\n') + 3]
 defines = ''.join(line + '\n' for line in mmce.splitlines() if line.startswith(('#define MMCE_GAMEID_START', '#define MMCE_GAMEID_QUERY', '#define MMCE_CARD_READY', '#define MMCE_HISTORY_SWITCH')))
 loop = send[send.index('    int queryFailures = 0;'):]
@@ -230,7 +232,7 @@ static void DelayThread(int us) { slept += us; }
 ''' + r'''
 static char mmceGameIdTarget[8] = "mmce0:/";
 static int mmceGameIdSwitchSeen;
-''' + wait + swap + hist + r'''
+''' + wait + swapOn + swap + hist + r'''
 static int sendWait(const char *mmceDevice, const char *startup)
 {
     (void)startup; /* LOG discards it here */

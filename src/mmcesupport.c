@@ -366,18 +366,16 @@ int mmceGameIdSettle(int timeoutMs)
 // send. A firmware without the busy query settles the moment presence answers, so it pays ~0 ms. The
 // MX4SIO leg has had this since batch S7 (mmceGameIdSettle); the MMCE-hosted legs did not, and they are
 // the ones that cannot survive the swap: the ISO the game streams is on the card being swapped.
-void mmceWaitSwapDone(const char *why)
+static void mmceWaitSwapDoneOn(const char *device, const char *why)
 {
-    if (mmceGameIdTarget[0] == '\0')
-        return; // no send this launch: nothing to wait for
     int silent;
     for (silent = 0; silent * 200 < MMCE_CARD_READY_SILENT_MS; silent++) {
-        if (fileXioDevctl(mmceGameIdTarget, 0x1, NULL, 0, NULL, 0) != -1) {
-            int busy = fileXioDevctl(mmceGameIdTarget, 0x2, NULL, 0, NULL, 0);
+        if (fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
+            int busy = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
             if (busy >= 0 && (busy & 1)) {
                 LOG("MMCE %s: the card is still swapping; waiting\n", why);
                 diagLog("mmce %s: card still busy; waiting", why);
-                mmceWaitCardReady(mmceGameIdTarget);
+                mmceWaitCardReady(device);
             } else if (silent)
                 LOG("MMCE %s: the card answers again after ~%d ms\n", why, silent * 200);
             return;
@@ -388,41 +386,63 @@ void mmceWaitSwapDone(const char *why)
     diagLog("mmce %s: card silent for %d ms; launching anyway", why, silent * 200);
 }
 
+void mmceWaitSwapDone(const char *why)
+{
+    if (mmceGameIdTarget[0] == '\0')
+        return; // no send this launch: nothing to wait for
+    mmceWaitSwapDoneOn(mmceGameIdTarget, why);
+}
+
+// The last look before the IOP handoff. With a Game ID send this launch it is the slot that send targeted;
+// without one (Game ID off, the reported case) it is the game's own slot, so a history-triggered switch that
+// began after mmceWaitHistorySwitch's window is still caught. ~0 ms on an idle card.
+static void mmceWaitBeforeHandoff(void)
+{
+    char device[8];
+    mmceGetDeviceRoot(device, sizeof(device));
+    mmceWaitSwapDoneOn(mmceGameIdTarget[0] != '\0' ? mmceGameIdTarget : device, "before handoff");
+}
+
 // After the OSD history write on an MMCE-hosted launch: watch the game's slot for the card's own folder
 // switch (see the launch) and wait it out on screen. Nothing to watch when our Game ID send already
 // switched the card (it is on that folder), or when the firmware has no busy query (presence answers
 // while the busy query fails): then the window is not paid. Bounded: the window, then mmceWaitCardReady.
-void mmceWaitHistorySwitch(const char *device, const char *why)
+int mmceWaitHistorySwitch(const char *device, const char *why)
 {
     if (mmceGameIdSwitchSeen) {
         LOG("MMCE %s: the card already switched for the Game ID send; not waiting again\n", why);
-        return;
+        return 0;
     }
+    char line[256];
     int polls, silent = 0;
     for (polls = 0; polls * MMCE_HISTORY_SWITCH_POLL_MS < MMCE_HISTORY_SWITCH_WINDOW_MS; polls++) {
         int status = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
         if (status >= 0 && (status & 1) == 0) {
             silent = 0; // answering and idle: the switch has not begun (or will not)
-            DelayThread(MMCE_HISTORY_SWITCH_POLL_MS * 1000);
-            continue;
+        } else if (status < 0 && ++silent < MMCE_GAMEID_QUERY_FAILURES) {
+            // one failed query is retried, not trusted
+        } else if (status < 0 && fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
+            LOG("MMCE %s: the card has no busy query; cannot watch for its switch\n", why);
+            return 0;
+        } else {
+            LOG("MMCE %s: the card is switching on its own after %d ms (%s)\n", why, polls * MMCE_HISTORY_SWITCH_POLL_MS,
+                status < 0 ? "not answering" : "busy");
+            diagLog("mmce %s: the card switching on its own after %d ms", why, polls * MMCE_HISTORY_SWITCH_POLL_MS);
+            mmceWaitCardReady(device);
+            return 1;
         }
-        if (status < 0) {
-            if (++silent < MMCE_GAMEID_QUERY_FAILURES) { // one failed query is retried, not trusted
-                DelayThread(MMCE_HISTORY_SWITCH_POLL_MS * 1000);
-                continue;
-            }
-            if (fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
-                LOG("MMCE %s: the card has no busy query; cannot watch for its switch\n", why);
-                return;
-            }
+        // The whole window is visible (it looked like a freeze before the launch), and START skips it.
+        readPads();
+        if (getKeyOn(KEY_START)) {
+            LOG("MMCE %s: START pressed after %d ms; not watching for the card's switch\n", why, polls * MMCE_HISTORY_SWITCH_POLL_MS);
+            return 0;
         }
-        LOG("MMCE %s: the card is switching on its own after %d ms (%s)\n", why, polls * MMCE_HISTORY_SWITCH_POLL_MS,
-            status < 0 ? "not answering" : "busy");
-        diagLog("mmce %s: the card switching on its own after %d ms", why, polls * MMCE_HISTORY_SWITCH_POLL_MS);
-        mmceWaitCardReady(device);
-        return;
+        snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), polls * MMCE_HISTORY_SWITCH_POLL_MS / 1000);
+        guiRenderTextScreen(line);
+        DelayThread(MMCE_HISTORY_SWITCH_POLL_MS * 1000);
     }
     LOG("MMCE %s: no card switch within %d ms\n", why, MMCE_HISTORY_SWITCH_WINDOW_MS);
+    return 0;
 }
 
 static void mmceGetDeviceRoot(char *root, size_t size)
@@ -1256,7 +1276,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             if (sysAddHistoryRecord(historyName)) { // no record (debug builds): nothing for the card to react to
                 char historyDevice[8];
                 mmceGetDeviceRoot(historyDevice, sizeof(historyDevice));
-                mmceWaitHistorySwitch(historyDevice, "history write");
+                if (mmceWaitHistorySwitch(historyDevice, "history write"))
+                    mmceSettleAfterSwitch(); // the fs surface came back with the new card: let it answer first
             }
             diagSaveBeforeLaunch(); // again, now with the Game ID switch, the history write and the card's waits in it
         }
@@ -1517,7 +1538,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
         // Last look before the handoff, as on the native leg: a switch the firmware deferred must not be in
         // flight when Neutrino's mmceman takes the card over. ~0 ms on an idle card.
-        mmceWaitSwapDone("before handoff");
+        mmceWaitBeforeHandoff();
         deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);
         sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, -1, &neutrinoVmc);
         return;
@@ -1568,8 +1589,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // paths (bdm/hdd/eth) send it too, with the same wait.
 
     // Last look before the handoff: a switch the firmware deferred (its buttons held, a flush) or that a
-    // card-side history refresh queued must not be in flight when mmcedrv takes the ISO handle over.
-    mmceWaitSwapDone("before handoff");
+    // card-side history refresh queued must not be in flight when mmcedrv takes the ISO handle over. On
+    // the game's own slot when no Game ID was sent (see mmceWaitBeforeHandoff).
+    mmceWaitBeforeHandoff();
 
     if (gAutoLaunchBDMGame == NULL) {
         deinit(NO_EXCEPTION, MMCE_MODE); // CAREFUL: deinit will call mmceCleanUp, so mmceGames/game will be freed
