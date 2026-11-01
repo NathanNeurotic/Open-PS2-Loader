@@ -56,7 +56,9 @@ hardware: it needs an SD2PSX with sd2psXtd firmware.
 
 ## Bug-report build
 
-Every rolling release carries `RIPTOPL-BUGREPORT-<version>.zip`. It holds `RIPTOPL-BUGREPORT.ELF`,
+A rolling release carries `RIPTOPL-BUGREPORT-<version>.zip` whenever its diagnostics build
+succeeded (the build is best-effort: if neither toolchain produced one, the run shows a warning
+and the release ships without the zip). It holds `RIPTOPL-BUGREPORT.ELF`,
 the release's field-diagnostics build (`OPLDIAG=1`), a README on what to send, and the licences
 (`LICENSE`, `CREDITS`, `licenses/libsmb2/` for the embedded smb2man driver). Use it when
 RiptOPL will not start, stops on a black screen or freezes in the menu:
