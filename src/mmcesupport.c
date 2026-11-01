@@ -1253,8 +1253,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             char historyName[32];
             if (configGetStrCopy(configSet, CONFIG_ITEM_ALTSTARTUP, historyName, sizeof(historyName)) == 0)
                 strcpy(historyName, game->startup);
-            sysAddHistoryRecord(historyName);
-            {
+            if (sysAddHistoryRecord(historyName)) { // no record (debug builds): nothing for the card to react to
                 char historyDevice[8];
                 mmceGetDeviceRoot(historyDevice, sizeof(historyDevice));
                 mmceWaitHistorySwitch(historyDevice, "history write");
@@ -1516,6 +1515,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
+        // Last look before the handoff, as on the native leg: a switch the firmware deferred must not be in
+        // flight when Neutrino's mmceman takes the card over. ~0 ms on an idle card.
+        mmceWaitSwapDone("before handoff");
         deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);
         sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, -1, &neutrinoVmc);
         return;

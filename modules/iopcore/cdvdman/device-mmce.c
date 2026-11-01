@@ -26,6 +26,9 @@ static int mmce_dev_ready;
 // How long a failed read waits for the card to answer again before it is an error: a card swap (card exit,
 // flush, close, 500 ms, open) plus most of an 8 MB card load. 100 ms probes.
 #define MMCE_SWAP_RECOVERY_PROBES 150
+// Set when that recovery budget ran out without the card answering: until it answers a probe again,
+// reads fail fast (one probe each) instead of each paying the whole budget.
+static int mmce_dev_lost;
 
 void DeviceInit(void)
 {
@@ -139,15 +142,23 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     WaitSema(mmce_io_sema);
 
     if (!mmce_dev_ready) {
-        // Init never saw the device. One cheap re-probe per read: a card that came back late (slow SD
-        // re-enumeration across the IOP reboot) recovers here; otherwise fail fast instead of driving
-        // a dead transport. Guard the pointer: DeviceFSInit leaves it NULL when mmcedrv wasn't resident
-        // (it bails before resolving the exports), and these are zero-init statics on first boot.
-        if (fp_mmcedrv_get_size == NULL || fp_mmcedrv_get_size(cdvdman_settings.iso_fd) <= 0) {
+        // Init never saw the device (or a read below lost it). Guard the pointer: DeviceFSInit leaves it
+        // NULL when mmcedrv wasn't resident (it bails before resolving the exports), and these are
+        // zero-init statics on first boot; nothing can be read then. One cheap re-probe per read: a card
+        // that came back late (slow SD re-enumeration across the IOP reboot) recovers here. A card that
+        // does not answer still gets the read and the bounded recovery wait below ONCE (it may be mid-swap,
+        // see there); after that budget ran out, reads fail fast until a probe answers again.
+        if (fp_mmcedrv_get_size == NULL) {
             SignalSema(mmce_io_sema);
             return SCECdErREAD;
         }
-        mmce_dev_ready = 1;
+        if (fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0) {
+            mmce_dev_ready = 1;
+            mmce_dev_lost = 0;
+        } else if (mmce_dev_lost) {
+            SignalSema(mmce_io_sema);
+            return SCECdErREAD;
+        }
     }
 
     do {
@@ -172,6 +183,12 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
             DPRINTF("%s: the card answers again after %d ms; retrying\n", __func__, (probes + 1) * 100);
             res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
             retries++;
+        } else {
+            // The card never answered: do not pay this wait again on every read (cdvdman issues one per
+            // sector for the odd sizes), fail fast until a probe at the top answers again.
+            DPRINTF("%s: the card did not answer for %d ms; failing fast until it does\n", __func__, MMCE_SWAP_RECOVERY_PROBES * 100);
+            mmce_dev_ready = 0;
+            mmce_dev_lost = 1;
         }
     }
     SignalSema(mmce_io_sema);

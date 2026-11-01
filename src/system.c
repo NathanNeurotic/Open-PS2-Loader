@@ -2955,13 +2955,15 @@ static int sysPlaceIgrOverlay(void)
 // launch that bails after the early write only skips the record of a retry of the same game, once.
 static char sysHistoryRecorded[32];
 
-void sysAddHistoryRecord(const char *filename)
+int sysAddHistoryRecord(const char *filename)
 {
 #if (!defined(__DEBUG) && !defined(_DTL_T10000))
     AddHistoryRecordUsingFullPath(filename);
     snprintf(sysHistoryRecorded, sizeof(sysHistoryRecorded), "%s", filename);
+    return 1;
 #else
     (void)filename;
+    return 0; // these builds write no history: the caller has no card switch to wait for
 #endif
 }
 
