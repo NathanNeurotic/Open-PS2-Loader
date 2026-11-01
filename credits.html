@@ -124,7 +124,7 @@ contributed code, ideas, or directly-ported features:</p>
   <td><b>Neutrino</b></td>
   <td><a href="https://github.com/rickgaiser">rickgaiser</a></td>
   <td><b>Launched, not derived from</b> — see <a href="#special-thanks">Special Thanks</a>. The external EE/IOP game-loader core RiptOPL hands games to per game, and the core behind the UDPBD block-device transport and the UDPFS network transports (a loose-ISO filesystem device plus a UDPFSBD block device), with its own IRX chain. Bundled in the release package.</td>
-  <td><a href="https://github.com/rickgaiser/neutrino">GitHub</a></td>
+  <td><a href="https://github.com/ps2max32/neutrino">GitHub</a></td>
 </tr>
 <tr>
   <td><b>sOPL</b> (Stable OPL)</td>
@@ -135,7 +135,7 @@ contributed code, ideas, or directly-ported features:</p>
 <tr>
   <td><b>uOPL</b> / <b>wOPL</b></td>
   <td><a href="https://github.com/KrahJohlito">KrahJohlito</a></td>
-  <td>The single biggest influence on this fork: <a href="https://github.com/KrahJohlito">KrahJohlito</a>'s uOPL (Unofficial Open PS2 Loader) and its continuation <a href="https://github.com/KrahJohlito/wOPL">wOPL</a>, where the modern OPL experience was invented. The <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> external-core launcher and per-game Neutrino args; the Coverflow cover-art carousel; the Favorites tab and <code>favourites.bin</code> format; the PS2RD cheat-image loader</td>
+  <td>The single biggest influence on this fork: <a href="https://github.com/KrahJohlito">KrahJohlito</a>'s uOPL (Unofficial Open PS2 Loader) and its continuation <a href="https://github.com/KrahJohlito/wOPL">wOPL</a>, where the modern OPL experience was invented. The <a href="https://github.com/ps2max32/neutrino">Neutrino</a> external-core launcher and per-game Neutrino args; the Coverflow cover-art carousel; the Favorites tab and <code>favourites.bin</code> format; the PS2RD cheat-image loader</td>
   <td>Historical project; public repository unavailable at the October 2026 audit</td>
 </tr>
 <tr>
@@ -226,18 +226,18 @@ this fork builds on top of it — traces directly back to that work.</p>
 </div>
 
 <div class="credit">
-<dt><a href="https://github.com/rickgaiser">rickgaiser</a> — <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> (second PS2 core)</dt>
+<dt><a href="https://github.com/rickgaiser">rickgaiser</a> — <a href="https://github.com/ps2max32/neutrino">Neutrino</a> (second PS2 core)</dt>
 <dd>
-<p>Author of <b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b>, a
+<p>Author of <b><a href="https://github.com/ps2max32/neutrino">Neutrino</a></b>, a
 <i>"Small, Fast and Modular PS2 Device Emulator"</i> — and RiptOPL's <b>second PS2 loader core</b>
 alongside OPL's own.
 Every release package bundles the official latest build, re-fetched from upstream at publish time, as
 a ready-to-use <code>neutrino/</code> folder.</p>
 <p>It is bundled under the <b>AFL-3.0</b> licence. One honest note on "unmodified": we add exactly one
-file, <code>config/bsd-udpfsbd.toml</code> — <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> ships <code>udpfs_bd.irx</code> without a
+file, <code>config/bsd-udpfsbd.toml</code> — <a href="https://github.com/ps2max32/neutrino">Neutrino</a> ships <code>udpfs_bd.irx</code> without a
 matching <code>-bsd</code> token, and <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a> launches UDPFS as <code>-bsd=udpfsbd</code>. Nothing of
 <a href="https://github.com/rickgaiser">rickgaiser</a>'s is altered or removed.</p>
-<p><a href="https://github.com/rickgaiser/neutrino">Neutrino</a> is deliberately <b>UI-agnostic</b> — it has no interface of its own, and that design
+<p><a href="https://github.com/ps2max32/neutrino">Neutrino</a> is deliberately <b>UI-agnostic</b> — it has no interface of its own, and that design
 choice is precisely what makes front-ends like this one possible. <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a> is one of several:
 <b><a href="https://github.com/dnunezx/LUNA">LUNA</a></b> by <a href="https://github.com/dnunezx">darkladark</a>
 (our <b>#1 recommended alternative</b>, for lightweight, customized Neutrino gameplay), <b><a href="https://github.com/pcm720/nhddl">NHDDL</a></b>,
@@ -444,7 +444,7 @@ PS2-Servers are <b>third-party projects</b>, independently maintained and not pa
 <li><b><a href="https://github.com/TheRealNextria/PS2RD-CHT-Manager">PS2RD CHT Manager</a></b> by <b><a href="https://github.com/TheRealNextria">TheRealNextria</a></b> —
     manages the PS2RD <code>.cht</code> cheat files <a href="https://github.com/NathanNeurotic/RiptOPL">RiptOPL</a> reads from a device's <code>CHT</code>
     folder. Shipped as <code>PS2RD-CHT-Manager.url</code>.</li>
-<li><b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b> by <b><a href="https://github.com/rickgaiser">rickgaiser</a></b> — not a shortcut but a
+<li><b><a href="https://github.com/ps2max32/neutrino">Neutrino</a></b> by <b><a href="https://github.com/rickgaiser">rickgaiser</a></b> — not a shortcut but a
     <em>bundle</em>: ships <em>inside</em> the package as a ready-to-use <code>neutrino/</code>
     folder. Ordinary memory-card placement is supported; for MMCE + GameID card switching, keep the
     complete folder on <code>mmceN:</code> (or under the MMCE Prefix Path) rather than the switched
