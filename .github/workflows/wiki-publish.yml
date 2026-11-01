@@ -1,0 +1,93 @@
+name: Publish Wiki
+
+# Rebuilds the GitHub wiki from rebuild/main (docs/, CHANGELOG, README) and gh-pages (the site)
+# with .github/scripts/wiki_sync.py, then pushes it to the wiki repository with this repository's
+# token. Fast-forward only, never forced; nothing is committed when nothing changed.
+on:
+  push:
+    branches:
+      - rebuild/main
+      - claude/project-thread-pc2jg6-wiki-publish  # TEMP: dry-run test, removed before merge
+    paths:
+      - 'docs/**'
+      - 'CHANGELOG'
+      - 'README.md'
+      - '.github/scripts/wiki_sync.py'
+      - '.github/workflows/wiki-publish.yml'
+  # gh-pages merges do not run rebuild/main workflows; the daily run catches the wiki up with them,
+  # after docs-sync (04:23) has refreshed the site.
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and check, but do not push
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v6
+        with:
+          ref: rebuild/main
+          path: src
+          fetch-depth: 1
+
+      - name: Checkout GitHub Pages branch
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: site
+          fetch-depth: 1
+
+      - name: Clone wiki
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki
+
+      - name: Build wiki
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/wiki-sync"
+          "$RUNNER_TEMP/wiki-sync/bin/pip" install --quiet -r src/.github/requirements-docs.txt
+          cd src
+          "$RUNNER_TEMP/wiki-sync/bin/python" .github/scripts/wiki_sync.py --source . --site ../site --wiki ../wiki
+
+      - name: Commit and push
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || github.ref != 'refs/heads/rebuild/main' }}
+        run: |
+          set -euo pipefail
+          cd wiki
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki already up to date."
+            exit 0
+          fi
+          git diff --cached --stat | tail -n 1
+          if git diff --cached --name-status | grep -q '^D'; then
+            echo "::warning::This sync deletes wiki pages:"
+            git diff --cached --name-status | grep '^D'
+          fi
+          src_sha=$(git -C ../src rev-parse --short=8 HEAD)
+          site_sha=$(git -C ../site rev-parse --short=8 HEAD)
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Sync wiki from rebuild/main ${src_sha} and gh-pages ${site_sha}"
+          if [ "$DRY_RUN" = "true" ]; then
+            git push --dry-run origin HEAD
+            echo "Dry run: not pushed."
+          else
+            git push origin HEAD
+          fi
