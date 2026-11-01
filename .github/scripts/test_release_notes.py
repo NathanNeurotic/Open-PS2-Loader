@@ -82,7 +82,7 @@ class ReleaseNotesTests(unittest.TestCase):
         credit_block = body.split("<summary>Credits</summary>\n", 1)[1].split("</details>", 1)[0]
         self.assertIn("Gageformer", credit_block)
         self.assertIn("https://github.com/Gageformer/Ember/releases", credit_block)
-        self.assertIn("https://github.com/rickgaiser/neutrino", credit_block)
+        self.assertIn("https://github.com/ps2max32/neutrino", credit_block)
         self.assertIn("https://github.com/hacan359/xerabora", credit_block)
         self.assertNotIn("—", credit_block)
         self.assertNotIn("<img", body)

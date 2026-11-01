@@ -13,7 +13,7 @@ menusys = (ROOT / "src/menusys.c").read_text(encoding="utf-8")
 udpfs = (ROOT / "src/udpfssupport.c").read_text(encoding="utf-8")
 base = (ROOT / "lng_tmpl/_base.yml").read_text(encoding="utf-8")
 
-start = menusys.index("void menuCheckSelectedGameSupport(")
+start = menusys.index("void menuCheckSelectedGameSupportLocked(")
 end = menusys.index("\n}\n", start) + 3
 check = menusys[start:end]
 

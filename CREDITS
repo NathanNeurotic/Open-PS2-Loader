@@ -83,12 +83,17 @@ features, code, and ideas from:
 
 Bundled third-party software, shipped in the release package and NOT part of RiptOPL:
 
-  - Neutrino, by rickgaiser          https://github.com/rickgaiser/neutrino
+  - Neutrino, by rickgaiser          https://github.com/ps2max32/neutrino
     A small, fast, modular PS2 device emulator, and RiptOPL's second PS2 loader
     core. Bundled as a ready-to-use neutrino/ folder under the AFL-3.0 licence.
     Deliberately UI-agnostic -- having no interface of its own is precisely what
-    lets a front-end drive it. RiptOPL adds only config/bsd-udpfsbd.toml, so that
-    UDPFS can be launched as -bsd=udpfsbd; nothing upstream is altered.
+    lets a front-end drive it. RiptOPL adds config/bsd-udpfsbd.toml, so that
+    UDPFS can be launched as -bsd=udpfsbd, and replaces the i.LINK pair
+    (modules/IEEE1394_bd_mini.irx and modules/iLinkman.irx) with its own builds
+    of the same ps2sdk modules, which keep the login across an IOP reset.
+    Launching an SMB game on Neutrino writes the menu's network and share
+    settings into config/bsd-smb.toml on the user's device. Nothing else
+    upstream is altered.
 
   - Ember, by Gageformer             https://github.com/Gageformer/Ember
     An independent PS1 emulator written from scratch for the PS2, and RiptOPL's
@@ -145,7 +150,7 @@ Maintained companion PC & mobile tools:
 
   - PS2-Servers, by Ripto (NathanNeurotic)
     https://github.com/NathanNeurotic/PS2-Servers
-    All-in-one PC server launcher for SMBv1, UDPFS and UDPBD.
+    All-in-one PC server launcher for SMB (v1, v2 and v3), UDPFS, UDPBD and HTTP.
 
   - udpfs-server, by YouKnow-sys
     https://github.com/YouKnow-sys/udpfs-server
@@ -236,6 +241,10 @@ Special and sincere thanks to:
   - Irfanlesnar - creator of PS2-Launcher, for UI and feature ideas across the OPL
     fork ecosystem.
   - pcm720 - for udpfsd and nhddl, key foundations for modern PS2 streaming.
+  - Ronnie Sahlberg (sahlberg) - for libsmb2, the base of the fork's SMB2
+    driver (https://github.com/sahlberg/libsmb2), and for usmb2 and the SMB
+    backend he added to Neutrino (https://github.com/ps2max32/neutrino/pull/236),
+    which RiptOPL uses to launch SMB games on the Neutrino core.
   - Ifcaro and jimmikaelkael - the original Open PS2 Loader authors - and every
     contributor across OPL's long history, all named above in this file.
 
@@ -306,3 +315,4 @@ row has no confirmed public profile):
   Blade1984        https://github.com/Blade1984
   zackcage6        https://github.com/zackcage6
   mihhru           https://github.com/mihhru
+  Ronnie Sahlberg  https://github.com/sahlberg

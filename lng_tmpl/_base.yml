@@ -2504,6 +2504,9 @@ gui_strings:
 - comment: SMB game set to Neutrino, but a path, share, user or password is too long, or the addresses are unknown.
   label: NEUTRINO_SMB_LIMITS
   string: These SMB settings are beyond Neutrino's limits -- launching with the OPL core.
+- comment: Rename, Delete or Hide was cancelled because the game list was refreshed while its dialog was open, so the selected row may now be a different game.
+  label: MENU_ROW_CHANGED
+  string: The game list changed while this was open, so nothing was done. Please try again.
 - comment: Interface setting (from RIPPS2 build 126). A PS1 game kept both as a POPSTARTER VCD and as an Ember image.
   label: PS1_DUPLICATES
   string: PS1 Duplicates
