@@ -92,6 +92,8 @@ jobs:
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check that a missed pad read is not a release, and rumble alignment waits for a quiet pad
         run: python3 .github/scripts/test_pad_missed_read.py
+      - name: Check that the DualShock stays locked in analog mode, so its ANALOG button cannot stall the menu
+        run: python3 .github/scripts/test_pad_mode_lock.py
       - name: Check masked pattern scan bounds and rejection of short ranges
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
