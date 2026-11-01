@@ -719,8 +719,12 @@ int sceAtaDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
         nsectors -= len;
     }
 
-    if (!hdpro_io_finish())
+    if (!hdpro_io_finish()) {
+        // A failed finish leaves hdpro_io_active set, and hdpro_io_start() would then refuse every later
+        // transfer without trying. Clear it so the next transfer issues the start sequence again.
+        hdpro_io_active = 0;
         res = -2; // still release the lock below
+    }
 
     SIGNALIOSEMA(ata_io_sema);
 
