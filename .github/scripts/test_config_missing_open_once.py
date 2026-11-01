@@ -8,7 +8,9 @@ over SIO2, and a settings load from mmce0 makes many of them.
 This compiles the real configOpenSingleShot() and configOpenForRead() (src/config.c) on the host
 against a counting openFile() and checks:
 
-- a missing file: exactly one open, NULL result;
+- a missing file (the device says ENOENT): exactly one open, NULL result;
+- a first open that fails for another reason (EIO: a timeout or a busy bus) and then succeeds: the
+  buffered reader retries and reads the file;
 - a small file: one open, read single-shot, the buffered reader is not used;
 - an oversized file (> 4 KB): the single-shot path gives up and the buffered reader still opens it;
 - every read-only open in configRead() and configOpenCarryOver() goes through configOpenForRead.
@@ -56,11 +58,19 @@ program = r'''
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #define O_RDONLY 0
 typedef struct { int size; } file_buffer_t;
 
-static int opens, bufferedOpens, fileExists, fileSize;
-static int openFile(char *path, int mode) { (void)path; (void)mode; opens++; return fileExists ? 3 : -1; }
+static int opens, bufferedOpens, fileExists, fileSize, failFirstWith;
+static int openFile(char *path, int mode)
+{
+    (void)path; (void)mode;
+    opens++;
+    if (opens == 1 && failFirstWith) { errno = failFirstWith; return -1; }
+    if (!fileExists) { errno = ENOENT; return -1; }
+    return 3;
+}
 static int getFileSize(int fd) { (void)fd; return fileSize; }
 static int read(int fd, void *buf, int n) { (void)fd; memset(buf, 'a', n); return n; }
 static int close(int fd) { (void)fd; return 0; }
@@ -97,6 +107,12 @@ int main()
     fb = configOpenForRead(path);
     CHECK(fb == &storeSingle, "small file not read single-shot");
     CHECK(opens == 1 && bufferedOpens == 0, "small file: %d opens, %d buffered", opens, bufferedOpens);
+
+    opens = bufferedOpens = 0; fileExists = 1; fileSize = 900; failFirstWith = EIO;
+    fb = configOpenForRead(path);
+    CHECK(fb == &storeBuffered, "a transient first-open failure did not get the buffered retry");
+    CHECK(opens == 2 && bufferedOpens == 1, "transient failure: %d opens, %d buffered", opens, bufferedOpens);
+    failFirstWith = 0;
 
     opens = bufferedOpens = 0; fileExists = 1; fileSize = 9000;
     fb = configOpenForRead(path);

@@ -1241,9 +1241,12 @@ static file_buffer_t *configOpenSingleShot(const char *path, int *missing)
     if (path == NULL)
         return NULL;
 
+    errno = 0;
     int fd = openFile((char *)path, O_RDONLY);
     if (fd < 0) {
-        *missing = 1;
+        // Only a file the device reports as absent (ENOENT) skips the buffered retry. A timeout, a
+        // busy bus or any other failure leaves errno different, so the caller still opens it again.
+        *missing = (errno == ENOENT);
         return NULL;
     }
 
@@ -1289,8 +1292,8 @@ static int configGlobalIndex(const config_set_t *configSet)
 }
 
 // Read-only open of one settings file: single-shot when it fits in 4 KB, else the buffered reader.
-// A file that is not there is opened ONCE. The buffered reader's own open is the identical
-// openFile(path, O_RDONLY), so retrying it after a failed open only fails again, and every settings
+// A file the device reports as absent is opened ONCE. The buffered reader's own open is the identical
+// openFile(path, O_RDONLY), so retrying it after an ENOENT only fails again, and every settings
 // name has several fallback names (wOPL, legacy, carry-over) that are tried in turn. On an MMCE each
 // of those failed opens is a full round trip over SIO2, which made a settings load from mmce0 slow.
 static file_buffer_t *configOpenForRead(const char *path)

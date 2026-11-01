@@ -3401,7 +3401,7 @@ static void resolveBootDirToMass(void)
         // reads defaults for now and its first successful save lands on mmce once item 1 makes the
         // driver real. Cost is the ~10 x delay(1) poll on an MMCE boot only.
         mmceLoadModules();
-        diagLog("settings: MMCE driver loaded for %s", gBootDir);
+        diagLog("settings: MMCE driver load requested for %s", gBootDir);
         char devRoot[8];
         const char *colon = strchr(gBootDir, ':');
         size_t rootLen = colon ? (size_t)(colon - gBootDir) + 1 : 0;
