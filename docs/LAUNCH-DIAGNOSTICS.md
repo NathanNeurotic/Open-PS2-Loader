@@ -62,10 +62,12 @@ the release's field-diagnostics build (`OPLDIAG=1`), a README on what to send, a
 RiptOPL will not start, stops on a black screen or freezes in the menu:
 
 - each start-up step up to the video setup is printed on screen as a numbered line, so a start-up
-  that stops leaves its last step on screen; from the video setup on, a start-up that never reaches
-  the menu turns the screen one colour per stage;
+  that stops leaves its last step on screen until the watchdog fires 20 seconds later and
+  replaces it with the stage colour, so the tester photographs it promptly; from the video setup
+  on, a start-up that never reaches the menu turns the screen one colour per stage;
 - a menu that stops drawing writes `RIPTOPL-FREEZE.TXT`, and a crash writes `RIPTOPL-CRASH.TXT`, to
-  `mc0:` (`mc1:` if that fails);
+  `mc0:` (`mc1:` if that fails); the screen turns green once the file is written (orange if no
+  card took it), and the README tells the tester to wait for that before restarting;
 - Drive Status and DIAG.TXT work as in the normal build.
 
 The ELF is not compressed (`NOT_PACKED=1`) and its program starts 0x80 bytes into the file, like

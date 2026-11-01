@@ -6,15 +6,18 @@ the same RiptOPL as this release, built by the {flavour} toolchain with the fiel
 
 - Start-up trace. From the first line of the program up to the video setup, each start-up step is
   printed on screen as a numbered line. If the screen stops changing, the last line is where it
-  stopped. The steps after the video setup are covered by the stage colours instead.
+  stopped: photograph it straight away, because after 20 seconds the freeze report below
+  replaces the lines with the stage colour. The steps after the video setup are covered by the
+  stage colours instead.
 - Stage colours. From the video setup on, a start-up that never reaches the menu turns the screen
   one colour for 5 seconds: red (boot folder, memory cards, pad driver), yellow (settings file),
   blue (video, language, theme), cyan (menu setup), white (controller wait), grey (loading the
   settings) or purple (intro, device start-up).
 - Freeze and crash reports. If the menu stops drawing for 8 seconds (20 while starting, 60 during
   the intro screen), the screen turns magenta and RIPTOPL-FREEZE.TXT is written to mc0: (mc1: if
-  that fails). Give it that long before you restart, or no report is written. A crash turns the
-  screen dark red and writes RIPTOPL-CRASH.TXT the same way. Green afterwards means the file was
+  that fails). While starting, the stage colour shows for 5 seconds first, then magenta. Wait
+  until the screen turns green or orange before you restart, or no report is written. A crash
+  turns the screen dark red and writes RIPTOPL-CRASH.TXT the same way. Green means the file was
   written; orange means neither memory card took it.
 
 The ELF is not compressed, and its program starts 0x80 bytes into the file like a standard ps2sdk
