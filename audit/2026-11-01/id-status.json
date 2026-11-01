@@ -1,0 +1,2531 @@
+{
+ "generated": "2026-11-01",
+ "baselines": {
+  "RiptOPL": "rebuild/main 9685235",
+  "Open-PS2-Loader": "rebuild/main b2d6b3b"
+ },
+ "statuses": [
+  "PRESENT",
+  "PARTIAL",
+  "MISSING",
+  "REGRESSED",
+  "INTENTIONAL DIFFERENCE",
+  "BLOCKED",
+  "UNKNOWN"
+ ],
+ "bucket_mapping": {
+  "Already present / equivalent scope": "PRESENT",
+  "Merged / hardware unverified": "PRESENT",
+  "Partial overlap / remaining difference": "PARTIAL",
+  "Prior source finding / reassess": "MISSING",
+  "Source comparison candidate": "MISSING",
+  "Companion / separate scope": "INTENTIONAL DIFFERENCE",
+  "Declined / outside local scope": "INTENTIONAL DIFFERENCE",
+  "Historical / withdrawn": "INTENTIONAL DIFFERENCE",
+  "Intentional design difference": "INTENTIONAL DIFFERENCE",
+  "Known upstream limitation": "BLOCKED",
+  "Experimental source / unvalidated": "UNKNOWN"
+ },
+ "counts": {
+  "PRESENT": 72,
+  "MISSING": 114,
+  "UNKNOWN": 40,
+  "INTENTIONAL DIFFERENCE": 44,
+  "PARTIAL": 37,
+  "BLOCKED": 4
+ },
+ "head_recheck": {
+  "started_at": "2026-11-01T17:00:46.734645+00:00",
+  "method": "git ls-remote --heads --tags --symref from the cloud container; compared with audit/2026-10-29-refresh/repository-heads.json"
+ },
+ "records": [
+  {
+   "id": "B1",
+   "feature": "File explorer",
+   "project": "BoliviaOS",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Console file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED."
+  },
+  {
+   "id": "B2",
+   "feature": "Music player",
+   "project": "BoliviaOS",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "B3",
+   "feature": "Image and font viewers",
+   "project": "BoliviaOS",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "B4",
+   "feature": "Text editor, code editor and terminal",
+   "project": "BoliviaOS",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "B5",
+   "feature": "Memory card format and repair",
+   "project": "BoliviaOS",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "B6",
+   "feature": "USB keyboard",
+   "project": "BoliviaOS",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "B7",
+   "feature": "PDF viewer",
+   "project": "BoliviaOS",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "BL1",
+   "feature": "Selectable per-library or shared-memory-card Favorites store",
+   "project": "OPL Custom (Blayr)",
+   "oct29_status": "Intentional design difference",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "BL2",
+   "feature": "Bounded idle-queue prefetch of adjacent cover/icon artwork",
+   "project": "OPL Custom (Blayr)",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "CA1",
+   "feature": "Curated SQLite desktop catalogue",
+   "project": "Caduceus (PC)",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CA2",
+   "feature": "ISO import, installed status and transfer queue",
+   "project": "Caduceus (PC)",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "CA3",
+   "feature": "Cover conversion, migration and repair",
+   "project": "Caduceus (PC)",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "CA4",
+   "feature": "PC RetroAchievements account/live progress dashboard",
+   "project": "Caduceus (PC)",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "CA5",
+   "feature": "Live game detection and Discord presence",
+   "project": "Caduceus (PC)",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "CA6",
+   "feature": "Importable catalogue and safe SQLite backups",
+   "project": "Caduceus (PC)",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CA7",
+   "feature": "Guided first-run PS2 connection setup",
+   "project": "Caduceus (PC)",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CF1",
+   "feature": "PC CARD CF/ATA controller and adapter detection",
+   "project": "PS2CF",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CF2",
+   "feature": "FAT32/exFAT CF game listing, including large ISOs",
+   "project": "PS2CF",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CF3",
+   "feature": "Read-only in-game PC CARD CF CD/DVD backend",
+   "project": "PS2CF",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CF4",
+   "feature": "PC CARD cf:/ file management via wLaunchELF",
+   "project": "PS2CF",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "CO1",
+   "feature": "Interpolated XMB category and game-list rail",
+   "project": "Caduceus OPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "CO2",
+   "feature": "Game-details card with automatic RA checks",
+   "project": "Caduceus OPL",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "CO3",
+   "feature": "Browse RA account achievements on the console",
+   "project": "Caduceus OPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CO4",
+   "feature": "Text-and-points in-game unlock card",
+   "project": "Caduceus OPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CO5",
+   "feature": "RA session-ready launch gating",
+   "project": "Caduceus OPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CO6",
+   "feature": "SMB ECHO and conditional reconnect on Refresh",
+   "project": "Caduceus OPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "CO7",
+   "feature": "Async initialize manual devices upon category focus",
+   "project": "Caduceus OPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DB1",
+   "feature": "DualSense Bluetooth input and feedback in menu/in-game",
+   "project": "OPL-DualSense-BT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DB2",
+   "feature": "Wireless pad scan and Secure Simple Pairing in OPL GUI",
+   "project": "OPL-DualSense-BT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DK1",
+   "feature": "DKWDRV 1.7.6t dithering, USB-menu and CD-emulation changes",
+   "project": "DKWDRV",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "DL1",
+   "feature": "Physical PS1 disc DKWDRV/PS1VModeNeg handoff",
+   "project": "Enhanced Disc Launcher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DL2",
+   "feature": "Conditional import-disc OSD language override",
+   "project": "Enhanced Disc Launcher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DN1",
+   "feature": "Configurable frosted-glass framebuffer blur compositing",
+   "project": "PS5-style OPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DN2",
+   "feature": "Horizontal CardShelf and crossfading cover-art wallpaper theme elements",
+   "project": "PS5-style OPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT1",
+   "feature": "Realtek RTL8761B/BU Bluetooth dongle firmware handling",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT2",
+   "feature": "DS4 clone HID CRC and rumble handling",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT3",
+   "feature": "Four-pad menu status and controller setup/test screens",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT4",
+   "feature": "Mixed real/emulated multitap slot and two-port poll routing",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT5",
+   "feature": "Controller screen with battery/type and per-pad disconnect",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT6",
+   "feature": "KH2 SMB+PADEMU memory-footprint correction",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT7",
+   "feature": "Per-slot custom lightbar picker with live preview and cancel rollback",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "DT8",
+   "feature": "Browse SMB shares directly from Network Settings",
+   "project": "OPL-DS4RTBT",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "E1",
+   "feature": "Controller, memory card, storage and network status",
+   "project": "OPL-Evolution",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "H4",
+   "feature": "Large achievement watch-list transport fix",
+   "project": "xeRAbora",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H5",
+   "feature": "Hardcore API unlock-date classification fix",
+   "project": "xeRAbora",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H6",
+   "feature": "Toggle unlock flash on console TV",
+   "project": "xeRAbora",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H7",
+   "feature": "Live Rich Presence in console status panel",
+   "project": "xeRAbora",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H8",
+   "feature": "Achievement/leaderboard list/grid + badge rings",
+   "project": "xeRAbora",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H9",
+   "feature": "Removal of PS2RD cheats in upstream OPL-RA",
+   "project": "xeRAbora",
+   "oct29_status": "Known upstream limitation",
+   "nov1_status": "BLOCKED",
+   "nov1_note": ""
+  },
+  {
+   "id": "H10",
+   "feature": "Android xeRAbora companion service",
+   "project": "xeRAbora",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H11",
+   "feature": "Selectable suffix RA mark and smaller unframed cover mark",
+   "project": "xeRAbora OPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H12",
+   "feature": "Linux ARM64 Raspberry Pi client package",
+   "project": "xeRAbora",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "H13",
+   "feature": "Correct in-game SMAP TX descriptor buffer base",
+   "project": "xeRAbora OPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "H14",
+   "feature": "Optional console link-counter fields in snapshot headers",
+   "project": "xeRAbora",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "H15",
+   "feature": "STREAM/OBS view, two skins, rarity/rank and achievement comments",
+   "project": "xeRAbora",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "JUMP1",
+   "feature": "Automatic Apps/PS1-shortcut filename categorization",
+   "project": "OPL-JUMP",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": "Apps/PS1 shortcut categorisation exists; OPL-JUMP filename filter not ported. Product call."
+  },
+  {
+   "id": "JUMP2",
+   "feature": "Loose root/POPS shortcut ELF discovery",
+   "project": "OPL-JUMP",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "K1",
+   "feature": "Write debug logs to a BDM device",
+   "project": "uOPL (historical)",
+   "oct29_status": "Historical / withdrawn",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "L1",
+   "feature": "APA HDDs over 2 TiB",
+   "project": "Extended APA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LC1",
+   "feature": "Explicit Ember CUE argument and cover-forwarding documentation",
+   "project": "launcHER",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "LS1",
+   "feature": "UDPFS odd-tail/startup fixes and current navigation wrap",
+   "project": "Launchstation",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "LS2",
+   "feature": "Aggregated card saves, staged Game-ID splits and PSU sets",
+   "project": "Launchstation",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU2",
+   "feature": "Orbit depth-sorted ring library view",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU4",
+   "feature": "Animated rotating ICO disc-label artwork",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU5",
+   "feature": "Per-drive Favorites that travel with the game HDD",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU6",
+   "feature": "Staged temp-file writes for key persistent library state",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU7",
+   "feature": "Neutrino physical power-button DEV9-safe shutdown",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU8",
+   "feature": "Neutrino in-game return / IGR",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU9",
+   "feature": "Projected 3D game-case grid",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU10",
+   "feature": "Animated ambient-orb Scroll library view",
+   "project": "LUNA",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU11",
+   "feature": "Neutrino VMC backing on APA/PFS",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU12",
+   "feature": "PS1 multi-disc playlists and in-game disc switching",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU13",
+   "feature": "Named PS1 VMC pairs, import/export, backup and recovery",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU14",
+   "feature": "Console file manager with copy tray, safe moves and preview",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Console file manager with copy tray merged: RiptOPL #219 / legacy #1180. NOT TESTED."
+  },
+  {
+   "id": "LU15",
+   "feature": "PS1 native IGR menu with return-to-launcher",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU16",
+   "feature": "Per-game Neutrino/OPL core choice",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU17",
+   "feature": "Neutrino low/high resolution video modes",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU18",
+   "feature": "PS2 startup logo per-title override",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU19",
+   "feature": "Neutrino PS2RD cheat selection",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU20",
+   "feature": "File manager conflict choices and verified moves",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "PARTIAL",
+   "nov1_note": "File manager present (#219 / #1180); conflict-choice and verified-move specifics not re-verified on 2026-11-01."
+  },
+  {
+   "id": "LU21",
+   "feature": "File manager previews, ELF launch, filter/sort",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "PARTIAL",
+   "nov1_note": "File manager present (#219 / #1180); preview/filter/sort specifics not re-verified on 2026-11-01."
+  },
+  {
+   "id": "LU22",
+   "feature": "Selectable devices and manual rescan",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU23",
+   "feature": "Enable or disable each browsing view",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU24",
+   "feature": "Orbit Random Scan and quick shortcuts",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU25",
+   "feature": "Separate or overlapping cover and disc art",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU26",
+   "feature": "PS1 jewel-case versus tall-case style",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU27",
+   "feature": "Scroll logo fallback to title text",
+   "project": "LUNA",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU28",
+   "feature": "Eleven background presets, glass, font",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU29",
+   "feature": "Ambient Orbs colors, trails, shapes",
+   "project": "LUNA",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU30",
+   "feature": "English/Spanish/Portuguese localizations",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU31",
+   "feature": "Favorites and PS1/PS2/Mix quick filters",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU32",
+   "feature": "Optional ambient WAV background music",
+   "project": "LUNA",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU33",
+   "feature": "PS1 shared-card auto-creation and named pairs",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU34",
+   "feature": "PS1 disc-set editing and image revalidation",
+   "project": "LUNA",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU35",
+   "feature": "APA/PFS PS2 VMC manager and capacity modes",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU36",
+   "feature": "SPU2 ADPCM hardware-loop ambient music",
+   "project": "LUNA frontend",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU37",
+   "feature": "Budgeted artwork loading slices during rapid navigation",
+   "project": "LUNA frontend",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU38",
+   "feature": "MMCE directory status translated to iomanX EOF",
+   "project": "LUNA frontend",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU39",
+   "feature": "Per-game PS1 HDTV Fix control for PSXCore",
+   "project": "LUNA frontend",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU40",
+   "feature": "Tolerant scans retaining partial library results",
+   "project": "LUNA",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU41",
+   "feature": "Direction-aware decoded-cover reuse within 4 MiB",
+   "project": "LUNA frontend",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU42",
+   "feature": "Paired frontend/Neutrino resident long-argument handoff",
+   "project": "LUNA / neutrino-luna",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU43",
+   "feature": "Session-scoped MMCE GameID and native/Neutrino IGR restore",
+   "project": "LUNA / paired runtimes",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "LU44",
+   "feature": "Unified PS1/PS2 whole-card lifecycle and recovery manager",
+   "project": "LUNA frontend",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "M1",
+   "feature": "Choose between several network servers",
+   "project": "Modulo R1",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "MA1",
+   "feature": "macOS PS1/PS2 import and POPStarter multi-disc packaging",
+   "project": "PS2 Manager (macOS)",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "MA2",
+   "feature": "POPS patch archive and reverse VCD conversion tools",
+   "project": "PS2 Manager (macOS)",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "MP1",
+   "feature": "Xbox 360 controllers over USB",
+   "project": "Modular PADEMU",
+   "oct29_status": "Historical / withdrawn",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "MP2",
+   "feature": "Generic USB HID gamepads",
+   "project": "Modular PADEMU",
+   "oct29_status": "Historical / withdrawn",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "N1",
+   "feature": "Generic forward-boot CLI",
+   "project": "NHDDL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "N2",
+   "feature": "Reuse SYS-CONF/IPCONFIG.DAT for UDPFS IP",
+   "project": "NHDDL",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "NV1",
+   "feature": "In-game master-volume RPC with framebuffer overlay",
+   "project": "OPL-volume",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O1",
+   "feature": "Grid game list",
+   "project": "OPLattice",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Grid view merged: RiptOPL #196 / legacy #1164. NOT TESTED."
+  },
+  {
+   "id": "O2",
+   "feature": "GameImage offset for non-selected games",
+   "project": "OPLattice",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O3",
+   "feature": "Recently played list",
+   "project": "OPLattice",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PARTIAL",
+   "nov1_note": "Recent list merged (#195 / #1163 family) but holds 10 entries, not RIPPS2 99 (see RI38)."
+  },
+  {
+   "id": "O4",
+   "feature": "Sort modes",
+   "project": "OPLattice",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "O5",
+   "feature": "MenuTabs device tab strip",
+   "project": "OPLattice",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O6",
+   "feature": "GameCountText prefix and suffix",
+   "project": "OPLattice",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O7",
+   "feature": "x_scaled widescreen alignment",
+   "project": "OPLattice",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O8",
+   "feature": "VRAM texture budget clamp",
+   "project": "OPLattice",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O9",
+   "feature": "Play stats",
+   "project": "OPLattice",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "O10",
+   "feature": "SHELF sidebar interface",
+   "project": "OPLattice",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O11",
+   "feature": "App subtitles",
+   "project": "OPLattice",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O12",
+   "feature": "Art conversion and VRAM checker",
+   "project": "OPLattice",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "O13",
+   "feature": "In-game screenshot importer",
+   "project": "OPLattice",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "O14",
+   "feature": "Browser theme previewer",
+   "project": "OPLattice",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "O15",
+   "feature": "Device staging and card sync scripts",
+   "project": "OPLattice",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OF1",
+   "feature": "Dedicated carousel/device dock/status HUD UI primitives",
+   "project": "OPL FUTURE",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH1",
+   "feature": "Declarative HTML/CSS flexbox compilation to zero-allocation C99 GS command list",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH2",
+   "feature": "Pre-resolved pairwise HarfBuzz font kerning on EE",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH3",
+   "feature": "Instant 1-byte palette theme switching without VRAM re-upload",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH4",
+   "feature": "Runtime 2D coordinate offsets for motion and expanding layouts",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH5",
+   "feature": "Runtime focus-subtree visibility masking with auto-bypassing navigation",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH6",
+   "feature": "Automated CRT overscan safe area and multi-layer alpha contrast linter",
+   "project": "OPHTML",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH7",
+   "feature": "Interactive web browser theme simulator and testbed",
+   "project": "OPHTML",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH8",
+   "feature": "Static VRAM budgeting and layout compiler",
+   "project": "OPHTML",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH9",
+   "feature": "Headless Play! emulator CI testbed with input scripting and frame diffs",
+   "project": "OPHTML",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH10",
+   "feature": "Fuzzed .uib loader with EE bus-alignment and malformed blob hardening",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH11",
+   "feature": "Hard compiler safety limits for untrusted themes",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OH12",
+   "feature": "Reusable console-launcher core archive",
+   "project": "OPHTML",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "OM1",
+   "feature": "Convert PS1 VCD launcher layout between POPStarter and RiptOPL/POPSLoader, including batch migration",
+   "project": "OrbitPS2 Manager",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OM2",
+   "feature": "Local bulk ISO ↔ ZSO compression/decompression and conversion jobs",
+   "project": "OrbitPS2 Manager",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OM3",
+   "feature": "Rip a physical PS2 DVD through the desktop importer",
+   "project": "OrbitPS2 Manager",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "OR3",
+   "feature": "RetroAchievements telemetry with Neutrino games",
+   "project": "ORBIT",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "OR4",
+   "feature": "Browse achievement titles and progress on the console",
+   "project": "ORBIT",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "OR5",
+   "feature": "Companion catalog for UDPFS games",
+   "project": "ORBIT",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "P1",
+   "feature": "Xbox One and Series controllers over USB",
+   "project": "PS2-Launcher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "P2",
+   "feature": "Download covers from the PS2",
+   "project": "PS2-Launcher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "P3",
+   "feature": "One games list across every device",
+   "project": "PS2-Launcher",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "P4",
+   "feature": "Hold SELECT to leave a game",
+   "project": "PS2-Launcher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "P5",
+   "feature": "Launch transition animation",
+   "project": "PS2-Launcher",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "P6",
+   "feature": "More USB controllers: Steam Controller, Shanwan PS3 clones, ANT Esports GP300",
+   "project": "PS2-Launcher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "P7",
+   "feature": "Connected controller count on screen",
+   "project": "PS2-Launcher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "PB1",
+   "feature": "Native Apple-silicon macOS PSBBN installation tooling",
+   "project": "PSBBN Definitive Project",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX1",
+   "feature": "PS1 guarded per-title code validation",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX2",
+   "feature": "PS1 GPU/GTE compatibility runtime corrections",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX3",
+   "feature": "Source-buildable POPS adapter and standalone tester",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX4",
+   "feature": "Third PS1 core, optional per-game PSXCore runtime choice",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX5",
+   "feature": "MDEC, RGB24 film and buffered interlace fixes",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX6",
+   "feature": "SPU, capture IRQ, reverb and CDDA audio fixes",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX7",
+   "feature": "Guest memory, CPU timing and load-delay safeguards",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX8",
+   "feature": "Firmware identity and transactional POPS patch safety",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX9",
+   "feature": "Native save-worker write, flush and ownership guards",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX10",
+   "feature": "Disc and TOC fingerprinting with save binding",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX11",
+   "feature": "Optional adaptive PCM output-rate feedback",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX12",
+   "feature": "Prepared native APA/PFS disc-mapping API",
+   "project": "PSXCore",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX13",
+   "feature": "Auto/Default/Custom profile selection API",
+   "project": "PSXCore",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX14",
+   "feature": "Guarded native license-string patch",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX15",
+   "feature": "Native USB/internal ATA FAT32/exFAT support",
+   "project": "PSXCore",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX16",
+   "feature": "APA, MX4SIO, MMCE and multi-USB tester limitations",
+   "project": "PSXCore",
+   "oct29_status": "Known upstream limitation",
+   "nov1_status": "BLOCKED",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX17",
+   "feature": "Standalone seven-title paginated tester UI",
+   "project": "PSXCore",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX18",
+   "feature": "Tester 128-VCD nonrecursive library limit",
+   "project": "PSXCore",
+   "oct29_status": "Known upstream limitation",
+   "nov1_status": "BLOCKED",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX19",
+   "feature": "Path-hash-derived game card identity",
+   "project": "PSXCore",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX20",
+   "feature": "Create only absent 128 KiB PS1 card slots",
+   "project": "PSXCore",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX21",
+   "feature": "Confirmed card-mode pair copying",
+   "project": "PSXCore",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX22",
+   "feature": "Read-only ATA/APA inventory developer utility",
+   "project": "PSXCore",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX23",
+   "feature": "On-screen boot stage and save-worker diagnostics",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX24",
+   "feature": "Sector-tail cache and seek-status correction",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX25",
+   "feature": "Exact raster/polygon cost fast path",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX26",
+   "feature": "GP0 packet coalescing and callback fast paths",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX27",
+   "feature": "Pinned SDK/driver build dependency checks",
+   "project": "PSXCore",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX28",
+   "feature": "Immediate power-button shutdown safety limitation",
+   "project": "PSXCore",
+   "oct29_status": "Known upstream limitation",
+   "nov1_status": "BLOCKED",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX29",
+   "feature": "Native pfs1 save partition and ownership guards",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX30",
+   "feature": "Bounded unaligned upload-row copy",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX31",
+   "feature": "Signed INTPL GTE interpolation correction",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX32",
+   "feature": "GP1 DMA control applied with native worker parked",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX33",
+   "feature": "Buffered interlace descriptor publication",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX34",
+   "feature": "Precomputed memory addressing and smaller DMA/GP0/GP1 saves",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX35",
+   "feature": "Larger adapter capacity and startup planner diagnostics",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX36",
+   "feature": "Output-only interlaced HDTV compatibility patch",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "PX37",
+   "feature": "Title-specific startup patch dispatch and stale-translation retirement",
+   "project": "PSXCore",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "R1",
+   "feature": "Retro emulator ROM libraries",
+   "project": "RETROLauncher",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI1",
+   "feature": "VMC image browsing and PSU save management",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PRESENT",
+   "nov1_note": "VMC browsing with PSU export/import and the file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED."
+  },
+  {
+   "id": "RI2",
+   "feature": "Native physical memory-card backup and management UI",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI3",
+   "feature": "In-game pause, resume, achievements and exit overlay",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PRESENT",
+   "nov1_note": "OPL-core in-game pause/resume/cheats/exit (#184 / #1155) plus the RA pages and silent pause (#200 / #1168) merged. NOT TESTED."
+  },
+  {
+   "id": "RI4",
+   "feature": "Offline BIOS audio-to-theme pack toolchain",
+   "project": "RIPPS2",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI5",
+   "feature": "Version-tolerant keyed translation packs with per-glyph fallback",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI6",
+   "feature": "RIPDISC optical-disc ripping workflow",
+   "project": "RIPPS2",
+   "oct29_status": "Declined / outside local scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI7",
+   "feature": "RIPSHOT in-game screenshot action",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI8",
+   "feature": "Memory Files universal search",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI9",
+   "feature": "Arabic/Persian shaping, bidi and Lao mark layout",
+   "project": "RIPPS2",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI10",
+   "feature": "Persistent per-source library snapshot with idle revalidation",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI11",
+   "feature": "Typed settings destination picker with directory provisioning",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI12",
+   "feature": "Power off from paused in-game actions panel",
+   "project": "RIPPS2",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Power off from the in-game actions panel merged with #184 / #1155. NOT TESTED."
+  },
+  {
+   "id": "RI13",
+   "feature": "Per-row star/highlight/platform decorator theme controls",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI14",
+   "feature": "Managed screenshot rolls, indexed PNG development and SCRn",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI15",
+   "feature": "Category sidebar, source drawers and explicit input focus",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI16",
+   "feature": "Legacy-theme opt-out for new category navigation",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI17",
+   "feature": "Two-axis Grid theme element and bounded edge navigation",
+   "project": "RIPPS2",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI18",
+   "feature": "Magnified single-pass 720p/1080i menu presentation",
+   "project": "RIPPS2",
+   "oct29_status": "Intentional design difference",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI19",
+   "feature": "Selective FreeType module registration and font stripping",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI20",
+   "feature": "External launcher search with remembered typed-family paths",
+   "project": "RIPPS2",
+   "oct29_status": "Intentional design difference",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI21",
+   "feature": "Master library before sources answer, with waiting rows",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI22",
+   "feature": "Per-device hidden-game catalogue and Hidden Games manager",
+   "project": "RIPPS2",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Hidden Games manager merged. NOT TESTED."
+  },
+  {
+   "id": "RI23",
+   "feature": "Managed full-game cleanup with a read-only APA preflight",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI24",
+   "feature": "On-console ISO/ZSO conversion with staged read-back checks",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI25",
+   "feature": "One background writer, a launch latch and aligned sequential stages",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI26",
+   "feature": "Editable named Color Sweeps with speed and delete controls",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI27",
+   "feature": "Hold-SELECT theme list / cycle / off policy",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI28",
+   "feature": "16-bit WAV mono/rate conversion for menu music",
+   "project": "RIPPS2",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI29",
+   "feature": "Reload sound sets only when source metadata changes",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI30",
+   "feature": "Settings destination bootstrap that survives memory-card precedence",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI31",
+   "feature": "Group menu-list caches separately from in-game read-ahead settings",
+   "project": "RIPPS2",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI32",
+   "feature": "i.LINK field results and shared upstream reset fixes",
+   "project": "RIPPS2",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI33",
+   "feature": "Drive-family identification instead of mass-slot assumptions",
+   "project": "RIPPS2",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI34",
+   "feature": "Version-aware external Neutrino argument negotiation",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI35",
+   "feature": "MMCE busy/card-creation coordination before scans and launch",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI36",
+   "feature": "Artwork name aliases with exact case-preserved directory lookup",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI37",
+   "feature": "Trust Cache policy and coalesced manual refresh",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI38",
+   "feature": "Recent Games as a lazy-source page, up to 99 entries",
+   "project": "RIPPS2",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": "Recent Games still capped at 10 entries in both editions; RIPPS2 keeps 99."
+  },
+  {
+   "id": "RI39",
+   "feature": "Quiet background HDD probes and explicit-source errors",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI40",
+   "feature": "MMCE rename capability preflight before conversion",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI41",
+   "feature": "On-console ART archive creation and selectable art packs",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI42",
+   "feature": "ART .tar merge with duplicate precedence and rename recovery",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI43",
+   "feature": "Aspect-aware widescreen crop for pictures with element override",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI44",
+   "feature": "Remembered menu-position profile per video mode",
+   "project": "RIPPS2",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Per-video-mode menu positions merged (October 29 batch). NOT TESTED."
+  },
+  {
+   "id": "RI45",
+   "feature": "Memory-card boot-sound sidecar and explicit copy offer",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI46",
+   "feature": "Spinning/zoom theme launch-disc transition",
+   "project": "RIPPS2",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI47",
+   "feature": "Opt-in thread-wait watchdog for a full-library freeze",
+   "project": "RIPPS2",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI48",
+   "feature": "Media Studio Windows audio/video authoring companion",
+   "project": "RIPPS2",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI49",
+   "feature": "TAR-as-folder browsing and editable archive members",
+   "project": "RIPPS2",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI50",
+   "feature": "Bounded recent-game CFG cache with explicit invalidation",
+   "project": "RIPPS2",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "RI51",
+   "feature": "Video playback transport and HD cover-download choice",
+   "project": "RIPPS2",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "RR1",
+   "feature": "USB Driving Force wheel with negCon presentation",
+   "project": "RRVE / exaconn OPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "S1",
+   "feature": "ATA DRDY waiting for slow-starting SMR / SSD drives",
+   "project": "Stable OPL",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": "Ours waits a bounded 30 s BSY plus 5 s DRDY; Stable OPL waits unbounded. Kept bounded on purpose."
+  },
+  {
+   "id": "SM1",
+   "feature": "HTTP-range-backed, persistent-cache virtual SMB1 ISO files",
+   "project": "PS2SMB",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "T1",
+   "feature": "Graphics patches kept apart from cheats",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "T2",
+   "feature": "Installable TPKG apps, in-process runtime and SDK",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "T3",
+   "feature": "Smart IGR overlay with Resume / Return",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "T4",
+   "feature": "Named user profiles with per-profile VMC",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "T5",
+   "feature": "Notification center and background-progress UI",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "T6",
+   "feature": "Integrated lightweight web browser",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "T7",
+   "feature": "Transactional .pup system updater",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "T8",
+   "feature": "Installable animated scene themes with audio",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "T9",
+   "feature": "Xbox Bluetooth/BLE plus USB keyboard and mouse input",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "T10",
+   "feature": "Repository-backed package download pipeline",
+   "project": "Project Titan Magenta Edition",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "T11",
+   "feature": "Fair scan/artwork quanta with separate prefetch/decode buffers",
+   "project": "Project Titan",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "T12",
+   "feature": "DEX operation-status ribbon with bounded owner snapshots",
+   "project": "Project Titan",
+   "oct29_status": "Experimental source / unvalidated",
+   "nov1_status": "UNKNOWN",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV1",
+   "feature": "Recursive ISO discovery outside CD/DVD",
+   "project": "FastLoader",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV2",
+   "feature": "Rename ISO and its associated art, VMC and metadata together",
+   "project": "FastLoader",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV3",
+   "feature": "Integrated CPS1/CPS2/MVS/PCE/Neo Geo CD ROM library",
+   "project": "Retro Arcade",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV4",
+   "feature": "Emulator return to same game and per-launch 240p/480i/480p",
+   "project": "Retro Arcade",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV5",
+   "feature": "Integrated Windows suite layout/art/VMC preparation",
+   "project": "Retro Volt Suite",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV6",
+   "feature": "Fixed CRT interface and embedded frontend resources",
+   "project": "FastLoader",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV7",
+   "feature": "Ember starting-disc selection from grouped PS1 games",
+   "project": "FastLoader",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV8",
+   "feature": "Nonrepeating startup background rotation",
+   "project": "FastLoader",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV9",
+   "feature": "Integrated bulk file/save manager with progress and cancellation",
+   "project": "FastLoader",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV10",
+   "feature": "Network ISO and artwork serving through Neutrino",
+   "project": "FastLoader",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "TV11",
+   "feature": "Retro Volt full-install memory-card boot and controller support",
+   "project": "FastLoader / Retro Volt",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "U1",
+   "feature": "Per-game parental lock",
+   "project": "Upstream OPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "U6",
+   "feature": "Launch announcement for Discord rich presence",
+   "project": "Upstream OPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "U9",
+   "feature": "Bluetooth controller input lag",
+   "project": "Upstream OPL",
+   "oct29_status": "Historical / withdrawn",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "UF1",
+   "feature": "udpfsd Stat fallback and UDP batch-writer panic correction",
+   "project": "udpfsd",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "W1",
+   "feature": "Themes loaded from a .tar archive",
+   "project": "wOPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "W2",
+   "feature": "wsX widescreen X position",
+   "project": "wOPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "W3",
+   "feature": "PADEMU, GSM and cheat status icons",
+   "project": "wOPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "W6",
+   "feature": "Info page without list navigation",
+   "project": "wOPL",
+   "oct29_status": "Prior source finding / reassess",
+   "nov1_status": "MISSING",
+   "nov1_note": ""
+  },
+  {
+   "id": "WC1",
+   "feature": "Game age-rating and platform/publisher metadata",
+   "project": "PS2 Webcore Launcher",
+   "oct29_status": "Companion / separate scope",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "X1",
+   "feature": "EXT2 USB filesystem support",
+   "project": "E2OPL",
+   "oct29_status": "Historical / withdrawn",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-01",
+   "feature": "OSD history executable-name bounds",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA1",
+   "feature": "Parser, configuration, VMC and MMCE hardening review",
+   "project": "YAOPL",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-02",
+   "feature": "ISO9660 directory record bounds and empty-name handling",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA2",
+   "feature": "LBA48 ATA transfers of 65,536 sectors or more",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-03",
+   "feature": "ZSO header/index validation and bounded large-read slices",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-04",
+   "feature": "Wrapped font-string terminator preservation",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-05",
+   "feature": "Cheat-table full-capacity attribution and accepted-code preservation",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-06",
+   "feature": "DualShock 2 digital and unlocked launch handoff",
+   "project": "YAOPL",
+   "oct29_status": "Intentional design difference",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": "Bounded digital/unlocked handoff kept; analog-lock follow-up RiptOPL #246 / legacy #1208 merged. NOT TESTED."
+  },
+  {
+   "id": "YA-07",
+   "feature": "Per-pad DS34 USB report ownership and alarm cancellation",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-08",
+   "feature": "Native UDPBD/UDPFS IMG launch and startup/read scheduling",
+   "project": "YAOPL",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PARTIAL",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-09",
+   "feature": "MMCE silent card-switch status settling",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-10",
+   "feature": "SYSTEM.CNF BOOT2 missing-equals handling",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-11",
+   "feature": "Per-game button remapping",
+   "project": "YAOPL",
+   "oct29_status": "Historical / withdrawn",
+   "nov1_status": "INTENTIONAL DIFFERENCE",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-12",
+   "feature": "One BdmIndex dot per visible mass device",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-13",
+   "feature": "MMCE bar/controller coverage verification",
+   "project": "YAOPL",
+   "oct29_status": "Source comparison candidate",
+   "nov1_status": "MISSING",
+   "nov1_note": "No MMCE bar/controller coverage test in either CI."
+  },
+  {
+   "id": "YA-14",
+   "feature": "Translated MMCE IGR slot choices and integration coverage",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-15",
+   "feature": "Synchronous disc-key RPC semaphore lifetime",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-16",
+   "feature": "Fragmented-VMC counts and recovery guidance",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-17",
+   "feature": "USB host shutdown before IGR IOP reset",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-18",
+   "feature": "Coordinated read-only UDPBD capability and write policy",
+   "project": "YAOPL",
+   "oct29_status": "Merged / hardware unverified",
+   "nov1_status": "PRESENT",
+   "nov1_note": ""
+  },
+  {
+   "id": "YA-19",
+   "feature": "PadOpen hook lifetime and kernel-context cache publication",
+   "project": "YAOPL",
+   "oct29_status": "Already present / equivalent scope",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Local padhook already preserves the hook flag and flushes through kernel-context cache publication."
+  },
+  {
+   "id": "YA-20",
+   "feature": "Shared wrapping across message, warning and confirmation surfaces",
+   "project": "YAOPL",
+   "oct29_status": "Partial overlap / remaining difference",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Shared message/warning/confirmation wrapping merged: RiptOPL #215 / legacy #1177. NOT TESTED."
+  },
+  {
+   "id": "YA-21",
+   "feature": "Settings dialogs, keyboard, number pad and colour picker draw under the GUI lock",
+   "project": "YAOPL",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "PARTIAL",
+   "nov1_note": "Ported from yaopl/yaopl ce6323f (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED."
+  },
+  {
+   "id": "YA-22",
+   "feature": "IO-thread queued list operations run under the GUI lock",
+   "project": "YAOPL",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "PARTIAL",
+   "nov1_note": "Ported from yaopl/yaopl 4c713a3 (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED."
+  },
+  {
+   "id": "YA-23",
+   "feature": "Delete/rename/launch act on the row the dialog was opened for",
+   "project": "YAOPL",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Row-race fix merged: RiptOPL #251 / legacy #1213 (YAOPL 5211110). NOT TESTED."
+  },
+  {
+   "id": "YA-24",
+   "feature": "PNG decode hardening (dimension and chunk bounds)",
+   "project": "YAOPL",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Merged: RiptOPL #245 / legacy #1207. NOT TESTED."
+  },
+  {
+   "id": "RI52",
+   "feature": "Game size via lseek64 when stat reports 0 (MMCE)",
+   "project": "RIPPS2",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 bd7615f). NOT TESTED."
+  },
+  {
+   "id": "RI53",
+   "feature": "PS1 Duplicates setting (Both / Ember / POPSTARTER)",
+   "project": "RIPPS2",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 a53f936). NOT TESTED."
+  },
+  {
+   "id": "RI54",
+   "feature": "List Title / Description per-row text (RIPPS2 b126-b128)",
+   "project": "RIPPS2",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "MISSING",
+   "nov1_note": "Released in RIPPS2 v1.2.8-beta. Product call; not ported."
+  },
+  {
+   "id": "RI55",
+   "feature": ".pad controller profiles and Set Up A USB Pad (RIPPS2 b129 branch)",
+   "project": "RIPPS2",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "MISSING",
+   "nov1_note": "Unreleased branch work. Product call; not ported."
+  },
+  {
+   "id": "DT6",
+   "feature": "In-game IOP memory relief: lwIP IP_REASSEMBLY/IP_FRAG off, USBD pool trim for PADEMU-only (KH2 over SMB)",
+   "project": "OPL-DualSense-BT",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "MISSING",
+   "nov1_note": "DualSense-BT 8bb581a. Turning IP fragmentation off changes behaviour for large-MTU SMB paths; needs a decision before any port."
+  },
+  {
+   "id": "NV2",
+   "feature": "Neutrino SMB launch path",
+   "project": "neutrino",
+   "oct29_status": "(new 2026-11-01)",
+   "nov1_status": "PRESENT",
+   "nov1_note": "Merged: RiptOPL #234 / legacy #1196 and #243 / #1205. NOT TESTED."
+  }
+ ]
+}
