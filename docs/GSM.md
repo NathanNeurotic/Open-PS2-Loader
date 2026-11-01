@@ -69,6 +69,7 @@ Modes 0–5 are the standard console rasters; the rest are forced progressive, H
 | 12 | HDTV 1080i @60Hz Non Interlaced | | 27 | VGA 1280x1024p @60Hz |
 | 13 | VGA 640x480p @60Hz | | 28 | VGA 1280x1024p @75Hz |
 | 14 | VGA 640x480p @72Hz | | 29 | HDTV 1080p @60Hz (EXPERIMENTAL) |
+| | | | 30 | HDTV 1080p @60Hz 4:3 (EXPERIMENTAL) |
 
 **HDTV 480p @60Hz** (8) is the safe starting point on almost any modern display. **720p** (10) and
 **1080i** (11) are the next most widely accepted. The VGA modes need a display fed over VGA or a
@@ -90,6 +91,17 @@ page.
 
 The same gate applies on the global page, which carries the wider blast radius of the two: it is what
 every game without its own GSM settings inherits.
+
+### 1080p 4:3
+
+Mode 30, **HDTV 1080p @60Hz 4:3 (EXPERIMENTAL)**, is the same 1080p signal with the picture held to
+a 1536-wide window in the middle of the 1920-wide frame, so 4:3 games get black bars at the sides
+instead of being stretched to 16:9. It asks for the same three confirmations as mode 29.
+
+The GS can only scale a game's picture by whole numbers, so the result depends on how wide the game
+draws. A 640-wide game (most of them) is doubled to 1280 pixels, which is slightly narrower than true
+4:3 (1440). A 512-wide game is tripled to 1536, which is slightly wider. Mode 29 triples a 640-wide
+game to the full 1920, which is the stretch this mode avoids. Widescreen games should stay on mode 29.
 
 ---
 

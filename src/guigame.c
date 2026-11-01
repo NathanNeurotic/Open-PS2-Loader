@@ -905,10 +905,10 @@ static int guiGameGSMUpdater(int modified)
 // UI-only sentinel for "this row follows the global". Appended LAST to gsmvmodeNames below, so it
 // sits one past the final real mode. It is NEVER written to disk -- picking it REMOVES $GSMVMode --
 // so unlike the real modes its index does not have to stay stable across builds.
-// Index of the last REAL mode in gsmvmodeNames[] / predef_vmode[]: 28 for the 29 base modes, 29 when
-// the 1080p row is compiled in (which is every shipped build -- Makefile GSM1080P ?= 1).
+// Index of the last REAL mode in gsmvmodeNames[] / predef_vmode[]: 28 for the 29 base modes, 30 when
+// the 1080p and 1080p 4:3 rows are compiled in (which is every shipped build -- Makefile GSM1080P ?= 1).
 #ifdef GSM_1080P
-#define GSM_VMODE_LAST_REAL_IDX 29
+#define GSM_VMODE_LAST_REAL_IDX 30
 #else
 #define GSM_VMODE_LAST_REAL_IDX 28
 #endif
@@ -960,6 +960,9 @@ int guiGameShowGSConfig(int forceGlobal)
         // gate in the save path below.
 #ifdef GSM_1080P
         "HDTV 1080p @60Hz (EXPERIMENTAL)",
+        // Index 30: the same 1080p raster with a 4:3 window centred in it, so 4:3 games are
+        // pillarboxed instead of stretched to 16:9 (issue #433). Same triple-confirm as 1080p.
+        "HDTV 1080p @60Hz 4:3 (EXPERIMENTAL)",
 #endif
         // "Default" = follow the global $GSMVMode. LAST, after every real mode, and never stored
         // (the save leg removes the key instead), so it cannot disturb the raw indices above.
@@ -1568,12 +1571,13 @@ static int compatShownNeutrino = 0;
 #define NEUTRINO_VIDEO_DEFAULT_IDX   6
 #define NEUTRINO_GSMCOMP_DEFAULT_IDX 4
 
-// Index of the appended "HDTV 1080p @60Hz (EXPERIMENTAL)" entry in gsmvmodeNames[] / predef_vmode[]
-// (both 30 long, last index 29). GSM1080P now defaults to 1, so every SHIPPED build has this entry
-// and the list length no longer varies between published flavours. Selecting it must clear
-// a triple-confirm before it is saved.
+// Indices of the appended "HDTV 1080p @60Hz (EXPERIMENTAL)" and "HDTV 1080p @60Hz 4:3 (EXPERIMENTAL)"
+// entries in gsmvmodeNames[] / predef_vmode[] (both 31 long, last index 30). GSM1080P now defaults
+// to 1, so every SHIPPED build has these entries and the list length no longer varies between
+// published flavours. Selecting either must clear a triple-confirm before it is saved.
 #ifdef GSM_1080P
 #define GSM_VMODE_1080P_IDX 29
+#define GSM_VMODE_1080P_43_IDX 30
 
 // 1080p is GSM-synthetic and hardware-confirmed, but it remains a non-standard raster that not every
 // display accepts. Force a THREE-STEP confirmation before it can reach disk, because a display that
@@ -1583,7 +1587,7 @@ static int compatShownNeutrino = 0;
 // the two, since it is what every game with no GSM keys of its own inherits.
 static void guiGameConfirmGSM1080p(void)
 {
-    if (EnableGSM != 0 && GSMVMode == GSM_VMODE_1080P_IDX) {
+    if (EnableGSM != 0 && (GSMVMode == GSM_VMODE_1080P_IDX || GSMVMode == GSM_VMODE_1080P_43_IDX)) {
         if (!guiMsgBox(_l(_STR_GSM_1080P_WARNING), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_PROCEED), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_SURE), 1, NULL)) {
