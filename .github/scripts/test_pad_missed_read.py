@@ -185,7 +185,9 @@ static void reset(int aligned)
     pad_data[0].state = PAD_STATE_STABLE;
     pad_data[0].actuators = 2;
     pad_data[0].actAligned = aligned;
+#ifdef PAD_HAS_LOCK /* an older src/pad.c (--ref) has no lock fields */
     pad_data[0].locked = 1; /* the ANALOG lock is test_pad_mode_lock.py's subject, not this one's */
+#endif
     pad_data[1].port = 1;
     pad_data[1].state = PAD_STATE_DISCONN;
     for (i = 0; i < 16; i++)
@@ -339,7 +341,8 @@ int main(void)
 with tempfile.TemporaryDirectory() as tmp:
     tmp = Path(tmp)
     (tmp / 'pad.h').write_text(pad_h, encoding='utf-8')
-    (tmp / 'pad_missed_read.c').write_text(STUBS + pad + MAIN, encoding='utf-8')
+    lockdef = '#define PAD_HAS_LOCK 1\n' if re.search(r'\bint locked;', pad) else ''
+    (tmp / 'pad_missed_read.c').write_text(lockdef + STUBS + pad + MAIN, encoding='utf-8')
     exe = tmp / 'pad_missed_read'
     build = subprocess.run(['gcc', '-std=gnu99', '-w', '-I', str(tmp), str(tmp / 'pad_missed_read.c'), '-o', str(exe)],
                            capture_output=True, text=True)
