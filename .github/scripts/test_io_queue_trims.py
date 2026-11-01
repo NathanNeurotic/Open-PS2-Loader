@@ -247,7 +247,11 @@ static int libViewPending(int mode) { (void)mode; return pendingView; }
 static int ioPutRequestUnlessWaiting(int type, void *data) { if (type == IO_MENU_UPDATE_DEFFERED && data == &list_support[APP_MODE].support->mode) appsQueued++; return 0; }
 #define ioPutRequest ioPutRequestUnlessWaiting /* either spelling counts as queuing (--baseline runs) */
 static void loadFavourites(void) { favLoads++; }
-static void guiExecDeferredOps(void) {}
+static int guiLocks, deferredUnlocked;
+static void guiLock(void) { guiLocks++; }
+static void guiUnlock(void) { guiLocks--; }
+/* the queued row operations must drain under the GUI lock: the GUI thread draws those rows */
+static void guiExecDeferredOps(void) { deferredUnlocked += guiLocks <= 0; }
 static void clearMenuGameList(opl_io_module_t *m) { (void)m; }
 static void libViewCommitPending(int mode) { (void)mode; }
 static void libViewFinishPending(int mode) { (void)mode; pendingView = 0; }
@@ -282,6 +286,7 @@ int main(void)
     if (appsQueued != 0) { printf("FAIL APPS rebuild queued another APPS rebuild\n"); failed = 1; }
     run(&fav, 1, 0);  /* FAV never re-syncs itself */
     if (appsQueued != 0 || favLoads != 0) { printf("FAIL FAV rebuild queued APPS or FAV\n"); failed = 1; }
+    if (deferredUnlocked || guiLocks) { printf("FAIL deferred ops ran without the GUI lock (%d) or left it held (%d)\n", deferredUnlocked, guiLocks); failed = 1; }
     if (!failed)
         printf("io queue: an L3 flip skips the APPS rebuild, keeps the Favourites re-sync\n");
     return failed;
