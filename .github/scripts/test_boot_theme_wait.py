@@ -33,6 +33,8 @@ if 'THEME_HOLD_MS' in splash:
     failures.append('the fixed THEME_HOLD_MS hold is still used')
 if not re.search(r'themeHold\s*=\s*[^;]*themeHoldMs\(\)\s*>\s*0\s*&&\s*thmSavedThemePending\(\)', splash):
     failures.append('the hold condition does not require themeHoldMs() > 0 before waiting for the saved theme')
+if not re.search(r'\(clock\(\)\s*-\s*tInitDone\)\s*<\s*\(clock_t\)themeHoldMs\(\)\s*\*\s*\(CLOCKS_PER_SEC\s*/\s*1000\)', splash):
+    failures.append('the hold condition does not stop once Boot Theme Wait seconds have passed')
 if not re.search(r'gBootThemeWait = 0;', opl):
     failures.append('boot_theme_wait does not default to 0 (off)')
 if opl.count('configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);') != 2:
