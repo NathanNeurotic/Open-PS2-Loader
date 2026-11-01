@@ -693,6 +693,10 @@ static void drawAttributeText(struct menu_list *menu, struct submenu_list *item,
                 }
             }
         }
+        // A size of 0 means "not measured" (size reading off, a device that gave none, a row with no image
+        // file): show nothing rather than a wrong "0 MiB" (from RIPPS2 build 126).
+        if (mutableText->currentValue && !strcmp(mutableText->value, CONFIG_ITEM_SIZE) && !strcmp(mutableText->currentValue, "0"))
+            return;
         if (mutableText->currentValue) {
             char result[300];
             if (mutableText->displayMode == DISPLAY_NEVER) {
