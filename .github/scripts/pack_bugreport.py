@@ -86,7 +86,10 @@ def main():
     except ValueError as error:
         sys.exit(f"ERROR: bug-report loader refused: {error}")
     if result is None:
-        print("No bug-report loader staged; the release ships without RIPTOPL-BUGREPORT.zip")
+        # Both builds are best-effort, so the release still goes out; the annotation makes it visible on
+        # the run's summary page instead of buried in the log.
+        print("::warning title=No bug-report build::Neither flavour staged a bug-report loader; "
+              "the release ships without RIPTOPL-BUGREPORT.zip")
     else:
         print(f"Packed {result[0].name} from the {result[1]} build")
 

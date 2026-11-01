@@ -17,7 +17,12 @@ set -eu
 BRAND="${1:?flavour brand required}"
 mkdir -p rolling/bugreport
 echo "== Building the RIPTOPL bug-report loader (OPLDIAG=1 NOT_PACKED=1, brand='${BRAND}') =="
-make clean >/dev/null 2>&1 || true
+# clean depends on download_lwNBD (a network fetch). If it fails, the previous flavour's objects may
+# still be there and the OPLDIAG build could link them, so the flavour ships no loader instead.
+if ! make clean >/dev/null 2>&1; then
+  echo "WARN: make clean failed before the ${BRAND} bug-report build; not building it" >&2
+  exit 0
+fi
 rm -f opl.elf
 if make --trace OPLDIAG=1 NOT_PACKED=1 "LOCALVERSION=${BRAND}-BUGREPORT" all && [ -f opl.elf ]; then
   if python3 ./.github/scripts/pack_bugreport.py --check opl.elf; then
