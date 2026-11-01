@@ -1,5 +1,5 @@
 /*
-  smb2man -- the SMB2/SMB3 browse driver for the menu (game lists, art, configs, VMC files, the
+  smb2man -- the SMB2 browse driver for the menu (game lists, art, configs, VMC files, the
   file manager). Chosen instead of smbman when Settings > Network > SMB Version is SMB2.
 
   It registers the same iomanX device as smbman ("smb", so every "smb0:" path is unchanged) and
@@ -7,8 +7,9 @@
   side only chooses which of the two modules to load. Only one of them is ever resident.
 
   The protocol work is Ronnie Sahlberg's libsmb2, vendored unmodified under libsmb2/ (see
-  libsmb2/VENDORED.txt for the commit). libsmb2 negotiates SMB 2.0.2 to 3.1.1, does NTLMv2, and signs
-  or encrypts when the server asks for it. This file is only the iomanX/devctl front end, and the
+  libsmb2/VENDORED.txt for the commit). libsmb2 can negotiate up to SMB 3.1.1, but this driver offers
+  only 2.0.2 and 2.1, the dialects the in-game reader speaks (smb2man_new_context). It does NTLMv2
+  and signs when the server asks for it. This file is only the iomanX/devctl front end, and the
   allocator libsmb2 needs on the IOP.
 
   It follows the earlier Open-PS2-Loader master implementation (modules/network/smb2man/smb2man.c,
@@ -1068,7 +1069,7 @@ int _start(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-    printf("smb2man: SMB2/SMB3 browse driver, libsmb2 (c) Ronnie Sahlberg\n");
+    printf("smb2man: SMB2 browse driver, libsmb2 (c) Ronnie Sahlberg\n");
 
     DelDrv(smb2man_dev.name);
     if (AddDrv(&smb2man_dev) != 0)
