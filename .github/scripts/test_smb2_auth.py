@@ -17,7 +17,7 @@ the oplutils exports and smb_mcemu bind to those names), smb_Close() never waits
 (oplShutdown() calls it with the semaphore held), every function that waits on it signals it before
 each return, and smbinit's SMB1 hash callback is never called.
 This is a host regression check, not a console test. The end-to-end check against a real server is
-tools/pc/smb2/run.sh (needs Samba).
+tests/smb2-live/run.sh (needs Samba).
 """
 from pathlib import Path
 import hashlib

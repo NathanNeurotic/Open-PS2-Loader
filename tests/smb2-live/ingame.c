@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     plwip_setsockopt = setsockopt;
     pinet_addr = h_inet;
     u32 caps;
-    int r;
+    int r, fails = 0;
     smb_NegotiateProtocol(argv[1], atoi(argv[2]), argv[3], argv[4], &caps, cb);
     printf("negotiate ok\n");
     r = smb_SessionSetupAndX(caps);
@@ -91,10 +91,13 @@ int main(int argc, char **argv)
     /* Read entirely past EOF: must be 0 (a short count of nothing), not an error. */
     r = smb_ReadFile(fid, 0x7FFFF000u, 0, buf, 2048);
     printf("past-eof read %d\n", r);
+    fails += (r != 0);
     r = smb_Close(fid);
     printf("close %d\n", r);
+    fails += (r < 0);
     r = smb_Close(fid);
     printf("double close %d (expect <0)\n", r);
+    fails += (r >= 0);
 
     /* VMC-style: open for write, write pages, read them back. */
     u16 vfid = 0xFFFF;
@@ -129,17 +132,21 @@ int main(int argc, char **argv)
         big[i] = (u8)(i ^ 0x5A);
     r = smb_WriteFile(vfid, 1 << 20, 0, big, sizeof(big));
     printf("big write %d\n", r);
+    fails += (r != (int)sizeof(big));
     static u8 bigb[100000];
     r = smb_ReadFile(vfid, 1 << 20, 0, bigb, sizeof(bigb));
     printf("big read %d match %d\n", r, memcmp(big, bigb, sizeof(big)) == 0);
+    fails += (r != (int)sizeof(bigb) || memcmp(big, bigb, sizeof(big)) != 0);
     printf("vmc page mismatches %d\n", bad);
+    fails += (bad != 0);
     smb_Close(vfid);
 
     /* A file that does not exist must fail cleanly. */
     u16 nf;
     r = smb_OpenAndX("\\DVD\\NOPE.iso", (u8 *)&nf, 0);
     printf("open missing %d (expect <0)\n", r);
+    fails += (r >= 0);
     smb_Disconnect();
-    printf("DONE\n");
-    return 0;
+    printf("DONE (%d failed checks)\n", fails);
+    return fails ? 10 : 0;
 }

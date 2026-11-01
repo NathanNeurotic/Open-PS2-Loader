@@ -22,18 +22,22 @@ set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
-work=$(mktemp -d)
 port=${SMB2_LIVE_PORT:-4450}
 sdk=${PS2BUILD_HOME:-$HOME/.local/share/ps2build}
 ps2smb=$(find "$sdk/packages" -name ps2smb.h -path '*common/include*' 2>/dev/null | head -n 1)
 [ -n "$ps2smb" ] || { echo "ps2smb.h not found under $sdk/packages"; exit 2; }
 command -v smbd >/dev/null || { echo "smbd not installed (apt-get install samba smbclient)"; exit 2; }
+command -v timeout >/dev/null || { echo "timeout not installed (coreutils)"; exit 2; }
 
+work=$(mktemp -d)
 cleanup() {
     [ -f "$work/run/smbd.pid" ] && kill "$(cat "$work/run/smbd.pid")" 2>/dev/null || true
     rm -rf "$work"
 }
-trap cleanup EXIT INT TERM
+# EXIT cleans up; INT/TERM exit (so the script does not resume with $work gone), which runs it.
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # ---- the share ----------------------------------------------------------------------------------
 mkdir -p "$work/share/DVD" "$work/share/VMC" "$work/run/ncalrpc" "$work/inc"
@@ -51,6 +55,9 @@ write_conf() { # $1 signing, $2 extra global line
    server role = standalone server
    map to guest = bad user
    smb ports = $port
+   interfaces = 127.0.0.1
+   bind interfaces only = yes
+   hosts allow = 127.0.0.1
    server min protocol = SMB2_02
    server signing = $1
    ntlm auth = ntlmv2-only
@@ -73,8 +80,18 @@ EOF
 }
 
 start_smbd() {
-    [ -f "$work/run/smbd.pid" ] && kill "$(cat "$work/run/smbd.pid")" 2>/dev/null || true
-    sleep 1
+    # Wait for the previous smbd to be gone: if it still held the port, the readiness probe below
+    # would succeed against the OLD configuration and the next cases would test nothing new.
+    if [ -f "$work/run/smbd.pid" ]; then
+        oldpid=$(cat "$work/run/smbd.pid")
+        kill "$oldpid" 2>/dev/null || true
+        i=0
+        while kill -0 "$oldpid" 2>/dev/null; do
+            i=$((i + 1))
+            [ $i -lt 50 ] || { echo "previous smbd ($oldpid) did not exit"; exit 1; }
+            sleep 0.2
+        done
+    fi
     smbd -s "$conf" -D
     i=0
     until smbclient -s "$conf" -p "$port" //127.0.0.1/PS2SMB -U ps2%secret -c ls >/dev/null 2>&1; do
@@ -120,14 +137,21 @@ run() { # $1 label, then the command
         fails=$((fails + 1))
     fi
 }
+# Each client gets a time limit: the in-game negotiate retries forever by design (a game keeps
+# trying), so a stalled case must fail here instead of blocking the run.
 ingame() { # $1 user, $2 password
-    ./ingame 127.0.0.1 "$port" "$1" "$2" PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' && cmp readback.bin share/DVD/TEST.iso
+    timeout 120 ./ingame 127.0.0.1 "$port" "$1" "$2" PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' && cmp readback.bin share/DVD/TEST.iso
 }
 denied() { # the logon must fail cleanly, not hang or crash
-    ./ingame 127.0.0.1 "$port" ps2 wrong PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' | grep -q 'session setup -1000'
+    timeout 120 ./ingame 127.0.0.1 "$port" ps2 wrong PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' | grep -q 'session setup -1000'
 }
 browse() {
-    ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso
+    timeout 120 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso
+}
+browse_refused() { # SMB 3-only: the menu must not list a server the in-game reader cannot reach
+    rc=0
+    timeout 60 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso || rc=$?
+    [ $rc -ne 0 ] && [ $rc -ne 124 ] # 0 = it listed the server; 124 = a hang, not a refusal
 }
 
 for signing in mandatory disabled; do
@@ -144,6 +168,9 @@ write_conf mandatory "server max protocol = SMB2_02"
 start_smbd
 run "in-game reader, SMB 2.0.2 only, signing mandatory" ingame ps2 secret
 run "browse driver, SMB 2.0.2 only" browse
+write_conf mandatory "server min protocol = SMB3"
+start_smbd
+run "browse driver refuses an SMB 3-only server" browse_refused
 
 [ $fails -eq 0 ] && echo "smb2-live: all passed" || echo "smb2-live: $fails failed"
 exit $fails

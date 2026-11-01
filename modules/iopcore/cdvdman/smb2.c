@@ -533,17 +533,17 @@ int smb_SessionSetupAndX(u32 capabilities)
 
     // TargetName (12): the domain this logon is computed for, sent back as-is (as usmb2 does).
     domlen = rd16(tok + 12);
-    off = (int)rd32(tok + 16);
-    if (domlen > (int)sizeof(domain) || off < 0 || (u32)(off + domlen) > seclen)
-        domlen = 0;
-    memcpy(domain, tok + off, domlen);
+    tioff = rd32(tok + 16); // the server's offset: check it alone first, so the sum cannot wrap
+    if (domlen > (int)sizeof(domain) || tioff > seclen || (u32)domlen > seclen - tioff)
+        domlen = 0, tioff = 0;
+    memcpy(domain, tok + tioff, domlen);
 
     // TargetInfo (40): copied into the NTLMv2 blob. Look for the server's timestamp in it.
     tilen = 0;
     if (seclen >= 48) {
         tilen = rd16(tok + 40);
         tioff = rd32(tok + 44);
-        if (tilen > SMB2_TI_MAX || tioff + tilen > seclen)
+        if (tilen > SMB2_TI_MAX || tioff > seclen || (u32)tilen > seclen - tioff)
             return -1000;
         memcpy(ntlm_ti, tok + tioff, tilen);
     }

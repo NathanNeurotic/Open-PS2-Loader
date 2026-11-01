@@ -217,6 +217,30 @@ static int smb2man_alloc_fd(void)
     return -1;
 }
 
+/*
+  libsmb2's sync read/write return exactly -1 when waiting for the reply failed (poll or
+  smb2_service error). The request is then still queued, and it still points at the caller's
+  buffer, so a late reply could land in memory the caller has reused. Destroy the context (that
+  frees every queued request without more network I/O) and forget the open handles; the menu's
+  next OPENSHARE builds a fresh session. (A status-mapped -EPERM also ends here: those statuses
+  mean the handle is gone anyway.) Called with the lock held.
+*/
+static void smb2man_drop_broken_session(int rv)
+{
+    int i;
+
+    if (rv != -1 || smb2 == NULL)
+        return;
+
+    for (i = 0; i < MAX_OPEN_FILES; i++) {
+        file_table[i].fh = NULL;
+        file_table[i].used = 0;
+    }
+    smb2_destroy_context(smb2);
+    smb2 = NULL;
+    share_open = 0;
+}
+
 static int smb2man_slot(iop_file_t *f)
 {
     int slot = (int)(intptr_t)f->privdata;
@@ -343,6 +367,7 @@ static int smb2man_read(iop_file_t *f, void *buffer, int size)
     while (done < size) {
         rv = smb2_read(smb2, file_table[slot].fh, p + done, (uint32_t)(size - done));
         if (rv < 0) {
+            smb2man_drop_broken_session(rv);
             UNLOCK();
             return (done > 0) ? done : -EIO;
         }
@@ -376,6 +401,7 @@ static int smb2man_write(iop_file_t *f, void *buffer, int size)
         rv = smb2_write(smb2, file_table[slot].fh, p + done, (uint32_t)(size - done));
         if (rv <= 0) {
             // A server that stores nothing (a full disk) must not spin this loop forever.
+            smb2man_drop_broken_session(rv);
             UNLOCK();
             return (done > 0) ? done : -EIO;
         }
@@ -757,9 +783,11 @@ static struct smb2_context *smb2man_new_context(void)
     if (ctx == NULL)
         return NULL;
 
-    // Sign when the server asks for it; libsmb2 picks the highest dialect both sides speak.
+    // Sign when the server asks for it. Offer SMB 2.0.2 and 2.1 only: those are the dialects the
+    // in-game reader (smb2_cdvdman) speaks, so a server the menu can list is one a game can load
+    // from. An SMB 3-only server fails here, at browse, instead of hanging at game start.
     smb2_set_security_mode(ctx, SMB2_NEGOTIATE_SIGNING_ENABLED);
-    smb2_set_version(ctx, SMB2_VERSION_ANY);
+    smb2_set_version(ctx, SMB2_VERSION_ANY2);
     smb2_set_timeout(ctx, SMB2MAN_TIMEOUT_SECONDS);
     smb2_set_password(ctx, conn_password);
 

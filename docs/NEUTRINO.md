@@ -367,7 +367,7 @@ the SMB2 driver cannot load, browsing falls back to SMBv1.
 
 > **SMB2 means SMB 2.0.2 and 2.1.** OPL's own core logs on with NTLMv2 and signs its requests when
 > the server requires signing (Windows 11 24H2 does by default). It does not offer SMB 3.x, so a
-> server set to SMB 3 only is not reached (in game it keeps retrying). Use PS2-Servers' **SMBv1**
+> server set to SMB 3 only is not reached (browsing it fails). Use PS2-Servers' **SMBv1**
 > card (or Samba with `min protocol = NT1`) with **SMBv1**, or its **SMBv2** card with **SMB2**;
 > Neutrino's experimental SMB path needs the **SMBv3** card on port 445 instead.
 
