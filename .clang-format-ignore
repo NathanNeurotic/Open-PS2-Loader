@@ -11,3 +11,4 @@
 ./modules/bdmassault
 ./modules/ilink/iLinkman
 ./third_party/mbedtls
+./modules/network/smb2man/libsmb2

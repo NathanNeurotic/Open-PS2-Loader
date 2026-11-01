@@ -1,0 +1,22 @@
+libsmb2 (vendored subset)
+=========================
+
+Upstream:  https://github.com/sahlberg/libsmb2 (Ronnie Sahlberg, https://github.com/sahlberg)
+Commit:    c6e4997fcbdbb0e2f1fe7a0c74483b4533859b52
+           2026-10-31 "ps2: make smb2man.irx a module the IOP can load and use"
+Licence:   LGPL-2.1 (see COPYING / LICENCE-LGPL-2.1.txt)
+
+What is here
+- lib/*.c: the SMB2_CORE_SOURCES list from upstream lib/CMakeLists.txt, unmodified.
+- lib/*.h, include/: upstream headers, unmodified.
+- lib/config.h: the config.h that upstream's own CMake generates for the PS2 IOP
+  target (cmake -DCMAKE_TOOLCHAIN_FILE=$PS2DEV/share/ps2dev_iop.cmake -DBUILD_IRX=1),
+  committed so ps2build does not need CMake.
+
+What is omitted
+- examples/, tests/, utils/, the other platform ports, and upstream's lib/ps2/
+  smb2man front end. This loader's front end is ../smb2man.c, which speaks the
+  ps2smb.h devctl interface OPL's network menu already uses.
+
+To update: copy the same file list from a newer upstream commit, regenerate
+lib/config.h the same way, and update the commit above.

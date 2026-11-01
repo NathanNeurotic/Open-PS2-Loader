@@ -19,6 +19,9 @@ void ethInit(item_list_t *itemList); // Full initialization (Start ETH + SMB and
 void ethDeinitModules(void);         // Module-only deinitialization, without the GUI's knowledge (for specific reasons, otherwise unused).
 int ethLoadInitModules(void);        // Initializes Ethernet and applies configuration.
 int ethGetModulesLoaded(void);       // 1 if the SMB NIC stack is loaded (UDPBD must not load on top).
+// The SMB dialect (enum SMB_DIALECT) of the browse driver now resident, or -1 when none is. The
+// Network page compares it with gSMBDialect: smbman and smb2man cannot be swapped live.
+int ethGetLoadedSmbDialect(void);
 // True only after OPENSHARE succeeded and the active smb0: prefix is usable. This is deliberately
 // stronger than "Network Protocol == SMB": callers must not turn a read-only import into a long
 // connection attempt or consume stale saved values.
