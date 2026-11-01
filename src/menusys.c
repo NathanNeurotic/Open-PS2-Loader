@@ -2859,8 +2859,10 @@ void menuRenderAppMenu()
     if (guiDrawBGSettings() == 0)
         guiDrawBGPlasma();
 
-    if (!appMenu)
+    if (!appMenu) {
+        guiSwitchScreen(GUI_SCREEN_MAIN);
         return;
+    }
 
     // The IO thread clears the apps list when it rereads it (a device plugged in, SMB coming up, a refresh), so
     // the app this menu was opened for is gone. Go back to the list, as the game menu does when its device goes
@@ -2962,8 +2964,10 @@ static void menuOpenSelectedVcdAchievements(void)
 
 void menuHandleInputAppMenu()
 {
-    if (!appMenu)
+    if (!appMenu) {
+        guiSwitchScreen(GUI_SCREEN_MAIN);
         return;
+    }
 
     if (!appMenuCurrent)
         appMenuCurrent = appMenu;
