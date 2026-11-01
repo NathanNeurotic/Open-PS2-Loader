@@ -3542,6 +3542,8 @@ static void _loadConfig()
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
             configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
 
             if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
@@ -5682,6 +5684,8 @@ static void miniInit(int mode)
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
             configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);

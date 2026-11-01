@@ -37,6 +37,8 @@ if not re.search(r'gBootThemeWait = 0;', opl):
     failures.append('boot_theme_wait does not default to 0 (off)')
 if opl.count('configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);') != 2:
     failures.append('boot_theme_wait is not read on both settings load paths')
+if opl.count('if (gBootThemeWait < 0 || gBootThemeWait > 10)') != 2:
+    failures.append('a hand-edited boot_theme_wait is not clamped to 0..10 on both settings load paths')
 if 'configSetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, gBootThemeWait);' not in opl:
     failures.append('boot_theme_wait is not saved')
 if 'diaSetInt(ui, UICFG_BOOT_THEME_WAIT, gBootThemeWait)' not in guisettings:
