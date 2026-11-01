@@ -93,8 +93,8 @@ static unsigned char mmceEverResolved = 0;
 // otherwise the game boots while the card is still mounting and freezes at its MC check (issue #50,
 // cross-device path). A prior change had collapsed the per-poll gap to a sub-ms nopdelay(), which
 // gutted the wait so it returned in well under a second; a real sleep restores it.
-#define MMCE_GAMEID_WAIT_TICKS     15           // max polls of the card-switch busy bit
-#define MMCE_GAMEID_POLL_US        (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
+#define MMCE_GAMEID_WAIT_TICKS        15           // max polls of the card-switch busy bit
+#define MMCE_GAMEID_POLL_US           (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
 // sd2psXtd starts the switch on a LATER pass of its main loop, not while it answers the 0x8 send, so a
 // poll straight after the send reads "not busy" before the switch has begun and the game boots while
 // the card is still loading (or creating) its per-game card from the SD the game streams from -- the
@@ -102,20 +102,20 @@ static unsigned char mmceEverResolved = 0;
 // slot already holds this game's card, or Game ID is off on the device), and is then waited out on
 // screen: loading an 8 MB card takes ~9 s, creating a new one longer. START launches at once.
 // Ported from RIPPS2 build 115 (akilluminati47/RIPPS2, mmcesupport.c).
-#define MMCE_GAMEID_START_MS       2000 // how long a sent Game ID may take to start the switch
-#define MMCE_GAMEID_START_POLL_MS  50   // poll interval while waiting for the switch to start
-#define MMCE_GAMEID_QUERY_FAILURES 3    // failed busy queries in a row that end the wait (unconfirmed)
-#define MMCE_GAMEID_QUERY_SILENT   2    // after an answer: failed queries in a row that mean the switch began
-#define MMCE_CARD_READY_MAX_S      180  // the longest the launch waits for the game's card
-#define MMCE_CARD_READY_POLL_US    (250 * 1000)
+#define MMCE_GAMEID_START_MS          2000 // how long a sent Game ID may take to start the switch
+#define MMCE_GAMEID_START_POLL_MS     50   // poll interval while waiting for the switch to start
+#define MMCE_GAMEID_QUERY_FAILURES    3    // failed busy queries in a row that end the wait (unconfirmed)
+#define MMCE_GAMEID_QUERY_SILENT      2    // after an answer: failed queries in a row that mean the switch began
+#define MMCE_CARD_READY_MAX_S         180  // the longest the launch waits for the game's card
+#define MMCE_CARD_READY_POLL_US       (250 * 1000)
 // The card's OWN switch after the OSD history write (sd2psXtd ps2_history_tracker: 2 s of quiet after the last
 // history page write, then the folder switch). The window is how long the launch watches for it to begin.
 #define MMCE_HISTORY_SWITCH_WINDOW_MS 3500
 #define MMCE_HISTORY_SWITCH_POLL_MS   250
-#define MMCE_CARD_READY_SILENT_MS  7500 // the longest the card may not answer at all (mmceigr's bound)
+#define MMCE_CARD_READY_SILENT_MS     7500 // the longest the card may not answer at all (mmceigr's bound)
 /* The MMCE worker checks its abort flag between 32 KB staged reads. A
  * 500 ms wait gives a slow card time to reach the next safe checkpoint. */
-#define MMCE_ART_ABORT_WAIT_TICKS  500
+#define MMCE_ART_ABORT_WAIT_TICKS     500
 
 // forward declaration
 static item_list_t mmceGameList;
