@@ -28,6 +28,18 @@ USE_DEV9 = 1
 IOP_INCS += -I../../network/common
 endif
 
+# smb_cdvdman with the SMB1 client (smb.c) swapped for the SMB 2.0.2/2.1 one (smb2.c). Same settings
+# block and exports, so smb_mcemu serves VMCs for either. Launched when the resident browse driver
+# is smb2man (Settings > Network > SMB Version = SMB2).
+ifeq ($(USE_SMB2),1)
+IOP_BIN  = smb2_cdvdman.irx
+IOP_OBJS_DIR = obj.smb2/
+IOP_OBJS += device-smb.o smb2.o smb2auth.o
+IOP_CFLAGS += -DSMB_DRIVER
+USE_DEV9 = 1
+IOP_INCS += -I../../network/common
+endif
+
 ifeq ($(USE_HTTP),1)
 IOP_BIN = http_cdvdman.irx
 IOP_OBJS_DIR = obj.http/
