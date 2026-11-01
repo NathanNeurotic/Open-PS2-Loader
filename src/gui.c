@@ -4568,7 +4568,7 @@ void guiIntroLoop(void)
         }
     }
     gIntroSplashActive = 0;
-    diagLog("boot: intro done; held %d ms for the saved theme, boot sound wait %d ms",
+    diagLog("boot: intro done; held %d ms for the saved theme, boot sound fade delay %d ms (0 = boot sound off)",
             tHoldLast ? (int)((tHoldLast - tHoldStart) / (CLOCKS_PER_SEC / 1000)) : 0, fadeDelayLogMs);
 }
 
