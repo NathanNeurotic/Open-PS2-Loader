@@ -77,13 +77,13 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
-<div class="callout info"><div class="h">PSX DVR requires a separate Neutrino installation</div><p>The <a href="psx-dvr.html">DESR DVR ISO feature</a> cannot use ordinary bundled <a href="https://github.com/rickgaiser/neutrino">Neutrino</a>; it requires <a href="https://github.com/pcm720">pcm720</a>'s complete <a href="https://github.com/pcm720/neutrino/tree/bsd-dvr"><code>bsd-dvr</code> backend</a>, configured through Neutrino Path. This experimental flow remains awaiting real DESR console testing.</p></div>
+<div class="callout info"><div class="h">PSX DVR requires a separate Neutrino installation</div><p>The <a href="psx-dvr.html">DESR DVR ISO feature</a> cannot use ordinary bundled <a href="https://github.com/ps2max32/neutrino">Neutrino</a>; it requires <a href="https://github.com/pcm720">pcm720</a>'s complete <a href="https://github.com/pcm720/neutrino/tree/bsd-dvr"><code>bsd-dvr</code> backend</a>, configured through Neutrino Path. This experimental flow remains awaiting real DESR console testing.</p></div>
 <h1>Neutrino Core</h1>
 <p><b>RiptOPL may remain inside APPS/.</b> Its installation folder is independent of Neutrino. Automatic card lookup expects the complete Neutrino installation at <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code>. If Neutrino is nested in another app folder, set its full ELF path explicitly; keep its configuration and modules alongside it.</p>
 
-<p class="lead">RiptOPL can hand any individual game to an <b>external <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> ELF</b> instead of OPL's built-in EE core. The choice is made <b>per game</b>, leaving other titles on the default OPL core untouched. This is useful for titles that boot more reliably under Neutrino, or when you want fine-grained control over Neutrino's own launch flags.</p>
+<p class="lead">RiptOPL can hand any individual game to an <b>external <a href="https://github.com/ps2max32/neutrino">Neutrino</a> ELF</b> instead of OPL's built-in EE core. The choice is made <b>per game</b>, leaving other titles on the default OPL core untouched. This is useful for titles that boot more reliably under Neutrino, or when you want fine-grained control over Neutrino's own launch flags.</p>
 
-<p><b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a> is created by <a href="https://github.com/rickgaiser">rickgaiser</a></b> — a
+<p><b><a href="https://github.com/ps2max32/neutrino">Neutrino</a> is created by <a href="https://github.com/rickgaiser">rickgaiser</a></b> — a
 <i>"Small, Fast and Modular PS2 Device Emulator"</i>. The
 standard release package bundles the upstream development pre-release selected at publish time (or upstream latest when none is listed) as a required ready-to-use <code>neutrino/</code> folder
 under its <b>AFL-3.0</b> licence; see <a href="credits.html#special-thanks">Credits</a> for the full
