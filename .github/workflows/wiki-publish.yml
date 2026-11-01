@@ -64,22 +64,26 @@ jobs:
 
       # wiki_sync.py refuses to run while the wiki holds a page it does not generate, so a renamed or
       # removed document would block every later publish. Drop only the pages the previous run
-      # generated (its manifest lists them). Any page left after that is not ours: wiki_sync.py would
+      # generated (its manifest lists them), after checking each still has the hash it was published with,
+      # so a hand edit on the wiki is not thrown away. Any page left after that is not ours: wiki_sync.py would
       # reject it, or overwrite it silently when its name matches a generated page, so stop here
       # for review either way. Without a manifest every page counts as hand-written.
       - name: Remove previously generated pages
         shell: python
         run: |
+          import hashlib
           import json
           from pathlib import Path
 
           wiki = Path("wiki")
           manifest = wiki / "_tools" / "manifest.json"
           if manifest.exists():
-              for page in json.loads(manifest.read_text(encoding="utf-8")).get("pages", {}):
+              for page, meta in json.loads(manifest.read_text(encoding="utf-8")).get("pages", {}).items():
                   target = (wiki / f"{page}.md").resolve()
                   if target.parent != wiki.resolve():
                       raise SystemExit(f"Manifest page outside the wiki: {page}")
+                  if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() != meta.get("sha256"):
+                      raise SystemExit(f"Generated page was edited on the wiki, review it first: {page}.md")
                   target.unlink(missing_ok=True)
           kept = sorted(p.name for p in wiki.glob("*.md"))
           if kept:
