@@ -42,6 +42,7 @@
 #include "include/cheatman.h"
 #include "include/cheatconfig.h"
 #include "include/sound.h"
+#include "include/diaglog.h"
 #include "include/guigame.h"
 #include "include/texcache.h"
 #include "include/appsupport.h" // appGetObject() -- push a live Art Delay change onto the APPS list
@@ -4492,6 +4493,9 @@ void guiIntroLoop(void)
     // theme does not show for a moment before the saved one replaces it. Bounded: at most THEME_HOLD_MS after init.
     clock_t tInitDone = 0;
     int tInitSeen = 0;
+    // For the DIAG.TXT line at the end: how long the greeting waited for the saved theme and the boot sound.
+    clock_t tHoldLast = 0;
+    int fadeDelayLogMs = 0;
 
     // oplIsBootInProgress() can become false while background startup work is still queued. That
     // is correct for runtime overlays, but the animated greeting owns the entire intro lifecycle.
@@ -4520,6 +4524,7 @@ void guiIntroLoop(void)
             int fadeDelayMs = sfxGetSoundDuration(SFX_BOOT) - fadeDuration;
             if (fadeDelayMs < 0)
                 fadeDelayMs = 0;
+            fadeDelayLogMs = fadeDelayMs;
             tFadeDelay = (clock_t)fadeDelayMs * (CLOCKS_PER_SEC / 1000);
             tFadeArmed = 1;
         }
@@ -4527,9 +4532,12 @@ void guiIntroLoop(void)
         if (gInitComplete && !tInitSeen) {
             tInitDone = clock();
             tInitSeen = 1;
+            diagLog("boot: devices started, intro fading out");
         }
         int themeHold = greetingAlpha == 0x80 && tInitSeen && thmSavedThemePending() &&
                         (clock() - tInitDone) < (clock_t)THEME_HOLD_MS * (CLOCKS_PER_SEC / 1000);
+        if (themeHold)
+            tHoldLast = clock();
 
         if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold)
             greetingAlpha -= 2;
@@ -4556,6 +4564,8 @@ void guiIntroLoop(void)
         }
     }
     gIntroSplashActive = 0;
+    diagLog("boot: intro done; held %d ms for the saved theme, boot sound wait %d ms",
+            tHoldLast ? (int)((tHoldLast - tInitDone) / (CLOCKS_PER_SEC / 1000)) : 0, fadeDelayLogMs);
 }
 
 void guiMainLoop(void)

@@ -1235,14 +1235,17 @@ static int configPathIsRawApa(const char *path)
 // avoids the 4KB buffered refill loop and the extra BOM probe in openFileBuffer.
 // Falls back to the established 4KB buffered path on any error/OOM/oversize.
 // Keeps the 4096 buffer size; no gratuitous 8KB expansion without measurement.
-static file_buffer_t *configOpenSingleShot(const char *path)
+static file_buffer_t *configOpenSingleShot(const char *path, int *missing)
 {
+    *missing = 0;
     if (path == NULL)
         return NULL;
 
     int fd = openFile((char *)path, O_RDONLY);
-    if (fd < 0)
+    if (fd < 0) {
+        *missing = 1;
         return NULL;
+    }
 
     int sz = getFileSize(fd);
     // Only single-shot when size is known, positive and fits in one 4KB buffer.
@@ -1285,6 +1288,20 @@ static int configGlobalIndex(const config_set_t *configSet)
     return -1;
 }
 
+// Read-only open of one settings file: single-shot when it fits in 4 KB, else the buffered reader.
+// A file that is not there is opened ONCE. The buffered reader's own open is the identical
+// openFile(path, O_RDONLY), so retrying it after a failed open only fails again, and every settings
+// name has several fallback names (wOPL, legacy, carry-over) that are tried in turn. On an MMCE each
+// of those failed opens is a full round trip over SIO2, which made a settings load from mmce0 slow.
+static file_buffer_t *configOpenForRead(const char *path)
+{
+    int missing;
+    file_buffer_t *fileBuffer = configOpenSingleShot(path, &missing);
+    if (fileBuffer == NULL && !missing)
+        fileBuffer = openFileBuffer((char *)path, O_RDONLY, 0, 4096);
+    return fileBuffer;
+}
+
 // "<dir><name>" for the carry-over directory, which always ends in '/' or ':' ("pfs0:OPL/", "pfs0:").
 static file_buffer_t *configOpenCarryOver(const char *name)
 {
@@ -1292,9 +1309,7 @@ static file_buffer_t *configOpenCarryOver(const char *name)
     file_buffer_t *fileBuffer;
 
     snprintf(path, sizeof(path), "%s%s", configCarryOverDir, name);
-    fileBuffer = configOpenSingleShot(path);
-    if (fileBuffer == NULL)
-        fileBuffer = openFileBuffer(path, O_RDONLY, 0, 4096);
+    fileBuffer = configOpenForRead(path);
     if (fileBuffer != NULL)
         LOG("CONFIG no RiptOPL settings in this home; carrying over %s read-only\n", path);
     return fileBuffer;
@@ -1315,17 +1330,13 @@ int configRead(config_set_t *configSet)
         return 0;
     }
     int ret;
-    file_buffer_t *fileBuffer = configOpenSingleShot(configSet->filename);
-    if (fileBuffer == NULL)
-        fileBuffer = openFileBuffer(configSet->filename, O_RDONLY, 0, 4096);
+    file_buffer_t *fileBuffer = configOpenForRead(configSet->filename);
 
     if (fileBuffer == NULL && configSet->filename != NULL) {
         // Our name is absent -- wOPL may have moved this file's data to its own name (see above).
         char woplPath[256];
         if (configBuildWoplPath(configSet->filename, woplPath, sizeof(woplPath))) {
-            fileBuffer = configOpenSingleShot(woplPath);
-            if (fileBuffer == NULL)
-                fileBuffer = openFileBuffer(woplPath, O_RDONLY, 0, 4096);
+            fileBuffer = configOpenForRead(woplPath);
             if (fileBuffer != NULL) {
                 LOG("CONFIG %s absent; reading wOPL's %s instead\n", configSet->filename, woplPath);
                 // Point the set at the file we actually read, so a later save updates THAT file rather
@@ -1350,9 +1361,7 @@ int configRead(config_set_t *configSet)
         // new name. configSet->filename stays the new name, so configWrite migrates transparently.
         char legacyPath[256];
         configBuildLegacyOplPath(configSet->filename, legacyPath, sizeof(legacyPath));
-        fileBuffer = configOpenSingleShot(legacyPath);
-        if (fileBuffer == NULL)
-            fileBuffer = openFileBuffer(legacyPath, O_RDONLY, 0, 4096);
+        fileBuffer = configOpenForRead(legacyPath);
         if (fileBuffer != NULL)
             LOG("CONFIG migrating settings from legacy %s\n", legacyPath);
     }

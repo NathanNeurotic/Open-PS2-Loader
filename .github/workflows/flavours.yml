@@ -150,6 +150,8 @@ jobs:
         run: python3 .github/scripts/test_vmode_safe_area.py
       - name: Check that the flicker-filtered HIRES modes blend each line with the next in the merge circuit
         run: python3 .github/scripts/test_hires_line_blend.py
+      - name: Check that a missing settings file is opened once, not twice
+        run: python3 .github/scripts/test_config_missing_open_once.py
       - name: Check 3D save icons parse real icons and card images, and refuse damaged ones
         run: python3 .github/scripts/test_save_icons.py
       - name: Check native PS2 logo validation including descriptor zero
