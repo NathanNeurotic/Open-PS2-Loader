@@ -327,7 +327,8 @@ enum UI_ITEMS {
     MMCE_SETTINGS_BUTTON,
     UICFG_GAME_LIST_BUTTON,
     UICFG_GAME_TYPE_LABELS,
-    UICFG_CFG_TITLES, // #918: rows show and sort by the CFG Title; default off
+    UICFG_CFG_TITLES,     // #918: rows show and sort by the CFG Title; default off
+    UICFG_PS1_DUPLICATES, // PS1 Duplicates: Both, Ember, POPSTARTER (RIPPS2 build 126)
     SECURITY_PARENTAL_BUTTON,
     ADV_PREFIX_BUTTON,
     ADV_STORAGE_BUTTON,

@@ -58,6 +58,11 @@ jobs:
         run: python3 .github/scripts/test_ripps2_all_games.py
       - name: Check the RIPPS2 Hide Game and Delete everything (hidden.txt, rows, files that go)
         run: python3 .github/scripts/test_ripps2_game_manage.py
+      - name: Check the game size fallback, PS1 Duplicates and the diagnostic menu crash catcher
+        run: |
+          python3 .github/scripts/test_game_size_fallback.py
+          python3 .github/scripts/test_ps1_duplicates.py
+          python3 .github/scripts/test_menu_crash_catcher.py
       - name: Check the About page (full version, NathanNeurotic credited, row count kept)
         run: python3 .github/scripts/test_about_credits_layout.py
       - name: Check the YAOPL theme fixes, the Background art hold and the RIPPS2 boot theme hold
@@ -152,6 +157,8 @@ jobs:
         run: python3 .github/scripts/test_hires_line_blend.py
       - name: Check the intro waits for the saved theme only as long as Boot Theme Wait says (off by default)
         run: python3 .github/scripts/test_boot_theme_wait.py
+      - name: Check that a missing settings file is opened once, not twice
+        run: python3 .github/scripts/test_config_missing_open_once.py
       - name: Check 3D save icons parse real icons and card images, and refuse damaged ones
         run: python3 .github/scripts/test_save_icons.py
       - name: Check native PS2 logo validation including descriptor zero

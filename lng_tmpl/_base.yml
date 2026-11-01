@@ -2512,3 +2512,11 @@ gui_strings:
   string: Boot Theme Wait
 - label: HINT_BOOT_THEME_WAIT
   string: "Seconds the start-up screen waits for your saved theme while its drive starts up. 0 = Off: the menu opens right away and your theme appears as soon as it is found."
+- comment: Interface setting (from RIPPS2 build 126). A PS1 game kept both as a POPSTARTER VCD and as an Ember image.
+  label: PS1_DUPLICATES
+  string: PS1 Duplicates
+- label: HINT_PS1_DUPLICATES
+  string: "A PS1 game that is both a POPSTARTER VCD and an Ember image. Both: two rows. Ember: the Ember one only. POPSTARTER: the VCD only. The same title, ignoring case and a leading disc ID, is the same game. Display only."
+- comment: PS1 Duplicates choice that keeps both rows.
+  label: PS1_DUPLICATES_BOTH
+  string: Both

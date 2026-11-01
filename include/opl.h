@@ -196,6 +196,11 @@ enum {
 extern int gDefaultGameView;
 extern int gGameTypeLabels;   // optional [PS1]/[PS2] prefixes in game lists; default off
 extern int gCfgTitlesInLists; // optional: rows show and sort by the CFG Title (#918); default off
+// Interface > PS1 Duplicates: a PS1 game that is both a POPSTARTER VCD and an Ember image (RIPPS2 build 126).
+enum { PS1_DUP_BOTH = 0,
+       PS1_DUP_EMBER,
+       PS1_DUP_POPSTARTER };
+extern int gPs1Duplicates;
 
 enum {
     APPS_DISPLAY_MIXED = 0, // all ELFs together; L3 disabled (back-compatible default)
