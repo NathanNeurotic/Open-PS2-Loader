@@ -3033,6 +3033,10 @@ reshow_interface:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
+        // A theme picked here is the user's choice, even the built-in one, so the save writes it although a saved
+        // disk theme is still waiting for its drive (_saveConfig keeps the saved name only while nothing was picked).
+        if (previousTheme != themeID)
+            configSetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, thmGetValue());
         if (viewPending) {
             gThemeAltBackground = altBackgroundRequest;
             if (!thmSetView(themeViewRequest)) // reloads only when the theme now shows a different view

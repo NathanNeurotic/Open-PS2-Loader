@@ -4214,7 +4214,11 @@ static void _saveConfig()
     if (lscstatus & CONFIG_OPL) {
         config_set_t *configOPL = configGetByType(CONFIG_OPL);
         configSetInt(configOPL, CONFIG_OPL_SCROLLING, gScrollSpeed);
-        configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
+        // Keep the saved disk theme while its drive has not offered it yet. Boot Theme Wait is off by default, so the
+        // menu (and a settings save) can come before that, and writing the built-in fallback on screen would lose the
+        // user's theme for good. An explicit pick on the Interface page writes the key itself (guiShowInterfaceConfig).
+        if (!thmSavedThemePending())
+            configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
         if (gThemeViewRequest >= 0)
             configSetStr(configOPL, CONFIG_OPL_THEME_VIEW, thmViewName(gThemeViewRequest));
         else

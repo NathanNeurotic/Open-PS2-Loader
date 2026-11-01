@@ -48,6 +48,13 @@ if 'diaGetInt(ui, UICFG_BOOT_THEME_WAIT, &gBootThemeWait)' not in guisettings:
 if '{UI_INT, UICFG_BOOT_THEME_WAIT, 1, 1, _STR_HINT_BOOT_THEME_WAIT, 0, 0, {.intvalue = {0, 0, 0, 10}}}' not in dialogs:
     failures.append('the Boot Theme Wait row is not a 0..10 integer defaulting to 0')
 
+save_src = (root / 'src/opl.c').read_text(encoding='utf-8')
+ui_src = (root / 'src/gui.c').read_text(encoding='utf-8')
+if 'if (!thmSavedThemePending())\n            configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());' not in save_src:
+    failures.append('a settings save before the saved theme loads overwrites it with the built-in fallback')
+if 'if (previousTheme != themeID)\n            configSetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, thmGetValue());' not in ui_src:
+    failures.append('an explicit theme pick on the Interface page is not written while the saved theme is pending')
+
 program = r'''
 #include <stdio.h>
 static int gBootThemeWait;
