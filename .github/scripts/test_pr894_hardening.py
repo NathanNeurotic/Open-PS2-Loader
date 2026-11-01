@@ -39,6 +39,7 @@ def run(name, program):
 cue = read("src/cuesupport.c")
 run("merge", r'''
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

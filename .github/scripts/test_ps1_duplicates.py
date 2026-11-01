@@ -32,6 +32,7 @@ pieces = "\n".join(function(cue, sig) for sig in (
     "static const char *ps1TwinKey(", "int ps1DropTwins(", "int ps1FillGameList("))
 program = r'''
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,8 +43,8 @@ static int gPs1Duplicates, gAutosort, ps1ScanIncomplete;
 #define LOG(...) ((void)0)
 static int ps1RowCmp(const void *a, const void *b) { (void)a; (void)b; return 0; }
 static void *memalign(int a, size_t n) { (void)a; return malloc(n); }
-static const char *vcdNames[] = {"SLUS_005.94.Crash Bandicoot", "Spyro the Dragon", "Only VCD", "XX.SCUS_944.26.Ape Escape", "SLES_123.45-Medievil", NULL};
-static const char *cueNames[] = {"crash bandicoot", "Spyro the Dragon", "Only Ember", "Ape Escape", "MediEvil", NULL};
+static const char *vcdNames[] = {"SLUS_005.94.Crash Bandicoot", "Spyro the Dragon", "Only VCD", "XX.SCUS_944.26.Ape Escape", "SLES_123.45-Medievil", "SLUS_00X.94.Weird", NULL};
+static const char *cueNames[] = {"crash bandicoot", "Spyro the Dragon", "Only Ember", "Ape Escape", "MediEvil", "Weird", "SPYRO THE DRAGON", NULL};
 static int half(const char **names, int ember, base_game_info_t **out) {
     int n = 0;
     while (names[n]) n++;
@@ -62,19 +63,25 @@ static int has(base_game_info_t *rows, int n, const char *name, int ember) {
 int main(void) {
     base_game_info_t *rows = NULL;
     gPs1Duplicates = PS1_DUP_BOTH;
-    assert(ps1FillGameList("mass0:/", &rows) == 10);
+    int n;
+    assert(ps1FillGameList("mass0:/", &rows) == 13);
     gPs1Duplicates = PS1_DUP_EMBER;
-    assert(ps1FillGameList("mass0:/", &rows) == 6);
-    assert(has(rows, 6, "Ape Escape", 1) && has(rows, 6, "MediEvil", 1) && !has(rows, 6, "XX.SCUS_944.26.Ape Escape", 0));
-    assert(has(rows, 6, "crash bandicoot", 1) && has(rows, 6, "Spyro the Dragon", 1));
-    assert(has(rows, 6, "Only VCD", 0) && has(rows, 6, "Only Ember", 1));
-    assert(!has(rows, 6, "SLUS_005.94.Crash Bandicoot", 0));
+    assert((n = ps1FillGameList("mass0:/", &rows)) == 9);
+    assert(has(rows, n, "Ape Escape", 1) && has(rows, n, "MediEvil", 1) && !has(rows, n, "XX.SCUS_944.26.Ape Escape", 0));
+    assert(has(rows, n, "crash bandicoot", 1) && has(rows, n, "Spyro the Dragon", 1) && has(rows, n, "SPYRO THE DRAGON", 1));
+    assert(has(rows, n, "Only VCD", 0) && has(rows, n, "Only Ember", 1));
+    assert(!has(rows, n, "SLUS_005.94.Crash Bandicoot", 0));
+    /* Not a disc ID ("00X" is not three digits): the name is kept whole, so no twin. */
+    assert(has(rows, n, "SLUS_00X.94.Weird", 0) && has(rows, n, "Weird", 1));
     gPs1Duplicates = PS1_DUP_POPSTARTER;
-    assert(ps1FillGameList("mass0:/", &rows) == 6);
-    assert(has(rows, 6, "XX.SCUS_944.26.Ape Escape", 0) && has(rows, 6, "SLES_123.45-Medievil", 0) && !has(rows, 6, "MediEvil", 1));
-    assert(has(rows, 6, "SLUS_005.94.Crash Bandicoot", 0) && has(rows, 6, "Spyro the Dragon", 0));
-    assert(has(rows, 6, "Only VCD", 0) && has(rows, 6, "Only Ember", 1));
-    assert(!has(rows, 6, "crash bandicoot", 1));
+    assert((n = ps1FillGameList("mass0:/", &rows)) == 8);
+    assert(has(rows, n, "XX.SCUS_944.26.Ape Escape", 0) && has(rows, n, "SLES_123.45-Medievil", 0) && !has(rows, n, "MediEvil", 1));
+    assert(has(rows, n, "SLUS_005.94.Crash Bandicoot", 0) && has(rows, n, "Spyro the Dragon", 0));
+    /* Every Ember copy of a VCD goes, not only the first. */
+    assert(!has(rows, n, "Spyro the Dragon", 1) && !has(rows, n, "SPYRO THE DRAGON", 1));
+    assert(has(rows, n, "Only VCD", 0) && has(rows, n, "Only Ember", 1));
+    assert(!has(rows, n, "crash bandicoot", 1));
+    assert(has(rows, n, "SLUS_00X.94.Weird", 0) && has(rows, n, "Weird", 1));
     free(rows);
 
     /* The HDD list keeps each row's partition in a parallel array: it moves with its row. */
@@ -83,7 +90,7 @@ int main(void) {
     assert(ps1DropTwins(hdd, parts, sizeof(parts[0]), 2, 1, PS1_DUP_EMBER) == 2);
     assert(!strcmp(hdd[0].name, "Only VCD") && !strcmp(parts[0], "__.POPS1"));
     assert(!strcmp(hdd[1].name, "Crash Bandicoot") && !strcmp(parts[1], "__.EMBER"));
-    puts("PASS: PS1 Duplicates keeps both, the Ember twin or the VCD twin; a POPSTARTER prefix, a disc ID and case are ignored");
+    puts("PASS: PS1 Duplicates keeps both, the Ember twin or the VCD twin; a POPSTARTER prefix, a real disc ID and case are ignored");
     return 0;
 }
 '''

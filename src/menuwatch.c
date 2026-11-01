@@ -67,6 +67,9 @@ typedef struct
 static crash_regs_t crashRegs;
 static volatile int crashCount;
 static u8 crashStack[CRASH_STACK_SIZE] __attribute__((aligned(16)));
+static u8 parkStack[256] __attribute__((aligned(16))); // a second exception parks here: the report may still be on crashStack
+static int epcHandlerId = -1;
+static int crashCatcherOn;
 static volatile u32 epcRing[EPC_SAMPLES];
 static volatile u32 epcTicks;
 extern char _ftext[], _etext[];
@@ -413,10 +416,12 @@ static int crashException(EE_RegFrame *frame)
         crashRegs.fp = frame->fp[0];
         crashRegs.ra = frame->ra[0];
         frame->epc = (u32)&crashReport;
-    } else
+        // Resume on a stack of our own: the crashed thread's may be what broke.
+        frame->sp[0] = (u32)(crashStack + CRASH_STACK_SIZE - 64);
+    } else {
         frame->epc = (u32)&crashPark; // an exception in the report itself (or a second thread): keep the first
-    // Resume on a stack of our own: the crashed thread's may be what broke.
-    frame->sp[0] = (u32)(crashStack + CRASH_STACK_SIZE - 64);
+        frame->sp[0] = (u32)(parkStack + sizeof(parkStack) - 64);
+    }
     frame->gp[0] = (u32)&_gp;
     frame->ra[0] = 0;
     return 0;
@@ -442,7 +447,6 @@ static void crashCatcherStart(void)
     // exceptions that otherwise park the CPU without a word (YAOPL's set, caught on a console there).
     static const int codes[] = {1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13};
     unsigned int i;
-    int handler;
 
     if (ee_dbg_install(1) < 0) {
         diagLog("crash catcher: libeedebug did not install");
@@ -450,10 +454,26 @@ static void crashCatcherStart(void)
     }
     for (i = 0; i < sizeof(codes) / sizeof(codes[0]); i++)
         ee_dbg_set_level1_handler(codes[i], &crashException);
-    handler = AddIntcHandler(INTC_VBLANK_S, &epcSampler, 0);
-    if (handler >= 0)
+    epcHandlerId = AddIntcHandler(INTC_VBLANK_S, &epcSampler, 0);
+    if (epcHandlerId >= 0)
         EnableIntc(INTC_VBLANK_S);
-    diagLog("crash catcher on, VBlank PC sampler %s", handler >= 0 ? "on" : "failed");
+    crashCatcherOn = 1;
+    diagLog("crash catcher on, VBlank PC sampler %s", epcHandlerId >= 0 ? "on" : "failed");
+}
+
+// Called at the end of deinit()/deinitEx(): the next program must not inherit our VBlank handler or
+// exception hooks (they point into this ELF's memory). Only the sampler is removed from the VBlank
+// interrupt; other handlers on it keep it enabled.
+void menuWatchStop(void)
+{
+    if (epcHandlerId >= 0) {
+        RemoveIntcHandler(INTC_VBLANK_S, epcHandlerId);
+        epcHandlerId = -1;
+    }
+    if (crashCatcherOn) {
+        ee_dbg_remove(1);
+        crashCatcherOn = 0;
+    }
 }
 
 void menuWatchStep(int step)

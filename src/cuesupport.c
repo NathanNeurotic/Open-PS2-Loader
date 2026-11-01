@@ -10,6 +10,7 @@
   POSIX IO only -- the newlib port rejects direct fileXio use here, same rule as vcdsupport.c.
 */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1073,11 +1074,25 @@ static int ps1ScanIncomplete;
    nothing on the device changes, and Both (the default) keeps both rows. */
 static const char *ps1TwinKey(const char *name)
 {
+    const char *id;
+    int i;
+
     if (strlen(name) > 3 && name[2] == '.' &&
         (!strncasecmp(name, "XX", 2) || !strncasecmp(name, "SB", 2) || !strncasecmp(name, "EL", 2) || !strncasecmp(name, "SM", 2)))
         name += 3;
-    if (strlen(name) > 12 && name[4] == '_' && name[8] == '.' &&
-        (name[11] == '.' || name[11] == '_' || name[11] == ' ' || name[11] == '-'))
+    if (strlen(name) <= 12)
+        return name;
+    // Disc ID shape: 4 letters or digits, '_', 3 digits, '.', 2 digits, then a separator.
+    id = name;
+    for (i = 0; i < 4; i++)
+        if (!isalnum((unsigned char)id[i]))
+            return name;
+    if (id[4] != '_' || id[8] != '.')
+        return name;
+    for (i = 5; i < 11; i++)
+        if (i != 8 && !isdigit((unsigned char)id[i]))
+            return name;
+    if (id[11] == '.' || id[11] == '_' || id[11] == ' ' || id[11] == '-')
         return name + 12;
     return name;
 }
@@ -1099,8 +1114,11 @@ int ps1DropTwins(base_game_info_t *rows, void *parallel, size_t stride, int vcdC
         const char *key = ps1TwinKey(rows[i].name);
         for (j = vcdCount; j < total; j++) {
             if (!drop[j] && !strcasecmp(key, ps1TwinKey(rows[j].name))) {
-                drop[prefer == PS1_DUP_EMBER ? i : j] = 1;
-                break;
+                if (prefer == PS1_DUP_EMBER) {
+                    drop[i] = 1; // one Ember twin is enough to hide this VCD
+                    break;
+                }
+                drop[j] = 1; // POPSTARTER: hide every Ember copy of it
             }
         }
     }

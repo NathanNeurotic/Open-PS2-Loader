@@ -54,8 +54,12 @@ enum MenuWatchStep {
 #ifdef __OPLDIAG
 void menuWatchStart(void);
 void menuWatchStep(int step);
+void menuWatchStop(void);
 #else
 static inline void menuWatchStart(void)
+{
+}
+static inline void menuWatchStop(void)
 {
 }
 static inline void menuWatchStep(int step)

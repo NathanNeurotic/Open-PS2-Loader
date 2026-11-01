@@ -46,6 +46,7 @@ for call in ("SleepThread", "diagLog", "printf", "screen(", "writeReport", "Refe
 assert "crashReport" in handler and "crashPark" in handler, "first exception reports, a second one parks"
 assert "crashStack + CRASH_STACK_SIZE" in handler, "the report runs on a stack of its own"
 assert "crashCount++ == 0" in handler
+assert "parkStack + sizeof(parkStack)" in handler, "a second exception parks on its own stack, not on the report's"
 
 sampler = function(src, "static int epcSampler(")
 assert "mfc0 %0, $14" in sampler and "ExitHandler();" in sampler
@@ -54,6 +55,15 @@ report = function(src, "static void crashReport(")
 assert 'writeReport("mc0:/RIPTOPL-CRASH.TXT", len) || writeReport("mc1:/RIPTOPL-CRASH.TXT", len)' in report
 assert "exceptionName(code)" in report and "addEpcSamples(len)" in report and "crashPark();" in report
 assert "crashRegs.sp >= 0x00100000" in report, "only a sane stack pointer is walked"
+
+# Torn down before the handoff: the next program inherits no VBlank handler and no exception hooks.
+stop = function(src, "void menuWatchStop(")
+assert "RemoveIntcHandler(INTC_VBLANK_S, epcHandlerId)" in stop and "ee_dbg_remove(1)" in stop
+opl = (root / ("src/app/opl.cpp" if CPP else "src/opl.c")).read_text(encoding="utf-8")
+for sig in ("void deinitEx(", "void deinit("):
+    assert "menuWatchStop();" in function(opl, sig), sig + " tears the crash catcher down"
+header = (root / "include/menuwatch.h").read_text(encoding="utf-8")
+assert header.count("menuWatchStop(void)") == 2, "declared, and a no-op outside diagnostic builds"
 
 # The freeze report lists the sampled PCs too, and the watchdog stands down after a crash.
 assert "addEpcSamples(len)" in function(src, "static int buildReport(")
