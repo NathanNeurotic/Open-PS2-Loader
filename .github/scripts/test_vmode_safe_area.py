@@ -55,7 +55,7 @@ enum { GS_INTERLACED = 1, GS_NONINTERLACED = 0, GS_FIELD = 0, GS_FRAME = 1 };
 enum rm_aratio { RM_ARATIO_4_3 = 0, RM_ARATIO_16_9 = 1 };
 struct GSGLOBAL { int Width, Height, Interlace, Field; };
 static GSGLOBAL globalStore, *gsGlobal = &globalStore;
-constexpr int NUM_RM_VMODES = 17;
+constexpr int NUM_RM_VMODES = 20;
 @STRUCT@
 @TABLE@
 static short int vmode = -1;
