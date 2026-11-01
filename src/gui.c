@@ -4534,7 +4534,7 @@ void guiIntroLoop(void)
         if (gInitComplete && !tInitSeen) {
             tInitDone = clock();
             tInitSeen = 1;
-            diagLog("boot: devices started, intro fading out");
+            diagLog("boot: devices started");
         }
         int themeHold = greetingAlpha == 0x80 && tInitSeen && thmSavedThemePending() &&
                         (clock() - tInitDone) < (clock_t)THEME_HOLD_MS * (CLOCKS_PER_SEC / 1000);
@@ -4546,8 +4546,11 @@ void guiIntroLoop(void)
             tHoldLast = clock();
         }
 
-        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold)
+        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold) {
+            if (greetingAlpha == 0x80)
+                diagLog("boot: intro fading out");
             greetingAlpha -= 2;
+        }
 
         if (greetingAlpha <= 0)
             endIntro = 1;
