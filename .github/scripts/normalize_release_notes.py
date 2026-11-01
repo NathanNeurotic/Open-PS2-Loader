@@ -19,6 +19,7 @@ def description(name):
         "RIPTOPL-RA.ELF": "RetroAchievements loader update (requires xeRAbora v1.0.1 or alpha.17+).",
         "APP_RIPTOPL.psu": "Standard app for memory-card import; app files only.",
         "APP_RIPTOPL-RA.psu": "RetroAchievements app for memory-card import; app files only.",
+        "LICENSE-LIBSMB2.txt": "LGPL-2.1 licence of libsmb2, the SMB2 library every loader embeds; shipped beside the standalone ELF.",
     }
     for theme in ("inceBtion", "Korium"):
         if name == f"RIPTOPL-RA-{theme}.ELF":

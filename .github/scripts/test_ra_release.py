@@ -288,5 +288,25 @@ class MbedtlsLicenceShippingTest(unittest.TestCase):
         self.assertIn('"LICENSE-MBEDTLS.txt" in names', app)
 
 
+class Libsmb2LicenceShippingTest(unittest.TestCase):
+    def test_every_kit_bundle_and_standalone_download_ships_the_lgpl_licence(self):
+        # Every RiptOPL ELF embeds smb2man over libsmb2 (LGPL-2.1), so the licence text must travel
+        # with the install kits (the RA kits copy the standard one), the VARIANTS/DEBUG zips and the
+        # standalone ELF download.
+        root = Path(__file__).resolve().parents[2]
+        licence = root / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"
+        self.assertIn("GNU LESSER GENERAL PUBLIC LICENSE", licence.read_text(encoding="utf-8"))
+        app = (root / ".github/scripts/package_release_app.py").read_text(encoding="utf-8")
+        self.assertIn('LIBSMB2_LICENCE = ROOT / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"', app)
+        self.assertIn('shutil.copyfile(LIBSMB2_LICENCE, package / "LICENSE-LIBSMB2.txt")', app)
+        self.assertIn('"LICENSE-LIBSMB2.txt",  # every loader embeds libsmb2 (LGPL-2.1)', app)
+        workflow = (root / ".github/workflows/rolling-release.yml").read_text(encoding="utf-8")
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt rolling/LICENSE-LIBSMB2.txt", workflow)
+        self.assertIn("PS2RD-CHT-Manager.url LICENSE-LIBSMB2.txt >/dev/null", workflow)
+        self.assertIn('cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "rolling/$kind/LICENSE-LIBSMB2.txt"', workflow)
+        notes = (root / ".github/scripts/normalize_release_notes.py").read_text(encoding="utf-8")
+        self.assertIn('"LICENSE-LIBSMB2.txt": "LGPL-2.1 licence of libsmb2', notes)
+
+
 if __name__ == "__main__":
     unittest.main()
