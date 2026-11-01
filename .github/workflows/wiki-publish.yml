@@ -14,8 +14,8 @@ on:
       - completed
     branches:
       - rebuild/main
-  # docs-sync's own daily run (04:23) also lands here through workflow_run; this is the fallback for a
-  # day when docs-sync fails, so gh-pages merges still reach the wiki.
+  # docs-sync's own daily run (04:23) also lands here through workflow_run; this schedule is a second
+  # chance for a day when that run, or the publish it starts, does not get through.
   schedule:
     - cron: '17 5 * * *'
   workflow_dispatch:
@@ -34,7 +34,9 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # No success gate on purpose: the concurrency group keeps only one pending run, so a skipped run
+    # could replace a real one. Every run builds from the current rebuild/main and gh-pages instead;
+    # after a failed docs-sync that is the same result the daily run would give.
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout source branch
