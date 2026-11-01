@@ -2507,6 +2507,11 @@ gui_strings:
 - comment: Rename, Delete or Hide was cancelled because the game list was refreshed while its dialog was open, so the selected row may now be a different game.
   label: MENU_ROW_CHANGED
   string: The game list changed while this was open, so nothing was done. Please try again.
+- comment: Settings > Interface. How many seconds the start-up screen waits for the saved theme.
+  label: BOOT_THEME_WAIT
+  string: Boot Theme Wait
+- label: HINT_BOOT_THEME_WAIT
+  string: "Seconds the start-up screen waits for your saved theme while its drive starts up. 0 = Off: the menu opens right away and your theme appears as soon as it is found."
 - comment: Interface setting (from RIPPS2 build 126). A PS1 game kept both as a POPSTARTER VCD and as an Ember image.
   label: PS1_DUPLICATES
   string: PS1 Duplicates

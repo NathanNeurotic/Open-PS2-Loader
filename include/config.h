@@ -91,6 +91,8 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_THEME                      "theme"
 #define CONFIG_OPL_THEME_VIEW                 "theme_view"   // list/coverflow/psbbn/grid; absent = the theme's default view
 #define CONFIG_OPL_THEME_ALT_BG               "theme_alt_bg" // 1 = the theme's alt= background (themeviews.h); absent = its default=
+// Boot Theme Wait: seconds the intro waits for the saved theme; 0 = off
+#define CONFIG_OPL_BOOT_THEME_WAIT            "boot_theme_wait"
 #define CONFIG_OPL_LANGUAGE                   "language_text"
 #define CONFIG_OPL_SCROLLING                  "scrolling"
 #define CONFIG_OPL_BGCOLOR                    "bg_color"
