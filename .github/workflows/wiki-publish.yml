@@ -11,6 +11,9 @@ on:
       - 'docs/**'
       - 'CHANGELOG'
       - 'README.md'
+      - 'ROLLING_RELEASE.md'
+      - 'pc/http/README.md'
+      - 'pc/apa-recovery/README.md'
       - '.github/scripts/wiki_sync.py'
       - '.github/workflows/wiki-publish.yml'
   # gh-pages merges do not run rebuild/main workflows; the daily run catches the wiki up with them,
