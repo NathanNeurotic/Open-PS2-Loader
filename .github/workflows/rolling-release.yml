@@ -876,9 +876,8 @@ jobs:
           fi
           NEUTRINO_VER=""
           NEUTRINO_ARCHIVE=""
-          NEU_TAG="$(gh release list --repo ps2max32/neutrino --limit 10 --json tagName,isPrerelease,isDraft \
-            --jq '[.[] | select(.isPrerelease and (.isDraft | not))][0].tagName' 2>/dev/null || true)"
-          [ -z "$NEU_TAG" ] && NEU_TAG="latest"
+          # Match the selected canonical nightly channel in watcher and packaging.
+          NEU_TAG="latest"
           for attempt in 1 2 3; do
             if gh release download "$NEU_TAG" --repo ps2max32/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
               NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"

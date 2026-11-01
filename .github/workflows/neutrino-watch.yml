@@ -45,9 +45,8 @@ jobs:
         run: |
           set -eu
           # Upstream: version embedded in the .7z asset name of Neutrino's latest pre-release.
-          NEU_TAG="$(gh release list --repo "$NEUTRINO_REPO" --limit 10 --json tagName,isPrerelease,isDraft \
-            --jq '[.[] | select(.isPrerelease and (.isDraft | not))][0].tagName' 2>/dev/null || true)"
-          [ -z "$NEU_TAG" ] && NEU_TAG="latest"
+          # Match the selected canonical nightly channel in watcher and packaging.
+          NEU_TAG="latest"
 
           NEU="$(gh release view "$NEU_TAG" --repo "$NEUTRINO_REPO" --json assets \
             --jq '.assets[].name' 2>/dev/null | grep -E '^neutrino_.*\.7z$' | head -n1 \
