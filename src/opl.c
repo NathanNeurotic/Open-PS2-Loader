@@ -1086,7 +1086,7 @@ static void initAllSupport(int force_reinit)
         guiRenderGreetingScreen();
     bdmEnumerateDevices();
     if (gBootInProgress)
-        diagLog("boot: BDM devices enumerated");
+        diagLog("boot: BDM start stage done");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_NET));
     if (gBootInProgress)
@@ -1099,7 +1099,7 @@ static void initAllSupport(int force_reinit)
     // only when gNetworkProtocol == NET_PROTO_HTTP.
     initSupport(httpGetObject(0), HTTP_MODE, force_reinit);
     if (gBootInProgress)
-        diagLog("boot: network started");
+        diagLog("boot: network start stage done");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
     if (gBootInProgress)
@@ -1108,7 +1108,7 @@ static void initAllSupport(int force_reinit)
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
     if (gBootInProgress)
-        diagLog("boot: HDD, apps and favourites started");
+        diagLog("boot: HDD, apps and favourites start stage done");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_MC));
     if (gBootInProgress)
@@ -1117,7 +1117,7 @@ static void initAllSupport(int force_reinit)
     initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
     LOG("BOOT scan: MMCE initSupport done\n");
     if (gBootInProgress)
-        diagLog("boot: MMCE started");
+        diagLog("boot: MMCE start stage done");
 
     // Arm the MMCE GameID transport at boot and on every settings apply -- instead
     // of deferring it to itemLaunchMMCE.
@@ -3518,12 +3518,12 @@ static void _loadConfig()
     lngRefreshBootLanguages(-1);
     diagLog("settings: languages scanned");
     int result = configReadMulti(lscstatus);
-    diagLog("settings: read 0x%x of 0x%x from %s", result, lscstatus, configGetDir());
+    diagLog("settings: read 0x%x of 0x%x from %s", result, lscstatus, configGetLoadDir());
 
     if (lscstatus & CONFIG_OPL) {
         if (!(result & CONFIG_OPL)) {
             result = tryAlternateDevice(lscstatus);
-            diagLog("settings: other devices tried, now 0x%x from %s", result, configGetDir());
+            diagLog("settings: other devices tried, now 0x%x from %s", result, configGetLoadDir());
         }
 
         if (result & CONFIG_OPL) {
