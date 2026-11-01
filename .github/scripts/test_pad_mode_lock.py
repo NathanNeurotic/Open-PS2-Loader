@@ -347,6 +347,7 @@ int main(void)
     before = lockRequests;
     int cleared = 0;
     simLocked = 0;
+    simButtons = PAD_DOWN; /* held across the mode change: no request while input is live */
     pressAnalog();
     for (int i = 0; i < 150; i++) {
         frame(KEY_DOWN);
@@ -354,6 +355,9 @@ int main(void)
             cleared = 1;
     }
     expect("lost lock: the software lock flag cleared after the mode change", cleared, 1);
+    expect("lost lock: no lock request while DOWN is held", lockRequests - before, 0);
+    simButtons = 0;
+    frames(100, KEY_DOWN);
     expect("lost lock: lock requests sent again", lockRequests - before, 1);
     expect("lost lock: the pad is locked again", simLocked, 1);
 
