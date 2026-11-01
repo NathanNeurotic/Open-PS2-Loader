@@ -15,7 +15,7 @@ def elf(offset=0x80, vaddr=0x00100000, tag=b""):
     header = bytearray(b"\x7fELF\x01\x01\x01" + bytes(9))
     header += struct.pack("<HHIIIIIHHHHHH", 2, 8, 1, vaddr, 52, 0, 0, 52, 32, 1, 40, 0, 0)
     header += struct.pack("<8I", 1, offset, vaddr, vaddr, 16, 16, 7, 0x80)
-    return bytes(header) + tag.ljust(16, b"\0")
+    return bytes(header).ljust(offset, b"\0") + tag.ljust(16, b"\0")  # the segment's 16 bytes sit at its offset
 
 
 class PackBugReportTests(unittest.TestCase):
@@ -53,7 +53,8 @@ class PackBugReportTests(unittest.TestCase):
             self.assertEqual(list(folder.glob("*.zip")), [])
 
     def test_packed_padded_and_foreign_loaders_are_refused(self):
-        cases = {"packed": elf(offset=0x60, vaddr=0x01D00000), "padded": elf(offset=0x10000), "foreign": b"MZ" + bytes(64)}
+        cases = {"packed": elf(offset=0x60, vaddr=0x01D00000), "padded": elf(offset=0x10000), "truncated": elf()[:-1],
+                 "foreign": b"MZ" + bytes(64)}
         for name, payload in cases.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
                 folder = Path(temporary)

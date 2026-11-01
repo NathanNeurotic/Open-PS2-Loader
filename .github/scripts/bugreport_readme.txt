@@ -22,8 +22,9 @@ How to use it
 -------------
 1. Copy RIPTOPL-BUGREPORT.ELF next to your normal RIPTOPL.ELF (for example to mc0:/APP_RIPTOPL/ or
    mmce0:/APP_RIPTOPL/). Keep your normal ELF. Settings, game lists and art are shared.
-2. Launch RIPTOPL-BUGREPORT.ELF exactly the way you normally launch RiptOPL (uLaunchELF, OSDMenu,
-   FMCB, PS2BBL and so on).
+2. Launch RIPTOPL-BUGREPORT.ELF the way you normally launch RiptOPL. A launcher that browses files
+   (uLaunchELF, wLaunchELF) can open it directly. A launcher with a fixed entry (OSDMenu, FMCB,
+   PS2BBL) keeps starting RIPTOPL.ELF until you point its entry at RIPTOPL-BUGREPORT.ELF or add one.
 3. Do what went wrong before.
 
 What to send
