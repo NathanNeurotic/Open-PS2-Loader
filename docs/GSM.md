@@ -85,10 +85,9 @@ passed real-hardware testing, it is non-standard enough that some displays will 
 
 Because a display that cannot sync leaves you with a black screen and no way to undo the choice from
 the console, selecting 1080p **with GSM enabled** triggers a three-step confirmation before it is
-written to disk. Decline at any of the three steps and the picker goes back to the mode the page
-opened with (or NTSC, mode 0, if that was already a 1080p mode). The question is only asked when you
-pick a 1080p mode: a game that follows a global already set to 1080p is not asked again when you save
-its other settings.
+written to disk. Decline at any of the three steps and the GSM switch and mode picker go back to what
+the page opened with. The question is only asked when you pick a 1080p mode: a game that follows a
+global already set to 1080p is not asked again when you save its other settings.
 
 The same gate applies on the global page, which carries the wider blast radius of the two: it is what
 every game without its own GSM settings inherits.

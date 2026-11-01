@@ -1601,8 +1601,12 @@ static void guiGameConfirmGSM1080p(void)
         if (!guiMsgBox(_l(_STR_GSM_1080P_WARNING), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_PROCEED), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_SURE), 1, NULL)) {
-            // cancelled at some step -> keep the mode the page loaded, never the 1080p one
-            GSMVMode = (sLoadedGSMVMode == GSM_VMODE_1080P_IDX || sLoadedGSMVMode == GSM_VMODE_1080P_43_IDX) ? 0 : sLoadedGSMVMode;
+            // cancelled at some step -> put back the pair the page loaded. A loaded 1080p mode was
+            // already confirmed when it was chosen, so it is safe to return to; and restoring the
+            // enable flag too means a decline cannot switch GSM on for a mode that was off.
+            EnableGSM = sLoadedEnableGSM;
+            GSMVMode = sLoadedGSMVMode;
+            diaSetInt(diaGSConfig, GSMCFG_ENABLEGSM, EnableGSM);
             diaSetInt(diaGSConfig, GSMCFG_GSMVMODE, GSMVMode);
         }
     }
