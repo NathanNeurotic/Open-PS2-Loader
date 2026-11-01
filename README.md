@@ -356,10 +356,14 @@ For loading games by SMB protocol, you need to share a folder (ex: PS2SMB)
 on the host machine or NAS device and grant read access for game loading. Write access is also needed for VMC saves and changes to files stored on the share. USB Advance/Extreme format is optional - \*.ISO images
 are supported using the folder structure above.
 
-> **SMB version:** this edition speaks **SMBv1** only, for browsing and in game. The **Network**
-> page's **SMB Version** row shows **SMBv1** and stays greyed: the SMB2 driver that builds before the
-> rebuild carried has not been re-added yet, and a saved SMB2 choice from those builds is ignored. Use
-> a server that answers SMBv1 (PS2-Servers' SMBv1 card, or Samba with `min protocol = NT1`).
+> **SMB version:** the **Network** page has an **SMB Version** row (**SMBv1** / **SMB2**) directly
+> under **Protocol**, live only while **Protocol** is **SMB**. It defaults to **SMBv1**. **SMB2**
+> switches *both* sides (browsing loads the SMB2 driver instead of the SMBv1 one, and the in-game
+> reader follows), so the server must speak SMB 2.0.2 or 2.1 for the whole session. SMB2 logs on with
+> NTLMv2 and signs requests when the server requires it; SMB 3.x is not offered, so a server set to
+> SMB 3 only is not reached. If the SMB2 driver cannot load, browsing falls back to SMBv1. Changing
+> the version while an SMB driver is loaded offers a restart. For SMBv1 use PS2-Servers' SMBv1 card,
+> or Samba with `min protocol = NT1`.
 >
 > **RiptOPL network defaults:** the network protocol selector defaults to **Off** — under
 > **Game Sources** set **Network Connectivity** to **Manual** or **Auto** and **Protocol** (under it,
@@ -367,9 +371,9 @@ are supported using the folder structure above.
 > ships static defaults (PS2 `192.168.1.10`, PC `192.168.1.100`, share `games`, user `guest`);
 > adjust them to your LAN. The default **SMB Port is `1111`** — a non-privileged port (>1024), so a server
 > binds it without admin/root. The **Network** page opens with **Advanced Options** on, so
-> the **Port** field (and ETH link mode) are editable immediately. Windows 10/11 has SMB1 turned off,
-> so on Windows use the **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one
-> launcher instead of Windows' own sharing. Choose its SMBv1 server, then set RiptOPL's
+> the **Port** field (and ETH link mode) are editable immediately. Windows 10/11 has SMB1 turned off:
+> either set **SMB Version** to **SMB2**, or use the **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one
+> launcher instead of Windows' own sharing. Choose its SMBv1 server (or its SMBv2 card with **SMB2**), then set RiptOPL's
 > IP, port, share and credentials to the values the launcher displays. Its Desktop SMBv1 card
 > defaults to port **1025** and its Core/standalone server to **1111** (RiptOPL's default), so copy
 > the port the running card shows ([PS2-Servers SMB setup](https://github.com/NathanNeurotic/PS2-Servers/blob/main/docs/SMB.md)).
