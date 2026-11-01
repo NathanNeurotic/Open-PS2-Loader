@@ -159,7 +159,7 @@ paths are no longer limited to 31 characters.
 | MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
 | UDPFS (network boot — Files or Image) | ✅ **default** for Files and Image — Neutrino unless the game's Loader Core is `<OPL>` (see §4). On `<OPL>`, Files reads the ISO through the in-game `udpfs_fhi` module and keeps VMCs on the server (`udpfs_mcemu`); **not tested on hardware** | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail. Same rule on `<OPL>`: a VMC the server will not open read-write offers the usual skip prompt |
 | UDPBD (network boot — served disk image) | ✅ **default** — Neutrino unless the game's Loader Core is `<OPL>` (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
-| SMB / ETH | ⚠️ **experimental, needs a Neutrino build with SMB support** — only a game whose own Loader Core is **Neutrino**; **Default** stays `<OPL>` on SMB whatever the global core is. See [SMB through Neutrino](#smb-through-neutrino-experimental). **Not tested on hardware** | ❌ the SMB driver is read-only: a game with a VMC launches with `<OPL>` and a warning |
+| SMB / ETH | ⚠️ **experimental, needs a Neutrino build with SMB support** — **Default** follows the global **Loader Core**, with per-game **Neutrino** / **<OPL>** overrides. See [SMB through Neutrino](#smb-through-neutrino-experimental). **Not tested on hardware** | ❌ the SMB driver is read-only: a game with a VMC launches with `<OPL>` and a warning |
 | USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) | n/a |
 | Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) | n/a |
 
@@ -186,19 +186,21 @@ Unsupported cases fall back to the `<OPL>` core automatically with an on-screen 
 
 ### SMB through Neutrino (experimental)
 
-Neutrino is gaining an SMB backend in
+Neutrino nightly includes the SMB backend merged on 2026-10-31 in
 [ps2max32/neutrino PR #236](https://github.com/ps2max32/neutrino/pull/236) by
 [Ronnie Sahlberg (sahlberg)](https://github.com/sahlberg). It uses his
 [usmb2](https://github.com/sahlberg/usmb2), a minimal SMB client (dialect 3.0 only) with its own small TCP/IP stack:
-`smb_ioman.irx` reads the game in Neutrino's loader and `smb_fhi.irx` reads it in the game. The PR is
-**not merged yet**, so this needs a Neutrino build that has it; a Neutrino without the SMB modules
-falls back to `<OPL>` with a warning. **Not tested on hardware.**
+`smb_ioman.irx` reads the game in Neutrino's loader and `smb_fhi.irx` reads it in the game. Install the
+**whole latest nightly folder**, including `config/bsd-smb.toml` and both SMB modules. Release kits
+fetch upstream's `latest` nightly at packaging time. An older installed folder without those files
+falls back to `<OPL>` with a warning. The RA kit uses the pinned ORBIT runtime; it needs its own SMB
+backend update before this path is available there. **Not tested on hardware.**
 
 How a game gets there:
 
-1. Set the game's **Loader Core** to **Neutrino** (Game Settings → Compatibility). **Default** keeps
-   SMB games on `<OPL>`, even when the global core is Neutrino, because `<OPL>` is the SMB path that
-   works today and Neutrino's has the limits below.
+1. Set the global **Loader Core** to **Neutrino** and leave the game on **Default**, or select
+   **Neutrino** for this game (Game Settings → Compatibility). An explicit **<OPL>** choice stays
+   on the native core. Favourites use the same rule as the original SMB row.
 2. At launch, the PS2's address, mask and gateway (the static ones, or the DHCP lease the menu got),
    the server's address (a NetBIOS name is looked up first), the user, the password and the share are
    written into every module argument in `<neutrino folder>/config/bsd-smb.toml`, because that file
@@ -210,14 +212,14 @@ Each of these keeps the game on `<OPL>`, with a warning saying why:
 
 | Limit | Why |
 |---|---|
-| SMB port is not **445** | usmb2 always dials 445. The bundled PS2-Servers defaults (SMBv1 on 1111, SMB2 on 1445) need to be moved to 445 for this |
+| SMB port is not **445** | usmb2 always dials 445. Use PS2-Servers' **SMBv3** card on 445 (its normal default is 1445); SMBv1 and the SMBv2 card cannot negotiate this backend |
 | A VMC is set for the game | the driver is read-only, so it cannot write the card |
 | `.zso` or USB Extreme (`ul.*`) images | Neutrino reads one plain ISO |
 | neutrino.elf only on the SMB share | Neutrino loads its modules after the share is closed; keep it on a memory card or USB |
 | User or password over 31 characters, share over 63, or path on the share over 127 | the driver's own limits |
 | `bsd-smb.toml` missing, read-only or not in the stock shape | the settings could not be handed over |
 
-The server must offer the **SMB 3.0** dialect (usmb2 asks for no other) with NTLM login, and no signing or encryption. OPL's **SMB Version** setting does not apply to this path. RetroAchievements are not
+The server must offer the **SMB 3.0** dialect (usmb2 asks for no other) with NTLM login, and no signing or encryption. Use ASCII usernames and passwords of at most 31 characters, because usmb2 hashes password bytes rather than decoding UTF-8. OPL's **SMB Version** setting does not apply to this path. RetroAchievements are not
 carried on this path yet. `bsd-smb.toml` holds the SMB password in plain text, like
 `conf_network.cfg` already does.
 
