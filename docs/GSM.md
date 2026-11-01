@@ -173,8 +173,8 @@ Two names are involved, and they are not the same thing. **`GSM1080P` is the Mak
 defaults to `1`, and when set the `Makefile` adds **`-DGSM_1080P`** — the preprocessor macro the code
 actually tests — to the EE build, and forwards `GSM1080P=1` on to `ee_core/Makefile`.
 
-So every shipped build has mode 29 and the list is a consistent 30 entries across published flavours.
-Building with `GSM1080P=0` drops it and shortens the list.
+So every shipped build has modes 29 and 30, and the list is a consistent 31 entries across published flavours.
+Building with `GSM1080P=0` drops both 1080p rows and shortens the list to 29 entries.
 
 `In-game screenshots (IGS) require GSM to be enabled` — see [IGR.md](IGR.md#in-game-screenshots-igs).
 
