@@ -10,6 +10,7 @@
   POSIX IO only -- the newlib port rejects direct fileXio use here, same rule as vcdsupport.c.
 */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1066,6 +1067,75 @@ int cueFillGameList(const char *devPrefix, base_game_info_t **outGames)
 
 static int ps1ScanIncomplete;
 
+/* Interface > PS1 Duplicates (from RIPPS2 build 126): a game kept both as a POPSTARTER VCD and as an
+   Ember image shows once, as the one picked. Two rows are twins when their names match ignoring
+   letter case, a POPSTARTER prefix ("XX.", "SB.", "EL.", "SM.") and a leading disc ID ("SLUS_005.94."
+   followed by '.', '_', ' ' or '-'), the same forms the VCD list parser recognises. Display only:
+   nothing on the device changes, and Both (the default) keeps both rows. */
+static const char *ps1TwinKey(const char *name)
+{
+    const char *id;
+    int i;
+
+    if (strlen(name) > 3 && name[2] == '.' &&
+        (!strncasecmp(name, "XX", 2) || !strncasecmp(name, "SB", 2) || !strncasecmp(name, "EL", 2) || !strncasecmp(name, "SM", 2)))
+        name += 3;
+    if (strlen(name) <= 12)
+        return name;
+    // Disc ID shape: 4 letters or digits, '_', 3 digits, '.', 2 digits, then a separator.
+    id = name;
+    for (i = 0; i < 4; i++)
+        if (!isalnum((unsigned char)id[i]))
+            return name;
+    if (id[4] != '_' || id[8] != '.')
+        return name;
+    for (i = 5; i < 11; i++)
+        if (i != 8 && !isdigit((unsigned char)id[i]))
+            return name;
+    if (id[11] == '.' || id[11] == '_' || id[11] == ' ' || id[11] == '-')
+        return name + 12;
+    return name;
+}
+
+// rows holds vcdCount VCD rows, then cueCount Ember rows. Returns the number of rows kept, packed at
+// the front in their order; `parallel` (stride bytes per row, may be NULL) is packed the same way.
+// Out of memory keeps every row (the setting is cosmetic, the list is not).
+int ps1DropTwins(base_game_info_t *rows, void *parallel, size_t stride, int vcdCount, int cueCount, int prefer)
+{
+    int i, j, out = 0, total = vcdCount + cueCount;
+    unsigned char *drop;
+
+    if (prefer == PS1_DUP_BOTH || vcdCount <= 0 || cueCount <= 0)
+        return total;
+    drop = (unsigned char *)calloc(total, 1);
+    if (drop == NULL)
+        return total;
+    for (i = 0; i < vcdCount; i++) {
+        const char *key = ps1TwinKey(rows[i].name);
+        for (j = vcdCount; j < total; j++) {
+            if (!drop[j] && !strcasecmp(key, ps1TwinKey(rows[j].name))) {
+                if (prefer == PS1_DUP_EMBER) {
+                    drop[i] = 1; // one Ember twin is enough to hide this VCD
+                    break;
+                }
+                drop[j] = 1; // POPSTARTER: hide every Ember copy of it
+            }
+        }
+    }
+    for (i = 0; i < total; i++) {
+        if (!drop[i]) {
+            if (out != i) {
+                rows[out] = rows[i];
+                if (parallel != NULL)
+                    memcpy((char *)parallel + (size_t)out * stride, (char *)parallel + (size_t)i * stride, stride);
+            }
+            out++;
+        }
+    }
+    free(drop);
+    return out;
+}
+
 int ps1GameListNeedsRetry(void)
 {
     return ps1ScanIncomplete;
@@ -1147,6 +1217,8 @@ int ps1FillGameList(const char *devPrefix, base_game_info_t **outGames)
 
     free(vcdGames);
     free(cueGames);
+
+    total = ps1DropTwins(merged, NULL, 0, vcdCount, cueCount, gPs1Duplicates);
 
     // Gated on the same Automatic Sorting switch every other list honours. With it off the halves
     // stay concatenated in scan order, which is the "raw directory order" the setting promises.

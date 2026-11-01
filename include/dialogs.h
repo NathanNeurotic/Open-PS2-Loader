@@ -327,7 +327,8 @@ enum UI_ITEMS {
     MMCE_SETTINGS_BUTTON,
     UICFG_GAME_LIST_BUTTON,
     UICFG_GAME_TYPE_LABELS,
-    UICFG_CFG_TITLES, // #918: rows show and sort by the CFG Title; default off
+    UICFG_CFG_TITLES,     // #918: rows show and sort by the CFG Title; default off
+    UICFG_PS1_DUPLICATES, // PS1 Duplicates: Both, Ember, POPSTARTER (RIPPS2 build 126)
     SECURITY_PARENTAL_BUTTON,
     ADV_PREFIX_BUTTON,
     ADV_STORAGE_BUTTON,
@@ -337,6 +338,7 @@ enum UI_ITEMS {
     UICFG_THEME_VIEW,
     UICFG_LIBRARY,
     UICFG_THEME_ALT_BG,
+    UICFG_BOOT_THEME_WAIT,
     UICFG_FONT_SIZE, // #757: Interface page Font Size enum (FONT_SIZE_*)
     UICFG_GLYPH_SET, // Interface page Button Glyphs enum (GLYPH_SET_*)
 

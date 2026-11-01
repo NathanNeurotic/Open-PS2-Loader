@@ -91,6 +91,8 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_THEME                      "theme"
 #define CONFIG_OPL_THEME_VIEW                 "theme_view"   // list/coverflow/psbbn/grid; absent = the theme's default view
 #define CONFIG_OPL_THEME_ALT_BG               "theme_alt_bg" // 1 = the theme's alt= background (themeviews.h); absent = its default=
+// Boot Theme Wait: seconds the intro waits for the saved theme; 0 = off
+#define CONFIG_OPL_BOOT_THEME_WAIT            "boot_theme_wait"
 #define CONFIG_OPL_LANGUAGE                   "language_text"
 #define CONFIG_OPL_SCROLLING                  "scrolling"
 #define CONFIG_OPL_BGCOLOR                    "bg_color"
@@ -115,6 +117,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_APPS_DISPLAY               "apps_display"
 #define CONFIG_OPL_GAME_TYPE_LABELS           "game_type_labels"    // show [PS1]/[PS2] prefixes in game lists; default off
 #define CONFIG_OPL_CFG_TITLES                 "cfg_titles_in_lists" // show each game's CFG Title in game lists (#918); default off
+#define CONFIG_OPL_PS1_DUPLICATES             "ps1_duplicates"      // PS1_DUP_*: VCD + Ember twins shown once or twice; default both
 // Remembered L3 position, one character per IO mode -- see libViewStoreToConfig in src/libview.c.
 // Two keys because the Both/Favorites/APPS ring and the device Mixed ring keep separate positions.
 // These live in the LAST set, beside "last_played": both are browse position rather than settings,

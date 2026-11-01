@@ -42,6 +42,7 @@
 #include "include/cheatman.h"
 #include "include/cheatconfig.h"
 #include "include/sound.h"
+#include "include/diaglog.h"
 #include "include/guigame.h"
 #include "include/texcache.h"
 #include "include/appsupport.h" // appGetObject() -- push a live Art Delay change onto the APPS list
@@ -2951,6 +2952,7 @@ static int guiSettingsShowInterface(void)
     guiSetAppsViewPicker(ui);
     guiSetThemeViewPicker(ui);
     diaSetInt(ui, UICFG_THEME_ALT_BG, gThemeAltBackground);
+    diaSetInt(ui, UICFG_BOOT_THEME_WAIT, gBootThemeWait);
     guiSetLibraryPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
@@ -2961,6 +2963,9 @@ static int guiSettingsShowInterface(void)
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(ui, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     diaSetInt(ui, UICFG_CFG_TITLES, gCfgTitlesInLists);
+    const char *ps1DupNames[] = {_l(_STR_PS1_DUPLICATES_BOTH), "Ember", "POPSTARTER", NULL};
+    diaSetEnum(ui, UICFG_PS1_DUPLICATES, ps1DupNames);
+    diaSetInt(ui, UICFG_PS1_DUPLICATES, gPs1Duplicates);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -3013,15 +3018,19 @@ reshow_interface:
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         {
-            int previousCfgTitles = gCfgTitlesInLists;
+            int previousCfgTitles = gCfgTitlesInLists, previousPs1Dup = gPs1Duplicates;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-            // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
-            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
+            diaGetInt(ui, UICFG_PS1_DUPLICATES, &gPs1Duplicates);
+            // A Sort Games or PS1 Duplicates change rebuilds every list; the CFG Title rebuild already does exactly that.
+            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort || previousPs1Dup != gPs1Duplicates;
+            if (previousPs1Dup != gPs1Duplicates)
+                hddVcdInvalidateCache(); // the HDD PS1 list applies the setting when it is built
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         themeViewRequest = guiReadThemeViewPicker(ui);
         diaGetInt(ui, UICFG_THEME_ALT_BG, &altBackgroundRequest);
+        diaGetInt(ui, UICFG_BOOT_THEME_WAIT, &gBootThemeWait);
         // With a view change pending, the alt change waits for that reload so the theme loads once.
         viewPending = themeViewRequest != gThemeViewRequest;
         if (!viewPending)
@@ -3046,6 +3055,10 @@ reshow_interface:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
+        // A theme picked here is the user's choice, even the built-in one, so the save writes it although a saved
+        // disk theme is still waiting for its drive (_saveConfig keeps the saved name only while nothing was picked).
+        if (previousTheme != themeID)
+            configSetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, thmGetValue());
         if (viewPending) {
             gThemeAltBackground = altBackgroundRequest;
             if (!thmSetView(themeViewRequest)) // reloads only when the theme now shows a different view
@@ -4488,8 +4501,19 @@ static void guiShow()
         screenHandler->renderScreen();
 }
 
-// The longest the greeting waits for the drive that holds the saved theme (RIPPS2 build 125 uses 6 s)
-#define THEME_HOLD_MS 6000
+// The longest the greeting waits for the drive that holds the saved theme: the Boot Theme Wait setting, in seconds
+// (Settings > Interface; RIPPS2 build 125 used 6 s). Off (0) by default: the menu opens straight away and the saved
+// theme replaces the built-in one as soon as its drive is up. Clamped so a hand-edited config cannot park the intro.
+#define THEME_HOLD_MAX_S 10
+static int themeHoldMs(void)
+{
+    int s = gBootThemeWait;
+    if (s <= 0)
+        return 0;
+    if (s > THEME_HOLD_MAX_S)
+        s = THEME_HOLD_MAX_S;
+    return s * 1000;
+}
 
 void guiIntroLoop(void)
 {
@@ -4504,9 +4528,14 @@ void guiIntroLoop(void)
     clock_t tFadeDelay = 0;
     int tFadeArmed = 0;
     // RIPPS2 build 125 (AK): a saved disk theme whose drive is not up yet keeps the greeting on screen, so the built-in
-    // theme does not show for a moment before the saved one replaces it. Bounded: at most THEME_HOLD_MS after init.
+    // theme does not show for a moment before the saved one replaces it. Bounded: at most Boot Theme Wait seconds after init, and off by default.
     clock_t tInitDone = 0;
     int tInitSeen = 0;
+    // For the DIAG.TXT line at the end: how long the greeting waited for the saved theme and the boot sound.
+    clock_t tHoldLast = 0;
+    clock_t tHoldStart = 0; // first frame the hold was active: the DIAG duration counts only the hold itself
+    int tHoldSeen = 0;      // a hold happened (clock() can in principle read 0, so the timestamps cannot say it)
+    int fadeDelayLogMs = 0;
 
     // oplIsBootInProgress() can become false while background startup work is still queued. That
     // is correct for runtime overlays, but the animated greeting owns the entire intro lifecycle.
@@ -4535,6 +4564,7 @@ void guiIntroLoop(void)
             int fadeDelayMs = sfxGetSoundDuration(SFX_BOOT) - fadeDuration;
             if (fadeDelayMs < 0)
                 fadeDelayMs = 0;
+            fadeDelayLogMs = fadeDelayMs;
             tFadeDelay = (clock_t)fadeDelayMs * (CLOCKS_PER_SEC / 1000);
             tFadeArmed = 1;
         }
@@ -4542,12 +4572,23 @@ void guiIntroLoop(void)
         if (gInitComplete && !tInitSeen) {
             tInitDone = clock();
             tInitSeen = 1;
+            diagLog("boot: devices started");
         }
-        int themeHold = greetingAlpha == 0x80 && tInitSeen && thmSavedThemePending() &&
-                        (clock() - tInitDone) < (clock_t)THEME_HOLD_MS * (CLOCKS_PER_SEC / 1000);
+        int themeHold = greetingAlpha == 0x80 && tInitSeen && themeHoldMs() > 0 && thmSavedThemePending() &&
+                        (clock() - tInitDone) < (clock_t)themeHoldMs() * (CLOCKS_PER_SEC / 1000);
+        if (themeHold) {
+            if (!tHoldSeen) {
+                tHoldStart = clock();
+                tHoldSeen = 1;
+            }
+            tHoldLast = clock();
+        }
 
-        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold)
+        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold) {
+            if (greetingAlpha == 0x80)
+                diagLog("boot: intro fading out");
             greetingAlpha -= 2;
+        }
 
         if (greetingAlpha <= 0)
             endIntro = 1;
@@ -4571,6 +4612,9 @@ void guiIntroLoop(void)
         }
     }
     gIntroSplashActive = 0;
+    diagLog("boot: intro done; held %d ms for the saved theme, boot sound %s, fade delay %d ms",
+            tHoldSeen ? (int)((tHoldLast - tHoldStart) / (CLOCKS_PER_SEC / 1000)) : 0, gEnableBootSND ? "on" : "off",
+            fadeDelayLogMs);
 }
 
 void guiMainLoop(void)
