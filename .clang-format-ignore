@@ -6,6 +6,7 @@
 ./src/md5.c
 ./include/md5.h
 ./modules/network/smbman-ra
+./modules/mx4sio_bd
 ./modules/usb/usbd-ra
 ./modules/bdmassault
 ./modules/ilink/iLinkman
