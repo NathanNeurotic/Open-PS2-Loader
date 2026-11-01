@@ -34,7 +34,7 @@ initialization order and never flashes firmware. The actual module/partition
 behavior is not verified on a real DESR yet; ISO discovery and launching may
 still fail pending DESR testing. Normal PS2 hardware never starts those drivers.
 
-Only the external [pcm720](https://github.com/pcm720) `bsd-dvr` [Neutrino](https://github.com/rickgaiser/neutrino) implementation can launch these ISO
+Only the external [pcm720](https://github.com/pcm720) `bsd-dvr` [Neutrino](https://github.com/ps2max32/neutrino) implementation can launch these ISO
 rows. The regular bundled Neutrino typically does not contain DVR modules.
 Install the FULL DVR-capable Neutrino directory on an accessible device and
 select its `neutrino.elf` using [RiptOPL](https://github.com/NathanNeurotic/RiptOPL)'s **Neutrino Path** setting.
@@ -62,7 +62,7 @@ backend's ownership contract, but still requires DESR hardware validation.
    and DESR-7000 hardware, including cold boots, repeat boots, and clean exit.
 2. Confirm `dvr_hdd0:` partition labels and read-only `dvr_pfsN:` mounts for
    both hardware families. No writes, deletions, format or firmware changes.
-3. Verify the external [pcm720](https://github.com/pcm720) `bsd-dvr` [Neutrino](https://github.com/rickgaiser/neutrino) handoff and PSX-mode transition.
+3. Verify the external [pcm720](https://github.com/pcm720) `bsd-dvr` [Neutrino](https://github.com/ps2max32/neutrino) handoff and PSX-mode transition.
 4. Confirm game-ID extraction from `SYSTEM.CNF` for non-ID ISO filenames and
    provide any additional DVR-only settings if hardware demands them.
 
@@ -70,7 +70,7 @@ backend's ownership contract, but still requires DESR hardware validation.
 of testing this RiptOPL integration.
 
 The GUI's bundled initialization modules come from PS2SDK (`dvrdrv.irx` and
-`dvrfile.irx`) and are independent of [pcm720](https://github.com/pcm720)'s custom [Neutrino](https://github.com/rickgaiser/neutrino) modules.
+`dvrfile.irx`) and are independent of [pcm720](https://github.com/pcm720)'s custom [Neutrino](https://github.com/ps2max32/neutrino) modules.
 Credit: ps2dev / PS2SDK, wLaunchELF DVR support, pcm720's bsd-dvr branch.
 
 Automatic launch from remembered DVR entries remains disabled until the
