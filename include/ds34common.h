@@ -13,11 +13,11 @@
 #define DS4_PID_SLIM        0x09CC // PS4 Slim Controller
 #define GUITAR_HERO_PS3_PID 0x0100 // PS3 Guitar Hero Guitar
 #define ROCK_BAND_PS3_PID   0x0200 // PS3 Rock Band Guitar
-// ShanWan "PS3" clone pad in its generic HID mode. It answers neither the DS3 enable feature report
-// nor the DS3 LED/rumble output report, and its input report is a plain HID gamepad report (see
-// translate_pad_shanwan). Found and mapped by freergam3r: https://github.com/Fgr-35/Modified-drivers-for-usb-controller-in-opl
+// ShanWan 2563:0575 generic HID pad. The contributor describes a wireless PS2-style unit
+// with an ANALOG mode switch, not a PS/Home button. This input-only path skips DS3 enable
+// and LED/rumble reports. Source layout contributed by freergam3r: https://github.com/Fgr-35/Modified-drivers-for-usb-controller-in-opl
 #define SHANWAN_VID         0x2563 // ShenZhen ShanWan Technology
-#define SHANWAN_PS3_PID     0x0575 // fake PS3 pad, generic HID mode
+#define SHANWAN_PS3_PID     0x0575 // generic HID pad; legacy identifier retained for compatibility
 #ifdef DS5_ENABLE
 #define DS5_PID 0x0CE6 // PS5 DualSense Controller
 #endif
@@ -115,12 +115,14 @@ struct ds2report
 } __attribute__((packed));
 
 /**
- * Translate a ShanWan clone (SHANWAN_VID/SHANWAN_PS3_PID) input report into DS2 pad data.
- * Report layout, as mapped on hardware by freergam3r (no report ID byte):
+ * Translate a ShanWan generic HID (SHANWAN_VID/SHANWAN_PS3_PID) report into DS2 pad data.
+ * Current seven-byte interpretation, adapted from freergam3r (no report ID byte):
  *   in[0]: bit0 Triangle, bit1 Circle, bit2 Cross, bit3 Square, bit4 L1, bit5 R1, bit6 L2, bit7 R2
  *   in[1]: bit0 Select, bit1 Start, bit2 L3, bit3 R3
  *   in[2]: low nibble hat switch, 0 = up, clockwise to 7 = up-left, 8 and above = released
  *   in[3], in[4]: left stick X, Y      in[5], in[6]: right stick X, Y
+ * Axis labels describe this parser; console/menu acceptance in both ANALOG modes is pending.
+ * See docs/SHANWAN-CONTROLLER.md for evidence boundaries and capture requirements.
  * The pad has no pressure sensors: pressure is 255 while a button is held, as for the DS4.
  */
 static inline void translate_pad_shanwan(const uint8_t *in, struct ds2report *out)
