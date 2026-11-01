@@ -328,8 +328,8 @@ check(re.search(r'static void cdvdman_poff_thread\(void \*arg\)\n\{\n\s*SleepThr
 module_make = read('modules/iopcore/cdvdman/Makefile')
 check(re.match(r'IOP_OBJS = cdvdman\.o ', module_make) is not None, 'cdvdman.o is in every CDVDMAN variant')
 top = read('Makefile')
-variants = re.findall(r'\t\$\(MAKE\) \$\(CDVDMAN_PS2LOGO_FLAGS\)[^\n]*?(USE_[A-Z_]+)=1 -C \$< all', top)
-check(len(variants) == 10, 'ten CDVDMAN variants in the top Makefile (got %d)' % len(variants))
+variants = re.findall(r'\t\$\(MAKE\) \$\(CDVDMAN_PS2LOGO_FLAGS\)[^\n]*?(USE_[A-Z0-9_]+)=1 -C \$< all', top)
+check(len(variants) == 11, 'eleven CDVDMAN variants in the top Makefile (got %d)' % len(variants))  # smb2_cdvdman is the 11th
 
 
 def variant_defines(use, debug, diag):

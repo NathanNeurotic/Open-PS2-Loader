@@ -236,6 +236,7 @@ int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived
 int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
 int gNetProtocolPick; // last protocol chosen, never OFF (see opl.h)
 int gUdpfsAccessMode; // UDPFS Files/IMG preference, independent of UDPBD
+int gSMBDialect;      // SMB_DIALECT_V1 / SMB_DIALECT_V2
 int gNetStartMode;    // START_MODE_* -- the Off/Manual/Auto network start row (see the 3-row Network setting)
 int gAutosort;
 int gAutoRefresh;
@@ -3817,8 +3818,11 @@ static void _loadConfig()
             // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
             // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that
             // had eth_mode=0 gets Manual. Any non-SMB protocol forces SMB off (preserves UDPBD-wins).
-            // NOTE(rebuild): the fork also loads the SMB dialect (gSMBDialect, SMBv1/SMB2) here --
-            // that returns with checklist item 4; until then the rebuild speaks SMBv1 unconditionally.
+            // SMB dialect. A missing key is SMBv1 (every config written before the row existed), and
+            // anything that is not exactly SMB2 falls back to SMBv1 too: losing SMB2 is recoverable,
+            // selecting a driver this build does not have is not. (Autolaunch has no SMB path.)
+            if (!configGetInt(configOPL, CONFIG_OPL_SMB_DIALECT, &gSMBDialect) || gSMBDialect != SMB_DIALECT_V2)
+                gSMBDialect = SMB_DIALECT_V1;
             gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
             gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
             if (gNetworkProtocol == NET_PROTO_SMB) {
@@ -4354,8 +4358,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, gNetBootProtocol);
         // Dual-write: the authoritative unified selector PLUS the three legacy keys (derived shadows),
         // so a config saved by this build still boots correctly on an older OPL that only reads the legacy keys.
-        // NOTE(rebuild): the fork also persists the SMB dialect here (item 4).
         configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
+        configSetInt(configOPL, CONFIG_OPL_SMB_DIALECT, gSMBDialect);
         configSetInt(configOPL, CONFIG_OPL_NET_START_MODE, gNetStartMode);
         configSetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, gNetProtocolPick);
         configSetInt(configOPL, CONFIG_OPL_UDPFS_ACCESS, gUdpfsAccessMode);
@@ -5405,6 +5409,7 @@ static void setDefaults(void)
     gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
     gNetProtocolPick = NET_PROTO_SMB;
     gUdpfsAccessMode = 0; // UDPFS Files; never inherit UDPBD's forced IMG
+    gSMBDialect = SMB_DIALECT_V1;
 
     frameCounter = 0;
 

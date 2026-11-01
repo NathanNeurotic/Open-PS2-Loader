@@ -128,6 +128,12 @@ Bundled third-party software, shipped in the release package and NOT part of Rip
     Apache-2.0 licence; the upstream GPL option is not used. Shipped in the RA
     package as LICENSE-MBEDTLS.txt; not compiled into standard or Korium builds.
 
+  - libsmb2, by Ronnie Sahlberg (sahlberg)   https://github.com/sahlberg/libsmb2
+    The SMB2 client under smb2man.irx, the menu's SMB2 browse driver. Vendored
+    unmodified at upstream commit c6e4997 (modules/network/smb2man/libsmb2, see
+    VENDORED.txt there) and used under the LGPL-2.1 licence. The in-game SMB2
+    reader (smb2_cdvdman) is separate code and does not use it.
+
   - POPStarter, by krHACKen          https://www.psx-place.com/resources/popstarter.683/
     A PS1 launcher built around Sony's native POPS emulator for the PS2, used as
     RiptOPL's primary PS1 core alongside Ember. POPStarter provides the
