@@ -1230,6 +1230,26 @@ static int configPathIsRawApa(const char *path)
     return path != NULL && !strncmp(path, "hdd", 3) && path[3] >= '0' && path[3] <= '9' && path[4] == ':';
 }
 
+// Did a failed read-only openFile() establish that the file is not there? Only then may the caller
+// skip its second (buffered) open of the same path.
+// - "mc?:" still unresolved: checkFile() found no card and never reached open(); errno is whatever
+//   checkMC()'s card probes left (often ENOENT), so it says nothing about the file. A card that comes
+//   up before the retry must still be read.
+// - mass: bdmfs_fatfs reports the negated FatFs FRESULT, not an errno. FR_NO_FILE (4) / FR_NO_PATH (5)
+//   mean absent; FR_INT_ERR (2) is numerically ENOENT but is an internal error, so it is retried.
+// - every other device (mmce, mc, pfs, ...): ENOENT. Where a driver reports no ENOENT at all (the
+//   SDK's mmceman may return a bare -1), the file is simply opened twice, as before.
+static int configOpenFailureIsAbsent(const char *path, int err)
+{
+    if (path == NULL)
+        return 0;
+    if (!strncmp(path, "mc", 2) && path[2] == '?')
+        return 0;
+    if (!strncmp(path, "mass", 4))
+        return err == 4 || err == 5;
+    return err == ENOENT;
+}
+
 // Single-shot fast path for small configs (issue #500). Small CFG files (few KB)
 // are common for per-game configs. Reading the whole file in one IOP transaction
 // avoids the 4KB buffered refill loop and the extra BOM probe in openFileBuffer.
@@ -1244,9 +1264,9 @@ static file_buffer_t *configOpenSingleShot(const char *path, int *missing)
     errno = 0;
     int fd = openFile((char *)path, O_RDONLY);
     if (fd < 0) {
-        // Only a file the device reports as absent (ENOENT) skips the buffered retry. A timeout, a
-        // busy bus or any other failure leaves errno different, so the caller still opens it again.
-        *missing = (errno == ENOENT);
+        // Only a file the device reports as absent skips the buffered retry. A timeout, a busy bus or
+        // any other failure leaves a different code, so the caller still opens it again.
+        *missing = configOpenFailureIsAbsent(path, errno);
         return NULL;
     }
 

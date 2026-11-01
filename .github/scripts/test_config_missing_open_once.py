@@ -11,6 +11,9 @@ against a counting openFile() and checks:
 - a missing file (the device says ENOENT): exactly one open, NULL result;
 - a first open that fails for another reason (EIO: a timeout or a busy bus) and then succeeds: the
   buffered reader retries and reads the file;
+- an "mc?:" path whose card did not resolve (errno left at ENOENT by the card probe): retried;
+- a mass path: FatFs FR_NO_FILE (4) is absent and opened once; FR_INT_ERR (2, numerically ENOENT) is
+  retried;
 - a small file: one open, read single-shot, the buffered reader is not used;
 - an oversized file (> 4 KB): the single-shot path gives up and the buffered reader still opens it;
 - every read-only open in configRead() and configOpenCarryOver() goes through configOpenForRead.
@@ -39,6 +42,7 @@ def function_text(source, signature):
     raise SystemExit(f'unterminated {signature}')
 
 
+absent = function_text(src, 'static int configOpenFailureIsAbsent(const char *path, int err)')
 single = function_text(src, 'static file_buffer_t *configOpenSingleShot(const char *path, int *missing)')
 for_read = function_text(src, 'static file_buffer_t *configOpenForRead(const char *path)')
 
@@ -62,13 +66,13 @@ program = r'''
 #define O_RDONLY 0
 typedef struct { int size; } file_buffer_t;
 
-static int opens, bufferedOpens, fileExists, fileSize, failFirstWith;
+static int opens, bufferedOpens, fileExists, fileSize, failFirstWith, missingErr = ENOENT;
 static int openFile(char *path, int mode)
 {
     (void)path; (void)mode;
     opens++;
     if (opens == 1 && failFirstWith) { errno = failFirstWith; return -1; }
-    if (!fileExists) { errno = ENOENT; return -1; }
+    if (!fileExists) { errno = missingErr; return -1; }
     return 3;
 }
 static int getFileSize(int fd) { (void)fd; return fileSize; }
@@ -86,6 +90,7 @@ static file_buffer_t *openFileBuffer(char *p, int mode, short a, unsigned int s)
     return &storeBuffered;
 }
 
+@ABSENT@
 @SINGLE@
 @FOR_READ@
 
@@ -114,6 +119,27 @@ int main()
     CHECK(opens == 2 && bufferedOpens == 1, "transient failure: %d opens, %d buffered", opens, bufferedOpens);
     failFirstWith = 0;
 
+    {
+        char mcPath[] = "mc?:OPL/conf_opl.cfg";
+        opens = bufferedOpens = 0; fileExists = 1; fileSize = 900; failFirstWith = ENOENT;
+        fb = configOpenForRead(mcPath);
+        CHECK(fb == &storeBuffered, "an unresolved mc?: card was taken as a missing file");
+        CHECK(opens == 2 && bufferedOpens == 1, "unresolved mc?: %d opens, %d buffered", opens, bufferedOpens);
+        failFirstWith = 0;
+
+        char massPath[] = "mass0:OPL/conf_opl.cfg";
+        opens = bufferedOpens = 0; fileExists = 0; fileSize = 0; missingErr = 4; // FR_NO_FILE
+        fb = configOpenForRead(massPath);
+        CHECK(fb == NULL && opens == 1 && bufferedOpens == 0, "mass FR_NO_FILE: %d opens, %d buffered", opens, bufferedOpens);
+        missingErr = ENOENT;
+
+        opens = bufferedOpens = 0; fileExists = 1; fileSize = 900; failFirstWith = 2; // FR_INT_ERR
+        fb = configOpenForRead(massPath);
+        CHECK(fb == &storeBuffered, "mass FR_INT_ERR (2 == ENOENT) was taken as a missing file");
+        CHECK(opens == 2 && bufferedOpens == 1, "mass FR_INT_ERR: %d opens, %d buffered", opens, bufferedOpens);
+        failFirstWith = 0;
+    }
+
     opens = bufferedOpens = 0; fileExists = 1; fileSize = 9000;
     fb = configOpenForRead(path);
     CHECK(fb == &storeBuffered, "oversized file not handed to the buffered reader");
@@ -125,7 +151,7 @@ int main()
     return 0;
 }
 '''
-program = program.replace('@SINGLE@', single).replace('@FOR_READ@', for_read)
+program = program.replace('@ABSENT@', absent).replace('@SINGLE@', single).replace('@FOR_READ@', for_read)
 
 with tempfile.TemporaryDirectory() as tmp:
     c = Path(tmp) / 'config_open_once.c'

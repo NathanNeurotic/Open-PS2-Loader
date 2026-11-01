@@ -3417,6 +3417,7 @@ static void resolveBootDirToMass(void)
                 }
                 delay(1);
             }
+            diagLog("settings: %s not readable after 10 tries, keeping it as the settings home", devRoot);
         }
         // Card still settling after the wait. It served this very ELF milliseconds ago, so it IS present
         // -- it just has not re-registered its mmceman filesystem yet. Do NOT blank gBootDir and re-home
