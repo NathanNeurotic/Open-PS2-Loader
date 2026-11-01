@@ -22,6 +22,10 @@ build. That is the layout of a test build that started from uLaunchELF on an MMC
 compressed build showed a black screen; this build has not been tried on that console yet, so if it
 does not start for you either, say so when you report.
 
+RiptOPL is licensed under the Academic Free License 3.0 (LICENSE; contributors in CREDITS). The ELF
+embeds the smb2man driver, built on libsmb2 by Ronnie Sahlberg (https://github.com/sahlberg/libsmb2),
+LGPL-2.1: its licence and the vendored commit are in licenses/libsmb2/.
+
 How to use it
 -------------
 1. Copy RIPTOPL-BUGREPORT.ELF next to your normal RIPTOPL.ELF (for example to mc0:/APP_RIPTOPL/ or

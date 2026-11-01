@@ -24,6 +24,12 @@ from pathlib import Path
 FLAVOURS = ("OFFICIALROLLING", "PS2DEVROLLING", "OFFICIALPINNED", "PS2DEVPINNED")
 README = Path(__file__).with_name("bugreport_readme.txt")
 ISSUES = "https://github.com/NathanNeurotic/Open-PS2-Loader/issues"
+ROOT = Path(__file__).resolve().parents[2]
+# What the zip carries besides the ELF: RiptOPL's own licence and credits, and the licence of libsmb2
+# (LGPL-2.1), which the embedded smb2man driver is built on and which asks to travel with a binary.
+LICENCES = {"LICENSE": "LICENSE", "CREDITS": "CREDITS",
+            "licenses/libsmb2/LICENCE-LGPL-2.1.txt": "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt",
+            "licenses/libsmb2/VENDORED.txt": "modules/network/smb2man/libsmb2/VENDORED.txt"}
 
 
 def check_layout(elf):
@@ -63,6 +69,8 @@ def pack(folder, version):
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
         bundle.writestr("RIPTOPL-BUGREPORT.ELF", elf)
         bundle.writestr("README.txt", readme(version, chosen))
+        for name, source in LICENCES.items():
+            bundle.writestr(name, (ROOT / source).read_bytes())
     return archive, chosen
 
 

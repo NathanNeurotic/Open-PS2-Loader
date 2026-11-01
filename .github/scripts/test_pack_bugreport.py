@@ -31,7 +31,10 @@ class PackBugReportTests(unittest.TestCase):
             archive, flavour = pack_bugreport.pack(folder, "v1.2.0-Beta-4540")
             self.assertEqual((archive.name, flavour), ("RIPTOPL-BUGREPORT-v1.2.0-Beta-4540.zip", "OFFICIALROLLING"))
             with zipfile.ZipFile(archive) as bundle:
-                self.assertEqual(sorted(bundle.namelist()), ["README.txt", "RIPTOPL-BUGREPORT.ELF"])
+                self.assertEqual(sorted(bundle.namelist()), [
+                    "CREDITS", "LICENSE", "README.txt", "RIPTOPL-BUGREPORT.ELF",
+                    "licenses/libsmb2/LICENCE-LGPL-2.1.txt", "licenses/libsmb2/VENDORED.txt"])
+                self.assertIn(b"GNU LESSER GENERAL PUBLIC LICENSE", bundle.read("licenses/libsmb2/LICENCE-LGPL-2.1.txt"))
                 self.assertEqual(bundle.read("RIPTOPL-BUGREPORT.ELF"), elf(tag=b"official"))
                 text = bundle.read("README.txt").decode()
                 self.assertTrue(text.startswith("RiptOPL bug-report build, v1.2.0-Beta-4540\r\n" + "=" * 42 + "\r\n"))
