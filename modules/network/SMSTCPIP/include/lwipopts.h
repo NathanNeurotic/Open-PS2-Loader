@@ -231,8 +231,31 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* IP reassembly and segmentation. These are orthogonal even
    if they both deal with IP fragments */
+#ifdef INGAME_DRIVER
+/* In-game IOP memory (Kingdom Hearts II over SMB ran out: OPL-DualSense-BT
+   8bb581a), with the fragment path kept where it can still matter.
+
+   IP_FRAG 0: nothing the in-game stack sends can exceed the SMAP MTU of
+   1500. tcp_in.c caps a connection's segment size at min(peer MSS, TCP_MSS)
+   = 1460 bytes plus 40 of headers; raudp builds its 1472-byte telemetry
+   frames itself, below the stack; the RA discovery datagrams are under
+   200 bytes. ip_frag()'s 1500-byte static buffer was never used in a game.
+
+   IP_REASSEMBLY stays on, with its buffer cut from 5760 to 1536 bytes. A
+   hop between the SMB server and the console with an MTU under 1500, and a
+   server that does not set DF, still delivers the server's 1500-byte
+   segments as two fragments, and those must reassemble or SMB stalls. The
+   server never sends a datagram over 1500 bytes (it segments to our MSS),
+   so 1536 covers every datagram that can arrive over the game's session.
+   Together 5790 bytes of static buffers go back to the game.
+   .github/scripts/test_usbd_pad_pool.py holds these numbers to the code. */
+#define IP_REASSEMBLY    1
+#define IP_FRAG          0
+#define IP_REASS_BUFSIZE 1536 /* a multiple of 64: ip_frag.c sizes its bitmap as BUFSIZE / 64 */
+#else
 #define IP_REASSEMBLY 1
 #define IP_FRAG       1
+#endif
 
 /* ---------- ICMP options ---------- */
 #define ICMP_TTL 255
