@@ -65,9 +65,12 @@ void _libcglue_args_parse(int argc, char **argv) {}
 //   * libkernel's iopcontrol.o and loadfile.o reference printf/snprintf (SifIopReboot) and
 //     open/lseek/close (SifExecModuleFile). Neither function is used here, but an undefined
 //     reference extracts the newlib objects before --gc-sections can see they are dead.
-// Defining the symbols here satisfies the references without extracting anything; every stub
-// below is unreferenced in the final link and is dropped by --gc-sections (verified with nm:
-// none of printf, snprintf, open, close or lseek survives), so no live code path changes.
+// Defining the symbols here satisfies the references without extracting anything. The
+// _ps2sdk_fileXio_init/_deinit overrides are live: fileXioInit() really calls them, and the SDK
+// versions only swap the libcglue file-op table in and out, which this loader never uses (no
+// newlib descriptor layer is linked). The printf/snprintf/open/close/lseek stubs are linker-only:
+// nothing calls them, so --gc-sections drops them (verified with nm: none survives). The loader's
+// own code paths are unchanged.
 void _ps2sdk_fileXio_init(void) {}
 void _ps2sdk_fileXio_deinit(void) {}
 int printf(const char *format, ...)
