@@ -5,6 +5,13 @@
   device off and RiptOPL booted from the memory card: nothing on the console says where it stopped.
   The watchdog runs above every other EE thread, so it still gets the CPU when the GUI thread spins
   or waits forever. What it cannot survive is the EE with interrupts off (DelayThread never returns).
+
+  An EE exception (a NULL pointer, a bad address, a reserved instruction ...) looked the same: with no
+  handler the kernel parks the CPU, so the watchdog never ran either and the screen just froze. The
+  crash catcher (from YAOPL, Roman Kelesidis: yaopl/yaopl ebffcf6) takes those exceptions, sends the
+  crashed thread into crashReport() on a stack of its own and writes RIPTOPL-CRASH.TXT with the
+  exception, the registers and the code addresses on the stack. A VBlank interrupt handler (YAOPL
+  c1fdeb0) keeps the last PCs it interrupted, so a freeze report also says where the EE was running.
 */
 
 #ifdef __OPLDIAG
@@ -18,6 +25,7 @@
 #include <unistd.h>
 #include <kernel.h>
 #include <delaythread.h>
+#include <ee_debug.h> // the crash catcher's exception handlers (libeedebug)
 
 #include "include/opl.h"
 #include "include/gui.h"
@@ -46,6 +54,22 @@ static int guiThreadId = -1;
 static u8 watchStack[MENUWATCH_STACK_SIZE] __attribute__((aligned(16)));
 static char report[MENUWATCH_REPORT_SIZE];
 static char logCopy[MENUWATCH_LOG_SIZE];
+
+// Crash catcher state. The exception handler runs in exception context (no kernel calls): it only
+// copies registers here and redirects the thread into crashReport().
+#define CRASH_STACK_SIZE (16 * 1024)
+#define EPC_SAMPLES      16
+typedef struct
+{
+    u32 cause, epc, badvaddr, status;
+    u32 at, v0, v1, a0, a1, a2, a3, t0, t1, t2, t3, s0, s1, s2, s3, s4, s5, s6, s7, t9, gp, sp, fp, ra;
+} crash_regs_t;
+static crash_regs_t crashRegs;
+static volatile int crashCount;
+static u8 crashStack[CRASH_STACK_SIZE] __attribute__((aligned(16)));
+static volatile u32 epcRing[EPC_SAMPLES];
+static volatile u32 epcTicks;
+extern char _ftext[], _etext[];
 
 static const char *stepName(int step)
 {
@@ -134,6 +158,20 @@ static int add(int len, const char *fmt, ...)
     return len < MENUWATCH_REPORT_SIZE - 1 ? len : MENUWATCH_REPORT_SIZE - 1;
 }
 
+// The last PCs the VBlank interrupt found the EE at, oldest first: where a spinning thread spins.
+static int addEpcSamples(int len)
+{
+    u32 ticks = epcTicks;
+    int i, n = ticks < EPC_SAMPLES ? (int)ticks : EPC_SAMPLES;
+
+    if (n == 0)
+        return add(len, "PC at the last VBlanks: none sampled\r\n");
+    len = add(len, "PC at the last %d VBlanks (oldest first, code is %08x-%08x):", n, (unsigned)(uintptr_t)_ftext, (unsigned)(uintptr_t)_etext);
+    for (i = n; i > 0; i--)
+        len = add(len, " %08x", (unsigned)epcRing[(ticks - i) % EPC_SAMPLES]);
+    return add(len, "\r\n");
+}
+
 static int buildReport(int stalledFor, int frameAge, int frame)
 {
     char frameNote[64];
@@ -152,11 +190,12 @@ static int buildReport(int stalledFor, int frameAge, int frame)
               "RiptOPL %s menu freeze report\r\n"
               "%d s after boot, stuck for %d s, %s\r\n"
               "GUI thread %d last entered: %s\r\n"
-              "longest run of missed pad reads: %u polls; of empty reads: %u polls\r\n\r\n"
-              "EE threads (id, state, priority, entry, wait type/id, wakeups):\r\n",
+              "longest run of missed pad reads: %u polls; of empty reads: %u polls\r\n\r\n",
               OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), stalledFor, frameNote,
               guiThreadId, stepName(watchStep), (unsigned)notReady, (unsigned)empty);
 
+    len = addEpcSamples(len);
+    len = add(len, "\r\nEE threads (id, state, priority, entry, wait type/id, wakeups):\r\n");
     for (id = 1; id < 256; id++) {
         if (ReferThreadStatus(id, &status) < 0)
             continue;
@@ -223,6 +262,8 @@ static void watchThread(void *arg)
             stallLimit = isBootStep(watchStep) ? MENUWATCH_BOOT_S : MENUWATCH_STALL_S;
         if (++stalledPolls < stallLimit * (1000000 / MENUWATCH_POLL_US))
             continue;
+        if (crashCount)
+            SleepThread(); // the crash report covers it: the crashed thread drew no frame since
 
         // A boot stage first shows its own colour for 5 s: that needs nothing but the GS.
         bootColour(lastStep);
@@ -235,6 +276,184 @@ static void watchThread(void *arg)
             screen(0xFF, 0x80, 0x00); // orange: the report could not be written
         SleepThread();                // one report per boot
     }
+}
+
+static const char *exceptionName(u32 code)
+{
+    switch (code) {
+        case 1:
+            return "TLB modified";
+        case 2:
+            return "TLB miss on a load or fetch (bad pointer)";
+        case 3:
+            return "TLB miss on a store (bad pointer)";
+        case 4:
+            return "address error on a load or fetch (unaligned or kernel address)";
+        case 5:
+            return "address error on a store (unaligned or kernel address)";
+        case 6:
+            return "bus error on an instruction fetch";
+        case 7:
+            return "bus error on a data access";
+        case 10:
+            return "reserved instruction";
+        case 11:
+            return "coprocessor unusable";
+        case 12:
+            return "arithmetic overflow";
+        case 13:
+            return "trap";
+        default:
+            return "?";
+    }
+}
+
+// A second exception while reporting: keep the first report's state and stop this thread.
+static void crashPark(void)
+{
+    for (;;)
+        SleepThread();
+}
+
+// Runs in the thread that raised the exception, on crashStack, after crashException() returned into it.
+static void crashReport(void)
+{
+    const u32 *stack;
+    int len, i, n, logLen, wrapped = 0, tid = GetThreadId();
+    u32 code = (crashRegs.cause >> 2) & 0x1F;
+    ee_thread_status_t status;
+
+    screen(0x80, 0x00, 0x00); // dark red: an exception was caught, the report is being written
+    len = add(0,
+              "RiptOPL %s menu CRASH report\r\n"
+              "%d s after boot, exception %u: %s\r\n"
+              "in thread %d%s, GUI thread last entered: %s\r\n\r\n"
+              "EPC %08x  BadVAddr %08x  Cause %08x  Status %08x\r\n"
+              "at %08x v0 %08x v1 %08x a0 %08x a1 %08x a2 %08x a3 %08x\r\n"
+              "t0 %08x t1 %08x t2 %08x t3 %08x t9 %08x\r\n"
+              "s0 %08x s1 %08x s2 %08x s3 %08x s4 %08x s5 %08x s6 %08x s7 %08x\r\n"
+              "gp %08x sp %08x fp %08x ra %08x\r\n",
+              OPL_VERSION, (int)(clock() / CLOCKS_PER_SEC), (unsigned)code, exceptionName(code),
+              tid, tid == guiThreadId ? " (GUI)" : "", stepName(watchStep),
+              (unsigned)crashRegs.epc, (unsigned)crashRegs.badvaddr, (unsigned)crashRegs.cause, (unsigned)crashRegs.status,
+              (unsigned)crashRegs.at, (unsigned)crashRegs.v0, (unsigned)crashRegs.v1, (unsigned)crashRegs.a0,
+              (unsigned)crashRegs.a1, (unsigned)crashRegs.a2, (unsigned)crashRegs.a3,
+              (unsigned)crashRegs.t0, (unsigned)crashRegs.t1, (unsigned)crashRegs.t2, (unsigned)crashRegs.t3, (unsigned)crashRegs.t9,
+              (unsigned)crashRegs.s0, (unsigned)crashRegs.s1, (unsigned)crashRegs.s2, (unsigned)crashRegs.s3,
+              (unsigned)crashRegs.s4, (unsigned)crashRegs.s5, (unsigned)crashRegs.s6, (unsigned)crashRegs.s7,
+              (unsigned)crashRegs.gp, (unsigned)crashRegs.sp, (unsigned)crashRegs.fp, (unsigned)crashRegs.ra);
+    if (ReferThreadStatus(tid, &status) >= 0)
+        len = add(len, "thread entry %08x, priority %d\r\n", (unsigned)(uintptr_t)status.func, status.current_priority);
+
+    // Code addresses on the crashed thread's stack: mostly return addresses, a rough backtrace to look
+    // up in the build's map file. Only a sane, aligned stack pointer in main RAM is read.
+    len = add(len, "\r\nCode addresses on the stack (callers first found first):\r\n");
+    if (crashRegs.sp >= 0x00100000 && crashRegs.sp < 0x01FFF000 && (crashRegs.sp & 3) == 0) {
+        stack = (const u32 *)(uintptr_t)crashRegs.sp;
+        for (i = 0, n = 0; i < 512 && n < 32 && crashRegs.sp + (u32)i * 4 < 0x02000000; i++) {
+            if (stack[i] >= (u32)(uintptr_t)_ftext && stack[i] < (u32)(uintptr_t)_etext && (stack[i] & 3) == 0) {
+                len = add(len, "%08x%s", (unsigned)stack[i], (++n % 8) == 0 ? "\r\n" : " ");
+            }
+        }
+        if (n % 8)
+            len = add(len, "\r\n");
+    } else
+        len = add(len, "(stack pointer not readable)\r\n");
+
+    len = addEpcSamples(len);
+    len = add(len, "\r\nEE threads (id, state, priority, entry, wait type/id, wakeups):\r\n");
+    for (i = 1; i < 256; i++) {
+        if (ReferThreadStatus(i, &status) < 0)
+            continue;
+        len = add(len, "%3d %-12s prio %3d entry %08x wait %u/%u wakeups %u%s\r\n", i, threadState(status.status),
+                  status.current_priority, (unsigned)(uintptr_t)status.func, (unsigned)status.waitType, (unsigned)status.waitId,
+                  (unsigned)status.wakeupCount, i == tid ? "  <- crashed" : (i == guiThreadId ? "  <- GUI" : ""));
+    }
+    logLen = diagCopy(logCopy, sizeof(logCopy) - 1, &wrapped);
+    logCopy[logLen] = '\0';
+    len = add(len, "\r\nLog%s:\r\n%s", wrapped ? " (oldest lines rolled out)" : "", logCopy);
+
+    if (writeReport("mc0:/RIPTOPL-CRASH.TXT", len) || writeReport("mc1:/RIPTOPL-CRASH.TXT", len))
+        screen(0x00, 0xFF, 0x00); // green: the report is on the card
+    else
+        screen(0xFF, 0x80, 0x00); // orange: the report could not be written
+    crashPark();
+}
+
+// libeedebug level 1 handler, in exception context: no kernel calls here.
+static int crashException(EE_RegFrame *frame)
+{
+    if (crashCount++ == 0) {
+        crashRegs.cause = frame->cause;
+        crashRegs.epc = frame->epc;
+        crashRegs.badvaddr = frame->badvaddr;
+        crashRegs.status = frame->status;
+        crashRegs.at = frame->at[0];
+        crashRegs.v0 = frame->v0[0];
+        crashRegs.v1 = frame->v1[0];
+        crashRegs.a0 = frame->a0[0];
+        crashRegs.a1 = frame->a1[0];
+        crashRegs.a2 = frame->a2[0];
+        crashRegs.a3 = frame->a3[0];
+        crashRegs.t0 = frame->t0[0];
+        crashRegs.t1 = frame->t1[0];
+        crashRegs.t2 = frame->t2[0];
+        crashRegs.t3 = frame->t3[0];
+        crashRegs.s0 = frame->s0[0];
+        crashRegs.s1 = frame->s1[0];
+        crashRegs.s2 = frame->s2[0];
+        crashRegs.s3 = frame->s3[0];
+        crashRegs.s4 = frame->s4[0];
+        crashRegs.s5 = frame->s5[0];
+        crashRegs.s6 = frame->s6[0];
+        crashRegs.s7 = frame->s7[0];
+        crashRegs.t9 = frame->t9[0];
+        crashRegs.gp = frame->gp[0];
+        crashRegs.sp = frame->sp[0];
+        crashRegs.fp = frame->fp[0];
+        crashRegs.ra = frame->ra[0];
+        frame->epc = (u32)&crashReport;
+    } else
+        frame->epc = (u32)&crashPark; // an exception in the report itself (or a second thread): keep the first
+    // Resume on a stack of our own: the crashed thread's may be what broke.
+    frame->sp[0] = (u32)(crashStack + CRASH_STACK_SIZE - 64);
+    frame->gp[0] = (u32)&_gp;
+    frame->ra[0] = 0;
+    return 0;
+}
+
+// Samples the interrupted PC every VBlank: the freeze and crash reports list the last ones.
+static int epcSampler(int cause)
+{
+    u32 epc;
+
+    (void)cause;
+    __asm__ __volatile__("mfc0 %0, $14"
+                         : "=r"(epc));
+    epcRing[epcTicks % EPC_SAMPLES] = epc;
+    epcTicks++;
+    ExitHandler();
+    return 0;
+}
+
+static void crashCatcherStart(void)
+{
+    // TLB, address and bus errors, reserved instruction, coprocessor unusable, overflow, trap: the
+    // exceptions that otherwise park the CPU without a word (YAOPL's set, caught on a console there).
+    static const int codes[] = {1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13};
+    unsigned int i;
+    int handler;
+
+    if (ee_dbg_install(1) < 0) {
+        diagLog("crash catcher: libeedebug did not install");
+        return;
+    }
+    for (i = 0; i < sizeof(codes) / sizeof(codes[0]); i++)
+        ee_dbg_set_level1_handler(codes[i], &crashException);
+    handler = AddIntcHandler(INTC_VBLANK_S, &epcSampler, 0);
+    if (handler >= 0)
+        EnableIntc(INTC_VBLANK_S);
+    diagLog("crash catcher on, VBlank PC sampler %s", handler >= 0 ? "on" : "failed");
 }
 
 void menuWatchStep(int step)
@@ -259,6 +478,7 @@ void menuWatchStart(void)
 
     bootTrace("watchdog started");
     guiThreadId = GetThreadId();
+    crashCatcherStart();
     memset(&thread, 0, sizeof(thread));
     thread.func = (void *)&watchThread;
     thread.stack = watchStack;
