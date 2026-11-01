@@ -248,7 +248,7 @@ static void padLockCheck(struct pad_data_t *pad)
     }
     if ((u32)(cpu_ticks() - pad->lockSentTicks) < PAD_LOCK_SETTLE_TICKS)
         return;
-    if (padGetState(pad->port, pad->slot) != PAD_STATE_STABLE)
+    if (!isPadReadyState(padGetState(pad->port, pad->slot)))
         return;
     req = padGetReqState(pad->port, pad->slot);
     if (req == PAD_RSTAT_BUSY)

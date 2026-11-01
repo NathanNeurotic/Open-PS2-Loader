@@ -340,6 +340,23 @@ int main(void)
     frames(100, KEY_DOWN);
     expect("0x73 -> 0x79 on a locked pad: extra lock requests", lockRequests - before, 0);
 
+    /* 6b. A confirmed lock that is lost (by whatever path) is noticed at the next ANALOG press and sent again. */
+    reset(0x73, 1);
+    frames(100, KEY_DOWN); /* locked and confirmed by the quiet gate */
+    expect("lost lock: confirmed before", LOCKED_FIELD, 1);
+    before = lockRequests;
+    int cleared = 0;
+    simLocked = 0;
+    pressAnalog();
+    for (int i = 0; i < 150; i++) {
+        frame(KEY_DOWN);
+        if (!LOCKED_FIELD)
+            cleared = 1;
+    }
+    expect("lost lock: the software lock flag cleared after the mode change", cleared, 1);
+    expect("lost lock: lock requests sent again", lockRequests - before, 1);
+    expect("lost lock: the pad is locked again", simLocked, 1);
+
     /* 7. No DualShock modes: no lock request. */
     reset(0x41, 0);
     simExId = 0;
