@@ -330,7 +330,7 @@ endif
 
 ifeq ($(OPLDIAG),1)
   EE_CFLAGS += -D__OPLDIAG
-  EE_LIBS += -ldebug # boot trace text screen (menuwatch)
+  EE_LIBS += -ldebug -leedebug # boot trace text screen, crash catcher (menuwatch)
 endif
 
 ifeq ($(INGAMEDIAG),1)
