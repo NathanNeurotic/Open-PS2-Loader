@@ -256,6 +256,8 @@ int gFontSize;
 int gGlyphSet;
 // Alternate Background: the theme's alt= pictures instead of its default= ones (themeviews.h).
 int gThemeAltBackground;
+// Boot Theme Wait: seconds the intro holds for a saved disk theme whose drive is not up yet (guiIntroLoop).
+int gBootThemeWait;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
 int gYOff;
@@ -3557,6 +3559,9 @@ static void _loadConfig()
             configReadFontSize(configOPL);
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
+            configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
 
             if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
@@ -4232,7 +4237,11 @@ static void _saveConfig()
     if (lscstatus & CONFIG_OPL) {
         config_set_t *configOPL = configGetByType(CONFIG_OPL);
         configSetInt(configOPL, CONFIG_OPL_SCROLLING, gScrollSpeed);
-        configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
+        // Keep the saved disk theme while its drive has not offered it yet. Boot Theme Wait is off by default, so the
+        // menu (and a settings save) can come before that, and writing the built-in fallback on screen would lose the
+        // user's theme for good. An explicit pick on the Interface page writes the key itself (guiShowInterfaceConfig).
+        if (!thmSavedThemePending())
+            configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
         if (gThemeViewRequest >= 0)
             configSetStr(configOPL, CONFIG_OPL_THEME_VIEW, thmViewName(gThemeViewRequest));
         else
@@ -4260,6 +4269,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_FONT_SIZE, gFontSize);
         configSetInt(configOPL, CONFIG_OPL_GLYPH_SET, gGlyphSet);
         configSetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, gThemeAltBackground);
+        configSetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, gBootThemeWait);
         configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
         configSetInt(configOPL, CONFIG_OPL_YOFF, gYOff);
@@ -5279,6 +5289,7 @@ static void setDefaults(void)
     gFontSize = FONT_SIZE_DEFAULT;
     gGlyphSet = GLYPH_SET_THEME;
     gThemeAltBackground = 0; // the theme's default= pictures (KrahJohlito's alt= idea)
+    gBootThemeWait = 0;      // off: the menu opens without waiting, and the saved theme replaces the built-in one later
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;
@@ -5712,6 +5723,9 @@ static void miniInit(int mode)
             configReadFontSize(configOPL);
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
+            configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);

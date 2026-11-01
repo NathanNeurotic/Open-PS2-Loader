@@ -48,6 +48,11 @@ a theme with `alt=` is reloaded when the setting changes. Per-game background ar
 theme's picture while a game is selected. See
 [THEME_ENGINE.md, Alternate background](THEME_ENGINE.md#alternate-background-alt--this-fork).
 
+**Boot Theme Wait**, under Alternate Background, is how many seconds (0 to 10) the start-up screen waits
+for your saved theme while the drive that holds it is still starting up, so the built-in theme does not show
+for a moment first. It is Off (0) on fresh configurations: the menu opens right away and the saved theme
+replaces the built-in one as soon as its drive is up. Saved as `boot_theme_wait`; 6 is the old fixed wait.
+
 Both flow views rotate navigation on the main game list: Left/Right browse covers and Up/Down
 change sources. R3 remains Favorite, and info/settings screens keep their normal controls.
 **Coverflow Settings** tunes the `Coverflow` renderer; PSBBN Flow uses its fixed layout and
