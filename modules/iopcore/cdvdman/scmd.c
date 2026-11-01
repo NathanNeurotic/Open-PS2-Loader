@@ -124,8 +124,8 @@ int sceCdBreak(void)
 {
     DPRINTF("sceCdBreak\n");
 
-    if (sync_flag)
-        return 0;
+    if (sync_flag) // a read is in flight: stop it (Tales of the Abyss, #185) instead of refusing the break
+        return cdvdman_BreakRead();
 
     cdvdman_stat.status = SCECdStatPause;
 
