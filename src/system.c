@@ -2950,6 +2950,21 @@ static int sysPlaceIgrOverlay(void)
 }
 #endif
 
+// The OSD history record a launch path wrote EARLY, before sysLaunchLoaderElf (the MMCE path: the card may
+// switch folders on that write, and the switch has to be over before the IOP reset). Keyed by name, so a
+// launch that bails after the early write only skips the record of a retry of the same game, once.
+static char sysHistoryRecorded[32];
+
+void sysAddHistoryRecord(const char *filename)
+{
+#if (!defined(__DEBUG) && !defined(_DTL_T10000))
+    AddHistoryRecordUsingFullPath(filename);
+    snprintf(sysHistoryRecorded, sizeof(sysHistoryRecorded), "%s", filename);
+#else
+    (void)filename;
+#endif
+}
+
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags)
 {
     unsigned int modules, ModuleStorageSize;
@@ -2969,7 +2984,9 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 
     ethGetNetConfig(local_ip_address, local_netmask, local_gateway);
 #if (!defined(__DEBUG) && !defined(_DTL_T10000))
-    AddHistoryRecordUsingFullPath(filename);
+    if (strcmp(sysHistoryRecorded, filename) != 0) // not already written early by the launch path
+        AddHistoryRecordUsingFullPath(filename);
+    sysHistoryRecorded[0] = '\0';
 #endif
 
     if (gExitPath[0] == '\0')

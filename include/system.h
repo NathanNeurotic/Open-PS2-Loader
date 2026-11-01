@@ -116,6 +116,8 @@ int sysInitDECI2(void);
 #endif
 
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags);
+// Write the OSD history record now instead of in sysLaunchLoaderElf (a launch path whose device reacts to the write).
+void sysAddHistoryRecord(const char *filename);
 
 int sysLoadModuleBuffer(void *buffer, int size, int argc, char *argv);
 int sysCheckMC(void);

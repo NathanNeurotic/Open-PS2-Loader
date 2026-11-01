@@ -191,7 +191,9 @@ wait = mmce[mmce.index('static int mmceWaitCardReady('):]
 wait = wait[:wait.index('\n}\n') + 3]
 swap = mmce[mmce.index('void mmceWaitSwapDone('):]
 swap = swap[:swap.index('\n}\n') + 3]
-defines = ''.join(line + '\n' for line in mmce.splitlines() if line.startswith(('#define MMCE_GAMEID_START', '#define MMCE_GAMEID_QUERY', '#define MMCE_CARD_READY')))
+hist = mmce[mmce.index('void mmceWaitHistorySwitch('):]
+hist = hist[:hist.index('\n}\n') + 3]
+defines = ''.join(line + '\n' for line in mmce.splitlines() if line.startswith(('#define MMCE_GAMEID_START', '#define MMCE_GAMEID_QUERY', '#define MMCE_CARD_READY', '#define MMCE_HISTORY_SWITCH')))
 loop = send[send.index('    int queryFailures = 0;'):]
 mmce_program = r'''
 #include <assert.h>
@@ -227,7 +229,8 @@ static void guiRenderTextScreen(const char *s) { (void)s; }
 static void DelayThread(int us) { slept += us; }
 ''' + r'''
 static char mmceGameIdTarget[8] = "mmce0:/";
-''' + wait + swap + r'''
+static int mmceGameIdSwitchSeen;
+''' + wait + swap + hist + r'''
 static int sendWait(const char *mmceDevice, const char *startup)
 {
     (void)startup; /* LOG discards it here */
@@ -303,6 +306,25 @@ int main(void)
     calls = 0;
     mmceWaitSwapDone("test"); assert(calls == 1);                  /* presence but no busy query: ~0 ms */
     noBusyQuery = 0;
+
+    /* The history-write wait: idle for the whole window, a switch that begins (busy, or silence), skipped. */
+    mmceGameIdSwitchSeen = 0;
+    memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1; calls = 0;
+    mmceWaitHistorySwitch("mmce0:/", "test"); assert(calls == MMCE_HISTORY_SWITCH_WINDOW_MS / MMCE_HISTORY_SWITCH_POLL_MS); /* no switch: the window */
+    const int idleThenBusy[] = {0, 0, 1, 1, 0};
+    memcpy(script, idleThenBusy, sizeof(idleThenBusy)); scriptLen = 5; calls = 0;
+    mmceWaitHistorySwitch("mmce0:/", "test"); assert(calls == 5);           /* the switch began (busy): waited out */
+    const int idleThenSilent[] = {0, -1, -1, -1, -1, 1, 0}; /* the presence probe reads the 4th silent slot */
+    memcpy(script, idleThenSilent, sizeof(idleThenSilent)); scriptLen = 7; calls = 0;
+    mmceWaitHistorySwitch("mmce0:/", "test"); assert(calls == 7);           /* the switch began (silence), then loading: waited out */
+    noBusyQuery = 1;
+    memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = 0;
+    mmceWaitHistorySwitch("mmce0:/", "test"); assert(calls == MMCE_GAMEID_QUERY_FAILURES); /* no busy query: not held for the window */
+    noBusyQuery = 0;
+    mmceGameIdSwitchSeen = 1;
+    memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1; calls = 0;
+    mmceWaitHistorySwitch("mmce0:/", "test"); assert(calls == 0);           /* the Game ID send already switched the card: skipped */
+    mmceGameIdSwitchSeen = 0;
     return 0;
 }
 '''
@@ -312,7 +334,7 @@ with tempfile.TemporaryDirectory(prefix='ripps2-mmce-') as temp:
     exe = Path(temp) / 'mmce.exe'
     subprocess.run(['cc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', str(src), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
-print('ok   MMCE Game ID: failed busy queries are retried and never read as ready; a silent card is a swap, waited out before the handoff')
+print('ok   MMCE Game ID: failed busy queries are retried and never read as ready; a silent card is a swap, waited out before the handoff; the card\'s own switch after the history write is waited out too')
 
 new_library = fnt[fnt.index('static FT_Error fntNewLibrary('):]
 new_library = new_library[:new_library.index('\n}\n')]
