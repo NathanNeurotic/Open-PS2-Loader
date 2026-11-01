@@ -2504,3 +2504,11 @@ gui_strings:
 - comment: SMB game set to Neutrino, but a path, share, user or password is too long, or the addresses are unknown.
   label: NEUTRINO_SMB_LIMITS
   string: These SMB settings are beyond Neutrino's limits -- launching with the OPL core.
+- comment: Interface setting (from RIPPS2 build 126). A PS1 game kept both as a POPSTARTER VCD and as an Ember image.
+  label: PS1_DUPLICATES
+  string: PS1 Duplicates
+- label: HINT_PS1_DUPLICATES
+  string: "A PS1 game that is both a POPSTARTER VCD and an Ember image. Both: two rows. Ember: the Ember one only. POPSTARTER: the VCD only. The same title, ignoring case and a leading disc ID, is the same game. Display only."
+- comment: PS1 Duplicates choice that keeps both rows.
+  label: PS1_DUPLICATES_BOTH
+  string: Both

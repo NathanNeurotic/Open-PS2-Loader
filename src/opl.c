@@ -199,6 +199,7 @@ int gDefaultGameView;
 int gAppsDisplay;
 int gGameTypeLabels;
 int gCfgTitlesInLists;
+int gPs1Duplicates; // PS1_DUP_*: a game both as a POPSTARTER VCD and an Ember image shows once or twice
 int gEmberDisplay;
 int gEmberTiming;
 int gEmberDither;
@@ -3654,6 +3655,9 @@ static void _loadConfig()
             gGameTypeLabels = gGameTypeLabels ? 1 : 0;
             configGetInt(configOPL, CONFIG_OPL_CFG_TITLES, &gCfgTitlesInLists);
             gCfgTitlesInLists = gCfgTitlesInLists ? 1 : 0;
+            configGetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, &gPs1Duplicates);
+            if (gPs1Duplicates < PS1_DUP_BOTH || gPs1Duplicates > PS1_DUP_POPSTARTER)
+                gPs1Duplicates = PS1_DUP_BOTH;
             // Where the user left each L3 page last session. Read from the LAST set (the same
             // configReadMulti above filled it), but sequenced HERE, after the two display settings
             // above: the restore validates every remembered position against what its mode can
@@ -4282,6 +4286,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
         configSetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels);
         configSetInt(configOPL, CONFIG_OPL_CFG_TITLES, gCfgTitlesInLists);
+        configSetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, gPs1Duplicates);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
@@ -5296,8 +5301,9 @@ static void setDefaults(void)
     gNeutrinoShowArgs = 0;
     gDefaultGameView = GAME_VIEW_BOTH;
     gAppsDisplay = APPS_DISPLAY_MIXED;
-    gGameTypeLabels = 0;   // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
-    gCfgTitlesInLists = 0; // #918: reading every CFG per list rebuild slows SMB/MMCE/MX4SIO; opt-in only
+    gGameTypeLabels = 0;           // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
+    gCfgTitlesInLists = 0;         // #918: reading every CFG per list rebuild slows SMB/MMCE/MX4SIO; opt-in only
+    gPs1Duplicates = PS1_DUP_BOTH; // both rows, as before the setting existed
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;

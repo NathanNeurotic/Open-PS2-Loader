@@ -1066,6 +1066,50 @@ int cueFillGameList(const char *devPrefix, base_game_info_t **outGames)
 
 static int ps1ScanIncomplete;
 
+/* Interface > PS1 Duplicates (from RIPPS2 build 126): a game kept both as a POPSTARTER VCD and as an
+   Ember image shows once, as the one picked. Two rows are twins when their names match ignoring
+   letter case and a leading disc ID ("SLUS_005.94."), which POPSTARTER VCD names often carry.
+   Display only: nothing on the device changes, and Both (the default) keeps both rows. */
+static const char *ps1TwinKey(const char *name)
+{
+    size_t n = strlen(name);
+    if (n > 12 && name[4] == '_' && name[8] == '.' && (name[11] == '.' || name[11] == '_' || name[11] == ' '))
+        return name + 12;
+    return name;
+}
+
+// rows holds vcdCount VCD rows, then cueCount Ember rows. Returns the number of rows kept, packed at
+// the front in their order. Out of memory keeps every row (the setting is cosmetic, the list is not).
+static int ps1DropTwins(base_game_info_t *rows, int vcdCount, int cueCount, int prefer)
+{
+    int i, j, out = 0, total = vcdCount + cueCount;
+    unsigned char *drop;
+
+    if (prefer == PS1_DUP_BOTH || vcdCount <= 0 || cueCount <= 0)
+        return total;
+    drop = (unsigned char *)calloc(total, 1);
+    if (drop == NULL)
+        return total;
+    for (i = 0; i < vcdCount; i++) {
+        const char *key = ps1TwinKey(rows[i].name);
+        for (j = vcdCount; j < total; j++) {
+            if (!drop[j] && !strcasecmp(key, ps1TwinKey(rows[j].name))) {
+                drop[prefer == PS1_DUP_EMBER ? i : j] = 1;
+                break;
+            }
+        }
+    }
+    for (i = 0; i < total; i++) {
+        if (!drop[i]) {
+            if (out != i)
+                rows[out] = rows[i];
+            out++;
+        }
+    }
+    free(drop);
+    return out;
+}
+
 int ps1GameListNeedsRetry(void)
 {
     return ps1ScanIncomplete;
@@ -1147,6 +1191,8 @@ int ps1FillGameList(const char *devPrefix, base_game_info_t **outGames)
 
     free(vcdGames);
     free(cueGames);
+
+    total = ps1DropTwins(merged, vcdCount, cueCount, gPs1Duplicates);
 
     // Gated on the same Automatic Sorting switch every other list honours. With it off the halves
     // stay concatenated in scan order, which is the "raw directory order" the setting promises.

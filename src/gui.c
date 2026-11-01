@@ -2946,6 +2946,9 @@ static int guiSettingsShowInterface(void)
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(ui, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     diaSetInt(ui, UICFG_CFG_TITLES, gCfgTitlesInLists);
+    const char *ps1DupNames[] = {_l(_STR_PS1_DUPLICATES_BOTH), "Ember", "POPSTARTER", NULL};
+    diaSetEnum(ui, UICFG_PS1_DUPLICATES, ps1DupNames);
+    diaSetInt(ui, UICFG_PS1_DUPLICATES, gPs1Duplicates);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -2998,10 +3001,11 @@ reshow_interface:
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         {
-            int previousCfgTitles = gCfgTitlesInLists;
+            int previousCfgTitles = gCfgTitlesInLists, previousPs1Dup = gPs1Duplicates;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-            // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
-            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
+            diaGetInt(ui, UICFG_PS1_DUPLICATES, &gPs1Duplicates);
+            // A Sort Games or PS1 Duplicates change rebuilds every list; the CFG Title rebuild already does exactly that.
+            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort || previousPs1Dup != gPs1Duplicates;
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
