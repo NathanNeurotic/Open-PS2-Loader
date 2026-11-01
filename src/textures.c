@@ -167,7 +167,6 @@ typedef struct
     png_bytep trans;
 } png_texture_t;
 
-static png_texture_t pngTexture;
 static volatile int *gTexAbortFlag;
 static int gTexAbortThreadId = -1;
 
@@ -690,18 +689,20 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer, u32 *stagedSize
     return 0;
 }
 
-static void texPrepareClut(GSTEXTURE *texture, int clutEntries)
+// The palette state is per load: the GUI thread and the art/IO worker decode PNGs at the same time, and a
+// shared static could hand one load the other's palette (YAOPL 2380267, Roman Kelesidis).
+static void texPrepareClut(GSTEXTURE *texture, const png_texture_t *pngTexture, int clutEntries)
 {
     png_clut_t *clut = (png_clut_t *)texture->Clut;
-    int paletteEntries = pngTexture.numPalette < clutEntries ? pngTexture.numPalette : clutEntries;
+    int paletteEntries = pngTexture->numPalette < clutEntries ? pngTexture->numPalette : clutEntries;
 
     memset(&clut[paletteEntries], 0, (clutEntries - paletteEntries) * sizeof(clut[0]));
 
     for (int i = 0; i < paletteEntries; i++) {
-        clut[i].red = pngTexture.palette[i].red;
-        clut[i].green = pngTexture.palette[i].green;
-        clut[i].blue = pngTexture.palette[i].blue;
-        clut[i].alpha = (i < pngTexture.numTrans) ? (pngTexture.trans[i] >> 1) : 0x80;
+        clut[i].red = pngTexture->palette[i].red;
+        clut[i].green = pngTexture->palette[i].green;
+        clut[i].blue = pngTexture->palette[i].blue;
+        clut[i].alpha = (i < pngTexture->numTrans) ? (pngTexture->trans[i] >> 1) : 0x80;
     }
 
     if (clutEntries == 256) {
@@ -837,6 +838,7 @@ static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr
 
 static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const void *memBuf, u32 memSize)
 {
+    png_texture_t pngTexture = {NULL, 0, 0, NULL}; // this load's palette, see texPrepareClut
     int fd = -1;
     int bitDepth, colorType, interlaceType;
     int result;
@@ -987,6 +989,9 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
         return texEnd(pngPtr, infoPtr, pFileBuffer, fd, aborted ? ERR_LOAD_ABORTED : ERR_SET_JMP);
     }
 
+    // Let libpng refuse images larger than texSizeValidate() accepts when it reads the header, before it
+    // allocates rows for them (YAOPL 07c868d).
+    png_set_user_limits(pngPtr, 1024, 1024);
     png_set_read_fn(pngPtr, readData, readFunction);
     png_set_sig_bytes(pngPtr, 0);
     png_read_info(pngPtr, infoPtr);
@@ -1032,11 +1037,6 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
             texPngReadRow = &texReadPixels24Row;
             break;
         case PNG_COLOR_TYPE_PALETTE:
-            pngTexture.palette = NULL;
-            pngTexture.numPalette = 0;
-            pngTexture.trans = NULL;
-            pngTexture.numTrans = 0;
-
             png_get_PLTE(pngPtr, infoPtr, &pngTexture.palette, &pngTexture.numPalette);
             png_get_tRNS(pngPtr, infoPtr, &pngTexture.trans, &pngTexture.numTrans, NULL);
             texture->ClutPSM = GS_PSM_CT32;
@@ -1047,7 +1047,7 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
                 if (texture->Clut == NULL)
                     return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_FILE_IO); // Clut OOM: file present -> transient, not absent
                 memset(texture->Clut, 0, gsKit_texture_size_ee(8, 2, GS_PSM_CT32));
-                texPrepareClut(texture, 16);
+                texPrepareClut(texture, &pngTexture, 16);
                 texPngReadRow = &texReadPixels4Row;
             } else if (bitDepth == 8) {
                 texture->PSM = GS_PSM_T8;
@@ -1055,7 +1055,7 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
                 if (texture->Clut == NULL)
                     return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_FILE_IO); // Clut OOM: file present -> transient, not absent
                 memset(texture->Clut, 0, gsKit_texture_size_ee(16, 16, GS_PSM_CT32));
-                texPrepareClut(texture, 256);
+                texPrepareClut(texture, &pngTexture, 256);
                 texPngReadRow = &texReadPixels8Row;
             } else
                 return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_BAD_DEPTH);
