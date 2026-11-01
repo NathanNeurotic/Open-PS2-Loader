@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - rebuild/main
-      - claude/project-thread-pc2jg6-wiki-publish  # TEMP: dry-run test, removed before merge
     paths:
       - 'docs/**'
       - 'CHANGELOG'
