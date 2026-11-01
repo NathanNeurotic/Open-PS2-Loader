@@ -303,7 +303,7 @@ static void readReport(u8 *data, int pad_idx)
     }
     if (pad->type == SHANWAN) { // no report ID: data[0] is a button byte and can be 0
         translate_pad_shanwan(data, &pad->ds2);
-        padMacroPerform(&pad->ds2, 0); // ANALOG switches report mode; no PS/Home input is established for this unit
+        padMacroPerform(&pad->ds2, 0); // ANALOG is a mode button; no PS/Home input is established for this unit
         return;
     }
     if (data[0]) {
