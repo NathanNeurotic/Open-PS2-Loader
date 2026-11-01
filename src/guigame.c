@@ -1576,7 +1576,7 @@ static int compatShownNeutrino = 0;
 // to 1, so every SHIPPED build has these entries and the list length no longer varies between
 // published flavours. Selecting either must clear a triple-confirm before it is saved.
 #ifdef GSM_1080P
-#define GSM_VMODE_1080P_IDX 29
+#define GSM_VMODE_1080P_IDX    29
 #define GSM_VMODE_1080P_43_IDX 30
 
 // 1080p is GSM-synthetic and hardware-confirmed, but it remains a non-standard raster that not every
