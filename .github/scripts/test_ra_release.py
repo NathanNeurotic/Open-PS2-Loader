@@ -37,7 +37,7 @@ class ReleaseTests(unittest.TestCase):
                     (folder / "Korium.patch").write_bytes(b"same theme patch")
 
     def assets(self):
-        names = {"RIPTOPL-RetroAchievements-src-test.zip"}
+        names = {"RIPTOPL-RetroAchievements-src-test.zip", "LICENSE-LIBSMB2.txt"}
         for theme in publisher.THEMES:
             names.update((f"RIPTOPL-RA-{theme}.ELF", f"APP_RIPTOPL-RA-{theme}.psu",
                           f"RIPTOPL-RetroAchievements-{theme}-test.zip"))
@@ -306,6 +306,13 @@ class Libsmb2LicenceShippingTest(unittest.TestCase):
         self.assertIn('cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "rolling/$kind/LICENSE-LIBSMB2.txt"', workflow)
         notes = (root / ".github/scripts/normalize_release_notes.py").read_text(encoding="utf-8")
         self.assertIn('"LICENSE-LIBSMB2.txt": "LGPL-2.1 licence of libsmb2', notes)
+        # The RA channel publishes standalone RA ELFs too, so the licence is an RA asset as well, and a
+        # PR preview bootstrapped from an older standard kit still passes the verifier.
+        ra = (root / ".github/scripts/package_ra_release.py").read_text(encoding="utf-8")
+        self.assertIn('shutil.copyfile(app.LIBSMB2_LICENCE, destination / "LICENSE-LIBSMB2.txt")', ra)
+        self.assertIn('shutil.copyfile(app.LIBSMB2_LICENCE, args.output / "LICENSE-LIBSMB2.txt")', ra)
+        publish = (root / ".github/scripts/publish_ra_release.py").read_text(encoding="utf-8")
+        self.assertIn('"LICENSE-LIBSMB2.txt"}', publish)
 
 
 if __name__ == "__main__":
