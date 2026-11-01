@@ -185,6 +185,7 @@ static void reset(int aligned)
     pad_data[0].state = PAD_STATE_STABLE;
     pad_data[0].actuators = 2;
     pad_data[0].actAligned = aligned;
+    pad_data[0].locked = 1; /* the ANALOG lock is test_pad_mode_lock.py's subject, not this one's */
     pad_data[1].port = 1;
     pad_data[1].state = PAD_STATE_DISCONN;
     for (i = 0; i < 16; i++)
