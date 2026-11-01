@@ -4495,6 +4495,7 @@ void guiIntroLoop(void)
     int tInitSeen = 0;
     // For the DIAG.TXT line at the end: how long the greeting waited for the saved theme and the boot sound.
     clock_t tHoldLast = 0;
+    clock_t tHoldStart = 0; // first frame the hold was active: the DIAG duration counts only the hold itself
     int fadeDelayLogMs = 0;
 
     // oplIsBootInProgress() can become false while background startup work is still queued. That
@@ -4536,8 +4537,11 @@ void guiIntroLoop(void)
         }
         int themeHold = greetingAlpha == 0x80 && tInitSeen && thmSavedThemePending() &&
                         (clock() - tInitDone) < (clock_t)THEME_HOLD_MS * (CLOCKS_PER_SEC / 1000);
-        if (themeHold)
+        if (themeHold) {
+            if (!tHoldLast)
+                tHoldStart = clock();
             tHoldLast = clock();
+        }
 
         if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold)
             greetingAlpha -= 2;
@@ -4565,7 +4569,7 @@ void guiIntroLoop(void)
     }
     gIntroSplashActive = 0;
     diagLog("boot: intro done; held %d ms for the saved theme, boot sound wait %d ms",
-            tHoldLast ? (int)((tHoldLast - tInitDone) / (CLOCKS_PER_SEC / 1000)) : 0, fadeDelayLogMs);
+            tHoldLast ? (int)((tHoldLast - tHoldStart) / (CLOCKS_PER_SEC / 1000)) : 0, fadeDelayLogMs);
 }
 
 void guiMainLoop(void)
