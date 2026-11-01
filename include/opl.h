@@ -368,6 +368,7 @@ extern int gWideScreen;
 extern int gFontSize;           // FONT_SIZE_* (fntsys.h)
 extern int gGlyphSet;           // GLYPH_SET_* (themes.h); GLYPH_SET_THEME follows the theme
 extern int gThemeAltBackground; // Alternate Background: the theme's alt= pictures (thmApplyAltBackground)
+extern int gBootThemeWait;      // Boot Theme Wait: seconds the intro holds for the saved theme (0 = off)
 extern int gVMode;              // 0 - Auto, 1 - PAL, 2 - NTSC
 extern int gXOff;
 extern int gYOff;
