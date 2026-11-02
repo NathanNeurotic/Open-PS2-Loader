@@ -372,6 +372,17 @@ network streaming and Neutrino HDD-launch conventions.</p>
 </div>
 
 <div class="credit">
+<dt><a href="https://github.com/sahlberg">Ronnie Sahlberg</a> — <a href="https://github.com/sahlberg/libsmb2">libsmb2</a> / <a href="https://github.com/sahlberg/usmb2">usmb2</a></dt>
+<dd>
+<p>For <a href="https://github.com/sahlberg/libsmb2"><b>libsmb2</b></a>, the base of RiptOPL's SMB2 driver
+(see <a href="smb.html">SMB</a>), and for <a href="https://github.com/sahlberg/usmb2"><b>usmb2</b></a> and the SMB
+backend he added to <a href="https://github.com/ps2max32/neutrino">Neutrino</a>
+(<a href="https://github.com/ps2max32/neutrino/pull/236">ps2max32/neutrino PR #236</a>), which lets RiptOPL launch
+SMB games on the Neutrino core. libsmb2 is used under the <b>GNU LGPL-2.1</b>; see <a href="#license">License</a>.</p>
+</dd>
+</div>
+
+<div class="credit">
 <dt><a href="https://www.psx-place.com/members/berion.1431">Berion</a> — Artwork &amp; Theme Design</dt>
 <dd>
 <p>Responsible for the UI design and artwork that has defined how OPL looks for years. The
@@ -506,6 +517,12 @@ core</a>.
 <b>Academic Free License version 3.0</b>. Review the
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/LICENSE">LICENSE</a>
 file in the repository for the full terms.</p>
+
+<p>The SMB2 driver is built on <a href="https://github.com/sahlberg/libsmb2">libsmb2</a> by <a href="https://github.com/sahlberg">Ronnie Sahlberg</a>, used under the
+<b>GNU Lesser General Public License version 2.1</b>. Every install kit, RA kits included, and the VARIANTS
+and DEBUG zips carry its licence as <code>LICENSE-LIBSMB2.txt</code>, and each release publishes the same file
+beside its standalone loader; the vendored copy and its provenance are in
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/tree/rebuild/main/modules/network/smb2man/libsmb2"><code>modules/network/smb2man/libsmb2/</code></a>.</p>
 
 <details class="deep"><summary>Why a fork at all, rather than contributing upstream?</summary>
 <p>RiptOPL was built primarily as a personal "definitive build" — opinionated defaults, a
