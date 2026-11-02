@@ -1,6 +1,7 @@
 #include "sys/fcntl.h"
 #include <sys/stat.h> // stat -- PP. partition IMAGE0.VCD #Size
 #include "include/opl.h"
+#include "include/riptlite.h" // LITE_HAS_*: a RiptOPLite build without this device
 #ifdef RETROACHIEVEMENTS
 #include "include/achievements.h"
 #endif
@@ -676,6 +677,11 @@ int hddLoadModules(void)
     int retStatus = HDD_LOADMODULES_STATUS_UNK;
 
     LOG("[HDD STARTUP DIAG] hddLoadModules entry count=%u loaded=%u\n", hddModulesLoadCount, hddModulesLoaded);
+
+#if defined(RIPTOPLITE) && !(LITE_HAS_APA || LITE_HAS_BDMHDD)
+    // A RiptOPLite build for another device carries no HDD drivers (include/riptlite.h).
+    return HDD_LOADMODULES_STATUS_ERROR;
+#endif
 
     // The ATA modules are resident for the lifetime of this IOP generation. A readiness
     // probe is NOT a new DEV9 owner: all HDD entry points share the one sysInitDev9()
