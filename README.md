@@ -30,7 +30,8 @@ installed package, actual game core, transport and failing stage before changing
 Our [fork collaboration review](docs/FORK-COLLABORATION.md) and
 [current comparison](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html)
 track shared improvements and candidates from [RIPPS2](https://github.com/akilluminati47/RIPPS2) and other projects with their evidence limits.
-The [October 28 fork-gap status](docs/FORK-GAP-STATUS-2026-10-28.md) records parity with the C++
+The [November 1 fork-gap status](docs/FORK-GAP-STATUS-2026-11-01.md) re-reads every tracked fork record
+against current code; the [October 28 status](docs/FORK-GAP-STATUS-2026-10-28.md) records parity with the C++
 edition, the fixes that landed in both, [akilluminati47](https://github.com/akilluminati47)'s RIPPS2 findings and port plan, and what is
 still not tested on hardware.
 

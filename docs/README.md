@@ -1,6 +1,6 @@
 # RiptOPL documentation
 
-Current comparison: [Full ecosystem fork-gap refresh - October 29, 2026](FORK-GAP-FULL-REFRESH-2026-10-29.md) (301 provenance records; 152 stable families). Source/branch/release evidence and console acceptance are recorded separately.
+Current comparison: [Fork-gap status - November 1, 2026](FORK-GAP-STATUS-2026-11-01.md) (311 records under seven statuses; every October 29 record re-read against current code). The [October 29 full refresh](FORK-GAP-FULL-REFRESH-2026-10-29.md) (301 provenance records; 152 stable families) is its dated evidence base. Source/branch/release evidence and console acceptance are recorded separately.
 
 Start with [installation and first boot](https://nathanneurotic.github.io/Open-PS2-Loader/install.html)
 and [your first game](https://nathanneurotic.github.io/Open-PS2-Loader/getting-started.html).
@@ -56,8 +56,9 @@ records the reviewed revisions, corrections, link evidence and remaining validat
 
 [Fork collaboration](FORK-COLLABORATION.md) explains candidate triage and evidence boundaries;
 the [October 25 audit](DOCUMENTATION-AUDIT-2026-10-25.md) records the last full refresh.
-[Fork-gap status: 2026-10-28](FORK-GAP-STATUS-2026-10-28.md) is the current summary: parity with
-RiptOPL, fixes landed in both editions, the RIPPS2 audit and port plan, and the open hardware checks.
+[Fork-gap status: 2026-11-01](FORK-GAP-STATUS-2026-11-01.md) is the current summary: every tracked
+fork record against current code, what merged in both editions since October 29, and the open hardware
+checks; the [October 28 status](FORK-GAP-STATUS-2026-10-28.md) keeps the RIPPS2 audit and port plan as dated history.
 
 Integration plans, dated audits, community-report handoffs and `docs/superpowers/` are engineering
 history. Their old DONE/pending states, branches and package names describe that baseline;
