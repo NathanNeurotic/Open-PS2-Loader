@@ -765,13 +765,19 @@ int cdvdman_BreakRead(void)
 {
     /* Once the data is in, only the completion callback is left (sync_flag stays set until it runs). There is
        nothing left to stop then, and accepting the break would leave SCECdErABRT beside a SCECdFuncRead callback. */
-    if (cdread_for_stream || !read_in_flight)
-        return 0;
+    int OldState, result = 0;
 
-    read_abort = 1;
-    cdvdman_stat.err = SCECdErABRT;
+    // Decide and mark under suspended interrupts: otherwise the read can end and a stream fill be queued in between,
+    // and the break would cut that fill short.
+    CpuSuspendIntr(&OldState);
+    if (!cdread_for_stream && read_in_flight) {
+        read_abort = 1;
+        cdvdman_stat.err = SCECdErABRT;
+        result = 1;
+    }
+    CpuResumeIntr(OldState);
 
-    return 1;
+    return result;
 }
 
 //-------------------------------------------------------------------------
@@ -1046,8 +1052,8 @@ static void cdvdman_cdread_Thread(void *args)
                Not through Stm0Callback: once the drive is free, the retry alarm can queue a fill before this line,
                and StmCallback would count that fill as done before it is read. If the game's callback is still
                pending, the drive is not free yet: the fill is refused again and keeps its alarm. */
-            if (!for_stream && Stm0Callback != NULL)
-                cdvdman_StreamRefill();
+            if (!for_stream && Stm0Callback != NULL && !read_abort) // after a break, leave the fill to its alarm so the
+                cdvdman_StreamRefill();                             // game sees SCECdErABRT before a fill resets it
         }
     }
 }
