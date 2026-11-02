@@ -129,7 +129,7 @@ static int thmViewGetInt(config_set_t *themeConfig, const char *prefix, const ch
     (void)themeConfig; (void)prefix;
     if (strcmp(key, "list_cfg_text") || keyValue == NULL)
         return 0;
-    *value = atoi(keyValue);
+    *value = atoi(keyValue); /* as configGetInt reads every theme value */
     return 1;
 }
 static int themeHides(const char *value)
@@ -147,9 +147,16 @@ static int themeHides(const char *value)
 
 static void setGame(config_set_t *c, int uid, const char *tag)
 {
-    static char title[64], desc[64];
-    snprintf(title, sizeof(title), "%s Title", tag);
-    snprintf(desc, sizeof(desc), "%s Description", tag);
+    /* Each game gets its own text, and the last game's text is overwritten, as when its CFG is freed. A renderer
+       that kept the last game's pointer then draws "Freed", not this game's text. */
+    static char text[2][2][64];
+    static int next;
+    char *title = text[next][0], *desc = text[next][1];
+    snprintf(text[!next][0], sizeof(text[0][0]), "Freed");
+    snprintf(text[!next][1], sizeof(text[0][1]), "Freed");
+    snprintf(title, sizeof(text[0][0]), "%s Title", tag);
+    snprintf(desc, sizeof(text[0][1]), "%s Description", tag);
+    next = !next;
     @SETUID@
     c->count = 4;
     c->kv[0].key = "Title"; c->kv[0].value = title;
@@ -227,9 +234,11 @@ int main(void)
     elem.drawElem(NULL, &item, &game, &elem);
     assert(!strcmp(drawn, "Second Title"));
 
-    /* The theme key: only list_cfg_text=0 hides them; absent or any other value shows them as before. */
+    /* The theme key: list_cfg_text=0 hides them, and so does a word, which reads as 0 as in RIPPS2. Absent or any
+       other number shows them as before. */
     assert(themeHides(NULL) == 0);
     assert(themeHides("0") == 1);
+    assert(themeHides("on") == 1);
     assert(themeHides("1") == 0);
     assert(themeHides("2") == 0);
 
