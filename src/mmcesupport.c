@@ -1274,6 +1274,10 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             if (configGetStrCopy(configSet, CONFIG_ITEM_ALTSTARTUP, historyName, sizeof(historyName)) == 0)
                 strcpy(historyName, game->startup);
             if (sysAddHistoryRecord(historyName)) { // no record (debug builds): nothing for the card to react to
+                // The card's history tracker switches by THIS name. An alternate startup that differs from the ID our
+                // Game ID send used can move the card to another folder: watch for that switch too, not skip it.
+                if (strcmp(historyName, game->startup) != 0)
+                    mmceGameIdSwitchSeen = 0;
                 char historyDevice[8];
                 mmceGetDeviceRoot(historyDevice, sizeof(historyDevice));
                 if (mmceWaitHistorySwitch(historyDevice, "history write"))
