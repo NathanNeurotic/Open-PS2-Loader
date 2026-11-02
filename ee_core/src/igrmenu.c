@@ -912,10 +912,10 @@ int IGR_MenuRun(u16 (*buttons)(void))
 #pragma GCC diagnostic pop
 #endif
     if (!igrmFindFrame())
-        return IGR_MENU_CANNOT_DRAW;
+        return IGR_MENU_NO_FRAME;
     // the game's own transfers finish first; a VIF1 stalled on an interrupt the pause holds cannot take ours
     if (!igrmWaitClear(IGRM_D1_CHCR, CHCR_STR) || !igrmWaitClear(IGRM_D2_CHCR, CHCR_STR) || (*IGRM_VIF1_STAT & VIF_STALLED))
-        return IGR_MENU_CANNOT_DRAW;
+        return IGR_MENU_GS_BUSY;
     bpc = igrmBpcOff();
     gameDone = *IGRM_D_STAT & 2; // a channel 1 completion the game has not handled yet stays for its handler
     d1chcr = *IGRM_D1_CHCR;
@@ -967,7 +967,7 @@ int IGR_MenuRun(u16 (*buttons)(void))
 
     igrmCompose(&info, sel, armed);
     if (!igrmDraw(pkt)) {
-        result = IGR_MENU_CANNOT_DRAW;
+        result = IGR_MENU_DRAW_FAILED;
         goto done;
     }
 
