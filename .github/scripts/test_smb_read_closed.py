@@ -157,6 +157,8 @@ int main(int argc, char **argv)
     u32 status = (u32)strtoul(argv[2], NULL, 0);
     /* SMB_EXTRA: data the server sends beyond the DATA_LEN bytes the read asked for */
     int extra = getenv("SMB_EXTRA") ? atoi(getenv("SMB_EXTRA")) : 0;
+    /* SMB_CLAIM: a DataLength other than the data sent */
+    int claim = getenv("SMB_CLAIM") ? atoi(getenv("SMB_CLAIM")) : 0;
     end_code = atoi(argv[5]);
     if (keepalive) { /* an NBSS session keepalive (type 0x85), its own segment */
         wire[pos++] = 0x85, wire[pos++] = 0, wire[pos++] = 0, wire[pos++] = 0;
@@ -172,7 +174,7 @@ int main(int argc, char **argv)
         r->smbH.Ecode = (s16)(status >> 16);
         if (status == 0) {
             r->smbWordcount = 12;
-            r->DataLengthLow = (u16)(DATA_LEN + extra);
+            r->DataLengthLow = (u16)(claim ? claim : DATA_LEN + extra);
             r->DataOffset = (u16)offset;
             for (i = 0; i < DATA_LEN + extra; i++)
                 wire[pos + 4 + offset + i] = (unsigned char)(i * 7 + 1);
@@ -243,6 +245,9 @@ cases = [
     ('more data than asked for', -errno.EIO, OK, 59, 0, CLOSE, [], 200),
     ('more data than asked for, header split', -errno.EIO, OK, 59, 0, CLOSE, [40, 1500, W + 200 - 1540], 200),
     ('server closes inside a reply with more data', -2, OK, 59, 0, CLOSE, [1063], 200),
+    # (..., DataLength): one larger than the data sent would count bytes that never arrived
+    ('DataLength larger than the data sent', -errno.EIO, OK, 59, 0, CLOSE, [], 0, 3500),
+    ('DataLength larger than the data sent, header split', -errno.EIO, OK, 59, 0, CLOSE, [40, W - 40], 0, 3001),
 ]
 failures = []
 with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
@@ -255,10 +260,11 @@ with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
     for case in cases:
         name, want, status, offset, keepalive, end, script = case[:7]
         extra = case[7] if len(case) > 7 else 0
+        claim = case[8] if len(case) > 8 else 0
         result = subprocess.run([str(binary), str(want), str(status), str(offset), str(keepalive), str(end)]
                                 + [str(s) for s in script],
                                 capture_output=True, text=True, timeout=10,
-                                env=dict(os.environ, SMB_EXTRA=str(extra)))
+                                env=dict(os.environ, SMB_EXTRA=str(extra), SMB_CLAIM=str(claim)))
         if result.returncode != 0:
             failures.append('%s: %s' % (name, (result.stdout + result.stderr).strip()))
 

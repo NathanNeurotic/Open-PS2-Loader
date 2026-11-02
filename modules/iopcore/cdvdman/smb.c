@@ -702,14 +702,14 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
     // end of the reply or of SMB_buf, is not a read reply: its fields would be the request's.
     if (expected_size < header_size || RRsp->DataOffset < (int)sizeof(ReadAndXResponse_t) || RRsp->DataOffset + 4 > expected_size || RRsp->DataOffset + 4 > (int)sizeof(SMB_buf))
         return smb_DrainReply(rcv_size, expected_size);
-    // More data than was asked for would be written past the end of readbuf.
-    if (expected_size - RRsp->DataOffset - 4 > nbytes)
+    // More data than was asked for would be written past the end of readbuf, and a DataLength larger
+    // than the data the reply carries would count bytes that never arrived.
+    DataLength = (int)(((u32)RRsp->DataLengthHigh << 16) | RRsp->DataLengthLow);
+    if (expected_size - RRsp->DataOffset - 4 > nbytes || (u32)DataLength > (u32)(expected_size - RRsp->DataOffset - 4))
         return smb_DrainReply(rcv_size, expected_size);
     // Padding between the header and the data, when the first segment ended before it.
     if (smb_RecvReplyRest(&rcv_size, RRsp->DataOffset + 4) < 0)
         return -2;
-
-    DataLength = (int)(((u32)RRsp->DataLengthHigh << 16) | RRsp->DataLengthLow);
 
     // Handle fragmented packets
     while (rcv_size < expected_size) {
