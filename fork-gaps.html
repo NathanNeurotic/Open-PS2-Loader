@@ -87,7 +87,7 @@
 <div class="fork-gap-metric"><strong>153</strong><span>Linked projects and related services in the A–Z directory</span></div>
 <div class="fork-gap-metric"><strong>72</strong><span>PRESENT records; merged source is not console acceptance</span></div>
 </div>
-<nav aria-label="Fork feature gaps shortcuts" class="fork-gap-nav"><a href="#nov1-status">Current November 1 status</a>
+<nav aria-label="Fork feature gaps shortcuts" class="fork-gap-nav"><a href="#nov1-status">Current status (November 2)</a>
 <a href="#oct29-ecosystem">Previous October 29 ecosystem audit</a>
 <a href="#at-a-glance">Search feature IDs</a>
 <a href="#oct29-focused">Historical October 29 focused findings</a>
@@ -105,10 +105,102 @@
 <a href="#audit-method">Audit methodology</a>
 <a href="#notes">Retired IDs</a>
 </nav>
-<p class="lead">Current status: November 1, 2026. 311 records (301 from October 29 plus 10 new) under seven statuses, each re-read against the C++ and legacy baselines of that day; 141 upstream heads rechecked. The October 29 full refresh and older snapshots remain dated evidence.</p>
+<p class="lead">Current status: November 1, 2026, updated November 2. 311 records (301 from October 29 plus 10 new) under seven statuses, each re-read against the C++ and legacy baselines of November 1; 141 upstream heads rechecked then, and the 13 that matter most again on November 2. The October 29 full refresh and older snapshots remain dated evidence.</p>
 <div class="callout info"><div class="h">Evidence and scope</div>Records include overlap, alternatives, tools and experiments. They are not a roadmap or a defect count. Source presence, target builds, emulator observations and physical-console acceptance are different evidence levels. This documentation audit ran no console code.</div>
-<section aria-labelledby="nov1-status" class="fork-gap-section"><h2 id="nov1-status">Current status - November 1, 2026</h2><p class="callout info">Every October 29 record re-read against current code (RiptOPL rebuild/main 96852359, legacy rebuild/main b2d6b3b1) and given one of seven statuses. Merged source is still <strong>NOT TESTED</strong> on a console unless a record says otherwise. The two new YAOPL lock fixes are drafts, not merges.</p>
+<section aria-labelledby="nov1-status" class="fork-gap-section"><h2 id="nov1-status">Current status - November 1, 2026, updated November 2</h2><p class="callout info">Every October 29 record re-read against current code (RiptOPL rebuild/main 96852359, legacy rebuild/main b2d6b3b1) and given one of seven statuses. Merged source is still <strong>NOT TESTED</strong> on a console unless a record says otherwise. The November 2 update below removes one duplicate record, adds one missed YAOPL fix and lists the ports opened since; those are drafts, not merges.</p>
 <p>This refresh re-reads every record of the <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/FORK-GAP-FULL-REFRESH-2026-10-29.md">October 29 register</a> against the code as it stands today, rechecks every tracked upstream head, and names the wins taken since. It supersedes the availability conclusions of the October 29 refresh; the October 29 document stays as dated evidence and its 301 records keep their IDs. Differences are comparison opportunities with shared work credited; they are not promised ports or a defect count.</p>
+<h3 id="nov1-update---november-2-2026">Update - November 2, 2026</h3>
+<p>Two corrections to the November 1 snapshot, the ports opened since, and a second upstream recheck. The sections after this one keep their November 1 values; the two corrections are also made where they apply.</p>
+<p><strong>Corrections.</strong></p>
+<ul>
+<li><strong>DT6 was counted twice.</strong> The October 29 register already carries it (KH2 SMB+PADEMU memory-footprint correction, from <a href="https://github.com/MiguelQueiroz010/OPL-DS4RTBT">OPL-DS4RTBT</a>, the downstream fork by <a href="https://github.com/MiguelQueiroz010">Miguel Queiroz (MiguelQueiroz010)</a>); the November 1 refresh added the same change again as a new record when it found it upstream in <a href="https://github.com/rodrigoGalvanDev/OPL-DualSense-BT">OPL-DualSense-BT</a> <a href="https://github.com/rodrigoGalvanDev/OPL-DualSense-BT/commit/8bb581ada8cfb7a08f96f6e82091b5a43f1125a4">8bb581a</a>. The duplicate is gone: November 1 had 310 records (301 carried + 9 new) and 113 MISSING, not 311 and 114.</li>
+<li><strong><a href="https://github.com/yaopl/yaopl">YAOPL</a> was not fully taken.</strong> A third lock fix by <a href="https://github.com/belomaxorka">Roman Kelesidis (belomaxorka)</a>, <a href="https://github.com/yaopl/yaopl/commit/b45a592d">b45a592d</a>, was still open: a theme or language that the IO thread loads was published, and the old one freed, without the GUI lock. It is new record <strong>YA-25</strong>, ported in the same drafts as YA-21 and YA-22, together with one theme switch and one language switch at a time.</li>
+</ul>
+<p><strong>Ports opened since November 1.</strong> All are draft tandem PRs, NOT TESTED on hardware:</p>
+<table>
+<thead>
+<tr>
+<th>Record</th>
+<th>November 2 status</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YA-21, YA-22, YA-25 (new): dialogs, IO-thread list operations, and theme and language swaps under the GUI lock</td>
+<td>PARTIAL</td>
+<td><a href="https://github.com/NathanNeurotic/RiptOPL/pull/264">RiptOPL #264</a> / <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1225">legacy #1225</a></td>
+</tr>
+<tr>
+<td>DT6 in-game IOP memory relief, about 26 KB: IP fragmentation off on transmit, reassembly kept with a 1536-byte buffer, USBD pools sized for PADEMU when the game is not on USB, transfer descriptors left at their default; two old reassembly bugs in <code>ip_frag.c</code> fixed on the way</td>
+<td>PARTIAL</td>
+<td><a href="https://github.com/NathanNeurotic/RiptOPL/pull/270">RiptOPL #270</a> / <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1231">legacy #1231</a></td>
+</tr>
+<tr>
+<td>RI54 List Title / Description: Settings &gt; Interface, Theme / On / Off, default Theme (today's look)</td>
+<td>PARTIAL</td>
+<td><a href="https://github.com/NathanNeurotic/RiptOPL/pull/276">RiptOPL #276</a> / <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/1235">legacy #1235</a></td>
+</tr>
+<tr>
+<td>RI55 .pad controller profiles and Set Up A USB Pad</td>
+<td>MISSING; port started, legacy first</td>
+<td>not yet open</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Upstream recheck.</strong> On November 2 at UTC 14:16, <code>git ls-remote</code> of the 11 tracked repositories that carry open records (<a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a>, YAOPL as <a href="https://github.com/yaopl/yaopl">yaopl/yaopl</a> and <a href="https://github.com/belomaxorka/yaopl">belomaxorka/yaopl</a>, <a href="https://github.com/dnunezx/LUNA">LUNA</a>, <a href="https://github.com/rodrigoGalvanDev/OPL-DualSense-BT">OPL-DualSense-BT</a>, <a href="https://github.com/MiguelQueiroz010/OPL-DS4RTBT">OPL-DS4RTBT</a>, <a href="https://github.com/DKWDRV/DKWDRV">DKWDRV</a>, <a href="https://github.com/juankyt505/OPL-JUMP">OPL-JUMP</a>, <a href="https://github.com/Okeanos86/BDMAssault">BDMAssault</a>, <a href="https://github.com/rickgaiser/neutrino">neutrino</a> and upstream <a href="https://github.com/ps2homebrew/Open-PS2-Loader">Open-PS2-Loader</a>) and 2 untracked ones; the result is <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/recheck-2026-11-02.json"><code>recheck-2026-11-02.json</code></a>.</p>
+<ul>
+<li><a href="https://github.com/akilluminati47/RIPPS2">RIPPS2</a> (<a href="https://github.com/akilluminati47">akilluminati47</a>) is the only tracked head that moved. v1.2.9-beta (build 129) came out on November 1, after the November 1 recheck, so RI55 is released work now. main is at f9d33c2 with build 130 in testing (long videos open, VIDEO.TXT, PS1 names read from the game's drive, START rows, memory card copies and listing). None of it touches pads; it will be compared once it is released.</li>
+<li><a href="https://github.com/dnunezx/LUNA">LUNA</a> (<a href="https://github.com/dnunezx">dnunezx</a>) gained a build-3.1.3-slovak branch, a translation build.</li>
+<li><a href="https://github.com/Okeanos86/ELFWD">ELFWD</a> by <a href="https://github.com/Okeanos86">Okeanos86</a> (v2.0.0) is not in the register: a generic ELF forwarder that can disguise argv[0], reset the IOP and load IRX modules, and apply RAM patches from ELFWD.CFG. A companion tool; no record. <a href="https://github.com/oMrRexD/sd2cloud">sd2cloud</a>, the other untracked one, has not moved since it was last looked at (main 0216488).</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>November 1 (corrected)</th>
+<th>November 2 (311: 301 carried + 10 new)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PRESENT</td>
+<td>72</td>
+<td>72</td>
+</tr>
+<tr>
+<td>PARTIAL</td>
+<td>37</td>
+<td>40</td>
+</tr>
+<tr>
+<td>MISSING</td>
+<td>113</td>
+<td>111</td>
+</tr>
+<tr>
+<td>REGRESSED</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>INTENTIONAL DIFFERENCE</td>
+<td>44</td>
+<td>44</td>
+</tr>
+<tr>
+<td>BLOCKED</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>UNKNOWN</td>
+<td>40</td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<p>Each record's November 2 status and note are the <code>nov2_status</code> and <code>nov2_note</code> fields of <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/id-status.json"><code>id-status.json</code></a>. Of the November 1 list of what is worth a look, DT6 and RI54 are now drafts and RI55 is being ported; <strong>RI38 Recent Games capacity</strong> leads what is left.</p>
 <h3 id="nov1-baselines">Baselines</h3>
 <table>
 <thead>
@@ -172,7 +264,7 @@
 <thead>
 <tr>
 <th>Status</th>
-<th>Records (311: 301 carried + 10 new)</th>
+<th>Records (310: 301 carried + 9 new; corrected November 2)</th>
 </tr>
 </thead>
 <tbody>
@@ -186,7 +278,7 @@
 </tr>
 <tr>
 <td>MISSING</td>
-<td>114</td>
+<td>113</td>
 </tr>
 <tr>
 <td>REGRESSED</td>
@@ -297,7 +389,7 @@
 <tr>
 <td><a href="https://github.com/yaopl/yaopl">YAOPL</a> (<a href="https://github.com/belomaxorka">belomaxorka</a>)</td>
 <td>master 6955d0be; branches fix/stale-current, debug/ds3-metrics</td>
-<td>PNG hardening and the row race are in; the two lock fixes are the drafts above. Nothing else outstanding.</td>
+<td>PNG hardening and the row race are in; the two lock fixes are the drafts above. A third, b45a592d, was missed here: see the November 2 update.</td>
 </tr>
 <tr>
 <td><a href="https://github.com/dnunezx/LUNA">LUNA</a> (<a href="https://github.com/dnunezx">dnunezx</a>)</td>
@@ -307,7 +399,7 @@
 <tr>
 <td><a href="https://github.com/rodrigoGalvanDev/OPL-DualSense-BT">OPL-DualSense-BT</a> (<a href="https://github.com/rodrigoGalvanDev">rodrigoGalvanDev</a>)</td>
 <td>7188a53, tag 1.2</td>
-<td>8bb581a adds DS4 clones, RTL8761B, multi-pad, a Controller Setup page and multitap. <strong>DT6 (new)</strong>: in-game IOP memory relief for KH2 over SMB (lwIP IP_REASSEMBLY/IP_FRAG off, about 7.3 KB; USBD pool trim when only PADEMU loads, about 28 KB). MISSING; turning IP fragmentation off changes behaviour on large-MTU SMB paths, so it needs a decision before any port.</td>
+<td>8bb581a adds DS4 clones, RTL8761B, multi-pad, a Controller Setup page and multitap. <strong>DT6</strong> (an October 29 record; this is its code, counted again as new until the November 2 correction): in-game IOP memory relief for KH2 over SMB (lwIP IP_REASSEMBLY/IP_FRAG off, about 7.3 KB; USBD pool trim when only PADEMU loads, about 28 KB). MISSING; turning IP fragmentation off changes behaviour on large-MTU SMB paths, so it needs a decision before any port.</td>
 </tr>
 <tr>
 <td><a href="https://github.com/DKWDRV/DKWDRV">DKWDRV</a></td>
@@ -350,8 +442,8 @@
 <p>Work owned by other threads and deliberately left alone here: SMB2 restore (#257 / #258, #1219 / #1220), MMCE launch regression, the Tales of the Abyss freeze (#262 / #1222), GSM 1080p 4:3 (#260 / #1221) and the bug-report build (#261 / #1223).</p>
 <h3 id="nov1-method-and-limits">Method and limits</h3>
 <p>Per-record verdicts come from reading the current source of both editions, not from PR titles. The head recheck is <code>git ls-remote --heads --tags --symref</code> from the cloud container, compared with the October 29 heads file; a moved head was inspected only where this document says so. Rolling release assets can change without a tag; release metadata was not re-pulled. No console code ran.</p>
-<p>Evidence set: <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/FORK-GAP-STATUS-2026-11-01.md">FORK-GAP-STATUS-2026-11-01.md</a> · <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/id-status.json">id-status.json</a> · <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/repository-heads.json">repository-heads.json</a>. The searchable register stays at <a href="https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html#at-a-glance">fork-gaps.html#at-a-glance</a>.</p>
-<p><a href="audit/2026-11-01/FORK-GAP-STATUS-2026-11-01.md">FORK-GAP-STATUS-2026-11-01.md</a> · <a href="audit/2026-11-01/id-status.json">id-status.json</a> · <a href="audit/2026-11-01/repository-heads.json">repository-heads.json</a></p>
+<p>Evidence set: <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/FORK-GAP-STATUS-2026-11-01.md">FORK-GAP-STATUS-2026-11-01.md</a> · <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/id-status.json">id-status.json</a> · <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/repository-heads.json">repository-heads.json</a> · <a href="https://nathanneurotic.github.io/Open-PS2-Loader/audit/2026-11-01/recheck-2026-11-02.json">recheck-2026-11-02.json</a>. The searchable register stays at <a href="https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html#at-a-glance">fork-gaps.html#at-a-glance</a>.</p>
+<p><a href="audit/2026-11-01/FORK-GAP-STATUS-2026-11-01.md">FORK-GAP-STATUS-2026-11-01.md</a> · <a href="audit/2026-11-01/id-status.json">id-status.json</a> · <a href="audit/2026-11-01/repository-heads.json">repository-heads.json</a> · <a href="audit/2026-11-01/recheck-2026-11-02.json">recheck-2026-11-02.json</a></p>
 </section>
 <section aria-labelledby="oct29-full-refresh" class="fork-gap-section"><h2 id="oct29-full-refresh">Previous full ecosystem refresh - October 29, 2026</h2><p class="callout amber">Superseded on November 1, 2026: <a href="#nov1-status">the current status</a> re-reads every record below against current code and records what merged since. This section stays as dated evidence; its IDs are unchanged.</p><blockquote>
 <p>Publication update - October 30, 2026: the All Games/Apps changes (#195 / #1163) have now merged in both editions. The CPP-only list-rebuild follow-up #201, Coverflow variants (#199 / #1167), Grid integration (#196 / #1164), silent in-game pause (#200 / #1168), config-import changes (#190 / #1159) and menu-freeze diagnostics (#191 / #1160) remain open at this publication check. The repository/ref/release inventory below remains the explicitly dated late-October-29 source snapshot.</p>

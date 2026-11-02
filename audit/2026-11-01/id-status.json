@@ -1,5 +1,6 @@
 {
  "generated": "2026-11-01",
+ "updated": "2026-11-02",
  "baselines": {
   "RiptOPL": "rebuild/main 9685235",
   "Open-PS2-Loader": "rebuild/main b2d6b3b"
@@ -28,16 +29,29 @@
  },
  "counts": {
   "PRESENT": 72,
-  "MISSING": 114,
-  "UNKNOWN": 40,
-  "INTENTIONAL DIFFERENCE": 44,
   "PARTIAL": 37,
-  "BLOCKED": 4
+  "MISSING": 113,
+  "INTENTIONAL DIFFERENCE": 44,
+  "BLOCKED": 4,
+  "UNKNOWN": 40
  },
  "head_recheck": {
   "started_at": "2026-11-01T17:00:46.734645+00:00",
   "method": "git ls-remote --heads --tags --symref from the cloud container; compared with audit/2026-10-29-refresh/repository-heads.json"
  },
+ "counts_nov2": {
+  "PRESENT": 72,
+  "PARTIAL": 40,
+  "MISSING": 111,
+  "INTENTIONAL DIFFERENCE": 44,
+  "BLOCKED": 4,
+  "UNKNOWN": 40
+ },
+ "corrections": [
+  "November 2: DT6 was listed twice (the October 29 record and a new copy for OPL-DualSense-BT 8bb581a); the copy is removed, so November 1 had 310 records and 113 MISSING.",
+  "November 2: YA-25 (YAOPL b45a592d) added; November 1 missed it."
+ ],
+ "recheck_2026_11_02": "recheck-2026-11-02.json",
  "records": [
   {
    "id": "B1",
@@ -45,7 +59,9 @@
    "project": "BoliviaOS",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "PRESENT",
-   "nov1_note": "Console file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED."
+   "nov1_note": "Console file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "B2",
@@ -53,7 +69,9 @@
    "project": "BoliviaOS",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "B3",
@@ -61,7 +79,9 @@
    "project": "BoliviaOS",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "B4",
@@ -69,7 +89,9 @@
    "project": "BoliviaOS",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "B5",
@@ -77,7 +99,9 @@
    "project": "BoliviaOS",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "B6",
@@ -85,7 +109,9 @@
    "project": "BoliviaOS",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "B7",
@@ -93,7 +119,9 @@
    "project": "BoliviaOS",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "BL1",
@@ -101,7 +129,9 @@
    "project": "OPL Custom (Blayr)",
    "oct29_status": "Intentional design difference",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "BL2",
@@ -109,7 +139,9 @@
    "project": "OPL Custom (Blayr)",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "CA1",
@@ -117,7 +149,9 @@
    "project": "Caduceus (PC)",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CA2",
@@ -125,7 +159,9 @@
    "project": "Caduceus (PC)",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "CA3",
@@ -133,7 +169,9 @@
    "project": "Caduceus (PC)",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "CA4",
@@ -141,7 +179,9 @@
    "project": "Caduceus (PC)",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "CA5",
@@ -149,7 +189,9 @@
    "project": "Caduceus (PC)",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "CA6",
@@ -157,7 +199,9 @@
    "project": "Caduceus (PC)",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CA7",
@@ -165,7 +209,9 @@
    "project": "Caduceus (PC)",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CF1",
@@ -173,7 +219,9 @@
    "project": "PS2CF",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CF2",
@@ -181,7 +229,9 @@
    "project": "PS2CF",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CF3",
@@ -189,7 +239,9 @@
    "project": "PS2CF",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CF4",
@@ -197,7 +249,9 @@
    "project": "PS2CF",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "CO1",
@@ -205,7 +259,9 @@
    "project": "Caduceus OPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "CO2",
@@ -213,7 +269,9 @@
    "project": "Caduceus OPL",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "CO3",
@@ -221,7 +279,9 @@
    "project": "Caduceus OPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CO4",
@@ -229,7 +289,9 @@
    "project": "Caduceus OPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CO5",
@@ -237,7 +299,9 @@
    "project": "Caduceus OPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CO6",
@@ -245,7 +309,9 @@
    "project": "Caduceus OPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "CO7",
@@ -253,7 +319,9 @@
    "project": "Caduceus OPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DB1",
@@ -261,7 +329,9 @@
    "project": "OPL-DualSense-BT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DB2",
@@ -269,7 +339,9 @@
    "project": "OPL-DualSense-BT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DK1",
@@ -277,7 +349,9 @@
    "project": "DKWDRV",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "DL1",
@@ -285,7 +359,9 @@
    "project": "Enhanced Disc Launcher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DL2",
@@ -293,7 +369,9 @@
    "project": "Enhanced Disc Launcher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DN1",
@@ -301,7 +379,9 @@
    "project": "PS5-style OPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DN2",
@@ -309,7 +389,9 @@
    "project": "PS5-style OPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DT1",
@@ -317,7 +399,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DT2",
@@ -325,7 +409,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DT3",
@@ -333,7 +419,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DT4",
@@ -341,7 +429,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DT5",
@@ -349,7 +439,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DT6",
@@ -357,7 +449,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "The same change landed upstream in OPL-DualSense-BT 8bb581a (rodrigoGalvanDev, Miguel Queiroz): lwIP IP_REASSEMBLY/IP_FRAG off, USBD pool trim for PADEMU-only. Turning IP fragmentation off changes behaviour for large-MTU SMB paths; needs a decision before any port. (November 1 listed this record twice; corrected November 2.)",
+   "nov2_status": "PARTIAL",
+   "nov2_note": "Draft RiptOPL #270 / legacy #1231: IP_FRAG off, reassembly kept with a 1536-byte buffer (was 5760), USBD pools sized for PADEMU when the game is not on USB, transfer descriptors left at the default; about 26 KB back; two old ip_frag.c reassembly bugs fixed. NOT TESTED."
   },
   {
    "id": "DT7",
@@ -365,7 +459,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "DT8",
@@ -373,7 +469,9 @@
    "project": "OPL-DS4RTBT",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "E1",
@@ -381,7 +479,9 @@
    "project": "OPL-Evolution",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "H4",
@@ -389,7 +489,9 @@
    "project": "xeRAbora",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H5",
@@ -397,7 +499,9 @@
    "project": "xeRAbora",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H6",
@@ -405,7 +509,9 @@
    "project": "xeRAbora",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H7",
@@ -413,7 +519,9 @@
    "project": "xeRAbora",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H8",
@@ -421,7 +529,9 @@
    "project": "xeRAbora",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H9",
@@ -429,7 +539,9 @@
    "project": "xeRAbora",
    "oct29_status": "Known upstream limitation",
    "nov1_status": "BLOCKED",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "BLOCKED",
+   "nov2_note": ""
   },
   {
    "id": "H10",
@@ -437,7 +549,9 @@
    "project": "xeRAbora",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H11",
@@ -445,7 +559,9 @@
    "project": "xeRAbora OPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H12",
@@ -453,7 +569,9 @@
    "project": "xeRAbora",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "H13",
@@ -461,7 +579,9 @@
    "project": "xeRAbora OPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "H14",
@@ -469,7 +589,9 @@
    "project": "xeRAbora",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "H15",
@@ -477,7 +599,9 @@
    "project": "xeRAbora",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "JUMP1",
@@ -485,7 +609,9 @@
    "project": "OPL-JUMP",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": "Apps/PS1 shortcut categorisation exists; OPL-JUMP filename filter not ported. Product call."
+   "nov1_note": "Apps/PS1 shortcut categorisation exists; OPL-JUMP filename filter not ported. Product call.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "JUMP2",
@@ -493,7 +619,9 @@
    "project": "OPL-JUMP",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "K1",
@@ -501,7 +629,9 @@
    "project": "uOPL (historical)",
    "oct29_status": "Historical / withdrawn",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "L1",
@@ -509,7 +639,9 @@
    "project": "Extended APA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LC1",
@@ -517,7 +649,9 @@
    "project": "launcHER",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "LS1",
@@ -525,7 +659,9 @@
    "project": "Launchstation",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "LS2",
@@ -533,7 +669,9 @@
    "project": "Launchstation",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "LU2",
@@ -541,7 +679,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU4",
@@ -549,7 +689,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU5",
@@ -557,7 +699,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU6",
@@ -565,7 +709,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU7",
@@ -573,7 +719,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU8",
@@ -581,7 +729,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU9",
@@ -589,7 +739,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU10",
@@ -597,7 +749,9 @@
    "project": "LUNA",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "LU11",
@@ -605,7 +759,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU12",
@@ -613,7 +769,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU13",
@@ -621,7 +779,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU14",
@@ -629,7 +789,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "PRESENT",
-   "nov1_note": "Console file manager with copy tray merged: RiptOPL #219 / legacy #1180. NOT TESTED."
+   "nov1_note": "Console file manager with copy tray merged: RiptOPL #219 / legacy #1180. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU15",
@@ -637,7 +799,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU16",
@@ -645,7 +809,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU17",
@@ -653,7 +819,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU18",
@@ -661,7 +829,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU19",
@@ -669,7 +839,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU20",
@@ -677,7 +849,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "PARTIAL",
-   "nov1_note": "File manager present (#219 / #1180); conflict-choice and verified-move specifics not re-verified on 2026-11-01."
+   "nov1_note": "File manager present (#219 / #1180); conflict-choice and verified-move specifics not re-verified on 2026-11-01.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU21",
@@ -685,7 +859,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "PARTIAL",
-   "nov1_note": "File manager present (#219 / #1180); preview/filter/sort specifics not re-verified on 2026-11-01."
+   "nov1_note": "File manager present (#219 / #1180); preview/filter/sort specifics not re-verified on 2026-11-01.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU22",
@@ -693,7 +869,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU23",
@@ -701,7 +879,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU24",
@@ -709,7 +889,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU25",
@@ -717,7 +899,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU26",
@@ -725,7 +909,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU27",
@@ -733,7 +919,9 @@
    "project": "LUNA",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "LU28",
@@ -741,7 +929,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU29",
@@ -749,7 +939,9 @@
    "project": "LUNA",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "LU30",
@@ -757,7 +949,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU31",
@@ -765,7 +959,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU32",
@@ -773,7 +969,9 @@
    "project": "LUNA",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU33",
@@ -781,7 +979,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU34",
@@ -789,7 +989,9 @@
    "project": "LUNA",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU35",
@@ -797,7 +999,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU36",
@@ -805,7 +1009,9 @@
    "project": "LUNA frontend",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU37",
@@ -813,7 +1019,9 @@
    "project": "LUNA frontend",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU38",
@@ -821,7 +1029,9 @@
    "project": "LUNA frontend",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "LU39",
@@ -829,7 +1039,9 @@
    "project": "LUNA frontend",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "LU40",
@@ -837,7 +1049,9 @@
    "project": "LUNA",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU41",
@@ -845,7 +1059,9 @@
    "project": "LUNA frontend",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU42",
@@ -853,7 +1069,9 @@
    "project": "LUNA / neutrino-luna",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "LU43",
@@ -861,7 +1079,9 @@
    "project": "LUNA / paired runtimes",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "LU44",
@@ -869,7 +1089,9 @@
    "project": "LUNA frontend",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "M1",
@@ -877,7 +1099,9 @@
    "project": "Modulo R1",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "MA1",
@@ -885,7 +1109,9 @@
    "project": "PS2 Manager (macOS)",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "MA2",
@@ -893,7 +1119,9 @@
    "project": "PS2 Manager (macOS)",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "MP1",
@@ -901,7 +1129,9 @@
    "project": "Modular PADEMU",
    "oct29_status": "Historical / withdrawn",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "MP2",
@@ -909,7 +1139,9 @@
    "project": "Modular PADEMU",
    "oct29_status": "Historical / withdrawn",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "N1",
@@ -917,7 +1149,9 @@
    "project": "NHDDL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "N2",
@@ -925,7 +1159,9 @@
    "project": "NHDDL",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "NV1",
@@ -933,7 +1169,9 @@
    "project": "OPL-volume",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O1",
@@ -941,7 +1179,9 @@
    "project": "OPLattice",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": "Grid view merged: RiptOPL #196 / legacy #1164. NOT TESTED."
+   "nov1_note": "Grid view merged: RiptOPL #196 / legacy #1164. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "O2",
@@ -949,7 +1189,9 @@
    "project": "OPLattice",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O3",
@@ -957,7 +1199,9 @@
    "project": "OPLattice",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PARTIAL",
-   "nov1_note": "Recent list merged (#195 / #1163 family) but holds 10 entries, not RIPPS2 99 (see RI38)."
+   "nov1_note": "Recent list merged (#195 / #1163 family) but holds 10 entries, not RIPPS2 99 (see RI38).",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "O4",
@@ -965,7 +1209,9 @@
    "project": "OPLattice",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "O5",
@@ -973,7 +1219,9 @@
    "project": "OPLattice",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O6",
@@ -981,7 +1229,9 @@
    "project": "OPLattice",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O7",
@@ -989,7 +1239,9 @@
    "project": "OPLattice",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O8",
@@ -997,7 +1249,9 @@
    "project": "OPLattice",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O9",
@@ -1005,7 +1259,9 @@
    "project": "OPLattice",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "O10",
@@ -1013,7 +1269,9 @@
    "project": "OPLattice",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O11",
@@ -1021,7 +1279,9 @@
    "project": "OPLattice",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O12",
@@ -1029,7 +1289,9 @@
    "project": "OPLattice",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "O13",
@@ -1037,7 +1299,9 @@
    "project": "OPLattice",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "O14",
@@ -1045,7 +1309,9 @@
    "project": "OPLattice",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "O15",
@@ -1053,7 +1319,9 @@
    "project": "OPLattice",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OF1",
@@ -1061,7 +1329,9 @@
    "project": "OPL FUTURE",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "OH1",
@@ -1069,7 +1339,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OH2",
@@ -1077,7 +1349,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OH3",
@@ -1085,7 +1359,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OH4",
@@ -1093,7 +1369,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OH5",
@@ -1101,7 +1379,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OH6",
@@ -1109,7 +1389,9 @@
    "project": "OPHTML",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OH7",
@@ -1117,7 +1399,9 @@
    "project": "OPHTML",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OH8",
@@ -1125,7 +1409,9 @@
    "project": "OPHTML",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OH9",
@@ -1133,7 +1419,9 @@
    "project": "OPHTML",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OH10",
@@ -1141,7 +1429,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OH11",
@@ -1149,7 +1439,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OH12",
@@ -1157,7 +1449,9 @@
    "project": "OPHTML",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "OM1",
@@ -1165,7 +1459,9 @@
    "project": "OrbitPS2 Manager",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OM2",
@@ -1173,7 +1469,9 @@
    "project": "OrbitPS2 Manager",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OM3",
@@ -1181,7 +1479,9 @@
    "project": "OrbitPS2 Manager",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "OR3",
@@ -1189,7 +1489,9 @@
    "project": "ORBIT",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "OR4",
@@ -1197,7 +1499,9 @@
    "project": "ORBIT",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "OR5",
@@ -1205,7 +1509,9 @@
    "project": "ORBIT",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "P1",
@@ -1213,7 +1519,9 @@
    "project": "PS2-Launcher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "P2",
@@ -1221,7 +1529,9 @@
    "project": "PS2-Launcher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "P3",
@@ -1229,7 +1539,9 @@
    "project": "PS2-Launcher",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "P4",
@@ -1237,7 +1549,9 @@
    "project": "PS2-Launcher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "P5",
@@ -1245,7 +1559,9 @@
    "project": "PS2-Launcher",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "P6",
@@ -1253,7 +1569,9 @@
    "project": "PS2-Launcher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "P7",
@@ -1261,7 +1579,9 @@
    "project": "PS2-Launcher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "PB1",
@@ -1269,7 +1589,9 @@
    "project": "PSBBN Definitive Project",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "PX1",
@@ -1277,7 +1599,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX2",
@@ -1285,7 +1609,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX3",
@@ -1293,7 +1619,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX4",
@@ -1301,7 +1629,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX5",
@@ -1309,7 +1639,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX6",
@@ -1317,7 +1649,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX7",
@@ -1325,7 +1659,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX8",
@@ -1333,7 +1669,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX9",
@@ -1341,7 +1679,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX10",
@@ -1349,7 +1689,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX11",
@@ -1357,7 +1699,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX12",
@@ -1365,7 +1709,9 @@
    "project": "PSXCore",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "PX13",
@@ -1373,7 +1719,9 @@
    "project": "PSXCore",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "PX14",
@@ -1381,7 +1729,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX15",
@@ -1389,7 +1739,9 @@
    "project": "PSXCore",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "PX16",
@@ -1397,7 +1749,9 @@
    "project": "PSXCore",
    "oct29_status": "Known upstream limitation",
    "nov1_status": "BLOCKED",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "BLOCKED",
+   "nov2_note": ""
   },
   {
    "id": "PX17",
@@ -1405,7 +1759,9 @@
    "project": "PSXCore",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "PX18",
@@ -1413,7 +1769,9 @@
    "project": "PSXCore",
    "oct29_status": "Known upstream limitation",
    "nov1_status": "BLOCKED",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "BLOCKED",
+   "nov2_note": ""
   },
   {
    "id": "PX19",
@@ -1421,7 +1779,9 @@
    "project": "PSXCore",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "PX20",
@@ -1429,7 +1789,9 @@
    "project": "PSXCore",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "PX21",
@@ -1437,7 +1799,9 @@
    "project": "PSXCore",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "PX22",
@@ -1445,7 +1809,9 @@
    "project": "PSXCore",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "PX23",
@@ -1453,7 +1819,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX24",
@@ -1461,7 +1829,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX25",
@@ -1469,7 +1839,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX26",
@@ -1477,7 +1849,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX27",
@@ -1485,7 +1859,9 @@
    "project": "PSXCore",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "PX28",
@@ -1493,7 +1869,9 @@
    "project": "PSXCore",
    "oct29_status": "Known upstream limitation",
    "nov1_status": "BLOCKED",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "BLOCKED",
+   "nov2_note": ""
   },
   {
    "id": "PX29",
@@ -1501,7 +1879,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX30",
@@ -1509,7 +1889,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX31",
@@ -1517,7 +1899,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX32",
@@ -1525,7 +1909,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX33",
@@ -1533,7 +1919,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX34",
@@ -1541,7 +1929,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX35",
@@ -1549,7 +1939,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX36",
@@ -1557,7 +1949,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "PX37",
@@ -1565,7 +1959,9 @@
    "project": "PSXCore",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "R1",
@@ -1573,7 +1969,9 @@
    "project": "RETROLauncher",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI1",
@@ -1581,7 +1979,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PRESENT",
-   "nov1_note": "VMC browsing with PSU export/import and the file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED."
+   "nov1_note": "VMC browsing with PSU export/import and the file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI2",
@@ -1589,7 +1989,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI3",
@@ -1597,7 +1999,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PRESENT",
-   "nov1_note": "OPL-core in-game pause/resume/cheats/exit (#184 / #1155) plus the RA pages and silent pause (#200 / #1168) merged. NOT TESTED."
+   "nov1_note": "OPL-core in-game pause/resume/cheats/exit (#184 / #1155) plus the RA pages and silent pause (#200 / #1168) merged. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI4",
@@ -1605,7 +2009,9 @@
    "project": "RIPPS2",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "RI5",
@@ -1613,7 +2019,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI6",
@@ -1621,7 +2029,9 @@
    "project": "RIPPS2",
    "oct29_status": "Declined / outside local scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "RI7",
@@ -1629,7 +2039,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI8",
@@ -1637,7 +2049,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI9",
@@ -1645,7 +2059,9 @@
    "project": "RIPPS2",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI10",
@@ -1653,7 +2069,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI11",
@@ -1661,7 +2079,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI12",
@@ -1669,7 +2089,9 @@
    "project": "RIPPS2",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": "Power off from the in-game actions panel merged with #184 / #1155. NOT TESTED."
+   "nov1_note": "Power off from the in-game actions panel merged with #184 / #1155. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI13",
@@ -1677,7 +2099,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI14",
@@ -1685,7 +2109,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI15",
@@ -1693,7 +2119,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI16",
@@ -1701,7 +2129,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI17",
@@ -1709,7 +2139,9 @@
    "project": "RIPPS2",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI18",
@@ -1717,7 +2149,9 @@
    "project": "RIPPS2",
    "oct29_status": "Intentional design difference",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "RI19",
@@ -1725,7 +2159,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI20",
@@ -1733,7 +2169,9 @@
    "project": "RIPPS2",
    "oct29_status": "Intentional design difference",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "RI21",
@@ -1741,7 +2179,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI22",
@@ -1749,7 +2189,9 @@
    "project": "RIPPS2",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": "Hidden Games manager merged. NOT TESTED."
+   "nov1_note": "Hidden Games manager merged. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI23",
@@ -1757,7 +2199,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI24",
@@ -1765,7 +2209,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI25",
@@ -1773,7 +2219,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI26",
@@ -1781,7 +2229,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI27",
@@ -1789,7 +2239,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI28",
@@ -1797,7 +2249,9 @@
    "project": "RIPPS2",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI29",
@@ -1805,7 +2259,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI30",
@@ -1813,7 +2269,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI31",
@@ -1821,7 +2279,9 @@
    "project": "RIPPS2",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI32",
@@ -1829,7 +2289,9 @@
    "project": "RIPPS2",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI33",
@@ -1837,7 +2299,9 @@
    "project": "RIPPS2",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI34",
@@ -1845,7 +2309,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI35",
@@ -1853,7 +2319,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI36",
@@ -1861,7 +2329,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI37",
@@ -1869,7 +2339,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI38",
@@ -1877,7 +2349,9 @@
    "project": "RIPPS2",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": "Recent Games still capped at 10 entries in both editions; RIPPS2 keeps 99."
+   "nov1_note": "Recent Games still capped at 10 entries in both editions; RIPPS2 keeps 99.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "RI39",
@@ -1885,7 +2359,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI40",
@@ -1893,7 +2369,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI41",
@@ -1901,7 +2379,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI42",
@@ -1909,7 +2389,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI43",
@@ -1917,7 +2399,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI44",
@@ -1925,7 +2409,9 @@
    "project": "RIPPS2",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": "Per-video-mode menu positions merged (October 29 batch). NOT TESTED."
+   "nov1_note": "Per-video-mode menu positions merged (October 29 batch). NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI45",
@@ -1933,7 +2419,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI46",
@@ -1941,7 +2429,9 @@
    "project": "RIPPS2",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "RI47",
@@ -1949,7 +2439,9 @@
    "project": "RIPPS2",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "RI48",
@@ -1957,7 +2449,9 @@
    "project": "RIPPS2",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "RI49",
@@ -1965,7 +2459,9 @@
    "project": "RIPPS2",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "RI50",
@@ -1973,7 +2469,9 @@
    "project": "RIPPS2",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "RI51",
@@ -1981,7 +2479,9 @@
    "project": "RIPPS2",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "RR1",
@@ -1989,7 +2489,9 @@
    "project": "RRVE / exaconn OPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "S1",
@@ -1997,7 +2499,9 @@
    "project": "Stable OPL",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": "Ours waits a bounded 30 s BSY plus 5 s DRDY; Stable OPL waits unbounded. Kept bounded on purpose."
+   "nov1_note": "Ours waits a bounded 30 s BSY plus 5 s DRDY; Stable OPL waits unbounded. Kept bounded on purpose.",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "SM1",
@@ -2005,7 +2509,9 @@
    "project": "PS2SMB",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "T1",
@@ -2013,7 +2519,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "T2",
@@ -2021,7 +2529,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "T3",
@@ -2029,7 +2539,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "T4",
@@ -2037,7 +2549,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "T5",
@@ -2045,7 +2559,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "T6",
@@ -2053,7 +2569,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "T7",
@@ -2061,7 +2579,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "T8",
@@ -2069,7 +2589,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "T9",
@@ -2077,7 +2599,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "T10",
@@ -2085,7 +2609,9 @@
    "project": "Project Titan Magenta Edition",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "T11",
@@ -2093,7 +2619,9 @@
    "project": "Project Titan",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "T12",
@@ -2101,7 +2629,9 @@
    "project": "Project Titan",
    "oct29_status": "Experimental source / unvalidated",
    "nov1_status": "UNKNOWN",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "UNKNOWN",
+   "nov2_note": ""
   },
   {
    "id": "TV1",
@@ -2109,7 +2639,9 @@
    "project": "FastLoader",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "TV2",
@@ -2117,7 +2649,9 @@
    "project": "FastLoader",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "TV3",
@@ -2125,7 +2659,9 @@
    "project": "Retro Arcade",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "TV4",
@@ -2133,7 +2669,9 @@
    "project": "Retro Arcade",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "TV5",
@@ -2141,7 +2679,9 @@
    "project": "Retro Volt Suite",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "TV6",
@@ -2149,7 +2689,9 @@
    "project": "FastLoader",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "TV7",
@@ -2157,7 +2699,9 @@
    "project": "FastLoader",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "TV8",
@@ -2165,7 +2709,9 @@
    "project": "FastLoader",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "TV9",
@@ -2173,7 +2719,9 @@
    "project": "FastLoader",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "TV10",
@@ -2181,7 +2729,9 @@
    "project": "FastLoader",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "TV11",
@@ -2189,7 +2739,9 @@
    "project": "FastLoader / Retro Volt",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "U1",
@@ -2197,7 +2749,9 @@
    "project": "Upstream OPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "U6",
@@ -2205,7 +2759,9 @@
    "project": "Upstream OPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "U9",
@@ -2213,7 +2769,9 @@
    "project": "Upstream OPL",
    "oct29_status": "Historical / withdrawn",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "UF1",
@@ -2221,7 +2779,9 @@
    "project": "udpfsd",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "W1",
@@ -2229,7 +2789,9 @@
    "project": "wOPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "W2",
@@ -2237,7 +2799,9 @@
    "project": "wOPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "W3",
@@ -2245,7 +2809,9 @@
    "project": "wOPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "W6",
@@ -2253,7 +2819,9 @@
    "project": "wOPL",
    "oct29_status": "Prior source finding / reassess",
    "nov1_status": "MISSING",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "WC1",
@@ -2261,7 +2829,9 @@
    "project": "PS2 Webcore Launcher",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "X1",
@@ -2269,7 +2839,9 @@
    "project": "E2OPL",
    "oct29_status": "Historical / withdrawn",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "YA-01",
@@ -2277,7 +2849,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA1",
@@ -2285,7 +2859,9 @@
    "project": "YAOPL",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "YA-02",
@@ -2293,7 +2869,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA2",
@@ -2301,7 +2879,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-03",
@@ -2309,7 +2889,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-04",
@@ -2317,7 +2899,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-05",
@@ -2325,7 +2909,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-06",
@@ -2333,7 +2919,9 @@
    "project": "YAOPL",
    "oct29_status": "Intentional design difference",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": "Bounded digital/unlocked handoff kept; analog-lock follow-up RiptOPL #246 / legacy #1208 merged. NOT TESTED."
+   "nov1_note": "Bounded digital/unlocked handoff kept; analog-lock follow-up RiptOPL #246 / legacy #1208 merged. NOT TESTED.",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "YA-07",
@@ -2341,7 +2929,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-08",
@@ -2349,7 +2939,9 @@
    "project": "YAOPL",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PARTIAL",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PARTIAL",
+   "nov2_note": ""
   },
   {
    "id": "YA-09",
@@ -2357,7 +2949,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-10",
@@ -2365,7 +2959,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-11",
@@ -2373,7 +2969,9 @@
    "project": "YAOPL",
    "oct29_status": "Historical / withdrawn",
    "nov1_status": "INTENTIONAL DIFFERENCE",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "INTENTIONAL DIFFERENCE",
+   "nov2_note": ""
   },
   {
    "id": "YA-12",
@@ -2381,7 +2979,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-13",
@@ -2389,7 +2989,9 @@
    "project": "YAOPL",
    "oct29_status": "Source comparison candidate",
    "nov1_status": "MISSING",
-   "nov1_note": "No MMCE bar/controller coverage test in either CI."
+   "nov1_note": "No MMCE bar/controller coverage test in either CI.",
+   "nov2_status": "MISSING",
+   "nov2_note": ""
   },
   {
    "id": "YA-14",
@@ -2397,7 +2999,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-15",
@@ -2405,7 +3009,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-16",
@@ -2413,7 +3019,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-17",
@@ -2421,7 +3029,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-18",
@@ -2429,7 +3039,9 @@
    "project": "YAOPL",
    "oct29_status": "Merged / hardware unverified",
    "nov1_status": "PRESENT",
-   "nov1_note": ""
+   "nov1_note": "",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-19",
@@ -2437,7 +3049,9 @@
    "project": "YAOPL",
    "oct29_status": "Already present / equivalent scope",
    "nov1_status": "PRESENT",
-   "nov1_note": "Local padhook already preserves the hook flag and flushes through kernel-context cache publication."
+   "nov1_note": "Local padhook already preserves the hook flag and flushes through kernel-context cache publication.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-20",
@@ -2445,7 +3059,9 @@
    "project": "YAOPL",
    "oct29_status": "Partial overlap / remaining difference",
    "nov1_status": "PRESENT",
-   "nov1_note": "Shared message/warning/confirmation wrapping merged: RiptOPL #215 / legacy #1177. NOT TESTED."
+   "nov1_note": "Shared message/warning/confirmation wrapping merged: RiptOPL #215 / legacy #1177. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-21",
@@ -2453,7 +3069,9 @@
    "project": "YAOPL",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "PARTIAL",
-   "nov1_note": "Ported from yaopl/yaopl ce6323f (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED."
+   "nov1_note": "Ported from yaopl/yaopl ce6323f (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": "Draft RiptOPL #264 / legacy #1225, with YA-22 and YA-25. NOT TESTED."
   },
   {
    "id": "YA-22",
@@ -2461,7 +3079,9 @@
    "project": "YAOPL",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "PARTIAL",
-   "nov1_note": "Ported from yaopl/yaopl 4c713a3 (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED."
+   "nov1_note": "Ported from yaopl/yaopl 4c713a3 (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": "Draft RiptOPL #264 / legacy #1225, with YA-21 and YA-25. NOT TESTED."
   },
   {
    "id": "YA-23",
@@ -2469,7 +3089,9 @@
    "project": "YAOPL",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "PRESENT",
-   "nov1_note": "Row-race fix merged: RiptOPL #251 / legacy #1213 (YAOPL 5211110). NOT TESTED."
+   "nov1_note": "Row-race fix merged: RiptOPL #251 / legacy #1213 (YAOPL 5211110). NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "YA-24",
@@ -2477,7 +3099,19 @@
    "project": "YAOPL",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "PRESENT",
-   "nov1_note": "Merged: RiptOPL #245 / legacy #1207. NOT TESTED."
+   "nov1_note": "Merged: RiptOPL #245 / legacy #1207. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
+  },
+  {
+   "id": "YA-25",
+   "feature": "Theme and language swaps publish the new one and free the old one under the GUI lock",
+   "project": "YAOPL",
+   "oct29_status": "(new 2026-11-02)",
+   "nov1_status": null,
+   "nov1_note": "Not recorded on November 1: YAOPL b45a592d was missed. Added November 2.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": "Ported from yaopl/yaopl b45a592d (Roman Kelesidis), with one theme switch and one language switch at a time. Draft RiptOPL #264 / legacy #1225. NOT TESTED."
   },
   {
    "id": "RI52",
@@ -2485,7 +3119,9 @@
    "project": "RIPPS2",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "PRESENT",
-   "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 bd7615f). NOT TESTED."
+   "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 bd7615f). NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI53",
@@ -2493,7 +3129,9 @@
    "project": "RIPPS2",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "PRESENT",
-   "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 a53f936). NOT TESTED."
+   "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 a53f936). NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   },
   {
    "id": "RI54",
@@ -2501,7 +3139,9 @@
    "project": "RIPPS2",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "MISSING",
-   "nov1_note": "Released in RIPPS2 v1.2.8-beta. Product call; not ported."
+   "nov1_note": "Released in RIPPS2 v1.2.8-beta. Product call; not ported.",
+   "nov2_status": "PARTIAL",
+   "nov2_note": "Draft RiptOPL #276 / legacy #1235: Settings > Interface > List Title and Description (Theme, On, Off), default Theme keeps today's look. NOT TESTED."
   },
   {
    "id": "RI55",
@@ -2509,15 +3149,9 @@
    "project": "RIPPS2",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "MISSING",
-   "nov1_note": "Unreleased branch work. Product call; not ported."
-  },
-  {
-   "id": "DT6",
-   "feature": "In-game IOP memory relief: lwIP IP_REASSEMBLY/IP_FRAG off, USBD pool trim for PADEMU-only (KH2 over SMB)",
-   "project": "OPL-DualSense-BT",
-   "oct29_status": "(new 2026-11-01)",
-   "nov1_status": "MISSING",
-   "nov1_note": "DualSense-BT 8bb581a. Turning IP fragmentation off changes behaviour for large-MTU SMB paths; needs a decision before any port."
+   "nov1_note": "Unreleased branch work. Product call; not ported.",
+   "nov2_status": "MISSING",
+   "nov2_note": "Released in RIPPS2 v1.2.9-beta (November 1). Port started: legacy first, then RiptOPL."
   },
   {
    "id": "NV2",
@@ -2525,7 +3159,9 @@
    "project": "neutrino",
    "oct29_status": "(new 2026-11-01)",
    "nov1_status": "PRESENT",
-   "nov1_note": "Merged: RiptOPL #234 / legacy #1196 and #243 / #1205. NOT TESTED."
+   "nov1_note": "Merged: RiptOPL #234 / legacy #1196 and #243 / #1205. NOT TESTED.",
+   "nov2_status": "PRESENT",
+   "nov2_note": ""
   }
  ]
 }
