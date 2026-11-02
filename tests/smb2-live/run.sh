@@ -48,6 +48,14 @@ command -v timeout >/dev/null || { echo "timeout not installed (coreutils)"; exi
 work=$(mktemp -d)
 cleanup() {
     [ -f "$work/run/smbd.pid" ] && kill "$(cat "$work/run/smbd.pid")" 2>/dev/null || true
+    # smbd starts samba-dcerpcd and its rpcd_* workers on demand (for the share lists) and leaves
+    # them running when it exits; with $work gone they never exit. Stop them before removing it.
+    pkill -f -- "--configfile=$work/smb.conf" 2>/dev/null || true
+    i=0
+    while pgrep -f -- "--configfile=$work/smb.conf" >/dev/null 2>&1 && [ $i -lt 50 ]; do
+        i=$((i + 1))
+        sleep 0.1
+    done
     rm -rf "$work"
 }
 # EXIT cleans up; INT/TERM exit (so the script does not resume with $work gone), which runs it.
@@ -185,6 +193,10 @@ denied() { # the logon must be refused cleanly: exit 3 after the refusal, no han
     [ $rc -eq 3 ] && grep -q 'session setup -1000' denied.txt
 }
 browse() {
+    # The share list is the first request to need smbd's RPC helpers (samba-dcerpcd, rpcd_*), which
+    # smbd starts on demand. Start them first, so that check does not also time their start-up:
+    # seconds on a loaded machine, against libsmb2's 15 s request timeout.
+    timeout 60 smbclient -s "$conf" -p "$port" -L 127.0.0.1 -U ps2%secret >/dev/null 2>&1 || true
     timeout 120 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso "$u8name"
 }
 keepalive() {
