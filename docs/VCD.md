@@ -142,9 +142,13 @@ re-registers the selected device driver as bare `mass:` before it resolves that 
 > completions to their requests, unwinds a failed combined startup, and accepts extended
 > SCSI GOOD status. The generation-change follow-up reports a bus reset consistently across
 > transmit and response waits. The October 27 status fix reads the SCSI status the way the
-> driver stores it, so a failed read or write is no longer taken for a good one. The rebuilt
-> iLink `usbhdfsd.irx.ilink` is **27,129 bytes** (the preceding candidate was 27,145 bytes;
-> the Beta 4221 copy was 22,025 bytes).
+> driver stores it, so a failed read or write is no longer taken for a good one. The November 2
+> bring-up fix stops a missed answer from leaving the drive detached until a bus reset that never
+> comes: an unanswered LOGIN is asked again with the same request, a drive that did not attach is
+> tried again after 1, 2 and 4 s and then every 5 s, a retry keeps the login the drive already
+> granted, and a drive that logs in again releases what its earlier login left reserved. The rebuilt
+> iLink `usbhdfsd.irx.ilink` is **27,641 bytes** (the preceding candidates were 27,129 and 27,145
+> bytes; the Beta 4221 copy was 22,025 bytes).
 > Replace the matching loose pair on the actual POPS seek path as well as the kit;
 > the stale-pair check rejects the old size. See the [audit and console test gate](ILINK_CODE_AUDIT_2026-10-22.md).
 > These are source/host-tested corrections awaiting a console result.
@@ -476,7 +480,7 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 7. **iLink returns to wLaunchELF?** Inspect the card after the attempt. A successful RiptOPL equip
    leaves `mc?:/POPSTARTER/bdma_config.txt` containing exactly `ilink`, plus `usbd.irx` (48,500 bytes;
    SHA-256 `5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369`) and `usbhdfsd.irx`
-   (27,129 bytes; SHA-256 `E7829B6AA81586FE53B10B200F256F7177069AAB287D3D028C20B7E043313917`). Missing or different files
+   (27,641 bytes; SHA-256 `2F945BD2C199A2FCD5D56DDF0B61DE607362D1340A4D9C0DB81F49462E17C2FA`). Missing or different files
    put the defect on RiptOPL's external-equip side; exact files narrow it to POPSTARTER/BDMA runtime
    reinitialization after the handoff.
 8. **UDPFS shows Ember but no VCDs?** Select **UDPFS Files**, check server `POPS/*.VCD`

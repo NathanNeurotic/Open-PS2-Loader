@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 27129 | e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917 |
+| usbhdfsd.irx.ilink | 27641 | 2f945bd2c199a2fcd5d56ddf0b61de607362d1340a4d9c0db81f49462e17c2fa |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
@@ -79,6 +79,13 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   `e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917`; the 27145-byte binary it
   replaces was sha256 `1a9c1baaf1dd020e35b75082b630f325b90e884819c743ddd5e1f27f106efcb6`.
   Console acceptance is pending.
+  The November 2 bring-up fix asks an unanswered LOGIN again with the same request, tries a drive
+  that did not attach again after 1, 2 and 4 s and then every 5 s without waiting for a bus reset,
+  keeps a granted login for a retry in the same bus generation, and releases a drive's stale
+  reserved LOGIN and command once it logs in again. It was built in the pinned image below and is
+  27641 bytes, sha256 `2f945bd2c199a2fcd5d56ddf0b61de607362d1340a4d9c0db81f49462e17c2fa`; the
+  27129-byte binary it replaces was sha256
+  `e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917`. Console acceptance is pending.
   **Rebuilt from source:** the bytes above are the output of `make` in that directory inside
   `ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11` (the
   iLink driver pin from 2026-08-13, not the release `PS2DEVPINNED` digest), which also reproduces

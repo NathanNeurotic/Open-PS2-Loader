@@ -232,7 +232,9 @@ typedef struct { u32 lo, hi; } iop_sys_clock_t;
 #define M_DEBUG(...) ((void)0)
 #define SBP2_LOGIN_REQUEST 0
 struct scsi_interface { int unused; };
-struct SBP2Device { struct scsi_interface scsi; };
+struct SBP2Device { struct scsi_interface scsi; int generation; unsigned char loggedIn; };
+static int generationNow = 1, resetAfterAttempts;
+static int iLinkGetGenerationNumber(void) { return generationNow; }
 
 /* One clock tick = 1 us, so SysClock2USec is a plain split. */
 static u64 simUs;
@@ -252,6 +254,10 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
     (void)mode; (void)dev;
     attempts++;
     simUs += attemptCostUs;
+    if (resetAfterAttempts && attempts >= resetAfterAttempts)
+        generationNow++; /* a bus reset: this and every later LOGIN here fails at once */
+    if (dev->generation != generationNow)
+        return -1;
     return simUs >= holdUntilUs ? 0 : -1;
 }
 static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev) { (void)dev; return 0; }
@@ -261,11 +267,13 @@ static int scsi_connect(struct scsi_interface *s) { (void)s; connects++; return 
 
 static int fails;
 #define CHECK(c, m) do { if (!(c)) { printf("FAIL %s\n", m); fails++; } } while (0)
+static unsigned char loggedIn;
 static int run(u64 hold, u64 cost)
 {
     struct SBP2Device dev;
     simUs = 1000000; /* not zero, so elapsed time is measured from the start, not from 0 */
     holdUntilUs = simUs + hold; attemptCostUs = cost; attempts = 0; connects = 0;
+    dev.generation = generationNow = 1; dev.loggedIn = loggedIn;
     return initConfigureSBP2Device(&dev);
 }
 
@@ -285,6 +293,19 @@ int main(void)
     CHECK(simUs - start >= 5000000 && simUs - start < 5200000 + 200000, "...after the 5 s budget, not sooner or much later");
     CHECK(run(~0ULL / 2, 2000000) < 0 && simUs - start < 5000000 + 2000000 + 200000 + 2000000,
           "slow refusals cannot stretch the budget: it is elapsed time, not a try count");
+
+    /* A retry without a bus reset, after this generation's LOGIN was granted and a later step
+       failed: the drive keeps that login, so asking again would only be refused. */
+    loggedIn = 1;
+    CHECK(run(~0ULL / 2, 0) >= 0 && attempts == 0 && connects == 1,
+          "a retry with this generation's login already granted goes straight to the warm-up");
+    loggedIn = 0;
+
+    /* A bus reset in the middle of the LOGIN loop: every later attempt here fails at once. */
+    resetAfterAttempts = 3;
+    CHECK(run(~0ULL / 2, 0) < 0 && attempts == 3 && simUs - start < 1000000,
+          "a bus reset ends the LOGIN loop at once instead of spinning out the budget");
+    resetAfterAttempts = 0;
     return fails ? 1 : 0;
 }
 '''

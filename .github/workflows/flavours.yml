@@ -425,7 +425,7 @@ jobs:
         run: python3 .github/scripts/test_bdm_cache.py
       - name: Check the i.LINK driver logs back in after an IOP reset and only offers a ready drive (#1018)
         run: python3 .github/scripts/test_ilink_bd_reset.py
-      - name: Check both i.LINK drivers retain requests and release failed discovery contexts
+      - name: Check both i.LINK drivers retain requests, retry discovery without a bus reset and release failed contexts
         run: |
           python3 .github/scripts/test_ilink_sbp2_completion.py
           python3 .github/scripts/test_ilink_discovery.py
@@ -439,6 +439,8 @@ jobs:
         run: |
           python3 .github/scripts/test_ilink_command_orb.py
           python3 .github/scripts/test_ilink_scsi_geometry.py
+      - name: Check a failed iLinkman or IEEE1394_bd start on the OPL core stops on the red screen
+        run: python3 .github/scripts/test_ilink_game_transport.py
       - name: Check CF transfer safety, bus ownership and native handoff
         run: python3 .github/scripts/test_pccf.py
       - name: Check per-game parental lock and test/autolaunch paths

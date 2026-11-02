@@ -153,11 +153,14 @@ int GetOPLModInfo(int id, void **pointer, unsigned int *size)
 // The transports a game cannot run without. If one does not start after the reset, cdvdman waits
 // forever for a block device that never arrives: a black screen with nothing to explain it. Stop on
 // a blinking red screen instead, as an out-of-IOP-memory failure does. A module that loads but
-// declines to stay resident (bad ip=, no adapter) counts as not started.
+// declines to stay resident (bad ip=, no adapter) counts as not started. iLinkman and IEEE1394_bd
+// are the i.LINK pair: iopmgr.c already skips IEEE1394_bd when iLinkman fails, but nothing said why,
+// and the game then sat on a black screen waiting for a drive that could never attach.
 static int IsRequiredTransport(int id)
 {
     return id == OPL_MODULE_ID_PCCF || id == OPL_MODULE_ID_SMAP_UDPBD || id == OPL_MODULE_ID_UDPFS_SMAP ||
-           id == OPL_MODULE_ID_UDPFS_MINISTACK || id == OPL_MODULE_ID_UDPFS_BD || id == OPL_MODULE_ID_UDPFS_FHI;
+           id == OPL_MODULE_ID_UDPFS_MINISTACK || id == OPL_MODULE_ID_UDPFS_BD || id == OPL_MODULE_ID_UDPFS_FHI ||
+           id == OPL_MODULE_ID_ILINK || id == OPL_MODULE_ID_ILINKBD;
 }
 
 static void RequiredTransportFailed(void)
