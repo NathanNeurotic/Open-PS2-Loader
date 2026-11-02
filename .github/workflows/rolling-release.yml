@@ -742,6 +742,9 @@ jobs:
           #   OrbitPS2-Manager.url            -- link to the cross-platform PC library manager.
           #   OPL-PS1-AIO-Converter-GUI.url   -- link to the PS1/POPSTARTER preparation tool.
           #   PS2RD-CHT-Manager.url           -- link to the PS2RD cheat-file manager.
+          #   LICENSE-LIBSMB2.txt             -- the LGPL-2.1 licence of libsmb2, which every loader embeds.
+          #   CREDITS                         -- who made what, including the notice that the loaders use
+          #                                      libsmb2 under that licence (LGPL-2.1 section 6).
           PKG=riptopl_pkg
           rm -rf "$PKG"
           mkdir -p "$PKG/APPS" "$PKG/POPS" "$PKG/EMBER"
@@ -997,7 +1000,7 @@ jobs:
           ZIP="RIPTOPL-${REL}.zip"
           (
             cd "$PKG"
-            zip -r -X "../rolling/${ZIP}" APPS ART APP_RIPTOPL.psu POPS EMBER neutrino PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url LICENSE-LIBSMB2.txt >/dev/null
+            zip -r -X "../rolling/${ZIP}" APPS ART APP_RIPTOPL.psu POPS EMBER neutrino PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url LICENSE-LIBSMB2.txt CREDITS >/dev/null
           )
           echo "Built rolling/${ZIP}:"
           unzip -l "rolling/${ZIP}"
@@ -1061,8 +1064,10 @@ jobs:
             up="$(echo "$kind" | tr '[:lower:]' '[:upper:]')"
             if [ -d "rolling/$kind" ] && [ -n "$(ls -A "rolling/$kind" 2>/dev/null)" ]; then
               ZN="RIPTOPL-${up}-${REL}.zip"
-              # Every loader in the bundle embeds libsmb2 (LGPL-2.1): the licence rides along.
+              # Every loader in the bundle embeds libsmb2 (LGPL-2.1): the licence rides along, with CREDITS,
+              # which says the loaders use libsmb2 under it.
               cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "rolling/$kind/LICENSE-LIBSMB2.txt"
+              cp -f CREDITS "rolling/$kind/CREDITS"
               (cd "rolling/$kind" && zip -r -X "../${ZN}" . >/dev/null)
               echo "Packed rolling/${ZN}:"
               unzip -l "rolling/${ZN}"
@@ -1325,10 +1330,12 @@ jobs:
               cp -f "$elf" mega-out/
             fi
           done
-          # Those ELFs embed libsmb2 (LGPL-2.1): its licence goes into the MEGA folder beside them.
+          # Those ELFs embed libsmb2 (LGPL-2.1): its licence goes into the MEGA folder beside them, with
+          # CREDITS, which says the loaders use libsmb2 under it.
           cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt mega-out/LICENSE-LIBSMB2.txt
+          cp -f CREDITS mega-out/CREDITS
 
-          MEGA_UPLOAD_FILES="mega-out/${ARCHIVE} mega-out/LICENSE-LIBSMB2.txt"
+          MEGA_UPLOAD_FILES="mega-out/${ARCHIVE} mega-out/LICENSE-LIBSMB2.txt mega-out/CREDITS"
           for f in mega-out/*.ELF; do
             if [ -f "$f" ]; then
               MEGA_UPLOAD_FILES="$MEGA_UPLOAD_FILES $f"

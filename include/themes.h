@@ -72,6 +72,10 @@ typedef struct
     int currentCount; // GameCountText: the count last written into value (-1: none yet)
     char *currentValue;
     char *wrappedValue; // owned, word-wrapped copy of currentValue for SIZING_WRAP (issue #44)
+
+    // AttributeText of the game CFG's Title or Description: Settings > Interface > List Title and Description
+    // can hide it on a list page (RIPPS2 build 126). Set by initAttributeText.
+    unsigned char cfgText;
 } mutable_text_t;
 
 typedef struct
@@ -279,6 +283,10 @@ typedef struct theme
     int hintsLabels;  // 1 glyph and label (the default), 0 the glyph alone
     int hintsColumn;  // 1 one hint a line from the element's x/y down; 0 one row (the default)
     int hintsSpacing; // a column's line pitch
+
+    // list_cfg_text=0 (RIPPS2 build 126): the list pages leave out the game CFG's Title and Description.
+    // 0 (the key absent, or any other value) shows them, as before the key existed.
+    int hideListCfgText;
 } theme_t;
 
 // Button glyph sets (RIPPS2 build 90, akilluminati47): the theme's own PNGs, OPL's built-in ones, or one of two
@@ -343,6 +351,12 @@ int thmCycleView(void);
 // for themes with SD/HD variants), or the Alternate Background setting no longer matches the pictures it was
 // built with (only for themes with alt= keys). Returns 1 when the theme was reloaded.
 int thmRefreshDisplayLayout(void);
+// The Grid Layout setting changed: a theme showing the grid loads again, as a page now holds a different number of
+// covers. Returns 0 only when that load was abandoned (#120) and the old grid is still on screen.
+int thmRefreshGridLayout(void);
+// Load the selected theme again (a language change brings its own font). The id is read under the theme switch
+// lock, so a theme the IO thread selected meanwhile is the one reloaded. Returns 1 when the theme was reloaded.
+int thmReload(void);
 int thmFindGuiID(const char *theme);
 int thmSavedThemePending(void); // the saved disk theme's drive has not offered it yet
 const char **thmGetGuiList(void);
