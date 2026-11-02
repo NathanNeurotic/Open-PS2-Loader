@@ -1,4 +1,4 @@
-"""The in-game SMB2 reader logs on exactly as the menu does.
+"""The in-game SMB2 reader logs on with the same user name, domain and password as the menu.
 
 A server recomputes NTOWFv2 from the user name and the domain the client sends (MS-NLMP 3.3.2). If
 the game's logon sends another user name or domain than the menu's, or hashes another one, a
@@ -6,14 +6,18 @@ password that works in the menu can fail at game start, and only on some servers
 live harness uses, accepts several domains for one account.
 
 This builds both clients on the host and runs each against a fake SMB2 server that sends one fixed
-CHALLENGE (TargetName PARITYDOM), then compares the AUTHENTICATE messages they send: UserName,
-DomainName, and the user, domain and password their NTLMv2 proofs are computed from.
+CHALLENGE, then compares the AUTHENTICATE messages they send: UserName, DomainName, and the user,
+domain and password their NTLMv2 proofs are computed from. The CHALLENGE's TargetName, ParityDom, is
+in mixed case and differs from its MsvAvNbDomainName AV pair, so a logon that changes the domain's
+case or takes it from the AV pair fails. The rest of the two messages is not compared, and differs:
+the menu's NTLMv2 blob also names the server (MsvAvTargetName), its LM response is empty where the
+game's is 24 zero bytes, and the flags differ. None of these is an input to the proof.
 - The game: tests/smb2-live/ingame.c around the real modules/iopcore/cdvdman/smb2.c.
 - The menu: the vendored libsmb2, set up the way smb2man_new_context() sets it up and connected the
   way smb2man.c connects. getlogin_r() fails as it does in libsmb2's IOP build, so a blank user is
   libsmb2's default, "Guest". smb2man.c itself needs the PS2SDK to build, so its calls are checked
-  in its source (comments ignored): the same setters as here, the password always set, no user and
-  no domain set, and a blank user passed as NULL.
+  in its source (comments and the contents of literals ignored): the same setters as here, the
+  password set once and always, no user and no domain set, and a blank user passed as NULL.
 This is a host check, not a console test. tests/smb2-live/run.sh runs both against a real Samba.
 """
 from pathlib import Path
@@ -41,7 +45,10 @@ def check(cond, what):
 
 
 def strip_comments(src):
-    """C source with each comment replaced by a space (its newlines kept); literals are left alone."""
+    """C source with each comment replaced by a space (its newlines kept) and the contents of each
+    string and character literal dropped, so neither can pass for code. Lines that end in a
+    backslash are joined first, as C joins them before it removes comments."""
+    src = src.replace('\\\n', '')
     out, i, n = [], 0, len(src)
     while i < n:
         if src.startswith('/*', i):
@@ -57,7 +64,7 @@ def strip_comments(src):
             j = i + 1
             while j < n and src[j] != src[i]:
                 j += 2 if src[j] == '\\' else 1
-            out.append(src[i:j + 1])
+            out.append(src[i] * 2)
             i = j + 1
         else:
             out.append(src[i])
@@ -77,10 +84,17 @@ smb2man = strip_comments((root / 'modules/network/smb2man/smb2man.c').read_text(
 setup = function_body(smb2man, 'smb2man_new_context')
 check(sorted(set(re.findall(r'\b(smb2_set_\w+)\s*\(', setup))) ==
       ['smb2_set_password', 'smb2_set_security_mode', 'smb2_set_timeout', 'smb2_set_version'] and
-      re.search(r'\bsmb2_set_security_mode\(ctx, SMB2_NEGOTIATE_SIGNING_ENABLED\);', setup) and
-      re.search(r'\bsmb2_set_version\(ctx, SMB2_VERSION_ANY2\);', setup),
+      re.search(r'\bsmb2_set_security_mode\(\s*ctx\s*,\s*SMB2_NEGOTIATE_SIGNING_ENABLED\s*\)\s*;', setup) and
+      re.search(r'\bsmb2_set_version\(\s*ctx\s*,\s*SMB2_VERSION_ANY2\s*\)\s*;', setup),
       'smb2man_new_context() sets libsmb2 up differently: make the menu logon in this check do the same')
-check(re.search(r'^    smb2_set_password\(ctx, conn_password\);$', setup, re.M) is not None,
+# The password is set once in all of smb2man.c: in smb2man_new_context(), at its top level, and the
+# only return before it is the one for a failed allocation (without a password libsmb2 logs on
+# anonymously).
+setter = re.search(r'^    smb2_set_password\(\s*ctx\s*,\s*conn_password\s*\)\s*;', setup, re.M)
+before = setup[:setter.start()] if setter else ''
+check(setter is not None and len(re.findall(r'\bsmb2_set_password\s*\(', smb2man)) == 1 and
+      len(re.findall(r'\breturn\b', before)) == 1 and
+      re.search(r'\bif\s*\(\s*(?:ctx\s*==\s*NULL|!\s*ctx)\s*\)\s*return\s+NULL\s*;', before) is not None,
       'smb2man_new_context() no longer always sets the password (without one libsmb2 logs on anonymously): '
       'make the menu logon in this check do the same')
 check(re.search(r'\bsmb2_set_(user|domain)\b', smb2man) is None,
@@ -134,7 +148,7 @@ def u16(s):
 
 
 # ---- the fake server -------------------------------------------------------------------------------
-TARGET_NAME = 'PARITYDOM'
+TARGET_NAME = 'ParityDom'  # mixed case: a logon that changes the domain's case must fail
 SERVER_CHALLENGE = bytes.fromhex('0123456789abcdef')
 TIMESTAMP = struct.pack('<Q', 133000000000000000)
 STATUS_SUCCESS, STATUS_MORE_PROCESSING_REQUIRED = 0, 0xC0000016
@@ -184,7 +198,9 @@ def error_body():
 def challenge_message():
     tn = u16(TARGET_NAME)
     av = b''
-    for code, val in [(2, u16(TARGET_NAME)), (1, u16('FAKESRV')), (4, u16('paritydom.test')),
+    # MsvAvNbDomainName (2) differs from TargetName on purpose: both logons must take the domain from
+    # TargetName, and a logon that read it from this AV pair would otherwise pass.
+    for code, val in [(2, u16('PARITYNB')), (1, u16('FAKESRV')), (4, u16('paritydom.test')),
                       (3, u16('fakesrv.paritydom.test')), (7, TIMESTAMP)]:
         av += struct.pack('<HH', code, len(val)) + val
     av += struct.pack('<HH', 0, 0)

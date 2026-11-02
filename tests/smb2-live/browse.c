@@ -151,6 +151,21 @@ int main(int argc, char **argv)
     CHECK(OPS->write(&f, a, 16) < 0, "write to a read-only handle fails");
     CHECK(OPS->close(&f) == 0, "close");
 
+    /* Positions past 2 GiB, as a dual-layer image in one file needs: its size, and its second layer,
+       which the menu finds by seeking there (sbProbeISO9660). The image is sparse, 7 GiB long, with a
+       marker at 0xFE830000, where a layer 0 of 2,084,960 sectors ends. */
+    CHECK(OPS->open(&f, "\\DVD\\DVD9.iso", FIO_O_RDONLY, 0) >= 0, "open a 7 GiB image");
+    s64 pos = OPS->lseek64(&f, 0, 2);
+    CHECK(pos == 0x1C0001234LL, "lseek64 SEEK_END of the 7 GiB image (%lld)", (long long)pos);
+    pos = OPS->lseek64(&f, 0xFE830000LL, 0);
+    CHECK(pos == 0xFE830000LL && OPS->read(&f, a, 6) == 6 && !memcmp(a, "LAYER1", 6),
+          "lseek64 to 0xFE830000 and read the marker there (%lld)", (long long)pos);
+    pos = OPS->lseek64(&f, 0x123456000LL, 0);
+    CHECK(pos == 0x123456000LL, "lseek64 past 4 GiB (%lld)", (long long)pos);
+    CHECK(OPS->lseek64(&f, 0x7FFFFFF0LL, 0) == 0x7FFFFFF0LL && OPS->lseek(&f, 0x20, 1) == -EOVERFLOW,
+          "a 32-bit lseek past 2 GiB reports -EOVERFLOW");
+    CHECK(OPS->close(&f) == 0, "close");
+
     /* create + write + reopen read-write, as VMC creation and config saves do */
     CHECK(OPS->mkdir(&f, "\\CFGTEST", 0) == 0, "mkdir");
     CHECK(OPS->mkdir(&f, "\\CFGTEST", 0) == 0, "mkdir existing folder is ok");

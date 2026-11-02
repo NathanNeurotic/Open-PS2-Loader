@@ -7,8 +7,9 @@
 #             writes and read-back, a 100 KB write across the 64 KB chunk, error paths.
 #   browse.c  drives modules/network/smb2man/smb2man.c (the menu's browse driver) over libsmb2,
 #             vendored at modules/network/smb2man/libsmb2: LOGON/OPENSHARE/GETSHARELIST devctls,
-#             directory listing, stat, read/write/seek, create/truncate/exclusive opens, mkdir,
-#             rename, remove, reconnect, and handles left open across LOGOFF.
+#             directory listing, stat, read/write/seek (seeks past 4 GiB in a sparse 7 GiB image
+#             too), create/truncate/exclusive opens, mkdir, rename, remove, reconnect, and handles
+#             left open across LOGOFF.
 #   keepalive.c  includes smb2man.c and runs its keepalive passes by hand: a session lost (the
 #             socket cut) under open files and directories, by a failed ECHO, read or write, the
 #             reconnect on the next tick, the backoff after a refused reconnect, LOGOFF and
@@ -18,9 +19,10 @@
 # All are built with AddressSanitizer and UBSan; a sanitizer report, a leak included, fails the case
 # (it exits 86, so not even a case that expects a refusal takes one for it).
 # The server is started on a private port with NTLMv2 only, run once with signing mandatory and once
-# with signing off, and once capped at SMB 2.0.2. Guest logons (an unknown user, and a blank user
-# name) are checked against a guest-ok share; a blank user name is also checked against a server where
-# only a real "Guest" account gets in, since it logs on as "Guest" as the menu does, not anonymously.
+# with signing off, once capped at SMB 2.0.2, and once SMB 3-only, which the browse driver must
+# refuse. Guest logons (an unknown user, and a blank user name) are checked against a guest-ok
+# share; a blank user name is also checked against a server where only a real "Guest" account gets
+# in, since it logs on as "Guest" as the menu does, not anonymously.
 #
 # Needs: a C compiler, Samba (smbd, smbpasswd, smbclient) and the PS2SDK's ps2smb.h (found through
 # PS2BUILD_HOME, default ~/.local/share/ps2build). Run as root (smbd wants to own its state) from
@@ -54,6 +56,11 @@ import sys
 root = sys.argv[1]
 open(root + '/DVD/TEST.iso', 'wb').write(bytes((i * 7 + 3) & 0xff for i in range(5 * 1024 * 1024 + 1234)))
 open(root + '/VMC/card.bin', 'wb').write(bytes(1024 * 1024 * 2))
+# A dual-layer image in one file, sparse (no data on disk): 7 GiB long, a marker where layer 1 starts.
+with open(root + '/DVD/DVD9.iso', 'wb') as f:
+    f.seek(0xFE830000)
+    f.write(b'LAYER1')
+    f.truncate(0x1C0001234)
 EOF
 # A name outside ASCII, as libsmb2 lists it (UTF-8): the in-game reader must request the same name.
 u8name=$(printf 'Caf\303\251 \303\274.iso')
@@ -103,7 +110,7 @@ start_smbd() {
             sleep 0.2
         done
     fi
-    smbd -s "$conf" -D
+    smbd -s "$conf" -D || { echo "smbd did not start"; tail -20 "$work/run/log.smbd" 2>/dev/null; exit 1; }
     i=0
     until smbclient -s "$conf" -p "$port" //127.0.0.1/PS2SMB -U ps2%secret -c ls >/dev/null 2>&1; do
         i=$((i + 1))
@@ -113,7 +120,7 @@ start_smbd() {
 }
 
 # ---- build ----------------------------------------------------------------------------------------
-# A sanitizer report exits 86, distinct from the clients' own failure codes (1, 3).
+# A sanitizer report exits 86, distinct from every exit code the clients use themselves (1-7, 9, 10).
 export ASAN_OPTIONS="${ASAN_OPTIONS:+$ASAN_OPTIONS:}exitcode=86"
 export UBSAN_OPTIONS="${UBSAN_OPTIONS:+$UBSAN_OPTIONS:}exitcode=86"
 cp "$ps2smb" "$work/inc/"
@@ -152,7 +159,9 @@ run() { # $1 label, then the command
         echo "ok   $label"
     else
         echo "FAIL $label"
-        grep '^FAIL:' "$work/out.txt" || true # the failed checks, wherever they are in the output
+        # the failed checks and any sanitizer report, wherever they are in the output (an ASan
+        # report ends with its shadow-byte legend, which is all the last lines would show)
+        grep -E '^FAIL[: ]|ERROR: [A-Za-z]+Sanitizer|runtime error|^SUMMARY: ' "$work/out.txt" || true
         echo "     last lines:"
         tail -15 "$work/out.txt"
         fails=$((fails + 1))

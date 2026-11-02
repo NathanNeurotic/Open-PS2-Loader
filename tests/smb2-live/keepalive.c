@@ -1,9 +1,10 @@
 /* Host harness for smb2man.c's keepalive: a session lost under open handles (a keepalive ECHO, an
    ECHO devctl, a read or a write that fails), the reconnect and its backoff, and LOGOFF /
    CLOSESHARE while the session is lost. It includes smb2man.c, so it can run keepalive passes by
-   hand (on the host no thread or alarm runs) and see the driver's state. The connection is cut
-   with shutdown() on the client's socket: both ways, so the next request fails as it does when a
-   server goes away, or only the read side, so requests still go out and their replies never come.
+   hand (on the host no thread or alarm runs) and see the driver's state. The connection is cut on
+   the client's side: shutdown() both ways, so the next request fails as it does when a server goes
+   away, or the socket swapped for a dead end that takes requests and never answers, so requests
+   still go out and their replies never come.
    Wrappers around smb2_echo() and smb2_connect_share() can let alarm ticks fire while those calls
    wait, as they do when a request times out on the IOP.
    Built with AddressSanitizer, whose leak check at exit fails the run if a dropped session leaves a
@@ -13,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <smb2/smb2.h>
 #include <smb2/libsmb2.h>
@@ -119,16 +121,32 @@ static void tick(void)
     smb2man_keepalive_pass();
 }
 
-// The server goes away: the next request on this session fails.
+// The server goes away: the next request on this session fails. After an earlier failed check
+// smb2 can be NULL: then there is nothing to cut, and the checks that follow report the state.
 static void cut(void)
 {
-    shutdown(smb2_get_fd(smb2), SHUT_RDWR);
+    if (smb2 != NULL)
+        shutdown(smb2_get_fd(smb2), SHUT_RDWR);
 }
 
-// Only the read side is cut: requests still go out, and their replies never come.
+/* Requests still go out, and their replies never come. The session's socket is swapped for one end
+   of a socket pair whose other end takes the requests, never answers and has shut its sending side,
+   so the client reads an end of file whatever the timing. A shutdown(SHUT_RD) of the TCP socket
+   would not do: Linux still delivers a reply that arrives before the client reads, and on a busy or
+   one-CPU machine the server can answer first, so the request would succeed. */
+static int dead_end = -1;
 static void cut_read(void)
 {
-    shutdown(smb2_get_fd(smb2), SHUT_RD);
+    int sv[2];
+
+    if (smb2 == NULL || socketpair(AF_UNIX, SOCK_STREAM, 0, sv) != 0)
+        return;
+    dup2(sv[0], smb2_get_fd(smb2)); // this also closes the TCP connection to the server
+    close(sv[0]);
+    shutdown(sv[1], SHUT_WR);
+    if (dead_end >= 0)
+        close(dead_end);
+    dead_end = sv[1]; // kept open, so requests can still be written to it
 }
 
 static int lost(void)
@@ -248,10 +266,10 @@ int main(int argc, char **argv)
     CHECK(OPS->close(&f) == -EBADF, "the file handle is stale");
     CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_LOGOFF, NULL, 0, NULL, 0) == 0, "logoff");
 
-    /* A read or a write that fails drops the session too. With only the read side cut, the request
-       and the closes queued for the open files are on the wire when the context goes, so destroying
-       it completes them from libsmb2's wait queue (the cases above complete them from its send
-       queue); the leak check sees whether every handle was freed. */
+    /* A read or a write that fails drops the session too. After cut_read(), the request and the
+       closes queued for the open files have gone out when the context goes, so destroying it
+       completes them from libsmb2's wait queue (the cases above complete them from its send queue);
+       the leak check sees whether every handle was freed. */
     CHECK(logon(ip, port, user, pw) == 0 && openshare(share) == 0, "logon + openshare");
     CHECK(OPS->open(&f, "\\DVD\\TEST.iso", FIO_O_RDONLY, 0) >= 0 && OPS->open(&f2, "\\VMC\\card.bin", FIO_O_RDONLY, 0) >= 0,
           "two files open");

@@ -551,7 +551,8 @@ static int smb2man_write(iop_file_t *f, void *buffer, int size)
 static int smb2man_lseek(iop_file_t *f, int offset, int whence)
 {
     uint64_t pos = 0;
-    int slot, rv;
+    int64_t rv; // smb2_lseek returns the new position: as an int, one past 2 GiB would read as an error
+    int slot;
 
     LOCK();
 
@@ -567,7 +568,7 @@ static int smb2man_lseek(iop_file_t *f, int offset, int whence)
 
     if (rv < 0)
         return -EIO;
-    // The 32-bit call cannot report a position past 2 GB; lseek64 serves those.
+    // The 32-bit call cannot report a position past 2 GiB; lseek64 serves those.
     if (pos > 0x7fffffffULL)
         return -EOVERFLOW;
 
@@ -577,7 +578,8 @@ static int smb2man_lseek(iop_file_t *f, int offset, int whence)
 static s64 smb2man_lseek64(iop_file_t *f, s64 offset, int whence)
 {
     uint64_t pos = 0;
-    int slot, rv;
+    int64_t rv; // the new position, as in smb2man_lseek: an int would cut it to 32 bits
+    int slot;
 
     LOCK();
 

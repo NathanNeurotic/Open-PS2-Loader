@@ -225,7 +225,7 @@ jobs:
         run: python3 .github/scripts/test_neutrino_smb.py
       - name: Check the in-game SMB2 reader's hashes and NTLMv2 logon
         run: python3 .github/scripts/test_smb2_auth.py
-      - name: Check the in-game SMB2 logon sends the same user, domain and NTLMv2 proof as the menu's (fake server)
+      - name: Check the in-game SMB2 logon sends the menu's user and domain and computes its NTLMv2 proof from the same credentials (fake server)
         run: python3 .github/scripts/test_smb2_logon_parity.py
       - name: Check the in-game SMB2 reader's UTF-8 to UTF-16 conversion (tests/smb2-live/utf16.c)
         run: |
