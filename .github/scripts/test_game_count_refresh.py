@@ -20,6 +20,10 @@ match = re.search(r"^static void drawGameCountText\(.*?\n\}\n", text, re.S | re.
 assert match, "drawGameCountText not found in %s" % SOURCE
 draw = match.group(0)
 assert "currentCount" in draw, "drawGameCountText no longer compares the count itself"
+# The harness starts currentCount at -1 by hand; production gets it from initMutableText. Without that
+# the first 0-game frame matches the zeroed field and the element draws an empty string (CodeRabbit).
+init = re.search(r"^static mutable_text_t \*initMutableText\(.*?\n\}\n", text, re.S | re.M)
+assert init and "currentCount = -1;" in init.group(0), "initMutableText must start currentCount at -1"
 
 if CPP:
     CONFIG = "struct config_set_t { u32 uid_; u32 uid() const { return uid_; } };"
