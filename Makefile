@@ -647,6 +647,9 @@ $(EE_VPKD).ELF: $(EE_BIN_PACKED)
 
 $(EE_VPKD).ZIP: $(EE_VPKD).ELF DETAILED_CHANGELOG CREDITS LICENSE README.md
 	zip -r $@ $^
+#The ELF embeds smb2man over libsmb2 (LGPL-2.1): its licence goes with it, as LICENSE-LIBSMB2.txt.
+	tmp=$$(mktemp -d) && cp modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "$$tmp/LICENSE-LIBSMB2.txt" && \
+	  zip -j $@ "$$tmp/LICENSE-LIBSMB2.txt"; status=$$?; rm -rf "$$tmp"; exit $$status
 	echo "Package Complete: $@"
 
 ee_core/ee_core.elf: ee_core

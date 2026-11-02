@@ -807,6 +807,11 @@ jobs:
         if: ${{ success() && matrix.opldiag == '1' }}
         run: for f in RIPTOPL-*.ELF; do cp opl_stripped.elf "${f%.ELF}-UNPACKED.ELF"; done
 
+      # Every loader embeds smb2man over libsmb2 (LGPL-2.1), so its licence travels with the artifact.
+      - name: Put the libsmb2 licence beside the loaders (${{ matrix.flavour }})
+        if: ${{ success() }}
+        run: cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt LICENSE-LIBSMB2.txt
+
       - name: Upload ELF (${{ matrix.flavour }})
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
@@ -816,6 +821,7 @@ jobs:
             RIPTOPL-*.ELF
             OPNPS2LD-*.ELF
             BUILD-MANIFEST.txt
+            LICENSE-LIBSMB2.txt
             POPS/
             docs/VCD.md
           if-no-files-found: error
