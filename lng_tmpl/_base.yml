@@ -2520,3 +2520,14 @@ gui_strings:
 - comment: PS1 Duplicates choice that keeps both rows.
   label: PS1_DUPLICATES_BOTH
   string: Both
+- comment: Game Launching setting. How the device is spelled in the argv[0] an ELF app receives.
+  label: APP_HANDOFF_PATH
+  string: App Handoff Path
+- label: HINT_APP_HANDOFF_PATH
+  string: "Legacy hands apps massN:/APPS/... (all devices). Typed hands usb0:, ata0:, ilink0: or mx4sio0: so an app that treats mass as USB finds a HDD or SD card. Per app: HANDOFFPATH=LEGACY or TYPED in its cfg. Loading is unchanged."
+- comment: App Handoff Path choice, today's spelling.
+  label: APP_HANDOFF_LEGACY
+  string: Legacy (mass)
+- comment: App Handoff Path choice, the typed spelling.
+  label: APP_HANDOFF_TYPED
+  string: "Typed (usb0:, ata0:)"

@@ -356,6 +356,7 @@ int _start(int argc, char *argv[])
         for (i = 0; i < NUM_DEVICES; ++i) {
             g_ata_bd[i].priv = (void *)&atad_devinfo[i];
             g_ata_bd[i].name = "ata";
+            g_ata_bd[i].path = "ata"; // bdmfs also registers ata<k>: next to mass<N>: (ps2sdk 3061dbe2); only ELF app handoffs use it
             g_ata_bd[i].devNr = i;
             g_ata_bd[i].parNr = 0;
             g_ata_bd[i].parId = 0x00;
