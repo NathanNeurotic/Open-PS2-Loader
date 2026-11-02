@@ -234,5 +234,6 @@ This is menu rumble only, and is independent of in-game vibration, which is the 
 
 * [IGR.md](IGR.md) — In-Game Reset in full
 * [PADEMU.md](PADEMU.md) — using a DualShock 3/4 in games
+* [PAD-PROFILES.md](PAD-PROFILES.md) — `.pad` profiles for other USB pads: My Pads and Set Up A USB Pad
 * [INTERFACE.md](INTERFACE.md) — folder browsing, parental lock, audio
 * [THEME_ENGINE.md](THEME_ENGINE.md) — themes can relabel on-screen button prompts
