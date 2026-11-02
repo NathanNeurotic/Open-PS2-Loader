@@ -370,8 +370,8 @@ char gCustomSettingsPath[64];
 int gEnableDebug;
 int gPS2Logo;
 int gAppHandoffPath; // the device spelling ELF apps are handed; the mounts themselves never change
-int gAutoCreateVmc; // default-off: create + assign a per-game VMC on a PS2 game's first launch
-int gIgrMenu;       // default-off: the IGR combo pauses the game under the in-game menu (beta)
+int gAutoCreateVmc;  // default-off: create + assign a per-game VMC on a PS2 game's first launch
+int gIgrMenu;        // default-off: the IGR combo pauses the game under the in-game menu (beta)
 int gDefaultDevice;
 int gEnableWrite;
 char gBDMPrefix[32];
