@@ -53,8 +53,9 @@ def stage_shared_kit(archive, destination, preview):
         # POPS payload must match the PR's loader and validator, while extra
         # runtime files supplied only by the install kit remain available.
         shutil.copytree(ROOT / "POPS", destination / "POPS", dirs_exist_ok=True)
-        # An older bootstrap kit predates the libsmb2 licence the verifier now requires.
+        # An older bootstrap kit predates the libsmb2 licence and the CREDITS the verifier now requires.
         shutil.copyfile(app.LIBSMB2_LICENCE, destination / "LICENSE-LIBSMB2.txt")
+        shutil.copyfile(app.CREDITS, destination / "CREDITS")
         validation_archive = destination.parent / "preview-standard.zip"
         with zipfile.ZipFile(validation_archive, "w", zipfile.ZIP_STORED) as output:
             for file in sorted(destination.rglob("*")):

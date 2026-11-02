@@ -1984,7 +1984,7 @@ static int menuPromptParentalLockPassword(const char *parentalLockPassword)
     int result;
 
     password[0] = '\0';
-    if (diaShowKeyb(password, CONFIG_KEY_VALUE_LEN, 1, _l(_STR_PARENLOCK_ENTER_PASSWORD_TITLE))) {
+    if (diaShowKeyb(password, CONFIG_KEY_VALUE_LEN, 1, _STR_PARENLOCK_ENTER_PASSWORD_TITLE)) {
         if (strncmp(parentalLockPassword, password, CONFIG_KEY_VALUE_LEN) == 0) {
             result = 0;
         } else if (strncmp(OPL_PARENTAL_LOCK_MASTER_PASS, password, CONFIG_KEY_VALUE_LEN) == 0) {
