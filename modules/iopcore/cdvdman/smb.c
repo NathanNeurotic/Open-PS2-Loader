@@ -615,6 +615,26 @@ static int smb_RecvReplyRest(int *rcv_size, int size)
 
     return 0;
 }
+
+//-------------------------------------------------------------------------
+// Take the rest of a refused reply (up to byte size) off the socket, so that the next request does
+// not read it as its reply. Returns -EIO, or -2 when the connection was closed or failed first.
+static int smb_DrainReply(int rcv_size, int size)
+{
+    int r, n;
+
+    while (rcv_size < size) {
+        n = size - rcv_size;
+        if (n > (int)sizeof(SMB_buf))
+            n = (int)sizeof(SMB_buf);
+        r = plwip_recvfrom(main_socket, NULL, 0, &SMB_buf, n, 0, NULL, NULL);
+        if (r <= 0)
+            return -2;
+        rcv_size += r;
+    }
+
+    return -EIO;
+}
 #endif
 
 //-------------------------------------------------------------------------
@@ -675,16 +695,16 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
     // check there's no error. An error response (an invalid handle, a failed read) is shorter than a
     // READ_ANDX response, so the DataLength read below would be left over from the request, and the
     // read would seem to succeed with whatever readbuf held.
-    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS) {
-        // An error response with more than its header: take the rest off the socket too.
-        if (expected_size <= (int)sizeof(SMB_buf) && smb_RecvReplyRest(&rcv_size, expected_size) < 0)
-            return -2;
-        return -EIO;
-    }
+    // An error response with more than its header: take the rest off the socket too.
+    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS)
+        return smb_DrainReply(rcv_size, expected_size);
     // A success shorter than a READ_ANDX response, or whose data starts inside its header or past the
     // end of the reply or of SMB_buf, is not a read reply: its fields would be the request's.
     if (expected_size < header_size || RRsp->DataOffset < (int)sizeof(ReadAndXResponse_t) || RRsp->DataOffset + 4 > expected_size || RRsp->DataOffset + 4 > (int)sizeof(SMB_buf))
-        return -EIO;
+        return smb_DrainReply(rcv_size, expected_size);
+    // More data than was asked for would be written past the end of readbuf.
+    if (expected_size - RRsp->DataOffset - 4 > nbytes)
+        return smb_DrainReply(rcv_size, expected_size);
     // Padding between the header and the data, when the first segment ended before it.
     if (smb_RecvReplyRest(&rcv_size, RRsp->DataOffset + 4) < 0)
         return -2;

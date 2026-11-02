@@ -19,6 +19,7 @@ an error reply off the socket, which would otherwise be read as the next reply.
 Adapted from belomaxorka/YAOPL e16e2d15. This is a host regression check, not a console test.
 """
 import errno
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -147,19 +148,21 @@ static int recv_stub(int s, void *mem, int hlen, void *payload, int plen, unsign
     return copylen;
 }
 static int (*plwip_recvfrom)(int s, void *mem, int hlen, void *payload, int plen, unsigned int flags, struct sockaddr *from, socklen_t *fromlen) = recv_stub;
-''' + function(smb, 'static int smb_RecvReplyRest(') + read_andx + r'''
+''' + function(smb, 'static int smb_RecvReplyRest(') + function(smb, 'static int smb_DrainReply(') + read_andx + r'''
 int main(int argc, char **argv)
 {
     /* argv: want status data_offset keepalive end_code segment sizes... (0 sizes: one segment) */
     static unsigned char readbuf[DATA_LEN + 64];
     int want = atoi(argv[1]), offset = atoi(argv[3]), keepalive = atoi(argv[4]), i, pos = 0, size;
     u32 status = (u32)strtoul(argv[2], NULL, 0);
+    /* SMB_EXTRA: data the server sends beyond the DATA_LEN bytes the read asked for */
+    int extra = getenv("SMB_EXTRA") ? atoi(getenv("SMB_EXTRA")) : 0;
     end_code = atoi(argv[5]);
     if (keepalive) { /* an NBSS session keepalive (type 0x85), its own segment */
         wire[pos++] = 0x85, wire[pos++] = 0, wire[pos++] = 0, wire[pos++] = 0;
         seg[seg_count++] = 4;
     }
-    size = status != 0 ? ERROR_REPLY : offset + DATA_LEN;
+    size = status != 0 ? ERROR_REPLY : offset + DATA_LEN + extra;
     wire[pos] = 0, wire[pos + 1] = (unsigned char)(size >> 16), wire[pos + 2] = (unsigned char)(size >> 8), wire[pos + 3] = (unsigned char)size;
     {
         ReadAndXResponse_t *r = (ReadAndXResponse_t *)&wire[pos + 4];
@@ -169,9 +172,9 @@ int main(int argc, char **argv)
         r->smbH.Ecode = (s16)(status >> 16);
         if (status == 0) {
             r->smbWordcount = 12;
-            r->DataLengthLow = DATA_LEN;
+            r->DataLengthLow = (u16)(DATA_LEN + extra);
             r->DataOffset = (u16)offset;
-            for (i = 0; i < DATA_LEN; i++)
+            for (i = 0; i < DATA_LEN + extra; i++)
                 wire[pos + 4 + offset + i] = (unsigned char)(i * 7 + 1);
         }
     }
@@ -236,6 +239,10 @@ cases = [
     ('refusal split inside the status', -errno.EIO, INVALID_HANDLE, 59, 0, CLOSE, [11, E - 11]),
     ('refusal split after the status', -errno.EIO, INVALID_HANDLE, 59, 0, CLOSE, [20, E - 20]),
     ('server closes inside a refusal', -2, INVALID_HANDLE, 59, 0, CLOSE, [20]),
+    # (..., data beyond what the read asked for): refused, not written past readbuf, taken off the socket
+    ('more data than asked for', -errno.EIO, OK, 59, 0, CLOSE, [], 200),
+    ('more data than asked for, header split', -errno.EIO, OK, 59, 0, CLOSE, [40, 1500, W + 200 - 1540], 200),
+    ('server closes inside a reply with more data', -2, OK, 59, 0, CLOSE, [1063], 200),
 ]
 failures = []
 with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
@@ -245,15 +252,18 @@ with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
     subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wno-unused-function', '-Wno-unused-variable',
                     '-Wno-unused-but-set-variable', '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
                     str(src), '-o', str(binary)], check=True)
-    for name, want, status, offset, keepalive, end, script in cases:
+    for case in cases:
+        name, want, status, offset, keepalive, end, script = case[:7]
+        extra = case[7] if len(case) > 7 else 0
         result = subprocess.run([str(binary), str(want), str(status), str(offset), str(keepalive), str(end)]
                                 + [str(s) for s in script],
-                                capture_output=True, text=True, timeout=10)
+                                capture_output=True, text=True, timeout=10,
+                                env=dict(os.environ, SMB_EXTRA=str(extra)))
         if result.returncode != 0:
             failures.append('%s: %s' % (name, (result.stdout + result.stderr).strip()))
 
 if failures:
     print('FAIL:\n  ' + '\n  '.join(failures))
     sys.exit(1)
-print('PASS: a cut-off SMB read reply fails with -2 and a refused one with -EIO, taken whole off the socket; '
+print('PASS: a cut-off SMB read reply fails with -2 and a refused one (more data than asked for included) with -EIO, taken whole off the socket; '
       'whole and segmented replies, a header in pieces included, return their data')
