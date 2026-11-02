@@ -2958,6 +2958,10 @@ static char sysHistoryRecorded[32];
 int sysAddHistoryRecord(const char *filename)
 {
 #if (!defined(__DEBUG) && !defined(_DTL_T10000))
+    // Kept, and reported as written, even when the write fails. A second try in sysLaunchLoaderElf would be the
+    // late write right before the IOP reset that made the card switch folders during the game's start, and a
+    // failed write can still have written to the card (the folder, or a truncated file), so the caller still
+    // watches for the card's switch. A failed write costs this launch its history record, not the game.
     AddHistoryRecordUsingFullPath(filename);
     snprintf(sysHistoryRecorded, sizeof(sysHistoryRecorded), "%s", filename);
     return 1;
