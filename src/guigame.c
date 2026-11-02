@@ -100,7 +100,7 @@ int guiGameAltStartupNameHandler(char *text, int maxLen)
 {
     int i;
 
-    int result = diaShowKeyb(text, maxLen, 0, NULL);
+    int result = diaShowKeyb(text, maxLen, 0, -1);
     if (result) {
         for (i = 0; text[i]; i++) {
             if (text[i] > 96 && text[i] < 123)
@@ -143,7 +143,7 @@ static short vmc_rebuild_offer, vmc_rebuilding;
 
 int guiGameVmcNameHandler(char *text, int maxLen)
 {
-    int result = diaShowKeyb(text, maxLen, 0, NULL);
+    int result = diaShowKeyb(text, maxLen, 0, -1);
 
     if (result)
         vmc_refresh = 1;

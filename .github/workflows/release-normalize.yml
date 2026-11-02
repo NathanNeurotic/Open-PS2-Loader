@@ -94,6 +94,11 @@ jobs:
             cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt package-work/LICENSE-LIBSMB2.txt
             echo "Added LICENSE-LIBSMB2.txt to $(basename "$MAIN_ZIP"): the kit predates it."
           fi
+          # The verify also requires CREDITS, the notice that the loaders use libsmb2 under that licence.
+          if [[ ! -f package-work/CREDITS ]]; then
+            cp -f CREDITS package-work/CREDITS
+            echo "Added CREDITS to $(basename "$MAIN_ZIP"): the kit predates it."
+          fi
 
           printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/NathanNeurotic/PS2-Servers' > package-work/PS2-Servers.url
           rm -f package-work/udpfs-server.url
@@ -129,6 +134,10 @@ jobs:
           if [[ ! -f variants-work/LICENSE-LIBSMB2.txt ]]; then
             cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt variants-work/LICENSE-LIBSMB2.txt
             echo "Added LICENSE-LIBSMB2.txt to $(basename "$VARIANT_ZIP"): the archive predates it."
+          fi
+          if [[ ! -f variants-work/CREDITS ]]; then
+            cp -f CREDITS variants-work/CREDITS
+            echo "Added CREDITS to $(basename "$VARIANT_ZIP"): the archive predates it."
           fi
 
           found=0

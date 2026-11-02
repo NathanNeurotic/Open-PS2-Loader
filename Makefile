@@ -710,7 +710,13 @@ $(EE_VPKD).ELF: $(EE_BIN_PACKED)
 	cp -f $< $@
 
 $(EE_VPKD).ZIP: $(EE_VPKD).ELF DETAILED_CHANGELOG CREDITS LICENSE README.md
-	zip -r $@ $^
+#The ELF embeds smb2man over libsmb2 (LGPL-2.1): its licence goes with it, as LICENSE-LIBSMB2.txt. The
+#licence is staged before the archive is touched, and a failed step removes the archive, so a failed run
+#leaves no zip without the licence for anyone to ship.
+	tmp=$$(mktemp -d) && cp modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "$$tmp/LICENSE-LIBSMB2.txt" && \
+	  zip -r $@ $^ && \
+	  zip -j $@ "$$tmp/LICENSE-LIBSMB2.txt"; status=$$?; rm -rf "$$tmp"; \
+	  if [ $$status -ne 0 ]; then rm -f "$@"; fi; exit $$status
 	echo "Package Complete: $@"
 
 ee_core/ee_core.elf: ee_core

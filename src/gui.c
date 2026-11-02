@@ -2394,7 +2394,7 @@ void guiShowCoverflowConfig(void)
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, &value))
             gGridLayout = (value >= 0 && value <= GRID_LAYOUTS) ? value : 0;
         // A new layout changes how many covers a page holds, and so the cover cache: the theme loads again.
-        if (gGridLayout != keepLayout && gTheme != NULL && gTheme->grid != NULL && !thmSetGuiValue(thmGetGuiValue(), 1))
+        if (gGridLayout != keepLayout && !thmRefreshGridLayout())
             gGridLayout = keepLayout; // abandoned load: the old grid is still on screen, keep the setting with it
     }
 }
@@ -2980,6 +2980,9 @@ static int guiSettingsShowInterface(void)
     const char *ps1DupNames[] = {_l(_STR_PS1_DUPLICATES_BOTH), "Ember", "POPSTARTER", NULL};
     diaSetEnum(ui, UICFG_PS1_DUPLICATES, ps1DupNames);
     diaSetInt(ui, UICFG_PS1_DUPLICATES, gPs1Duplicates);
+    const char *listCfgNames[] = {_l(_STR_THEME), _l(_STR_ON), _l(_STR_OFF), NULL};
+    diaSetEnum(ui, UICFG_LIST_CFG_TEXT, listCfgNames);
+    diaSetInt(ui, UICFG_LIST_CFG_TEXT, gListCfgText);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -3031,6 +3034,7 @@ reshow_interface:
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
+        diaGetInt(ui, UICFG_LIST_CFG_TEXT, &gListCfgText); // read as each frame draws: nothing to rebuild
         {
             int previousCfgTitles = gCfgTitlesInLists, previousPs1Dup = gPs1Duplicates;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
@@ -3625,7 +3629,7 @@ int guiShowKeyboard(char *value, int maxLength)
     char tmp[maxLength];
     strncpy(tmp, value, maxLength);
 
-    int result = diaShowKeyb(tmp, maxLength, 0, NULL);
+    int result = diaShowKeyb(tmp, maxLength, 0, -1);
     if (result) {
         strncpy(value, tmp, maxLength);
         value[maxLength - 1] = '\0';
