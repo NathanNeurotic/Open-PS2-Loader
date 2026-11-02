@@ -100,9 +100,9 @@ static int SendData(int sock, char *buf, int size) { (void)sock; (void)buf; retu
 #define ERROR_REPLY 35 /* an error reply: the SMB header, WordCount 0 and ByteCount 0 */
 /* The server's side of the socket: the bytes it sent (an NBSS keepalive first, when asked), cut into
    TCP segments. lwip_recvfrom() below is SMSTCPIP's (modules/network/SMSTCPIP/sockets.c): a call
-   with a header index copies a segment of 63 bytes or more as a READ_ANDX header of DataOffset + 4
-   bytes plus payload, and a shorter segment whole into the header; the rest of a segment stays for
-   the next call. */
+   with a header index copies a segment that reaches the data (DataOffset + 4 bytes) as a READ_ANDX
+   header of that many bytes plus payload, and a shorter one, ending inside the header or its padding,
+   whole into the header; the rest of a segment stays for the next call. */
 static unsigned char wire[8192];
 static int wire_len, seg[16], seg_count, seg_pos, seg_off, wire_pos, end_code, calls;
 static int recv_stub(int s, void *mem, int hlen, void *payload, int plen, unsigned int flags, struct sockaddr *from, socklen_t *fromlen)
@@ -117,17 +117,13 @@ static int recv_stub(int s, void *mem, int hlen, void *payload, int plen, unsign
         return end_code;
     avail = seg[seg_pos] - seg_off;
     if (index) {
-        if (avail >= 63) {
-            memcpy(mem, &wire[wire_pos], 63);
-            index = ((unsigned char *)mem)[index] + 4;
-            if (index > avail) {
-                printf("BAD TEST: DataOffset beyond the segment\n");
-                exit(4);
-            }
+        if (avail >= 63)
+            index = wire[wire_pos + index] + 4;
+        if (avail >= 63 && index <= avail) {
             memcpy(mem, &wire[wire_pos], index);
             copylen = index;
             avail -= index;
-        } else {
+        } else { /* a segment that ends before the data, inside the header or its padding */
             memcpy(mem, &wire[wire_pos], avail);
             copylen = avail;
             avail = 0;
@@ -234,6 +230,8 @@ cases = [
     ('first segment ends before DataOffset', 3000, OK, 59, 0, CLOSE, [40, W - 40]),
     ('header in four segments', 3000, OK, 59, 0, CLOSE, [3, 20, 30, 10, W - 63]),
     ('padding after the header, split before it', 3000, OK, 60, 0, CLOSE, [40, 4 + 60 + 3000 - 40]),
+    ('first segment ends inside the padding', 3000, OK, 60, 0, CLOSE, [63, 4 + 60 + 3000 - 63]),
+    ('first segment ends inside longer padding', 3000, OK, 70, 0, CLOSE, [66, 4 + 70 + 3000 - 66]),
     ('server closes inside the header', -2, OK, 59, 0, CLOSE, [40]),
     ('server refuses the read: invalid handle', -errno.EIO, INVALID_HANDLE, 59, 0, CLOSE, []),
     ('server refuses the read: end of file', -errno.EIO, END_OF_FILE, 59, 0, CLOSE, []),
