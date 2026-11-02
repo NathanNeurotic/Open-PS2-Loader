@@ -54,6 +54,32 @@ hung). The launch now waits up to 2 seconds to see the card go busy, then shows
 unconfirmed, and the launch goes ahead. Ported from RIPPS2 by [akilluminati47](https://github.com/akilluminati47). NOT TESTED on
 hardware: it needs an SD2PSX with sd2psXtd firmware.
 
+## Bug-report build
+
+A rolling release carries `RIPTOPL-BUGREPORT-<version>.zip` whenever its diagnostics build
+succeeded (the build is best-effort: if neither toolchain produced one, the run shows a warning
+and the release ships without the zip). It holds `RIPTOPL-BUGREPORT.ELF`,
+the release's field-diagnostics build (`OPLDIAG=1`), a README on what to send, and the licences
+(`LICENSE`, `CREDITS`, `licenses/libsmb2/` for the embedded smb2man driver). Use it when
+RiptOPL will not start, stops on a black screen or freezes in the menu:
+
+- each start-up step up to the video setup is printed on screen as a numbered line, so a start-up
+  that stops leaves its last step on screen until the watchdog fires 20 seconds later and
+  replaces it with the stage colour, so the tester photographs it promptly; from the video setup
+  on, a start-up that never reaches the menu turns the screen one colour per stage;
+- a menu that stops drawing writes `RIPTOPL-FREEZE.TXT`, and a crash writes `RIPTOPL-CRASH.TXT`, to
+  `mc0:` (`mc1:` if that fails); the screen turns green once the file is written (orange if no
+  card took it), and the README tells the tester to wait for that before restarting;
+- Drive Status and DIAG.TXT work as in the normal build.
+
+The ELF is not compressed (`NOT_PACKED=1`) and its program starts 0x80 bytes into the file, like
+every ps2sdk link. Volventura's console starts that layout from uLaunchELF on `mmce0:` where the
+compressed builds showed a black screen; the bug-report build has the same layout but has not been
+tried there yet, so its README asks the tester to say if it does not start. The publisher refuses a
+loader with any other layout. It is built by the official ps2homebrew container when that
+build succeeds, else by ps2dev:latest; the README names which. Copy it next to the normal
+`RIPTOPL.ELF`; both share settings. Requested by Volventura on 2026-11-01. NOT TESTED on hardware.
+
 ## Drive Status and DIAG.TXT
 
 **Drive Status** in the main menu (above About) lists, without changing anything:
