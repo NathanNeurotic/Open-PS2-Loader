@@ -109,6 +109,8 @@ cp "$ps2smb" "$work/inc/"
 san="-fsanitize=address,undefined -fno-omit-frame-pointer -g -O1"
 cc $san -Wall -Wno-unused-parameter -I"$here/inc-ingame" -I"$root/modules/iopcore/cdvdman" -I"$root/modules/iopcore/common" \
     "$here/ingame.c" "$root/modules/iopcore/cdvdman/smb2.c" "$root/modules/iopcore/cdvdman/smb2auth.c" -o "$work/ingame"
+cc $san -Wall -Wno-unused-parameter -Wno-unused-function -I"$here/inc-ingame" -I"$root/modules/iopcore/cdvdman" \
+    -I"$root/modules/iopcore/common" "$here/utf16.c" "$root/modules/iopcore/cdvdman/smb2auth.c" -o "$work/utf16"
 
 lib="$root/modules/network/smb2man/libsmb2"
 # libsmb2 for the host, from the vendored sources, with the configuration its CMake build finds on Linux.
@@ -157,6 +159,7 @@ browse_refused() { # SMB 3-only: the menu must not list a server the in-game rea
     [ $rc -ne 0 ] && [ $rc -ne 124 ] # 0 = it listed the server; 124 = a hang, not a refusal
 }
 
+run "in-game reader: UTF-8 names to UTF-16 (put_utf16)" ./utf16
 for signing in mandatory disabled; do
     write_conf "$signing" ""
     printf 'secret\nsecret\n' | smbpasswd -c "$conf" -s -a ps2 >/dev/null

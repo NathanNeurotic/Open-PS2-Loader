@@ -1091,7 +1091,8 @@ static int smb2man_devctl(iop_file_t *f, const char *name, int cmd, void *arg, u
             }
 
             openshare->ShareName[sizeof(openshare->ShareName) - 1] = '\0';
-            strcpy(conn_share, openshare->ShareName);
+            strncpy(conn_share, openshare->ShareName, sizeof(conn_share) - 1);
+            conn_share[sizeof(conn_share) - 1] = '\0';
             rv = smb2_connect_share(smb2, conn_server, conn_share, conn_user[0] ? conn_user : NULL);
             if (rv < 0) {
                 UNLOCK();

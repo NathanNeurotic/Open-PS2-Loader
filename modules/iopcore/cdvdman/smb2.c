@@ -179,15 +179,15 @@ static int put_utf16(u8 *out, const char *in, int upper)
     int len = 0;
 
     while (*in != '\0') {
-        u32 c = (u8)*in++;
+        u32 c = (u8)*in++, min = 0; // min: the smallest code point a sequence of this length may hold
         int more = 0;
 
         if (c >= 0xC2 && c <= 0xDF)
-            more = 1, c &= 0x1F;
+            more = 1, c &= 0x1F, min = 0x80;
         else if (c >= 0xE0 && c <= 0xEF)
-            more = 2, c &= 0x0F;
+            more = 2, c &= 0x0F, min = 0x800;
         else if (c >= 0xF0 && c <= 0xF4)
-            more = 3, c &= 0x07;
+            more = 3, c &= 0x07, min = 0x10000;
 
         if (more) {
             const u8 *p = (const u8 *)in;
@@ -195,8 +195,10 @@ static int put_utf16(u8 *out, const char *in, int upper)
 
             for (i = 0; i < more && (p[i] & 0xC0) == 0x80; i++)
                 c = (c << 6) | (p[i] & 0x3F);
-            if (i == more && c >= 0x80 && c <= 0x10FFFF && (c < 0xD800 || c > 0xDFFF))
-                in += more; // a well-formed sequence
+            // Well-formed (RFC 3629): complete, not overlong (E0 82 80 is not U+0080), not past
+            // U+10FFFF, not a lone surrogate.
+            if (i == more && c >= min && c <= 0x10FFFF && (c < 0xD800 || c > 0xDFFF))
+                in += more;
             else
                 c = (u8)in[-1]; // not UTF-8: the lead byte alone, as Latin-1
         }
