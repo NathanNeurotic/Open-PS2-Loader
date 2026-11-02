@@ -351,6 +351,12 @@ int thmCycleView(void);
 // for themes with SD/HD variants), or the Alternate Background setting no longer matches the pictures it was
 // built with (only for themes with alt= keys). Returns 1 when the theme was reloaded.
 int thmRefreshDisplayLayout(void);
+// The Grid Layout setting changed: a theme showing the grid loads again, as a page now holds a different number of
+// covers. Returns 0 only when that load was abandoned (#120) and the old grid is still on screen.
+int thmRefreshGridLayout(void);
+// Load the selected theme again (a language change brings its own font). The id is read under the theme switch
+// lock, so a theme the IO thread selected meanwhile is the one reloaded. Returns 1 when the theme was reloaded.
+int thmReload(void);
 int thmFindGuiID(const char *theme);
 int thmSavedThemePending(void); // the saved disk theme's drive has not offered it yet
 const char **thmGetGuiList(void);

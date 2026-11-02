@@ -201,6 +201,13 @@ jobs:
               elf_sha256={p.stem.removeprefix("pademu"): hashlib.sha256(p.read_bytes()).hexdigest() for p in folder.glob("*.ELF")})
           (folder / "BUILD.json").write_text(json.dumps(data, indent=2) + "\n")
           PY
+      # These RA loaders embed smb2man over libsmb2 (LGPL-2.1) too: the artifact carries its licence and
+      # CREDITS, which says the loader uses libsmb2 under that licence. The package job reads only
+      # BUILD.json, the pademu ELFs and Korium.patch from it, so the extra files change nothing there.
+      - name: Put the libsmb2 licence and the credits beside the RA loaders
+        run: |
+          cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt ra-build/LICENSE-LIBSMB2.txt
+          cp -f CREDITS ra-build/CREDITS
       - uses: actions/upload-artifact@v6
         with:
           name: ra-${{ matrix.theme }}-${{ matrix.sdk.name }}

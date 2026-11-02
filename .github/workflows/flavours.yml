@@ -204,6 +204,8 @@ jobs:
         run: python3 .github/scripts/test_settings_fit.py
       - name: Check settings text stays on screen (long notes wrap, labels leave room, values fit)
         run: python3 .github/scripts/test_dia_text_room.py
+      - name: Check dialogs draw under the GUI lock and IO-thread list operations run under it
+        run: python3 .github/scripts/test_dialog_gui_lock.py
       - name: Check the in-game USBD pad pool and lwIP fragment settings fit the pads and the MTU
         run: python3 .github/scripts/test_usbd_pad_pool.py
       - name: Check Settings and its prompts follow the user's confirm button
@@ -812,6 +814,12 @@ jobs:
         if: ${{ success() && matrix.opldiag == '1' }}
         run: for f in RIPTOPL-*.ELF; do cp opl_stripped.elf "${f%.ELF}-UNPACKED.ELF"; done
 
+      # Every loader embeds smb2man over libsmb2 (LGPL-2.1), so its licence travels with the artifact, with
+      # CREDITS, which says the loader uses libsmb2 under that licence (LGPL-2.1 section 6).
+      - name: Put the libsmb2 licence beside the loaders (${{ matrix.flavour }})
+        if: ${{ success() }}
+        run: cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt LICENSE-LIBSMB2.txt
+
       - name: Upload ELF (${{ matrix.flavour }})
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
@@ -821,6 +829,8 @@ jobs:
             RIPTOPL-*.ELF
             OPNPS2LD-*.ELF
             BUILD-MANIFEST.txt
+            LICENSE-LIBSMB2.txt
+            CREDITS
             POPS/
             docs/VCD.md
           if-no-files-found: error
