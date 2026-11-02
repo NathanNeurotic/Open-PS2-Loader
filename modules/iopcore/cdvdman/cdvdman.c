@@ -95,6 +95,7 @@ static struct cdvdman_cb_data cb_data;
 int cdrom_io_sema;
 static int cdrom_rthread_sema;
 static unsigned char cdread_for_stream;       // the read queued for cdvdman_cdread_Thread is a stream fill (cdvdman_StreamRead)
+static unsigned char cdread_breakable;        // sceCdBreak may stop the read in flight: it came through the exported sceCdRead
 static volatile unsigned char read_abort;     // sceCdBreak hit the read in flight: cdvdman_read_sectors stops at its next chunk
 static volatile unsigned char read_in_flight; // cdvdman_read is still moving data (sync_flag also covers the pending callback)
 static int cdvdman_scmdsema;
@@ -681,7 +682,7 @@ static int cdvdman_common_lock(int IntrContext)
     return 1;
 }
 
-static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int for_stream)
+static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int for_stream, int breakable)
 {
     int IsIntrContext, OldState;
 
@@ -696,6 +697,7 @@ static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, i
     }
 
     cdread_for_stream = for_stream ? 1 : 0;
+    cdread_breakable = breakable ? 1 : 0;
     read_abort = 0;
     read_in_flight = 1;
     cdvdman_stat.cdread_lba = lsn;
@@ -713,19 +715,19 @@ static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, i
     return 1;
 }
 
-// The game's sceCdRead: its completion goes to the game's sceCdCallback.
-int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
+// A read through sceCdRead (ncmd.c): its completion goes to the game's sceCdCallback. breakable: see cdvdman_BreakRead.
+int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int breakable)
 {
-    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 0);
+    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 0, breakable);
 }
 
-// A stream fill (streaming.c): its completion goes to the stream channel's callback.
+// A stream fill (streaming.c): its completion goes to the stream channel's callback. sceCdBreak leaves it alone.
 int cdvdman_StreamRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
 {
-    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 1);
+    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 1, 0);
 }
 
-int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
+int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int breakable)
 {
     int IsIntrContext, OldState;
 
@@ -740,6 +742,7 @@ int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
     }
 
     cdread_for_stream = 0;
+    cdread_breakable = breakable ? 1 : 0;
     read_abort = 0;
     read_in_flight = 1;
 
@@ -759,18 +762,21 @@ int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
    SCECdErABRT and an SCECdFuncBreak callback, and returns 1; every emulated cdvdman returned 0 and let the read run.
    Tales of the Abyss (#185) breaks the read it has in flight whenever it switches ADX streams, treats the 0 as a
    failure and then waits in sceCdSync(0) for a read it believes it cancelled.
-   A stream fill is left alone and still refuses the break: StmCallback counts a finished fill as data, so a
-   fill cut short would put garbage in the stream buffer. */
+   Only a read that came through the exported sceCdRead (the game's, or cdvdfsv's for the EE) is stopped. The rest
+   still refuse the break, as every read did before: a stream fill, because StmCallback counts a finished fill as
+   data and a fill cut short would put garbage in the stream buffer; and cdvdman's own reads for cdrom0: files and
+   sceCdSearchFile (cdvdman_FsRead), because their callers do not check for an aborted read and would hand on a
+   cut-short buffer as file data or directory records. */
 int cdvdman_BreakRead(void)
 {
     /* Once the data is in, only the completion callback is left (sync_flag stays set until it runs). There is
        nothing left to stop then, and accepting the break would leave SCECdErABRT beside a SCECdFuncRead callback. */
     int OldState, result = 0;
 
-    // Decide and mark under suspended interrupts: otherwise the read can end and a stream fill be queued in between,
-    // and the break would cut that fill short.
+    // Decide and mark under suspended interrupts: otherwise the read can end and another one (a stream fill, say) be
+    // queued in between, and the break would cut that one short.
     CpuSuspendIntr(&OldState);
-    if (!cdread_for_stream && read_in_flight) {
+    if (cdread_breakable && read_in_flight) {
         read_abort = 1;
         cdvdman_stat.err = SCECdErABRT;
         result = 1;
