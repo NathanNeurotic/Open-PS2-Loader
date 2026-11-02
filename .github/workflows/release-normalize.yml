@@ -76,7 +76,7 @@ jobs:
           set -euo pipefail
           # The unified package is the one RIPTOPL-*.zip that is not another archive. The RetroAchievements
           # package must be excluded too: `-print -quit` takes whichever match find lists first.
-          MAIN_ZIP="$(find release-work -maxdepth 1 -type f -name 'RIPTOPL-*.zip' ! -name 'RIPTOPL-VARIANTS-*' ! -name 'RIPTOPL-DEBUG-*' ! -name 'RIPTOPL-LANGS-*' ! -name 'RIPTOPL-RetroAchievements-*' ! -name 'RIPTOPL-RA-*' ! -name 'RIPTOPL-src-*' ! -name '*-src.zip' -print -quit)"
+          MAIN_ZIP="$(find release-work -maxdepth 1 -type f -name 'RIPTOPL-*.zip' ! -name 'RIPTOPL-VARIANTS-*' ! -name 'RIPTOPL-DEBUG-*' ! -name 'RIPTOPL-BUGREPORT-*' ! -name 'RIPTOPL-LANGS-*' ! -name 'RIPTOPL-RetroAchievements-*' ! -name 'RIPTOPL-RA-*' ! -name 'RIPTOPL-src-*' ! -name '*-src.zip' -print -quit)"
           if [[ -z "$MAIN_ZIP" ]]; then
             echo 'ERROR: unified RIPTOPL release package zip is missing.' >&2
             exit 1
@@ -145,7 +145,7 @@ jobs:
           for zip in release-work/RIPTOPL-*.zip; do
             [[ -f "$zip" ]] || continue
             case "$(basename "$zip")" in
-              *-src.zip|RIPTOPL-src-*.zip|RIPTOPL-*-src-*.zip|RIPTOPL-LANGS-*.zip|RIPTOPL-DEBUG-*.zip) continue ;;
+              *-src.zip|RIPTOPL-src-*.zip|RIPTOPL-*-src-*.zip|RIPTOPL-LANGS-*.zip|RIPTOPL-DEBUG-*.zip|RIPTOPL-BUGREPORT-*.zip) continue ;;
             esac
             retry gh release upload "$TAG" "$zip" --repo "$GITHUB_REPOSITORY" --clobber
           done

@@ -334,6 +334,11 @@ jobs:
         # Runs after staging the main ELF so the per-build `make clean` can't wipe it.
         run: sh ./.github/scripts/build_rolling_extras.sh "-PS2DEVROLLING" "PS2DEVROLLING"
 
+      - name: Build the bug-report loader (PS2DEVROLLING)
+        # Stand-in for the official container's bug-report loader when that best-effort job fails
+        # (pack_bugreport.py takes the official one first). Best-effort itself, after every other build.
+        run: sh ./.github/scripts/build_bugreport.sh PS2DEVROLLING
+
       - name: Upload ps2dev-latest rolling assets
         uses: actions/upload-artifact@v6
         with:
@@ -419,6 +424,13 @@ jobs:
           else
             echo "WARN: OFFICIALROLLING DUALSENSE=1 build failed; skipping DS5 asset this run" >&2
           fi
+
+      - name: Build the bug-report loader (OFFICIALROLLING)
+        # The release's RIPTOPL-BUGREPORT zip: the OPLDIAG build left unpacked (start-up trace on screen,
+        # stage colours, FREEZE/CRASH reports). This flavour first, because the one-click RIPTOPL.ELF is
+        # it and Volventura's working boot-trace loader was built in this container. Best-effort, after
+        # the main ELF and DS5 loader are staged (make clean).
+        run: sh ./.github/scripts/build_bugreport.sh OFFICIALROLLING
 
       - name: Upload officialsdk rolling assets
         uses: actions/upload-artifact@v6
@@ -1056,6 +1068,16 @@ jobs:
             rm -rf "rolling/$kind" 2>/dev/null || true
           done
 
+      - name: Pack the RIPTOPL BUGREPORT zip
+        run: |
+          set -eu
+          # One bug-report loader per release (official container first, ps2dev:latest as the stand-in),
+          # with its README, as RIPTOPL-BUGREPORT-<version>.zip. A packed or padded loader fails the
+          # step: a bug-report build that starts from fewer launchers than the normal one is no use.
+          python3 .github/scripts/test_pack_bugreport.py
+          python3 .github/scripts/pack_bugreport.py rolling --version "${ASSET_VERSION:-rolling}"
+          rm -rf rolling/bugreport 2>/dev/null || true
+
       - name: End every ZIP name with the version
         env:
           # The Korium line's download version ends with its channel (v1.2.0-Beta-4420-Korium); the
@@ -1261,6 +1283,7 @@ jobs:
           # deliberately EXCLUDED from the permanent MEGA copy:
           #   RIPTOPL-VARIANTS-*.zip  (~120 MB -- every PADEMU x EXTRA_FEATURES x DUALSENSE combo, two ps2dev flavours)
           #   RIPTOPL-DEBUG-*.zip     (~91 MB  -- iopcore/ingame/eesio/ppctty/DTL debug builds, two ps2dev flavours)
+          #   RIPTOPL-BUGREPORT-*.zip (the unpacked OPLDIAG loader: a diagnostic build of the current revision)
           # RIPTOPL-RetroAchievements-*.zip is NOT in that exclusion: it is an installable package (loader + POPS +
           # EMBER + neutrino + shortcuts), the same shape as the main zip, so it is archived like one.
           # They dominate the size (~10x: ~233 MB -> ~22 MB), they still ship on the GitHub rolling
@@ -1275,7 +1298,7 @@ jobs:
           for f in rolling/*; do
             b="$(basename "$f")"
             case "$b" in
-              RIPTOPL-VARIANTS-*.zip|RIPTOPL-DEBUG-*.zip)
+              RIPTOPL-VARIANTS-*.zip|RIPTOPL-DEBUG-*.zip|RIPTOPL-BUGREPORT-*.zip)
                 echo "MEGA archive: excluding diagnostic bundle $b" ;;
               RIPTOPL.ELF)
                 # Byte-identical to the versioned <base>-<flavour>.ELF already in this archive --
