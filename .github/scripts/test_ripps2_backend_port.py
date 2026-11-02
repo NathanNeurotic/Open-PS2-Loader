@@ -189,7 +189,7 @@ print('ok   bdmIopWasReset clears every latch and asks CF to probe again')
 # MMCE Game ID, run against scripted busy-query answers (-1 = the devctl failed).
 wait = mmce[mmce.index('static int mmceWaitCardReady('):]
 wait = wait[:wait.index('\n}\n') + 3]
-swapOn = mmce[mmce.index('static void mmceWaitSwapDoneOn('):]
+swapOn = mmce[mmce.index('static int mmceWaitSwapDoneOn('):]
 swapOn = swapOn[:swapOn.index('\n}\n') + 3]
 swap = mmce[mmce.index('void mmceWaitSwapDone('):]
 swap = swap[:swap.index('\n}\n') + 3]
@@ -292,21 +292,27 @@ int main(void)
     const int busySilentBusy[] = {1, -1, -1, -1, 1, 1, 0}; /* silence in the middle of the load */
     assert(run(busySilentBusy, 7) == 1);
 
-    /* The MMCE-hosted legs' pre-handoff wait: presence, then busy, bounded. */
+    /* The MMCE-hosted legs' pre-handoff wait: presence, then busy, bounded; 1 when a swap was waited out
+       (the caller then settles the card's file system), 0 when there was nothing to wait out. */
     const int idleCard[] = {0};
     memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1; calls = 0;
     mmceWaitSwapDone("test"); assert(calls == 1);                  /* answers and idle: ~0 ms */
+    calls = 0;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 1); /* nothing waited out: no settle */
     const int stillLoading[] = {1, 1, 0};
     memcpy(script, stillLoading, sizeof(stillLoading)); scriptLen = 3; calls = 0;
-    mmceWaitSwapDone("test"); assert(calls == 3);                  /* busy: waited out */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 3); /* busy: waited out */
     const int silentThenLoading[] = {-1, -1, 1, 0};
     memcpy(script, silentThenLoading, sizeof(silentThenLoading)); scriptLen = 4; calls = 0;
-    mmceWaitSwapDone("test"); assert(calls == 4);                  /* silent, then loading: waited out */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 4); /* silent, then loading: waited out */
+    const int silentThenIdleCard[] = {-1, -1, 0};
+    memcpy(script, silentThenIdleCard, sizeof(silentThenIdleCard)); scriptLen = 3; calls = 0;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 3); /* silent, then idle: a swap ended between polls */
     memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = 0;
-    mmceWaitSwapDone("test"); assert(calls == (MMCE_CARD_READY_SILENT_MS + 199) / 200); /* never answers: bounded */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == (MMCE_CARD_READY_SILENT_MS + 199) / 200); /* never answers: bounded */
     noBusyQuery = 1;
     calls = 0;
-    mmceWaitSwapDone("test"); assert(calls == 1);                  /* presence but no busy query: ~0 ms */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 1); /* presence but no busy query: ~0 ms */
     noBusyQuery = 0;
 
     /* The history-write wait: idle for the whole window, a switch that begins (busy, or silence), skipped. */
@@ -330,7 +336,7 @@ int main(void)
 
     /* No slot resolved (Auto mode after the card was taken out): neither wait asks anything or waits. */
     memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = slept = 0;
-    mmceWaitSwapDoneOn("", "test"); assert(calls == 0 && slept == 0);
+    assert(mmceWaitSwapDoneOn("", "test") == 0 && calls == 0 && slept == 0);
     assert(mmceWaitHistorySwitch("", "test") == 0 && calls == 0 && slept == 0);
     return 0;
 }

@@ -366,10 +366,12 @@ int mmceGameIdSettle(int timeoutMs)
 // send. A firmware without the busy query settles the moment presence answers, so it pays ~0 ms. The
 // MX4SIO leg has had this since batch S7 (mmceGameIdSettle); the MMCE-hosted legs did not, and they are
 // the ones that cannot survive the swap: the ISO the game streams is on the card being swapped.
-static void mmceWaitSwapDoneOn(const char *device, const char *why)
+// Returns 1 when it waited a swap out (the card was busy, or silent and then answering again), so the caller
+// lets the card's file system answer again too (mmceSettleAfterSwitch); 0 when there was nothing to wait out.
+static int mmceWaitSwapDoneOn(const char *device, const char *why)
 {
     if (device == NULL || device[0] == '\0')
-        return; // no slot resolved (Auto mode after the card was taken out): nothing to watch
+        return 0; // no slot resolved (Auto mode after the card was taken out): nothing to watch
     int silent;
     for (silent = 0; silent * 200 < MMCE_CARD_READY_SILENT_MS; silent++) {
         if (fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
@@ -378,14 +380,19 @@ static void mmceWaitSwapDoneOn(const char *device, const char *why)
                 LOG("MMCE %s: the card is still swapping; waiting\n", why);
                 diagLog("mmce %s: card still busy; waiting", why);
                 mmceWaitCardReady(device);
-            } else if (silent)
+                return 1;
+            }
+            if (silent) {
                 LOG("MMCE %s: the card answers again after ~%d ms\n", why, silent * 200);
-            return;
+                return 1;
+            }
+            return 0;
         }
         DelayThread(200 * 1000);
     }
     LOG("MMCE %s: the card did not answer for %d ms; launching anyway\n", why, silent * 200);
     diagLog("mmce %s: card silent for %d ms; launching anyway", why, silent * 200);
+    return 0;
 }
 
 void mmceWaitSwapDone(const char *why)
@@ -397,12 +404,14 @@ void mmceWaitSwapDone(const char *why)
 
 // The last look before the IOP handoff. With a Game ID send this launch it is the slot that send targeted;
 // without one (Game ID off, the reported case) it is the game's own slot, so a history-triggered switch that
-// began after mmceWaitHistorySwitch's window is still caught. ~0 ms on an idle card.
-static void mmceWaitBeforeHandoff(void)
+// began after mmceWaitHistorySwitch's window is still caught. ~0 ms on an idle card. Returns 1 when it waited
+// a swap out: the caller then settles the file system before the handoff. Handles opened before the swap stay
+// valid (an SD2PSX closes its MMCE file handles only on the MMCE reset command, not on a card switch).
+static int mmceWaitBeforeHandoff(void)
 {
     char device[8];
     mmceGetDeviceRoot(device, sizeof(device));
-    mmceWaitSwapDoneOn(mmceGameIdTarget[0] != '\0' ? mmceGameIdTarget : device, "before handoff");
+    return mmceWaitSwapDoneOn(mmceGameIdTarget[0] != '\0' ? mmceGameIdTarget : device, "before handoff");
 }
 
 // After the OSD history write on an MMCE-hosted launch: watch the game's slot for the card's own folder
@@ -1546,7 +1555,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
         // Last look before the handoff, as on the native leg: a switch the firmware deferred must not be in
         // flight when Neutrino's mmceman takes the card over. ~0 ms on an idle card.
-        mmceWaitBeforeHandoff();
+        if (mmceWaitBeforeHandoff())
+            mmceSettleAfterSwitch(); // a swap was waited out: let the card's file system answer first
         deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);
         sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, -1, &neutrinoVmc);
         return;
@@ -1598,8 +1608,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
     // Last look before the handoff: a switch the firmware deferred (its buttons held, a flush) or that a
     // card-side history refresh queued must not be in flight when mmcedrv takes the ISO handle over. On
-    // the game's own slot when no Game ID was sent (see mmceWaitBeforeHandoff).
-    mmceWaitBeforeHandoff();
+    // the game's own slot when no Game ID was sent (see mmceWaitBeforeHandoff). The ISO handle opened above stays
+    // valid across a swap (the card closes its file handles only on an MMCE reset); the settle lets the
+    // card's file system answer again before mmcedrv takes that handle over.
+    if (mmceWaitBeforeHandoff())
+        mmceSettleAfterSwitch();
 
     if (gAutoLaunchBDMGame == NULL) {
         deinit(NO_EXCEPTION, MMCE_MODE); // CAREFUL: deinit will call mmceCleanUp, so mmceGames/game will be freed

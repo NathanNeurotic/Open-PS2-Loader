@@ -24,8 +24,11 @@ static int mmce_io_sema;
 // 0 so reads fail fast with SCECdErREAD instead of silently wedging the IOP right after the PS2 logo.
 static int mmce_dev_ready;
 // How long a failed read waits for the card to answer again before it is an error: a card swap (card exit,
-// flush, close, 500 ms, open) plus most of an 8 MB card load. 100 ms probes.
-#define MMCE_SWAP_RECOVERY_PROBES 150
+// flush, close, 500 ms, open) plus most of an 8 MB card load, probed every 100 ms. Timed on the IOP clock,
+// so a probe that itself takes long (mmcedrv's size query allows its reply up to 1 s) cannot stretch it.
+#define MMCE_SWAP_RECOVERY_MS 15000
+#define MMCE_SWAP_PROBE_US    (100 * 1000)
+#define MMCE_TICKS_PER_MS     36864u // GetSystemTime counts the 36.864 MHz IOP clock
 // Set when that recovery budget ran out without the card answering: until it answers a probe again,
 // reads fail fast (one probe each) instead of each paying the whole budget.
 static int mmce_dev_lost;
@@ -179,22 +182,29 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     // extra probe (the card answers at once, the retry fails again). A shutdown (DeviceLock) cuts the retries
     // and this wait short: the game is about to be reset or powered off, and the read just fails.
     if (res != sectors && fp_mmcedrv_get_size != NULL) {
-        int probes;
-        for (probes = 0; probes < MMCE_SWAP_RECOVERY_PROBES && !mmce_stopping; probes++) {
-            DelayThread(100 * 1000);
-            if (fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0)
+        iop_sys_clock_t start, now;
+        u32 waited = 0; // IOP clock ticks. Checked every probe, far below the low word's 116 s wrap.
+        int answered = 0;
+
+        GetSystemTime(&start);
+        while (!mmce_stopping && waited < MMCE_SWAP_RECOVERY_MS * MMCE_TICKS_PER_MS) {
+            DelayThread(MMCE_SWAP_PROBE_US);
+            answered = fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0;
+            GetSystemTime(&now);
+            waited = now.lo - start.lo; // modulo 2^32: right across one wrap of the low word
+            if (answered)
                 break;
         }
         if (mmce_stopping) {
             DPRINTF("%s: shutting down; not waiting for the card\n", __func__);
-        } else if (probes < MMCE_SWAP_RECOVERY_PROBES) {
-            DPRINTF("%s: the card answers again after %d ms; retrying\n", __func__, (probes + 1) * 100);
+        } else if (answered) {
+            DPRINTF("%s: the card answers again after %u ms; retrying\n", __func__, waited / MMCE_TICKS_PER_MS);
             res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
             retries++;
         } else {
             // The card never answered: do not pay this wait again on every read (cdvdman issues one per
             // sector for the odd sizes), fail fast until a probe at the top answers again.
-            DPRINTF("%s: the card did not answer for %d ms; failing fast until it does\n", __func__, MMCE_SWAP_RECOVERY_PROBES * 100);
+            DPRINTF("%s: the card did not answer for %u ms; failing fast until it does\n", __func__, waited / MMCE_TICKS_PER_MS);
             mmce_dev_ready = 0;
             mmce_dev_lost = 1;
         }
