@@ -3054,15 +3054,25 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 
     LOG("SYSTEM LaunchLoaderElf loading modules\n");
     ModuleStorageSize = (sendIrxKernelRAM(filename, mode_str, modules, ModuleStorage, size_cdvdman_irx, cdvdman_irx, size_mcemu_irx, mcemu_irx) + 0x3F) & ~0x3F;
+    ModuleStorageEnd = (void *)((u8 *)ModuleStorage + ModuleStorageSize);
+
+#ifdef RETROACHIEVEMENTS
+    /* The watch block right after the modules, before the menu's cheats below (RiptOPL places its RA work area the
+       same way): the cheats take only the room it leaves, so a long cheat file can no longer push the watch block,
+       and with it the menu, past IGROVL_BASE. */
+    if (!sysModeHasNoRATelemetry(mode_str) && gRATelemetry && GetWatchCount() > 0)
+        ModuleStorageEnd = PlaceWatchBlock(ModuleStorageEnd);
+#endif
 
 #ifdef IGR_MENU
-    /* The in-game menu's CHEATS page (ee_core igrmenu.c): every cheat of the game's file goes after the modules,
-       for the whole game, as RIPPS2 carries its menu's data. Only at the default address and only below 0xD0000
-       (above it some games keep data, see ee_core/linkfile): a game moved lower (mod_storage_location_list) or a
-       storage too full for it gets the menu without the page, and its cheats run as ticked before the launch. */
+    /* The in-game menu's CHEATS page (ee_core igrmenu.c): every cheat of the game's file goes after the modules (and
+       the watch block), for the whole game, as RIPPS2 carries its menu's data. Only at the default address and only
+       below 0xD0000 (above it some games keep data, see ee_core/linkfile): a game moved lower
+       (mod_storage_location_list) or a storage too full for it gets the menu without the page, and its cheats run as
+       ticked before the launch. */
     void *igrCheats = NULL;
     if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && !discMode && GetCheatsEnabled() && ModuleStorage == (void *)OPL_MOD_STORAGE) {
-        u8 *at = (u8 *)ModuleStorage + ModuleStorageSize;
+        u8 *at = (u8 *)ModuleStorageEnd; // 64-byte aligned: the modules' size and PlaceWatchBlock's end both are
 #ifdef IGR_OVERLAY
         const u32 top = IGROVL_BASE; // the menu itself goes above (RETROACHIEVEMENTS flavour)
 #else
@@ -3072,21 +3082,15 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
         int bytes = igrCheatsPack(at, room);
         if (bytes > 0) {
             igrCheats = at;
-            ModuleStorageSize += (bytes + 0x3F) & ~0x3F;
+            ModuleStorageEnd = (void *)(at + ((bytes + 0x3F) & ~0x3F));
         }
         LOG("IGR menu cheats: %d bytes at %p (room %u)\n", bytes, at, room);
     }
 #endif
 
-    ModuleStorageEnd = (void *)((u8 *)ModuleStorage + ModuleStorageSize);
-#ifdef RETROACHIEVEMENTS
-    if (!sysModeHasNoRATelemetry(mode_str) && gRATelemetry && GetWatchCount() > 0)
-        ModuleStorageEnd = PlaceWatchBlock(ModuleStorageEnd);
-#endif
-
 #ifdef IGR_OVERLAY
     /* The menu's ACHIEVEMENTS page (RIPPS2 build 94): the game's locked achievements as RA/<startup>.ach had them, in
-       the menu's lines (sbGetRaHunt), after the cheats and the watch block and below the overlay. With no room for all
+       the menu's lines (sbGetRaHunt), after the watch block and the cheats and below the overlay. With no room for all
        of it, the page gives the counts alone. */
     const u8 *raHunt = NULL, *huntSrc;
     int raHuntCount = 0, raHuntBytes = 0, raHuntTotal = 0, raHuntUnlocked = 0;
@@ -3104,7 +3108,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 
     /* RETROACHIEVEMENTS flavour: the menu itself is igrovl.elf (ee_core/include/igrovl.h), linked at the top of the
        module storage region. It goes in only with the menu on, only at the default address and only when the modules,
-       the cheats and the watch block end below it; the storage then runs to its end so the kernel's erase leaves it
+       the watch block and the cheats end below it; the storage then runs to its end so the kernel's erase leaves it
        alone. Without it the launch is the menu-off one: config->IgrMenu goes to 0 below. */
     int igrOvlPlaced = 0;
     if (gIgrMenu && !(compatflags & COMPAT_MODE_6) && ModuleStorage == (void *)OPL_MOD_STORAGE &&
@@ -3113,7 +3117,8 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     if (igrOvlPlaced) {
         ModuleStorageEnd = (void *)(IGROVL_BASE + IGROVL_SIZE);
         LOG("IGR menu overlay at 0x%x\n", IGROVL_BASE);
-    }
+    } else if (gIgrMenu && !(compatflags & COMPAT_MODE_6))
+        LOG("IGR menu overlay not placed, module storage %p-%p\n", ModuleStorage, ModuleStorageEnd);
 #endif
 
     // NB: LOADER.ELF is embedded
@@ -3186,8 +3191,11 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // freeze-report builds make ee_core without it (no room), and leave these zero.
     config->IgrMenu = gIgrMenu && !(compatflags & COMPAT_MODE_6); // Mode 6 (Disable IGR) turns the menu off too
 #ifdef IGR_OVERLAY
-    if (!igrOvlPlaced) // no overlay for this launch: the combo leaves the game, as with the menu off
+    if (!igrOvlPlaced) { // no overlay for this launch: the combo leaves the game, as with the menu off
+        // With the menu still on here (not Mode 6) that was a lack of room: Debug Colors shows it at the combo
+        config->IgrMenuNoRoom = config->IgrMenu;
         config->IgrMenu = 0;
+    }
     config->IgrRaHunt = raHunt;
     config->IgrRaHuntCount = raHunt != NULL ? raHuntCount : 0;
     config->IgrRaTotal = raHuntTotal;
