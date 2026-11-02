@@ -283,7 +283,9 @@ static int appGetHandoffPathConfig(config_set_t *configSet)
 // name (udp, cf) or the slot cannot be read, so a launch never fails for the sake of the spelling.
 static const char *appChooseHandoffArgv0(int handoff, const char *normFilename, char *typedBuf, size_t typedSize)
 {
-    if (handoff == APP_HANDOFF_TYPED && bdmBuildTypedHandoffPath(normFilename, typedBuf, (int)typedSize)) {
+    // POPSTARTER reads argv[0] as its own selector and loads its own older drivers, so it always gets the legacy spelling.
+    if (handoff == APP_HANDOFF_TYPED && !appIsPopstarterElf(normFilename, NULL) &&
+        bdmBuildTypedHandoffPath(normFilename, typedBuf, (int)typedSize)) {
         LOG("[APPS] handoff argv0=%s (typed) load=%s\n", typedBuf, normFilename);
         return typedBuf;
     }
