@@ -204,8 +204,9 @@ launcher has saved that file, if at all, before it gets this far.
 
 **In the menu.** *Settings → Controller Settings → My Pads* lists the profiles, with the line and reason for any the
 reader refuses, and says which are not used and why. *Set Up A USB Pad* writes a profile for the pad plugged in: it
-asks for each button and stick in turn (SELECT on the PS2 pad skips one), lets you try the result, and puts an older
-file for that pad aside first, as `.bak` (then `.b01` to `.b99`), rather than removing it. Every profile is off while
+asks for each button and stick in turn (SELECT on the PS2 pad skips one), takes one once it has been held by itself
+for a moment (a slide to another button, or a stick swung back, starts the count again), lets you try the result, and
+puts an older file for that pad aside first, as `.bak` (then `.b01` to `.b99`), rather than removing it. Every profile is off while
 it is open, so it needs a pad that works the menu without one, a DualShock 2 in a controller port or a DualShock 3 or
 4, and says so instead of opening without one. A USB pad that is in as it opens is not taken until it has been
 unplugged and plugged in again, as the screen asks; from then on it reads only that pad, in the port it found it in.

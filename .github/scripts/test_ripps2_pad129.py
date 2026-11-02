@@ -37,6 +37,10 @@ This port's rules (each failure starts "this port:"):
 11. PADEMU's game map moves a button's pressure byte with its press (a game in mode 0x79 reads both), compiled on the PC.
 12. The menu's driver registers again for a profiled pad that was plugged in before its profile came, when a slot it
     reads is free (usbd-ra's own register and unregister, compiled on the PC), and imports sceUsbdUnregisterLdd for it.
+13. libds34usb.h's DS34USB_RAW_SIZE is 8 + the IRX's MAX_BUFFER_SIZE and its DS34USB_TYPE_GENERIC the IRX's GENERIC, and
+    the EE reads the raw reply with them only (libds34usb.c, pad.c, gui.c).
+14. The menu's driver loads profiles only from a SET_PROFILES call that holds the whole block, and reads the learn byte
+    only from one that holds the four-byte header: past what came, its buffer still holds the call before.
 """
 import os
 import re
@@ -66,6 +70,8 @@ prof = text('modules/pademu/padprofile.c')
 menu_mk = text('modules/ds34usb/iop/Makefile')
 menu = text('modules/ds34usb/iop/ds34usb.c')
 menu_ee = text('modules/ds34usb/ee/libds34usb.c')
+menu_ee_h = text('modules/ds34usb/ee/libds34usb.h')
+menu_h = text('modules/ds34usb/iop/ds34usb.h')
 iopmgr = text('ee_core/src/iopmgr.c')
 coreconfig = text('ee_core/include/coreconfig.h')
 system = text('src/system.c')
@@ -792,6 +798,47 @@ def check_reprobe(cc, td):
         port('menu ds34usb.c: ds34usb_set_profiles does not call usb_reprobe once the setup screen is closed')
 
 
+def check_reply_contract():
+    def num(src, pat):
+        m = re.search(pat, src, re.M)
+        return int(m.group(1), 0) if m else None
+    raw = num(menu_ee_h, r'^\s*#\s*define\s+DS34USB_RAW_SIZE\s+(\d+)\b')
+    generic = num(menu_ee_h, r'^\s*#\s*define\s+DS34USB_TYPE_GENERIC\s+(\d+)\b')
+    buf = num(menu_h, r'^\s*#\s*define\s+MAX_BUFFER_SIZE\s+(\d+)\b')
+    iop_generic = num(menu_h, r'^\s*#\s*define\s+GENERIC\s+(\d+)\b')
+    if None in (raw, generic, buf, iop_generic):
+        return port('libds34usb.h DS34USB_RAW_SIZE/DS34USB_TYPE_GENERIC or iop/ds34usb.h MAX_BUFFER_SIZE/GENERIC not found')
+    if raw != 8 + buf:
+        port('libds34usb.h: DS34USB_RAW_SIZE is %d, the IRX replies with 8 + MAX_BUFFER_SIZE = %d' % (raw, 8 + buf))
+    if generic != iop_generic:
+        port('libds34usb.h: DS34USB_TYPE_GENERIC is %d, the IRX\'s GENERIC is %d' % (generic, iop_generic))
+    get_raw = body(blank(menu_ee), 'ds34usb_get_raw')
+    if len(re.findall(r'\bDS34USB_RAW_SIZE\b', get_raw)) < 2 or re.search(r'\b72\b', get_raw):
+        port('libds34usb.c: ds34usb_get_raw does not receive and copy DS34USB_RAW_SIZE bytes')
+    for src, name in ((pad, 'pad.c'), (gui, 'gui.c')):
+        code = blank(src)
+        if re.search(r'\[\s*72\s*\]', code) or re.search(r'#\s*define\s+\w*GENERIC\s+4\b', code):
+            port(name + ': a raw reply size or the GENERIC type written out instead of DS34USB_RAW_SIZE/DS34USB_TYPE_GENERIC')
+
+
+def check_short_profiles():
+    code = blank(menu)
+    m = re.search(r'\bstatic\s+void\s+ds34usb_set_profiles\s*\(\s*const\s+u8\s*\*\s*(\w+)\s*,\s*int\s+(\w+)\s*\)', code)
+    if not m:
+        return port('menu ds34usb.c: ds34usb_set_profiles(const u8 *data, int size) not found')
+    data, size = m.group(1), m.group(2)
+    b = body(code, 'ds34usb_set_profiles')
+    whole = r'\b%s\s*>=\s*4\s*\+\s*PAD_BLOCK_SIZE\s*\?\s*%s\s*\+\s*4\s*:\s*NULL\b' % (size, data)
+    if not re.search(r'\bpadProfilesLoad\s*\(\s*' + whole, b):
+        port('menu ds34usb.c: ds34usb_set_profiles loads the block without checking the call holds all of it')
+    learn = re.search(r'\bpads_learn\s*=([^;]*);', b)
+    if not learn or not re.search(r'\b%s\s*>=\s*4\s*\?' % size, learn.group(1)):
+        port('menu ds34usb.c: ds34usb_set_profiles reads the learn byte without checking the call holds it')
+    if not re.search(r'case\s+DS34USB_SET_PROFILES\s*:[^;]*\bds34usb_set_profiles\s*\(\s*\(\s*const\s+u8\s*\*\s*\)\s*data\s*,\s*size\s*\)',
+                     code):
+        port('menu ds34usb.c: rpc_sf does not hand ds34usb_set_profiles the size of the call')
+
+
 check_last_member()
 check_bit19_clear()
 check_undef()
@@ -802,6 +849,8 @@ check_usb_only()
 check_report_length()
 check_late_signal()
 check_prerequisites()
+check_reply_contract()
+check_short_profiles()
 
 cc = shutil.which('gcc') or shutil.which('cc')
 if cc is None:
@@ -839,5 +888,5 @@ print('\n'.join(fail) or 'build129 pad: PADEMU, ee_core, the launcher and the me
       'applies; this port: PadEmuArgs last, bit 19 clear with no block, memcpy and memset undefined, no Sony VID takes a '
       'profile, fmRename and mode 0666, PADS beside the settings and never on raw APA, the USB build only, the real report '
       'length, a late signal dropped, padprofile.o rebuilt, the game map moves pressure with the press, a pad plugged in '
-      'before its profile is taken')
+      'before its profile is taken, the raw reply\'s size and type shared with the driver, a short profile call loads none')
 sys.exit(1 if fail else 0)

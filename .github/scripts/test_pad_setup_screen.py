@@ -270,7 +270,7 @@ int main(void)
 # 3 and 4: the two screens run whole. The PADEMU block of gui.c, cut in three: My Pads, the setup screen up to its frame
 # (renamed, so a wrapper can play the user each frame), and the rest of the setup screen
 block_start = gui.find('#define MY_PADS_MSG')
-setup_start = gui.find('#define PAD_SETUP_GENERIC')
+setup_start = gui.find('#define PAD_SETUP_SWING')
 draw_start = gui.find('// One frame. Only drawing happens inside the lock')
 draw_end = gui.find('\n}\n', gui.find('static void padSetupDraw(')) + 3
 setup_end = gui.find('\n}\n', gui.find('static void guiSetUpUsbPad(void)\n{')) + 3
@@ -278,6 +278,10 @@ pieces_ok = min(block_start, setup_start, draw_start) >= 0 and block_start < set
 check(pieces_ok, 'gui.c: My Pads and the setup screen not found in the order the host harness cuts them')
 MYPADS_SRC = gui[block_start:gui.rfind('/*', block_start, setup_start)] if pieces_ok else ''
 PIECE1 = gui[setup_start:draw_start] if pieces_ok else ''
+RAW_SIZE = re.search(r'^#define\s+DS34USB_RAW_SIZE\s+(\d+)\b', libds34usb, re.M)
+TYPE_GENERIC = re.search(r'^#define\s+DS34USB_TYPE_GENERIC\s+(\d+)\b', libds34usb, re.M)
+check(RAW_SIZE and TYPE_GENERIC, 'libds34usb.h: DS34USB_RAW_SIZE or DS34USB_TYPE_GENERIC not defined')
+check('PAD_SETUP_GENERIC' not in gui, 'gui.c: PAD_SETUP_GENERIC is back; the screen reads DS34USB_TYPE_GENERIC')
 DRAW = gui[draw_start:draw_end].replace('static void padSetupDraw(', 'static void padSetupDrawReal(') if pieces_ok else ''
 PIECE2 = gui[draw_end:setup_end] if pieces_ok else ''
 STRINGS = 'enum {\n' + ''.join('    _STR_%s = %d,\n' % (l, i) for i, l in enumerate(labels)) + '};\n' + \
@@ -324,6 +328,8 @@ static const u64 gColDarker = 1, gColWhite = 2;
 #define H_KEY_CONFIRM 2
 enum { SFX_CANCEL, SFX_CONFIRM, SFX_CURSOR, SFX_MESSAGE };
 #define DS34USB_STATE_RUNNING 0x08
+#define DS34USB_RAW_SIZE ''' + (RAW_SIZE.group(1) if RAW_SIZE else '72') + r'''
+#define DS34USB_TYPE_GENERIC ''' + (TYPE_GENERIC.group(1) if TYPE_GENERIC else '4') + r'''
 
 static char hShown[1024]; /* the text the last frame drew */
 static int guiDrawBGSettings(void) { H_DRAWING("the background"); return 0; }
@@ -417,10 +423,10 @@ static int ds34usb_get_raw(int port, unsigned char *out)
     if (port < 0 || port > 1)
         H_FAIL("port %d polled", port);
     hPolls++;
-    memset(out, 0, 72);
+    memset(out, 0, DS34USB_RAW_SIZE);
     if (hOld && port == 0) { /* a HID pad there as the screen opened (its profile off), 0E6F:0213: Cross held throughout */
         out[0] = 0x01 | 0x02 | 0x04 | DS34USB_STATE_RUNNING;
-        out[1] = 4;
+        out[1] = DS34USB_TYPE_GENERIC;
         out[2] = hOldSameId ? 0x34 : 0x6F; out[3] = hOldSameId ? 0x12 : 0x0E;
         out[4] = hOldSameId ? 0x78 : 0x13; out[5] = hOldSameId ? 0x56 : 0x02;
         out[6] = 9;
@@ -432,7 +438,7 @@ static int ds34usb_get_raw(int port, unsigned char *out)
     if (port != hPort || !hPresent)
         return 1;
     out[0] = 0x01 | 0x02 | 0x04 | DS34USB_STATE_RUNNING;
-    out[1] = 4;
+    out[1] = DS34USB_TYPE_GENERIC;
     out[2] = 0x34; out[3] = 0x12; out[4] = 0x78; out[5] = 0x56;
     out[6] = 9;
     out[7] = hSeq++;
@@ -589,7 +595,7 @@ static int guiMsgBox(const char *text, int addAccept, void *ui)
 }
 ''' + MYPADS_SRC + PIECE1 + DRAW + r'''
 /* The user: what the screen asks for each frame is what they do, on the USB pad or the PS2 pad */
-static int hCancelView = -1, hCancelFrame = 3, hSkip = 0, hBrush = -1, hStrangerView = -1, hStrangerFrom = 0,
+static int hCancelView = -1, hCancelFrame = 3, hSkip = 0, hBrush = -1, hSlide = -1, hStrangerView = -1, hStrangerFrom = 0,
            hViewFrames = 0, hLastView = -1, hLastStep = -1, hReplug = 0;
 static char hTry[1024];
 
@@ -670,6 +676,14 @@ static void padSetupDraw(const pad_setup_view_t *v)
                     hKeys = 1 << KEY_SELECT;
             } else if (v->step == hBrush && hViewFrames < PAD_SETUP_HOLD)
                 hPress(0, PAD_B_CIRCLE, hRep); /* the thumb brushes Circle first, for less than a hold */
+            else if (v->step == hSlide && hViewFrames > PAD_SETUP_HOLD && hViewFrames <= PAD_SETUP_HOLD + 3) {
+                /* held for a hold, then the thumb slides for less than one: Circle, in Cross's byte, or the left
+                   stick the other way */
+                if (padSetupSteps[v->step].axis)
+                    hRep[3] = 0x00;
+                else
+                    hPress(0, PAD_B_CIRCLE, hRep);
+            }
             else
                 hPress(padSetupSteps[v->step].axis, padSetupSteps[v->step].id, hRep);
             break;
@@ -708,7 +722,7 @@ static void hReset(const char *tmp, const char *name)
     hNoHome = hLearn = hLearnCount = hLearnFails = hLoads = hLoadsBeforeOff = hPolls = hPresent = 0;
     hPort = hOld = hOldSameId = hNoPlainPad = hUnused = hHasCalls = hReplug = 0;
     hWriteFails = hWriteLies = hCloseFails = hRenameFails = hUnlinks = hMsgBoxes = hKeys = hSkip = 0;
-    hCancelView = hBrush = hStrangerView = hLastView = hLastStep = -1;
+    hCancelView = hBrush = hSlide = hStrangerView = hLastView = hLastStep = -1;
     hCancelFrame = 3;
     hStranger = hStrangerFrom = 0;
     hMsg[0] = hTry[0] = '\0';
@@ -754,6 +768,7 @@ static void setupChecks(const char *tmp)
 {
     char want[1024], got[4096], path[500];
     pad_def_t d;
+    int i;
     char err[96];
 
     /* the whole way through, no profile there before */
@@ -892,6 +907,21 @@ static void setupChecks(const char *tmp)
     guiSetUpUsbPad();
     if (hReadFile(hFile, got, sizeof(got)) < 0 || strcmp(got, hMade) != 0)
         H_FAIL("brushed: written\n%s\nwant:\n%s", got, hMade);
+
+    /* Cross held for a hold, then the thumb slides to Circle, a bit in the same byte, for less than one: the count
+       starts again, so Circle is not taken for Cross. The same for the left stick swung the other way */
+    hReset(tmp, "s13b");
+    hSlide = 0;
+    guiSetUpUsbPad();
+    if (hReadFile(hFile, got, sizeof(got)) < 0 || strcmp(got, hMade) != 0)
+        H_FAIL("slid to Circle: written\n%s\nwant:\n%s", got, hMade);
+    hReset(tmp, "s13c");
+    for (i = 0; i < PAD_SETUP_STEPS; i++)
+        if (padSetupSteps[i].axis && padSetupSteps[i].id == PAD_AX_LX)
+            hSlide = i;
+    guiSetUpUsbPad();
+    if (hSlide < 0 || hReadFile(hFile, got, sizeof(got)) < 0 || strcmp(got, hMade) != 0)
+        H_FAIL("left stick swung back: written\n%s\nwant:\n%s", got, hMade);
 
     /* another pad's reports in that port, while this one is measured at rest (past the first half second) and while
        Cross is asked for: never taken for this pad's */

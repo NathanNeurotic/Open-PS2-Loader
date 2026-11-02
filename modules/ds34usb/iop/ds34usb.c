@@ -997,13 +997,14 @@ static void usb_reprobe(void)
 
 // RIPPS2 build 129: the .pad block (PAD_BLOCK_SIZE bytes, padfile.h) and the setup screen's learn switch (byte 0 of the
 // call: 1 open, 0 closed). Every connected HID pad is read again with the profile its ID now names; a pad that has none
-// reads as nothing held, and once the setup screen closes it is let go
-static void ds34usb_set_profiles(const u8 *data)
+// reads as nothing held, and once the setup screen closes it is let go. A call too short for the whole block loads no
+// profiles: past what came, the buffer still holds the call before
+static void ds34usb_set_profiles(const u8 *data, int size)
 {
     int pad;
 
-    pads_learn = data[0];
-    padProfilesLoad(data + 4);
+    pads_learn = size >= 4 ? data[0] : 0;
+    padProfilesLoad(size >= 4 + PAD_BLOCK_SIZE ? data + 4 : NULL);
     for (pad = 0; pad < MAX_PADS; pad++) {
         WaitSema(ds34pad[pad].sema);
         if (ds34pad[pad].type == GENERIC && ds34pad[pad].devId != -1) {
@@ -1111,7 +1112,7 @@ void *rpc_sf(int cmd, void *data, int size)
             ds34usb_get_raw((u8 *)data, *(u8 *)data);
             break;
         case DS34USB_SET_PROFILES: // build 129
-            ds34usb_set_profiles((const u8 *)data);
+            ds34usb_set_profiles((const u8 *)data, size);
             break;
         default:
             break;

@@ -5111,9 +5111,8 @@ static void guiShowMyPads(void)
    port as it opened until it has been out, reads only the port it found the pad in, and says when the new profile is
    left out of the block. */
 
-#define PAD_SETUP_GENERIC 4    // the menu driver's GENERIC (modules/ds34usb/iop/ds34usb.h)
-#define PAD_SETUP_SWING   0x50 // an axis moved this far from rest
-#define PAD_SETUP_HOLD    4    // frames a find must hold before it counts
+#define PAD_SETUP_SWING 0x50 // an axis moved this far from rest
+#define PAD_SETUP_HOLD  4    // frames a find must hold before it counts
 
 typedef struct
 {
@@ -5183,11 +5182,11 @@ static const char *padSetupName(const pad_setup_name_t *n)
 // driver did not answer
 static int padSetupPoll(int port, pad_setup_raw_t *p)
 {
-    unsigned char b[72];
+    unsigned char b[DS34USB_RAW_SIZE];
 
     if (!ds34usb_get_raw(port, b))
         return -1;
-    if (b[1] != PAD_SETUP_GENERIC || !(b[0] & DS34USB_STATE_RUNNING))
+    if (b[1] != DS34USB_TYPE_GENERIC || !(b[0] & DS34USB_STATE_RUNNING))
         return 0;
     p->port = port;
     p->vid = b[2] | b[3] << 8;
@@ -5448,6 +5447,7 @@ static void guiSetUpUsbPad(void)
     // 3: each button and stick
     for (step = 0; step < PAD_SETUP_STEPS; step++) {
         int axis = padSetupSteps[step].axis, id = padSetupSteps[step].id, held = 0, last = -1, lastKind = 0, a = 0, b = 0, l = 0;
+        int lastBit = -1, lastLow = -1; // a hold counts one find: the same byte, the same bit, the same way
         int dpad = !axis && id >= PAD_B_UP && id <= PAD_B_LEFT;
 
         if (dpad && hat >= 0) { // the hat gave all four
@@ -5469,11 +5469,13 @@ static void guiSetUpUsbPad(void)
             }
             if (padSetupPoll(port, &p) > 0 && p.vid == vid && p.pid == pid)
                 found = padSetupFind(rest, noise, &p, axis, dpad, !axis && (id == PAD_B_L2 || id == PAD_B_R2), usedBits, usedAxis, &a, &b, &l);
-            if (found && found == lastKind && a == last)
+            if (found && found == lastKind && a == last && b == lastBit && l == lastLow)
                 held++;
             else
                 held = 0;
             last = a;
+            lastBit = b;
+            lastLow = l;
             lastKind = found;
             if (found && held >= PAD_SETUP_HOLD) {
                 kind[step] = found;

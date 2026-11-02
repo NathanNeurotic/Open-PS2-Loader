@@ -2,6 +2,7 @@
 #include <sifrpc.h>
 #include <string.h>
 #include <time.h>
+#include "libds34usb.h"
 
 #define DS34USB_INIT         1
 #define DS34USB_GET_STATUS   2
@@ -169,7 +170,7 @@ int ds34usb_set_profiles(const u8 *block, int size, int learn)
     return (SifCallRpc(&ds34usb, DS34USB_SET_PROFILES, 0, rpcbuf, 4 + size, NULL, 0, NULL, NULL) == 0);
 }
 
-// RIPPS2 build 129: a port's state and its last report as it came (out: 8 + 64 bytes, see the IRX's ds34usb_get_raw)
+// RIPPS2 build 129: a port's state and its last report as it came (out: DS34USB_RAW_SIZE bytes, see the IRX's ds34usb_get_raw)
 int ds34usb_get_raw(int port, u8 *out)
 {
     int ret;
@@ -178,8 +179,8 @@ int ds34usb_get_raw(int port, u8 *out)
         return 0;
 
     rpcbuf[0] = port;
-    ret = (SifCallRpc(&ds34usb, DS34USB_GET_RAW, 0, rpcbuf, 1, rpcbuf, 72, NULL, NULL) == 0);
-    memcpy(out, rpcbuf, 72);
+    ret = (SifCallRpc(&ds34usb, DS34USB_GET_RAW, 0, rpcbuf, 1, rpcbuf, DS34USB_RAW_SIZE, NULL, NULL) == 0);
+    memcpy(out, rpcbuf, DS34USB_RAW_SIZE);
 
     return ret;
 }
