@@ -231,7 +231,11 @@ static int smb2man_init(iop_device_t *dev)
     thread.attr = TH_C;
     thread.option = 0;
     thread.thread = smb2man_keepalive_thread;
-    thread.stacksize = 0x2000; // libsmb2 sync calls run on it: socket.c keeps SMB2_MAX_VECTORS iovecs on the stack
+    // libsmb2's sync calls run on this thread, as they run on fileXio's 32 KB RPC thread for the menu's
+    // requests. From the IOP compiler's stack-usage data, the deepest path (a reply read by
+    // smb2_read_data, whose 256 iovecs take 2 KB, completing into the session setup and its
+    // HMAC-SHA256 signature) needs about 4.3 KB, and about 6.5 KB if a server nests a transform header.
+    thread.stacksize = 0x4000;
     thread.priority = 0x64;
     keepalive_tid = CreateThread(&thread);
     if (keepalive_sema >= 0 && keepalive_tid >= 0 && StartThread(keepalive_tid, NULL) == 0) {
