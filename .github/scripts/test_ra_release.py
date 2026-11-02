@@ -326,6 +326,22 @@ class Libsmb2LicenceShippingTest(unittest.TestCase):
         self.assertIn("grep -qFx 'LICENSE-LIBSMB2.txt'", normalize)
         self.assertLess(normalize.index("package-work/LICENSE-LIBSMB2.txt"), normalize.index("package_release_app.py verify"))
 
+    def test_every_actions_test_build_and_the_release_zip_carry_the_lgpl_licence(self):
+        # Testers also download loaders straight from Actions runs, and `make release` zips one up.
+        root = Path(__file__).resolve().parents[2]
+        flavours = (root / ".github/workflows/flavours.yml").read_text(encoding="utf-8")
+        copy = "run: cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt LICENSE-LIBSMB2.txt"
+        listed = "            BUILD-MANIFEST.txt\n            LICENSE-LIBSMB2.txt\n"
+        self.assertIn(copy, flavours)
+        self.assertIn(listed, flavours)
+        self.assertLess(flavours.index(copy), flavours.index(listed))
+        self.assertLess(flavours.index("name: OPL-${{ matrix.flavour }}"), flavours.index(listed))
+        makefile = (root / "Makefile").read_text(encoding="utf-8")
+        recipe = makefile[makefile.index("$(EE_VPKD).ZIP:"):]
+        recipe = recipe[:recipe.index("\n\n")]
+        self.assertIn('cp modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "$$tmp/LICENSE-LIBSMB2.txt"', recipe)
+        self.assertIn('zip -j $@ "$$tmp/LICENSE-LIBSMB2.txt"', recipe)
+
 
 if __name__ == "__main__":
     unittest.main()

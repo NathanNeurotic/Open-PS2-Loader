@@ -28,6 +28,8 @@ archives by purpose (RA, DEBUG and language packs are listed when produced):
 | `RIPTOPL-LANGS-*.zip` | Extra UI language files (`.lng` + non-Latin fonts) — copy into your OPL folder. |
 | `RIPTOPL-VARIANTS-*.zip` | Alternate build configs across the moving and pinned ps2dev flavours; the normalizer also adds one ready-made DualSense (`DUALSENSE=1`) loader for each available official flavour. |
 | `RIPTOPL-DEBUG-*.zip` | Diagnostic builds across the moving and pinned ps2dev flavours, when produced. |
+| `RIPTOPL-BUGREPORT-*.zip` | The field-diagnostics build before compression, with a README on what to send, when produced. See [Launch diagnostics](docs/LAUNCH-DIAGNOSTICS.md#bug-report-build). |
+| `LICENSE-LIBSMB2.txt` | The GNU LGPL-2.1 licence of [libsmb2](https://github.com/sahlberg/libsmb2), by [Ronnie Sahlberg](https://github.com/sahlberg), which every loader embeds for SMB2 browsing. The kit and the VARIANTS and DEBUG zips carry the same file; the bug-report zip carries the same text under `licenses/libsmb2/`. |
 
 To install on a memory card, import the matching `.psu` with a PS2 save manager. For other
 devices, copy the matching `APPS/APP_RIPTOPL*/` directory instead. Install `ART/`,

@@ -12,7 +12,7 @@ A test artifact belongs to one GitHub Actions run and commit. It is separate fro
 
 For Japanese/Unicode game-name font fallback, see [Unicode Game Titles](UNICODE-GAME-TITLES.md). The optional `font_CJK.ttf` is user-provided, not in the build artifact. Verify the artifact commit includes [PR #917](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/917).
 
-Extract the ZIP and read BUILD-MANIFEST.txt for commit, flavour and build configuration. Launch the ELF requested in the test instructions. The rolling suffix identifies a moving toolchain; it does not prove the source commit has been published. Artifacts contain loader builds and a manifest, so retain the complete companion installation for Neutrino, Ember, POPSTARTER and artwork.
+Extract the ZIP and read BUILD-MANIFEST.txt for commit, flavour and build configuration. Launch the ELF requested in the test instructions. The rolling suffix identifies a moving toolchain; it does not prove the source commit has been published. Artifacts contain loader builds, a manifest and `LICENSE-LIBSMB2.txt`, so retain the complete companion installation for Neutrino, Ember, POPSTARTER and artwork. Every loader embeds [libsmb2](https://github.com/sahlberg/libsmb2), by [Ronnie Sahlberg](https://github.com/sahlberg), used under the GNU LGPL-2.1; `LICENSE-LIBSMB2.txt` is its licence.
 
 Replacing only RIPTOPL.ELF does not update companion cores or modules. Use the full release package when its notes announce such updates; back up configuration and save cards first.
 
