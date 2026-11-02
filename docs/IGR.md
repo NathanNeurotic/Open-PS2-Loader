@@ -261,6 +261,22 @@ lands in the PS2 browser anyway is missing its memory-card drivers — see
 **The game resets on its own during play.** A game that uses all four shoulders plus Start or Select
 in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for that title.
 
+**In-Game Menu is on, but the combination leaves the game instead of pausing it.** The menu only opens
+when it can draw into the picture the game is showing; when it cannot, the combination falls back to the
+plain reset, as described above. To see which step refused, turn on **Debug Colors** for that game
+(*Game Settings*), start it, and press the combination. The screen blinks the reason three times before
+the usual reset colours:
+
+| Blink | Meaning |
+|---|---|
+| **Purple** | No frame was seen: the game set its display in a way the GS write tracker did not record, or in a format or size the panel cannot use |
+| **Yellow** | The game's VIF1 or GIF transfers never went idle while paused, or VIF1 was stalled: the menu will not draw over a transfer in flight |
+| **Mint green** | The first page was composed but VIF1 did not take it |
+| **Grey** | The menu itself was not there to run (RetroAchievements editions: no overlay for this launch) |
+
+Report the colour with the game's ID and the device it runs from. No blink at all with Debug Colors on
+means the combination never reached the menu: check the list under *Nothing happens* first.
+
 ---
 
 ## Where this lives in the source

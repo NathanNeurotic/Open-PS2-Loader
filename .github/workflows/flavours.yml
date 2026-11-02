@@ -263,6 +263,8 @@ jobs:
         run: python3 .github/scripts/test_mx4sio_host_boot.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
+      - name: Check the GameCountText follows the list count, not only the selected game
+        run: python3 .github/scripts/test_game_count_refresh.py
       - name: Check optional game titles fall back without changing metadata
         run: python3 .github/scripts/test_theme_metadata.py
       - name: Check PSBBN Flow rendering, the theme catalog and view switching
