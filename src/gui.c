@@ -3155,6 +3155,9 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_DEFAULT_CORE, defaultCoreStrs);
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
+    const char *appHandoffStrs[] = {_l(_STR_APP_HANDOFF_LEGACY), _l(_STR_APP_HANDOFF_TYPED), NULL};
+    diaSetEnum(ui, CFG_APP_HANDOFF_PATH, appHandoffStrs);
+    diaSetInt(ui, CFG_APP_HANDOFF_PATH, gAppHandoffPath);
     diaSetInt(ui, CFG_AUTO_CREATE_VMC, gAutoCreateVmc);
 #ifdef IGR_MENU
     diaSetInt(ui, CFG_IGR_MENU, gIgrMenu);
@@ -3185,6 +3188,7 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
+        diaGetInt(ui, CFG_APP_HANDOFF_PATH, &gAppHandoffPath);
         diaGetInt(ui, CFG_AUTO_CREATE_VMC, &gAutoCreateVmc);
 #ifdef IGR_MENU
         diaGetInt(ui, CFG_IGR_MENU, &gIgrMenu);

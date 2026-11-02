@@ -371,8 +371,9 @@ char gExitPath[256];
 char gCustomSettingsPath[64];
 int gEnableDebug;
 int gPS2Logo;
-int gAutoCreateVmc; // default-off: create + assign a per-game VMC on a PS2 game's first launch
-int gIgrMenu;       // default-off: the IGR combo pauses the game under the in-game menu (beta)
+int gAppHandoffPath; // the device spelling ELF apps are handed; the mounts themselves never change
+int gAutoCreateVmc;  // default-off: create + assign a per-game VMC on a PS2 game's first launch
+int gIgrMenu;        // default-off: the IGR combo pauses the game under the in-game menu (beta)
 int gDefaultDevice;
 int gEnableWrite;
 char gBDMPrefix[32];
@@ -3625,6 +3626,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_YSENSITIVITY, &gYSensitivity);
             configGetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, &gEnableDebug);
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
+            configGetInt(configOPL, CONFIG_OPL_APP_HANDOFF_PATH, &gAppHandoffPath);
             configGetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, &gAutoCreateVmc);
             configGetInt(configOPL, CONFIG_OPL_IGR_MENU, &gIgrMenu);
             configGetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, &gHDDGameListCache);
@@ -4298,6 +4300,7 @@ static void _saveConfig()
         screenPosSave(configOPL); // each video mode's position (RIPPS2 build 124)
         configSetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, gEnableDebug);
         configSetInt(configOPL, CONFIG_OPL_PS2LOGO, gPS2Logo);
+        configSetInt(configOPL, CONFIG_OPL_APP_HANDOFF_PATH, gAppHandoffPath);
         configSetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, gAutoCreateVmc);
         configSetInt(configOPL, CONFIG_OPL_IGR_MENU, gIgrMenu);
         configSetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, gHDDGameListCache);
