@@ -36,6 +36,7 @@ Use the references below for implementation details, exact limits and contributo
 | Neutrino | [Installation, core selection, arguments, cheats and VMC](NEUTRINO.md) |
 | PS1 | [POPSTARTER and Ember](VCD.md), including POPS UDPFS and device/core restrictions |
 | RetroAchievements | [RA setup and runtime limits](RETROACHIEVEMENTS.md); requires its separate kit |
+| One device only | [RiptOPLite single-device loaders](RIPTOPLITE.md) |
 | Experimental hardware | [PC CARD CF](PC-CARD-CF.md) · [PSX DESR DVR](DESR-DVR.md) |
 
 ## Settings and customization

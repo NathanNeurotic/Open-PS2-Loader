@@ -1,0 +1,240 @@
+name: RiptOPLite Release
+
+# rolling-lite: one loader per game device (docs/RIPTOPLITE.md). Korium only (maintainer decision
+# 2026-11-02). It follows each published RetroAchievements release, so the Korium theme delta, the
+# version and ORBIT's Neutrino RA runtime are the ones that release froze and verified for the same
+# revision. Never Latest; it never touches another release.
+on:
+  workflow_run:
+    workflows: ["RetroAchievements Release"]
+    branches: [rebuild/main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ra_run:
+        description: Successful rebuild/main RetroAchievements Release run ID (blank uses the published rolling-ra release)
+        type: string
+  # Previews only for changes to the lite machinery; flavours.yml builds one lite flavour on every PR.
+  pull_request:
+    branches: [rebuild/main]
+    paths:
+      - .github/workflows/lite-release.yml
+      - .github/scripts/package_lite_release.py
+      - .github/scripts/publish_lite_release.py
+      - include/riptlite.h
+      - src/riptlite.c
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: lite-release-${{ github.event_name == 'pull_request' && github.ref || 'rolling-lite' }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    # A PR's own RetroAchievements preview run is not a publication source.
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request')
+    runs-on: ubuntu-24.04
+    outputs:
+      revision: ${{ steps.input.outputs.revision }}
+      korium: ${{ steps.input.outputs.korium }}
+      version: ${{ steps.input.outputs.version }}
+      preview: ${{ steps.input.outputs.preview }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RA_RUN: ${{ inputs.ra_run || github.event.workflow_run.id }}
+      EVENT: ${{ github.event_name }}
+      PR_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Take the verified RetroAchievements release this channel follows
+        id: input
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ra
+          if [ -n "$RA_RUN" ]; then
+            [[ "$RA_RUN" =~ ^[0-9]+$ ]]
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RA_RUN" > run.json
+            python3 - <<'PY'
+          import json, os
+          run = json.load(open("run.json"))
+          assert run["conclusion"] == "success"
+          assert run["head_branch"] == "rebuild/main" and run["event"] != "pull_request"
+          assert run["head_repository"]["full_name"] == os.environ["GITHUB_REPOSITORY"]
+          assert run["path"] == ".github/workflows/ra-release.yml"
+          PY
+            gh run download "$RA_RUN" --repo "$GITHUB_REPOSITORY" --name RetroAchievements-both-themes --dir artifact
+            cp artifact/release/RA-RELEASE.json ra/
+            cp artifact/release/RIPTOPL-RetroAchievements-Korium-*.zip ra/
+          else
+            gh release download rolling-ra --repo "$GITHUB_REPOSITORY" --dir ra --pattern RA-RELEASE.json --pattern 'RIPTOPL-RetroAchievements-Korium-*.zip'
+          fi
+          python3 - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+          ra = json.loads(Path("ra/RA-RELEASE.json").read_text())
+          kits = list(Path("ra").glob("RIPTOPL-RetroAchievements-Korium-*.zip"))
+          assert len(kits) == 1 and kits[0].name == f"RIPTOPL-RetroAchievements-Korium-{ra['version']}.zip"
+          assert ra["assets"][kits[0].name] == hashlib.sha256(kits[0].read_bytes()).hexdigest()
+          assert not ra["preview"] and re.fullmatch(r"[0-9a-f]{40}", ra["revision"]) and re.fullmatch(r"[0-9a-f]{40}", ra["korium_revision"])
+          preview = os.environ["EVENT"] == "pull_request"
+          # A PR builds its own head against the published RA kit; a publication builds the RA revision.
+          revision = os.environ["PR_SHA"] if preview else ra["revision"]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"revision={revision}\nkorium={ra['korium_revision']}\nversion={ra['version']}\npreview={str(preview).lower()}\n")
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ra-input-for-lite
+          path: ra/
+          if-no-files-found: error
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [usb, mx4sio, ilink, hdd, smb, udpbd, udpfs, mmce]
+        ra: [0, 1]
+    container: ghcr.io/ps2homebrew/ps2homebrew:main
+    env:
+      SOURCE_SHA: ${{ needs.prepare.outputs.revision }}
+      KORIUM_SHA: ${{ needs.prepare.outputs.korium }}
+      DEVICE: ${{ matrix.device }}
+      RA: ${{ matrix.ra }}
+    steps:
+      - name: Install host dependencies
+        run: apk add --no-cache bash make git zip unzip python3 py3-yaml gmp mpfr4 mpc1 gawk
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Apply only the frozen Korium theme delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          mkdir -p lite-build
+          git fetch --no-tags origin "$KORIUM_SHA"
+          BASE=$(git merge-base "$SOURCE_SHA" "$KORIUM_SHA")
+          git diff --binary "$BASE" "$KORIUM_SHA" -- Makefile audio/ gfx/ misc/ include/textures.h src/opl.c src/textures.c src/themes.c > Korium.patch
+          test -s Korium.patch
+          git apply --3way --index Korium.patch
+          git diff --cached --check
+          grep -q 'Korium Komblete' misc/conf_theme_OPL.cfg
+      - name: Build the RiptOPLite loader and check what it embeds
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh .github/scripts/install_coherent_mmce.sh
+          python3 .github/scripts/install_safe_bdmfs.py
+          FLAVOUR=LITE
+          [ "$RA" = 0 ] || FLAVOUR=LITE-RA
+          make clean
+          rm -f RIPTOPL.ELF opl.elf
+          make RIPTOPLITE="$DEVICE" RETROACHIEVEMENTS="$RA" EXTRA_FEATURES=0 PADEMU=1 LOCALVERSION="OFFICIALROLLING-$FLAVOUR-Korium" RELEASE_CHANNEL="$FLAVOUR-Korium"
+          test -s RIPTOPL.ELF
+          test "$(wc -c < RIPTOPL.ELF)" -le 6291456
+          NM=mips64r5900el-ps2-elf-nm
+          command -v "$NM" >/dev/null 2>&1 || NM=ee-nm
+          "$NM" -S opl.elf > lite-build/symbols.txt
+          # Every left-out module is a 16-byte stub, or gone when the linker dropped the code that named it;
+          # never real module data. The device's own cdvdman is real.
+          for SYM in $(make -s RIPTOPLITE="$DEVICE" RETROACHIEVEMENTS="$RA" lite-dropped); do
+            if grep -Eq " ${SYM}_irx$" lite-build/symbols.txt; then
+              grep -Eq "^[0-9a-f]+ 0+10 [bB] ${SYM}_irx$" lite-build/symbols.txt || { echo "::error::${SYM}_irx is not a stub"; exit 1; }
+            fi
+          done
+          case "$DEVICE" in
+            hdd) KEEP=hdd_cdvdman ;; smb) KEEP=smb_cdvdman ;; udpfs) KEEP=udpfs_cdvdman ;;
+            mmce) KEEP=mmce_cdvdman ;; udpbd) KEEP=bdm_udp_cdvdman ;; *) KEEP=bdm_cdvdman ;;
+          esac
+          for SYM in $KEEP mmce_cdvdman mmceman smap netman; do
+            grep -Eq "^[0-9a-f]+ [0-9a-f]+ [dD] ${SYM}_irx$" lite-build/symbols.txt || { echo "::error::${SYM}_irx is missing"; exit 1; }
+          done
+          if [ "$RA" = 1 ]; then
+            grep -q ' sysNeutrinoPrepareRA$' lite-build/symbols.txt
+            for SYM in raudp rapops ingame_smstcpip smap_ingame smbman smb2man nbns; do
+              grep -Eq "^[0-9a-f]+ [0-9a-f]+ [dD] ${SYM}_irx$" lite-build/symbols.txt || { echo "::error::RA needs ${SYM}_irx"; exit 1; }
+            done
+          fi
+          cp RIPTOPL.ELF lite-build/RIPTOPLITE.ELF
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          elf = Path("lite-build/RIPTOPLITE.ELF").read_bytes()
+          data = dict(revision=os.environ["SOURCE_SHA"], korium_revision=os.environ["KORIUM_SHA"],
+              device=os.environ["DEVICE"], ra=os.environ["RA"] == "1", theme="Korium", sdk="OFFICIALROLLING",
+              elf_sha256=hashlib.sha256(elf).hexdigest(), elf_size=len(elf),
+              unpacked_elf_size=Path("opl_stripped.elf").stat().st_size)
+          Path("lite-build/BUILD.json").write_text(json.dumps(data, indent=2) + "\n")
+          print(json.dumps(data, indent=2))
+          PY
+          rm lite-build/symbols.txt
+      - uses: actions/upload-artifact@v6
+        with:
+          name: lite-${{ matrix.ra == 1 && 'ra-' || '' }}${{ matrix.device }}
+          path: lite-build/
+          if-no-files-found: error
+
+  package:
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: ra-input-for-lite
+          path: ra
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: lite-*
+          path: builds
+      - name: Assemble and verify the rolling-lite set
+        env:
+          SOURCE_SHA: ${{ needs.prepare.outputs.revision }}
+          PREVIEW: ${{ needs.prepare.outputs.preview }}
+        run: |
+          FLAG=''
+          [ "$PREVIEW" != true ] || FLAG=--preview
+          python3 .github/scripts/package_lite_release.py $FLAG --builds builds --ra-release ra --output release --notes LITE-NOTES.md --repository "$GITHUB_REPOSITORY" --revision "$SOURCE_SHA"
+          cat release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v6
+        with:
+          name: RiptOPLite
+          path: |
+            release/
+            LITE-NOTES.md
+          if-no-files-found: error
+
+  publish:
+    needs: [prepare, package]
+    if: needs.prepare.outputs.preview == 'false' && github.ref == 'refs/heads/rebuild/main' && github.repository == 'NathanNeurotic/Open-PS2-Loader'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: RiptOPLite
+          path: publication
+      - name: Publish rolling-lite (never Latest)
+        run: python3 .github/scripts/publish_lite_release.py --assets publication/release --notes publication/LITE-NOTES.md --repository "$GITHUB_REPOSITORY"

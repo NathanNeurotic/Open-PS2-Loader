@@ -52,6 +52,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <libvux.h>
+#include "include/riptlite.h" // LITE_HAS_NET_SOURCE / LITE_HAS_SMB_SHARE -- the Network page in a RiptOPLite build
 
 // Last Played Auto Start
 #include <time.h>
@@ -1108,6 +1109,15 @@ static int netConfigUpdater(int modified)
 
         diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &isDHCPEnabled);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &isNetBIOS);
+        // RiptOPLite has no Protocol row (dialogs.c): its one protocol is the shown one, and a build
+        // without a network games source shows none of the protocol rows, only the PS2's own address.
+#if LITE_HAS_NET_SOURCE
+        netProto = guiNetProtocolToPicker(guiNetProtocolShown());
+#elif LITE_HAS_SMB_SHARE
+        netProto = 0;                       // RetroAchievements reads its key and badges from the SMB share: keep its rows
+#else
+        netProto = -1;
+#endif
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProto);
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
@@ -1336,6 +1346,9 @@ int guiShowNetConfig(void)
     // A NET_PROTO_OFF backend has no protocol memory, so seed the protocol row to SMB -- the common
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
     int netProtoVal = guiNetProtocolToPicker(guiNetProtocolShown()); // while Off: the remembered pick
+#if !LITE_HAS_NET_SOURCE
+    netProtoVal = -1; // RiptOPLite without a network games source: no protocol rows (netConfigUpdater)
+#endif
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
     int netAccessVal = (netProtoVal == 1) ? gUdpfsAccessMode : guiNetProtocolAccess(guiNetProtocolShown());
     for (i = 0; i < 4; ++i)
@@ -1348,7 +1361,7 @@ int guiShowNetConfig(void)
     // Seed the initial grey/lock: diaExecuteDialog renders the FIRST frame before it calls
     // netConfigUpdater, so without this the first frame flashes every row enabled.
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
-    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0);
+    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0 || (!LITE_HAS_NET_SOURCE && LITE_HAS_SMB_SHARE));
     netConfigDhcpPreference = ps2_ip_use_dhcp;
     netConfigUdpfsAccess = gUdpfsAccessMode;
     netConfigLastProtocol = -1;
@@ -1389,7 +1402,8 @@ reshow_network:
         goto reshow_network;
     }
     if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL)) {
-        int netProtoVal2, netAccessVal2;
+        // Seeded with what the page showed: a RiptOPLite page has no Protocol row, and only UDPFS has Access.
+        int netProtoVal2 = netProtoVal, netAccessVal2 = netAccessVal;
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
         diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
 
