@@ -343,6 +343,10 @@ static inline void cdvd_readchain(void *buf)
             }
             sceCdSync(0);
 
+            // sceCdBreak stopped this entry: end the chain here, as Sony's cdvdfsv does.
+            if (sceCdGetError() == SCECdErABRT)
+                return;
+
             readpos += tsectors * 2048;
         } else { // EE addr
             while (tsectors > 0) {
@@ -358,6 +362,12 @@ static inline void cdvd_readchain(void *buf)
                     return;
                 }
                 sceCdSync(0);
+
+                /* sceCdBreak cut this chunk short: cdvdfsv_buf holds sectors it never read. Send none of them and
+                   end the chain here, as Sony's cdvdfsv does. */
+                if (sceCdGetError() == SCECdErABRT)
+                    return;
+
                 sysmemSendEE(cdvdfsv_buf, (void *)addr, nsectors * 2048);
 
                 lsn += nsectors;
