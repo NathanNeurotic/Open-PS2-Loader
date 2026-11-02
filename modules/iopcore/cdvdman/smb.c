@@ -22,6 +22,11 @@
 
 #define USE_CUSTOM_RECV 1
 
+// The NT status of a response (SMB_FLAGS2_32BIT_STATUS): Eclass holds its low 16 bits and Ecode its
+// high 16 bits. Both are signed shorts, so each is taken unsigned first: shifting a negative Ecode
+// (every error status) is undefined in C, and a negative Eclass would set the high bits.
+#define SMB_STATUS(h) ((u32)(u16)(h).Eclass | ((u32)(u16)(h).Ecode << 16))
+
 //Round up the erasure amount, so that memset can erase memory word-by-word.
 #define ZERO_PKT_ALIGNED(hdr, hdrSize) memset((hdr), 0, ((hdrSize) + 3) & ~3)
 
@@ -413,7 +418,7 @@ lbl_session_setup:
         return -1;
 
     // check there's no auth failure
-    if ((server_specs.SecurityMode == SERVER_USER_SECURITY_LEVEL) && ((SSRsp->smbH.Eclass | (SSRsp->smbH.Ecode << 16)) == STATUS_LOGON_FAILURE) && (AuthType == NTLM_AUTH)) {
+    if ((server_specs.SecurityMode == SERVER_USER_SECURITY_LEVEL) && (SMB_STATUS(SSRsp->smbH) == STATUS_LOGON_FAILURE) && (AuthType == NTLM_AUTH)) {
         AuthType = LM_AUTH;
         goto lbl_session_setup;
     }
@@ -583,7 +588,7 @@ int smb_Close(int FID)
     }
 
     // check there's no error
-    if ((CRsp->smbH.Eclass | (CRsp->smbH.Ecode << 16)) != STATUS_SUCCESS) {
+    if (SMB_STATUS(CRsp->smbH) != STATUS_SUCCESS) {
         //      SIGNALIOSEMA(smb_io_sema);
         return -EIO;
     }
@@ -636,6 +641,12 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
             return -2;
     } while (nb_GetPacketType() != 0); // dropping NBSS Session Keep alive
 
+    // check there's no error. An error response (an invalid handle, a failed read) is shorter than a
+    // READ_ANDX response, so the DataLength read below would be left over from the request, and the
+    // read would seem to succeed with whatever readbuf held.
+    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS)
+        return -EIO;
+
     expected_size = nb_GetSessionMessageLength() + 4;
     DataLength = (int)(((u32)RRsp->DataLengthHigh << 16) | RRsp->DataLengthLow);
 
@@ -653,7 +664,7 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
         return -EIO;
 
     // check there's no error
-    if ((RRsp->smbH.Eclass | (RRsp->smbH.Ecode << 16)) != STATUS_SUCCESS)
+    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS)
         return -EIO;
 
     //Skip any padding bytes.
@@ -742,7 +753,7 @@ static int smb_WriteAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *writebuf,
         return -EIO;
 
     // check there's no error
-    if ((WRsp->smbH.Eclass | (WRsp->smbH.Ecode << 16)) != STATUS_SUCCESS)
+    if (SMB_STATUS(WRsp->smbH) != STATUS_SUCCESS)
         return -EIO;
 
     // A success status does not mean every byte was written: MS-CIFS 2.2.4.43.2 lets a server report
