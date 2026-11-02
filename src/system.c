@@ -3084,7 +3084,8 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     if (igrOvlPlaced) {
         ModuleStorageEnd = (void *)(IGROVL_BASE + IGROVL_SIZE);
         LOG("IGR menu overlay at 0x%x\n", IGROVL_BASE);
-    }
+    } else if (gIgrMenu && !(compatflags & COMPAT_MODE_6))
+        LOG("IGR menu overlay not placed, module storage %p-%p\n", ModuleStorage, ModuleStorageEnd);
 #endif
 
     // NB: LOADER.ELF is embedded
@@ -3157,8 +3158,11 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // freeze-report builds make ee_core without it (no room), and leave these zero.
     config->IgrMenu = gIgrMenu && !(compatflags & COMPAT_MODE_6); // Mode 6 (Disable IGR) turns the menu off too
 #ifdef IGR_OVERLAY
-    if (!igrOvlPlaced) // no overlay for this launch: the combo leaves the game, as with the menu off
+    if (!igrOvlPlaced) { // no overlay for this launch: the combo leaves the game, as with the menu off
+        // With the menu still on here (not Mode 6) that was a lack of room: Debug Colors shows it at the combo
+        config->IgrMenuNoRoom = config->IgrMenu;
         config->IgrMenu = 0;
+    }
     config->IgrRaHunt = raHunt;
     config->IgrRaHuntCount = raHunt != NULL ? raHuntCount : 0;
     config->IgrRaTotal = raHuntTotal;

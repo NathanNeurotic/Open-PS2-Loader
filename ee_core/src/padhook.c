@@ -460,6 +460,12 @@ static void IGR_Thread(void *arg)
     while (Pad_Data.combo_type == 0x00)
         SleepThread();
 #endif
+#ifdef IGR_OVERLAY
+    // The combo with In-Game Menu on, in a launch that had no room for the menu (coreconfig.h IgrMenuNoRoom): the
+    // grey of a menu that was not there to run, before the reset goes on (docs/IGR.md)
+    if (EnableDebug && config->IgrMenuNoRoom && Pad_Data.combo_type == IGR_COMBO_START_SELECT && !Power_Button.press)
+        DBGCOL_BLNK(3, 0x808080, 0, IGR, "In-Game Menu on, but this launch had no room for it");
+#endif
 
     DPRINTF("IGR thread woken up!\n");
 

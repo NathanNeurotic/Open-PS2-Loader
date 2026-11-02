@@ -267,6 +267,8 @@ jobs:
         run: python3 .github/scripts/test_game_count_refresh.py
       - name: Check menu notices wrap on screen and long game titles and cheat names fit
         run: python3 .github/scripts/test_menu_text_fit.py
+      - name: Check an In-Game Menu launch with no room for the menu blinks grey with Debug Colors on
+        run: python3 .github/scripts/test_igr_menu_no_room.py
       - name: Check optional game titles fall back without changing metadata
         run: python3 .github/scripts/test_theme_metadata.py
       - name: Check PSBBN Flow rendering, the theme catalog and view switching
