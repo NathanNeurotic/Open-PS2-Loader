@@ -2520,3 +2520,8 @@ gui_strings:
 - comment: PS1 Duplicates choice that keeps both rows.
   label: PS1_DUPLICATES_BOTH
   string: Both
+- comment: Interface setting (from RIPPS2 build 126). Whether a theme's game list pages show the Title and Description from each game's CFG.
+  label: LIST_CFG_TEXT
+  string: List Title and Description
+- label: HINT_LIST_CFG_TEXT
+  string: "The Title and Description from a game's CFG that a theme shows beside the game list. Theme: as the theme sets them. On: shown even if the theme turns them off. Off: hidden. The info page shows them either way."

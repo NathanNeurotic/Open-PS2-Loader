@@ -71,6 +71,10 @@ typedef struct
     u32 currentConfigId;
     char *currentValue;
     char *wrappedValue; // owned, word-wrapped copy of currentValue for SIZING_WRAP (issue #44)
+
+    // AttributeText of the game CFG's Title or Description: Settings > Interface > List Title and Description
+    // can hide it on a list page (RIPPS2 build 126). Set by initAttributeText.
+    unsigned char cfgText;
 } mutable_text_t;
 
 typedef struct
@@ -278,6 +282,10 @@ typedef struct theme
     int hintsLabels;  // 1 glyph and label (the default), 0 the glyph alone
     int hintsColumn;  // 1 one hint a line from the element's x/y down; 0 one row (the default)
     int hintsSpacing; // a column's line pitch
+
+    // list_cfg_text=0 (RIPPS2 build 126): the list pages leave out the game CFG's Title and Description.
+    // 0 (the key absent, or any other value) shows them, as before the key existed.
+    int hideListCfgText;
 } theme_t;
 
 // Button glyph sets (RIPPS2 build 90, akilluminati47): the theme's own PNGs, OPL's built-in ones, or one of two

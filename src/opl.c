@@ -200,6 +200,7 @@ int gAppsDisplay;
 int gGameTypeLabels;
 int gCfgTitlesInLists;
 int gPs1Duplicates; // PS1_DUP_*: a game both as a POPSTARTER VCD and an Ember image shows once or twice
+int gListCfgText;   // LIST_CFG_TEXT_*: the CFG Title and Description on list pages, the theme's way by default
 int gEmberDisplay;
 int gEmberTiming;
 int gEmberDither;
@@ -3681,6 +3682,9 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, &gPs1Duplicates);
             if (gPs1Duplicates < PS1_DUP_BOTH || gPs1Duplicates > PS1_DUP_POPSTARTER)
                 gPs1Duplicates = PS1_DUP_BOTH;
+            configGetInt(configOPL, CONFIG_OPL_LIST_CFG_TEXT, &gListCfgText);
+            if (gListCfgText < LIST_CFG_TEXT_THEME || gListCfgText > LIST_CFG_TEXT_OFF)
+                gListCfgText = LIST_CFG_TEXT_THEME;
             // Where the user left each L3 page last session. Read from the LAST set (the same
             // configReadMulti above filled it), but sequenced HERE, after the two display settings
             // above: the restore validates every remembered position against what its mode can
@@ -4320,6 +4324,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels);
         configSetInt(configOPL, CONFIG_OPL_CFG_TITLES, gCfgTitlesInLists);
         configSetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, gPs1Duplicates);
+        configSetInt(configOPL, CONFIG_OPL_LIST_CFG_TEXT, gListCfgText);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
@@ -5340,6 +5345,8 @@ static void setDefaults(void)
     gGameTypeLabels = 0;           // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
     gCfgTitlesInLists = 0;         // #918: reading every CFG per list rebuild slows SMB/MMCE/MX4SIO; opt-in only
     gPs1Duplicates = PS1_DUP_BOTH; // both rows, as before the setting existed
+    // List Title and Description: the theme's way, as before the setting existed
+    gListCfgText = LIST_CFG_TEXT_THEME;
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;

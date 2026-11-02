@@ -50,6 +50,8 @@ static void thmDrawElemText(theme_element_t *elem, int mode, const char *s, int 
     (void)elem; (void)mode; (void)flag;
     snprintf(drawn, sizeof(drawn), "%s", s);
 }
+/* List Title and Description never hides here: test_list_cfg_text.py runs that against the real helpers. */
+static int thmCfgTextHidden(theme_element_t *elem) { (void)elem; return 0; }
 @RENDERER@
 int main(void)
 {

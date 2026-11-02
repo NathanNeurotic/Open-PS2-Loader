@@ -89,6 +89,26 @@ themes. The change shows on the next frame and is saved with your settings. Them
 
 ---
 
+## List Title and Description
+
+**Settings → Interface → List Title and Description.** Choose **Theme**, **On** or **Off**.
+
+Some themes show the `Title` and `Description` from each game's CFG beside the game list. **Theme**, the
+default, shows them the way the theme sets them, and a theme can leave them off its list pages with
+`list_cfg_text=0`. **On** shows them even then. **Off** hides them on every theme. The game info page shows
+them either way. The names in the list itself follow
+[Show CFG Titles in Game Lists](UNICODE-GAME-TITLES.md#show-cfg-titles-in-game-lists-optional) instead. The
+change shows on the next frame and is saved with your settings (`list_cfg_text` in `settings_riptopl.cfg`).
+The built-in themes show these two on the info page only, so on them the setting changes nothing.
+
+This comes from [RIPPS2](https://github.com/akilluminati47/RIPPS2) build 126, by
+[akilluminati47](https://github.com/akilluminati47). Theme authors can find the `list_cfg_text` key in the
+[Theme Engine reference](THEME_ENGINE.md#other-global-keys).
+
+*Not yet tested on hardware.*
+
+---
+
 ## Menu video modes
 
 **Settings → Interface → Video Mode** sets the signal the **menu** uses. Games are not affected; they

@@ -858,6 +858,11 @@ struct UIItem diaUIConfig[] = {
     {UI_BOOL, UICFG_CFG_TITLES, 1, 1, _STR_HINT_CFG_TITLES, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LIST_CFG_TEXT}}},
+    {UI_SPACER},
+    {UI_ENUM, UICFG_LIST_CFG_TEXT, 1, 1, _STR_HINT_LIST_CFG_TEXT, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PS1_DUPLICATES}}},
     {UI_SPACER},
     {UI_ENUM, UICFG_PS1_DUPLICATES, 1, 1, _STR_HINT_PS1_DUPLICATES, 0, 0, {.intvalue = {0, 0}}},
