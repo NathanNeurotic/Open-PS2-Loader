@@ -81,12 +81,15 @@ void _ps2sdk_fileXio_init(void) {}
 void _ps2sdk_fileXio_deinit(void) {}
 void _ps2sdk_fileXio_set_block_size(int size) {}
 
-// The five libc stubs below are linker-only: nothing calls them. They live in a section the
+// The libc stubs below are linker-only: nothing calls them. They live in a section the
 // linker script discards (/DISCARD/ in elfldr/linkfile), so today the build is unchanged. If a
 // later change makes one live -- a printf here, or a call to SifIopReboot or SifExecModuleFile,
 // which use them -- the link fails ("defined in discarded section") instead of silently calling
-// a stub that does nothing. noinline and the empty volatile asm stop the compiler from inlining
-// or deleting such a call, which would hide it from the linker.
+// a stub that does nothing. puts is stubbed because the compiler folds printf("text\n") into
+// puts(): without the stub that shape still fails the link, but only indirectly, deep in the
+// newlib objects that the real puts drags in; with it the error names the loader's own call.
+// noinline and the empty volatile asm stop the compiler from inlining or deleting such a call,
+// which would hide it from the linker.
 #define LINKER_ONLY __attribute__((noinline, section(".discard.linker_only")))
 LINKER_ONLY int printf(const char *format, ...)
 {
@@ -100,6 +103,12 @@ LINKER_ONLY int snprintf(char *str, size_t size, const char *format, ...)
     (void)str;
     (void)size;
     (void)format;
+    return 0;
+}
+LINKER_ONLY int puts(const char *s)
+{
+    __asm__ __volatile__("");
+    (void)s;
     return 0;
 }
 LINKER_ONLY int open(const char *path, int flags, ...)
