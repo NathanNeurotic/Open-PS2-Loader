@@ -109,6 +109,12 @@ struct EECoreConfig_t
        it blinks grey first, as for a menu that was not there to run (padhook.c IGR_Thread, docs/IGR.md). */
     int IgrMenuNoRoom;
 #endif
+    /* RIPPS2 build 129 (.pad USB pad profiles; RIPPS2 contributors, AFL-3.0): PADEMU's arguments with the user's .pad
+       profiles: 8 bytes ee_core fills with PadEmuSettings (bit 19 set) and PadMacroSettings, then the launcher's
+       PAD_BLOCK_SIZE (180) byte block (include/padfile.h), in module storage for the whole game. NULL: no profiles,
+       PADEMU gets its 8 bytes as before, with bit 19 clear. APPENDED: keep it the last member, as the launcher and
+       ee_core read this struct through the same layout. */
+    char *PadEmuArgs;
 };
 
 #define USE_LOCAL_EECORE_CONFIG struct EECoreConfig_t *config = &g_ee_core_config;
