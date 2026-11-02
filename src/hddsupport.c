@@ -989,6 +989,13 @@ static int hddLoadCoreSupportModules(void)
 
     LOG("HDDSUPPORT LoadSupportModules\n");
 
+#if defined(RIPTOPLITE) && !(LITE_HAS_APA || LITE_HAS_BDMHDD)
+    // A RiptOPLite build for another device carries no HDD drivers (include/riptlite.h). Without this,
+    // a settings or boot-home path reaching the APA support stack probes a drive it cannot read and
+    // shows "HDD not detected".
+    return 0;
+#endif
+
     // ALREADY PROVEN -- do not re-litigate it. The non-Sony probe below exists to avoid loading APA
     // modules onto a non-APA drive, which is a one-time question: if hddSupportModulesLoaded is set
     // then ps2hdd and PS2FS are up, and that cannot have happened on a drive this probe would
