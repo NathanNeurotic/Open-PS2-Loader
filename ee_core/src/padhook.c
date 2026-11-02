@@ -445,6 +445,14 @@ static void IGR_Thread(void *arg)
         // before. ResetEE leaves the DMAC alone (0x7E, not 0x7F): a SIF transfer in flight would stick (ORBIT)
         IGR_StopDmaAndGs();
         ResetEE(0x7E);
+        if (EnableDebug && choice >= IGR_MENU_CANNOT_DRAW) {
+            // Debug Colors: why the menu did not open, three blinks before the reset goes on (docs/IGR.md)
+            // GS BGCOLOR is 0xBBGGRR: purple, yellow, mint, grey
+            u32 why = choice == IGR_MENU_NO_FRAME ? 0xFF0080 : choice == IGR_MENU_GS_BUSY ? 0x00FFFF :
+                                                           choice == IGR_MENU_DRAW_FAILED ? 0x80FF00 :
+                                                                                            0x808080;
+            DBGCOL_BLNK(3, why, 0, IGR, "In-Game Menu could not draw: purple = no frame seen, yellow = GS busy, mint = first page failed, grey = no menu");
+        }
         Pad_Data.combo_type = choice == IGR_MENU_POWEROFF ? IGR_COMBO_R3_L3 : IGR_COMBO_START_SELECT;
         break;
     }

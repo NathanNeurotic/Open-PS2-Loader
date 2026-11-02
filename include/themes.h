@@ -69,6 +69,7 @@ typedef struct
     int displayMode;
 
     u32 currentConfigId;
+    int currentCount; // GameCountText: the count last written into value (-1: none yet)
     char *currentValue;
     char *wrappedValue; // owned, word-wrapped copy of currentValue for SIZING_WRAP (issue #44)
 } mutable_text_t;

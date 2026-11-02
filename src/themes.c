@@ -342,6 +342,7 @@ static mutable_text_t *initMutableText(const char *themePath, config_set_t *them
 {
     mutable_text_t *mutableText = (mutable_text_t *)malloc(sizeof(mutable_text_t));
     mutableText->currentConfigId = 0;
+    mutableText->currentCount = -1;
     mutableText->currentValue = NULL;
     mutableText->wrappedValue = NULL;
     mutableText->alias = NULL;
@@ -614,15 +615,17 @@ static int getGameCount(void *support)
 static void drawGameCountText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     mutable_text_t *mutableText = (mutable_text_t *)elem->extended;
+    // The number can change without the selected game changing: a device whose scan lands after the first
+    // frame (a cold boot, before a USB drive has settled), the PS1 half of a Mixed view, a rescan that adds
+    // or drops rows. Refreshing only on a new game config left the first boot's count on screen until the
+    // cursor moved (zackcage6, 2026-11-01), so the count itself is compared every frame: two int reads.
+    int count = getGameCount(menu->item->userdata);
+    u32 uid = config ? config->uid : mutableText->currentConfigId;
 
-    if (config) {
-        if (mutableText->currentConfigId != config->uid) {
-            // force refresh
-            mutableText->currentConfigId = config->uid;
-
-            int count = getGameCount(menu->item->userdata);
-            snprintf(mutableText->value, sizeof(char) * 60, _l(_STR_FILE_COUNT), count);
-        }
+    if (count != mutableText->currentCount || uid != mutableText->currentConfigId) {
+        mutableText->currentConfigId = uid;
+        mutableText->currentCount = count;
+        snprintf(mutableText->value, sizeof(char) * 60, _l(_STR_FILE_COUNT), count);
     }
 
     thmDrawElemText(elem, SIZING_NONE, mutableText->value, 1);
