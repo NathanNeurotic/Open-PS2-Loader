@@ -2525,3 +2525,14 @@ gui_strings:
   string: List Title and Description
 - label: HINT_LIST_CFG_TEXT
   string: "The Title and Description from a game's CFG that a theme shows beside the game list. Theme: as the theme sets them. On: shown even if the theme turns them off. Off: hidden. The info page shows them either way."
+- comment: Game Launching setting. How the device is spelled in the argv[0] an ELF app receives.
+  label: APP_HANDOFF_PATH
+  string: App Handoff Path
+- label: HINT_APP_HANDOFF_PATH
+  string: "Legacy hands apps massN:/APPS/... (all devices). Typed hands usb0:, ata0:, ilink0: or mx4sio0: so an app that treats mass as USB finds a HDD or SD card. Per app: HANDOFFPATH=LEGACY or TYPED in its cfg. Loading is unchanged."
+- comment: App Handoff Path choice, today's spelling.
+  label: APP_HANDOFF_LEGACY
+  string: Legacy (mass)
+- comment: App Handoff Path choice, the typed spelling.
+  label: APP_HANDOFF_TYPED
+  string: "Typed (usb0:, ata0:)"

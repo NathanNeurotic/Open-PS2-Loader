@@ -494,6 +494,27 @@ POPSTARTER launches never ask: `POPSTARTER.ELF` and the `XX.`, `SB.`, `EL.` and 
 keep their own PS1 launch path. An app on the APA HDD always gets the HDD cleanup before it starts,
 whichever answer you give.
 
+### App Handoff Path (how the device is spelled for the app)
+
+OPL mounts every USB, iLink, MX4SIO and exFAT-HDD volume as `massN:` and keeps doing so. Some apps,
+however, read a `mass` path as "this is a USB stick" and only load a USB driver, so when they are started
+from an exFAT HDD or an SD card they never find their own folder. **Settings → Game Launching → App
+Handoff Path** chooses what an ordinary app receives as its own path (argv[0]):
+
+| Choice | argv[0] the app receives | Notes |
+| ------ | ------------------------ | ----- |
+| **Legacy (mass)** (default) | `mass0:/APPS/MYAPP.ELF` | Exactly what OPL has always handed over. |
+| **Typed (usb0:, ata0:)** | `usb0:/APPS/MYAPP.ELF`, `ata0:/...`, `ilink0:/...`, `mx4sio0:/...` | The names newer ps2sdk builds register next to `massN:`; numbered the way the SDK numbers them (second USB stick = `usb1:`). |
+
+Only the string handed to the app changes. The ELF is still read through OPL's own `massN:` mount
+before any IOP reset, POPSTARTER keeps its bare `mass:` selector, HDD apps keep `hddN:...:pfs:/`, and a
+device with no typed name (UDPBD, PC CARD CF) falls back to the legacy spelling. Typed is only for apps
+built on a ps2sdk from February 2026 or later: an older app does not register `usb0:`/`ata0:` at all, so
+if it opens its own folder through argv[0] it finds nothing, and nothing detects that or falls back to
+`massN:` after the handoff. Leave such apps on Legacy. To override the setting for one app, add
+`HANDOFFPATH=TYPED` or `HANDOFFPATH=LEGACY` to its `title.cfg` (or `CFG/<ELF name>.cfg` for a
+`conf_apps.cfg` entry, like `REBOOTIOP`). The File Manager's Run follows the global setting.
+
 ## Cheats
 
 OPL accepts `.cht` files in PS2RD format. Name them after the game’s startup ID, for example `CHT/SLUS_123.45.cht`. An uncompressed `CHT/cht.tar` containing `<startup>.cht` members is also supported, with loose files used as a fallback. Each cheat file corresponds to a specific game and must be stored in the `CHT` directory on your device.

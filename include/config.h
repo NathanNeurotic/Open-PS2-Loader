@@ -137,6 +137,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_OVERSCAN                   "overscan"
 #define CONFIG_OPL_DISABLE_DEBUG              "disable_debug"
 #define CONFIG_OPL_PS2LOGO                    "ps2logo"
+#define CONFIG_OPL_APP_HANDOFF_PATH           "app_handoff_path"          // APP_HANDOFF_*: the device spelling in the argv[0] handed to ELF apps
 #define CONFIG_OPL_AUTO_CREATE_VMC            "auto_create_vmc"           // default-off: a PS2 launch with an empty VMC slot 1 creates/assigns one
 #define CONFIG_OPL_IGR_MENU                   "igr_menu"                  // the in-game menu (ee_core igrmenu.c): 0 off, 1 on
 #define CONFIG_OPL_DEFAULT_CORE               "default_core"              // global default Loader Core (0=<OPL>, 1=Neutrino); a game's per-game "$CoreLoader" overrides it, absent = follow this
