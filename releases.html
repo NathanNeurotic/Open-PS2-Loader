@@ -139,7 +139,8 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   <code>APP_RIPTOPL-OFFICIALROLLING/</code> (#4, moving official canary). The package also has
   one canonical <code>POPS/</code> folder for POPSTARTER support (every BDMA pair stays loose there,
   including <code>usbd.irx.ilink</code> + <code>usbhdfsd.irx.ilink</code>; none is embedded),
-  the bundled <code>EMBER/</code> and <code>neutrino/</code> folders, and five companion-tool shortcuts.
+  the bundled <code>EMBER/</code> and <code>neutrino/</code> folders, five companion-tool shortcuts, and
+  <code>LICENSE-LIBSMB2.txt</code>, the licence of the libsmb2 code every loader embeds.
   Install the ready app, or start with <code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> for a
   pinned build when that best-effort flavour is present.
   The presence of the loose iLink pair documents package contents, not a hardware pass: revision
@@ -182,6 +183,19 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   <code>eesio</code>, <code>iopcore_ppctty</code>, <code>ingame_ppctty</code>, and
   <code>DTL_T10000</code>). For diagnostics only.</td>
 </tr>
+<tr>
+  <td><code>RIPTOPL-BUGREPORT-*.zip</code></td>
+  <td>The field-diagnostics build (<code>OPLDIAG=1</code>) before compression, with a README on what to
+  send. Best-effort: a release ships without it when that build fails. See
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/LAUNCH-DIAGNOSTICS.md#bug-report-build">Bug-report build</a>.</td>
+</tr>
+<tr>
+  <td><code>LICENSE-LIBSMB2.txt</code></td>
+  <td>The GNU LGPL-2.1 licence of <a href="https://github.com/sahlberg/libsmb2">libsmb2</a>, by <a href="https://github.com/sahlberg">Ronnie Sahlberg</a>, which every loader embeds for SMB2
+  browsing (see <a href="smb.html">SMB</a>). Each release publishes it beside its standalone loader ELFs.
+  Every install kit, RA kits included, and the VARIANTS and DEBUG zips carry the same file; the bug-report
+  zip carries the same text under <code>licenses/libsmb2/</code>.</td>
+</tr>
 </tbody>
 </table>
 
@@ -196,7 +210,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 <h2 id="test-artifacts">Download a PR or Actions test build</h2>
 <p>A test artifact is a ZIP attached to a successful GitHub Actions run, rather than an asset on the Releases page. Open the supplied run link, check that its source commit matches the fix you are testing, then choose the requested artifact under <b>Artifacts</b>. GitHub normally requires you to sign in to download it. Expired artifacts need a new build.</p>
 <p>For an <b>official rolling toolchain</b> test, choose <code>OPL-OFFICIALROLLING</code>. <code>OPL-OFFICIALPINNED</code> is the separate pinned official toolchain; <code>OPL-PS2DEVROLLING</code> uses the moving ps2dev toolchain. The word rolling in the artifact name identifies the toolchain, not proof that the commit has been published in the rolling release.</p>
-<p>Extract the ZIP and read <code>BUILD-MANIFEST.txt</code> for the source commit, flavour and build configuration. Launch the supplied ELF requested in the test instructions. These artifacts contain loader builds and their manifest; keep a complete installed package for companion cores, modules and artwork. Report the exact commit and flavour alongside the console, device, filesystem, core and changed settings.</p>
+<p>Extract the ZIP and read <code>BUILD-MANIFEST.txt</code> for the source commit, flavour and build configuration. Launch the supplied ELF requested in the test instructions. These artifacts contain loader builds, their manifest and <code>LICENSE-LIBSMB2.txt</code>, the licence of the libsmb2 code every loader embeds; keep a complete installed package for companion cores, modules and artwork. Report the exact commit and flavour alongside the console, device, filesystem, core and changed settings.</p>
 
 <p>Japanese/Unicode game-name fallback is available in compatible builds using a user-supplied <code>font_CJK.ttf</code> beside <code>settings_riptopl.cfg</code>. See <a href="unicode-titles.html">Unicode font setup</a> for the PR #917 build artifact and activation steps.</p>
 <h2 id="four-flavours">Four toolchain flavours, ordered for testing</h2>
