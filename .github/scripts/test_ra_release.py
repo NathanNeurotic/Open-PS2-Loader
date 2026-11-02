@@ -304,6 +304,9 @@ class Libsmb2LicenceShippingTest(unittest.TestCase):
         self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt rolling/LICENSE-LIBSMB2.txt", workflow)
         self.assertIn("PS2RD-CHT-Manager.url LICENSE-LIBSMB2.txt >/dev/null", workflow)
         self.assertIn('cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "rolling/$kind/LICENSE-LIBSMB2.txt"', workflow)
+        # The MEGA mirror uploads the standalone flavour ELFs on their own, so the licence goes up beside them.
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt mega-out/LICENSE-LIBSMB2.txt", workflow)
+        self.assertIn('MEGA_UPLOAD_FILES="mega-out/${ARCHIVE} mega-out/LICENSE-LIBSMB2.txt"', workflow)
         notes = (root / ".github/scripts/normalize_release_notes.py").read_text(encoding="utf-8")
         self.assertIn('"LICENSE-LIBSMB2.txt": "LGPL-2.1 licence of libsmb2', notes)
         # The RA channel publishes standalone RA ELFs too, so the licence is an RA asset as well, and a

@@ -1325,8 +1325,10 @@ jobs:
               cp -f "$elf" mega-out/
             fi
           done
+          # Those ELFs embed libsmb2 (LGPL-2.1): its licence goes into the MEGA folder beside them.
+          cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt mega-out/LICENSE-LIBSMB2.txt
 
-          MEGA_UPLOAD_FILES="mega-out/${ARCHIVE}"
+          MEGA_UPLOAD_FILES="mega-out/${ARCHIVE} mega-out/LICENSE-LIBSMB2.txt"
           for f in mega-out/*.ELF; do
             if [ -f "$f" ]; then
               MEGA_UPLOAD_FILES="$MEGA_UPLOAD_FILES $f"
