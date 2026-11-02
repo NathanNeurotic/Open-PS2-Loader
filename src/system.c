@@ -132,6 +132,12 @@ static void poweroffHandler(void *arg);
 
 int sysLoadModuleBuffer(void *buffer, int size, int argc, char *argv)
 {
+    // A RiptOPLite build leaves the IRX of every other device out of the ELF; their symbols are
+    // zero-sized stubs (Makefile RIPTOPLITE). Refuse them here so a stray load fails cleanly.
+    if (buffer == NULL || size <= 0) {
+        LOG("sysLoadModuleBuffer: module not in this build (size %d)\n", size);
+        return -1;
+    }
 
     int i, id, ret, index = 0;
 
