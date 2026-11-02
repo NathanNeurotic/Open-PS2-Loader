@@ -251,7 +251,7 @@ a lot of data that needs to be copied, this should be set high. */
    .github/scripts/test_usbd_pad_pool.py holds these numbers to the code. */
 #define IP_REASSEMBLY    1
 #define IP_FRAG          0
-#define IP_REASS_BUFSIZE 1536 /* a multiple of 64: ip_frag.c sizes its bitmap as BUFSIZE / 64 */
+#define IP_REASS_BUFSIZE 1536 /* holds the 1480-byte payload of a full-MTU datagram */
 #else
 #define IP_REASSEMBLY 1
 #define IP_FRAG       1

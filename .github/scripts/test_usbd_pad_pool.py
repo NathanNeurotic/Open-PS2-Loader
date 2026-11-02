@@ -9,13 +9,18 @@ numbers to those facts so a later edit cannot quietly break the assumption:
    the stack sends can exceed the SMAP MTU: tcp_in.c must cap a connection's segment size at
    TCP_MSS, TCP_MSS + 40 must fit the MTU smap-ingame sets, and raudp's hand-built frames must
    fit it too. It receives with IP_REASSEMBLY 1 and a buffer that must still hold a full-MTU
-   datagram, in units ip_frag.c's bitmap can address.
+   datagram. The test also compiles ip_frag.c's own reassembly code on the host, under
+   AddressSanitizer, and feeds it fragments: a datagram that ends exactly at the end of the
+   buffer (the bitmap needs a byte for that end), a hole in the bitmap's second-to-last byte
+   (the completeness check must see it), and an ordinary 1480-byte datagram in two pieces.
 
 2. When USBD serves only the pads (PADEMU on, game not on USB), ee_core hands it pool sizes on
    its command line. usbd_mini must actually parse them: the test compiles usbd.c's own option
    parser and argument loop on the host, feeds them the exact string ee_core sends, and checks
    the pools that result fit four pads behind a hub or a Bluetooth dongle, beside the driver's
-   own root entries, and stay within the defaults.
+   own root entries, and stay within the defaults. The general transfer descriptors are not
+   trimmed: a request that finds too few waits at the head of usbd's queue (usbio.c
+   checkTdQueue retries only the head), so a shortfall stalls every pipe behind it.
 """
 import os
 import re
@@ -99,8 +104,6 @@ if num(ingame, 'IP_REASSEMBLY') != 1:
 reass = num(ingame, 'IP_REASS_BUFSIZE')
 if reass < mtu - 20:
     fail('in-game IP_REASS_BUFSIZE %d cannot hold a fragmented full-MTU datagram (%d bytes of payload)' % (reass, mtu - 20))
-if reass % 64:
-    fail('in-game IP_REASS_BUFSIZE %d is not a multiple of 64: ip_frag.c sizes its bitmap as BUFSIZE / 64 and would lose the tail' % reass)
 if 'IP_REASS_BUFSIZE' in menu:
     fail('menu build defines IP_REASS_BUFSIZE: the full 5760-byte reassembly buffer must stay for the loader')
 if num(menu, 'IP_FRAG') != 1 or num(menu, 'IP_REASSEMBLY') != 1:
@@ -112,6 +115,141 @@ if '#ifndef IP_REASS_BUFSIZE' not in frag_c:
 for guard in ('#if IP_REASSEMBLY\n', '#endif /* IP_REASSEMBLY */', '#if IP_FRAG\n', '#endif /* IP_FRAG */'):
     if guard not in frag_c:
         fail('ip_frag.c lost the %s guard' % guard.strip())
+
+# ip_reass() itself, on the host: the copy helper and the reassembly half of ip_frag.c, verbatim,
+# around stand-ins for the pbuf, header and alarm calls it makes. AddressSanitizer catches a
+# bitmap access past the end; the scenarios check what comes back.
+REASS_HARNESS = r"""
+#include <arpa/inet.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+typedef uint8_t u8_t;
+typedef uint16_t u16_t;
+typedef uint32_t u32_t;
+typedef struct { u32_t lo, hi; } iop_sys_clock_t;
+struct ip_addr { u32_t addr; };
+struct ip_hdr {
+    u16_t _v_hl_tos, _len, _id, _offset, _ttl_proto, _chksum;
+    struct ip_addr src, dest;
+};
+#define IP_HLEN 20
+#define IP_MF 0x2000
+#define IP_OFFMASK 0x1fff
+#define IPH_HL(hdr) ((ntohs((hdr)->_v_hl_tos) >> 8) & 0x0f)
+#define IPH_LEN(hdr) ((hdr)->_len)
+#define IPH_ID(hdr) ((hdr)->_id)
+#define IPH_OFFSET(hdr) ((hdr)->_offset)
+#define IPH_LEN_SET(hdr, len) (hdr)->_len = (len)
+#define IPH_OFFSET_SET(hdr, off) (hdr)->_offset = (off)
+#define IPH_CHKSUM_SET(hdr, chksum) (hdr)->_chksum = (chksum)
+#define ip_addr_cmp(a, b) ((a)->addr == (b)->addr)
+#define LWIP_DEBUGF(debug, x) do { } while (0)
+#define mips_memcpy memcpy
+#define mips_memset memset
+#define PBUF_LINK 0
+#define PBUF_POOL 0
+struct pbuf { struct pbuf *next; void *payload; u16_t tot_len, len; };
+static struct pbuf *pbuf_alloc(int layer, u16_t len, int type)
+{
+    struct pbuf *p = malloc(sizeof(*p) + len);
+    p->next = NULL;
+    p->payload = p + 1;
+    p->tot_len = p->len = len;
+    return p;
+}
+static void pbuf_free(struct pbuf *p) { free(p); }
+static u16_t inet_chksum(void *data, u16_t len) { return 0; }
+static int SetAlarm(iop_sys_clock_t *clock, unsigned (*handler)(void *), void *arg) { return 0; }
+static int CancelAlarm(unsigned (*handler)(void *), void *arg) { return 0; }
+#define IP_REASSEMBLY 1
+#define IP_FRAG 0
+#define IP_REASS_BUFSIZE @BUFSIZE@
+@COPY@
+@REASS@
+static u8_t payload[IP_REASS_BUFSIZE + 64];
+
+/* One fragment of datagram `id`: payload bytes [off, off + len), more fragments to come if mf. */
+static struct pbuf *frag(u16_t id, u16_t off, u16_t len, int mf)
+{
+    struct pbuf *p = pbuf_alloc(0, IP_HLEN + len, 0);
+    struct ip_hdr *h = p->payload;
+    memset(h, 0, IP_HLEN);
+    h->_v_hl_tos = htons(0x4500);
+    h->_len = htons(IP_HLEN + len);
+    h->_id = htons(id);
+    h->_offset = htons((off / 8) | (mf ? IP_MF : 0));
+    h->src.addr = 0x0a000001;
+    h->dest.addr = 0x0a000002;
+    memcpy((u8_t *)p->payload + IP_HLEN, payload + off, len);
+    return p;
+}
+
+/* The datagram that came back must carry exactly bytes [0, total) of the payload. */
+static int whole(struct pbuf *p, u16_t total)
+{
+    int ok = p && p->tot_len == IP_HLEN + total && !memcmp((u8_t *)p->payload + IP_HLEN, payload, total);
+    if (p)
+        pbuf_free(p);
+    return ok;
+}
+
+int main(void)
+{
+    int i, bad = 0;
+    struct pbuf *r;
+    for (i = 0; i < (int)sizeof(payload); i++)
+        payload[i] = (u8_t)(i * 7 + 3);
+
+    /* A datagram whose last fragment ends exactly at the end of the buffer. */
+    r = ip_reass(frag(1, 0, IP_REASS_BUFSIZE - 512, 1));
+    if (r) { printf("exact: complete after the first fragment\n"); bad = 1; pbuf_free(r); }
+    r = ip_reass(frag(1, IP_REASS_BUFSIZE - 512, 512, 0));
+    if (!whole(r, IP_REASS_BUFSIZE)) { printf("exact: a datagram that fills the buffer did not reassemble\n"); bad = 1; }
+
+    /* One byte of the bitmap covers 64 bytes of payload. Leave out bytes 1408-1471 of a 1480-byte
+       datagram, the second-to-last bitmap byte: the datagram must not come back until they arrive. */
+    r = ip_reass(frag(2, 0, 1408, 1));
+    if (r) { printf("hole: complete after the first fragment\n"); bad = 1; pbuf_free(r); }
+    r = ip_reass(frag(2, 1472, 8, 0));
+    if (r) { printf("hole: returned with bytes 1408-1471 missing\n"); bad = 1; pbuf_free(r); }
+    r = ip_reass(frag(2, 1408, 64, 1));
+    if (!whole(r, 1480)) { printf("hole: did not reassemble once the gap was filled\n"); bad = 1; }
+
+    /* An ordinary full-MTU datagram split across a smaller hop. */
+    r = ip_reass(frag(3, 0, 1024, 1));
+    if (r) { printf("plain: complete after the first fragment\n"); bad = 1; pbuf_free(r); }
+    r = ip_reass(frag(3, 1024, 456, 0));
+    if (!whole(r, 1480)) { printf("plain: a 1480-byte datagram did not reassemble\n"); bad = 1; }
+
+    /* A fragment that would run past the buffer is dropped, and the next datagram starts clean. */
+    r = ip_reass(frag(4, IP_REASS_BUFSIZE - 8, 16, 0));
+    if (r) { printf("over: a fragment past the buffer was accepted\n"); bad = 1; pbuf_free(r); }
+    r = ip_reass(frag(5, 0, 64, 0));
+    if (!whole(r, 64)) { printf("over: the next datagram did not go through\n"); bad = 1; }
+
+    if (!bad)
+        printf("reass ok\n");
+    return bad;
+}
+"""
+copy_fn = one(r'(#if IP_REASSEMBLY \|\| IP_FRAG\n.*?#endif /\* IP_REASSEMBLY \|\| IP_FRAG \*/\n)', frag_c, 'copy_from_pbuf block', re.S)
+reass_fn = one(r'(#if IP_REASSEMBLY\n#ifndef IP_REASS_BUFSIZE.*?#endif /\* IP_REASSEMBLY \*/\n)', frag_c, 'ip_reass block', re.S)
+harness_c = REASS_HARNESS.replace('@BUFSIZE@', str(reass)).replace('@COPY@', copy_fn).replace('@REASS@', reass_fn)
+with tempfile.TemporaryDirectory() as tmp:
+    src = os.path.join(tmp, 'reass.c')
+    exe = os.path.join(tmp, 'reass')
+    with open(src, 'w') as f:
+        f.write(harness_c)
+    cc = subprocess.run(['gcc', '-std=gnu99', '-g', '-O1', '-w', '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
+                         '-fno-omit-frame-pointer', '-o', exe, src], capture_output=True, text=True)
+    if cc.returncode:
+        sys.exit('ip_reass harness failed to compile (it needs gcc with AddressSanitizer):\n' + cc.stderr)
+    run = subprocess.run([exe], capture_output=True, text=True)
+    print(run.stdout.strip() or '(no output)')
+    if run.returncode:
+        fail('ip_reass on the host, IP_REASS_BUFSIZE %d:\n%s%s' % (reass, run.stdout, run.stderr[-3000:]))
 
 # --- USBD pad pool -------------------------------------------------------------------------------------
 IOPMGR = 'ee_core/src/iopmgr.c'
@@ -167,7 +305,7 @@ got = dict(zip(FIELDS, (int(x) for x in out.split())))
 mini = dict(zip(FIELDS, defaults))
 print('usbd_mini parsed', argv, '->', got)
 
-want = {'maxDevices': 10, 'maxEndpoints': 20, 'maxTransfDesc': 16, 'maxIsoTransfDesc': 2, 'maxIoReqs': 24,
+want = {'maxDevices': 10, 'maxEndpoints': 20, 'maxTransfDesc': mini['maxTransfDesc'], 'maxIsoTransfDesc': 2, 'maxIoReqs': 24,
         'maxStaticDescSize': mini['maxStaticDescSize'], 'maxHubDevices': 2, 'maxPortsPerHub': mini['maxPortsPerHub'],
         'hcdThreadPrio': 2, 'cbThreadPrio': 3}
 for k, v in want.items():
@@ -191,8 +329,19 @@ if got['maxEndpoints'] < need_ep:
     fail('maxEndpoints %d < %d needed by %d pads x %d pipes (or a dongle with %d) plus a hub' % (got['maxEndpoints'], need_ep, usb_pads, usb_eps, bt_eps))
 if got['maxIoReqs'] < need_ep:
     fail('maxIoReqs %d < one in flight per pipe (%d)' % (got['maxIoReqs'], need_ep))
-if got['maxTransfDesc'] < need_ep:
-    fail('maxTransfDesc %d < one per pipe (%d)' % (got['maxTransfDesc'], need_ep))
+# Transfer descriptors: every open pipe keeps one as its tail (hcd.c openDeviceEndpoint), every
+# bulk or interrupt transfer in flight takes one more (usbio.c setupBulkTransfer), and a control
+# request with data three more (setupControlTransfer). When the free list runs short the request
+# waits in a queue of which checkTdQueue retries only the head, so a control request that cannot
+# get its three holds up every pipe queued behind it. Worst case with four USB pads behind a hub:
+# every pipe's tail, the hub's status read, a report read and a SET_REPORT write on every pad, and
+# two more control requests (a DS3 sends two back to back when it connects, and a new device on
+# the hub is enumerated with them).
+if b'gtd=' in args:
+    fail('ee_core trims usbd_mini\'s general transfer descriptors again; a shortfall there stalls the pads')
+need_td = need_ep + 1 + usb_pads * (1 + 3) + 2 * 3
+if got['maxTransfDesc'] < need_td:
+    fail('maxTransfDesc %d < %d: %d pipe tails, the hub status read, a read and a control write per pad, two more control requests' % (got['maxTransfDesc'], need_td, need_ep))
 if got['maxIsoTransfDesc'] < 2:
     fail('maxIsoTransfDesc must be at least 2: hcd.c links maxIsoTransfDesc - 1 descriptors')
 if got['maxHubDevices'] < 1:

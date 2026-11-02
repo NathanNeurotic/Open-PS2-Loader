@@ -92,7 +92,9 @@ static iop_sys_clock_t s_Clock = {
     0x01194000, 0x00000000};
 
 static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];
-static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8)];
+/* One byte past BUFSIZE / 64: a fragment may end exactly at IP_REASS_BUFSIZE, and the update and
+   the completeness check below both touch the byte that end falls in (upstream lwIP sizes it the same). */
+static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8) + 1];
 
 static const u8_t bitmap_bits[8] = {
     0xFF, 0x7F, 0x3F, 0x1F,
@@ -201,9 +203,10 @@ ip_reass(struct pbuf *p)
        this by checking if we have the last fragment and if all bits
        in the bitmap are set. */
         if (ip_reassflags & IP_REASS_FLAG_LASTFRAG) {
-            /* Check all bytes up to and including all but the last byte in
-         the bitmap. */
-            for (i = 0; i < ip_reasslen / (8 * 8) - 1; ++i) {
+            /* Check every byte before the last one in the bitmap: each must be
+         full. (The old bound, ip_reasslen / 64 - 1, skipped the byte before
+         the last, so a hole there passed as a complete datagram.) */
+            for (i = 0; i < ip_reasslen / (8 * 8); ++i) {
                 if (ip_reassbitmap[i] != 0xff) {
                     goto nullreturn;
                 }
