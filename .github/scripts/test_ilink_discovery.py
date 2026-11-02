@@ -14,6 +14,10 @@ With two drives, a slot that holds one drive's login of this generation is that 
 drive never takes it (it would skip its own LOGIN and drive the first one's command agent), and in
 the menu/in-game driver the logged-in drive keeps its device number while its warm-up is retried. A
 login left from a generation whose bus reset the thread has not handled yet is not reused.
+
+A try holds the transport while it waits for the drive, so a drive that never attaches would stall
+an attached drive's I/O at every try. With another drive attached, the tries stop after
+SBP2_RETRY_LIMIT retries (32 s of waiting) until the next bus reset; with none attached they go on.
 """
 from pathlib import Path
 import subprocess
@@ -28,6 +32,7 @@ SIGNATURES = (
     'static unsigned int sbp2FreeDevNr(const struct SBP2Device *dev)',  # the menu/in-game driver only
     'static void sbp2BusReset(void)',
     'static int sbp2AttachUnits(void)',
+    'static int sbp2AnyAttached(void)',
     'static void iLinkIntrCBHandlingThread(void *arg)',
 )
 DEFINES = ('SBP2_RETRY_FIRST_US', 'SBP2_RETRY_MAX_US', 'SBP2_RETRY_POLL_US', 'SBP2_RETRY_LIMIT')
@@ -63,6 +68,8 @@ static void topology(void) {
         nNodesNow=2;nodeIds[0]=1;nodeIds[1]=2;
     } else if(scenario==7) { /* the reset renumbers the first drive and keeps the second at node 2 */
         nNodesNow=2;nodeIds[0]=generation==1 ? 1 : 3;nodeIds[1]=2;
+    } else if(scenario==8) {
+        nNodesNow=2;nodeIds[0]=1;nodeIds[1]=2;
     } else {
         nNodesNow=1;nodeIds[0]=generation==1 ? 1 : 3; /* a reset can renumber the lone drive */
     }
@@ -121,7 +128,7 @@ static int initConfigureSBP2Device(struct SBP2Device *dev) {
             if(attempts==1) { dev->loggedIn=1;return -3; }
             return 0;
         case 3: /* never attaches */
-            if(attempts>=6) longjmp(done,1);
+            if(attempts>=12) longjmp(done,1);
             return -1;
         case 6: /* two drives, every LOGIN granted: node 1's first warm-up fails */
             dev->loggedIn=1;
@@ -130,6 +137,10 @@ static int initConfigureSBP2Device(struct SBP2Device *dev) {
                    thread has not handled that reset when it moves on to the next node */
             dev->loggedIn=1;
             if(attempts==1) { generation++;topology(); }
+            return 0;
+        case 8: /* two drives: node 1 never answers its LOGIN, node 2 attaches */
+            if(attempts>=40) longjmp(done,1); /* the tries never stopped */
+            if(dev->nodeID==1) { dev->managementPending=1;return -1; }
             return 0;
     }
     return 0;
@@ -172,14 +183,16 @@ int main(void) {
 #endif
     CHECK(allocations==2 && frees==1,"each failed attempt releases its context");
 
-    /* A drive that never attaches: the thread keeps trying, backing off to every 5 s. */
+    /* A lone drive that never attaches: the thread keeps trying, backing off to every 5 s, and with no
+       other drive attached it does not stop after SBP2_RETRY_LIMIT retries. */
     run(3,0);
-    static const unsigned long long gaps[]={1000000,2000000,4000000,5000000,5000000};
-    int backoff=attempts==6;
-    for(int i=0;i<5;i++)
+    static const unsigned long long gaps[]={1000000,2000000,4000000,5000000,5000000,5000000,5000000,5000000,
+                                            5000000,5000000,5000000};
+    int backoff=attempts==12;
+    for(int i=0;i<11;i++)
         backoff=backoff && attemptUs[i+1]-attemptUs[i]==gaps[i] && attemptSlot[i+1]==0;
     CHECK(backoff,"retries back off 1, 2, 4, then 5 s and keep the drive's slot");
-    CHECK(waits==1,"retries do not wait for a bus reset");
+    CHECK(waits==1,"with no drive attached, retries go on and do not wait for a bus reset");
 
     /* A speed this driver cannot use is permanent: no context, no attempt, no retry. */
     run(4,0);
@@ -223,6 +236,19 @@ int main(void) {
     CHECK(SBP2Devices[0].IsConnected && SBP2Devices[0].nodeID==2 && SBP2Devices[1].IsConnected && SBP2Devices[1].nodeID==3,
           "both drives attach in the new generation");
     CHECK(allocations==3 && frees==1,"the attempt the reset ended releases its context");
+
+    /* Two drives: node 2 attaches, node 1 never answers its LOGIN. Each try holds the transport against
+       node 2's I/O, so they stop after SBP2_RETRY_LIMIT retries and wait for the next bus reset. */
+    run(8,0);
+    int node1=0;
+    for(int i=0;i<attempts && i<16;i++)
+        node1+=attemptNode[i]==1;
+    CHECK(attempts==2+SBP2_RETRY_LIMIT && node1==1+SBP2_RETRY_LIMIT && attemptNode[1]==2,
+          "with another drive attached, a drive that never attaches gets SBP2_RETRY_LIMIT retries");
+    CHECK(attemptUs[1+SBP2_RETRY_LIMIT]==32000000,"the last retry comes 32 s after the first attempt");
+    CHECK(waits==2,"then the thread waits for a bus reset instead of trying again");
+    CHECK(SBP2Devices[1].IsConnected && SBP2Devices[1].nodeID==2 && SBP2Devices[0].nodeID==1,
+          "the attached drive stays attached");
     return failures ? 1 : 0;
 }
 """

@@ -19,7 +19,7 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
 | usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
-| usbhdfsd.irx.ilink | 27705 | 2b1435ecf363ff5fd5c3310c5a3fd5464efff1b3d0070a652e4229d4af40ff92 |
+| usbhdfsd.irx.ilink | 27769 | 9cd849ea7f06d72f3ee6015032dfd91d6fcb1332e87d5acde306cb42b5d4313d |
 
 **Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
 `usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
@@ -85,8 +85,10 @@ fallback — the same external-beats-embedded order POPSLoader ships.
   reserved LOGIN and command once it logs in again. With two drives on the bus, a slot that holds
   one drive's login of the current bus generation stays that drive's, so the other drive neither
   takes it nor skips its own LOGIN, and a login left from a bus generation that has ended is never
-  reused. It was built in the pinned image below and is
-  27705 bytes, sha256 `2b1435ecf363ff5fd5c3310c5a3fd5464efff1b3d0070a652e4229d4af40ff92`; the
+  reused. While another drive is attached, a drive that never attaches gets at most 8 more tries
+  (32 s of waiting) and then waits for a bus reset, so its tries no longer stall the attached
+  drive's I/O for as long as both are on the bus. It was built in the pinned image below and is
+  27769 bytes, sha256 `9cd849ea7f06d72f3ee6015032dfd91d6fcb1332e87d5acde306cb42b5d4313d`; the
   27129-byte binary it replaces was sha256
   `e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917`. Console acceptance is pending.
   **Rebuilt from source:** the bytes above are the output of `make` in that directory inside

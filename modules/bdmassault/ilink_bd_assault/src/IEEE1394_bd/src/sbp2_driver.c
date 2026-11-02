@@ -362,11 +362,17 @@ static inline int initSBP2Disk(struct SBP2Device *dev)
  * the login budget, or whose warm-up failed, then stayed detached until the next bus reset -- and
  * nothing in a running game causes one, so CDVDMAN or Neutrino waited for it forever. Keep trying
  * while the unit is on the bus: after 1 s, then 2 s and 4 s, then every 5 s. A bus reset ends the wait
- * at once and starts over. The wait polls, so it cannot sleep through a reset. */
+ * at once and starts over. The wait polls, so it cannot sleep through a reset.
+ *
+ * A try holds the transport while it waits for the drive's answer (up to the login budget), so a
+ * drive that never answers would stall the I/O of an attached drive at every try, for as long as both
+ * are on the bus. With another drive attached, the tries stop after SBP2_RETRY_LIMIT retries (32 s
+ * of waiting in all) until the next bus reset. With none attached, nothing waits on the transport,
+ * and the tries go on. */
 #define SBP2_RETRY_FIRST_US (1000 * 1000)
 #define SBP2_RETRY_MAX_US   (5 * 1000 * 1000)
 #define SBP2_RETRY_POLL_US  (100 * 1000)
-#define SBP2_RETRY_LIMIT    8 /* caps the counter only; retries never stop */
+#define SBP2_RETRY_LIMIT    8 /* retries while another drive is attached; also caps the back-off */
 
 static u32 sbp2RetryDelayUs(unsigned int retries)
 {
@@ -518,6 +524,17 @@ static int sbp2AttachUnits(void)
     return missing;
 }
 
+/* Whether any drive is attached. Only the bus-reset thread changes IsConnected once it runs. */
+static int sbp2AnyAttached(void)
+{
+    int i;
+
+    for (i = 0; i < MAX_DEVICES; i++)
+        if (SBP2Devices[i].IsConnected)
+            return 1;
+    return 0;
+}
+
 /* Hardware event handling threads. */
 static void iLinkIntrCBHandlingThread(void *arg)
 {
@@ -535,6 +552,8 @@ static void iLinkIntrCBHandlingThread(void *arg)
             retries = 0;
         else if (retries < SBP2_RETRY_LIMIT)
             retries++;
+        else if (sbp2AnyAttached())
+            retries = 0; /* no more tries until a bus reset: each one stalls the attached drive's I/O */
     }
 }
 

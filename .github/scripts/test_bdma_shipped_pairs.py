@@ -51,7 +51,7 @@ int main(void) {
         markerMode=mode;assert(!vcdBdmaEnvironmentValid(mode));
     }
     /* Reject each preceding iLink candidate, including the immediately previous rebuild. */
-    const int staleIlink[]={21609,21977,22025,22185,27081,27145,27129,27641};
+    const int staleIlink[]={21609,21977,22025,22185,27081,27145,27129,27641,27705};
     for(unsigned i=0;i<sizeof(staleIlink)/sizeof(staleIlink[0]);i++) {
         pairSize[0]=48500;pairSize[1]=staleIlink[i];
         markerMode=VCD_BDMA_ILINK;markerExists=1;

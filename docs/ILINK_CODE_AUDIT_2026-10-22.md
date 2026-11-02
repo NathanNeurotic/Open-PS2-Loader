@@ -223,9 +223,11 @@ latency remain console checks.
   command once it logs in again. The menu and in-game driver also numbers a lone
   drive 0 whichever slot it lands in, as CDVDMAN and Neutrino expect. With two
   drives, a slot holding one drive's login of this generation stays that drive's,
-  and that drive keeps its device number while its warm-up is retried. The rebuilt
-  POPStarter driver is 27,705 bytes, SHA-256
-  `2b1435ecf363ff5fd5c3310c5a3fd5464efff1b3d0070a652e4229d4af40ff92`; item 7 of
+  and that drive keeps its device number while its warm-up is retried. While
+  another drive is attached, a drive that never attaches gets at most 8 more tries
+  (32 s of waiting) and then waits for a bus reset, so its tries cannot keep
+  stalling the attached drive's I/O. The rebuilt POPStarter driver is 27,769 bytes,
+  SHA-256 `9cd849ea7f06d72f3ee6015032dfd91d6fcb1332e87d5acde306cb42b5d4313d`; item 7 of
   `modules/ilink/IEEE1394_bd/ORIGIN.txt` has the details. Not tested on a console.
 
 The old local C++ RiptOPL tree has the same reversed POPStarter direction and

@@ -96,7 +96,10 @@ already granted when it retries in the same bus generation, and stops a LOGIN lo
 reset makes it pointless. A drive that logs in again releases the LOGIN and command storage its
 earlier login left reserved, matched by the EUI-64 in its bus info block. With two drives on the bus,
 a slot that holds one drive's login of the current generation is never handed to the other drive,
-which would skip its own LOGIN and drive the first one's command agent. Same change as OPL's own
+which would skip its own LOGIN and drive the first one's command agent. While another drive is
+attached, a drive that never attaches gets at most 8 more tries (32 s of waiting) and then waits for
+a bus reset: each try holds the transport, and would otherwise stall the attached drive's I/O for
+as long as both are on the bus. Same change as OPL's own
 copy (`modules/ilink/IEEE1394_bd`, item 7 of its `ORIGIN.txt`), without the device-number change
 this copy's BDM layer has no use for. Host-tested by `test_ilink_discovery.py`,
 `test_ilink_bd_assault_reset.py` and `test_ilink_sbp2_completion.py`; not tested on a console.

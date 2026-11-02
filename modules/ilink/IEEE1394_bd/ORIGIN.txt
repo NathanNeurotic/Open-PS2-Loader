@@ -102,6 +102,11 @@ and the manager recovery corrections. No physical-console acceptance yet.
       it would be refused. A slot that holds a login of this generation is now kept for its drive, a
       slot taken over from an ended generation starts without a login, and a logged-in drive keeps
       its device number while its warm-up is retried.
+   g. (Found in review of b.) Every try holds the transport while it waits for the drive, so with
+      two drives, one that never attached stalled the attached drive's I/O at every try, every 5 s,
+      for as long as both were on the bus. While another drive is attached, the tries now stop after
+      SBP2_RETRY_LIMIT (8) retries, 32 s of waiting, until the next bus reset (sbp2AnyAttached); a
+      lone drive is still tried for as long as it is on the bus.
    A drive that logs in again also releases what its own earlier login left reserved (an unanswered
    LOGIN, the shared command): an exclusive login is granted only when the drive holds no other
    login, so that storage can no longer be written (sbp2RetireOlderLogins, matched by the EUI-64
