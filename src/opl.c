@@ -1435,7 +1435,12 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
 {
     int viewTransition;
 
+    // This runs on the IO thread while the GUI thread draws the menu through the same rows under
+    // guiLock (guiStartFrame..guiEndFrame). The queued list operations change those rows, so they run
+    // under the lock here too; menuRowBeginEdit already does the same (YAOPL 4c713a3).
+    guiLock();
     guiExecDeferredOps();
+    guiUnlock();
 
     // Remember where the cursor was, so a rebuild does not dump the user back at the top of
     // the list (#589). Keyed on the game's startup id, not its row index: a rescan is exactly
@@ -1661,7 +1666,9 @@ void menuDeferredUpdate(void *data)
         // A device can reject a scan before it consumes the view-dirty flag (for example, MMCE with
         // no card inserted). Still retire the old rows and commit the retained destination so input
         // does not remain locked and the next successful device scan uses the user's chosen view.
+        guiLock(); // IO thread: see updateMenuFromGameList
         guiExecDeferredOps();
+        guiUnlock();
         clearMenuGameList(mod);
         libViewCommitPending(mod->support->mode);
         libViewFinishPending(mod->support->mode);
