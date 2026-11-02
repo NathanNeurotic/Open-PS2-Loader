@@ -202,6 +202,11 @@ static inline void cdvd_readee(void *buf)
             }
             sceCdSync(0);
 
+            /* sceCdBreak cut this chunk short: fsvRbuf holds sectors it never read. Send none of them; the check at
+               the top of the loop ends the read. */
+            if (sceCdGetError() == SCECdErABRT)
+                continue;
+
             size_64b = nsectors * sector_size;
             size_64bb = size_64b;
 
