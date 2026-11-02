@@ -5312,11 +5312,18 @@ static int thmLoad(const char *themePath)
     }
     if (curT == NULL)
         cacheCancelPendingImageLoads(); // first load: pre-cacheInit, nothing queued -- plain no-op drain
+    // The GUI thread draws the theme under the GUI lock (its frames and the dialog frames), and thmAddElements
+    // runs this on the IO thread when a device with the saved theme comes up: publish the new theme and free the
+    // old one under the same lock (YAOPL b45a592d, Roman Kelesidis). The lock is not recursive, so no caller may
+    // hold it: thmAddElements, thmReinit and lngSetGuiValue release theirs first, the settings pages and the view
+    // switch run between frames, and the first load comes before guiInit, when the lock is a no-op.
+    guiLock();
     gTheme = newT;
     loadedFontSize = gFontSize;
     cfIsAnimating = 0;
     psbbnFlowStartOffset = 0;
     thmFree(curT);
+    guiUnlock();
     return 0;
 }
 
