@@ -12,10 +12,13 @@
 3. guiSetUpUsbPad run whole on the PC: a fake menu driver and USB pad, a scripted PS2 pad and a temporary PADS folder.
    Every button and stick is found and the file written is exactly what is expected; one already there is put aside
    as .bak, then .b01; a write that fails removes the new file and keeps the old one aside; a profile that cannot be put
-   aside is left as it was; cancelling, skipping everything, a failed learn-on and no usable settings folder each end
-   as they should; a button brushed for less than a hold is not what is taken, and another pad's reports in the same
-   port are never taken for this one's. Throughout: input, the driver, sounds, message boxes and files are only touched outside the GUI lock,
-   the driver is polled only while learning, and every message box comes after the driver is let go.
+   aside is left as it was; a close that fails removes the new file too; cancelling, skipping everything, a failed
+   learn-on, no usable settings folder and no pad that works the menu without a profile each end as they should; a
+   button brushed for less than a hold is not what is taken, and another pad's reports in the same port are never taken
+   for this one's; a pad in a port as the screen opens is taken only after it has been out, a new pad in the other
+   port is read there and only there, even with the same ID; a profile saved past the block's four says it is not used.
+   Throughout: input, the driver, sounds, message boxes and files are only touched outside the GUI lock, the driver is
+   polled only while learning, and every message box comes after the driver is let go.
 4. guiShowMyPads run whole on the PC against temporary PADS folders: each profile's name and OK, or why a game does not
    get it, in the order the launcher's packer meets them (the fifth good profile is past the block); game maps counted;
    a long list stops with "and N more" inside 480 bytes and 10 lines, at the first row that does not fit, whether bytes
@@ -137,8 +140,13 @@ if 'out:' in setup:
     learn = before[before.find('padProfilesMenuLearn(1)'):]
     check('return;' not in learn[learn.find('sfxPlay'):], 'guiSetUpUsbPad: every way out after learn-on goes through out:')
     check('guiMsgBox' not in learn[learn.find('sfxPlay'):], 'guiSetUpUsbPad: no message box while the driver is learning')
-    check(re.search(r'padProfilesMenuLoad\(\);\s*padProfilesMenuLearn\(0\);\s*if \(msg\[0\] != .\\0.\)\s*guiMsgBox\(msg, 0, NULL\);',
-                    after), 'guiSetUpUsbPad: out: reads PADS again, lets the driver go, then shows the message')
+    check(re.search(r'padProfilesMenuLoad\(\);\s*padProfilesMenuLearn\(0\);\s*(?:if \(saved && !padProfilesMenuHas\(vid, pid\)\)\s*'
+                    r'snprintf\(msg, sizeof\(msg\), _l\(_STR_PAD_SETUP_SAVED_UNUSED\), path, PAD_DEFS_MAX\);\s*)?'
+                    r'if \(msg\[0\] != .\\0.\)\s*guiMsgBox\(msg, 0, NULL\);', after),
+          'guiSetUpUsbPad: out: reads PADS again, lets the driver go, then shows the message')
+    check(re.search(r'if \(!padReadyWithoutProfile\(\)\) \{[^}]*guiMsgBox\(_l\(_STR_PAD_SETUP_NO_PAD\), 0, NULL\);\s*return;\s*\}'
+                    r'\s*if \(padProfilesMenuLearn\(1\) < 0\)', setup),
+          'guiSetUpUsbPad: with no pad that works the menu without a profile, it says so and returns before learn-on')
 else:
     fail.append('guiSetUpUsbPad: no out: label')
 check(not re.search(r'(?<![A-Za-z])rename\(', setup), 'guiSetUpUsbPad: an old profile is put aside with fmRename, not rename()')
@@ -164,7 +172,7 @@ used = set(re.findall(r'_STR_([A-Z0-9_]+)', mypads + body(gui, 'static void padS
 for name in sorted(used):
     check(name in english, '_base.yml: %s is used but missing' % name)
 new = [l for l in labels if l in ('MY_PADS', 'HINT_MY_PADS', 'PAD_SETUP', 'HINT_PAD_SETUP') or l.startswith(('MY_PADS_', 'PAD_SETUP_'))]
-check(len(new) == 46, '_base.yml: %d My Pads and Set Up A USB Pad strings, want 46' % len(new))
+check(len(new) == 48, '_base.yml: %d My Pads and Set Up A USB Pad strings, want 48' % len(new))
 if 'PS1_DUPLICATES_BOTH' in labels and new:
     check(min(labels.index(l) for l in new) > labels.index('PS1_DUPLICATES_BOTH'),
           '_base.yml: the new strings come after the last one before them, so no string ID moves')
@@ -374,7 +382,7 @@ static void sfxPlay(int id) { (void)id; H_OUTSIDE("sfxPlay"); hSounds++; }
 
 /* the menu's USB pad driver and the profiles module */
 static int hLearn = 0, hLearnCalls[8], hLearnCount = 0, hLearnFails = 0, hLoads = 0, hLoadsBeforeOff = 0, hPolls = 0;
-static int hPresent = 0, hStranger = 0;
+static int hPresent = 0, hStranger = 0, hPort = 0, hOld = 0, hOldSameId = 0, hNoPlainPad = 0, hUnused = 0, hHasCalls = 0;
 static unsigned char hRep[64], hSeq = 0;
 static void hRest(unsigned char *r);
 int padProfilesMenuLearn(int on)
@@ -390,14 +398,38 @@ int padProfilesMenuLearn(int on)
     return 0;
 }
 void padProfilesMenuLoad(void) { H_OUTSIDE("padProfilesMenuLoad"); hLoads++; }
+int padProfilesMenuHas(unsigned vid, unsigned pid)
+{
+    H_OUTSIDE("padProfilesMenuHas");
+    hHasCalls++;
+    if (hLearn || hLoadsBeforeOff == 0)
+        H_FAIL("padProfilesMenuHas asked before PADS was read again and the driver let go");
+    if (vid != 0x1234 || pid != 0x5678)
+        H_FAIL("padProfilesMenuHas asked about %04X:%04X", vid, pid);
+    return !hUnused;
+}
+static int padReadyWithoutProfile(void) { H_OUTSIDE("padReadyWithoutProfile"); return !hNoPlainPad; }
 static int ds34usb_get_raw(int port, unsigned char *out)
 {
     H_OUTSIDE("ds34usb_get_raw");
     if (!hLearn)
         H_FAIL("the driver polled while it is not learning");
+    if (port < 0 || port > 1)
+        H_FAIL("port %d polled", port);
     hPolls++;
     memset(out, 0, 72);
-    if (port != 0 || !hPresent)
+    if (hOld && port == 0) { /* a HID pad there as the screen opened (its profile off), 0E6F:0213: Cross held throughout */
+        out[0] = 0x01 | 0x02 | 0x04 | DS34USB_STATE_RUNNING;
+        out[1] = 4;
+        out[2] = hOldSameId ? 0x34 : 0x6F; out[3] = hOldSameId ? 0x12 : 0x0E;
+        out[4] = hOldSameId ? 0x78 : 0x13; out[5] = hOldSameId ? 0x56 : 0x02;
+        out[6] = 9;
+        out[7] = hSeq++;
+        hRest(out + 8);
+        out[8] |= 0x02;
+        return 1;
+    }
+    if (port != hPort || !hPresent)
         return 1;
     out[0] = 0x01 | 0x02 | 0x04 | DS34USB_STATE_RUNNING;
     out[1] = 4;
@@ -425,7 +457,7 @@ int padProfilesDir(char *out, int size)
 }
 
 /* files: the host's, only outside the lock; a write can be made to fail */
-static int hWriteFails = 0, hWriteLies = 0, hRenameFails = 0, hUnlinks = 0, hMsgBoxes = 0;
+static int hWriteFails = 0, hWriteLies = 0, hCloseFails = 0, hRenameFails = 0, hUnlinks = 0, hMsgBoxes = 0;
 static int h_open(const char *path, int flags, ...)
 {
     int mode = 0;
@@ -456,7 +488,16 @@ static ssize_t h_write(int fd, const void *buf, size_t n)
     }
     return write(fd, buf, n);
 }
-static int h_close(int fd) { H_OUTSIDE("close"); return close(fd); }
+static int h_close(int fd)
+{
+    H_OUTSIDE("close");
+    if (hCloseFails) { /* one that takes all of it and reports the error only at close: the next close fails, once */
+        hCloseFails = 0;
+        close(fd);
+        return -1;
+    }
+    return close(fd);
+}
 static int h_unlink(const char *p) { H_OUTSIDE("unlink"); hUnlinks++; return unlink(p); }
 static int h_mkdir(const char *p, mode_t m) { H_OUTSIDE("mkdir"); return mkdir(p, m); }
 typedef struct
@@ -548,8 +589,8 @@ static int guiMsgBox(const char *text, int addAccept, void *ui)
 }
 ''' + MYPADS_SRC + PIECE1 + DRAW + r'''
 /* The user: what the screen asks for each frame is what they do, on the USB pad or the PS2 pad */
-static int hCancelView = -1, hSkip = 0, hBrush = -1, hStrangerView = -1, hStrangerFrom = 0, hViewFrames = 0,
-           hLastView = -1, hLastStep = -1;
+static int hCancelView = -1, hCancelFrame = 3, hSkip = 0, hBrush = -1, hStrangerView = -1, hStrangerFrom = 0,
+           hViewFrames = 0, hLastView = -1, hLastStep = -1, hReplug = 0;
 static char hTry[1024];
 
 static void hRest(unsigned char *r)
@@ -612,13 +653,15 @@ static void padSetupDraw(const pad_setup_view_t *v)
     hRest(hRep);
     hStranger = v->view == hStrangerView && (v->view != PAD_SETUP_VIEW_STEP || v->step == 0) &&
                 hViewFrames >= hStrangerFrom && hViewFrames < hStrangerFrom + 8;
-    if (v->view == hCancelView && hViewFrames == 3) {
+    if (v->view == hCancelView && hViewFrames == hCancelFrame) {
         hKeys = 1 << H_KEY_CANCEL;
         return;
     }
     switch (v->view) {
         case PAD_SETUP_VIEW_PLUG:
-            if (hViewFrames >= 3)
+            if (hReplug) /* in as the screen opened: out for three frames, then in again */
+                hPresent = hViewFrames < 3 || hViewFrames >= 6;
+            else if (hViewFrames >= 3)
                 hPresent = 1;
             break;
         case PAD_SETUP_VIEW_STEP:
@@ -663,8 +706,10 @@ static void hReset(const char *tmp, const char *name)
     snprintf(hPads, sizeof(hPads), "%s/PADS", hHome);
     snprintf(hFile, sizeof(hFile), "%s/1234_5678.pad", hPads);
     hNoHome = hLearn = hLearnCount = hLearnFails = hLoads = hLoadsBeforeOff = hPolls = hPresent = 0;
-    hWriteFails = hWriteLies = hRenameFails = hUnlinks = hMsgBoxes = hKeys = hSkip = 0;
+    hPort = hOld = hOldSameId = hNoPlainPad = hUnused = hHasCalls = hReplug = 0;
+    hWriteFails = hWriteLies = hCloseFails = hRenameFails = hUnlinks = hMsgBoxes = hKeys = hSkip = 0;
     hCancelView = hBrush = hStrangerView = hLastView = hLastStep = -1;
+    hCancelFrame = 3;
     hStranger = hStrangerFrom = 0;
     hMsg[0] = hTry[0] = '\0';
 }
@@ -721,8 +766,8 @@ static void setupChecks(const char *tmp)
     snprintf(want, sizeof(want), _l(_STR_PAD_SETUP_SAVED), hFile);
     hExpectMsg("saved", want);
     hExpectLearn("saved", 2, 1, 0);
-    if (hMsgBoxes != 1)
-        H_FAIL("saved: %d message boxes", hMsgBoxes);
+    if (hMsgBoxes != 1 || hHasCalls != 1)
+        H_FAIL("saved: %d message boxes, the block asked %d times", hMsgBoxes, hHasCalls);
     if (!strstr(hTry, "Cross") || !strstr(hTry, "Left") || !strstr(hTry, "L2") || !strstr(hTry, "L 255 128"))
         H_FAIL("tried live: the screen showed '%s'", hTry);
     snprintf(path, sizeof(path), "%s/1234_5678.bak", hPads);
@@ -862,6 +907,63 @@ static void setupChecks(const char *tmp)
     guiSetUpUsbPad();
     if (hReadFile(hFile, got, sizeof(got)) < 0 || strcmp(got, hMade) != 0)
         H_FAIL("another pad on Cross: written\n%s", got);
+
+    /* saved, but past the block's four: the file stays, and the box says it is not used */
+    hReset(tmp, "s16");
+    hUnused = 1;
+    guiSetUpUsbPad();
+    if (hReadFile(hFile, got, sizeof(got)) < 0 || strcmp(got, hMade) != 0)
+        H_FAIL("not used: written\n%s", got);
+    snprintf(want, sizeof(want), _l(_STR_PAD_SETUP_SAVED_UNUSED), hFile, PAD_DEFS_MAX);
+    hExpectMsg("not used", want);
+    hExpectLearn("not used", 2, 1, 0);
+
+    /* a close that fails, on a device that then reads it back whole from its cache: removed all the same */
+    hReset(tmp, "s17");
+    hCloseFails = 1;
+    guiSetUpUsbPad();
+    if (access(hFile, F_OK) == 0 || hUnlinks != 1)
+        H_FAIL("failed close: file left or not removed (%d)", hUnlinks);
+    snprintf(want, sizeof(want), _l(_STR_PAD_SETUP_WRITE_FAILED), hFile);
+    hExpectMsg("failed close", want);
+    hExpectLearn("failed close", 2, 1, 0);
+
+    /* no pad that works the menu without a profile: said, before the driver is touched */
+    hReset(tmp, "s18");
+    hNoPlainPad = 1;
+    guiSetUpUsbPad();
+    hExpectMsg("no plain pad", _l(_STR_PAD_SETUP_NO_PAD));
+    hExpectLearn("no plain pad", 0, 0, 0);
+    if (hPolls != 0)
+        H_FAIL("no plain pad: %d polls", hPolls);
+
+    /* a profiled pad in port 0 as the screen opens, never taken out: never taken; cancelled while it waits */
+    hReset(tmp, "s19");
+    hOld = 1;
+    hCancelView = PAD_SETUP_VIEW_PLUG;
+    hCancelFrame = 30;
+    guiSetUpUsbPad();
+    hExpectLearn("old pad stays", 2, 1, 0);
+    snprintf(path, sizeof(path), "%s/0E6F_0213.pad", hPads);
+    if (hMsgBoxes != 0 || access(hFile, F_OK) == 0 || access(path, F_OK) == 0)
+        H_FAIL("old pad stays: a message or a file");
+
+    /* the same, and the pad to set up, with the same ID, plugged into port 1: that one is read, there only */
+    hReset(tmp, "s20");
+    hOld = hOldSameId = 1;
+    hPort = 1;
+    guiSetUpUsbPad();
+    if (hReadFile(hFile, got, sizeof(got)) < 0 || strcmp(got, hMade) != 0)
+        H_FAIL("new pad in port 1: written\n%s", got);
+    snprintf(want, sizeof(want), _l(_STR_PAD_SETUP_SAVED), hFile);
+    hExpectMsg("new pad in port 1", want);
+
+    /* the pad to set up in port 0 as the screen opens: taken once it has been out and in again */
+    hReset(tmp, "s21");
+    hPresent = hReplug = 1;
+    guiSetUpUsbPad();
+    if (hReadFile(hFile, got, sizeof(got)) < 0 || strcmp(got, hMade) != 0)
+        H_FAIL("replugged: written\n%s", got);
 }
 
 static void myPadsChecks(const char *tmp)

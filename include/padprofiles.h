@@ -41,6 +41,10 @@ int padProfilesMenuLearn(int on);
 // After an IOP reset reloaded the driver without them: the menu's profiles are sent again (nothing when none were sent).
 void padProfilesMenuResend(void);
 
+// Any thread: 1 when the menu's copy, as the last padProfilesMenuLoad left it, holds a profile for vid:pid (Set Up A USB
+// Pad asks after it saves one: the block holds the first PAD_DEFS_MAX the packer meets)
+int padProfilesMenuHas(unsigned vid, unsigned pid);
+
 // "<settings home>/PADS" into out. 0, or -1 when the home is empty, holds '?' (no memory card found), is raw APA
 // (hdd...: a partition namespace, not a file system) or does not fit.
 int padProfilesDir(char *out, int size);

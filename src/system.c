@@ -3158,6 +3158,15 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
         LOG("IGR menu overlay at 0x%x\n", IGROVL_BASE);
     } else if (gIgrMenu && !(compatflags & COMPAT_MODE_6))
         LOG("IGR menu overlay not placed, module storage %p-%p\n", ModuleStorage, ModuleStorageEnd);
+#ifdef PADEMU
+    // The menu is off for this launch (config->IgrMenu below), so say why: the USB PADEMU, bigger with the .pad profiles'
+    // code (RIPPS2 build 129), moves the end of the module storage up by about 3 KB, with a PADS folder or without
+    if (!igrOvlPlaced && gIgrMenu && !(compatflags & COMPAT_MODE_6) && ModuleStorage == (void *)OPL_MOD_STORAGE &&
+        (u32)ModuleStorageEnd > IGROVL_BASE) {
+        LOG("IGR menu off: the module storage ends at %p, above its overlay at 0x%x\n", ModuleStorageEnd, IGROVL_BASE);
+        diagLog("launch: IGR menu off, the module storage ends at %p, above its overlay at 0x%x", ModuleStorageEnd, IGROVL_BASE);
+    }
+#endif
 #endif
 
     // NB: LOADER.ELF is embedded

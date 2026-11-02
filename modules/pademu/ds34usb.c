@@ -277,10 +277,21 @@ static void usb_config_set(int result, int count, void *arg)
         return;
     }
     if (ds34pad[pad].type == GENERIC) {
-        // RIPPS2 build 129: only what its .pad asks for (init=ds3: the F4 enable packet); everything else starts off,
-        // as many copies hang on a packet they do not know
-        if (padProfiles[ds34pad[pad].profile].flags & PAD_F_INIT_DS3)
+        // RIPPS2 build 129: only what its .pad asks for, as many copies hang on a packet they do not know. init=ds3: the
+        // F4 enable packet. led=ds3: the port's LED, sent once here with the motors off (the DualShock 3's report, which
+        // rumble=ds3 then sends again with the game's motors). Without led=ds3 that report carries the LEDs off.
+        // rumble=ds4 and led=ds4 send nothing in this build (docs/PAD-PROFILES.md, F13).
+        u8 flags = padProfiles[ds34pad[pad].profile].flags;
+
+        mips_memset(ds34pad[pad].oldled, 0, sizeof(ds34pad[pad].oldled)); // nothing from a pad this slot held before
+        if (flags & PAD_F_INIT_DS3)
             DS3USB_init(pad);
+        if (flags & PAD_F_LED_DS3) {
+            if (flags & PAD_F_INIT_DS3)
+                DelayThread(10000); // as for a DualShock 3: the enable packet first
+            ds34pad[pad].oldled[0] = led_patterns[pad][1];
+            LEDRumble(ds34pad[pad].oldled, 0, 0, pad);
+        }
         ds34pad[pad].status |= DS34USB_STATE_RUNNING;
         SignalSema(ds34pad[pad].sema);
         return;
@@ -437,7 +448,7 @@ static int LEDRumble(u8 *led, u8 lrum, u8 rrum, int pad)
 
     mips_memset(usb_buf, 0, sizeof(usb_buf));
 
-    if (ds34pad[pad].type == DS3 || ds34pad[pad].type == GENERIC) { // build 129: a profiled pad with rumble=ds3 or led=ds3
+    if (ds34pad[pad].type == DS3 || ds34pad[pad].type == GENERIC) { // build 129: a profiled pad with led=ds3 or rumble=ds3
         mips_memcpy(usb_buf, output_01_report, sizeof(output_01_report));
 
         usb_buf[1] = 0xFE; // rt
@@ -548,8 +559,9 @@ int ds34usb_get_data(u8 *dst, int size, int port)
     ret = ds34pad[port].analog_btn & 1;
 
     if (ds34pad[port].type == SHANWAN ||
-        (ds34pad[port].type == GENERIC && !(padProfiles[ds34pad[port].profile].flags & (PAD_F_RUMBLE_DS3 | PAD_F_LED_DS3)))) {
-        ds34pad[port].update_rum = 0; // no LED, no motors (a profiled pad: unless its .pad says rumble=ds3 or led=ds3)
+        (ds34pad[port].type == GENERIC && !(padProfiles[ds34pad[port].profile].flags & PAD_F_RUMBLE_DS3))) {
+        // No LED, no motors. A profiled pad: the game's motors only with rumble=ds3 (led=ds3 alone was sent at connect)
+        ds34pad[port].update_rum = 0;
     } else if (ds34pad[port].update_rum) {
         ret = LEDRumble(ds34pad[port].oldled, ds34pad[port].lrum, ds34pad[port].rrum, port);
         if (ret == USB_RC_OK)

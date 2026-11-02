@@ -25,7 +25,9 @@ ee_core gives it to PADEMU) and to the menu's driver (read at boot, sent from re
    - a game map alone makes a block with no profile; no ID, another game, a map that changes nothing or a bad map
      makes none, and the menu never gets a game map;
    - a driver that does not take the block is tried again the next frame; Set Up A USB Pad open sends no profile
-     and both ports, closed sends the profiles and one port, and a failed open is undone;
+     and both ports, closed sends one port and then the profiles (so the driver, which looks for a profiled pad it
+     does not hold only when a port it reads is free, sees the menu's one), and a failed open is undone;
+   - the menu's copy answers whether it holds a profile for an ID: the one packed, none of the fifth, none once gone;
    - interrupts go off only around the shared copy, never across a file or driver call, and come back as they were.
 3. The placement, extracted from sysLaunchLoaderElf and run with and without the RETROACHIEVEMENTS overlay: 64-byte
    aligned after the storage end, 8 zero bytes then the block, below 0xD0000 or below the overlay when it goes in, never
@@ -447,6 +449,7 @@ static void s_absent(void)
     padProfilesMenuTick();
     CHECK(t_opendirs == 2, "the menu's read is one more failed opendir (%d)", t_opendirs);
     CHECK(t_sets == 0 && t_reinits == 0, "the menu's driver is never called (%s)", t_seq);
+    CHECK(!padProfilesMenuHas(0x0079, 0x0006), "and the menu's copy holds no profile");
     CHECK(padProfilesPrepare("SLUS_123.45") == -1 && t_opendirs == 3, "the absence is not remembered: the next launch looks again");
     balanced();
 }
@@ -485,6 +488,8 @@ static void s_one(void)
     CHECK(padProfilesPrepare("SLUS_123.45") == 0 && padProfilesBlock() != NULL, "the next read makes it again");
     padProfilesMenuLoad();
     CHECK(t_sets == 0, "the read does not call the driver");
+    CHECK(padProfilesMenuHas(0x0079, 0x0006) && !padProfilesMenuHas(0x0079, 0x0007) && !padProfilesMenuHas(0x0006, 0x0079),
+          "the menu's copy holds that profile, and no other");
     padProfilesMenuTick();
     CHECK(!strcmp(t_seq, "S0P ") && t_last_size == PAD_BLOCK_SIZE && !memcmp(t_last_block, want, PAD_BLOCK_SIZE),
           "readPads sends the profile (%s)", t_seq);
@@ -501,6 +506,7 @@ static void s_one(void)
     padProfilesMenuLoad();
     padProfilesMenuTick();
     CHECK(!strcmp(t_seq, "S0P S0P S0Z "), "the menu's driver gets an empty block once (%s)", t_seq);
+    CHECK(!padProfilesMenuHas(0x0079, 0x0006), "and the menu's copy no longer holds it");
     padProfilesMenuLoad();
     padProfilesMenuTick();
     padProfilesMenuResend();
@@ -590,6 +596,14 @@ static void s_five(void)
           "five profiles: the first four are packed");
     CHECK(t_diags == 1 && strstr(t_diag, "left out: the first 4 profiles fill the block") != NULL, "the fifth is reported (%s)", t_diag);
     CHECK(t_open_ok == PAD_DEFS_MAX, "and not opened (%d files)", t_open_ok);
+    {
+        int i, has = 0;
+        padProfilesMenuLoad();
+        for (i = 1; i <= 5; i++)
+            has += padProfilesMenuHas(0x1000 + i, 0x0001);
+        CHECK(has == PAD_DEFS_MAX && !padProfilesMenuHas(0x1006, 0x0001),
+              "the menu's copy holds the four packed and not the fifth: Set Up A USB Pad can tell (%d)", has);
+    }
     balanced();
 }
 
@@ -621,7 +635,8 @@ static void s_learn(void)
     padProfilesMenuTick();
     CHECK(!strcmp(t_seq, "S1Z R3 "), "nothing is sent while it is open (%s)", t_seq);
     CHECK(padProfilesMenuLearn(0) == 0, "Set Up A USB Pad closes");
-    CHECK(!strcmp(t_seq, "S1Z R3 S0P R1 ") && !memcmp(t_last_block, want, PAD_BLOCK_SIZE), "closed: the profiles and the menu's one port (%s)", t_seq);
+    CHECK(!strcmp(t_seq, "S1Z R3 R1 S0P ") && !memcmp(t_last_block, want, PAD_BLOCK_SIZE),
+          "closed: the menu's one port, then the profiles (%s)", t_seq);
     padProfilesMenuTick();
     CHECK(t_sets == 2, "and nothing more (%s)", t_seq);
     balanced();
@@ -633,24 +648,24 @@ static void s_learnfail(void)
     padProfilesMenuTick();
     t_set_ok = 0;
     CHECK(padProfilesMenuLearn(1) < 0, "an open the driver does not take fails");
-    CHECK(!strcmp(t_seq, "S0P S1Z S0P "), "and is undone (%s)", t_seq);
+    CHECK(!strcmp(t_seq, "S0P S1Z R1 S0P "), "and is undone (%s)", t_seq);
     t_set_ok = 1;
     padProfilesMenuTick();
-    CHECK(!strcmp(t_seq, "S0P S1Z S0P S0P "), "not left learning: readPads sends the profiles again (%s)", t_seq);
+    CHECK(!strcmp(t_seq, "S0P S1Z R1 S0P S0P "), "not left learning: readPads sends the profiles again (%s)", t_seq);
     t_reinit_ok = 0;
     CHECK(padProfilesMenuLearn(1) < 0, "an open whose port change fails fails");
-    CHECK(!strcmp(t_seq, "S0P S1Z S0P S0P S1Z R3 S0P R1 "), "and is undone (%s)", t_seq);
+    CHECK(!strcmp(t_seq, "S0P S1Z R1 S0P S0P S1Z R3 R1 "), "and is undone (%s)", t_seq);
     t_reinit_ok = 1;
     padProfilesMenuTick();
     padProfilesMenuTick();
-    CHECK(!strcmp(t_seq, "S0P S1Z S0P S0P S1Z R3 S0P R1 S0P "), "then readPads sends the profiles once (%s)", t_seq);
+    CHECK(!strcmp(t_seq, "S0P S1Z R1 S0P S0P S1Z R3 R1 S0P "), "then readPads sends the profiles once (%s)", t_seq);
     balanced();
 }
 
 static void s_learnnone(void)
 {
     CHECK(padProfilesMenuLearn(1) == 0 && padProfilesMenuLearn(0) == 0, "Set Up A USB Pad opens and closes with no PADS folder");
-    CHECK(!strcmp(t_seq, "S1Z R3 S0Z R1 "), "no profile either way (%s)", t_seq);
+    CHECK(!strcmp(t_seq, "S1Z R3 R1 S0Z "), "no profile either way (%s)", t_seq);
     padProfilesMenuTick();
     CHECK(t_sets == 2 && t_opendirs == 0, "and no file is read (%s)", t_seq);
     balanced();

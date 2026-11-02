@@ -798,6 +798,23 @@ static void padPademuStopAll(void)
             ds34usb_set_rumble(pad_data[i].port, 0, 0);
     }
 }
+
+#define PAD_DS34USB_GENERIC 4 // the menu driver's type for a HID pad that a .pad profile drives (ds34usb/iop/ds34usb.h)
+
+int padReadyWithoutProfile(void)
+{
+    unsigned char raw[72];
+    int i;
+
+    for (i = 0; i < pad_count; ++i) {
+        if (isPadReadyState(pad_data[i].state) || (ds34bt_get_status(pad_data[i].port) & DS34BT_STATE_RUNNING))
+            return 1;
+        if ((ds34usb_get_status(pad_data[i].port) & DS34USB_STATE_RUNNING) && ds34usb_get_raw(pad_data[i].port, raw) &&
+            raw[1] != PAD_DS34USB_GENERIC)
+            return 1;
+    }
+    return 0;
+}
 #endif
 
 void padRumbleFlush(void)

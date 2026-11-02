@@ -18,6 +18,7 @@
 #ifndef PADPROFILE_NO_IMPORTS // the menu driver (modules/ds34usb) has its own headers
 #include "irx_imports.h"
 #endif
+#include <stddef.h>
 #include "padprofile.h"
 
 // sysclib.h maps them to the compiler's builtins; padfile.c gets the IOP's own copies (smsutils) instead
@@ -82,8 +83,39 @@ void padProfileDecode(int def, const unsigned char *report, int len, struct ds2r
     ds2->PressureR2 = pressed & (1u << PAD_B_R2) ? 0xFF : 0;
 }
 
+// Where each DS2 button keeps its pressure in struct ds2report, by button bit; 0: Select, L3, R3 and Start have none
+static const unsigned char padPressureAt[PAD_B_COUNT] = {
+    0, 0, 0, 0,
+    offsetof(struct ds2report, PressureUp), offsetof(struct ds2report, PressureRight),
+    offsetof(struct ds2report, PressureDown), offsetof(struct ds2report, PressureLeft),
+    offsetof(struct ds2report, PressureL2), offsetof(struct ds2report, PressureR2),
+    offsetof(struct ds2report, PressureL1), offsetof(struct ds2report, PressureR1),
+    offsetof(struct ds2report, PressureTriangle), offsetof(struct ds2report, PressureCircle),
+    offsetof(struct ds2report, PressureCross), offsetof(struct ds2report, PressureSquare)};
+
 void padGameMapApply(struct ds2report *ds2)
 {
-    if (padGameMapOn)
-        ds2->nButtonState = padApplyMap(ds2->nButtonState, padGameMap);
+    unsigned char in[sizeof(*ds2)], *out = (unsigned char *)ds2;
+    unsigned pressed;
+    int i, to, v;
+
+    if (!padGameMapOn)
+        return;
+    // A game in pressure mode (0x79) reads the pressure bytes as well as the button word, so a button's pressure goes
+    // where its press goes: a button with none (Start, say) gives 255 while held, and the highest wins where two meet.
+    // A press sent to nothing, or to a button with no pressure byte, takes its pressure with it.
+    pressed = (unsigned short)~ds2->nButtonState;
+    memcpy(in, out, sizeof(in));
+    for (i = 0; i < PAD_B_COUNT; i++)
+        if (padPressureAt[i])
+            out[padPressureAt[i]] = 0;
+    for (i = 0; i < PAD_B_COUNT; i++) {
+        to = padGameMap[i] == PAD_REMAP_SAME ? i : padGameMap[i];
+        if (to >= PAD_B_COUNT || !padPressureAt[to])
+            continue;
+        v = padPressureAt[i] ? in[padPressureAt[i]] : (pressed & (1u << i) ? 0xFF : 0);
+        if (v > out[padPressureAt[to]])
+            out[padPressureAt[to]] = (unsigned char)v;
+    }
+    ds2->nButtonState = padApplyMap(ds2->nButtonState, padGameMap);
 }

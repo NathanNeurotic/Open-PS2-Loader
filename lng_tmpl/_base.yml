@@ -2682,4 +2682,10 @@ gui_strings:
   string: "%s could not be written. The one that was there is kept as %s."
 - comment: Set Up A USB Pad. %s is the file, such as mass0:/OPL/PADS/0E6F_0213.pad.
   label: PAD_SETUP_SAVED
-  string: "Saved as %s. The pad now steers the menu, and plays in games with the Pad Emulator on."
+  string: "Saved as %s. The pad now steers the menu, and plays in games with the Pad Emulator on in DualShock3/4 USB mode."
+- comment: Set Up A USB Pad, when it does not open. Every .pad profile is off while it is open.
+  label: PAD_SETUP_NO_PAD
+  string: "This needs a pad that works the menu without a profile: a DualShock 2 in a controller port, or a DualShock 3 or 4. A USB pad that a .pad profile drives does nothing while a pad is set up."
+- comment: Set Up A USB Pad. %s is the file, such as mass0:/OPL/PADS/0E6F_0213.pad; %d is how many profiles are used (4).
+  label: PAD_SETUP_SAVED_UNUSED
+  string: "Saved as %s, but it is not used: the menu and games get the first %d profiles only. My Pads lists them."

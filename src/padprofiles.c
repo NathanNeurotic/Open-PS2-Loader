@@ -253,8 +253,9 @@ int padProfilesMenuLearn(int on)
     has = menuHas;
     padsUnlock(i);
     // open: no profile, so a pad being set up again steers nothing while it is learnt, and both ports, so it is taken
-    // beside a DualShock in the first; closed: the profiles again and the menu's one port (sysReset loads it with 1)
-    if (ds34usb_set_profiles(b, PAD_BLOCK_SIZE, on != 0) && ds34usb_reinit_ports(on ? 3 : 1))
+    // beside a DualShock in the first; closed: the menu's one port (sysReset loads it with 1), then the profiles again,
+    // so the driver looks for a profiled pad it does not hold only when that port is free
+    if (on ? ds34usb_set_profiles(b, PAD_BLOCK_SIZE, 1) && ds34usb_reinit_ports(3) : ds34usb_reinit_ports(1) && ds34usb_set_profiles(b, PAD_BLOCK_SIZE, 0))
         return 0;
     if (on) // not open after all: back to the menu's own state, as a close leaves it
         padProfilesMenuLearn(0);
@@ -264,6 +265,23 @@ int padProfilesMenuLearn(int on)
         padsUnlock(i);
     }
     return -1;
+}
+
+int padProfilesMenuHas(unsigned vid, unsigned pid)
+{
+    unsigned char b[PAD_BLOCK_SIZE], map[PAD_B_COUNT];
+    pad_def_t defs[PAD_DEFS_MAX];
+    int i, n = 0, has, on = padsLock();
+
+    memcpy(b, menuBlock, sizeof(b));
+    has = menuHas;
+    padsUnlock(on);
+    if (!has || padBlockUnpack(b, PAD_BLOCK_SIZE, defs, &n, map) != 0)
+        return 0;
+    for (i = 0; i < n; i++)
+        if (defs[i].vid == vid && defs[i].pid == pid)
+            return 1;
+    return 0;
 }
 
 void padProfilesMenuResend(void)

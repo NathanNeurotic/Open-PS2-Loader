@@ -161,7 +161,10 @@ console or in an emulator.
 (`PADEMU ?= 1`). A game gets the profiles only through the USB PADEMU, Pad Emulator Mode **DualShock3/4 USB**, and
 only on the OPL core: PADEMU does not run under [Neutrino](NEUTRINO.md). The Bluetooth PADEMU does not read them and
 does not carry the code. The menu's own USB pad driver gets the same profiles, without a game map, when the menu
-starts and again after Set Up A USB Pad saves one, so a profiled pad steers the menu too.
+starts, again after Set Up A USB Pad saves one, and again after the NBD server stops, so a profiled pad steers the
+menu too. The menu reads one USB pad. A profiled pad that was plugged in before the profiles came is taken when they
+come if that one place is free; while another pad holds it, a DualShock 3 say, take that one out, then unplug the
+profiled pad and plug it in again.
 
 **Where PADS is.** `PADS` is a folder beside the settings file (`settings_riptopl.cfg`). With the settings in
 `mc0:OPL`, profiles are `mc0:OPL/PADS/VVVV_PPPP.pad` and game maps `mc0:OPL/PADS/GAMES/<ELF name>.pad`, where the ELF
@@ -174,41 +177,60 @@ ShanWan keep their built-in decoders. So the launcher leaves out a profile for o
 place in the block, and My Pads says why. `decoder=` is read, but nothing in PADEMU uses it, so the launcher also leaves
 out a profile whose `decoder=` is not `generic` (its pad would do nothing), and My Pads says why. At most four profiles
 are used, as the block holds four: after the fourth good one, in the order the folder lists them, the rest are left
-out, and so is a file over 4095 bytes, rather than read in part. Each file left out is named, with the reason, in the
-debug log and in `DIAG.TXT`.
+out, and so is a file over 4095 bytes, rather than read in part. Each profile left out is named, with the reason, in
+the debug log, and in `DIAG.TXT` when Drive Status saves it, as the profiles are read when the menu starts too.
 
 **Game maps** apply only to the pads PADEMU's USB driver reads: DualShock 3, DualShock 4, the ShanWan PS3 clone and
 profiled pads. Not the guitars, not pads on Bluetooth, not a real DualShock 2 in a controller port, and not the menu.
+A map moves each button's pressure with its press, for a game that reads pressure: a press sent to nothing takes its
+pressure with it, a button with none of its own (Start, Select, L3, R3) gives full pressure while held, and where two
+presses meet the harder one counts. A game map is read only as its game starts, so one that is left out is named in
+the debug log, and in `DIAG.TXT` only on an MMCE launch with Debug on, which saves that file just before the game
+starts ([Launch diagnostics](LAUNCH-DIAGNOSTICS.md#drive-status-and-diagtxt)).
 
-**No PADS folder: nothing changes.** No block is made, PADEMU gets its eight bytes of settings exactly as before
-(bit 19, which says a block follows, stays clear), and the menu's USB pad driver is sent nothing. The same holds for a
-PADS folder with no profile the launcher can use and no map for the game. The cost is one failed folder lookup when
-the menu starts and one each time a game starts with the USB PADEMU. The absence is not remembered: a folder made
-later is found the next time.
+**No PADS folder: no profiles, but the bigger PADEMU all the same.** No block is made, PADEMU gets its eight bytes of
+settings exactly as before (bit 19, which says a block follows, stays clear), and the menu's USB pad driver is sent
+nothing. The same holds for a PADS folder with no profile the launcher can use and no map for the game. The cost is
+one failed folder lookup when the menu starts and one each time a game starts with the USB PADEMU, and the USB
+PADEMU's own size, which every game that uses it pays, with a PADS folder or without (**Memory**, below). The absence
+is not remembered: a folder made later is found the next time.
 
 **Where the block goes.** As a game starts, the launcher puts eight bytes for PADEMU's settings and the 180-byte block
 in module storage, after the modules and anything the [in-game menu](IGR.md#the-in-game-menu-beta) or
 [RetroAchievements](RETROACHIEVEMENTS.md) keep there for the game, 64-byte aligned, below 0xD0000, or below the
 in-game menu's overlay when that goes in. When there is no room, and for the two games whose module storage is moved
-(SLUS_209.77 and SLPM_656.32), the game starts without profiles, and the debug log and `DIAG.TXT` say so.
+(SLUS_209.77 and SLPM_656.32), the game starts without profiles, and the debug log says so. `DIAG.TXT` does not: the
+launcher has saved that file, if at all, before it gets this far.
 
 **In the menu.** *Settings → Controller Settings → My Pads* lists the profiles, with the line and reason for any the
 reader refuses, and says which are not used and why. *Set Up A USB Pad* writes a profile for the pad plugged in: it
 asks for each button and stick in turn (SELECT on the PS2 pad skips one), lets you try the result, and puts an older
-file for that pad aside first, as `.bak` (then `.b01` to `.b99`), rather than removing it.
+file for that pad aside first, as `.bak` (then `.b01` to `.b99`), rather than removing it. Every profile is off while
+it is open, so it needs a pad that works the menu without one, a DualShock 2 in a controller port or a DualShock 3 or
+4, and says so instead of opening without one. A USB pad that is in as it opens is not taken until it has been
+unplugged and plugged in again, as the screen asks; from then on it reads only that pad, in the port it found it in.
+When the new profile is one the block has no room for (four are used), it says that it is saved but not used.
 
 **Memory.** The bigger USB PADEMU costs IOP RAM in every game that uses it, with a PADS folder or without:
 
 | Module | Before | After | Change |
 |---|---|---|---|
-| `usb_pademu.irx` in IOP RAM during a game (text to bss) | 12,928 B | 15,336 B | +2,408 B |
-| `usb_pademu.irx` file, kept in module storage for the game | 15,489 B | 18,029 B | +2,540 B |
+| `usb_pademu.irx` in IOP RAM during a game (text to bss) | 12,928 B | 15,720 B | +2,792 B |
+| `usb_pademu.irx` file, kept in module storage for the game | 15,489 B | 18,461 B | +2,972 B |
 | `bt_pademu.irx` | 16,564 B in IOP RAM | the same file, byte for byte | none |
-| `ds34usb.irx`, the menu's USB pad driver (never in a game), in IOP RAM | 8,128 B | 12,008 B | +3,880 B |
+| `ds34usb.irx`, the menu's USB pad driver (never in a game), in IOP RAM | 8,128 B | 12,648 B | +4,520 B |
 
 These are the modules as built for this port with the rolling `ps2dev:latest` image from
 [ps2dev](https://github.com/ps2dev/ps2dev) (`mipsel-none-elf-gcc` 15.2.0), not the image CI pins. How much IOP RAM a
 game has left was not measured.
+
+The bigger file also moves the end of EE module storage up by about 3 KB on every launch with the USB PADEMU, with a
+PADS folder or without (2,960 B, as each module is rounded up to 16 bytes, then the whole to 64 bytes). Everything
+the launcher puts after the modules moves with it. Near the limit that can cost the
+[in-game menu](IGR.md#the-in-game-menu-beta) its CHEATS page, which needs room below 0xD0000 (0xCC000 in the
+[RetroAchievements](RETROACHIEVEMENTS.md) builds), and in those builds the ACHIEVEMENTS page's list or the menu's
+overlay itself. Without the overlay the in-game menu is off for that game and its combo leaves the game, and the
+debug log says `IGR menu off` with where the module storage ends. Not measured on a launch.
 
 **Not verified either:** that the IOP's module loader hands PADEMU all 188 bytes of its arguments. It splits a
 module's arguments at each zero byte and the block has many; PADEMU reads past them, as it already does for the
@@ -218,7 +240,7 @@ second four bytes of its settings.
 
 The text above is RIPPS2's and is not edited here. Where the reader (RIPPS2's reference code, unchanged in behaviour)
 or the rest of this build does something else, it is listed below. F1 to F8 were checked by running the reader on a
-PC; F9 to F12 by reading PADEMU, the menu's driver and the launchers. Format 1 is frozen, so these are for RIPPS2 to
+PC; F9 to F13 by reading PADEMU, the menu's driver and the launchers. Format 1 is frozen, so these are for RIPPS2 to
 settle, in the text or in the reader: this build changes neither on its own.
 
 1. **F1, sections.** [Text format](#text-format) says a section the reader does not know "is skipped with its keys".
@@ -259,6 +281,12 @@ settle, in the text or in the reader: this build changes neither on its own.
 12. **F12, file size.** The text sets no limit. RIPPS2's launcher reads up to 4095 bytes of a file while its My Pads
     reads 8191, so in RIPPS2 a profile of 4 to 8 KB looks right in My Pads and is cut short when a game starts. This
     build's launcher leaves a file over 4095 bytes out instead. Keep a `.pad` under 4 KB.
+13. **F13, rumble and LED.** The profile's flags (offset 7) ask for DualShock 3 or DualShock 4 output. This build's
+    PADEMU sends the DualShock 3 kind only: with `init=ds3` its enable packet, and with `led=ds3` the port's LED,
+    once, as the pad is taken. With `rumble=ds3` it sends the game's motors in the DualShock 3's output report, which
+    carries the LED too (off without `led=ds3`). It sends nothing for `rumble=ds4` or `led=ds4`, so a pad whose
+    profile asks for those gets no rumble and no LED in a game. In RIPPS2, `led=ds3` alone also sent the game's
+    motors, and no port LED was set. Checked by reading PADEMU; not tried on a pad.
 
 ## See also
 

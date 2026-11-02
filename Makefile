@@ -986,7 +986,13 @@ $(EE_OBJS_DIR)libds34usb.a: modules/ds34usb/ee/libds34usb.a
 modules/ds34usb/ee/libds34usb.a: modules/ds34usb/ee
 	$(MAKE) -C $<
 
-modules/ds34usb/iop/ds34usb.irx: modules/ds34usb/iop
+# Always enter the sub-makes of the two IRXs that read the .pad block. Both build the launcher's src/padfile.c, and
+# the menu's driver PADEMU's padprofile.c, from outside their own directory, whose timestamp cannot show an edit
+# there. Their Makefiles name those files as prerequisites, so an IRX is rebuilt only when one changed.
+.PHONY: pads-submake
+pads-submake:
+
+modules/ds34usb/iop/ds34usb.irx: modules/ds34usb/iop pads-submake
 	$(MAKE) -C $< DUALSENSE=$(DUALSENSE)
 
 $(EE_ASM_DIR)ds34usb.c: modules/ds34usb/iop/ds34usb.irx | $(EE_ASM_DIR)
@@ -998,7 +1004,7 @@ modules/pademu/bt_pademu.irx: modules/pademu
 $(EE_ASM_DIR)bt_pademu.c: modules/pademu/bt_pademu.irx
 	$(BIN2C) $< $@ $(*F)_irx
 
-modules/pademu/usb_pademu.irx: modules/pademu
+modules/pademu/usb_pademu.irx: modules/pademu pads-submake
 	$(MAKE) -C $< USE_USB=1
 
 $(EE_ASM_DIR)usb_pademu.c: modules/pademu/usb_pademu.irx

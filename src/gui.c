@@ -5106,7 +5106,10 @@ static void guiShowMyPads(void)
    Changed from RIPPS2: PADS is padProfilesDir's; a frame holds the GUI lock from just before rmStartFrame to just after
    rmEndFrame, makes its text there from string IDs, and reads no input, calls no driver and opens no file inside it; the
    driver is let go before any closing message; a profile already there is put aside with fmRename (.bak, then .b01 to
-   .b99), never removed; the new file is written with a mode, read back, and removed if any of that fails. */
+   .b99), never removed; the new file is written with a mode, read back, and removed if any of that fails. It does not
+   open without a pad that works the menu with no profile (all are off while it is open), takes no pad that was in a
+   port as it opened until it has been out, reads only the port it found the pad in, and says when the new profile is
+   left out of the block. */
 
 #define PAD_SETUP_GENERIC 4    // the menu driver's GENERIC (modules/ds34usb/iop/ds34usb.h)
 #define PAD_SETUP_SWING   0x50 // an axis moved this far from rest
@@ -5176,23 +5179,23 @@ static const char *padSetupName(const pad_setup_name_t *n)
     return n->text != NULL ? n->text : _l(n->label);
 }
 
-static int padSetupPoll(pad_setup_raw_t *p) // the port the driver holds a HID pad in, and its last report
+// The HID pad the driver holds in a port, and its last report: 1, 0 when the port holds none that runs, -1 when the
+// driver did not answer
+static int padSetupPoll(int port, pad_setup_raw_t *p)
 {
     unsigned char b[72];
-    int port;
 
-    for (port = 0; port < 2; port++) {
-        if (!ds34usb_get_raw(port, b) || b[1] != PAD_SETUP_GENERIC || !(b[0] & DS34USB_STATE_RUNNING))
-            continue;
-        p->port = port;
-        p->vid = b[2] | b[3] << 8;
-        p->pid = b[4] | b[5] << 8;
-        p->len = b[6] < (int)sizeof(p->r) ? b[6] : (int)sizeof(p->r); // the driver caps it at 64; never past r all the same
-        p->seq = b[7];
-        memcpy(p->r, b + 8, sizeof(p->r));
-        return 1;
-    }
-    return 0;
+    if (!ds34usb_get_raw(port, b))
+        return -1;
+    if (b[1] != PAD_SETUP_GENERIC || !(b[0] & DS34USB_STATE_RUNNING))
+        return 0;
+    p->port = port;
+    p->vid = b[2] | b[3] << 8;
+    p->pid = b[4] | b[5] << 8;
+    p->len = b[6] < (int)sizeof(p->r) ? b[6] : (int)sizeof(p->r); // the driver caps it at 64; never past r all the same
+    p->seq = b[7];
+    memcpy(p->r, b + 8, sizeof(p->r));
+    return 1;
 }
 
 // One frame. Only drawing happens inside the lock: readPads and padSetupPoll run between frames, outside it
@@ -5361,7 +5364,8 @@ static void guiSetUpUsbPad(void)
     pad_setup_raw_t p;
     pad_setup_view_t v;
     pad_def_t def;
-    int step, frames, i, k, hat = -1, len = 0, fd, offset, maxButton = 0, ok;
+    int step, frames, i, k, hat = -1, len = 0, fd, offset, maxButton = 0, ok, port, got, saved = 0;
+    int stale[2]; // per port: it held a HID pad as the screen opened, and has not been seen without one since
     unsigned vid = 0, pid = 0;
 
     msg[0] = '\0';
@@ -5371,16 +5375,31 @@ static void guiSetUpUsbPad(void)
         guiMsgBox(_l(_STR_MY_PADS_NO_HOME), 0, NULL);
         return;
     }
+    if (!padReadyWithoutProfile()) { // every profile is off while this is open: a pad that one drives could not work it
+        guiMsgBox(_l(_STR_PAD_SETUP_NO_PAD), 0, NULL);
+        return;
+    }
     if (padProfilesMenuLearn(1) < 0) { // the driver did not take it, and an open that fails is undone: nothing to let go
         guiMsgBox(_l(_STR_PAD_SETUP_NO_DRIVER), 0, NULL);
         return;
     }
     sfxPlay(SFX_MESSAGE);
 
-    // 1: the pad, plugged in now (one the driver already let go of is not offered again until it is)
+    // 1: the pad, plugged in now (one the driver already let go of is not offered again until it is). A port that holds
+    // a HID pad as the screen opens, a profiled pad say, is taken only once it has been seen without one, as PLUG's
+    // replug asks; from then on only the port and the ID found here are read
+    for (port = 0; port < 2; port++)
+        stale[port] = padSetupPoll(port, &p) > 0;
     v.view = PAD_SETUP_VIEW_PLUG;
     for (;;) {
-        if (padSetupPoll(&p) && p.len > 0) {
+        for (port = 0; port < 2; port++) {
+            got = padSetupPoll(port, &p);
+            if (got == 0)
+                stale[port] = 0;
+            else if (got > 0 && !stale[port] && p.len > 0)
+                break;
+        }
+        if (port < 2) {
             vid = p.vid;
             pid = p.pid;
             break;
@@ -5405,7 +5424,7 @@ static void guiSetUpUsbPad(void)
         readPads();
         if (getKeyOn(guiCancelKey()))
             goto out;
-        if (!padSetupPoll(&p) || p.vid != vid || p.pid != pid)
+        if (padSetupPoll(port, &p) <= 0 || p.vid != vid || p.pid != pid)
             continue;
         memcpy(rest, p.r, sizeof(rest));
         if (frames < 30 || !len) { // the first half second: the hand lets go
@@ -5448,7 +5467,7 @@ static void guiSetUpUsbPad(void)
                 sfxPlay(SFX_CURSOR);
                 break;
             }
-            if (padSetupPoll(&p) && p.vid == vid && p.pid == pid)
+            if (padSetupPoll(port, &p) > 0 && p.vid == vid && p.pid == pid)
                 found = padSetupFind(rest, noise, &p, axis, dpad, !axis && (id == PAD_B_L2 || id == PAD_B_R2), usedBits, usedAxis, &a, &b, &l);
             if (found && found == lastKind && a == last)
                 held++;
@@ -5479,7 +5498,7 @@ static void guiSetUpUsbPad(void)
             readPads();
             if (getKeyOn(guiCancelKey()))
                 goto out;
-            if (padSetupPoll(&p) && p.vid == vid && p.pid == pid && padSetupAtRest(rest, noise, usedAxis, &p))
+            if (padSetupPoll(port, &p) > 0 && p.vid == vid && p.pid == pid && padSetupAtRest(rest, noise, usedAxis, &p))
                 break;
         }
     }
@@ -5541,7 +5560,7 @@ static void guiSetUpUsbPad(void)
     for (ok = 0; !ok;) {
         v.buttons = 0xFFFF;
         memset(v.ax, 128, sizeof(v.ax));
-        if (padSetupPoll(&p) && p.vid == vid && p.pid == pid)
+        if (padSetupPoll(port, &p) > 0 && p.vid == vid && p.pid == pid)
             padTranslate(&def, p.r, p.len, &v.buttons, v.ax);
         padSetupDraw(&v);
         readPads();
@@ -5582,12 +5601,15 @@ static void guiSetUpUsbPad(void)
         goto out;
     }
     snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_SAVED), path);
+    saved = 1;
 
 out:
     // Every way out lets the driver go first: the profiles read again, the new one too, and sent now, so the pad steers
-    // the menu as soon as the box below closes
+    // the menu as soon as the box below closes. A new profile the block has no room for is not used, and the box says so
     padProfilesMenuLoad();
     padProfilesMenuLearn(0);
+    if (saved && !padProfilesMenuHas(vid, pid))
+        snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_SAVED_UNUSED), path, PAD_DEFS_MAX);
     if (msg[0] != '\0')
         guiMsgBox(msg, 0, NULL);
 }

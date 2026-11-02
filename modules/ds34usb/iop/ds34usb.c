@@ -355,7 +355,9 @@ static void genericReport(int pad) // build 129
 {
     int n = ds34pad[pad].data_bytes;
 
-    if (n <= 0 || n > MAX_BUFFER_SIZE)
+    if (n <= 0) // an empty report holds no input: the last state stays, as in PADEMU's driver
+        return;
+    if (n > MAX_BUFFER_SIZE)
         n = MAX_BUFFER_SIZE;
     mips_memcpy(ds34pad[pad].raw, gen_buf[pad], n);
     ds34pad[pad].raw_len = (u8)n;
@@ -961,6 +963,38 @@ int ds34usb_get_status(int port)
     return ret;
 }
 
+// The USBD asks a driver about a device only when the device arrives or the driver registers, so a profiled pad that
+// was plugged in before its profile came (the menu reads PADS after it loads this driver, and again after the NBD
+// server's IOP reset) was turned down and is never asked about again. When a profile's pad is held by no slot and an
+// enabled slot is free, the driver registers again, and the USBD asks it about every device no driver holds. Taking
+// this driver off its devices does not call usb_disconnect, so each pad it holds is let go first, and is taken again
+// with the rest (a DualShock 3 sees its LED set again). Not while the setup screen is open: it asks for a replug.
+static void usb_reprobe(void)
+{
+    int pad, i, room = 0, missing = 0;
+
+    for (pad = 0; pad < MAX_PADS; pad++)
+        if (ds34pad[pad].enabled && ds34pad[pad].devId == -1)
+            room = 1;
+    for (i = 0; i < padProfileCount && !missing; i++) {
+        missing = 1;
+        for (pad = 0; pad < MAX_PADS; pad++)
+            if (ds34pad[pad].devId != -1 && ds34pad[pad].vid == padProfiles[i].vid && ds34pad[pad].pid == padProfiles[i].pid)
+                missing = 0;
+    }
+    if (!room || !missing)
+        return;
+    for (pad = 0; pad < MAX_PADS; pad++)
+        if (ds34pad[pad].devId != -1)
+            usb_release(pad);
+    if (UsbUnregisterDriver(&usb_driver) != USB_RC_OK)
+        return;
+    usb_driver.next = NULL; // the USBD leaves both set, and refuses to register a driver that has either
+    usb_driver.prev = NULL;
+    if (UsbRegisterDriver(&usb_driver) != USB_RC_OK)
+        DPRINTF("DS34USB: Error registering USB devices again\n");
+}
+
 // RIPPS2 build 129: the .pad block (PAD_BLOCK_SIZE bytes, padfile.h) and the setup screen's learn switch (byte 0 of the
 // call: 1 open, 0 closed). Every connected HID pad is read again with the profile its ID now names; a pad that has none
 // reads as nothing held, and once the setup screen closes it is let go
@@ -981,6 +1015,8 @@ static void ds34usb_set_profiles(const u8 *data)
         if (ds34pad[pad].type == GENERIC && ds34pad[pad].devId != -1 && ds34pad[pad].profile < 0 && !pads_learn)
             usb_release(pad);
     }
+    if (!pads_learn)
+        usb_reprobe();
 }
 
 // RIPPS2 build 129: Set Up A USB Pad's view of a port: its state, type, ID, and its last report as it came. 8 + 64 bytes:

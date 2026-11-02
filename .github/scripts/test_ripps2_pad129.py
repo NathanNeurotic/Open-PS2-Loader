@@ -32,7 +32,11 @@ This port's rules (each failure starts "this port:"):
 7. Only the USB PADEMU links padprofile.o, and pademu.c reads the block in its USB build only.
 8. PADEMU decodes a profiled pad's report with the length the transfer brought, not 64.
 9. After a wait that ran out, the menu's driver drops the signal of a transfer that completed late before it reads it.
-10. Both IOP Makefiles rebuild padprofile.o when src/padfile.c or include/padfile.h changes.
+10. Both IOP Makefiles rebuild padprofile.o when src/padfile.c or include/padfile.h changes, and the top-level Makefile
+    enters both sub-makes to let them.
+11. PADEMU's game map moves a button's pressure byte with its press (a game in mode 0x79 reads both), compiled on the PC.
+12. The menu's driver registers again for a profiled pad that was plugged in before its profile came, when a slot it
+    reads is free (usbd-ra's own register and unregister, compiled on the PC), and imports sceUsbdUnregisterLdd for it.
 """
 import os
 import re
@@ -54,6 +58,7 @@ def text(rel):
     return p.read_text(encoding='utf-8', errors='replace')
 
 
+top_mk = text('Makefile')
 pademu_mk = text('modules/pademu/Makefile')
 pademu = text('modules/pademu/pademu.c')
 pademu_usb = text('modules/pademu/ds34usb.c')
@@ -71,6 +76,7 @@ pad = text('src/pad.c')
 gui = text('src/gui.c')
 dialogs = text('src/dialogs.c')
 base = text('lng_tmpl/_base.yml')
+usbd_driver = text('modules/usb/usbd-ra/src/driver.c')
 
 
 def blank(src):
@@ -430,6 +436,13 @@ def check_prerequisites():
         for n in need:
             if not any(d == n or d.endswith('/' + n) for d in deps):
                 port('%s: padprofile.o is not rebuilt when %s changes' % (rel, n))
+    # the top level enters both sub-makes: a directory's timestamp does not show an edit to src/padfile.c
+    lines = make_lines(top_mk)
+    phony = {t for line in lines for m in [re.match(r'\s*\.PHONY\s*:(.*)', line)] if m for t in m.group(1).split()}
+    for irx in ('modules/pademu/usb_pademu.irx', 'modules/ds34usb/iop/ds34usb.irx'):
+        deps = [d for line in lines for m in [re.match(re.escape(irx) + r'\s*:(?!=)(.*)', line)] if m for d in m.group(1).split()]
+        if not any(d in phony for d in deps) and not {'src/padfile.c', 'include/padfile.h'} <= set(deps):
+            port('Makefile: %s does not enter its sub-make when src/padfile.c or include/padfile.h changes' % irx)
 
 
 DIR_PROG = r'''
@@ -487,6 +500,298 @@ def check_dir(cc, td):
         port('padProfilesDir into 8 bytes gives %s, not -1: a PADS path cut short' % rows[len(HOMES)])
 
 
+MAP_PROG = r'''
+#include <stdio.h>
+#include <string.h>
+#define mips_memcpy memcpy
+#define mips_memset memset
+#define PADPROFILE_NO_IMPORTS
+#include "modules/pademu/padprofile.c"
+#define B(x) (1u << PAD_B_##x)
+static int show(int code, const struct ds2report *r)
+{
+    printf("buttons %04x; pressure Cross %d Circle %d Triangle %d Square %d L1 %d R1 %d Up %d\n", r->nButtonState, r->PressureCross,
+           r->PressureCircle, r->PressureTriangle, r->PressureSquare, r->PressureL1, r->PressureR1, r->PressureUp);
+    return code;
+}
+int main(void)
+{
+    unsigned char report[8] = {0x0F};
+    struct ds2report r;
+    pad_def_t *d = &padProfiles[0];
+
+    /* a profiled pad, no pressure of its own: byte 0 bit 0 Cross, bit 1 Start, bit 2 Square, bit 3 L1, all four held */
+    memset(d, 0, sizeof(*d));
+    d->vid = 0x0079;
+    d->pid = 0x0006;
+    d->hat = PAD_REF_NONE;
+    memset(d->axis, PAD_REF_NONE, sizeof(d->axis));
+    d->button[PAD_B_CROSS] = 0 | 0 << 5;
+    d->button[PAD_B_START] = 0 | 1 << 5;
+    d->button[PAD_B_SQUARE] = 0 | 2 << 5;
+    d->button[PAD_B_L1] = 0 | 3 << 5;
+    d->present = B(CROSS) | B(START) | B(SQUARE) | B(L1);
+    padProfileCount = 1;
+    /* the game's map: Cross to Circle, Start to Triangle, Square to nothing, L1 to Select */
+    memset(padGameMap, PAD_REMAP_SAME, sizeof(padGameMap));
+    padGameMap[PAD_B_CROSS] = PAD_B_CIRCLE;
+    padGameMap[PAD_B_START] = PAD_B_TRIANGLE;
+    padGameMap[PAD_B_SQUARE] = 0xFE;
+    padGameMap[PAD_B_L1] = PAD_B_SELECT;
+    padGameMapOn = !padMapIsSame(padGameMap);
+    padProfileDecode(0, report, (int)sizeof(report), &r);
+    padGameMapApply(&r);
+    if (r.nButtonState != (unsigned short)~(B(CIRCLE) | B(TRIANGLE) | B(SELECT))) return show(1, &r);
+    if (r.PressureCircle != 0xFF || r.PressureCross) return show(2, &r); /* the pressure went with the press */
+    if (r.PressureTriangle != 0xFF) return show(3, &r);                   /* Start has none: 255 while held */
+    if (r.PressureSquare || r.PressureL1) return show(4, &r);             /* to nothing, or to Select: none left */
+    /* a DS3's own pressure: kept where the map leaves a button (a light touch too), the higher where two meet */
+    memset(&r, 0, sizeof(r));
+    r.nButtonState = (unsigned short)~(B(CROSS) | B(CIRCLE) | B(R1));
+    r.PressureCross = 0x30;
+    r.PressureCircle = 0x90;
+    r.PressureR1 = 0x40;
+    r.PressureUp = 0x07;
+    padGameMapApply(&r);
+    if (r.nButtonState != (unsigned short)~(B(CIRCLE) | B(R1)) || r.PressureCircle != 0x90 || r.PressureCross ||
+        r.PressureR1 != 0x40 || r.PressureUp != 0x07)
+        return show(5, &r);
+    /* Cross and Circle swapped */
+    padGameMap[PAD_B_CIRCLE] = PAD_B_CROSS;
+    memset(&r, 0, sizeof(r));
+    r.nButtonState = (unsigned short)~B(CROSS);
+    r.PressureCross = 0x30;
+    padGameMapApply(&r);
+    if (r.nButtonState != (unsigned short)~B(CIRCLE) || r.PressureCircle != 0x30 || r.PressureCross) return show(6, &r);
+    /* no map: nothing moves */
+    padGameMapOn = 0;
+    memset(&r, 0, sizeof(r));
+    r.nButtonState = (unsigned short)~B(CROSS);
+    r.PressureCross = 0x30;
+    padGameMapApply(&r);
+    if (r.nButtonState != (unsigned short)~B(CROSS) || r.PressureCross != 0x30 || r.PressureCircle) return show(7, &r);
+    printf("map ok\n");
+    return 0;
+}
+'''
+
+
+def check_map_pressure(cc, td):
+    (td / 'map.c').write_text(MAP_PROG, encoding='utf-8')
+    r = subprocess.run([cc, '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', '-I', str(root), '-I', str(root / 'include'),
+                        str(td / 'map.c'), '-o', str(td / 'map.exe')], capture_output=True, text=True)
+    if r.returncode:
+        return port('modules/pademu/padprofile.c must build on the PC (PADPROFILE_NO_IMPORTS): ' + r.stderr[-800:])
+    r = subprocess.run([str(td / 'map.exe')], capture_output=True, text=True)
+    if r.returncode:
+        port('PADEMU\'s game map, check %d: a pressure byte did not go with its press: %s' % (r.returncode, r.stdout.strip()))
+
+
+REPROBE_PROG = r'''
+#include <stdio.h>
+#include <string.h>
+#include "include/padfile.h"
+typedef unsigned char u8;
+typedef unsigned int u32;
+#define USE_GP_REGISTER 0
+#define USB_RC_OK 0
+#define USB_RC_BADDRIVER 0x103
+#define USB_RC_BUSY 0x104
+#define DEVICE_READY 5
+#define DPRINTF(...) do { } while (0)
+#define dbg_printf(...) do { } while (0)
+/* the layout of ps2sdk's usbd.h, and the members of usbd-ra's Device that driver.c uses */
+typedef struct _UsbDriver
+{
+    struct _UsbDriver *next, *prev;
+    char *name;
+    int (*probe)(int devID);
+    int (*connect)(int devID);
+    int (*disconnect)(int devID);
+    u32 reserved1, reserved2, reserved3, reserved4, reserved5;
+    void *gp;
+} sceUsbdLddOps;
+typedef sceUsbdLddOps UsbDriver;
+typedef struct _endpoint
+{
+    struct _endpoint *next;
+} Endpoint;
+typedef struct _device
+{
+    u32 id;
+    struct _device *next;
+    Endpoint *endpointListStart;
+    sceUsbdLddOps *devDriver;
+    u8 deviceStatus;
+    u8 functionAddress;
+    struct _device *childListStart;
+    void *privDataField;
+    unsigned vid, pid; /* this test's: what the device descriptor says */
+} Device;
+static struct
+{
+    Device *deviceTreeRoot;
+} memPool;
+static int usbdLock(void) { return 0; }
+static int usbdUnlock(void) { return 0; }
+static void removeEndpointFromDevice(Device *dev, Endpoint *ep) { (void)dev; (void)ep; }
+static int callUsbDriverFunc(int (*func)(int devId), int devId, void *gp) /* driver.c's, without the GP switch */
+{
+    int res = 0;
+    (void)gp;
+    if (func) {
+        usbdUnlock();
+        res = func(devId);
+        usbdLock();
+    }
+    return res;
+}
+@@USBD@@
+/* the menu driver's side: its slots, its profiles, and probe and connect as ds34usb.c decides them */
+#define MAX_PADS 2
+static struct
+{
+    int devId, enabled;
+    unsigned vid, pid;
+} ds34pad[MAX_PADS];
+pad_def_t padProfiles[PAD_DEFS_MAX];
+int padProfileCount;
+static Device hDev[3]; /* the root hub, then two devices */
+static char hLog[256];
+static void hNote(const char *s) { strncat(hLog, s, sizeof(hLog) - strlen(hLog) - 1); }
+static int usb_probe(int devId)
+{
+    int i;
+    if (hDev[devId].vid == 0x054C && hDev[devId].pid == 0x0268)
+        return 1; /* a DualShock 3 */
+    for (i = 0; i < padProfileCount; i++)
+        if (padProfiles[i].vid == hDev[devId].vid && padProfiles[i].pid == hDev[devId].pid)
+            return 1;
+    return 0;
+}
+static int usb_connect(int devId)
+{
+    int pad;
+    for (pad = 0; pad < MAX_PADS; pad++)
+        if (ds34pad[pad].devId == -1 && ds34pad[pad].enabled)
+            break;
+    if (pad >= MAX_PADS)
+        return 1;
+    ds34pad[pad].devId = devId;
+    ds34pad[pad].vid = hDev[devId].vid;
+    ds34pad[pad].pid = hDev[devId].pid;
+    return 0;
+}
+static int usb_disconnect(int devId) { (void)devId; hNote("D "); return 0; }
+static void usb_release(int pad)
+{
+    char s[8];
+    snprintf(s, sizeof(s), "R%d ", pad);
+    hNote(s);
+    ds34pad[pad].devId = -1;
+}
+static int hNone(int devId) { (void)devId; return 0; }
+static UsbDriver usb_driver = {NULL, NULL, "ds34usb", usb_probe, usb_connect, usb_disconnect, 0, 0, 0, 0, 0, NULL};
+static UsbDriver hHub = {NULL, NULL, "hub", hNone, NULL, NULL, 0, 0, 0, 0, 0, NULL};
+static UsbDriver hMass = {NULL, NULL, "usbmass", hNone, NULL, NULL, 0, 0, 0, 0, 0, NULL};
+static int UsbRegisterDriver(UsbDriver *d) { hNote("G "); return doRegisterDriver(d, NULL); }
+static int UsbUnregisterDriver(UsbDriver *d) { hNote("U "); return doUnregisterDriver(d); }
+@@REPROBE@@
+/* Boot: the hub driver, the menu's driver with the profiles it has at its start, a storage driver after it; then the
+   profiles arrive (SET_PROFILES) and usb_reprobe runs */
+static void boot(unsigned vid1, unsigned pid1, unsigned vid2, unsigned pid2, int enabled, int profilesAtStart)
+{
+    int i;
+    memset(hDev, 0, sizeof(hDev));
+    hDev[1].id = 1;
+    hDev[1].vid = vid1;
+    hDev[1].pid = pid1;
+    hDev[2].id = 2;
+    hDev[2].vid = vid2;
+    hDev[2].pid = pid2;
+    hDev[1].deviceStatus = hDev[2].deviceStatus = DEVICE_READY;
+    hDev[0].childListStart = &hDev[1];
+    hDev[1].next = vid2 ? &hDev[2] : NULL;
+    memPool.deviceTreeRoot = &hDev[0];
+    drvListStart = drvListEnd = drvAutoLoader = NULL;
+    usb_driver.next = usb_driver.prev = hHub.next = hHub.prev = hMass.next = hMass.prev = NULL;
+    for (i = 0; i < MAX_PADS; i++) {
+        ds34pad[i].devId = -1;
+        ds34pad[i].enabled = (enabled >> i) & 1;
+    }
+    memset(padProfiles, 0, sizeof(padProfiles));
+    padProfiles[0].vid = 0x0079;
+    padProfiles[0].pid = 0x0006;
+    padProfileCount = profilesAtStart;
+    doRegisterDriver(&hHub, NULL);
+    doRegisterDriver(&usb_driver, NULL);
+    doRegisterDriver(&hMass, NULL);
+    padProfileCount = 1;
+    hLog[0] = '\0';
+}
+static int holds(unsigned vid, unsigned pid)
+{
+    int pad;
+    for (pad = 0; pad < MAX_PADS; pad++)
+        if (ds34pad[pad].devId != -1 && ds34pad[pad].vid == vid && ds34pad[pad].pid == pid)
+            return 1;
+    return 0;
+}
+int main(void)
+{
+    /* 1: the profiled pad plugged in before the profiles came, the menu's one port free */
+    boot(0x0079, 0x0006, 0, 0, 1, 0);
+    if (hDev[1].devDriver != NULL || holds(0x0079, 0x0006)) return 1; /* turned down at the driver's start */
+    usb_reprobe();
+    if (strcmp(hLog, "U G ") || hDev[1].devDriver != &usb_driver || !holds(0x0079, 0x0006)) { printf("1: %s\n", hLog); return 2; }
+    if (drvListStart != &hHub || hHub.next != &hMass || hMass.next != &usb_driver || drvListEnd != &usb_driver) return 3;
+    /* 2: the menu's one port held by a DualShock 3: nothing moves */
+    boot(0x054C, 0x0268, 0x0079, 0x0006, 1, 0);
+    usb_reprobe();
+    if (hLog[0] || !holds(0x054C, 0x0268) || hDev[2].devDriver != NULL) { printf("2: %s\n", hLog); return 4; }
+    /* 3: both ports read, a DualShock 3 in one: it is let go before the driver goes, and both are taken again */
+    boot(0x054C, 0x0268, 0x0079, 0x0006, 3, 0);
+    usb_reprobe();
+    if (strcmp(hLog, "R0 U G ") || !holds(0x054C, 0x0268) || !holds(0x0079, 0x0006) || hDev[1].devDriver != &usb_driver ||
+        hDev[2].devDriver != &usb_driver) { printf("3: %s\n", hLog); return 5; }
+    /* 4: the pad taken at the start already (its profile was there): nothing moves */
+    boot(0x0079, 0x0006, 0, 0, 3, 1);
+    usb_reprobe();
+    if (hLog[0] || !holds(0x0079, 0x0006)) { printf("4: %s\n", hLog); return 6; }
+    /* 5: no profile: nothing moves */
+    boot(0x0079, 0x0006, 0, 0, 1, 0);
+    padProfileCount = 0;
+    usb_reprobe();
+    if (hLog[0] || hDev[1].devDriver != NULL) { printf("5: %s\n", hLog); return 7; }
+    printf("reprobe ok\n");
+    return 0;
+}
+'''
+
+
+def check_reprobe(cc, td):
+    usbd = blank(usbd_driver)
+    names = ('probeDeviceTree', 'doRegisterDriver', 'disconnectDriver', 'doUnregisterDriver')
+    found = {n: usbd_driver[s:e] for n, s, e in functions(usbd, '|'.join(names))}
+    reprobe = functions(blank(menu), 'usb_reprobe')
+    if len(found) != len(names) or not reprobe:
+        return port('menu ds34usb.c: usb_reprobe, or usbd-ra driver.c\'s %s, not found' % ', '.join(n for n in names if n not in found))
+    usbd_src = 'static sceUsbdLddOps *drvListStart, *drvListEnd, *drvAutoLoader;\n' + '\n'.join(found[n] for n in names)
+    prog = REPROBE_PROG.replace('@@USBD@@', usbd_src).replace('@@REPROBE@@', menu[reprobe[0][1]:reprobe[0][2]])
+    (td / 'reprobe.c').write_text(prog, encoding='utf-8')
+    r = subprocess.run([cc, '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', '-I', str(root), str(td / 'reprobe.c'),
+                        '-o', str(td / 'reprobe.exe')], capture_output=True, text=True)
+    if r.returncode:
+        return port('usb_reprobe with usbd-ra\'s driver list must build on the PC: ' + r.stderr[-800:])
+    r = subprocess.run([str(td / 'reprobe.exe')], capture_output=True, text=True)
+    if r.returncode:
+        port('menu ds34usb.c: a profiled pad plugged in before its profile came, check %d: %s' % (r.returncode, r.stdout.strip()))
+    if not re.search(r'^\s*I_sceUsbdUnregisterLdd\s*$', text('modules/ds34usb/iop/imports.lst'), re.M):
+        port('modules/ds34usb/iop/imports.lst: no I_sceUsbdUnregisterLdd for usb_reprobe')
+    if not re.search(r'\bif\s*\(\s*!\s*pads_learn\s*\)\s*usb_reprobe\s*\(\s*\)\s*;', body(blank(menu), 'ds34usb_set_profiles')):
+        port('menu ds34usb.c: ds34usb_set_profiles does not call usb_reprobe once the setup screen is closed')
+
+
 check_last_member()
 check_bit19_clear()
 check_undef()
@@ -524,10 +829,15 @@ with tempfile.TemporaryDirectory() as td:
                 fail.append('pad129 check %d failed: %s' % (r.returncode, r.stdout.strip()))
     if pads:
         check_dir(cc, td)
+    if prof:
+        check_map_pressure(cc, td)
+    if menu and usbd_driver:
+        check_reprobe(cc, td)
 
 print('\n'.join(fail) or 'build129 pad: PADEMU, ee_core, the launcher and the menu driver wired; decode-only build; the setup '
       'screen finds a button, an active-low button, a hat, a trigger and a stick (inverted too), ignores a counter; the game map '
       'applies; this port: PadEmuArgs last, bit 19 clear with no block, memcpy and memset undefined, no Sony VID takes a '
       'profile, fmRename and mode 0666, PADS beside the settings and never on raw APA, the USB build only, the real report '
-      'length, a late signal dropped, padprofile.o rebuilt')
+      'length, a late signal dropped, padprofile.o rebuilt, the game map moves pressure with the press, a pad plugged in '
+      'before its profile is taken')
 sys.exit(1 if fail else 0)
