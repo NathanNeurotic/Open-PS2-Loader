@@ -203,7 +203,11 @@ slotOf = mmce[mmce.index('static int mmceSlotOf('):]
 slotOf = slotOf[:slotOf.index('\n}\n') + 3]
 lacks = mmce[mmce.index('static int mmceLacksBusyQuery('):]
 lacks = lacks[:lacks.index('\n}\n') + 3]
-defines = ''.join(line + '\n' for line in mmce.splitlines() if line.startswith(('#define MMCE_GAMEID_START', '#define MMCE_GAMEID_QUERY', '#define MMCE_CARD_READY', '#define MMCE_HISTORY_SWITCH')))
+startKey = mmce[mmce.index('static int mmceStartPressed('):]
+startKey = startKey[:startKey.index('\n}\n') + 3]
+sleepKey = mmce[mmce.index('static void mmceSleepReadingStart('):]
+sleepKey = sleepKey[:sleepKey.index('\n}\n') + 3]
+defines = ''.join(line + '\n' for line in mmce.splitlines() if line.startswith(('#define MMCE_GAMEID_START', '#define MMCE_GAMEID_QUERY', '#define MMCE_CARD_READY', '#define MMCE_HISTORY_SWITCH', '#define MMCE_START_SAMPLE')))
 loop = send[send.index('    int queryFailures = 0;'):]
 mmce_program = r'''
 #include <assert.h>
@@ -213,8 +217,9 @@ mmce_program = r'''
 #define diagLog(...) ((void)(0 && printf(__VA_ARGS__)))
 #define KEY_START 1
 #define _STR_MMCE_GAMEID_CARD_WAIT 0
+#define _STR_PLEASE_WAIT 1
 ''' + defines + r'''
-static int script[512], scriptLen, calls, startPressed, slept, rendered, noBusyQuery, asked[2], lastAsked = -1;
+static int script[512], scriptLen, calls, startPressed, slept, rendered, acked, noBusyQuery, asked[2], lastAsked = -1;
 /* The script is the card's state over time, read by the busy query (0x2). The presence probe (0x1) reads the
    same state: a card whose next busy answer is -1 is silent for everything, so presence fails too and uses
    up that slot -- unless noBusyQuery, a firmware that answers presence but has no busy query at all. -2 is a
@@ -237,17 +242,23 @@ static int fileXioDevctl(const char *d, int cmd, void *a, unsigned al, void *b, 
     calls++;
     return answer < 0 ? -1 : answer;
 }
-static void readPads(void) {}
-static int getKeyOn(int key) { (void)key; return startPressed; }
-static const char *_l(int id) { (void)id; return "%d"; }
-static void guiRenderTextScreen(const char *s) { (void)s; rendered++; }
+/* START: presses still to come, each read at once (startPressed), or a tap held from tapFrom until tapUntil, in us
+   of sleep (slept). readPads samples the pad as pad.c does (the last sample becomes the old one) and getKeyOn is an
+   edge between the two: each press is seen once, and a tap that begins and ends between two reads is never seen. */
+static int tapFrom = -1, tapUntil = -1, padDown, padWasDown;
+static void tap(int from, int until) { tapFrom = from; tapUntil = until; padDown = padWasDown = 0; }
+static void readPads(void) { padWasDown = padDown; padDown = tapFrom >= 0 && slept >= tapFrom && slept < tapUntil; }
+static int getKeyOn(int key) { (void)key; if (startPressed > 0) { startPressed--; return 1; } return padDown && !padWasDown; }
+static const char *_l(int id) { return id == _STR_PLEASE_WAIT ? "Please wait." : "%d"; }
+static char lastLine[64]; /* the last frame drawn */
+static void guiRenderTextScreen(const char *s) { rendered++; acked += !strcmp(s, "Please wait."); snprintf(lastLine, sizeof(lastLine), "%s", s); }
 static void DelayThread(int us) { slept += us; }
 ''' + r'''
 static char mmceGameIdTarget[8] = "mmce0:/";
 static int mmceGameIdSwitchSeen;
 static char gameRoot[8] = "mmce0:/"; /* the slot the game is on */
 static void mmceGetDeviceRoot(char *root, size_t size) { snprintf(root, size, "%s", gameRoot); }
-''' + slotOf + lacks + wait + swapOn + swap + handoff + hist + settle + r'''
+''' + slotOf + lacks + startKey + sleepKey + wait + swapOn + swap + handoff + hist + settle + r'''
 static int sendWait(const char *mmceDevice, const char *startup)
 {
     (void)startup; /* LOG discards it here */
@@ -322,42 +333,42 @@ int main(void)
     memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1; calls = 0;
     mmceWaitSwapDone("test"); assert(calls == 1);                  /* answers and idle: ~0 ms */
     calls = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 1); /* nothing waited out: no settle */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 0 && calls == 1); /* nothing waited out: no settle */
     const int stillLoading[] = {1, 1, 0};
     memcpy(script, stillLoading, sizeof(stillLoading)); scriptLen = 3; calls = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 3); /* busy: waited out */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 1 && calls == 3); /* busy: waited out */
     const int silentThenLoading[] = {-1, -1, 1, 0};
     memcpy(script, silentThenLoading, sizeof(silentThenLoading)); scriptLen = 4; calls = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 4); /* silent, then loading: waited out */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 1 && calls == 4); /* silent, then loading: waited out */
     const int silentThenIdleCard[] = {-1, -1, 0};
     memcpy(script, silentThenIdleCard, sizeof(silentThenIdleCard)); scriptLen = 3; calls = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 3); /* silent, then idle: a swap ended between polls */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 1 && calls == 3); /* silent, then idle: a swap ended between polls */
     memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == (MMCE_CARD_READY_SILENT_MS + 199) / 200); /* never answers: bounded */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 0 && calls == (MMCE_CARD_READY_SILENT_MS + 199) / 200); /* never answers: bounded */
     noBusyQuery = 1;
     calls = slept = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 2 && slept == 0); /* presence but no busy query (asked twice): ~0 ms */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 0 && calls == 2 && slept == 0); /* presence but no busy query (asked twice): ~0 ms */
     noBusyQuery = 0;
     /* The card answers the presence probe and falls silent before the busy query: the start of its swap, not a
        firmware without the busy query. Waited out like any silence, then reported, so the caller settles. */
     const int fellSilentBetween[] = {-2, -1, 0};
     memcpy(script, fellSilentBetween, sizeof(fellSilentBetween)); scriptLen = 3; calls = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 3);
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 1 && calls == 3);
     const int fellSilentThenLoading[] = {-2, -1, -1, 1, 0};
     memcpy(script, fellSilentThenLoading, sizeof(fellSilentThenLoading)); scriptLen = 5; calls = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 5);
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 1 && calls == 5);
     /* The card's silence is on screen like the rest of its wait (a frame for every look that found it silent),
-       and START launches now: 0, so the caller does not settle a card that answers nothing. An idle card draws
-       nothing. */
+       and START launches now: 0, so the caller does not settle a card that answers nothing. The press is answered
+       at once with one "Please wait." frame. An idle card draws nothing. */
     memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1; calls = rendered = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 1 && rendered == 0);
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 0 && calls == 1 && rendered == 0);
     memcpy(script, silentThenIdleCard, sizeof(silentThenIdleCard)); scriptLen = 3; calls = rendered = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 3 && rendered == 2);
-    memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = slept = rendered = 0;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && rendered == (MMCE_CARD_READY_SILENT_MS + 199) / 200);
-    calls = slept = rendered = 0;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 1 && calls == 3 && rendered == 2);
+    memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = slept = rendered = acked = 0;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 0 && rendered == (MMCE_CARD_READY_SILENT_MS + 199) / 200);
+    calls = slept = rendered = acked = 0;
     startPressed = 1;
-    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 1 && slept == 0 && rendered == 0);
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 0 && calls == 1 && slept == 0 && rendered == 1 && acked == 1);
     startPressed = 0;
 
     /* The last look before the handoff always ends on the game's own slot (its ISO is there). A Game ID send to
@@ -383,14 +394,36 @@ int main(void)
     assert(mmceWaitBeforeHandoff() == 0 && calls == 1 && asked[1] == 2 && asked[0] == 0);
     strcpy(gameRoot, "mmce0:/");
     strcpy(mmceGameIdTarget, "mmce0:/");
-    /* START during the other slot's silence ends that look only: the game's own slot is still looked at. */
+    /* On screen the two looks are one wait, so one START press ends both (getKeyOn is an edge: read once).
+       Pressed during the other slot's look, silent or loading, the game's own slot is still asked, but nothing
+       more is waited out: an idle card is nothing to wait for, a silent one launches now (0: no settle), and one
+       still loading returns at once, as after START in its own wait (1: the caller settles its file system). The
+       press is answered once ("Please wait."), not once per look. */
+    strcpy(mmceGameIdTarget, "mmce1:/");
     const int otherSilentGameIdle[] = {-1, 0};
     memcpy(script, otherSilentGameIdle, sizeof(otherSilentGameIdle)); scriptLen = 2;
-    strcpy(mmceGameIdTarget, "mmce1:/");
-    calls = 0; asked[0] = asked[1] = 0;
+    calls = rendered = acked = 0; asked[0] = asked[1] = 0;
     startPressed = 1;
-    assert(mmceWaitBeforeHandoff() == 0 && calls == 2 && asked[1] == 1 && asked[0] == 2 && lastAsked == 0);
-    startPressed = 0;
+    assert(mmceWaitBeforeHandoff() == 0 && calls == 2 && asked[1] == 1 && asked[0] == 2 && lastAsked == 0 && rendered == 1 && acked == 1);
+    const int bothSilent[] = {-1, -1};
+    memcpy(script, bothSilent, sizeof(bothSilent)); scriptLen = 2;
+    calls = slept = rendered = acked = 0; asked[0] = asked[1] = 0;
+    startPressed = 1;
+    assert(mmceWaitBeforeHandoff() == 0 && calls == 2 && asked[1] == 1 && asked[0] == 1 && lastAsked == 0 && slept == 0 && rendered == 1 && acked == 1);
+    const int otherLoadingGameSilent[] = {1, 1, -1};
+    memcpy(script, otherLoadingGameSilent, sizeof(otherLoadingGameSilent)); scriptLen = 3;
+    calls = slept = rendered = acked = 0; asked[0] = asked[1] = 0;
+    startPressed = 1;
+    assert(mmceWaitBeforeHandoff() == 1 && calls == 3 && asked[1] == 3 && asked[0] == 1 && lastAsked == 0 && slept == 0 && rendered == 1 && acked == 1);
+    const int otherSilentGameLoading[] = {-1, 1};
+    memcpy(script, otherSilentGameLoading, sizeof(otherSilentGameLoading)); scriptLen = 2;
+    calls = slept = rendered = acked = 0; asked[0] = asked[1] = 0;
+    startPressed = 1;
+    assert(mmceWaitBeforeHandoff() == 1 && calls == 3 && asked[1] == 1 && asked[0] == 3 && lastAsked == 0 && slept == 0 && rendered == 1 && acked == 1);
+    /* The press holds for that one handoff only: the next one waits a silence out again. */
+    memcpy(script, bothSilent, sizeof(bothSilent)); scriptLen = 2; calls = rendered = acked = 0;
+    assert(startPressed == 0 && mmceWaitBeforeHandoff() == 0 && calls == 2 * ((MMCE_CARD_READY_SILENT_MS + 199) / 200) && acked == 0 &&
+           rendered == 2 * ((MMCE_CARD_READY_SILENT_MS + 199) / 200));
     strcpy(mmceGameIdTarget, "mmce0:/");
 
     /* The history-write wait: idle for the whole window, a switch that begins (busy, or silence), skipped. */
@@ -438,9 +471,49 @@ int main(void)
     assert(mmceGameIdSettle(1000) == 0 && calls == 0); /* no send this launch: nothing to settle */
     strcpy(mmceGameIdTarget, "mmce0:/");
 
+    /* START is read about once a frame while a wait sleeps between its looks at the card (getKeyOn is an edge
+       between two reads), so a quick tap between two looks still launches, at the next look; the card is still
+       asked once per interval. Each press is answered once with "Please wait.". */
+    memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1;
+    calls = slept = rendered = acked = 0;
+    tap(250 * 1000, 350 * 1000); /* the silent phase looks at 200 and 400 ms */
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test", NULL) == 0 && calls == 3 && slept == 260 * 1000 && acked == 1 && !strcmp(lastLine, "Please wait."));
+    rendered = acked = 0;
+    tap(300 * 1000, 400 * 1000); /* the card wait looks at 250 and 500 ms */
+    assert(run(stuckBusy, 1) == 1 && calls == 4 && slept == 310 * 1000 && acked == 1 && !strcmp(lastLine, "Please wait."));
+    memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1;
+    calls = slept = rendered = acked = 0;
+    mmceGameIdSwitchSeen = 0;
+    tap(600 * 1000, 700 * 1000); /* the history window looks at 500 and 750 ms */
+    assert(mmceWaitHistorySwitch("mmce0:/", "test") == 0 && calls == 4 && slept == 600 * 1000 && acked == 1);
+    /* A tap the history window catches while the card starts its switch: the switch is still reported (1), so
+       the caller settles its file system, and its wait launches at once on the held press. */
+    const int idleThenBusyAtTap[] = {0, 0, 0, 1};
+    memcpy(script, idleThenBusyAtTap, sizeof(idleThenBusyAtTap)); scriptLen = 4;
+    calls = slept = rendered = acked = 0;
+    tap(600 * 1000, 700 * 1000);
+    assert(mmceWaitHistorySwitch("mmce0:/", "test") == 1 && calls == 5 && slept == 600 * 1000 && acked == 1);
+    /* The card wait reads START before either bound: a press caught in its last sleep launches (1), even on the
+       look that would have ended the wait unconfirmed (-1) or at the cap (0). */
+    memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1;
+    calls = slept = rendered = acked = 0;
+    tap(7100 * 1000, 7200 * 1000); /* the 30th silent look, at 7250 ms, ends the wait unconfirmed */
+    assert(mmceWaitCardReady("mmce0:/", NULL) == 1 && calls == 30 && slept == 7100 * 1000 && acked == 1);
+    tap(-1, -1);
+    calls = slept = 0;
+    assert(mmceWaitCardReady("mmce0:/", NULL) == -1 && calls == 30 && slept == 29 * 250 * 1000);
+    memcpy(script, stuckBusy, sizeof(stuckBusy)); scriptLen = 1;
+    calls = slept = rendered = acked = 0;
+    tap(179900 * 1000, 179950 * 1000); /* the look at 180 s ends the wait at the cap */
+    assert(mmceWaitCardReady("mmce0:/", NULL) == 1 && calls == 721 && slept == 179910 * 1000 && acked == 1);
+    tap(-1, -1);
+    calls = slept = rendered = acked = 0;
+    assert(mmceWaitCardReady("mmce0:/", NULL) == 0 && calls == 721 && acked == 0);
+    mmceGameIdSwitchSeen = 0;
+
     /* No slot resolved (Auto mode after the card was taken out): neither wait asks anything or waits. */
     memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = slept = 0;
-    assert(mmceWaitSwapDoneOn("", "test") == 0 && calls == 0 && slept == 0);
+    assert(mmceWaitSwapDoneOn("", "test", NULL) == 0 && calls == 0 && slept == 0);
     assert(mmceWaitHistorySwitch("", "test") == 0 && calls == 0 && slept == 0);
     return 0;
 }
@@ -451,7 +524,7 @@ with tempfile.TemporaryDirectory(prefix='ripps2-mmce-') as temp:
     exe = Path(temp) / 'mmce.exe'
     subprocess.run(['cc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', str(src), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
-print('ok   MMCE Game ID: failed busy queries are retried and never read as ready; a silent card is a swap, waited out on screen before the handoff (START launches now); the card\'s own switch after the history write is waited out too')
+print('ok   MMCE Game ID: failed busy queries are retried and never read as ready; a silent card is a swap, waited out on screen before the handoff (START, read about once a frame and before the wait\'s bounds, launches now: one press for both slots, answered at once with "Please wait."); the card\'s own switch after the history write is waited out too')
 print('ok   MMCE: "no busy query" only when the card answers presence and fails the busy query again; the handoff look always ends on the game\'s slot; a send to the other slot does not skip the history watch')
 
 # The launch resolves its core, the Neutrino-to-OPL-core fallback included, before the OPL core's preparation:

@@ -113,6 +113,9 @@ static unsigned char mmceEverResolved = 0;
 #define MMCE_HISTORY_SWITCH_WINDOW_MS 3500
 #define MMCE_HISTORY_SWITCH_POLL_MS   250
 #define MMCE_CARD_READY_SILENT_MS     7500 // the longest the card may not answer at all (mmceigr's bound)
+// START is read this often (about a frame) while a card wait sleeps between two looks at the card: a quick tap is
+// shorter than a look's interval and would otherwise fall between two reads (getKeyOn is an edge between them).
+#define MMCE_START_SAMPLE_US          (20 * 1000)
 /* The MMCE worker checks its abort flag between 32 KB staged reads. A
  * 500 ms wait gives a slow card time to reach the next safe checkpoint. */
 #define MMCE_ART_ABORT_WAIT_TICKS     500
@@ -133,20 +136,61 @@ static int mmceModLoaded = 0;          // latched by mmceLoadModules; read by mm
 static char mmceGameIdTarget[8] = {0}; // last device a GameID 0x8 switch was SENT to (mmceGameIdSettle polls it)
 static int mmceGameIdSwitchSeen = 0;   // mmceSendGameID saw the card switch for its send: the history write will not switch it again
 
+// START during a card's wait (getKeyOn is an edge between two reads: each press is seen once). *latch is the wait's
+// own: it keeps the press for the rest of that wait, which can be more than one look (the handoff's look at the
+// other slot, then at the game's): one press launches, so a later look still asks its card but waits nothing out.
+// The press is answered on screen at once: what follows START can still take a moment (the card's file system
+// coming back before the game's files are opened on it), and the wait's last frame left standing reads as a freeze.
+static int mmceStartPressed(int *latch)
+{
+    if (*latch)
+        return 1;
+    readPads();
+    if (!getKeyOn(KEY_START))
+        return 0;
+    *latch = 1;
+    guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
+    return 1;
+}
+
+// A card wait's sleep between two looks at the card, reading START about once a frame (MMCE_START_SAMPLE_US): a
+// tap is shorter than the look's interval and would otherwise fall between two reads. It ends early on START, so
+// the wait's next look ends the wait at once. The card is still asked only once per interval.
+static void mmceSleepReadingStart(int us, int *latch)
+{
+    while (us > 0) {
+        int slice = us < MMCE_START_SAMPLE_US ? us : MMCE_START_SAMPLE_US;
+        DelayThread(slice);
+        us -= slice;
+        if (mmceStartPressed(latch))
+            return;
+    }
+}
+
 // Waits, on screen, while the card reports busy after a Game ID switch. Returns 1 when it is ready or the
-// user pressed START, 0 when it was still busy at MMCE_CARD_READY_MAX_S, -1 when the card stopped
-// answering for MMCE_CARD_READY_SILENT_MS before it reported ready (unconfirmed). The launch goes ahead in
+// user pressed START (now, or earlier in the same wait: *start, see mmceStartPressed; NULL: this wait alone),
+// 0 when it was still busy at MMCE_CARD_READY_MAX_S, -1 when the card stopped answering for
+// MMCE_CARD_READY_SILENT_MS before it reported ready (unconfirmed). START is read before either bound: a press
+// made while the wait slept launches, even on the look that would have ended the wait. The launch goes ahead in
 // every case. An SD2PSX does not answer at all while it swaps cards (sd2psXtd ps2_mmceman_task(): card exit,
 // close, 500 ms, open), so a failed query here is part of the switch, not its end.
-static int mmceWaitCardReady(const char *device)
+static int mmceWaitCardReady(const char *device, int *start)
 {
     char line[256];
-    int status, polls, silent = 0;
+    int status, polls, silent = 0, own = 0;
 
+    if (start == NULL)
+        start = &own;
     for (polls = 0;; polls++) {
         status = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
         if (status >= 0 && (status & 1) == 0)
             break; // the game's card is ready
+        int seconds = polls * MMCE_CARD_READY_POLL_US / 1000000;
+        if (mmceStartPressed(start)) {
+            LOG("MMCE: START pressed after %d s of the card's wait; launching\n", seconds);
+            diagLog("mmce: START after %d s of the card's wait; launching", seconds);
+            return 1;
+        }
         if (status >= 0)
             silent = 0;
         else if (++silent * (MMCE_CARD_READY_POLL_US / 1000) >= MMCE_CARD_READY_SILENT_MS) {
@@ -155,21 +199,14 @@ static int mmceWaitCardReady(const char *device)
             diagLog("mmce: the card's busy query failed during the wait");
             return -1;
         }
-        int seconds = polls * MMCE_CARD_READY_POLL_US / 1000000;
         if (seconds >= MMCE_CARD_READY_MAX_S) {
             LOG("MMCE: the game's memory card was still busy after %d s; launching\n", seconds);
             diagLog("mmce: the game's card still busy after %d s; launching", seconds);
             return 0;
         }
-        readPads();
-        if (getKeyOn(KEY_START)) {
-            LOG("MMCE: START pressed after %d s of the card's wait; launching\n", seconds);
-            diagLog("mmce: START after %d s of the card's wait; launching", seconds);
-            return 1;
-        }
         snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), seconds);
         guiRenderTextScreen(line);
-        DelayThread(MMCE_CARD_READY_POLL_US);
+        mmceSleepReadingStart(MMCE_CARD_READY_POLL_US, start);
     }
     diagLog("mmce: the game's card ready after %d ms", polls * MMCE_CARD_READY_POLL_US / 1000);
     return 1;
@@ -306,7 +343,7 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
                 LOG("MMCE GameID %s: the card went silent after %d ms (swapping)\n", startup, waited);
                 diagLog("gameid %s: the card silent after %d ms; waiting for the swap", startup, waited);
                 mmceGameIdSwitchSeen = 1; // the card is switching for our send
-                int ready = mmceWaitCardReady(mmceDevice);
+                int ready = mmceWaitCardReady(mmceDevice, NULL);
                 if (ready < 0)
                     return -1; // never came back within the silent bound: unconfirmed
                 if (ready == 0)
@@ -327,7 +364,7 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
                 status < 0 ? "not answering" : "busy");
             diagLog("gameid %s: the card switching after %d ms", startup, waited);
             mmceGameIdSwitchSeen = 1; // the card is switching for our send
-            int ready = mmceWaitCardReady(mmceDevice);
+            int ready = mmceWaitCardReady(mmceDevice, NULL);
             if (ready < 0)
                 return -1; // the query failed mid-wait: unconfirmed
             if (ready == 0)
@@ -389,22 +426,26 @@ int mmceGameIdSettle(int timeoutMs)
 // the ones that cannot survive the swap: the ISO the game streams is on the card being swapped.
 // Returns 1 when it waited a swap out (the card was busy, or silent and then answering again), so the caller
 // lets the card's file system answer again too (mmceSettleAfterSwitch); 0 when there was nothing to wait out,
-// or when START cut the card's silence short. A busy query that fails after the presence probe answered is not
-// taken for a firmware without one on its own: the card can fall silent between the two queries, the start of
-// its swap (mmceLacksBusyQuery).
-static int mmceWaitSwapDoneOn(const char *device, const char *why)
+// or when START cut the card's silence short. START is *start's (mmceStartPressed; NULL: this look alone): pressed
+// in an earlier look of the same wait, it holds here, so this look still asks its card but waits nothing out (a
+// card still loading returns 1 at once, as after START in its own wait; a silent one returns 0). A busy query that
+// fails after the presence probe answered is not taken for a firmware without one on its own: the card can fall
+// silent between the two queries, the start of its swap (mmceLacksBusyQuery).
+static int mmceWaitSwapDoneOn(const char *device, const char *why, int *start)
 {
     if (device == NULL || device[0] == '\0')
         return 0; // no slot resolved (Auto mode after the card was taken out): nothing to watch
     char line[256];
-    int silent;
+    int silent, own = 0;
+    if (start == NULL)
+        start = &own;
     for (silent = 0; silent * 200 < MMCE_CARD_READY_SILENT_MS; silent++) {
         if (fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
             int busy = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
             if (busy >= 0 && (busy & 1)) {
                 LOG("MMCE %s: the card is still swapping; waiting\n", why);
                 diagLog("mmce %s: card still busy; waiting", why);
-                mmceWaitCardReady(device);
+                mmceWaitCardReady(device, start);
                 return 1;
             }
             // Answering and idle, or answering with no busy query: nothing in flight now. A busy query that failed
@@ -420,15 +461,14 @@ static int mmceWaitSwapDoneOn(const char *device, const char *why)
         // The card is silent, the first phase of its swap: on screen like the rest of the card's wait (a frame
         // left standing for up to MMCE_CARD_READY_SILENT_MS reads as a freeze), and START launches now. START
         // returns 0, so the handoff look does not settle a card that answers nothing (nor its file system).
-        readPads();
-        if (getKeyOn(KEY_START)) {
+        if (mmceStartPressed(start)) {
             LOG("MMCE %s: START pressed after ~%d ms of the card's silence; launching\n", why, silent * 200);
             diagLog("mmce %s: START after ~%d ms of the card's silence; launching", why, silent * 200);
             return 0;
         }
         snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), silent * 200 / 1000);
         guiRenderTextScreen(line);
-        DelayThread(200 * 1000);
+        mmceSleepReadingStart(200 * 1000, start);
     }
     LOG("MMCE %s: the card did not answer for %d ms; launching anyway\n", why, silent * 200);
     diagLog("mmce %s: card silent for %d ms; launching anyway", why, silent * 200);
@@ -439,7 +479,7 @@ void mmceWaitSwapDone(const char *why)
 {
     if (mmceGameIdTarget[0] == '\0')
         return; // no send this launch: nothing to wait for
-    mmceWaitSwapDoneOn(mmceGameIdTarget, why);
+    mmceWaitSwapDoneOn(mmceGameIdTarget, why, NULL);
 }
 
 // The last look before the IOP handoff, always ending on the game's own slot: the ISO the game streams is on it,
@@ -447,17 +487,19 @@ void mmceWaitSwapDone(const char *why)
 // window (Game ID off, the reported case) or one on this slot while a Game ID send went to the OTHER slot (two
 // cards, the game's slot covered by its VMC: the history record still goes to the first formatted card, which can
 // be the game's). Before that, when a send this launch went to the other slot, that slot too: a switch its
-// firmware deferred must not be in flight either. ~0 ms on idle cards. Returns 1 when it waited a swap out: the
-// caller then settles the file system before the handoff. Handles opened before the swap stay valid (an SD2PSX
-// closes its MMCE file handles only on the MMCE reset command, not on a card switch).
+// firmware deferred must not be in flight either. ~0 ms on idle cards. On screen the two looks are one wait, so
+// one START press ends both: pressed during the other slot's look, the game's slot is still asked, but nothing
+// more is waited out. Returns 1 when it waited a swap out: the caller then settles the file system before the
+// handoff. Handles opened before the swap stay valid (an SD2PSX closes its MMCE file handles only on the MMCE
+// reset command, not on a card switch).
 static int mmceWaitBeforeHandoff(void)
 {
     char device[8];
     mmceGetDeviceRoot(device, sizeof(device));
-    int waited = 0;
+    int waited = 0, start = 0;
     if (mmceGameIdTarget[0] != '\0' && mmceSlotOf(mmceGameIdTarget) != mmceSlotOf(device))
-        waited = mmceWaitSwapDoneOn(mmceGameIdTarget, "before handoff, the Game ID slot");
-    if (mmceWaitSwapDoneOn(device, "before handoff"))
+        waited = mmceWaitSwapDoneOn(mmceGameIdTarget, "before handoff, the Game ID slot", &start);
+    if (mmceWaitSwapDoneOn(device, "before handoff", &start))
         waited = 1;
     return waited;
 }
@@ -476,7 +518,7 @@ int mmceWaitHistorySwitch(const char *device, const char *why)
         return 0;
     }
     char line[256];
-    int polls, silent = 0;
+    int polls, silent = 0, start = 0;
     for (polls = 0; polls * MMCE_HISTORY_SWITCH_POLL_MS < MMCE_HISTORY_SWITCH_WINDOW_MS; polls++) {
         int status = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
         if (status >= 0 && (status & 1) == 0) {
@@ -490,18 +532,19 @@ int mmceWaitHistorySwitch(const char *device, const char *why)
             LOG("MMCE %s: the card is switching on its own after %d ms (%s)\n", why, polls * MMCE_HISTORY_SWITCH_POLL_MS,
                 status < 0 ? "not answering" : "busy");
             diagLog("mmce %s: the card switching on its own after %d ms", why, polls * MMCE_HISTORY_SWITCH_POLL_MS);
-            mmceWaitCardReady(device);
+            mmceWaitCardReady(device, &start);
             return 1;
         }
-        // The whole window is visible (it looked like a freeze before the launch), and START skips it.
-        readPads();
-        if (getKeyOn(KEY_START)) {
+        // The whole window is visible (it looked like a freeze before the launch), and START skips it. A press caught
+        // while the window slept is taken after one more look at the card: a card found switching then still returns
+        // 1 (mmceWaitCardReady returns at once on the held press), so the caller settles its file system.
+        if (mmceStartPressed(&start)) {
             LOG("MMCE %s: START pressed after %d ms; not watching for the card's switch\n", why, polls * MMCE_HISTORY_SWITCH_POLL_MS);
             return 0;
         }
         snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), polls * MMCE_HISTORY_SWITCH_POLL_MS / 1000);
         guiRenderTextScreen(line);
-        DelayThread(MMCE_HISTORY_SWITCH_POLL_MS * 1000);
+        mmceSleepReadingStart(MMCE_HISTORY_SWITCH_POLL_MS * 1000, &start);
     }
     LOG("MMCE %s: no card switch within %d ms\n", why, MMCE_HISTORY_SWITCH_WINDOW_MS);
     return 0;
