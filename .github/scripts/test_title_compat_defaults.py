@@ -40,9 +40,13 @@ assert 'compatmask = sbGetCompatModes(configSet, 1);' in src['src/udpfssupport.c
 for p, s in src.items():
     assert not re.search(r'sbGetCompatModes\(configSet\)|sbTitleCompatDefault\(configSet\)', s), p
 
-# The MMCE switch to Neutrino happens after the OPL-core fallback, so that fallback keeps the OPL mask.
+# The MMCE switch to Neutrino happens after the OPL-core fallback, so that fallback keeps the OPL mask: the fallback
+# is decided before the OPL core's preparation, whose IGR check runs on the OPL mask, and the Neutrino mask is taken
+# only on the Neutrino leg, after it.
 mmce = src['src/mmcesupport.c']
-assert mmce.index('sbEnsureIgrUsbDrivers(compatmask);\n\n        // VMC -> neutrino') < mmce.index('compatmask = sbGetCompatModes(configSet, 1);')
+launch = mmce[mmce.index('void mmceLaunchGame('):]
+assert launch.index('_STR_NEUTRINO_NOT_FOUND') < launch.index('sbEnsureIgrUsbDrivers(compatmask);') < launch.index('compatmask = sbGetCompatModes(configSet, 1);')
+assert launch.count('sbEnsureIgrUsbDrivers(') == 1
 
 # The settings screen saves only a change from the default it showed, so a core-limited default
 # never turns into a saved value for both cores.

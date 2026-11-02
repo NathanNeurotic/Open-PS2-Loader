@@ -113,7 +113,8 @@ void diaSetSettingsContext(int enabled);
 // button (its id, with diaListKey()). NULL turns it off.
 void diaSetListKeys(struct UIItem *ui);
 int diaListKey(void);
-int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title);
+// titleId: the _STR_ id of the title, looked up in every frame (a language swap frees translated strings), or -1.
+int diaShowKeyb(char *text, int maxLen, int hide_text, int titleId);
 void diaSetEnabled(struct UIItem *ui, int id, int enabled);
 void diaSetShowDefaultWhenEmpty(struct UIItem *ui, int id, int show);
 void diaSetVisible(struct UIItem *ui, int id, int visible);

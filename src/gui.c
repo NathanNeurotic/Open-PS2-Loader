@@ -52,6 +52,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <libvux.h>
+#include "include/riptlite.h" // LITE_HAS_NET_SOURCE / LITE_HAS_SMB_SHARE -- the Network page in a RiptOPLite build
 
 // Last Played Auto Start
 #include <time.h>
@@ -1108,6 +1109,15 @@ static int netConfigUpdater(int modified)
 
         diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &isDHCPEnabled);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &isNetBIOS);
+        // RiptOPLite has no Protocol row (dialogs.c): its one protocol is the shown one, and a build
+        // without a network games source shows none of the protocol rows, only the PS2's own address.
+#if LITE_HAS_NET_SOURCE
+        netProto = guiNetProtocolToPicker(guiNetProtocolShown());
+#elif LITE_HAS_SMB_SHARE
+        netProto = 0;                       // RetroAchievements reads its key and badges from the SMB share: keep its rows
+#else
+        netProto = -1;
+#endif
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProto);
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
@@ -1336,6 +1346,9 @@ int guiShowNetConfig(void)
     // A NET_PROTO_OFF backend has no protocol memory, so seed the protocol row to SMB -- the common
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
     int netProtoVal = guiNetProtocolToPicker(guiNetProtocolShown()); // while Off: the remembered pick
+#if !LITE_HAS_NET_SOURCE
+    netProtoVal = -1; // RiptOPLite without a network games source: no protocol rows (netConfigUpdater)
+#endif
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
     int netAccessVal = (netProtoVal == 1) ? gUdpfsAccessMode : guiNetProtocolAccess(guiNetProtocolShown());
     for (i = 0; i < 4; ++i)
@@ -1348,7 +1361,7 @@ int guiShowNetConfig(void)
     // Seed the initial grey/lock: diaExecuteDialog renders the FIRST frame before it calls
     // netConfigUpdater, so without this the first frame flashes every row enabled.
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
-    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0);
+    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0 || (!LITE_HAS_NET_SOURCE && LITE_HAS_SMB_SHARE));
     netConfigDhcpPreference = ps2_ip_use_dhcp;
     netConfigUdpfsAccess = gUdpfsAccessMode;
     netConfigLastProtocol = -1;
@@ -1389,7 +1402,8 @@ reshow_network:
         goto reshow_network;
     }
     if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL)) {
-        int netProtoVal2, netAccessVal2;
+        // Seeded with what the page showed: a RiptOPLite page has no Protocol row, and only UDPFS has Access.
+        int netProtoVal2 = netProtoVal, netAccessVal2 = netAccessVal;
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
         diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
 
@@ -2380,7 +2394,7 @@ void guiShowCoverflowConfig(void)
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, &value))
             gGridLayout = (value >= 0 && value <= GRID_LAYOUTS) ? value : 0;
         // A new layout changes how many covers a page holds, and so the cover cache: the theme loads again.
-        if (gGridLayout != keepLayout && gTheme != NULL && gTheme->grid != NULL && !thmSetGuiValue(thmGetGuiValue(), 1))
+        if (gGridLayout != keepLayout && !thmRefreshGridLayout())
             gGridLayout = keepLayout; // abandoned load: the old grid is still on screen, keep the setting with it
     }
 }
@@ -2966,6 +2980,9 @@ static int guiSettingsShowInterface(void)
     const char *ps1DupNames[] = {_l(_STR_PS1_DUPLICATES_BOTH), "Ember", "POPSTARTER", NULL};
     diaSetEnum(ui, UICFG_PS1_DUPLICATES, ps1DupNames);
     diaSetInt(ui, UICFG_PS1_DUPLICATES, gPs1Duplicates);
+    const char *listCfgNames[] = {_l(_STR_THEME), _l(_STR_ON), _l(_STR_OFF), NULL};
+    diaSetEnum(ui, UICFG_LIST_CFG_TEXT, listCfgNames);
+    diaSetInt(ui, UICFG_LIST_CFG_TEXT, gListCfgText);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -3017,6 +3034,7 @@ reshow_interface:
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
+        diaGetInt(ui, UICFG_LIST_CFG_TEXT, &gListCfgText); // read as each frame draws: nothing to rebuild
         {
             int previousCfgTitles = gCfgTitlesInLists, previousPs1Dup = gPs1Duplicates;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
@@ -3611,7 +3629,7 @@ int guiShowKeyboard(char *value, int maxLength)
     char tmp[maxLength];
     strncpy(tmp, value, maxLength);
 
-    int result = diaShowKeyb(tmp, maxLength, 0, NULL);
+    int result = diaShowKeyb(tmp, maxLength, 0, -1);
     if (result) {
         strncpy(value, tmp, maxLength);
         value[maxLength - 1] = '\0';

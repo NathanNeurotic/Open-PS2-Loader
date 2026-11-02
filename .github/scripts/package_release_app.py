@@ -27,6 +27,8 @@ ART_TEMPLATE = EXAMPLE / "ART"
 # Every RiptOPL ELF embeds the smb2man driver over libsmb2 (LGPL-2.1), so its licence text travels
 # with every kit, bundle and standalone loader download, the way the RA kit carries mbedTLS's.
 LIBSMB2_LICENCE = ROOT / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"
+# CREDITS goes with it: it is the notice that the loader uses libsmb2 under that licence (LGPL-2.1 section 6).
+CREDITS = ROOT / "CREDITS"
 APP_COMPANIONS = (
     "APPINFO.PBT",
     "title.cfg",
@@ -262,6 +264,7 @@ def stage(args: argparse.Namespace) -> None:
         raise ValueError("invalid bgm.ogg in example")
     shutil.copyfile(elf, app_dir / args.elf_name)
     shutil.copyfile(LIBSMB2_LICENCE, package / "LICENSE-LIBSMB2.txt")
+    shutil.copyfile(CREDITS, package / "CREDITS")
     cfg = replace_cfg_fields((APP_TEMPLATE / "title.cfg").read_text(encoding="utf-8"), {
         "title": args.title,
         "boot": args.elf_name,
@@ -340,6 +343,7 @@ def verify(args: argparse.Namespace) -> None:
             "OPL-PS1-AIO-Converter-GUI.url",
             "PS2RD-CHT-Manager.url",
             "LICENSE-LIBSMB2.txt",  # every loader embeds libsmb2 (LGPL-2.1)
+            "CREDITS",  # the notice that names libsmb2 and its licence
         }
         required.update(f"APPS/{args.app_name}/{name}" for name in APP_COMPANIONS)
         required.update(f"ART/{args.elf_name}_{suffix}.png" for suffix in ART_SUFFIXES)
