@@ -388,13 +388,15 @@ int mmceGameIdSettle(int timeoutMs)
 // MX4SIO leg has had this since batch S7 (mmceGameIdSettle); the MMCE-hosted legs did not, and they are
 // the ones that cannot survive the swap: the ISO the game streams is on the card being swapped.
 // Returns 1 when it waited a swap out (the card was busy, or silent and then answering again), so the caller
-// lets the card's file system answer again too (mmceSettleAfterSwitch); 0 when there was nothing to wait out.
-// A busy query that fails after the presence probe answered is not taken for a firmware without one on its own:
-// the card can fall silent between the two queries, the start of its swap (mmceLacksBusyQuery).
+// lets the card's file system answer again too (mmceSettleAfterSwitch); 0 when there was nothing to wait out,
+// or when START cut the card's silence short. A busy query that fails after the presence probe answered is not
+// taken for a firmware without one on its own: the card can fall silent between the two queries, the start of
+// its swap (mmceLacksBusyQuery).
 static int mmceWaitSwapDoneOn(const char *device, const char *why)
 {
     if (device == NULL || device[0] == '\0')
         return 0; // no slot resolved (Auto mode after the card was taken out): nothing to watch
+    char line[256];
     int silent;
     for (silent = 0; silent * 200 < MMCE_CARD_READY_SILENT_MS; silent++) {
         if (fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
@@ -415,6 +417,17 @@ static int mmceWaitSwapDoneOn(const char *device, const char *why)
                 return 0;
             }
         }
+        // The card is silent, the first phase of its swap: on screen like the rest of the card's wait (a frame
+        // left standing for up to MMCE_CARD_READY_SILENT_MS reads as a freeze), and START launches now. START
+        // returns 0, so the handoff look does not settle a card that answers nothing (nor its file system).
+        readPads();
+        if (getKeyOn(KEY_START)) {
+            LOG("MMCE %s: START pressed after ~%d ms of the card's silence; launching\n", why, silent * 200);
+            diagLog("mmce %s: START after ~%d ms of the card's silence; launching", why, silent * 200);
+            return 0;
+        }
+        snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), silent * 200 / 1000);
+        guiRenderTextScreen(line);
         DelayThread(200 * 1000);
     }
     LOG("MMCE %s: the card did not answer for %d ms; launching anyway\n", why, silent * 200);

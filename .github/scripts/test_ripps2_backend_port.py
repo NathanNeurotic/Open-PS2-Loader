@@ -214,7 +214,7 @@ mmce_program = r'''
 #define KEY_START 1
 #define _STR_MMCE_GAMEID_CARD_WAIT 0
 ''' + defines + r'''
-static int script[512], scriptLen, calls, startPressed, slept, noBusyQuery, asked[2], lastAsked = -1;
+static int script[512], scriptLen, calls, startPressed, slept, rendered, noBusyQuery, asked[2], lastAsked = -1;
 /* The script is the card's state over time, read by the busy query (0x2). The presence probe (0x1) reads the
    same state: a card whose next busy answer is -1 is silent for everything, so presence fails too and uses
    up that slot -- unless noBusyQuery, a firmware that answers presence but has no busy query at all. -2 is a
@@ -240,7 +240,7 @@ static int fileXioDevctl(const char *d, int cmd, void *a, unsigned al, void *b, 
 static void readPads(void) {}
 static int getKeyOn(int key) { (void)key; return startPressed; }
 static const char *_l(int id) { (void)id; return "%d"; }
-static void guiRenderTextScreen(const char *s) { (void)s; }
+static void guiRenderTextScreen(const char *s) { (void)s; rendered++; }
 static void DelayThread(int us) { slept += us; }
 ''' + r'''
 static char mmceGameIdTarget[8] = "mmce0:/";
@@ -346,6 +346,19 @@ int main(void)
     const int fellSilentThenLoading[] = {-2, -1, -1, 1, 0};
     memcpy(script, fellSilentThenLoading, sizeof(fellSilentThenLoading)); scriptLen = 5; calls = 0;
     assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 5);
+    /* The card's silence is on screen like the rest of its wait (a frame for every look that found it silent),
+       and START launches now: 0, so the caller does not settle a card that answers nothing. An idle card draws
+       nothing. */
+    memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1; calls = rendered = 0;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 1 && rendered == 0);
+    memcpy(script, silentThenIdleCard, sizeof(silentThenIdleCard)); scriptLen = 3; calls = rendered = 0;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 1 && calls == 3 && rendered == 2);
+    memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = slept = rendered = 0;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && rendered == (MMCE_CARD_READY_SILENT_MS + 199) / 200);
+    calls = slept = rendered = 0;
+    startPressed = 1;
+    assert(mmceWaitSwapDoneOn("mmce0:/", "test") == 0 && calls == 1 && slept == 0 && rendered == 0);
+    startPressed = 0;
 
     /* The last look before the handoff always ends on the game's own slot (its ISO is there). A Game ID send to
        the other slot (two cards, the game's slot covered by its VMC) adds that slot first; it does not replace
@@ -369,6 +382,15 @@ int main(void)
     calls = 0; asked[0] = asked[1] = 0;
     assert(mmceWaitBeforeHandoff() == 0 && calls == 1 && asked[1] == 2 && asked[0] == 0);
     strcpy(gameRoot, "mmce0:/");
+    strcpy(mmceGameIdTarget, "mmce0:/");
+    /* START during the other slot's silence ends that look only: the game's own slot is still looked at. */
+    const int otherSilentGameIdle[] = {-1, 0};
+    memcpy(script, otherSilentGameIdle, sizeof(otherSilentGameIdle)); scriptLen = 2;
+    strcpy(mmceGameIdTarget, "mmce1:/");
+    calls = 0; asked[0] = asked[1] = 0;
+    startPressed = 1;
+    assert(mmceWaitBeforeHandoff() == 0 && calls == 2 && asked[1] == 1 && asked[0] == 2 && lastAsked == 0);
+    startPressed = 0;
     strcpy(mmceGameIdTarget, "mmce0:/");
 
     /* The history-write wait: idle for the whole window, a switch that begins (busy, or silence), skipped. */
@@ -429,7 +451,7 @@ with tempfile.TemporaryDirectory(prefix='ripps2-mmce-') as temp:
     exe = Path(temp) / 'mmce.exe'
     subprocess.run(['cc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', '-Wno-unused-function', str(src), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
-print('ok   MMCE Game ID: failed busy queries are retried and never read as ready; a silent card is a swap, waited out before the handoff; the card\'s own switch after the history write is waited out too')
+print('ok   MMCE Game ID: failed busy queries are retried and never read as ready; a silent card is a swap, waited out on screen before the handoff (START launches now); the card\'s own switch after the history write is waited out too')
 print('ok   MMCE: "no busy query" only when the card answers presence and fails the busy query again; the handoff look always ends on the game\'s slot; a send to the other slot does not skip the history watch')
 
 # The launch resolves its core, the Neutrino-to-OPL-core fallback included, before the OPL core's preparation:
