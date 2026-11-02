@@ -176,6 +176,8 @@ Start + Select** no longer leaves the game at once: it **pauses** the game under
 
 Up and Down move; the confirm and back buttons are the ones OPL's own menus use.
 The console's power button still works while the menu is open: once powers off, twice exits.
+In RetroAchievements builds the PC's reset (**RAR1**) leaves the game at once, as before, and does not open
+the menu.
 
 **Cheats, live.** The game's `.cht` file is read when the game starts (*Cheats* on in the game's
 settings, as before); every cheat comes along, ticked or not, and the menu turns them on and off while
@@ -225,7 +227,10 @@ into the picture the game is showing, which it finds through the same GS write b
   so there the menu is a small program of its own, `igrovl.elf`, that the loader copies into the top 16 KB
   of the module area (0xCC000 to 0xD0000) only for a launch with *In-Game Menu* on. With the menu off
   nothing is copied and the module area is what it always was. A game whose modules are moved elsewhere
-  (`mod_storage_location_list`), or run past 0xCC000, gets the plain combo in those builds.
+  (`mod_storage_location_list`), or run past 0xCC000, gets the plain combo in those builds, and with
+  **Debug Colors** on the combo blinks grey first. The modules run past it when a launch carries many of them
+  beside RetroAchievements telemetry (212 KB lie below the menu; the experimental achievement cards alone
+  take 30 KB of them).
 * Not in the IGS (`EXTRA_FEATURES=1`) and freeze-report (`INGAMEDIAG=1`) builds: `ee_core` has no room
   for both. Those keep the plain combo and have no *In-Game Menu* row. `make IGR_MENU=0` leaves it out of
   a standard build too.
@@ -272,7 +277,7 @@ the usual reset colours:
 | **Purple** | No frame was seen: the game set its display in a way the GS write tracker did not record, or in a format or size the panel cannot use |
 | **Yellow** | The game's VIF1 or GIF transfers never went idle while paused, or VIF1 was stalled: the menu will not draw over a transfer in flight |
 | **Mint green** | The first page was composed but VIF1 did not take it |
-| **Grey** | The menu itself was not there to run (RetroAchievements editions: no overlay for this launch) |
+| **Grey** | The menu itself was not there to run (RetroAchievements builds: this launch had no room for it, see *Where it works* above) |
 
 Report the colour with the game's ID and the device it runs from. No blink at all with Debug Colors on
 means the combination never reached the menu: check the list under *Nothing happens* first.
