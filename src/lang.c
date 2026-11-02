@@ -183,11 +183,15 @@ static int lngLoadFromFile(char *path, char *name)
             newL[strId] = internalEnglish[strId];
             strId++;
         }
+        // The GUI thread draws these strings under the GUI lock, and lngAddLanguages runs this on the IO thread when
+        // a device with the saved language comes up: publish the new strings and free the old ones under the same
+        // lock (YAOPL b45a592d, Roman Kelesidis). lngFreeFromFile still sees the old guiLangID and nValidEntries.
+        guiLock();
         lang_strs = newL;
         lngFreeFromFile(curL);
-
         // remember how many entries were read from the file (for the free later)
         nValidEntries = newEntries;
+        guiUnlock();
 
         // "lang_" + language name + ".lng": parent path can exceed 128 bytes.
         size_t dirLen = strlen(path) - strlen(name) - 9;
@@ -471,14 +475,18 @@ int lngSetGuiValue(int langID)
                     return 1;
                 }
             }
-            /* Free the previously-loaded foreign lang_strs before switching to
-               internalEnglish. guiLangID is still non-zero here so lngFreeFromFile's
-               guard correctly allows the free; nValidEntries still holds the old
+            /* Switch to internalEnglish and free the previously-loaded foreign lang_strs, under the GUI lock as in
+               lngLoadFromFile (lngPublishLanguages reaches this on the IO thread too). English is published
+               before the old table is freed, so a frame never finds a freed table. guiLangID is still non-zero
+               here so lngFreeFromFile's guard correctly allows the free; nValidEntries still holds the old
                file-entry count so the per-entry loop is correctly bounded. */
-            lngFreeFromFile(lang_strs);
+            guiLock();
+            char **oldL = lang_strs;
             lang_strs = internalEnglish;
+            lngFreeFromFile(oldL);
             guiLangID = 0;
             nValidEntries = LANG_STR_COUNT;
+            guiUnlock();
             // lang switched back to internalEnglish, reload default font
             fntLoadDefault(NULL);
             thmSetGuiValue(thmGetGuiValue(), 1);
