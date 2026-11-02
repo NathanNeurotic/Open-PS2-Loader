@@ -16,8 +16,9 @@ It also pins the structure smb2.c relies on: smb2.c provides every function smb.
 the oplutils exports and smb_mcemu bind to those names), smb_Close() never waits on smb_io_sema
 (oplShutdown() calls it with the semaphore held), every function that waits on it signals it before
 each return, and smbinit's SMB1 hash callback is never called.
-That the in-game logon sends and hashes the same user name and NTLM domain as the menu's is checked
-by test_smb2_logon_parity.py, which runs both against one fake server.
+That the in-game logon sends and hashes the same user name and NTLM domain as the menu's, and sends
+the same NTLMv2 AV pairs, is checked by test_smb2_logon_parity.py, which runs both against one fake
+server.
 This is a host regression check, not a console test. The end-to-end check against a real server is
 tests/smb2-live/run.sh (needs Samba).
 """

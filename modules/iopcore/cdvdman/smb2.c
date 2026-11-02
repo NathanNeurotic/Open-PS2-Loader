@@ -78,8 +78,9 @@
 #define NTLM_CLIENT_FLAGS (NTLMSSP_NEGOTIATE_UNICODE | NTLMSSP_REQUEST_TARGET | NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_NTLM | \
                            NTLMSSP_NEGOTIATE_ALWAYS_SIGN | NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY | NTLMSSP_NEGOTIATE_TARGET_INFO | NTLMSSP_NEGOTIATE_128)
 
-#define MSV_AV_EOL       0
-#define MSV_AV_TIMESTAMP 7
+#define MSV_AV_EOL         0
+#define MSV_AV_TIMESTAMP   7
+#define MSV_AV_TARGET_NAME 9
 
 int smb_io_sema = -1;
 
@@ -108,8 +109,9 @@ static u32 max_read, max_write;
 
 static char user_name[33];
 static char pass_word[33];
+static char spn[32]; // "cifs/" and the server as smb2man names it: up to 15 + ":" + 10 characters
 
-static u8 ntlm_ti[SMB2_TI_MAX];
+static u8 ntlm_ti[SMB2_TI_MAX + 4 + 2 * sizeof(spn) + 4]; // with room for an MsvAvTargetName and an EOL
 
 static struct
 {
@@ -483,8 +485,14 @@ int smb_NegotiateProtocol(char *SMBServerIP, int SMBServerPort, char *Username, 
     pass_word[sizeof(pass_word) - 1] = '\0';
 
     server_addr.s_addr = pinet_addr(SMBServerIP);
-    server_port = (u16)SMBServerPort;
+    // Port 0 is port 445, as in the menu's logon: smb2man.c then names the server without a port,
+    // and libsmb2 connects to 445. Connecting to port 0 would retry here forever.
+    server_port = (u16)(SMBServerPort > 0 ? SMBServerPort : 445);
     *capabilities = 0;
+
+    // The SPN the logon names the server by, as the menu's does: libsmb2 sends "cifs/" and the
+    // server as smb2man.c passes it to smb2_connect_share(), "<ip>", or "<ip>:<port>" off port 445.
+    sprintf(spn, (SMBServerPort > 0 && SMBServerPort != 445) ? "cifs/%.15s:%d" : "cifs/%.15s", SMBServerIP, SMBServerPort);
 
     // As smb.c: keep trying until the server answers. Without it there is no game to boot.
     for (;;) {
@@ -546,8 +554,14 @@ int smb_SessionSetupAndX(u32 capabilities)
     static smb2auth_hash_t h;
     u8 nthash[16], *nt, *blob;
     const char *user;
-    int len, off, tilen, domlen, ulen, pwlen, bloblen, has_timestamp = 0;
+    int len, off, inlen, tilen, domlen, ulen, pwlen, bloblen, has_timestamp = 0;
     u32 secoff, seclen, status, tioff;
+
+    // The longest AUTHENTICATE_MESSAGE fits the packet: header, domain, user, LM response, then
+    // NtChallengeResponse (NTProofStr, the blob's header, its AV pairs and Z(4)).
+    _Static_assert(24 + 64 + sizeof(domain) + 2 * (sizeof(user_name) - 1) + 24 + 16 + 28 + sizeof(ntlm_ti) + 4 <=
+                       SMB2_BUF_SIZE - SMB2_HDR_SIZE,
+                   "AUTHENTICATE_MESSAGE larger than the packet buffer");
 
     (void)capabilities;
 
@@ -588,25 +602,54 @@ int smb_SessionSetupAndX(u32 capabilities)
         domlen = 0, tioff = 0;
     memcpy(domain, tok + tioff, domlen);
 
-    // TargetInfo (40): copied into the NTLMv2 blob. Look for the server's timestamp in it.
+    /*
+      TargetInfo (40): sent back in the NTLMv2 blob as libsmb2 sends it in the menu's logon
+      (lib/ntlmssp.c): each AV pair copied, and in front of each MsvAvEOL an MsvAvTargetName that
+      names the server by spn. A server set to check it (on Windows, "Server SPN target name
+      validation level") can refuse a logon without one. Lists that break MS-NLMP 2.2.2.1 go out as
+      libsmb2 sends them as well: an EOL is kept without a value, whatever length it claims, and the
+      walk goes on after it; a pair that overruns the list ends the walk and is dropped with the
+      rest; a list without an EOL gets no name. A pair is kept only if it ends within SMB2_TI_MAX
+      bytes, names included (ntlm_ti has room for one more name and EOL), so no list accepted here
+      loses its first name to that limit. libsmb2 stops at the end of its own buffer instead, the
+      CHALLENGE's length + 400 bytes, so the two can end a list at different pairs; but neither
+      limit is reached by a list accepted here that has one EOL, at its end, in a CHALLENGE whose
+      fields do not overlap.
+      The logon is refused where libsmb2 refuses it (it then has no AV pairs to send back): when
+      TargetInfo is not empty but no pair of it is kept, and when it is empty and its offset is the
+      end of the CHALLENGE.
+      The server's timestamp is taken from any MsvAvTimestamp pair kept.
+    */
     tilen = 0;
-    if (seclen >= 48) {
-        tilen = rd16(tok + 40);
-        tioff = rd32(tok + 44);
-        if (tilen > SMB2_TI_MAX || tioff > seclen || (u32)tilen > seclen - tioff)
-            return -1000;
-        memcpy(ntlm_ti, tok + tioff, tilen);
-    }
-    for (off = 0; off + 4 <= tilen;) {
-        u16 id = rd16(ntlm_ti + off), avlen = rd16(ntlm_ti + off + 2);
-        if (id == MSV_AV_EOL || off + 4 + avlen > tilen)
+    inlen = rd16(tok + 40);
+    tioff = rd32(tok + 44);
+    if (inlen > SMB2_TI_MAX || tioff > seclen || (u32)inlen > seclen - tioff || (inlen == 0 && tioff == seclen))
+        return -1000;
+    tok += tioff;
+    for (off = 0; off + 4 <= inlen;) {
+        int id = rd16(tok + off), avlen = rd16(tok + off + 2);
+
+        if (off + 4 + avlen > inlen || tilen + 4 + avlen > SMB2_TI_MAX)
             break;
-        if (id == MSV_AV_TIMESTAMP && avlen == 8) {
-            memcpy(timestamp, ntlm_ti + off + 4, 8);
-            has_timestamp = 1;
+        if (id == MSV_AV_EOL) {
+            avlen = put_utf16(ntlm_ti + tilen + 4, spn, 0);
+            wr16(ntlm_ti + tilen, MSV_AV_TARGET_NAME);
+            wr16(ntlm_ti + tilen + 2, (u16)avlen);
+            tilen += 4 + avlen;
+            memset(ntlm_ti + tilen, 0, 4);
+            avlen = 0; // an EOL is 4 bytes here, so a value it claims is walked as pairs
+        } else {
+            if (id == MSV_AV_TIMESTAMP && avlen == 8) {
+                memcpy(timestamp, tok + off + 4, 8);
+                has_timestamp = 1;
+            }
+            memcpy(ntlm_ti + tilen, tok + off, 4 + avlen);
         }
+        tilen += 4 + avlen;
         off += 4 + avlen;
     }
+    if (inlen > 0 && tilen == 0)
+        return -1000;
     if (!has_timestamp)
         memset(timestamp, 0, sizeof(timestamp)); // no clock on the IOP; servers that check send one
 
