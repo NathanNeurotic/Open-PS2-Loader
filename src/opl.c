@@ -71,6 +71,7 @@
 #ifdef PADEMU
 #include <libds34bt.h>
 #include <libds34usb.h>
+#include "include/padprofiles.h" // the user's USB pad profiles for the menu's USB pad driver
 #endif
 
 #ifdef __EESIO_DEBUG
@@ -4905,6 +4906,9 @@ static void unloadLwnbdSvr(void)
     unloadPads();
 
     reset();
+#ifdef PADEMU
+    padProfilesMenuResend(); // the reset reloaded ds34usb.irx without the user's pad profiles: readPads sends them again
+#endif
 
     LOG_INIT();
     LOG_ENABLE();
@@ -5655,6 +5659,11 @@ static void deferredInit(void)
             guiDeferUpdate(id);
         }
     }
+#ifdef PADEMU
+    // RIPPS2 build 129: a profiled USB pad steers the menu too. The settings are loaded by now; readPads hands the
+    // profiles to the menu's driver. With no PADS folder this is one failed opendir and the driver is never called
+    padProfilesMenuLoad();
+#endif
 }
 
 static void deferredAudioInit(void)

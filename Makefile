@@ -274,6 +274,8 @@ endif
 
 ifeq ($(PADEMU),1)
   IOP_OBJS += bt_pademu.o usb_pademu.o ds34usb.o ds34bt.o libds34usb.a libds34bt.a
+  # The user's .pad USB pad profiles (RIPPS2 build 126-129): read for a launch and for the menu's USB pad driver
+  FRONTEND_OBJS += padprofiles.o
   EE_CFLAGS += -DPADEMU
   EE_INCS += -Imodules/ds34bt/ee -Imodules/ds34usb/ee
   PADEMU_FLAGS = PADEMU=1

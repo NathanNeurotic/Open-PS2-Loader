@@ -16,6 +16,7 @@
 #ifdef PADEMU
 #include <libds34bt.h>
 #include <libds34usb.h>
+#include "include/padprofiles.h" // padProfilesMenuTick: the user's USB pad profiles to the menu's driver
 #endif
 
 #define MAX_PADS 4
@@ -956,6 +957,10 @@ int readPads()
 {
     int i;
     int pollClean = 1;
+
+#ifdef PADEMU
+    padProfilesMenuTick(); // RIPPS2 build 129: profiles read since the last frame go to the menu's USB pad driver
+#endif
 
     if (!edgeBaselineFrozen)
         oldpaddata = paddata;
