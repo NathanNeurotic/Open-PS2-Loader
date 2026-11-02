@@ -53,6 +53,8 @@ def stage_shared_kit(archive, destination, preview):
         # POPS payload must match the PR's loader and validator, while extra
         # runtime files supplied only by the install kit remain available.
         shutil.copytree(ROOT / "POPS", destination / "POPS", dirs_exist_ok=True)
+        # An older bootstrap kit predates the libsmb2 licence the verifier now requires.
+        shutil.copyfile(app.LIBSMB2_LICENCE, destination / "LICENSE-LIBSMB2.txt")
         validation_archive = destination.parent / "preview-standard.zip"
         with zipfile.ZipFile(validation_archive, "w", zipfile.ZIP_STORED) as output:
             for file in sorted(destination.rglob("*")):
@@ -103,6 +105,8 @@ def package(args):
     args.output.mkdir(parents=True, exist_ok=True)
     if any(args.output.iterdir()):
         raise ValueError("output directory must be empty")
+    # The standalone RA ELFs embed libsmb2 (LGPL-2.1) like every loader: publish its licence beside them.
+    shutil.copyfile(app.LIBSMB2_LICENCE, args.output / "LICENSE-LIBSMB2.txt")
     with tempfile.TemporaryDirectory() as temporary:
         temporary = Path(temporary)
         shared = temporary / "shared"
