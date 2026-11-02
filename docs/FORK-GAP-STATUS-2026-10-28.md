@@ -113,7 +113,7 @@ Status as of the merge of RiptOPL #99 (`09ea7d83`) and Open-PS2-Loader #1084 (`f
 | IGR exit path checked before use, else Browser | ee_core loads only rom0 SIO2MAN/MCMAN and USB before the exit path, so MMCE and HDD exit paths cannot work | PARTIAL | Not scheduled |
 | exFAT lost clusters when two files grow at once (RIPPS2's claim against the ps2sdk driver) | Not investigated; RiptOPL ships its own bdmfs FatFs fork | UNKNOWN | Reproduce on a PC image first |
 | PCSX2 `host:` launch: rename the `imgdrv` device from `host` to `iprp` | `imgdrv.c` and `ee_core iopmgr.c` still use `host` in both | INTENTIONAL DIFFERENCE | Owner decision 2026-10-28: not planned |
-| Pad missed-read hold, pad idle gate before `padSetActAlign`, analog-mode re-request | `src/core/pad.cpp` | INTENTIONAL DIFFERENCE | Owner decision 2026-10-28: not planned |
+| Pad missed-read hold, pad idle gate before `padSetActAlign`, analog-mode re-request | `src/pad.c` | PARTIAL | Corrected 2026-11-01: the missed-read hold shipped (`PAD_MISS_HOLD_TICKS`, 300 ms, from [zackcage6](https://github.com/zackcage6)'s navigation trace; same idea as [RIPPS2](https://github.com/akilluminati47/RIPPS2)'s `PAD_HOLD_MS` by [akilluminati47](https://github.com/akilluminati47)) and the DualShock mode lock is re-requested when it is lost (#1208). Only the idle gate before `padSetActAlign` still differs |
 
 Already PRESENT, no action: the ps2ips receive tail (#1064), the exFAT HDD device number on a USB
 boot, ee_core `gc-sections`, and the single-shape save icon. RiptOPL's hires HD drawing is sharper than RIPPS2's
