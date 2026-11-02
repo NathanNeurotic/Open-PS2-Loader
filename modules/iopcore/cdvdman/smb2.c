@@ -70,7 +70,6 @@
 #define NTLMSSP_REQUEST_TARGET                     0x00000004
 #define NTLMSSP_NEGOTIATE_SIGN                     0x00000010
 #define NTLMSSP_NEGOTIATE_NTLM                     0x00000200
-#define NTLMSSP_NEGOTIATE_ANONYMOUS                0x00000800
 #define NTLMSSP_NEGOTIATE_ALWAYS_SIGN              0x00008000
 #define NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY 0x00080000
 #define NTLMSSP_NEGOTIATE_TARGET_INFO              0x00800000
@@ -168,11 +167,12 @@ static int bytes_equal(const u8 *a, const u8 *b, int n)
 }
 
 /*
-  UTF-8 to UTF-16LE, optionally upper-cased (ASCII only, as NTOWFv2 needs); returns the byte length
-  written (no terminator). The names come from the menu, which got them from smb2man's directory
-  listing, and libsmb2 returns those as UTF-8: a file called "Café.iso" must be requested as the
-  same UTF-16 the server listed it under. A byte that is not valid UTF-8 is passed through as
-  Latin-1, so an 8-bit name from an old config still makes a request of the same length.
+  UTF-8 to UTF-16LE, optionally upper-cased; returns the byte length written (no terminator).
+  Upper-casing is ASCII only, the way libsmb2 upper-cases the user name for the menu's logon. The
+  names come from the menu, which got them from smb2man's directory listing, and libsmb2 returns
+  those as UTF-8: a file called "Café.iso" must be requested as the same UTF-16 the server listed
+  it under. A byte that is not valid UTF-8 is passed through as Latin-1, so an 8-bit name from an
+  old config still makes a request of the same length.
 */
 static int put_utf16(u8 *out, const char *in, int upper)
 {
@@ -541,9 +541,12 @@ int smb_SessionSetupAndX(u32 capabilities)
     u8 *tok = BODY + 24;
     u8 server_challenge[8], client_challenge[8], timestamp[8], ntowf[16], nt_proof[16], digest[16];
     static u8 domain[64];
+    static u8 pw16[64];
     static smb2auth_hmac_t mac;
     static smb2auth_hash_t h;
-    int len, off, tilen, domlen, ulen, has_timestamp = 0, anonymous;
+    u8 nthash[16], *nt, *blob;
+    const char *user;
+    int len, off, tilen, domlen, ulen, pwlen, bloblen, has_timestamp = 0;
     u32 secoff, seclen, status, tioff;
 
     (void)capabilities;
@@ -572,15 +575,18 @@ int smb_SessionSetupAndX(u32 capabilities)
     memcpy(server_challenge, tok + 24, 8);
 
     /*
-      DomainName: empty, as the menu's logon. The menu checked these credentials through smb2man,
-      and libsmb2 logs on with no domain (smb2->domain is unset): the server resolved the user in
-      its own account database. The server recomputes NTOWFv2 with the UserDom the client sent
-      (MS-NLMP 3.3.2), so hashing and sending the CHALLENGE's TargetName instead (the usmb2 way)
-      asks it to look the same user up under that name. On a domain-joined Windows machine that
-      name is the domain, and a local account is not found there: the browse logon succeeds and
-      the in-game logon fails with the same password. The two logons now ask the same question.
+      TargetName (12): the domain this logon is computed for, hashed into NTOWFv2 and sent back
+      as-is. The menu's logon does the same: smb2man sets no domain, so libsmb2 adopts the
+      CHALLENGE's TargetName (lib/ntlmssp.c) and hashes and sends that. The server recomputes
+      NTOWFv2 with the domain the client sent (MS-NLMP 3.3.2), so both logons must send the same
+      one, or a password that passes the menu fails at game start. A TargetName longer than the
+      buffer (a NetBIOS name is at most 15 characters) is left out.
     */
-    domlen = 0;
+    domlen = rd16(tok + 12);
+    tioff = rd32(tok + 16); // the server's offset: check it alone first, so the sum cannot wrap
+    if (domlen > (int)sizeof(domain) || tioff > seclen || (u32)domlen > seclen - tioff)
+        domlen = 0, tioff = 0;
+    memcpy(domain, tok + tioff, domlen);
 
     // TargetInfo (40): copied into the NTLMv2 blob. Look for the server's timestamp in it.
     tilen = 0;
@@ -604,8 +610,15 @@ int smb_SessionSetupAndX(u32 capabilities)
     if (!has_timestamp)
         memset(timestamp, 0, sizeof(timestamp)); // no clock on the IOP; servers that check send one
 
-    // 3: AUTHENTICATE_MESSAGE, laid out as a 64-byte header followed by its fields.
-    anonymous = (user_name[0] == '\0');
+    /*
+      3: AUTHENTICATE_MESSAGE, laid out as a 64-byte header followed by its fields.
+      A blank user name logs on as "Guest" with the configured password, as the menu's logon does:
+      smb2man then sets no user, so libsmb2 keeps its default, "Guest" (there is no login name on
+      the IOP), and it always runs NTLMv2, because smb2man always sets a password. An anonymous
+      logon here could be refused where the menu's was accepted: a Windows PC that shares with
+      guest access serves "Guest" but by default refuses an anonymous tree connect.
+    */
+    user = user_name[0] ? user_name : "Guest";
     SetHeader(SMB2_SESSION_SETUP);
     tok = BODY + 24;
     memset(tok, 0, 64);
@@ -617,83 +630,70 @@ int smb_SessionSetupAndX(u32 capabilities)
     PutSecBuf(tok + 28, (u16)domlen, off);
     off += domlen;
 
-    ulen = put_utf16(tok + off, user_name, 0); // UserName
+    ulen = put_utf16(tok + off, user, 0); // UserName
     PutSecBuf(tok + 36, (u16)ulen, off);
     off += ulen;
 
     PutSecBuf(tok + 44, 0, off); // Workstation: empty
     PutSecBuf(tok + 52, 0, off); // EncryptedRandomSessionKey: none (no KEY_EXCH)
 
-    if (anonymous) {
-        tok[off] = 0; // LmChallengeResponse Z(1), NtChallengeResponse empty (MS-NLMP 3.1.5.1.2)
-        PutSecBuf(tok + 12, 1, off);
-        off += 1;
-        PutSecBuf(tok + 20, 0, off);
-        wr32(tok + 60, NTLM_CLIENT_FLAGS | NTLMSSP_NEGOTIATE_ANONYMOUS);
+    // NTOWFv2 = HMAC_MD5(MD4(UTF16(password)), UTF16(UPPER(user)) . domain)
+    pwlen = put_utf16(pw16, pass_word, 0);
+    smb2auth_init(&h, SMB2AUTH_MD4);
+    smb2auth_update(&h, pw16, pwlen);
+    smb2auth_final(&h, nthash);
+    memset(pw16, 0, sizeof(pw16));
+
+    ulen = put_utf16(pw16, user, 1);
+    smb2auth_hmac_init(&mac, SMB2AUTH_MD5, nthash, 16);
+    smb2auth_hmac_update(&mac, pw16, ulen);
+    smb2auth_hmac_update(&mac, domain, domlen);
+    smb2auth_hmac_final(&mac, ntowf);
+    memset(nthash, 0, sizeof(nthash));
+
+    ClientChallenge(client_challenge, server_challenge);
+
+    // LmChallengeResponse: Z(24) when the server sent a timestamp, else LMv2 (MS-NLMP 3.3.2).
+    if (has_timestamp) {
+        memset(tok + off, 0, 24);
     } else {
-        u8 *nt, *blob;
-        static u8 pw16[64];
-        u8 nthash[16];
-        int bloblen, pwlen;
-
-        // NTOWFv2 = HMAC_MD5(MD4(UTF16(password)), UTF16(UPPER(user)) . domain)
-        pwlen = put_utf16(pw16, pass_word, 0);
-        smb2auth_init(&h, SMB2AUTH_MD4);
-        smb2auth_update(&h, pw16, pwlen);
-        smb2auth_final(&h, nthash);
-        memset(pw16, 0, sizeof(pw16));
-
-        ulen = put_utf16(pw16, user_name, 1);
-        smb2auth_hmac_init(&mac, SMB2AUTH_MD5, nthash, 16);
-        smb2auth_hmac_update(&mac, pw16, ulen);
-        smb2auth_hmac_update(&mac, domain, domlen);
-        smb2auth_hmac_final(&mac, ntowf);
-        memset(nthash, 0, sizeof(nthash));
-
-        ClientChallenge(client_challenge, server_challenge);
-
-        // LmChallengeResponse: Z(24) when the server sent a timestamp, else LMv2 (MS-NLMP 3.3.2).
-        if (has_timestamp) {
-            memset(tok + off, 0, 24);
-        } else {
-            smb2auth_hmac_init(&mac, SMB2AUTH_MD5, ntowf, 16);
-            smb2auth_hmac_update(&mac, server_challenge, 8);
-            smb2auth_hmac_update(&mac, client_challenge, 8);
-            smb2auth_hmac_final(&mac, tok + off);
-            memcpy(tok + off + 16, client_challenge, 8);
-        }
-        PutSecBuf(tok + 12, 24, off);
-        off += 24;
-
-        // NtChallengeResponse = NTProofStr . blob
-        nt = tok + off;
-        blob = nt + 16;
-        memset(blob, 0, 28);
-        blob[0] = 1; // RespType
-        blob[1] = 1; // HiRespType
-        memcpy(blob + 8, timestamp, 8);
-        memcpy(blob + 16, client_challenge, 8);
-        memcpy(blob + 28, ntlm_ti, tilen);
-        memset(blob + 28 + tilen, 0, 4);
-        bloblen = 28 + tilen + 4;
-
         smb2auth_hmac_init(&mac, SMB2AUTH_MD5, ntowf, 16);
         smb2auth_hmac_update(&mac, server_challenge, 8);
-        smb2auth_hmac_update(&mac, blob, bloblen);
-        smb2auth_hmac_final(&mac, nt_proof);
-        memcpy(nt, nt_proof, 16);
-        PutSecBuf(tok + 20, (u16)(16 + bloblen), off);
-        off += 16 + bloblen;
-
-        // Session key (no KEY_EXCH: the session base key itself), used for signing.
-        smb2auth_hmac_init(&mac, SMB2AUTH_MD5, ntowf, 16);
-        smb2auth_hmac_update(&mac, nt_proof, 16);
-        smb2auth_hmac_final(&mac, digest);
-        memcpy(session_key, digest, 16);
-        memset(ntowf, 0, sizeof(ntowf));
-
-        wr32(tok + 60, NTLM_CLIENT_FLAGS);
+        smb2auth_hmac_update(&mac, client_challenge, 8);
+        smb2auth_hmac_final(&mac, tok + off);
+        memcpy(tok + off + 16, client_challenge, 8);
     }
+    PutSecBuf(tok + 12, 24, off);
+    off += 24;
+
+    // NtChallengeResponse = NTProofStr . blob
+    nt = tok + off;
+    blob = nt + 16;
+    memset(blob, 0, 28);
+    blob[0] = 1; // RespType
+    blob[1] = 1; // HiRespType
+    memcpy(blob + 8, timestamp, 8);
+    memcpy(blob + 16, client_challenge, 8);
+    memcpy(blob + 28, ntlm_ti, tilen);
+    memset(blob + 28 + tilen, 0, 4);
+    bloblen = 28 + tilen + 4;
+
+    smb2auth_hmac_init(&mac, SMB2AUTH_MD5, ntowf, 16);
+    smb2auth_hmac_update(&mac, server_challenge, 8);
+    smb2auth_hmac_update(&mac, blob, bloblen);
+    smb2auth_hmac_final(&mac, nt_proof);
+    memcpy(nt, nt_proof, 16);
+    PutSecBuf(tok + 20, (u16)(16 + bloblen), off);
+    off += 16 + bloblen;
+
+    // Session key (no KEY_EXCH: the session base key itself), used for signing.
+    smb2auth_hmac_init(&mac, SMB2AUTH_MD5, ntowf, 16);
+    smb2auth_hmac_update(&mac, nt_proof, 16);
+    smb2auth_hmac_final(&mac, digest);
+    memcpy(session_key, digest, 16);
+    memset(ntowf, 0, sizeof(ntowf));
+
+    wr32(tok + 60, NTLM_CLIENT_FLAGS);
 
     len = SessionSetupRequest(off);
     if (len < 0)
@@ -702,8 +702,8 @@ int smb_SessionSetupAndX(u32 capabilities)
     if (status != STATUS_SUCCESS || len < 8)
         return -1000;
 
-    // Guest and anonymous sessions have no key to sign with; servers do not require it of them.
-    signing = (sign_required && !anonymous && !(rd16(BODY + 2) & 0x0003)) ? 1 : 0;
+    // A guest session (or a null one) has no key to sign with; servers do not require it of them.
+    signing = (sign_required && !(rd16(BODY + 2) & 0x0003)) ? 1 : 0;
 
     return 1;
 }

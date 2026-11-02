@@ -15,7 +15,12 @@ This compiles the real smb2auth.c on the host and checks it against:
 It also pins the structure smb2.c relies on: smb2.c provides every function smb.c does (device-smb.c,
 the oplutils exports and smb_mcemu bind to those names), smb_Close() never waits on smb_io_sema
 (oplShutdown() calls it with the semaphore held), every function that waits on it signals it before
-each return, and smbinit's SMB1 hash callback is never called.
+each return, and smbinit's SMB1 hash callback is never called. And it pins that the in-game logon
+hashes and sends the same NTLM domain as the menu's: smb2man sets none, so libsmb2 adopts the
+CHALLENGE's TargetName, and smb2.c takes the same field. If the two differ, a password that passes
+the menu can fail at game start. The same goes for a blank user name: the menu's logon is then libsmb2's
+default user, "Guest", with NTLMv2 (smb2man sets no user and always sets a password), so smb2.c logs on
+as "Guest" too, not anonymously.
 This is a host regression check, not a console test. The end-to-end check against a real server is
 tests/smb2-live/run.sh (needs Samba).
 """
@@ -165,7 +170,33 @@ check('blob[0] = 1;' in smb2 and 'blob[1] = 1;' in smb2 and 'memcpy(blob + 8, ti
       'smb2.c: the NTLMv2 blob layout (MS-NLMP 2.2.2.7) changed')
 check(re.search(r'smb2auth_hmac_update\(&mac, pw16, ulen\);\s*smb2auth_hmac_update\(&mac, domain, domlen\);', smb2) is not None,
       'smb2.c: NTOWFv2 must hash UPPER(user) then the domain')
-check('put_utf16(pw16, user_name, 1)' in smb2, 'smb2.c: NTOWFv2 must upper-case the user name')
+check('put_utf16(pw16, user, 1)' in smb2, 'smb2.c: NTOWFv2 must upper-case the user name')
+
+# Both logons must hash and send the same NTLM domain (the server recomputes NTOWFv2 with the one the
+# client sent). The menu's is libsmb2's: with no domain set, it adopts the CHALLENGE's TargetName.
+check(re.search(r'domlen = rd16\(tok \+ 12\);', smb2) is not None and 'memcpy(domain, tok + tioff, domlen);' in smb2,
+      "smb2.c: the NTLM domain must be the CHALLENGE's TargetName, the one libsmb2 sends for the menu")
+ntlmssp = text(root / 'modules/network/smb2man/libsmb2/lib/ntlmssp.c')
+check(re.search(r'auth_data->domain == NULL && auth_data->target_name\)\s*\{\s*smb2_set_domain\(smb2, auth_data->target_name\);',
+                ntlmssp) is not None,
+      "libsmb2 no longer adopts the CHALLENGE's TargetName as the domain: make smb2.c send what lib/ntlmssp.c sends")
+smb2man = text(root / 'modules/network/smb2man/smb2man.c')
+check('smb2_set_domain' not in smb2man,
+      'smb2man.c now sets an NTLM domain: smb2.c must send the same one')
+
+# A blank user name: the menu logs on as libsmb2's default user, "Guest", over NTLMv2 (no user set,
+# a password always set, and no login name on the IOP); smb2.c must send the same, not an anonymous logon.
+check('user = user_name[0] ? user_name : "Guest";' in smb2 and 'NTLMSSP_NEGOTIATE_ANONYMOUS' not in smb2,
+      'smb2.c: a blank user name must log on as "Guest" over NTLMv2, as the menu does')
+check(re.search(r'smb2_set_user\(smb2, ret == 0 \? buf : "Guest"\);', text(root / 'modules/network/smb2man/libsmb2/lib/init.c')) is not None,
+      'libsmb2 no longer defaults the user to "Guest": make smb2.c log on a blank user name as libsmb2 does')
+connects = re.findall(r'smb2_connect_share(?:_async)?\([^;]*;', smb2man)
+check(len(connects) > 0 and all('conn_user[0] ? conn_user : NULL)' in c for c in connects) and 'smb2_set_user' not in smb2man,
+      'smb2man.c changed how it passes a blank user: check smb2.c still logs on the same way')
+check(re.search(r'smb2_set_timeout\(ctx, SMB2MAN_TIMEOUT_SECONDS\);\s*smb2_set_password\(ctx, conn_password\);\s*return ctx;',
+                smb2man) is not None,
+      'smb2man.c no longer always sets the password (libsmb2 logs on anonymously without one): '
+      'check smb2.c still logs on the same way')
 
 # The same entry points as smb.c, which device-smb.c, exports.tab and smb_mcemu bind to by name.
 smb1 = text(cdvdman / 'smb.c')

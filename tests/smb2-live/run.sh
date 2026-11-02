@@ -9,10 +9,15 @@
 #             vendored at modules/network/smb2man/libsmb2: LOGON/OPENSHARE/GETSHARELIST devctls,
 #             directory listing, stat, read/write/seek, create/truncate/exclusive opens, mkdir,
 #             rename, remove, reconnect, and handles left open across LOGOFF.
+#   keepalive.c  includes smb2man.c and runs its keepalive passes by hand: a session lost (the
+#             socket cut) under an open file and directory, the reconnect on the next tick, the
+#             backoff after a refused reconnect, LOGOFF and CLOSESHARE while lost, and the leak check
+#             that a dropped session or a share change frees every handle and directory listing.
 #
-# Both are built with AddressSanitizer and UBSan. The server is started on a private port with
-# NTLMv2 only, run once with signing mandatory and once with signing off, and once capped at
-# SMB 2.0.2. Guest and anonymous logons are checked against a guest-ok share.
+# All are built with AddressSanitizer and UBSan; a sanitizer report, a leak included, fails the case.
+# The server is started on a private port with NTLMv2 only, run once with signing mandatory and once
+# with signing off, and once capped at SMB 2.0.2. Guest logons (an unknown user, and a blank user name,
+# which logs on as "Guest" as the menu does) are checked against a guest-ok share.
 #
 # Needs: a C compiler, Samba (smbd, smbpasswd, smbclient) and the PS2SDK's ps2smb.h (found through
 # PS2BUILD_HOME, default ~/.local/share/ps2build). Run as root (smbd wants to own its state) from
@@ -106,7 +111,7 @@ start_smbd() {
 
 # ---- build ----------------------------------------------------------------------------------------
 cp "$ps2smb" "$work/inc/"
-san="-fsanitize=address,undefined -fno-omit-frame-pointer -g -O1"
+san="-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1"
 cc $san -Wall -Wno-unused-parameter -I"$here/inc-ingame" -I"$root/modules/iopcore/cdvdman" -I"$root/modules/iopcore/common" \
     "$here/ingame.c" "$root/modules/iopcore/cdvdman/smb2.c" "$root/modules/iopcore/cdvdman/smb2auth.c" -o "$work/ingame"
 cc $san -Wall -Wno-unused-parameter -Wno-unused-function -I"$here/inc-ingame" -I"$root/modules/iopcore/cdvdman" \
@@ -128,6 +133,9 @@ cc $san -Wall -Wno-unused-function -I"$here/inc-browse" -I"$work/inc" -I"$lib/in
     -Dmalloc=iop_malloc -Dfree=iop_free -Dcalloc=iop_calloc -Drealloc=iop_realloc -D_start=smb2man_start \
     -c "$root/modules/network/smb2man/smb2man.c" -o "$work/smb2man.o"
 cc $san -Wall -I"$here/inc-browse" -I"$work/inc" "$here/browse.c" "$work/smb2man.o" "$work"/lib/*.o -o "$work/browse"
+cc $san -Wall -Wno-unused-function -I"$here/inc-browse" -I"$work/inc" -I"$lib/include" -I"$lib/include/smb2" \
+    -I"$root/modules/network/smb2man" -Dmalloc=iop_malloc -Dfree=iop_free -Dcalloc=iop_calloc -Drealloc=iop_realloc \
+    -D_start=smb2man_start "$here/keepalive.c" "$work"/lib/*.o -o "$work/keepalive"
 
 id ps2 >/dev/null 2>&1 || useradd -M ps2
 fails=0
@@ -153,6 +161,9 @@ denied() { # the logon must fail cleanly, not hang or crash
 browse() {
     timeout 120 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso "$u8name"
 }
+keepalive() {
+    timeout 120 ./keepalive 127.0.0.1 "$port" ps2 secret PS2SMB
+}
 browse_refused() { # SMB 3-only: the menu must not list a server the in-game reader cannot reach
     rc=0
     timeout 60 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso || rc=$?
@@ -166,9 +177,10 @@ for signing in mandatory disabled; do
     start_smbd
     run "in-game reader, signing $signing, NTLMv2 user" ingame ps2 secret
     run "in-game reader, signing $signing, guest" ingame nobody x
-    run "in-game reader, signing $signing, anonymous" ingame '' ''
+    run "in-game reader, signing $signing, blank user (logs on as Guest)" ingame '' ''
     run "in-game reader, signing $signing, wrong password refused" denied
     run "browse driver, signing $signing" browse
+    run "browse driver keepalive: lost session, reconnect, backoff, no leaks, signing $signing" keepalive
 done
 write_conf mandatory "server max protocol = SMB2_02"
 start_smbd
