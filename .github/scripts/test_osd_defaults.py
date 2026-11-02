@@ -25,6 +25,9 @@ definitions += "\n" + "\n".join(re.findall(r"^#define SETTINGS_(?:GLOBAL|PERGAME
 functions = "\n".join(function(sig) for sig in (
     "static void guiGameLoadOSDLanguageConfig(", "void guiGameSaveOSDLanguageGlobalConfig(",
     "static int guiGameOSDLanguageUpdater(", "void guiGameShowOSDLanguageConfig("))
+# The enum rows name their strings by id; any distinct numbers do here
+definitions += "\n" + "\n".join("#define %s %d" % (name, i)
+                                for i, name in enumerate(sorted(set(re.findall(r"\b_STR_\w+", functions)))))
 program = r'''
 #include <assert.h>
 #include <stdio.h>
@@ -58,7 +61,13 @@ static config_set_t *gameMenuLoadConfig(struct UIItem *ui) { (void)ui; return &g
 static void diaSetInt(struct UIItem *ui, int id, int value) { (void)ui; assert(id < 1024); rows[id] = value; }
 static void diaGetInt(struct UIItem *ui, int id, int *value) { (void)ui; assert(id < 1024); *value = rows[id]; }
 static void diaSetEnabled(struct UIItem *ui, int id, int enabled) { (void)ui; (void)id; (void)enabled; }
-static void diaSetEnum(struct UIItem *ui, int id, const char **names) { (void)ui; (void)id; (void)names; }
+static int enumLists;
+static void diaSetEnumIds(struct UIItem *ui, int id, const char **names, const int *ids) {
+    (void)ui; (void)id;
+    /* every row shows something: its own text, or the string its id names */
+    for (int i = 0; names[i] != NULL; i++) assert(names[i][0] != '\0' || ids[i] >= 0);
+    enumLists++;
+}
 static int diaExecuteDialog(struct UIItem *ui, int id, short menu, int (*updater)(int)) {
     assert(ui == diaOSDConfig && id == -1 && menu);
     if (nextLanguage >= 0) {
@@ -76,6 +85,7 @@ int main(void) {
     globalConfig = (config_set_t){{1, 1, 2, 1, SETTINGS_GLOBAL}};
     nextLanguage = 7; exitResult = UIID_BTN_OK;
     guiGameShowOSDLanguageConfig(1);
+    assert(enumLists == 4);
     assert(globalConfig.value[1] == 7 && globalConfig.value[2] == 2 && globalConfig.value[3] == 1);
     assert(!forceGlobalOSDLanguage);
     nextLanguage = -1;

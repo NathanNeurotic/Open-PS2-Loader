@@ -156,7 +156,7 @@ static int guiGameRefreshVMCConfig(item_list_t *support, char *name)
     int size = support->itemCheckVMC(support, name, 0);
 
     if (size != -1) {
-        diaSetLabel(diaVMC, VMC_STATUS, _l(_STR_VMC_FILE_EXISTS));
+        diaSetLabelId(diaVMC, VMC_STATUS, _STR_VMC_FILE_EXISTS);
 
         if (size == 8)
             diaSetInt(diaVMC, VMC_SIZE, 0);
@@ -168,10 +168,10 @@ static int guiGameRefreshVMCConfig(item_list_t *support, char *name)
             diaSetInt(diaVMC, VMC_SIZE, 3);
         else {
             diaSetInt(diaVMC, VMC_SIZE, 0);
-            diaSetLabel(diaVMC, VMC_STATUS, _l(_STR_VMC_FILE_ERROR));
+            diaSetLabelId(diaVMC, VMC_STATUS, _STR_VMC_FILE_ERROR);
         }
 
-        diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_MODIFY));
+        diaSetLabelId(diaVMC, VMC_BUTTON_CREATE, _STR_MODIFY);
         diaSetVisible(diaVMC, VMC_BUTTON_DELETE, 1);
         diaSetVisible(diaVMC, VMC_BUTTON_SAVES, 1);
         diaSetEnabled(diaVMC, VMC_BUTTON_SAVES, 1);
@@ -185,8 +185,8 @@ static int guiGameRefreshVMCConfig(item_list_t *support, char *name)
             diaSetEnabled(diaVMC, VMC_BUTTON_DELETE, 0);
         }
     } else {
-        diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_CREATE));
-        diaSetLabel(diaVMC, VMC_STATUS, _l(_STR_VMC_FILE_NEW));
+        diaSetLabelId(diaVMC, VMC_BUTTON_CREATE, _STR_CREATE);
+        diaSetLabelId(diaVMC, VMC_STATUS, _STR_VMC_FILE_NEW);
 
         diaSetInt(diaVMC, VMC_SIZE, 0);
         diaSetEnabled(diaVMC, VMC_SIZE, 1);
@@ -216,7 +216,7 @@ static int guiGameVMCUpdater(int modified)
                 LOG("GUI VMCUpdater: %d\n", vmc_status.VMC_error);
 
             if (vmc_status.VMC_status == 0x00) {
-                diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_OK));
+                diaSetLabelId(diaVMC, VMC_BUTTON_CREATE, _STR_OK);
                 vmc_operation = OPERATION_ENDING;
                 return VMC_BUTTON_CREATE;
             }
@@ -269,7 +269,7 @@ static void guiGameRefreshVMCRebuild(int id, item_list_t *support, config_set_t 
     diaSetVisible(diaVMC, VMC_BUTTON_REBUILD, vmc_rebuild_offer);
     diaSetEnabled(diaVMC, VMC_BUTTON_REBUILD, vmc_rebuild_offer);
     if (vmc_rebuild_offer)
-        diaSetLabel(diaVMC, VMC_STATUS, _l(_STR_VMC_FILE_NEEDS_REBUILD));
+        diaSetLabelId(diaVMC, VMC_STATUS, _STR_VMC_FILE_NEEDS_REBUILD);
 }
 
 static int guiGameVMCRebuildMessage(int outcome)
@@ -480,7 +480,7 @@ static void guiGameRefreshVMCKind(const char *startup, const char *name)
         text = _STR_VMC_KIND_GENERIC;
 
     if (text >= 0)
-        diaSetLabel(diaVMC, VMC_KIND, _l(text));
+        diaSetLabelId(diaVMC, VMC_KIND, text);
     diaSetVisible(diaVMC, VMC_KIND, text >= 0);
 }
 
@@ -545,7 +545,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                     } else {
                         diaSetEnabled(diaVMC, VMC_NAME, 0);
                         diaSetEnabled(diaVMC, VMC_SIZE, 0);
-                        diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_ABORT));
+                        diaSetLabelId(diaVMC, VMC_BUTTON_CREATE, _STR_ABORT);
                         vmc_operation = OPERATION_CREATING;
                         vmc_check_layout = 1;
                     }
@@ -599,7 +599,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *conf
                     diaSetEnabled(diaVMC, VMC_BUTTON_DELETE, 0);
                     diaSetEnabled(diaVMC, VMC_BUTTON_REBUILD, 0);
                     diaSetEnabled(diaVMC, VMC_BUTTON_SAVES, 0);
-                    diaSetLabel(diaVMC, VMC_BUTTON_CREATE, _l(_STR_ABORT));
+                    diaSetLabelId(diaVMC, VMC_BUTTON_CREATE, _STR_ABORT);
                     diaSetEnabled(diaVMC, VMC_BUTTON_CREATE, 1);
                     vmc_operation = OPERATION_CREATING;
                     vmc_rebuilding = 1;
@@ -812,13 +812,13 @@ void guiGameShowVMCMenu(int id, item_list_t *support, config_set_t *configSet)
         diaSetInt(diaVMCConfig, COMPAT_VMC2_DISABLE, vmc2Disabled);
 
         if (strlen(vmc1))
-            diaSetLabel(diaVMCConfig, COMPAT_VMC1_ACTION, _l(_STR_RESET));
+            diaSetLabelId(diaVMCConfig, COMPAT_VMC1_ACTION, _STR_RESET);
         else
-            diaSetLabel(diaVMCConfig, COMPAT_VMC1_ACTION, _l(_STR_USE_GENERIC));
+            diaSetLabelId(diaVMCConfig, COMPAT_VMC1_ACTION, _STR_USE_GENERIC);
         if (strlen(vmc2))
-            diaSetLabel(diaVMCConfig, COMPAT_VMC2_ACTION, _l(_STR_RESET));
+            diaSetLabelId(diaVMCConfig, COMPAT_VMC2_ACTION, _STR_RESET);
         else
-            diaSetLabel(diaVMCConfig, COMPAT_VMC2_ACTION, _l(_STR_USE_GENERIC));
+            diaSetLabelId(diaVMCConfig, COMPAT_VMC2_ACTION, _STR_USE_GENERIC);
 
         result = diaExecuteDialog(diaVMCConfig, result, 1, NULL);
         // UI_BOOL state persists across the button-driven do/while re-entries; read it back each pass
@@ -921,8 +921,11 @@ int guiGameShowGSConfig(int forceGlobal)
 {
     // configure the enumerations
     // Third source: per-KEY inheritance. Only offered here (the GSM page); the cheats/VMC/etc
-    // pages keep the original two-way choice.
-    const char *settingsSource[] = {_l(_STR_GLOBAL_SETTINGS), _l(_STR_PERGAME_SETTINGS), _l(_STR_PERGAME_MIXED_SETTINGS), NULL};
+    // pages keep the original two-way choice. Translated rows are string ids, looked up in every
+    // frame (a language switch frees translated strings); "" holds their place in the list.
+    static const char *settingsSource[] = {"", "", "", NULL};
+    static const int settingsSourceIds[] = {_STR_GLOBAL_SETTINGS, _STR_PERGAME_SETTINGS, _STR_PERGAME_MIXED_SETTINGS};
+    int gsmvmodeIds[GSM_VMODE_DEFAULT_IDX + 1];
     // clang-format off
     const char *gsmvmodeNames[] = {
         "NTSC",
@@ -966,9 +969,15 @@ int guiGameShowGSConfig(int forceGlobal)
 #endif
         // "Default" = follow the global $GSMVMode. LAST, after every real mode, and never stored
         // (the save leg removes the key instead), so it cannot disturb the raw indices above.
-        _l(_STR_DEFAULT),
+        // Its text is _STR_DEFAULT in gsmvmodeIds.
+        "",
         NULL};
     // clang-format on
+
+    // The mode names are not translated; only "Default" is.
+    for (int i = 0; i < GSM_VMODE_DEFAULT_IDX; i++)
+        gsmvmodeIds[i] = -1;
+    gsmvmodeIds[GSM_VMODE_DEFAULT_IDX] = _STR_DEFAULT;
 
     forceGlobalGSM = forceGlobal;
     if (forceGlobal) {
@@ -979,8 +988,8 @@ int guiGameShowGSConfig(int forceGlobal)
         gsmvmodeNames[GSM_VMODE_DEFAULT_IDX] = NULL;
     }
 
-    diaSetEnum(diaGSConfig, GSMCFG_GSMSOURCE, settingsSource);
-    diaSetEnum(diaGSConfig, GSMCFG_GSMVMODE, gsmvmodeNames);
+    diaSetEnumIds(diaGSConfig, GSMCFG_GSMSOURCE, settingsSource, settingsSourceIds);
+    diaSetEnumIds(diaGSConfig, GSMCFG_GSMVMODE, gsmvmodeNames, gsmvmodeIds);
     diaSetEnabled(diaGSConfig, GSMCFG_GSMSOURCE, !forceGlobal);
 
     if (forceGlobal)
@@ -1039,12 +1048,14 @@ static int guiGameCheatUpdater(int modified)
 
 void guiGameShowCheatConfig(int neutrinoCore)
 {
-    // configure the enumerations
-    const char *settingsSource[] = {_l(_STR_GLOBAL_SETTINGS), _l(_STR_PERGAME_SETTINGS), NULL};
-    const char *cheatmodeNames[] = {_l(_STR_CHEATMODEAUTO), _l(_STR_CHEATMODESELECT), NULL};
+    // configure the enumerations (string ids, looked up in every frame)
+    static const char *settingsSource[] = {"", "", NULL};
+    static const int settingsSourceIds[] = {_STR_GLOBAL_SETTINGS, _STR_PERGAME_SETTINGS};
+    static const char *cheatmodeNames[] = {"", "", NULL};
+    static const int cheatmodeIds[] = {_STR_CHEATMODEAUTO, _STR_CHEATMODESELECT};
 
-    diaSetEnum(diaCheatConfig, CHTCFG_CHEATSOURCE, settingsSource);
-    diaSetEnum(diaCheatConfig, CHTCFG_CHEATMODE, cheatmodeNames);
+    diaSetEnumIds(diaCheatConfig, CHTCFG_CHEATSOURCE, settingsSource, settingsSourceIds);
+    diaSetEnumIds(diaCheatConfig, CHTCFG_CHEATMODE, cheatmodeNames, cheatmodeIds);
     diaSetEnabled(diaCheatConfig, CHTCFG_CHEATMODE, EnableCheat);
     // Neutrino takes .cht codes but has no PS2RD cheat image: that row only applies to the OPL core.
     diaSetEnabled(diaCheatConfig, CHTCFG_ENABLEIMAGE, !neutrinoCore);
@@ -1261,7 +1272,7 @@ static int guiGamePadEmuUpdater(int modified)
         }
 
         if (!dgmacset) {
-            diaSetLabel(diaPadEmuConfig, PADCFG_USBDG_MAC, _l(_STR_NOT_CONNECTED));
+            diaSetLabelId(diaPadEmuConfig, PADCFG_USBDG_MAC, _STR_NOT_CONNECTED);
         }
 
         if (ds34usb_get_status(0) & DS34USB_STATE_RUNNING) {
@@ -1274,7 +1285,7 @@ static int guiGamePadEmuUpdater(int modified)
                 }
             }
         } else {
-            diaSetLabel(diaPadEmuConfig, PADCFG_PAD_MAC, _l(_STR_NOT_CONNECTED));
+            diaSetLabelId(diaPadEmuConfig, PADCFG_PAD_MAC, _STR_NOT_CONNECTED);
             ds3macset = 0;
         }
     }
@@ -1311,7 +1322,7 @@ static int guiGamePadEmuInfoUpdater(int modified)
                 supported = 0;
                 for (i = 0, j = 0; i < 64; i++) {
                     data = (feat[j] >> (i - j * 8)) & 1;
-                    diaSetLabel(diaPadEmuInfo, PADCFG_FEAT_START + i, _l(_STR_NO - data));
+                    diaSetLabelId(diaPadEmuInfo, PADCFG_FEAT_START + i, _STR_NO - data);
                     j = (i + 1) / 8;
                     if (i == 25 || i == 26 || i == 39) {
                         if (data)
@@ -1319,9 +1330,9 @@ static int guiGamePadEmuInfoUpdater(int modified)
                     }
                 }
                 if (supported == 3)
-                    diaSetLabel(diaPadEmuInfo, PADCFG_BT_SUPPORTED, _l(_STR_BT_SUPPORTED));
+                    diaSetLabelId(diaPadEmuInfo, PADCFG_BT_SUPPORTED, _STR_BT_SUPPORTED);
                 else
-                    diaSetLabel(diaPadEmuInfo, PADCFG_BT_SUPPORTED, _l(_STR_BT_NOTSUPPORTED));
+                    diaSetLabelId(diaPadEmuInfo, PADCFG_BT_SUPPORTED, _STR_BT_NOTSUPPORTED);
             } else {
                 feat_set = 0;
             }
@@ -1336,8 +1347,11 @@ static int guiGamePadEmuInfoUpdater(int modified)
 
 void guiGameShowPadEmuConfig(int forceGlobal)
 {
-    const char *settingsSource[] = {_l(_STR_GLOBAL_SETTINGS), _l(_STR_PERGAME_SETTINGS), NULL};
-    const char *PadEmuModes[] = {_l(_STR_DS34USB_MODE), _l(_STR_DS34BT_MODE), NULL};
+    // string ids, looked up in every frame (a language switch frees translated strings)
+    static const char *settingsSource[] = {"", "", NULL};
+    static const int settingsSourceIds[] = {_STR_GLOBAL_SETTINGS, _STR_PERGAME_SETTINGS};
+    static const char *PadEmuModes[] = {"", "", NULL};
+    static const int PadEmuModeIds[] = {_STR_DS34USB_MODE, _STR_DS34BT_MODE};
 
     int PadEmuMtap, PadEmuMtapPort, i;
 
@@ -1347,8 +1361,8 @@ void guiGameShowPadEmuConfig(int forceGlobal)
     if (forceGlobalPadEmu)
         guiGameLoadPadEmuConfig(NULL, configGetByType(CONFIG_GAME));
 
-    diaSetEnum(diaPadEmuConfig, PADCFG_PADEMU_SOURCE, settingsSource);
-    diaSetEnum(diaPadEmuConfig, PADCFG_PADEMU_MODE, PadEmuModes);
+    diaSetEnumIds(diaPadEmuConfig, PADCFG_PADEMU_SOURCE, settingsSource, settingsSourceIds);
+    diaSetEnumIds(diaPadEmuConfig, PADCFG_PADEMU_MODE, PadEmuModes, PadEmuModeIds);
 
     PadEmuMtap = (PadEmuSettings >> 24) & 1;
     PadEmuMtapPort = ((PadEmuSettings >> 25) & 1) + 1;
@@ -1391,15 +1405,15 @@ void guiGameShowPadEmuConfig(int forceGlobal)
 
         if (result == PADCFG_BTINFO) {
             for (i = PADCFG_FEAT_START; i < PADCFG_FEAT_END; i++)
-                diaSetLabel(diaPadEmuInfo, i, _l(_STR_NO));
+                diaSetLabelId(diaPadEmuInfo, i, _STR_NO);
 
-            diaSetLabel(diaPadEmuInfo, PADCFG_VID, _l(_STR_NOT_CONNECTED));
-            diaSetLabel(diaPadEmuInfo, PADCFG_PID, _l(_STR_NOT_CONNECTED));
-            diaSetLabel(diaPadEmuInfo, PADCFG_REV, _l(_STR_NOT_CONNECTED));
-            diaSetLabel(diaPadEmuInfo, PADCFG_HCIVER, _l(_STR_NOT_CONNECTED));
-            diaSetLabel(diaPadEmuInfo, PADCFG_LMPVER, _l(_STR_NOT_CONNECTED));
-            diaSetLabel(diaPadEmuInfo, PADCFG_MANID, _l(_STR_NOT_CONNECTED));
-            diaSetLabel(diaPadEmuInfo, PADCFG_BT_SUPPORTED, _l(_STR_NOT_CONNECTED));
+            diaSetLabelId(diaPadEmuInfo, PADCFG_VID, _STR_NOT_CONNECTED);
+            diaSetLabelId(diaPadEmuInfo, PADCFG_PID, _STR_NOT_CONNECTED);
+            diaSetLabelId(diaPadEmuInfo, PADCFG_REV, _STR_NOT_CONNECTED);
+            diaSetLabelId(diaPadEmuInfo, PADCFG_HCIVER, _STR_NOT_CONNECTED);
+            diaSetLabelId(diaPadEmuInfo, PADCFG_LMPVER, _STR_NOT_CONNECTED);
+            diaSetLabelId(diaPadEmuInfo, PADCFG_MANID, _STR_NOT_CONNECTED);
+            diaSetLabelId(diaPadEmuInfo, PADCFG_BT_SUPPORTED, _STR_NOT_CONNECTED);
             ver_set = 0;
             feat_set = 0;
             diaExecuteDialog(diaPadEmuInfo, -1, 1, &guiGamePadEmuInfoUpdater);
@@ -1460,7 +1474,11 @@ static int guiGamePadMacroUpdater(int modified)
 
 void guiGameShowPadMacroConfig(int forceGlobal)
 {
-    const char *settingsSource[] = {_l(_STR_GLOBAL_SETTINGS), _l(_STR_PERGAME_SETTINGS), NULL};
+    // string ids, looked up in every frame (a language switch frees translated strings)
+    static const char *settingsSource[] = {"", "", NULL};
+    static const int settingsSourceIds[] = {_STR_GLOBAL_SETTINGS, _STR_PERGAME_SETTINGS};
+    static const char *toggle_enum[] = {"", "", NULL};
+    static const int toggle_enum_ids[] = {_STR_ACT_WHILE_PRESSED, _STR_ACT_TOGGLED};
     forceGlobalPadMacro = forceGlobal;
     diaSetEnabled(diaPadMacroConfig, PADMACRO_CFG_SOURCE, !forceGlobalPadMacro);
 
@@ -1468,12 +1486,11 @@ void guiGameShowPadMacroConfig(int forceGlobal)
         guiGameLoadPadMacroConfig(NULL, configGetByType(CONFIG_GAME));
     }
 
-    diaSetEnum(diaPadMacroConfig, PADMACRO_CFG_SOURCE, settingsSource);
+    diaSetEnumIds(diaPadMacroConfig, PADMACRO_CFG_SOURCE, settingsSource, settingsSourceIds);
     diaSetEnum(diaPadMacroConfig, PADMACRO_SLOWDOWN_L, button_names_enum);
     diaSetEnum(diaPadMacroConfig, PADMACRO_SLOWDOWN_R, button_names_enum);
-    const char *toggle_enum[] = {_l(_STR_ACT_WHILE_PRESSED), _l(_STR_ACT_TOGGLED), NULL};
-    diaSetEnum(diaPadMacroConfig, PADMACRO_SLOWDOWN_TOGGLE_L, toggle_enum);
-    diaSetEnum(diaPadMacroConfig, PADMACRO_SLOWDOWN_TOGGLE_R, toggle_enum);
+    diaSetEnumIds(diaPadMacroConfig, PADMACRO_SLOWDOWN_TOGGLE_L, toggle_enum, toggle_enum_ids);
+    diaSetEnumIds(diaPadMacroConfig, PADMACRO_SLOWDOWN_TOGGLE_R, toggle_enum, toggle_enum_ids);
 
     int result = -1;
     while (result != 0) {
@@ -1717,19 +1734,24 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // Index 0/1 == the stored $CoreLoader value (0=<OPL>, 1=Neutrino); index 2 "Default" = no per-game
     // key -> follow the global gDefaultCoreLoader. Keeping 0/1 aligned with the stored ints means the
     // UDPBD lock (index 1) and the launch-side value semantics are untouched -- only "Default" is new.
-    const char *loaders[] = {"<OPL>", "Neutrino", _l(_STR_DEFAULT), NULL};
-    diaSetEnum(diaCompatConfig, COMPAT_LOADER, loaders);
+    // "Default" is a string id, looked up in every frame (a language switch frees translated strings);
+    // "" holds its place in the list. Here and in the two Neutrino rows below.
+    static const char *loaders[] = {"<OPL>", "Neutrino", "", NULL};
+    static const int loaderIds[] = {-1, -1, _STR_DEFAULT};
+    diaSetEnumIds(diaCompatConfig, COMPAT_LOADER, loaders, loaderIds);
 
     // Indices map 1:1 onto system.c's gsmVideoTokens (fp1/fp2/1080ix1/ix2/ix3) -- old configs
     // stored 0-3, which keep their meaning; x2/x3 and now "Default" are APPENDED so persisted
     // values stay stable. "Default" (index NEUTRINO_VIDEO_DEFAULT_IDX) = no per-game key -> follow
     // the global gNeutrinoVideoDefault, mirroring the Loader Core row's index-2 pattern.
-    const char *neutrinoVideoModes[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", _l(_STR_DEFAULT), NULL};
-    diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideoModes);
+    static const char *neutrinoVideoModes[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", "", NULL};
+    static const int neutrinoVideoModeIds[] = {-1, -1, -1, -1, -1, -1, _STR_DEFAULT};
+    diaSetEnumIds(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideoModes, neutrinoVideoModeIds);
     // The ":c" compatibility half of -gsm=v:c -- field-flipping interlace fixes for games that
     // shake/tear under a forced mode. Ignored (not emitted) while the effective video mode is Off.
-    const char *neutrinoGsmCompModes[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", _l(_STR_DEFAULT), NULL};
-    diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmCompModes);
+    static const char *neutrinoGsmCompModes[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", "", NULL};
+    static const int neutrinoGsmCompModeIds[] = {-1, -1, -1, -1, _STR_DEFAULT};
+    diaSetEnumIds(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmCompModes, neutrinoGsmCompModeIds);
 
     // -bsdfs override (parity-audit #11). Indices map 1:1 onto system.c's bsdfsTokens; the value
     // strings are Neutrino's literal driver tokens, deliberately untranslated (like the -gsm rows).
@@ -2351,14 +2373,20 @@ static int guiGameOSDLanguageUpdater(int modified)
 void guiGameShowOSDLanguageConfig(int forceGlobal)
 {
     /// `_STR_SYSTEM_DEFAULT` MUST BE AT THE END OF THE LIST. ELSE, THE ENUMERATOR VALUES WILL NOT MATCH THE ONES ON OSDCONFIG. BREAKING THIS FEATURE
-    const char *Lngs[] = {_l(_STR_LANGUAGE_JAPANESE), _l(_STR_LANGUAGE_ENGLISH), _l(_STR_LANGUAGE_FRENCH), _l(_STR_LANGUAGE_SPANISH), _l(_STR_LANGUAGE_GERMAN), _l(_STR_LANGUAGE_ITALIAN), _l(_STR_LANGUAGE_DUTCH), _l(_STR_LANGUAGE_PORTUGUESE), _l(_STR_SYSTEM_DEFAULT), NULL};
-    const char *sources[] = {_l(_STR_GLOBAL_SETTINGS), _l(_STR_PERGAME_SETTINGS), NULL};
-    const char *TV[] = {"4:3", _l(_STR_FULL_SCREEN), "16:9", _l(_STR_SYSTEM_DEFAULT), NULL};
-    const char *VMOD[] = {"RGB", "Y Cb/Pb Cr/Pr", _l(_STR_SYSTEM_DEFAULT), NULL};
-    diaSetEnum(diaOSDConfig, OSD_LANGUAGE_VALUE, Lngs);
-    diaSetEnum(diaOSDConfig, OSD_LANGUAGE_SOURCE, sources);
-    diaSetEnum(diaOSDConfig, OSD_TVASPECT_VALUE, TV);
-    diaSetEnum(diaOSDConfig, OSD_VMODE_VALUE, VMOD);
+    // Translated rows are string ids, looked up in every frame (a language switch frees translated strings);
+    // "" holds their place in the list.
+    static const char *Lngs[] = {"", "", "", "", "", "", "", "", "", NULL};
+    static const int LngIds[] = {_STR_LANGUAGE_JAPANESE, _STR_LANGUAGE_ENGLISH, _STR_LANGUAGE_FRENCH, _STR_LANGUAGE_SPANISH, _STR_LANGUAGE_GERMAN, _STR_LANGUAGE_ITALIAN, _STR_LANGUAGE_DUTCH, _STR_LANGUAGE_PORTUGUESE, _STR_SYSTEM_DEFAULT};
+    static const char *sources[] = {"", "", NULL};
+    static const int sourceIds[] = {_STR_GLOBAL_SETTINGS, _STR_PERGAME_SETTINGS};
+    static const char *TV[] = {"4:3", "", "16:9", "", NULL};
+    static const int TVIds[] = {-1, _STR_FULL_SCREEN, -1, _STR_SYSTEM_DEFAULT};
+    static const char *VMOD[] = {"RGB", "Y Cb/Pb Cr/Pr", "", NULL};
+    static const int VMODIds[] = {-1, -1, _STR_SYSTEM_DEFAULT};
+    diaSetEnumIds(diaOSDConfig, OSD_LANGUAGE_VALUE, Lngs, LngIds);
+    diaSetEnumIds(diaOSDConfig, OSD_LANGUAGE_SOURCE, sources, sourceIds);
+    diaSetEnumIds(diaOSDConfig, OSD_TVASPECT_VALUE, TV, TVIds);
+    diaSetEnumIds(diaOSDConfig, OSD_VMODE_VALUE, VMOD, VMODIds);
     forceGlobalOSDLanguage = forceGlobal;
     diaSetEnabled(diaOSDConfig, OSD_LANGUAGE_SOURCE, !forceGlobalOSDLanguage);
 

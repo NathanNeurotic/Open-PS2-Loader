@@ -111,32 +111,34 @@ static void fmPath(char *out, int size, int i)
         out[0] = '\0';
 }
 
-static const char *fmErrText(int err)
+// The reasons are string ids, not text: a paste keeps its first failure while it copies the rest, and a
+// language switch on the IO thread in that time frees the strings _l() returned. fmShowFailure looks it up.
+static int fmErrId(int err)
 {
     switch (err) {
         case FM_ERR_EXISTS:
-            return _l(_STR_FM_ERR_EXISTS);
+            return _STR_FM_ERR_EXISTS;
         case FM_ERR_INSIDE:
-            return _l(_STR_FM_ERR_INSIDE);
+            return _STR_FM_ERR_INSIDE;
         case FM_ERR_NAME:
-            return _l(_STR_FM_ERR_NAME);
+            return _STR_FM_ERR_NAME;
         case FM_ERR_READ:
-            return _l(_STR_FM_ERR_READ);
+            return _STR_FM_ERR_READ;
         case FM_ERR_DELETE:
-            return _l(_STR_FM_ERR_DELETE);
+            return _STR_FM_ERR_DELETE;
         case FM_ERR_DEEP:
-            return _l(_STR_FM_ERR_DEEP);
+            return _STR_FM_ERR_DEEP;
         case FM_ERR_MEMORY:
-            return _l(_STR_FM_ERR_MEMORY);
+            return _STR_FM_ERR_MEMORY;
         default:
-            return _l(_STR_FM_ERR_WRITE);
+            return _STR_FM_ERR_WRITE;
     }
 }
 
-static void fmShowFailure(const char *name, const char *why)
+static void fmShowFailure(const char *name, int whyId)
 {
     char msg[FM_PATH_LEN + 200];
-    snprintf(msg, sizeof(msg), _l(_STR_FM_FAILED), name, why);
+    snprintf(msg, sizeof(msg), _l(_STR_FM_FAILED), name, _l(whyId));
     guiMsgBox(msg, 0, NULL);
 }
 
@@ -303,7 +305,10 @@ static void fmFill(void)
     for (i = 0; i < fmCount; i++)
         marks += fmMarked[i];
 
-    diaSetLabel(diaFileManager, FM_PATH, fmInFolder() ? fmDir : _l(_STR_FM_DRIVES));
+    if (fmInFolder())
+        diaSetLabel(diaFileManager, FM_PATH, fmDir);
+    else
+        diaSetLabelId(diaFileManager, FM_PATH, _STR_FM_DRIVES);
     clip[0] = marked[0] = '\0';
     if (fmClipCount > 0)
         snprintf(clip, sizeof(clip), _l(fmClipCut ? _STR_FM_CLIP_CUT : _STR_FM_CLIP_COPY), fmClipCount);
@@ -415,12 +420,12 @@ static void fmDirSlash(char *out, int size, const char *dir)
         snprintf(out, size, "%s%c", dir, fmSep(dir));
 }
 
-// A vmcsaves result (1 done, -1 already there, 0 failed) as the words a failure shows; NULL for done
-static const char *fmPsuWhy(int r)
+// A vmcsaves result (1 done, -1 already there, 0 failed) as the string id of the words a failure shows; -1 for done
+static int fmPsuWhy(int r)
 {
     if (r == 1)
-        return NULL;
-    return r < 0 ? _l(_STR_FM_ERR_EXISTS) : _l(guiGameVMCSavesErrorText());
+        return -1;
+    return r < 0 ? _STR_FM_ERR_EXISTS : guiGameVMCSavesErrorText();
 }
 
 // Paste here (asPsu 0) or Paste as PSU (1): every clipboard entry into this folder. A failure is named and the
@@ -428,7 +433,7 @@ static const char *fmPsuWhy(int r)
 static void fmPaste(int asPsu)
 {
     char target[FM_PATH_LEN], parent[FM_PATH_LEN], failedName[FM_NAME];
-    const char *why = NULL, *firstWhy = NULL;
+    int why = -1, firstWhy = -1; // string ids, -1 for none
     int i, failed = 0, done = 0, ok, keep = 0;
 
     if (!fmCanWrite() || fmClipCount == 0)
@@ -438,7 +443,7 @@ static void fmPaste(int asPsu)
         const char *name = fmBaseName(fmClip[i]);
         fmLastPercent = -1;
         fmProgressShow(name, 0, 1);
-        why = NULL;
+        why = -1;
         if (asPsu) {
             // Paste as PSU: a save folder becomes <here>/<save>.psu (RIPPS2's PASTE AS PSU)
             if (!fmClipIsDir[i] || !fmIsSaveFolder(fmClip[i]) || !fmParent(parent, sizeof(parent), fmClip[i]))
@@ -457,9 +462,9 @@ static void fmPaste(int asPsu)
             else
                 ok = fmCopy(fmClip[i], fmClipIsDir[i], target, &fmProgressShow);
             if (!ok)
-                why = fmErrText(fmError());
+                why = fmErrId(fmError());
         }
-        if (why == NULL)
+        if (why < 0)
             done++;
         else {
             if (failed++ == 0) {
@@ -481,7 +486,7 @@ static void fmPaste(int asPsu)
     if (failed)
         fmShowFailure(failedName, firstWhy);
     else if (done == 0)
-        fmShowFailure(_l(_STR_FM_PASTE_PSU), _l(_STR_FM_NO_SAVES));
+        fmShowFailure(_l(_STR_FM_PASTE_PSU), _STR_FM_NO_SAVES);
 }
 
 static void fmDeleteSelection(int e)
@@ -510,7 +515,7 @@ static void fmDeleteSelection(int e)
     }
     fmLoad();
     if (failed)
-        fmShowFailure(failedName, fmErrText(firstErr));
+        fmShowFailure(failedName, fmErrId(firstErr));
 }
 
 static void fmRenameEntry(int e)
@@ -524,7 +529,7 @@ static void fmRenameEntry(int e)
         return;
     fmPath(path, sizeof(path), e);
     if (!fmRename(path, name)) {
-        fmShowFailure(fmList_[e].name, fmErrText(fmError()));
+        fmShowFailure(fmList_[e].name, fmErrId(fmError()));
         return;
     }
     fmLoad();
@@ -539,7 +544,7 @@ static void fmNewFolder(void)
     if (!diaShowKeyb(name, FM_NAME - 1, 0, _STR_FM_NEW_FOLDER) || name[0] == '\0')
         return;
     if (!fmMakeDir(fmDir, name)) {
-        fmShowFailure(name, fmErrText(fmError()));
+        fmShowFailure(name, fmErrId(fmError()));
         return;
     }
     fmLoad();
@@ -549,7 +554,7 @@ static void fmNewFolder(void)
 static void fmUnpackPsu(int e)
 {
     char psu[FM_PATH_LEN], here[FM_PATH_LEN];
-    const char *why;
+    int why;
 
     if (!fmCanWrite())
         return;
@@ -558,7 +563,7 @@ static void fmUnpackPsu(int e)
     guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
     why = fmPsuWhy(vmcSavesPsuToFolder(psu, here));
     fmLoad();
-    if (why != NULL)
+    if (why >= 0)
         fmShowFailure(fmList_[e].name, why);
 }
 
@@ -574,7 +579,7 @@ static void fmActions(int e)
     diaSetLabel(diaFileActions, FMA_TITLE, f->name);
     diaSetVisible(diaFileActions, FMA_OPEN, f->isDir);
     diaSetVisible(diaFileActions, FMA_RUN, isElf);
-    diaSetLabel(diaFileActions, FMA_MARK, _l(fmMarked[e] ? _STR_FM_UNMARK : _STR_FM_MARK));
+    diaSetLabelId(diaFileActions, FMA_MARK, fmMarked[e] ? _STR_FM_UNMARK : _STR_FM_MARK);
     diaSetVisible(diaFileActions, FMA_UNPACK, isPsu);
     diaSetEnabled(diaFileActions, FMA_CUT, gEnableWrite);
     diaSetEnabled(diaFileActions, FMA_RENAME, gEnableWrite);

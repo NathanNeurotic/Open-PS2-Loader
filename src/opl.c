@@ -3998,6 +3998,10 @@ static void _loadConfig()
                          gNetworkProtocol == NET_PROTO_UDPBD));
 
     diagLog("settings: applying (theme, language, device start-up)");
+    // This load applies the saved language, so from here a language publish applies it again when its LNG folder
+    // only arrives later (a device mounted after boot): no Language-page pick stands in its way any more.
+    if (langID >= 0)
+        lngSetUserPick(0);
     applyConfig(themeID, langID, 0);
     diagLog("settings: applied");
     // applyConfig reloads only a CHANGED theme; the default <OPL> theme loaded at boot still shows its

@@ -30,7 +30,13 @@ for old in ("diaConfig", "diaUIConfig", "diaLaunchConfig"):
     assert "UICFG_LANG" not in array(old), old
     assert "LAUNCH_OSD_DEFAULTS_BUTTON" not in array(old), old
 index = function("static int guiSettingsShowIndex(")
-assert "_l(_STR_LANGUAGE)" in index
+# The Index lists the page by its string id, in page order, and looks the text up inside each frame
+rows = re.search(r"static const int (\w+)\[SETTINGS_PAGE_COUNT \+ 1\] = \{([^}]*)\};", index)
+assert rows, "the Index rows are string ids"
+pages = re.findall(r"^\s*(SETTINGS_\w+)", re.search(r"^enum gui_settings_page \{.*?\};", gui, re.M | re.S).group(), re.M)
+assert [row.strip() for row in rows.group(2).split(",")][pages.index("SETTINGS_LANGUAGE")] == "_STR_LANGUAGE"
+frame = index[index.index("guiStartFrame();"):index.index("guiEndFrame();")]
+assert "_l(%s[i])" % rows.group(1) in frame
 shell = function("static void guiShowSettingsFromPage(")
 assert re.search(r"case SETTINGS_LANGUAGE:\s*result = guiSettingsShowLanguage\(\);", shell)
 assert "guiGameShowOSDLanguageConfig" not in function("static int guiSettingsShowLaunch(")
@@ -56,7 +62,7 @@ program = r'''
 static struct UIItem *guiSettingsActiveDialog, *shellUI;
 static int guiSettingsShellActive = 1, guiSettingsCurrentPage = SETTINGS_LANGUAGE;
 static int guiSettingsSavePending, context, lockDepth, calls, applyCalls, menuCalls, osdCalls;
-static int currentLanguage, selectedLanguage, osdLanguage, childFirst, finalResult;
+static int currentLanguage, selectedLanguage, osdLanguage, childFirst, finalResult, userPick, pickCalls;
 static int composeFails, allocFail, allocCalls, outstanding;
 static char guiSettingsPageIndicator[32];
 static char english[] = "English", japanese[] = "Japanese";
@@ -129,9 +135,12 @@ static void guiGameShowOSDLanguageConfig(int global)
     osdLanguage = 7;
     osdCalls++;
 }
+/* The pick is flagged before the switch, so a language publish meanwhile keeps it */
+static void lngSetUserPick(int picked) { assert(picked == 1 && !lockDepth); userPick = picked; pickCalls++; }
 static void applyConfig(int theme, int language, int skipDeviceRefresh)
 {
     assert(theme == -1 && skipDeviceRefresh == 1);
+    assert(userPick == 1);
     currentLanguage = language;
     applyCalls++;
 }
@@ -142,7 +151,7 @@ static void reset(void)
 {
     assert(outstanding == 0 && lockDepth == 0);
     guiSettingsActiveDialog = shellUI = NULL;
-    context = guiSettingsSavePending = calls = applyCalls = menuCalls = osdCalls = 0;
+    context = guiSettingsSavePending = calls = applyCalls = menuCalls = osdCalls = userPick = pickCalls = 0;
     currentLanguage = selectedLanguage = 0;
     osdLanguage = 2;
     childFirst = composeFails = allocCalls = 0;
@@ -159,7 +168,7 @@ static void expectExit(int result, int change, int child)
     got = guiSettingsShowLanguage();
     assert(got == (result == DIA_RESULT_PREV || result == DIA_RESULT_NEXT ? result : DIA_RESULT_INDEX));
     assert(currentLanguage == (result == UIID_BTN_CANCEL || result == -1 ? 0 : change));
-    assert(applyCalls == (currentLanguage != 0) && menuCalls == applyCalls);
+    assert(applyCalls == (currentLanguage != 0) && menuCalls == applyCalls && pickCalls == applyCalls);
     assert(osdLanguage == (child ? 7 : 2) && osdCalls == child);
     assert(!guiSettingsActiveDialog && !shellUI && !context && !outstanding);
     assert(guiSettingsSavePending == (child || result != UIID_BTN_CANCEL));

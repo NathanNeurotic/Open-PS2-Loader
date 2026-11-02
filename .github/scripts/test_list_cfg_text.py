@@ -269,7 +269,15 @@ dialogs = read("src/dialogs.c", "src/ui/dialogs.cpp")
 assert re.search(r"\{UI_LABEL, 0, 1, 1, -1, -40, 0, \{\.label = \{NULL, _STR_LIST_CFG_TEXT\}\}\},\s*\{UI_SPACER\},\s*"
                  r"\{UI_ENUM, UICFG_LIST_CFG_TEXT, 1, 1, _STR_HINT_LIST_CFG_TEXT,", dialogs), "Settings > Interface row"
 gui = read("src/gui.c", "src/ui/guisettings.cpp")
-assert "{_l(_STR_THEME), _l(_STR_ON), _l(_STR_OFF), NULL}" in gui, "the choices in LIST_CFG_TEXT_* order"
+# The choices in LIST_CFG_TEXT_* order, as string ids looked up in every frame: an _l() pointer kept in the
+# list is freed by a language switch while the page is open
+by_id = re.search(r'static const char \*(\w+)\[\] = \{"", "", "", NULL\};\s*'
+                  r'static const int (\w+)\[\] = \{_STR_THEME, _STR_ON, _STR_OFF\};\s*'
+                  r'diaSetEnumIds\(\w+, UICFG_LIST_CFG_TEXT, \1, \2\);', gui)
+if CPP:  # until its settings page passes ids too
+    assert by_id or "{_l(_STR_THEME), _l(_STR_ON), _l(_STR_OFF), NULL}" in gui, "the choices in LIST_CFG_TEXT_* order"
+else:
+    assert by_id, "the choices in LIST_CFG_TEXT_* order, as string ids"
 assert re.search(r"diaSetInt\(\w+, UICFG_LIST_CFG_TEXT, gListCfgText\)", gui)
 assert re.search(r"diaGetInt\(\w+, UICFG_LIST_CFG_TEXT, &gListCfgText\)", gui)
 

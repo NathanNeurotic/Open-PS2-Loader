@@ -1017,6 +1017,18 @@ static int diaWrapExtra(struct UIItem *item, int wrapRoom)
     return (diaWrapLines(diaLabelText(item), wrapRoom) - 1) * MENU_ITEM_HEIGHT;
 }
 
+// The text of enum row i, the one place an enum's text is read: the row's string id looked up now, or
+// enumvalues[i] for a row without one. Only ever called inside a guiLock'd frame, so a language switch cannot
+// free the string between this lookup and its use. Counting and the end-of-list test stay on enumvalues.
+static const char *diaEnumValueText(const struct UIItem *item, int i)
+{
+    const int *ids = item->intvalue.enumids;
+
+    if (ids != NULL && ids[i] >= 0)
+        return _l(ids[i]);
+    return item->intvalue.enumvalues[i];
+}
+
 // The text an enum shows. A corrupt/out-of-range stored index (e.g. a hand-edited cfg) shows the first option:
 // count the NULL-terminated options, then index with a clamped copy so we never read past the array.
 static const char *diaEnumText(const struct UIItem *item)
@@ -1029,7 +1041,7 @@ static const char *diaEnumText(const struct UIItem *item)
         eidx = 0;
     if (ecount == 0 || item->intvalue.enumvalues[eidx] == NULL)
         return _l(_STR_NO_ITEMS);
-    return item->intvalue.enumvalues[eidx];
+    return diaEnumValueText(item, eidx);
 }
 
 // A value that fits itself to whatever room is left (an enum, a string, a button) asks a label in front of it for
@@ -2363,18 +2375,39 @@ int diaSetLabel(struct UIItem *ui, int id, const char *text)
 
     if ((item->type == UI_LABEL) || (item->type == UI_BUTTON) || (item->type == UI_HEADER)) {
         item->label.text = text;
+        item->label.stringId = -1; // the text shows, not a string id the row was declared with
         return 1;
     }
 
     return 0;
 }
 
-// LIFETIME CONTRACT: this stores enumvals' RAW POINTER -- no copy. The array must outlive every
-// render of the dialog (dialog structs are also reused across openings). A block-scoped array is
-// a dangling pointer the moment its brace closes (issue #154: the DMA row rendered the Neutrino
-// video-mode list). Use static arrays for pure literals; _l()-localized arrays must stay
-// function-scope in the function that executes the dialog (static would freeze the first language).
-int diaSetEnum(struct UIItem *ui, int id, const char **enumvals)
+// The label shows _l(stringId), looked up in every frame (diaLabelText), so a language switch cannot leave it
+// pointing at a freed translation.
+int diaSetLabelId(struct UIItem *ui, int id, int stringId)
+{
+    struct UIItem *item = diaFindByID(ui, id);
+
+    if (!item)
+        return 0;
+
+    if ((item->type == UI_LABEL) || (item->type == UI_BUTTON) || (item->type == UI_HEADER)) {
+        item->label.text = NULL;
+        item->label.stringId = stringId;
+        return 1;
+    }
+
+    return 0;
+}
+
+// LIFETIME CONTRACT: this stores the RAW POINTERS of enumvals and enumids -- no copy. Both arrays
+// must outlive every render of the dialog (dialog structs are also reused across openings). A
+// block-scoped array is a dangling pointer the moment its brace closes (issue #154: the DMA row
+// rendered the Neutrino video-mode list); a static array is safe. Never put an _l() pointer in
+// enumvals: a language switch (the Language page, or the IO thread applying the saved language
+// when a device brings its LNG folder) frees the old translation while the dialog is open. A
+// translated row is an id in enumids, which diaEnumValueText looks up in every frame.
+static int diaSetEnumList(struct UIItem *ui, int id, const char **enumvals, const int *enumids)
 {
     struct UIItem *item = diaFindByID(ui, id);
 
@@ -2385,5 +2418,16 @@ int diaSetEnum(struct UIItem *ui, int id, const char **enumvals)
         return 0;
 
     item->intvalue.enumvalues = enumvals;
+    item->intvalue.enumids = enumids;
     return 1;
+}
+
+int diaSetEnum(struct UIItem *ui, int id, const char **enumvals)
+{
+    return diaSetEnumList(ui, id, enumvals, NULL);
+}
+
+int diaSetEnumIds(struct UIItem *ui, int id, const char **enumvals, const int *enumids)
+{
+    return diaSetEnumList(ui, id, enumvals, enumids);
 }

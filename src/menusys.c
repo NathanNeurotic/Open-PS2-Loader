@@ -961,7 +961,8 @@ static void menuInitMainMenu(void)
     submenuAppendItem(&mainMenu, -1, NULL, MENU_LAUNCH_PS2_DISC, _STR_LAUNCH_PS2_DISC);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RANDOM_GAME, _STR_RANDOM_GAME);
 #ifdef RETROACHIEVEMENTS
-    submenuAppendItem(&mainMenu, -1, _l(gRAMode == RA_MODE_CADUCEUS ? _STR_CAD_ACHIEVEMENTS : _STR_XERA_ACHIEVEMENTS), MENU_RA_ACHIEVEMENTS, -1);
+    // A string id like every other row: a submenu keeps the text pointer, and a language switch frees _l() text.
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_ACHIEVEMENTS, gRAMode == RA_MODE_CADUCEUS ? _STR_CAD_ACHIEVEMENTS : _STR_XERA_ACHIEVEMENTS);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_CHECK, _STR_RA_DISC_CHECK);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_LAUNCH, _STR_RA_DISC_LAUNCH);
 #endif
@@ -1016,7 +1017,7 @@ void menuInitGameMenu(item_list_t *support)
 #ifdef RETROACHIEVEMENTS
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
-    submenuAppendItem(&gameMenu, -1, _l(_STR_CAD_VIEW_ACHIEVEMENTS), GAME_RA_ACHIEVEMENTS, -1);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_ACHIEVEMENTS, _STR_CAD_VIEW_ACHIEVEMENTS);
 #endif
 
     gameMenuCurrent = gameMenu;
@@ -1056,7 +1057,7 @@ void menuInitVcdMenu(int isEmber, int readOnly)
     if (!isEmber) {
         submenuAppendItem(&appMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
         submenuAppendItem(&appMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
-        submenuAppendItem(&appMenu, -1, _l(_STR_CAD_VIEW_ACHIEVEMENTS), GAME_RA_ACHIEVEMENTS, -1);
+        submenuAppendItem(&appMenu, -1, NULL, GAME_RA_ACHIEVEMENTS, _STR_CAD_VIEW_ACHIEVEMENTS);
     }
 #endif
 

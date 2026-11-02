@@ -23,6 +23,11 @@ void lngInitFallbackFont(void);
 char *lngGetValue(void);
 void lngEnd(void);
 
+/** 1: the Language page applied the user's pick this session. It is live but reaches language_text only on
+ *  save, so until a config load applies the saved language again (0), a language publish (a device bringing
+ *  its LNG folder) keeps the pick instead of re-applying the saved language over it. */
+void lngSetUserPick(int picked);
+
 // Indices are shifted in GUI, as we add the internal english language at 0
 int lngSetGuiValue(int langID);
 int lngGetGuiValue(void);

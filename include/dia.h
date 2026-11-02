@@ -78,6 +78,9 @@ struct UIItem
             int max;
             // if UI_ENUM is used, this contains enumeration values
             const char **enumvalues; // last one has to be NULL
+            // optional, one per enumvalues entry: the _STR_ id the row shows, looked up in every frame
+            // (a language switch frees translated strings), or -1 to show enumvalues[i]. NULL: no ids.
+            const int *enumids;
         } intvalue;
 
         struct
@@ -127,9 +130,16 @@ int diaSetString(struct UIItem *ui, int id, const char *text);
 int diaGetColor(struct UIItem *ui, int id, unsigned char *col);
 int diaSetColor(struct UIItem *ui, int id, const unsigned char *col);
 int diaSetU64Color(struct UIItem *ui, int id, u64 col);
-// set label pointer into the label's text (must be valid while rendering dialog)
+// set label pointer into the label's text (must be valid while rendering dialog). Clears the label's string id,
+// so the text is what shows. Never pass _l() here: a language switch frees translated strings; use diaSetLabelId.
 int diaSetLabel(struct UIItem *ui, int id, const char *text);
-// sets the current enum value list for given control
+// stringId: the _STR_ id the label shows, looked up in every frame (a language switch frees translated strings).
+int diaSetLabelId(struct UIItem *ui, int id, int stringId);
+// sets the current enum value list for given control (no string ids: every row shows its enumvals text)
 int diaSetEnum(struct UIItem *ui, int id, const char **enumvals);
+// enumids: one per enumvals entry, the _STR_ id the row shows, looked up in every frame (a language switch
+// frees translated strings), or -1 to show enumvals[i]. A translated row keeps a non-NULL placeholder ("")
+// in enumvals, which still ends at the first NULL.
+int diaSetEnumIds(struct UIItem *ui, int id, const char **enumvals, const int *enumids);
 
 #endif

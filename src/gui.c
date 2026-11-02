@@ -765,9 +765,9 @@ static void guiSourcesNetRowsUpdate(struct UIItem *ui)
     diaSetEnabled(ui, CFG_NETPROTOCOL, startMode != START_MODE_DISABLED);
 }
 
-static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes)
+static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes, const int *deviceModeIds)
 {
-    diaSetEnum(ui, CFG_NETSTART, deviceModes);
+    diaSetEnumIds(ui, CFG_NETSTART, deviceModes, deviceModeIds);
     diaSetInt(ui, CFG_NETSTART, gNetStartMode);
     diaSetEnum(ui, CFG_NETPROTOCOL, guiNetProtocolNames);
     diaSetInt(ui, CFG_NETPROTOCOL, guiNetProtocolToPicker(guiNetProtocolShown()));
@@ -821,35 +821,34 @@ int guiShowMmceConfig(void)
 {
     const struct UIItem *parts[] = {diaMmceConfig, diaMmceCommConfig, diaMmcePathConfig};
     const int skipIDs[] = {MMCE_COMM_BUTTON, MMCE_PATH_BUTTON};
-    static const char *deviceSlots[] = {"0", "1", NULL, NULL};
-    static const char *deviceIGRSlots[] = {NULL, "0", "1", NULL, NULL};
+    // diaSetEnum/diaSetEnumIds store the array pointers rather than copying them. Keep the MMCE options
+    // alive for the lifetime of the dedicated child dialog, including any parent re-entry after Circle.
+    // The translated rows are string ids, looked up in every frame; "" holds their place in the list.
+    static const char *deviceSlots[] = {"0", "1", "", NULL};
+    static const int deviceSlotIds[] = {-1, -1, _STR_AUTO};
+    // The IGR slot and ON/OFF choices were fixed English text no translation could change
+    // (belomaxorka / YAOPL 999bb6d3). The stored values (mmceigr_slot 0-3, 0/1) are unchanged.
+    static const char *deviceIGRSlots[] = {"", "0", "1", "", NULL};
+    static const int deviceIGRSlotIds[] = {_STR_OFF, -1, -1, _STR_BOTH};
     static const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
-    static const char *deviceOnOff[] = {NULL, NULL, NULL};
+    static const char *deviceOnOff[] = {"", "", NULL};
+    static const int deviceOnOffIds[] = {_STR_OFF, _STR_ON};
     struct UIItem *previousActiveDialog = guiSettingsActiveDialog;
     struct UIItem *ui;
 
-    // diaSetEnum stores the array pointer rather than copying it. Keep the MMCE options alive for
-    // the lifetime of the dedicated child dialog, including any parent re-entry after Circle.
-    deviceSlots[2] = _l(_STR_AUTO);
-    // The IGR slot and ON/OFF choices were fixed English text no translation could change
-    // (belomaxorka / YAOPL 999bb6d3). The stored values (mmceigr_slot 0-3, 0/1) are unchanged.
-    deviceIGRSlots[0] = _l(_STR_OFF);
-    deviceIGRSlots[3] = _l(_STR_BOTH);
-    deviceOnOff[0] = _l(_STR_OFF);
-    deviceOnOff[1] = _l(_STR_ON);
     ui = guiSettingsComposeInto(guiMmceSettingsDialog, parts, 3, skipIDs, 2, -1, 1);
 
     if (ui == NULL)
         return -1;
 
-    diaSetEnum(ui, CFG_MMCESLOT, deviceSlots);
+    diaSetEnumIds(ui, CFG_MMCESLOT, deviceSlots, deviceSlotIds);
     diaSetInt(ui, CFG_MMCESLOT, gMMCESlot);
-    diaSetEnum(ui, CFG_MMCEIGRSLOT, deviceIGRSlots);
+    diaSetEnumIds(ui, CFG_MMCEIGRSLOT, deviceIGRSlots, deviceIGRSlotIds);
     diaSetInt(ui, CFG_MMCEIGRSLOT, gMMCEIGRSlot);
     diaSetInt(ui, CFG_MMCEGAMEID, gMMCEEnableGameID);
     diaSetEnum(ui, CFG_MMCE_WAIT_CYCLES, deviceAckWaitCycles);
     diaSetInt(ui, CFG_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
-    diaSetEnum(ui, CFG_MMCE_USE_ALARMS, deviceOnOff);
+    diaSetEnumIds(ui, CFG_MMCE_USE_ALARMS, deviceOnOff, deviceOnOffIds);
     diaSetInt(ui, CFG_MMCE_USE_ALARMS, gMMCEUseAlarms);
     diaSetString(ui, CFG_MMCEPREFIX, gMMCEPrefix);
 
@@ -989,15 +988,25 @@ static int sThemeViewPickerShown; // the value guiSetThemeViewPicker put on the 
 
 static void guiSetThemeViewPicker(struct UIItem *ui)
 {
-    static const char *names[THM_VIEW_PICK_COUNT + 1];
-    names[THM_VIEW_PICK_DEFAULT] = _l(_STR_DEFAULT);
-    names[THM_VIEW_PICK_LIST] = "List";
-    names[THM_VIEW_PICK_COVERFLOW3] = "Coverflow (3)";
-    names[THM_VIEW_PICK_COVERFLOW5] = "Coverflow (5)";
-    names[THM_VIEW_PICK_PSBBN] = "PSBBN Flow";
-    names[THM_VIEW_PICK_GRID] = "Grid";
-    names[THM_VIEW_PICK_COUNT] = NULL;
-    diaSetEnum(ui, UICFG_THEME_VIEW, names);
+    // "Default" is a string id, looked up in every frame (a language switch frees translated strings).
+    static const char *names[THM_VIEW_PICK_COUNT + 1] = {
+        [THM_VIEW_PICK_DEFAULT] = "",
+        [THM_VIEW_PICK_LIST] = "List",
+        [THM_VIEW_PICK_COVERFLOW3] = "Coverflow (3)",
+        [THM_VIEW_PICK_COVERFLOW5] = "Coverflow (5)",
+        [THM_VIEW_PICK_PSBBN] = "PSBBN Flow",
+        [THM_VIEW_PICK_GRID] = "Grid",
+        [THM_VIEW_PICK_COUNT] = NULL,
+    };
+    static const int ids[THM_VIEW_PICK_COUNT] = {
+        [THM_VIEW_PICK_DEFAULT] = _STR_DEFAULT,
+        [THM_VIEW_PICK_LIST] = -1,
+        [THM_VIEW_PICK_COVERFLOW3] = -1,
+        [THM_VIEW_PICK_COVERFLOW5] = -1,
+        [THM_VIEW_PICK_PSBBN] = -1,
+        [THM_VIEW_PICK_GRID] = -1,
+    };
+    diaSetEnumIds(ui, UICFG_THEME_VIEW, names, ids);
     sThemeViewPickerShown = thmViewPickFor(gThemeViewRequest, gCoverflowCount);
     diaSetInt(ui, UICFG_THEME_VIEW, sThemeViewPickerShown);
 }
@@ -1019,11 +1028,9 @@ static int guiReadThemeViewPicker(struct UIItem *ui)
 // the main page is laid out; it is the same all_games setting as the Game Sources row.
 static void guiSetLibraryPicker(struct UIItem *ui)
 {
-    static const char *names[3];
-    names[0] = _l(_STR_LIBRARY_PAGES);
-    names[1] = _l(_STR_ALL_GAMES_LIST);
-    names[2] = NULL;
-    diaSetEnum(ui, UICFG_LIBRARY, names);
+    static const char *names[] = {"", "", NULL};
+    static const int ids[] = {_STR_LIBRARY_PAGES, _STR_ALL_GAMES_LIST};
+    diaSetEnumIds(ui, UICFG_LIBRARY, names, ids);
     diaSetInt(ui, UICFG_LIBRARY, gAllGames ? 1 : 0);
 }
 
@@ -1265,15 +1272,20 @@ int guiShowNetConfig(void)
     // What the live SMB session was built from, before this page changes anything.
     gui_smb_link_t smbBefore;
     guiSmbLinkCapture(&smbBefore);
-    const char *ethOpModes[] = {_l(_STR_AUTO), _l(_STR_ETH_100MFDX), _l(_STR_ETH_100MHDX), _l(_STR_ETH_10MFDX), _l(_STR_ETH_10MHDX), NULL};
-    const char *addrConfModes[] = {_l(_STR_ADDR_TYPE_IP), _l(_STR_ADDR_TYPE_NETBIOS), NULL};
-    const char *ipAddrConfModes[] = {_l(_STR_IP_ADDRESS_TYPE_STATIC), _l(_STR_IP_ADDRESS_TYPE_DHCP), NULL};
+    // Translated rows are string ids, looked up in every frame: the IO thread can switch the language while this
+    // page is open (a device bringing its LNG folder), which frees the strings _l() returned.
+    static const char *ethOpModes[] = {"", "", "", "", "", NULL};
+    static const int ethOpModeIds[] = {_STR_AUTO, _STR_ETH_100MFDX, _STR_ETH_100MHDX, _STR_ETH_10MFDX, _STR_ETH_10MHDX};
+    static const char *addrConfModes[] = {"", "", NULL};
+    static const int addrConfModeIds[] = {_STR_ADDR_TYPE_IP, _STR_ADDR_TYPE_NETBIOS};
+    static const char *ipAddrConfModes[] = {"", "", NULL};
+    static const int ipAddrConfModeIds[] = {_STR_IP_ADDRESS_TYPE_STATIC, _STR_IP_ADDRESS_TYPE_DHCP};
     const char *udpfsModes[] = {"Files", "IMG", NULL}; // Access: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
     // Index == enum SMB_DIALECT. Protocol names, not translated.
     const char *smbDialects[] = {"SMBv1", "SMB2", NULL};
-    diaSetEnum(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ipAddrConfModes);
-    diaSetEnum(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, addrConfModes);
-    diaSetEnum(diaNetConfig, NETCFG_ETHOPMODE, ethOpModes);
+    diaSetEnumIds(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ipAddrConfModes, ipAddrConfModeIds);
+    diaSetEnumIds(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, addrConfModes, addrConfModeIds);
+    diaSetEnumIds(diaNetConfig, NETCFG_ETHOPMODE, ethOpModes, ethOpModeIds);
     diaSetEnum(diaNetConfig, CFG_NETPROTOCOL, guiNetProtocolNames); // UDPBD = SUDPBDv2 server
     diaSetEnum(diaNetConfig, CFG_UDPFSMODE, udpfsModes);
     diaSetEnum(diaNetConfig, CFG_SMBDIALECT, smbDialects);
@@ -1325,8 +1337,9 @@ int guiShowNetConfig(void)
     diaSetInt(diaNetConfig, NETCFG_RA_TELEMETRY, gRATelemetry);
     diaSetInt(diaNetConfig, NETCFG_RA_BADGES, gRABadges);
     diaSetInt(diaNetConfig, NETCFG_RA_EXPERIMENTAL_CARDS, gRAExperimentalCards);
-    const char *raBadgePos[] = {_l(_STR_RA_BADGE_PREFIX), _l(_STR_RA_BADGE_SUFFIX), NULL};
-    diaSetEnum(diaNetConfig, NETCFG_RA_BADGE_SUFFIX, raBadgePos);
+    static const char *raBadgePos[] = {"", "", NULL};
+    static const int raBadgePosIds[] = {_STR_RA_BADGE_PREFIX, _STR_RA_BADGE_SUFFIX};
+    diaSetEnumIds(diaNetConfig, NETCFG_RA_BADGE_SUFFIX, raBadgePos, raBadgePosIds);
     diaSetInt(diaNetConfig, NETCFG_RA_BADGE_SUFFIX, gRABadgeSuffix);
 #endif
 
@@ -1356,13 +1369,13 @@ int guiShowNetConfig(void)
 
     // Update the spacer item between the OK and reconnect buttons (See dialogs.c).
     if (gNetworkStartup == 0) {
-        diaSetLabel(diaNetConfig, NETCFG_OK, _l(_STR_OK));
+        diaSetLabelId(diaNetConfig, NETCFG_OK, _STR_OK);
         diaSetVisible(diaNetConfig, NETCFG_RECONNECT, 1);
     } else if (gNetworkStartup >= ERROR_ETH_SMB_CONN) {
-        diaSetLabel(diaNetConfig, NETCFG_OK, _l(_STR_RECONNECT));
+        diaSetLabelId(diaNetConfig, NETCFG_OK, _STR_RECONNECT);
         diaSetVisible(diaNetConfig, NETCFG_RECONNECT, 0);
     } else {
-        diaSetLabel(diaNetConfig, NETCFG_OK, _l(_STR_OK));
+        diaSetLabelId(diaNetConfig, NETCFG_OK, _STR_OK);
         diaSetVisible(diaNetConfig, NETCFG_RECONNECT, 0);
     }
 
@@ -1622,34 +1635,25 @@ int guiPrepareEmberLaunch(const char *devPrefix, const char *folder, const char 
 
 static void guiSetBdmaSettings(struct UIItem *ui)
 {
-    static const char *bdmaSourceStrs[] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    static const char *bdmaModeStrs[VCD_BDMA_MODE_COUNT + 1];
+    // diaSetEnumIds stores the array pointers rather than copying them. These arrays must therefore outlive
+    // this initializer, especially when the BDMA rows are composed into the POPSTARTER peer page. The
+    // translated rows are string ids, looked up in every frame; "" holds their place in the list.
+    static const char *bdmaSourceStrs[] = {"", "", "", "", "", NULL};
+    static const int bdmaSourceIds[] = {_STR_BDMA_SRC_USB, _STR_BDMA_SRC_MX4SIO, _STR_BDMA_SRC_MMCE, _STR_BDMA_SRC_HDD,
+                                        _STR_BDMA_SRC_ILINK};
+    static const char *bdmaModeStrs[VCD_BDMA_MODE_COUNT + 1] = {"", "", "", "", "", "", [VCD_BDMA_UDPFS] = "UDPFS"};
+    static const int bdmaModeIds[VCD_BDMA_MODE_COUNT] = {_STR_BDMA_MODE_FAT32, _STR_BDMA_MODE_USBEXFAT, _STR_BDMA_MODE_MX4SIO,
+                                                         _STR_BDMA_MODE_MMCE, _STR_BDMA_MODE_ATA, _STR_BDMA_MODE_ILINK,
+                                                         [VCD_BDMA_UDPFS] = -1};
     // Order matches enum VCD_USB_BDMA_MODE: Ask / exFAT / fat32. The two driver labels are the ones the
     // per-launch prompt already uses, so the row and the dialog it replaces read identically.
-    static const char *vcdUsbBdmaStrs[] = {NULL, NULL, NULL, NULL};
-
-    // diaSetEnum stores the array pointer rather than copying it. These arrays must therefore outlive
-    // this initializer, especially when the BDMA rows are composed into the POPSTARTER peer page.
-    bdmaSourceStrs[0] = _l(_STR_BDMA_SRC_USB);
-    bdmaSourceStrs[1] = _l(_STR_BDMA_SRC_MX4SIO);
-    bdmaSourceStrs[2] = _l(_STR_BDMA_SRC_MMCE);
-    bdmaSourceStrs[3] = _l(_STR_BDMA_SRC_HDD);
-    bdmaSourceStrs[4] = _l(_STR_BDMA_SRC_ILINK);
-    bdmaModeStrs[0] = _l(_STR_BDMA_MODE_FAT32);
-    bdmaModeStrs[1] = _l(_STR_BDMA_MODE_USBEXFAT);
-    bdmaModeStrs[2] = _l(_STR_BDMA_MODE_MX4SIO);
-    bdmaModeStrs[3] = _l(_STR_BDMA_MODE_MMCE);
-    bdmaModeStrs[4] = _l(_STR_BDMA_MODE_ATA);
-    bdmaModeStrs[5] = _l(_STR_BDMA_MODE_ILINK);
-    bdmaModeStrs[VCD_BDMA_UDPFS] = "UDPFS";
-    vcdUsbBdmaStrs[0] = _l(_STR_VCD_USB_BDMA_ASK);
-    vcdUsbBdmaStrs[1] = _l(_STR_VCD_USB_MODE_EXFAT);
-    vcdUsbBdmaStrs[2] = _l(_STR_VCD_USB_MODE_FAT32);
+    static const char *vcdUsbBdmaStrs[] = {"", "", "", NULL};
+    static const int vcdUsbBdmaIds[] = {_STR_VCD_USB_BDMA_ASK, _STR_VCD_USB_MODE_EXFAT, _STR_VCD_USB_MODE_FAT32};
 
     gBdmaMode = vcdReadBdmaMode();
-    diaSetEnum(ui, CFG_BDMASOURCE, bdmaSourceStrs);
-    diaSetEnum(ui, CFG_BDMAMODE, bdmaModeStrs);
-    diaSetEnum(ui, CFG_VCD_USB_BDMA, vcdUsbBdmaStrs);
+    diaSetEnumIds(ui, CFG_BDMASOURCE, bdmaSourceStrs, bdmaSourceIds);
+    diaSetEnumIds(ui, CFG_BDMAMODE, bdmaModeStrs, bdmaModeIds);
+    diaSetEnumIds(ui, CFG_VCD_USB_BDMA, vcdUsbBdmaStrs, vcdUsbBdmaIds);
     diaSetInt(ui, CFG_BDMASOURCE, gBdmaSource);
     diaSetInt(ui, CFG_BDMAMODE, gBdmaMode);
     diaSetInt(ui, CFG_VCD_USB_BDMA, gVcdUsbBdmaMode);
@@ -1968,12 +1972,10 @@ void guiShowPopsNetConfig(void)
     size_t i;
     static vcd_popsnet_t popsOriginal;
     static char popsNotice[128];
-    static const char *ipAddrConfModes[3];
+    static const char *ipAddrConfModes[] = {"", "", NULL};
+    static const int ipAddrConfModeIds[] = {_STR_IP_ADDRESS_TYPE_STATIC, _STR_IP_ADDRESS_TYPE_DHCP};
 
-    ipAddrConfModes[0] = _l(_STR_IP_ADDRESS_TYPE_STATIC);
-    ipAddrConfModes[1] = _l(_STR_IP_ADDRESS_TYPE_DHCP);
-    ipAddrConfModes[2] = NULL;
-    diaSetEnum(diaPopsNetConfig, NETCFG_POPS_IPTYPE, ipAddrConfModes);
+    diaSetEnumIds(diaPopsNetConfig, NETCFG_POPS_IPTYPE, ipAddrConfModes, ipAddrConfModeIds);
 
     int readResult = guiReadPopsNet(GUI_POPSNET_READ_LOCAL, &popsOriginal);
     if (readResult == GUI_POPSNET_READ_ABORTED)
@@ -1988,12 +1990,12 @@ void guiShowPopsNetConfig(void)
     guiSetPopsNetDialogFields(&popsOriginal);
 
     if (popsOriginal.smbInvalid || popsOriginal.ipInvalid) {
-        diaSetLabel(diaPopsNetConfig, NETCFG_POPS_NOTICE, _l(_STR_POPSTARTER_NET_INVALID));
+        diaSetLabelId(diaPopsNetConfig, NETCFG_POPS_NOTICE, _STR_POPSTARTER_NET_INVALID);
     } else if (popsOriginal.smbExists || popsOriginal.ipExists) {
         snprintf(popsNotice, sizeof(popsNotice), _l(_STR_POPS_LOADED_FROM), popsOriginal.home);
         diaSetLabel(diaPopsNetConfig, NETCFG_POPS_NOTICE, popsNotice);
     } else {
-        diaSetLabel(diaPopsNetConfig, NETCFG_POPS_NOTICE, _l(_STR_POPS_NONE_DETECTED));
+        diaSetLabelId(diaPopsNetConfig, NETCFG_POPS_NOTICE, _STR_POPS_NONE_DETECTED);
     }
 
     for (;;) {
@@ -2337,11 +2339,14 @@ void guiShowCoverflowConfig(void)
     // Map index<->stored value: scale 0/15/30/45 is linear (idx*15); anim 0/100/200/400 is a lookup.
     static const int animValues[] = {0, 100, 200, 400};
 
-    const char *centerScales[] = {_l(_STR_NONE), _l(_STR_SMALL), _l(_STR_MEDIUM), _l(_STR_LARGE), NULL};
-    const char *animSpeeds[] = {_l(_STR_OFF), _l(_STR_FAST), _l(_STR_NORMAL), _l(_STR_SLOW), NULL};
+    // String ids, looked up in every frame (a language switch frees translated strings).
+    static const char *centerScales[] = {"", "", "", "", NULL};
+    static const int centerScaleIds[] = {_STR_NONE, _STR_SMALL, _STR_MEDIUM, _STR_LARGE};
+    static const char *animSpeeds[] = {"", "", "", "", NULL};
+    static const int animSpeedIds[] = {_STR_OFF, _STR_FAST, _STR_NORMAL, _STR_SLOW};
 
-    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_SCALE, centerScales);
-    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_ANIM, animSpeeds);
+    diaSetEnumIds(diaCoverflowConfig, COVERFLOW_CFG_SCALE, centerScales, centerScaleIds);
+    diaSetEnumIds(diaCoverflowConfig, COVERFLOW_CFG_ANIM, animSpeeds, animSpeedIds);
 
 
     int scaleIdx = gCoverflowCenterScale / 15;
@@ -2361,11 +2366,13 @@ void guiShowCoverflowConfig(void)
     diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_DIM, gCoverflowDimCovers ? 1 : 0);
 
     // Grid Layout (RIPPS2 build 91, akilluminati47): the theme's, or one of RIPPS2's pages of covers.
+    // "Theme" is a string id; the two composed rows are copies, made once when the page opens.
     char large[48], compact[48];
     snprintf(large, sizeof(large), "3 x 2 %s", _l(_STR_LARGE));
     snprintf(compact, sizeof(compact), "6 x 3 %s", _l(_STR_GRID_COMPACT));
-    const char *gridLayouts[] = {_l(_STR_THEME), "4 x 2", "5 x 2", large, compact, NULL};
-    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, gridLayouts);
+    const char *gridLayouts[] = {"", "4 x 2", "5 x 2", large, compact, NULL};
+    static const int gridLayoutIds[] = {_STR_THEME, -1, -1, -1, -1};
+    diaSetEnumIds(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, gridLayouts, gridLayoutIds);
     diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, gGridLayout);
     int keepLayout = gGridLayout;
 
@@ -2442,14 +2449,18 @@ int guiShowControllerConfig(void)
     int value;
 
     // configure the enumerations
-    const char *scrollSpeeds[] = {_l(_STR_SLOW), _l(_STR_MEDIUM), _l(_STR_FAST), NULL};
-    const char *selectButtons[] = {_l(_STR_CIRCLE), _l(_STR_CROSS), NULL};
-    const char *sensitivity[] = {_l(_STR_OFF), _l(_STR_LOW), _l(_STR_MEDIUM), _l(_STR_HIGH), NULL};
+    // String ids, looked up in every frame (a language switch frees translated strings).
+    static const char *scrollSpeeds[] = {"", "", "", NULL};
+    static const int scrollSpeedIds[] = {_STR_SLOW, _STR_MEDIUM, _STR_FAST};
+    static const char *selectButtons[] = {"", "", NULL};
+    static const int selectButtonIds[] = {_STR_CIRCLE, _STR_CROSS};
+    static const char *sensitivity[] = {"", "", "", "", NULL};
+    static const int sensitivityIds[] = {_STR_OFF, _STR_LOW, _STR_MEDIUM, _STR_HIGH};
 
-    diaSetEnum(diaControllerConfig, UICFG_SCROLL, scrollSpeeds);
-    diaSetEnum(diaControllerConfig, CFG_SELECTBUTTON, selectButtons);
-    diaSetEnum(diaControllerConfig, CFG_XSENSITIVITY, sensitivity);
-    diaSetEnum(diaControllerConfig, CFG_YSENSITIVITY, sensitivity);
+    diaSetEnumIds(diaControllerConfig, UICFG_SCROLL, scrollSpeeds, scrollSpeedIds);
+    diaSetEnumIds(diaControllerConfig, CFG_SELECTBUTTON, selectButtons, selectButtonIds);
+    diaSetEnumIds(diaControllerConfig, CFG_XSENSITIVITY, sensitivity, sensitivityIds);
+    diaSetEnumIds(diaControllerConfig, CFG_YSENSITIVITY, sensitivity, sensitivityIds);
 
     diaSetInt(diaControllerConfig, UICFG_SCROLL, gScrollSpeed);
     diaSetInt(diaControllerConfig, CFG_SELECTBUTTON, gSelectButton == KEY_CIRCLE ? 0 : 1);
@@ -2760,6 +2771,8 @@ reshow_language:
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, UICFG_LANG, &langID);
         if (langID != lngGetGuiValue()) {
+            // Live from here, saved only with the settings: a language publish must keep it (lngSetUserPick).
+            lngSetUserPick(1);
             applyConfig(-1, langID, 1);
             menuReinitMainMenu();
         }
@@ -2781,8 +2794,12 @@ static int guiSettingsSourcesUpdater(int modified)
 static int guiSettingsShowSources(void)
 {
     const struct UIItem *parts[] = {diaDeviceConfig};
-    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
-    const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
+    // String ids, looked up in every frame: turning a source on here can mount a device whose LNG folder makes
+    // the IO thread switch the language while the page is open, which frees the strings _l() returned.
+    static const char *deviceNames[] = {"", "", "", "", "", "", NULL};
+    static const int deviceNameIds[] = {_STR_BDM_GAMES, _STR_MMCE, _STR_HDD_GAMES, _STR_NET_GAMES, _STR_APPS, _STR_FAV};
+    static const char *deviceModes[] = {"", "", "", NULL};
+    static const int deviceModeIds[] = {_STR_OFF, _STR_MANUAL, _STR_AUTO};
     struct UIItem *ui = guiSettingsCompose(parts, 1, NULL, 0, -1, 0);
     int deviceModeIndex;
     int result;
@@ -2790,11 +2807,11 @@ static int guiSettingsShowSources(void)
     if (ui == NULL)
         return 0;
 
-    diaSetEnum(ui, CFG_DEFDEVICE, deviceNames);
-    diaSetEnum(ui, CFG_BDMMODE, deviceModes);
-    diaSetEnum(ui, CFG_HDDMODE, deviceModes);
-    diaSetEnum(ui, CFG_APPMODE, deviceModes);
-    diaSetEnum(ui, CFG_FAVMODE, deviceModes);
+    diaSetEnumIds(ui, CFG_DEFDEVICE, deviceNames, deviceNameIds);
+    diaSetEnumIds(ui, CFG_BDMMODE, deviceModes, deviceModeIds);
+    diaSetEnumIds(ui, CFG_HDDMODE, deviceModes, deviceModeIds);
+    diaSetEnumIds(ui, CFG_APPMODE, deviceModes, deviceModeIds);
+    diaSetEnumIds(ui, CFG_FAVMODE, deviceModes, deviceModeIds);
     deviceModeIndex = guiIoModeToDeviceType(gDefaultDevice);
     diaSetInt(ui, CFG_DEFDEVICE, deviceModeIndex);
     diaSetInt(ui, CFG_BDMMODE, gBDMStartMode);
@@ -2811,8 +2828,8 @@ static int guiSettingsShowSources(void)
     diaSetInt(ui, CFG_ENABLEBDMHDD, gEnableBdmHDD);
     diaSetEnabled(ui, CFG_ENABLEBDMHDD, 1);
     diaSetEnabled(ui, CFG_HDDMODE, 1);
-    guiSourcesNetRowsBegin(ui, deviceModes);
-    diaSetEnum(ui, CFG_MMCEMODE, deviceModes);
+    guiSourcesNetRowsBegin(ui, deviceModes, deviceModeIds);
+    diaSetEnumIds(ui, CFG_MMCEMODE, deviceModes, deviceModeIds);
     diaSetInt(ui, CFG_MMCEMODE, gMMCEStartMode);
     diaSetEnabled(ui, CFG_MMCEMODE, 1);
     guiSettingsBeginDialog(ui);
@@ -2912,7 +2929,10 @@ static int guiSettingsShowInterface(void)
 {
     const struct UIItem *parts[] = {diaUIConfig, diaDisplayConfig};
     const int skipIDs[] = {UICFG_VMODE};
-    const char *vmodeNames[] = {_l(_STR_AUTO), "PAL 640x512i @50Hz 24bit", "NTSC 640x448i @60Hz 24bit",
+    // Translated rows on this page are string ids, looked up in every frame (a language switch frees translated
+    // strings); "" holds their place in the list. Here only Auto is translated, the modes are names.
+    static const int vmodeIds[] = {_STR_AUTO, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    const char *vmodeNames[] = {"", "PAL 640x512i @50Hz 24bit", "NTSC 640x448i @60Hz 24bit",
                                 "EDTV 640x448p @60Hz 24bit", "EDTV 640x512p @50Hz 24bit", "VGA 640x480p @60Hz 24bit",
                                 "PAL 704x576i @50Hz 24bit (HIRES)", "NTSC 704x480i @60Hz 24bit (HIRES)",
                                 "EDTV 704x480p @60Hz 24bit (HIRES)", "EDTV 704x576p @50Hz 24bit (HIRES)",
@@ -2954,38 +2974,44 @@ static int guiSettingsShowInterface(void)
     diaSetInt(ui, UICFG_THEME_ALT_BG, gThemeAltBackground);
     diaSetInt(ui, UICFG_BOOT_THEME_WAIT, gBootThemeWait);
     guiSetLibraryPicker(ui);
-    diaSetEnum(ui, UICFG_VMODE, vmodeNames);
+    diaSetEnumIds(ui, UICFG_VMODE, vmodeNames, vmodeIds);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
-    const char *sortNames[] = {_l(_STR_OFF), _l(_STR_SORT_AZ), _l(_STR_SORT_LAST_PLAYED), NULL};
-    diaSetEnum(ui, UICFG_AUTOSORT, sortNames);
+    static const char *sortNames[] = {"", "", "", NULL};
+    static const int sortIds[] = {_STR_OFF, _STR_SORT_AZ, _STR_SORT_LAST_PLAYED};
+    diaSetEnumIds(ui, UICFG_AUTOSORT, sortNames, sortIds);
     diaSetInt(ui, UICFG_AUTOSORT, gAutosort);
     diaSetInt(ui, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(ui, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     diaSetInt(ui, UICFG_CFG_TITLES, gCfgTitlesInLists);
-    const char *ps1DupNames[] = {_l(_STR_PS1_DUPLICATES_BOTH), "Ember", "POPSTARTER", NULL};
-    diaSetEnum(ui, UICFG_PS1_DUPLICATES, ps1DupNames);
+    static const char *ps1DupNames[] = {"", "Ember", "POPSTARTER", NULL};
+    static const int ps1DupIds[] = {_STR_PS1_DUPLICATES_BOTH, -1, -1};
+    diaSetEnumIds(ui, UICFG_PS1_DUPLICATES, ps1DupNames, ps1DupIds);
     diaSetInt(ui, UICFG_PS1_DUPLICATES, gPs1Duplicates);
-    const char *listCfgNames[] = {_l(_STR_THEME), _l(_STR_ON), _l(_STR_OFF), NULL};
-    diaSetEnum(ui, UICFG_LIST_CFG_TEXT, listCfgNames);
+    static const char *listCfgNames[] = {"", "", "", NULL};
+    static const int listCfgIds[] = {_STR_THEME, _STR_ON, _STR_OFF};
+    diaSetEnumIds(ui, UICFG_LIST_CFG_TEXT, listCfgNames, listCfgIds);
     diaSetInt(ui, UICFG_LIST_CFG_TEXT, gListCfgText);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
     diaSetInt(ui, UICFG_VMODE, gVMode);
     diaSetInt(ui, UICFG_WIDESCREEN, gWideScreen);
-    const char *fontSizeNames[] = {_l(_STR_SMALL), _l(_STR_DEFAULT), _l(_STR_LARGE), NULL};
-    diaSetEnum(ui, UICFG_FONT_SIZE, fontSizeNames);
+    static const char *fontSizeNames[] = {"", "", "", NULL};
+    static const int fontSizeIds[] = {_STR_SMALL, _STR_DEFAULT, _STR_LARGE};
+    diaSetEnumIds(ui, UICFG_FONT_SIZE, fontSizeNames, fontSizeIds);
     diaSetInt(ui, UICFG_FONT_SIZE, gFontSize);
-    const char *glyphSetNames[] = {_l(_STR_THEME), _l(_STR_GLYPHS_BUILTIN), _l(_STR_GLYPHS_STANDARD), _l(_STR_GLYPHS_WHITE), NULL};
-    diaSetEnum(ui, UICFG_GLYPH_SET, glyphSetNames);
+    static const char *glyphSetNames[] = {"", "", "", "", NULL};
+    static const int glyphSetIds[] = {_STR_THEME, _STR_GLYPHS_BUILTIN, _STR_GLYPHS_STANDARD, _STR_GLYPHS_WHITE};
+    diaSetEnumIds(ui, UICFG_GLYPH_SET, glyphSetNames, glyphSetIds);
     diaSetInt(ui, UICFG_GLYPH_SET, gGlyphSet);
     diaSetInt(ui, UICFG_XOFF, gXOff);
     diaSetInt(ui, UICFG_YOFF, gYOff);
     diaSetInt(ui, UICFG_OVERSCAN, gOverscan);
-    const char *gameIDModes[] = {_l(_STR_GAMEID_MODE_ALL), _l(_STR_GAMEID_MODE_POPSTARTER),
-                                 _l(_STR_GAMEID_MODE_PS2), _l(_STR_GAMEID_MODE_OFF), NULL};
-    diaSetEnum(ui, CFG_APPLYGAMEID, gameIDModes);
+    static const char *gameIDModes[] = {"", "", "", "", NULL};
+    static const int gameIDModeIds[] = {_STR_GAMEID_MODE_ALL, _STR_GAMEID_MODE_POPSTARTER, _STR_GAMEID_MODE_PS2,
+                                        _STR_GAMEID_MODE_OFF};
+    diaSetEnumIds(ui, CFG_APPLYGAMEID, gameIDModes, gameIDModeIds);
     diaSetInt(ui, CFG_APPLYGAMEID, guiGameIdModeFromGlobals());
     guiSettingsBeginDialog(ui);
 reshow_interface:
@@ -3211,11 +3237,17 @@ static int guiSettingsShowPopstarter(void)
     const struct UIItem *parts[] = {diaVcdConfig, diaBdmaConfig};
     const int skipIDs[] = {VCD_BDMA_BUTTON};
     // "480" is 480i to Ember -- it always was; this row used to call it 480p.
-    const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480i", "480p", NULL};
-    const char *emberTimingStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "NTSC", "PAL", NULL};
-    const char *emberDitherStrs[] = {_l(_STR_DEFAULT), _l(_STR_ON), _l(_STR_OFF), NULL};
-    const char *emberShadingStrs[] = {_l(_STR_DEFAULT), "15-bit", _l(_STR_EMBER_SHADING_24), NULL};
-    const char *emberControllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
+    // Translated rows are string ids (looked up in every frame); "" holds their place in the list.
+    static const char *emberDisplayStrs[] = {"", "240p", "480i", "480p", NULL};
+    static const int emberDisplayIds[] = {_STR_DEFAULT, -1, -1, -1};
+    static const char *emberTimingStrs[] = {"", "", "NTSC", "PAL", NULL};
+    static const int emberTimingIds[] = {_STR_DEFAULT, _STR_AUTO, -1, -1};
+    static const char *emberDitherStrs[] = {"", "", "", NULL};
+    static const int emberDitherIds[] = {_STR_DEFAULT, _STR_ON, _STR_OFF};
+    static const char *emberShadingStrs[] = {"", "15-bit", "", NULL};
+    static const int emberShadingIds[] = {_STR_DEFAULT, -1, _STR_EMBER_SHADING_24};
+    static const char *emberControllerStrs[] = {"", "", "Analog", "D2A", NULL};
+    static const int emberControllerIds[] = {_STR_DEFAULT, _STR_AUTO, -1, -1};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
     // A setting never changed in RiptOPL is UNSET and shows as Default; it only becomes stored when
     // the user actually picks something else (see emberSettingFromRow).
@@ -3233,15 +3265,15 @@ static int guiSettingsShowPopstarter(void)
     // template it was built from: the copy is what renders and what diaGetInt reads back. Setting
     // the template instead leaves the row on screen with no enum list and silently discards every
     // change, which is exactly the bug this line replaced.
-    diaSetEnum(ui, CFG_EMBER_DISPLAY, emberDisplayStrs);
+    diaSetEnumIds(ui, CFG_EMBER_DISPLAY, emberDisplayStrs, emberDisplayIds);
     diaSetInt(ui, CFG_EMBER_DISPLAY, emberDisplayShown);
-    diaSetEnum(ui, CFG_EMBER_TIMING, emberTimingStrs);
+    diaSetEnumIds(ui, CFG_EMBER_TIMING, emberTimingStrs, emberTimingIds);
     diaSetInt(ui, CFG_EMBER_TIMING, emberTimingShown);
-    diaSetEnum(ui, CFG_EMBER_DITHER, emberDitherStrs);
+    diaSetEnumIds(ui, CFG_EMBER_DITHER, emberDitherStrs, emberDitherIds);
     diaSetInt(ui, CFG_EMBER_DITHER, emberDitherShown);
-    diaSetEnum(ui, CFG_EMBER_SHADING, emberShadingStrs);
+    diaSetEnumIds(ui, CFG_EMBER_SHADING, emberShadingStrs, emberShadingIds);
     diaSetInt(ui, CFG_EMBER_SHADING, emberShadingShown);
-    diaSetEnum(ui, CFG_EMBER_CONTROLLER, emberControllerStrs);
+    diaSetEnumIds(ui, CFG_EMBER_CONTROLLER, emberControllerStrs, emberControllerIds);
     diaSetInt(ui, CFG_EMBER_CONTROLLER, emberControllerShown);
 
     guiCorePathBegin(ui, CFG_POPSTARTER_PATH, popstarterPathEdit, sizeof(popstarterPathEdit), gPopstarterPath);
@@ -3367,17 +3399,19 @@ static void guiDrawSettingsIndexHints(void)
 
 static int guiSettingsShowIndex(int *page)
 {
-    const char *labels[SETTINGS_PAGE_COUNT + 1] = {
-        _l(_STR_GAME_SOURCES),
-        _l(_STR_GENERAL_SYSTEM),
-        _l(_STR_LANGUAGE),
-        _l(_STR_MENU_NETWORK),
-        _l(_STR_INTERFACE_SETTINGS),
-        _l(_STR_GAME_LAUNCHING),
-        _l(_STR_POPSTARTER),
-        _l(_STR_CONTROLLER_SETTINGS),
-        _l(_STR_AUDIO_SETTINGS),
-        _l(_STR_SAVE_CHANGES),
+    // String ids, looked up inside each frame: Save Changes and the IO thread (a device bringing its LNG
+    // folder) can switch the language while the Index is up, which frees the strings _l() returned.
+    static const int labelIds[SETTINGS_PAGE_COUNT + 1] = {
+        _STR_GAME_SOURCES,
+        _STR_GENERAL_SYSTEM,
+        _STR_LANGUAGE,
+        _STR_MENU_NETWORK,
+        _STR_INTERFACE_SETTINGS,
+        _STR_GAME_LAUNCHING,
+        _STR_POPSTARTER,
+        _STR_CONTROLLER_SETTINGS,
+        _STR_AUDIO_SETTINGS,
+        _STR_SAVE_CHANGES,
     };
     int selected = *page;
     const int itemCount = SETTINGS_PAGE_COUNT + 1;
@@ -3405,7 +3439,7 @@ static int guiSettingsShowIndex(int *page)
 
         y = (gTheme->usedHeight >> 1) - (spacing * (itemCount >> 1));
         for (int i = 0; i < itemCount; i++) {
-            fntRenderString(gTheme->fonts[0], screenWidth >> 1, y, ALIGN_CENTER, 0, 0, labels[i], (i == selected) ? gTheme->selTextColor : gTheme->textColor);
+            fntRenderString(gTheme->fonts[0], screenWidth >> 1, y, ALIGN_CENTER, 0, 0, _l(labelIds[i]), (i == selected) ? gTheme->selTextColor : gTheme->textColor);
             y += spacing;
             if (i == SETTINGS_PAGE_COUNT - 1)
                 y += spacing / 2;
@@ -3556,10 +3590,15 @@ static int emberGameSettingGet(config_set_t *configSet, const char *key, int cou
 // removes that per-game key immediately; launch reapplies managed values if the file changes.
 void guiShowEmberGameSettings(void)
 {
-    const char *timingStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "NTSC", "PAL", NULL};
-    const char *ditherStrs[] = {_l(_STR_DEFAULT), _l(_STR_ON), _l(_STR_OFF), NULL};
-    const char *shadingStrs[] = {_l(_STR_DEFAULT), "15-bit", _l(_STR_EMBER_SHADING_24), NULL};
-    const char *controllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
+    // Translated rows are string ids (looked up in every frame); "" holds their place in the list.
+    static const char *timingStrs[] = {"", "", "NTSC", "PAL", NULL};
+    static const int timingIds[] = {_STR_DEFAULT, _STR_AUTO, -1, -1};
+    static const char *ditherStrs[] = {"", "", "", NULL};
+    static const int ditherIds[] = {_STR_DEFAULT, _STR_ON, _STR_OFF};
+    static const char *shadingStrs[] = {"", "15-bit", "", NULL};
+    static const int shadingIds[] = {_STR_DEFAULT, -1, _STR_EMBER_SHADING_24};
+    static const char *controllerStrs[] = {"", "", "Analog", "D2A", NULL};
+    static const int controllerIds[] = {_STR_DEFAULT, _STR_AUTO, -1, -1};
     config_set_t *configSet = gameMenuLoadConfig(NULL);
     int timing, dither, shading, controller;
     int newTiming, newDither, newShading, newController;
@@ -3572,13 +3611,13 @@ void guiShowEmberGameSettings(void)
     shading = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_SHADING, EMBER_SHADING_COUNT);
     controller = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
 
-    diaSetEnum(diaEmberGameConfig, CFG_EMBER_TIMING, timingStrs);
+    diaSetEnumIds(diaEmberGameConfig, CFG_EMBER_TIMING, timingStrs, timingIds);
     diaSetInt(diaEmberGameConfig, CFG_EMBER_TIMING, emberSettingShown(timing));
-    diaSetEnum(diaEmberGameConfig, CFG_EMBER_DITHER, ditherStrs);
+    diaSetEnumIds(diaEmberGameConfig, CFG_EMBER_DITHER, ditherStrs, ditherIds);
     diaSetInt(diaEmberGameConfig, CFG_EMBER_DITHER, emberSettingShown(dither));
-    diaSetEnum(diaEmberGameConfig, CFG_EMBER_SHADING, shadingStrs);
+    diaSetEnumIds(diaEmberGameConfig, CFG_EMBER_SHADING, shadingStrs, shadingIds);
     diaSetInt(diaEmberGameConfig, CFG_EMBER_SHADING, emberSettingShown(shading));
-    diaSetEnum(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerStrs);
+    diaSetEnumIds(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerStrs, controllerIds);
     diaSetInt(diaEmberGameConfig, CFG_EMBER_CONTROLLER, emberSettingShown(controller));
 
     if (diaExecuteDialog(diaEmberGameConfig, -1, 1, NULL) != UIID_BTN_OK)
@@ -4935,6 +4974,11 @@ int guiPromptRebootIop(void)
 
 void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data, int timeoutMs)
 {
+    // Copied first, before anything here can block: callers pass _l() text, and while this waits the IO
+    // thread can run a queued language switch (a device bringing its LNG folder), which frees that string.
+    char text[512];
+    snprintf(text, sizeof(text), "%s", message);
+
     // Neither of these loops calls readPads(), so the rumble decay is frozen for the whole wait.
     // The IOP LATCHES the actuator state, so a pulse armed by the SFX_CONFIRM that started this
     // save keeps the motor spinning for the entire blocking operation -- seconds, at full level.
@@ -4995,7 +5039,7 @@ void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data, int
             gLastDeferredTimedOut = 1;
             break;
         }
-        guiRenderTextScreen(message);
+        guiRenderTextScreen(text);
     }
 }
 
@@ -5049,12 +5093,16 @@ void guiFadeCurrentScreenToBlack(void)
 void guiFadeOutForHandoff(const char *message)
 {
     int frame;
+    // Copied before the first guiStartFrame waits for the GUI lock: callers pass _l() text, which a language
+    // switch holding that lock frees.
+    char text[256];
+    snprintf(text, sizeof(text), "%s", message);
     for (frame = 1; frame <= 8; ++frame) {
         guiStartFrame();
         rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
         fntRenderString(gTheme->fonts[0], screenWidth >> 1,
                         gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0,
-                        message, gTheme->textColor);
+                        text, gTheme->textColor);
         rmDrawRect(0, 0, screenWidth, screenHeight,
                    GS_SETREG_RGBA(0, 0, 0, (frame * 0x80) / 8));
         guiEndFrame();
@@ -5063,6 +5111,11 @@ void guiFadeOutForHandoff(const char *message)
 
 void guiRenderTextScreen(const char *message)
 {
+    // Copied before guiStartFrame waits for the GUI lock: callers pass _l() text, which a language switch
+    // holding that lock frees. guiDrawMsgText wraps into 512 bytes, so the copy cuts nothing it would show.
+    char text[512];
+    snprintf(text, sizeof(text), "%s", message);
+
     guiStartFrame();
 
     guiShow();
@@ -5077,7 +5130,7 @@ void guiRenderTextScreen(const char *message)
     // background); the video-mode, remove-settings and cheat-selection screens went opaque too.
     rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
-    guiDrawMsgText(message);
+    guiDrawMsgText(text);
 
     guiDrawOverlays();
 
@@ -5250,6 +5303,10 @@ void guiWarning(const char *text, int count)
         return;
     }
 
+    // Copied before guiStartFrame waits for the GUI lock, as in guiRenderTextScreen: callers pass _l() text.
+    char copy[512];
+    snprintf(copy, sizeof(copy), "%s", text);
+
     guiStartFrame();
 
     guiShow();
@@ -5261,7 +5318,7 @@ void guiWarning(const char *text, int count)
     rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
     rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
-    guiDrawMsgText(text);
+    guiDrawMsgText(copy);
 
     guiEndFrame();
 

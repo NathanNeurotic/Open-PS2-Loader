@@ -34,6 +34,12 @@ Checks, on the source:
    locks exist before the IO thread starts. A reload of the current theme reads the id under the lock
    (thmReload), never as thmSetGuiValue(thmGetGuiValue(), 1), which can reload a theme the IO thread has
    just replaced. Theme code never switches language, so the lock order stays language, theme, GUI.
+6. No translated pointer is kept for a dialog to draw later. A language switch frees the strings _l() returned,
+   and the IO thread switches language while a dialog is open (it applies the saved language when a device
+   brings its LNG folder). So no array handed to diaSetEnum/diaSetEnumIds is filled with _l() (in its function
+   or at file scope): a translated row is a string id in the enumids array, which the dialog looks up in every
+   frame. No diaSetLabel text is an _l() result (diaSetLabelId takes the id). An enumids array has one entry
+   per enum value. The Settings Index keeps string ids too, and looks each one up inside its frame.
 """
 from pathlib import Path
 import re
@@ -62,8 +68,11 @@ UNLOCKING = re.compile(r'\bguiUnlock\(\);|\bhost::ui\(\)\.unlock\(\);')
 
 
 def function_body(src, signature):
-    """The text between the braces of the function whose definition starts with signature, or None."""
+    """The text between the braces of the function whose definition starts with signature, or None.
+    A prototype of it (a ';' before the next '{') is skipped."""
     at = src.find(signature)
+    while at >= 0 and 0 <= src.find(';', at) < src.find('{', at):
+        at = src.find(signature, at + 1)
     if at < 0:
         return None
     start = src.find('{', at)
@@ -417,7 +426,7 @@ def check_switch_locks():
         lang_locked = ('lngLoadFromFile', 'lngSetGuiValueLocked')
     check_switch_lock(theme, theme_takers, ('thmLoad', 'setGuiValueLocked', 'thmSetGuiValueLocked',
                                             'thmSetViewLocked', 'thmCycleViewLocked'))
-    check_switch_lock(lang, ('lngSetGuiValue',), lang_locked)
+    check_switch_lock(lang, ('lngSetGuiValue',) if CPP else ('lngSetGuiValue', 'lngSetUserPick'), lang_locked)
     for name in ('thmLoad', 'lngLoadFromFile'):
         lock = theme if name == 'thmLoad' else lang
         if not list(lock.calls(name)):
@@ -446,10 +455,152 @@ def check_switch_locks():
         failures.append('%s: theme code switches the language; the lock order is language, then theme' % THEMES_FILE)
 
 
+def enclosing(funcs, pos):
+    for f in funcs:
+        if f[2] < pos < f[3]:
+            return f
+    return None
+
+
+def outside_functions(code, funcs):
+    """code with every function body blanked, so only file-scope declarations are left."""
+    out = list(code)
+    for f in funcs:
+        for i in range(f[2] + 1, f[3]):
+            if out[i] != '\n':
+                out[i] = ' '
+    return ''.join(out)
+
+
+def assignments(scope, name):
+    """The right-hand side of every initializer of, or assignment to, name or one of its elements in scope."""
+    found = []
+    for m in re.finditer(r'\b%s\s*(?:\[[^\]]*\]\s*)*=(?!=)' % re.escape(name), scope):
+        depth = 0
+        for i in range(m.end(), len(scope)):
+            c = scope[i]
+            if c in '({[':
+                depth += 1
+            elif c in ')}]':
+                depth -= 1
+            elif c == ';' and depth <= 0:
+                found.append(scope[m.end():i].strip())
+                break
+    return found
+
+
+def brace_entries(init):
+    """The top-level entries of a '{...}' initializer, or None when init is not one."""
+    if not init.startswith('{') or not init.endswith('}'):
+        return None
+    entries, depth, start = [], 0, 1
+    for i, c in enumerate(init[1:-1], 1):
+        if c in '({[':
+            depth += 1
+        elif c in ')}]':
+            depth -= 1
+        elif c == ',' and depth == 0:
+            entries.append(init[start:i].strip())
+            start = i + 1
+    last = init[start:-1].strip()
+    if last:
+        entries.append(last)
+    return entries
+
+
+def frames_of(body):
+    """(start, end) of every guiStartFrame() .. guiEndFrame() stretch in body."""
+    spans = []
+    for m in re.finditer(r'\bguiStartFrame\s*\(\s*\)', body):
+        end = body.find('guiEndFrame', m.end())
+        spans.append((m.start(), end if end >= 0 else len(body)))
+    return spans
+
+
+def check_translated_pointers():
+    index_found = False
+    for path in sorted((root / 'src').rglob('*')):
+        if path.suffix not in ('.c', '.cpp'):
+            continue
+        raw = path.read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n')
+        if not re.search(r'diaSetEnum|diaSetLabel|SETTINGS_PAGE_COUNT \+ 1\]', raw):
+            continue
+        rel = path.relative_to(root)
+        code = blank_literals(strip_comments(raw))
+        funcs = functions(code)
+        file_scope = outside_functions(code, funcs)
+
+        def where(pos):
+            return '%s:%d' % (rel, code.count('\n', 0, pos) + 1)
+
+        def sources(f, name):
+            return assignments(code[f[2]:f[3]], name) + assignments(file_scope, name)
+
+        for call in re.finditer(r'\b(diaSetEnum|diaSetEnumIds|diaSetLabel)\s*\(', code):
+            f = enclosing(funcs, call.start())
+            if f is None:
+                continue  # a definition or a prototype
+            kind = call.group(1)
+            args = call_args(code, call.end() - 1)
+            if len(args) < 3:
+                continue
+            if kind == 'diaSetLabel':
+                text = args[2]
+                if '_l(' in text or (re.fullmatch(r'\w+', text) and any('_l(' in rhs for rhs in sources(f, text))):
+                    failures.append(where(call.start()) + ' diaSetLabel text "%s" is an _l() result, which a language '
+                                    'switch frees while the dialog is up: use diaSetLabelId with the string id' % text)
+                continue
+            values = args[2]
+            names = set(re.findall(r'\b[A-Za-z_]\w*\b', values)) - {'NULL', 'const', 'char'}
+            if '_l(' in values or any('_l(' in rhs for name in names for rhs in sources(f, name)):
+                failures.append(where(call.start()) + ' %s list "%s" holds _l() pointers, which a language switch frees '
+                                'while the dialog is up: put the string ids in the enumids array of diaSetEnumIds'
+                                % (kind, values))
+            if kind == 'diaSetEnumIds' and len(args) == 4 and re.fullmatch(r'\w+', values) and re.fullmatch(r'\w+', args[3]):
+                inits = [brace_entries(rhs) for rhs in sources(f, values)]
+                ids = [brace_entries(rhs) for rhs in sources(f, args[3])]
+                inits = [e for e in inits if e is not None]
+                ids = [e for e in ids if e is not None]
+                if inits and ids:
+                    shown = [e for e in inits[0] if not re.fullmatch(r'(?:\[[^\]]*\]\s*=\s*)?NULL', e)]
+                    if len(ids[0]) != len(shown):
+                        failures.append(where(call.start()) + ' %s has %d string ids for %d values: one per value, -1 '
+                                        'for a row that shows its own text' % (args[3], len(ids[0]), len(shown)))
+
+        for m in re.finditer(r'\[SETTINGS_PAGE_COUNT \+ 1\]\s*=\s*\{', code):
+            index_found = True
+            depth, end = 0, len(code)
+            for i in range(m.end() - 1, len(code)):
+                if code[i] == '{':
+                    depth += 1
+                elif code[i] == '}':
+                    depth -= 1
+                    if depth == 0:
+                        end = i
+                        break
+            if '_l(' in code[m.end():end]:
+                failures.append(where(m.start()) + ' the Settings Index labels are _l() pointers taken once, which a '
+                                'language switch frees while the Index is up: keep the string ids')
+            f = enclosing(funcs, m.start())
+            if f is None:
+                continue
+            body = code[f[2]:f[3]]
+            spans = frames_of(body)
+            if not spans and not CPP:
+                failures.append(where(m.start()) + ' the Settings Index draws no guiStartFrame() frame')
+            for look in re.finditer(r'\b_l\s*\(', body):
+                if spans and not any(s < look.start() < e for s, e in spans):
+                    failures.append(where(f[2] + look.start()) + ' the Settings Index looks a label up outside its frame: '
+                                    'only a lookup inside guiStartFrame()..guiEndFrame() is safe from a language switch')
+    if not index_found and not CPP:
+        failures.append('the Settings Index label array ([SETTINGS_PAGE_COUNT + 1]) was not found')
+
+
 for rel in DIALOG_FILES:
     check_frames(rel)
 check_keyboard()
 check_deferred()
+check_translated_pointers()
 check_swap(THEMES_FILE, 'static int thmLoad(', 'gTheme = newT;', 'thmFree(curT);')
 check_swap(LANG_FILE, 'static int lngLoadFromFile(', 'lang_strs = newL;', 'lngFreeFromFile(curL);')
 check_swap(LANG_FILE, 'int lngSetGuiValue(' if CPP else 'static int lngSetGuiValueLocked(', 'lang_strs = internalEnglish;',

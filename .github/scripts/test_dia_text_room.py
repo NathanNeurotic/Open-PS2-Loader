@@ -64,6 +64,7 @@ functions = ''.join(function(dia, sig) for sig in (
     'static int diaWrapRoom(',
     'static int diaWrapLines(',
     'static int diaWrapExtra(',
+    'static const char *diaEnumValueText(',
     'static const char *diaEnumText(',
     'static int diaRowTailWidth(',
     'static int diaItemHeight(',
@@ -173,6 +174,23 @@ int main(void)
     page[2].type = UI_STRING;
     strcpy(page[2].stringvalue.text, "A string far wider than 100");
     assert(diaRowTailWidth(&page[0]) == 52 + DIA_TAIL_VALUE_W + 2);
+    /* an enum row with a string id is measured by that string ("On" here), not by its "" placeholder; a row
+       without one by its own text */
+    {
+        static const char *names[] = {"", "A literal far wider than 100", NULL};
+        static const int ids[] = {_STR_ON, -1};
+
+        page[2].type = UI_ENUM;
+        page[2].intvalue.enumvalues = names;
+        page[2].intvalue.enumids = ids;
+        page[2].intvalue.current = 0;
+        assert(diaRowTailWidth(&page[0]) == 52 + 18);
+        page[2].intvalue.current = 1;
+        assert(diaRowTailWidth(&page[0]) == 52 + DIA_TAIL_VALUE_W + 2);
+        page[2].intvalue.enumids = NULL; /* no ids: the placeholder itself, which is empty */
+        page[2].intvalue.current = 0;
+        assert(diaRowTailWidth(&page[0]) == 52);
+    }
 
     /* a hidden label wraps nothing and takes no height */
     n = 0;

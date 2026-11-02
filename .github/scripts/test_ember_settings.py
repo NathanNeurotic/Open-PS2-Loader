@@ -316,7 +316,7 @@ for row, var in (('CFG_EMBER_DISPLAY', 'gEmberDisplay'), ('CFG_EMBER_TIMING', 'g
                  ('CFG_EMBER_CONTROLLER', 'gEmberController')):
     if f'{{UI_ENUM, {row},' not in dialogs_c:
         failures.append(f'src/dialogs.c: no {row} row on the PS1 page')
-    if page and f'diaSetEnum(ui, {row},' not in page:
+    if page and not re.search(r'diaSetEnum(?:Ids)?\(ui, ' + row + ',', page):
         failures.append(f'src/gui.c: {row} gets no enum list on the composed page')
     if page and f'emberSettingFromRow(ui, {row},' not in page:
         failures.append(f'src/gui.c: {row} is not read back through emberSettingFromRow')

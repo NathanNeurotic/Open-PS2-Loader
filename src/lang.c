@@ -21,6 +21,12 @@ static int nValidEntries = LANG_STR_COUNT;
 // the id is committed. Lock order: language switch, theme switch, GUI lock. lngInit creates it before the IO thread.
 static int lngSwitchSema = -1;
 
+// 1 while the language on screen is the user's own pick from the Language page, which reaches language_text only
+// when the settings are saved: lngPublishLanguages must not re-apply the saved language over it (that reverted the
+// pick, and freed the strings on screen, whenever a device brought its LNG folder). A config load that applies the
+// saved language clears it, so a saved language whose LNG folder arrives later is still applied. Under lngSwitchSema.
+static int lngUserPick;
+
 static void lngSwitchLock(void)
 {
     if (lngSwitchSema >= 0)
@@ -399,17 +405,25 @@ static int lngScanBootDirectory(void)
     return added;
 }
 
+static int lngSetGuiValueLocked(int langID);
+
 static void lngPublishLanguages(int mode)
 {
     guiLock();
     lngRebuildLangNames();
     guiUnlock();
 
+    // The saved language may have just arrived (its LNG folder on a device mounted after boot): apply it, unless
+    // the user picked a language this session. The test and the switch are one step under the switch lock, so a
+    // pick on the GUI thread cannot land between them.
     const char *saved;
-    if (configGetStr(configGetByType(CONFIG_OPL), "language_text", &saved)) {
-        if (lngSetGuiValue(lngFindGuiID(saved)))
-            moduleUpdateMenu(mode, 0, 1);
-    }
+    int changed = 0;
+    lngSwitchLock();
+    if (!lngUserPick && configGetStr(configGetByType(CONFIG_OPL), "language_text", &saved))
+        changed = lngSetGuiValueLocked(lngFindGuiID(saved));
+    lngSwitchUnlock();
+    if (changed)
+        moduleUpdateMenu(mode, 0, 1);
 }
 
 void lngRefreshBootLanguages(int mode)
@@ -527,6 +541,13 @@ int lngSetGuiValue(int langID)
     int changed = lngSetGuiValueLocked(langID);
     lngSwitchUnlock();
     return changed;
+}
+
+void lngSetUserPick(int picked)
+{
+    lngSwitchLock();
+    lngUserPick = picked;
+    lngSwitchUnlock();
 }
 
 int lngGetGuiValue(void)

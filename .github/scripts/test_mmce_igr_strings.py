@@ -35,6 +35,22 @@ def compile_lng(temp, overlay):
     return out.read_bytes().decode('utf-8', 'replace')
 
 
+def enum_rows(page, row):
+    """The choices diaSetEnumIds gives `row` on this page: each one's string id, or its text when it has none."""
+    call = re.search(r'diaSetEnumIds\(ui, ' + row + r', (\w+), (\w+)\);', page)
+    if not call:
+        return None
+    names = re.search(r'static const char \*' + call.group(1) + r'\[\] = \{([^}]*)\};', page)
+    ids = re.search(r'static const int ' + call.group(2) + r'\[\] = \{([^}]*)\};', page)
+    if not names or not ids:
+        return None
+    names = [name.strip() for name in names.group(1).split(',')]
+    ids = [ident.strip() for ident in ids.group(1).split(',')]
+    if names[-1] != 'NULL' or len(ids) != len(names) - 1:
+        return None
+    return [name if ident == '-1' else ident for name, ident in zip(names, ids)]
+
+
 def main():
     failures = []
     gui = GUI.read_text(encoding='utf-8')
@@ -43,10 +59,16 @@ def main():
     for word in ('"NONE"', '"BOTH"', '"OFF"', '"ON"'):
         if word in gui:
             failures.append('%s still offers the fixed English choice %s' % (GUI.name, word))
-    for line in ('deviceIGRSlots[0] = _l(_STR_OFF);', 'deviceIGRSlots[3] = _l(_STR_BOTH);',
-                 'deviceOnOff[0] = _l(_STR_OFF);', 'deviceOnOff[1] = _l(_STR_ON);'):
-        if line not in gui:
-            failures.append('%s does not set %s' % (GUI.name, line))
+    # Each choice in order, as the row shows it: its string id (looked up in every frame, as a language switch
+    # frees translated strings) or its own text
+    for row, names, want in (('CFG_MMCEIGRSLOT', 'deviceIGRSlots', ['_STR_OFF', '"0"', '"1"', '_STR_BOTH']),
+                             ('CFG_MMCE_USE_ALARMS', 'deviceOnOff', ['_STR_OFF', '_STR_ON'])):
+        got = enum_rows(gui, row)
+        if CPP and got is None:  # until its settings page passes ids too
+            if not all('%s[%d] = _l(%s);' % (names, i, word) in gui for i, word in enumerate(want) if word[0] == '_'):
+                failures.append('%s does not set %s' % (GUI.name, names))
+        elif got != want:
+            failures.append('%s: %s shows %s, not %s' % (GUI.name, row, got, want))
 
     base = BASE.read_text(encoding='utf-8')
     if not re.search(r'^  label: BOTH\n  string: Both$', base, re.M):
