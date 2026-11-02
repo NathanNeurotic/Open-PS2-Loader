@@ -399,7 +399,9 @@ static int sbp2WaitBusReset(u32 us)
  * (bd->devNr == bdDeviceId, modules/iopcore/cdvdman/device-bdm.c), and the slot index is not stable:
  * a slot whose LOGIN or command never got its status stays reserved, so after a bus reset the same
  * drive comes up in the next slot. Numbering by slot made a lone drive device 1 there, and nothing
- * attached it. A lone drive is now always device 0, as it was in the menu. */
+ * attached it. A lone drive is now always device 0, as it was in the menu. A drive whose login this
+ * generation granted keeps its number while its warm-up is retried, so a second drive that attaches
+ * meanwhile does not take it. */
 static unsigned int sbp2FreeDevNr(const struct SBP2Device *dev)
 {
     unsigned int nr;
@@ -408,7 +410,8 @@ static unsigned int sbp2FreeDevNr(const struct SBP2Device *dev)
     for (nr = 0;; nr++) {
         for (i = 0; i < MAX_DEVICES; i++) {
             const struct SBP2Device *other = &SBP2Devices[i];
-            if (other != dev && (other->IsConnected || other->configuring) && other->scsi.devNr == nr)
+            if (other != dev && other->scsi.devNr == nr &&
+                (other->IsConnected || other->configuring || (other->loggedIn && other->generation == dev->generation)))
                 break;
         }
         if (i == MAX_DEVICES)
@@ -459,7 +462,8 @@ static int sbp2AttachUnits(void)
         generation = iLinkGetGenerationNumber();
         /* RiptOPL: a retry keeps the slot of its earlier attempt in this generation, so a late answer
          * to that attempt's LOGIN is still collected and an accepted login is reused, not refused.
-         * Otherwise take the first slot whose remote storage nothing can still write. */
+         * Otherwise take the first slot whose remote storage nothing can still write and that holds no
+         * login of this generation: such a login is another drive's, kept for that drive's retry. */
         dev = NULL;
         for (j = 0; j < MAX_DEVICES; j++) {
             slot = &SBP2Devices[j];
@@ -468,6 +472,7 @@ static int sbp2AttachUnits(void)
                 break;
             }
             if (dev == NULL && !slot->IsConnected && !slot->managementPending &&
+                !(slot->loggedIn && slot->generation == generation) &&
                 !(command.pending && command.owner == slot))
                 dev = slot;
         }
@@ -480,6 +485,10 @@ static int sbp2AttachUnits(void)
             SignalSema(sbp2_io_sema);
             continue;
         }
+        /* A login another slot still records belongs to an earlier generation (a bus reset this thread
+         * has not handled yet ended it): this drive asks for its own. */
+        if (dev->generation != generation || dev->nodeID != nodeID)
+            dev->loggedIn = 0;
         dev->generation = generation;
         dev->nodeID = nodeID;
         dev->InitiatorNodeID = iLinkGetLocalNodeID();

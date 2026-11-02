@@ -436,7 +436,8 @@ static int sbp2AttachUnits(void)
         generation = iLinkGetGenerationNumber();
         /* RiptOPL: a retry keeps the slot of its earlier attempt in this generation, so a late answer
          * to that attempt's LOGIN is still collected and an accepted login is reused, not refused.
-         * Otherwise take the first slot whose remote storage nothing can still write. */
+         * Otherwise take the first slot whose remote storage nothing can still write and that holds no
+         * login of this generation: such a login is another drive's, kept for that drive's retry. */
         dev = NULL;
         for (j = 0; j < MAX_DEVICES; j++) {
             slot = &SBP2Devices[j];
@@ -445,6 +446,7 @@ static int sbp2AttachUnits(void)
                 break;
             }
             if (dev == NULL && !slot->IsConnected && !slot->managementPending &&
+                !(slot->loggedIn && slot->generation == generation) &&
                 !(command.pending && command.owner == slot))
                 dev = slot;
         }
@@ -457,6 +459,10 @@ static int sbp2AttachUnits(void)
             SignalSema(sbp2_io_sema);
             continue;
         }
+        /* A login another slot still records belongs to an earlier generation (a bus reset this thread
+         * has not handled yet ended it): this drive asks for its own. */
+        if (dev->generation != generation || dev->nodeID != nodeID)
+            dev->loggedIn = 0;
         dev->generation = generation;
         dev->nodeID = nodeID;
         dev->InitiatorNodeID = iLinkGetLocalNodeID();

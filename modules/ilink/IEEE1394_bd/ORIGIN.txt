@@ -96,6 +96,12 @@ and the manager recovery corrections. No physical-console acceptance yet.
       reserved, so after a reset a lone drive came up as device 1, and CDVDMAN and Neutrino accept
       the game's drive only under the menu's number (device 0). sbp2FreeDevNr now gives each drive
       the lowest number no other attached or attaching drive uses.
+   f. (Found in review of c.) With two drives, a slot whose drive logged in but failed its warm-up
+      looked free, so the next drive in the same pass took it, kept its login flag, skipped its own
+      LOGIN and drove the first drive's command agent; the first drive then asked for a second login
+      it would be refused. A slot that holds a login of this generation is now kept for its drive, a
+      slot taken over from an ended generation starts without a login, and a logged-in drive keeps
+      its device number while its warm-up is retried.
    A drive that logs in again also releases what its own earlier login left reserved (an unanswered
    LOGIN, the shared command): an exclusive login is granted only when the drive holds no other
    login, so that storage can no longer be written (sbp2RetireOlderLogins, matched by the EUI-64

@@ -9,6 +9,11 @@ causes one, so the SDK's wait-for-the-next-reset left CDVDMAN waiting forever. A
 slot (and the login) of its earlier attempt in that generation, backs off 1, 2, 4, then 5 s, and a
 bus reset ends the wait at once. In the menu/in-game driver a lone drive is device 0 whichever slot
 it lands in, because CDVDMAN and Neutrino accept the game's drive only under the menu's number.
+
+With two drives, a slot that holds one drive's login of this generation is that drive's: the other
+drive never takes it (it would skip its own LOGIN and drive the first one's command agent), and in
+the menu/in-game driver the logged-in drive keeps its device number while its warm-up is retried. A
+login left from a generation whose bus reset the thread has not handled yet is not reused.
 """
 from pathlib import Path
 import subprocess
@@ -54,6 +59,10 @@ static void topology(void) {
     speedNow=scenario==4 ? 3 : 0;
     if(scenario==5) {
         nNodesNow=generation==1 ? 2 : 1;nodeIds[0]=generation==1 ? 1 : 2;nodeIds[1]=2;
+    } else if(scenario==6) {
+        nNodesNow=2;nodeIds[0]=1;nodeIds[1]=2;
+    } else if(scenario==7) { /* the reset renumbers the first drive and keeps the second at node 2 */
+        nNodesNow=2;nodeIds[0]=generation==1 ? 1 : 3;nodeIds[1]=2;
     } else {
         nNodesNow=1;nodeIds[0]=generation==1 ? 1 : 3; /* a reset can renumber the lone drive */
     }
@@ -114,6 +123,14 @@ static int initConfigureSBP2Device(struct SBP2Device *dev) {
         case 3: /* never attaches */
             if(attempts>=6) longjmp(done,1);
             return -1;
+        case 6: /* two drives, every LOGIN granted: node 1's first warm-up fails */
+            dev->loggedIn=1;
+            return dev->nodeID==1 && attempts==1 ? -3 : 0;
+        case 7: /* two drives: a bus reset ends node 1's first warm-up, after its LOGIN was granted; the
+                   thread has not handled that reset when it moves on to the next node */
+            dev->loggedIn=1;
+            if(attempts==1) { generation++;topology(); }
+            return 0;
     }
     return 0;
 }
@@ -183,6 +200,29 @@ int main(void) {
     CHECK(SBP2Devices[1].scsi.devNr==0,"the only attached drive is device 0");
 #endif
     CHECK(allocations==4 && frees==3,"failed setup and later bus reset each release their old context");
+
+    /* Two drives: node 1's LOGIN is granted and its first warm-up fails; node 2 comes next in the same pass. */
+    run(6,0);
+    CHECK(attempts==3 && attemptNode[1]==2 && attemptSlot[1]==1 && !attemptLoggedIn[1],
+          "a second drive does not take the slot that holds the first drive's login; it asks for its own");
+    CHECK(attemptNode[2]==1 && attemptSlot[2]==0 && attemptLoggedIn[2] && attemptGeneration[2]==1,
+          "the first drive's retry reuses its own login in its own slot");
+    CHECK(SBP2Devices[0].IsConnected && SBP2Devices[0].nodeID==1 && SBP2Devices[1].IsConnected && SBP2Devices[1].nodeID==2,
+          "both drives attach without a bus reset");
+#ifdef HAS_DEVNR
+    CHECK(SBP2Devices[0].scsi.devNr==0 && SBP2Devices[1].scsi.devNr==1,
+          "the first drive keeps device 0 while its warm-up is retried");
+#endif
+    CHECK(allocations==3 && frees==1,"the failed warm-up releases its context");
+
+    /* Two drives: a bus reset the thread has not handled yet ends node 1's login during its warm-up. */
+    run(7,0);
+    CHECK(attempts==3 && attemptNode[1]==2 && attemptGeneration[1]==2 && attemptSlot[1]==0,
+          "the next drive may take the slot of a login from an earlier generation");
+    CHECK(!attemptLoggedIn[1],"a login from an earlier generation is not reused: the drive asks for its own");
+    CHECK(SBP2Devices[0].IsConnected && SBP2Devices[0].nodeID==2 && SBP2Devices[1].IsConnected && SBP2Devices[1].nodeID==3,
+          "both drives attach in the new generation");
+    CHECK(allocations==3 && frees==1,"the attempt the reset ended releases its context");
     return failures ? 1 : 0;
 }
 """
