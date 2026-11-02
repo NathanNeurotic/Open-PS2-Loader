@@ -200,7 +200,34 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
 #define PADEMU_ARG
 #endif
     if (config->GameMode == BDM_USB_MODE PADEMU_ARG) {
-        LoadOPLModule(OPL_MODULE_ID_USBD, 0, 11, "thpri=2,3");
+        const char *usbd_args = "thpri=2,3";
+        int usbd_args_len = 11;
+#ifdef PADEMU
+        if (config->GameMode != BDM_USB_MODE) {
+            /* USBD serves only the pads here (the game is not on USB), so size its pools for
+               them. usbd_mini's defaults (16 devices, 32 endpoints, 64 + 64 transfer
+               descriptors, 256 I/O requests, 4 hubs) take about 33 KB of IOP RAM; these take
+               about 12.5 KB and the game gets the rest (Kingdom Hearts II over SMB ran out:
+               OPL-DualSense-BT 8bb581a). Headroom: the driver spends three device slots on
+               its virtual root and the two root-hub ports, PADEMU's USB build takes up to
+               four pads behind a hub (three endpoints each) or one Bluetooth dongle (four),
+               and pads make no isochronous transfers. The general transfer descriptors keep
+               their default of 64: every open pipe holds one, every transfer in flight takes
+               one more and a control request with data three, and a request that finds too
+               few waits at the head of a queue that holds up every pipe behind it, so a
+               shortfall there stalls the pads where the other pools refuse a device. At 20
+               bytes a descriptor, trimming them saved under 1 KB. The fork-built usbd_mini
+               parses these (ps2sdk 314d87e7 usbd.c); .github/scripts/test_usbd_pad_pool.py
+               feeds it this exact string.
+               Not const, so it sits in .data: in the LLVM build ee_core's .rodata ended on a
+               128-byte boundary, so this string there took 128 bytes from the stack above
+               .bss and went under the 3 KB guard in ee_core/linkfile. */
+            static char usbd_pad_args[] = "thpri=2,3\0dev=10\0ed=20\0itd=2\0ioreq=24\0hub=2";
+            usbd_args = usbd_pad_args;
+            usbd_args_len = sizeof(usbd_pad_args);
+        }
+#endif
+        LoadOPLModule(OPL_MODULE_ID_USBD, 0, usbd_args_len, usbd_args);
     }
 
 #if defined(RETROACHIEVEMENTS) && !defined(__LOAD_DEBUG_MODULES)
