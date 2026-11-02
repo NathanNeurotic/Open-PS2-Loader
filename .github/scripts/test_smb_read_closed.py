@@ -12,6 +12,10 @@ length, and that a close (0) or an error (-1) after the first segment returns -2
 It also checks that a reply with an error status returns -EIO. Such a reply is shorter than a READ_ANDX
 reply, so its DataLength field still holds the request's bytes, and the read used to return them as its
 length with nothing read: a game whose image could not be opened read whatever its buffer held.
+The transport is SMSTCPIP's lwip_recvfrom() over the bytes the server sent, cut into TCP segments, so
+replies whose first segment ends inside the header (before the length, inside the status, before the
+data) are checked too: the read must return the server's status and data, and must take the whole of
+an error reply off the socket, which would otherwise be read as the next reply.
 Adapted from belomaxorka/YAOPL e16e2d15. This is a host regression check, not a console test.
 """
 import errno
@@ -93,44 +97,114 @@ static int SendData(int sock, char *buf, int size) { (void)sock; (void)buf; retu
 #define DATA_LEN 3000
 #define HDR 49
 #define ERROR_REPLY 35 /* an error reply: the SMB header, WordCount 0 and ByteCount 0 */
-static int script[8], script_len, script_pos, calls;
-static u32 status; /* the reply's NT status */
+/* The server's side of the socket: the bytes it sent (an NBSS keepalive first, when asked), cut into
+   TCP segments. lwip_recvfrom() below is SMSTCPIP's (modules/network/SMSTCPIP/sockets.c): a call
+   with a header index copies a segment of 63 bytes or more as a READ_ANDX header of DataOffset + 4
+   bytes plus payload, and a shorter segment whole into the header; the rest of a segment stays for
+   the next call. */
+static unsigned char wire[8192];
+static int wire_len, seg[16], seg_count, seg_pos, seg_off, wire_pos, end_code, calls;
 static int recv_stub(int s, void *mem, int hlen, void *payload, int plen, unsigned int flags, struct sockaddr *from, socklen_t *fromlen)
 {
-    (void)s; (void)payload; (void)plen; (void)flags; (void)from; (void)fromlen;
+    int avail, copylen = 0, index = hlen;
+    (void)s; (void)flags; (void)from; (void)fromlen;
     if (++calls > 64) {
         printf("TIMEOUT: smb_ReadAndX kept receiving after the connection closed\n");
         exit(3);
     }
-    if (mem != NULL && hlen == HDR) { /* first segment: header plus the first part of the data */
-        u32 size = status != 0 ? ERROR_REPLY : HDR - 4 + DATA_LEN;
-        SMB_buf.sessionHeader = ((size & 0xff0000) >> 8) | ((size & 0xff00) << 8) | ((size & 0xff) << 24);
-        SMB_buf.smb.readAndXResponse.smbH.Eclass = (s16)(status & 0xffff);
-        SMB_buf.smb.readAndXResponse.smbH.Ecode = (s16)(status >> 16);
-        if (status != 0) /* the rest of SMB_buf still holds the request, where DataLength would be */
-            return 4 + ERROR_REPLY;
-        SMB_buf.smb.readAndXResponse.DataOffset = HDR - 4;
-        SMB_buf.smb.readAndXResponse.DataLengthLow = DATA_LEN;
-        SMB_buf.smb.readAndXResponse.DataLengthHigh = 0;
-        return HDR + script[script_pos++];
+    if (seg_pos >= seg_count)
+        return end_code;
+    avail = seg[seg_pos] - seg_off;
+    if (index) {
+        if (avail >= 63) {
+            memcpy(mem, &wire[wire_pos], 63);
+            index = ((unsigned char *)mem)[index] + 4;
+            if (index > avail) {
+                printf("BAD TEST: DataOffset beyond the segment\n");
+                exit(4);
+            }
+            memcpy(mem, &wire[wire_pos], index);
+            copylen = index;
+            avail -= index;
+        } else {
+            memcpy(mem, &wire[wire_pos], avail);
+            copylen = avail;
+            avail = 0;
+        }
     }
-    return script_pos < script_len ? script[script_pos++] : 0;
+    if (avail) {
+        if (plen > avail)
+            plen = avail;
+        memcpy(payload, &wire[wire_pos + copylen], plen);
+        copylen += plen;
+    }
+    wire_pos += copylen;
+    seg_off += copylen;
+    if (seg_off == seg[seg_pos]) {
+        seg_pos++;
+        seg_off = 0;
+    }
+    return copylen;
 }
 static int (*plwip_recvfrom)(int s, void *mem, int hlen, void *payload, int plen, unsigned int flags, struct sockaddr *from, socklen_t *fromlen) = recv_stub;
-''' + read_andx + r'''
+''' + function(smb, 'static int smb_RecvReplyRest(') + read_andx + r'''
 int main(int argc, char **argv)
 {
-    static u8 readbuf[DATA_LEN + 64];
-    int want = atoi(argv[1]), i;
-    status = (u32)strtoul(argv[2], NULL, 0);
-    script_len = argc - 3;
-    for (i = 0; i < script_len; i++)
-        script[i] = atoi(argv[i + 3]);
+    /* argv: want status data_offset keepalive end_code segment sizes... (0 sizes: one segment) */
+    static unsigned char readbuf[DATA_LEN + 64];
+    int want = atoi(argv[1]), offset = atoi(argv[3]), keepalive = atoi(argv[4]), i, pos = 0, size;
+    u32 status = (u32)strtoul(argv[2], NULL, 0);
+    end_code = atoi(argv[5]);
+    if (keepalive) { /* an NBSS session keepalive (type 0x85), its own segment */
+        wire[pos++] = 0x85, wire[pos++] = 0, wire[pos++] = 0, wire[pos++] = 0;
+        seg[seg_count++] = 4;
+    }
+    size = status != 0 ? ERROR_REPLY : offset + DATA_LEN;
+    wire[pos] = 0, wire[pos + 1] = (unsigned char)(size >> 16), wire[pos + 2] = (unsigned char)(size >> 8), wire[pos + 3] = (unsigned char)size;
+    {
+        ReadAndXResponse_t *r = (ReadAndXResponse_t *)&wire[pos + 4];
+        r->smbH.Magic = SMB_MAGIC;
+        r->smbH.Cmd = SMB_COM_READ_ANDX;
+        r->smbH.Eclass = (s16)(status & 0xffff);
+        r->smbH.Ecode = (s16)(status >> 16);
+        if (status == 0) {
+            r->smbWordcount = 12;
+            r->DataLengthLow = DATA_LEN;
+            r->DataOffset = (u16)offset;
+            for (i = 0; i < DATA_LEN; i++)
+                wire[pos + 4 + offset + i] = (unsigned char)(i * 7 + 1);
+        }
+    }
+    wire_len = pos + 4 + size;
+    if (argc == 6) {
+        seg[seg_count++] = wire_len - pos;
+    } else {
+        int sum = pos;
+        for (i = 6; i < argc; i++) {
+            seg[seg_count] = atoi(argv[i]);
+            sum += seg[seg_count++];
+        }
+        if (sum > wire_len) {
+            printf("BAD TEST: segments add up to %d of %d bytes\n", sum, wire_len);
+            return 4;
+        }
+    }
     int r = smb_ReadAndX(1, 0, 0, readbuf, DATA_LEN);
     if (r != want) {
         printf("smb_ReadAndX = %d, expected %d\n", r, want);
         return 1;
     }
+    if (r == DATA_LEN)
+        for (i = 0; i < DATA_LEN; i++)
+            if (readbuf[i] != (unsigned char)(i * 7 + 1)) {
+                printf("readbuf[%d] = %d, not the server's data\n", i, readbuf[i]);
+                return 1;
+            }
+    if (r >= 0 || r == -EIO)
+        if (wire_pos != wire_len) {
+            printf("%d of the reply's %d bytes left on the socket\n", wire_len - wire_pos, wire_len);
+            return 1;
+        }
     return 0;
 }
 '''
@@ -138,14 +212,30 @@ int main(int argc, char **argv)
 OK = 0
 INVALID_HANDLE = 0xC0000008  # STATUS_INVALID_HANDLE: a read from an image that could not be opened
 END_OF_FILE = 0xC0000011  # STATUS_END_OF_FILE: a read that starts past the end of the file
+W = 4 + 59 + 3000  # a whole READ_ANDX reply with its data at DataOffset 59
+E = 4 + 35  # a whole error reply
+CLOSE, ERROR = 0, -1
+# (name, expected result, status, DataOffset, keepalive first, what the socket returns once the
+#  segments run out, segment sizes; [] is one segment)
 cases = [
-    ('whole reply in one segment', 3000, OK, [3000]),
-    ('reply in three segments', 3000, OK, [1000, 1000, 1000]),
-    ('server closes after the first segment', -2, OK, [1000, 0]),
-    ('receive error after the first segment', -2, OK, [1000, -1]),
-    ('server closes after two segments', -2, OK, [1000, 1500, 0]),
-    ('server refuses the read: invalid handle', -errno.EIO, INVALID_HANDLE, []),
-    ('server refuses the read: end of file', -errno.EIO, END_OF_FILE, []),
+    ('whole reply in one segment', 3000, OK, 59, 0, CLOSE, []),
+    ('reply in three segments', 3000, OK, 59, 0, CLOSE, [1063, 1000, 1000]),
+    ('server closes after the first segment', -2, OK, 59, 0, CLOSE, [1063]),
+    ('receive error after the first segment', -2, OK, 59, 0, ERROR, [1063]),
+    ('server closes after two segments', -2, OK, 59, 0, CLOSE, [1063, 1500]),
+    ('a keepalive before the reply', 3000, OK, 59, 1, CLOSE, []),
+    ('first segment ends inside the length', 3000, OK, 59, 0, CLOSE, [2, W - 2]),
+    ('first segment ends inside the status', 3000, OK, 59, 0, CLOSE, [11, W - 11]),
+    ('first segment ends before DataOffset', 3000, OK, 59, 0, CLOSE, [40, W - 40]),
+    ('header in four segments', 3000, OK, 59, 0, CLOSE, [3, 20, 30, 10, W - 63]),
+    ('padding after the header, split before it', 3000, OK, 60, 0, CLOSE, [40, 4 + 60 + 3000 - 40]),
+    ('server closes inside the header', -2, OK, 59, 0, CLOSE, [40]),
+    ('server refuses the read: invalid handle', -errno.EIO, INVALID_HANDLE, 59, 0, CLOSE, []),
+    ('server refuses the read: end of file', -errno.EIO, END_OF_FILE, 59, 0, CLOSE, []),
+    ('refusal split inside the length', -errno.EIO, INVALID_HANDLE, 59, 0, CLOSE, [2, E - 2]),
+    ('refusal split inside the status', -errno.EIO, INVALID_HANDLE, 59, 0, CLOSE, [11, E - 11]),
+    ('refusal split after the status', -errno.EIO, INVALID_HANDLE, 59, 0, CLOSE, [20, E - 20]),
+    ('server closes inside a refusal', -2, INVALID_HANDLE, 59, 0, CLOSE, [20]),
 ]
 failures = []
 with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
@@ -155,8 +245,9 @@ with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
     subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wno-unused-function', '-Wno-unused-variable',
                     '-Wno-unused-but-set-variable', '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
                     str(src), '-o', str(binary)], check=True)
-    for name, want, status, script in cases:
-        result = subprocess.run([str(binary), str(want), str(status)] + [str(s) for s in script],
+    for name, want, status, offset, keepalive, end, script in cases:
+        result = subprocess.run([str(binary), str(want), str(status), str(offset), str(keepalive), str(end)]
+                                + [str(s) for s in script],
                                 capture_output=True, text=True, timeout=10)
         if result.returncode != 0:
             failures.append('%s: %s' % (name, (result.stdout + result.stderr).strip()))
@@ -164,5 +255,5 @@ with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
 if failures:
     print('FAIL:\n  ' + '\n  '.join(failures))
     sys.exit(1)
-print('PASS: a cut-off SMB read reply fails with -2 and a refused one with -EIO; whole and segmented replies '
-      'still return their length')
+print('PASS: a cut-off SMB read reply fails with -2 and a refused one with -EIO, taken whole off the socket; '
+      'whole and segmented replies, a header in pieces included, return their data')

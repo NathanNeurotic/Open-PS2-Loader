@@ -598,6 +598,25 @@ int smb_Close(int FID)
     return 0;
 }
 
+#ifdef USE_CUSTOM_RECV
+//-------------------------------------------------------------------------
+// Receive the reply in SMB_buf from byte *rcv_size up to byte size (session header included).
+// Returns 0, or -2 when the connection was closed (0) or failed (< 0) first.
+static int smb_RecvReplyRest(int *rcv_size, int size)
+{
+    int r;
+
+    while (*rcv_size < size) {
+        r = plwip_recvfrom(main_socket, NULL, 0, &((u8 *)&SMB_buf)[*rcv_size], size - *rcv_size, 0, NULL, NULL);
+        if (r <= 0)
+            return -2;
+        *rcv_size += r;
+    }
+
+    return 0;
+}
+#endif
+
 //-------------------------------------------------------------------------
 static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, int nbytes)
 {
@@ -605,7 +624,7 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
     ReadAndXResponse_t *RRsp = &SMB_buf.smb.readAndXResponse;
     register int r, DataLength;
 #ifdef USE_CUSTOM_RECV
-    int rcv_size, expected_size;
+    int rcv_size, expected_size, header_size;
 #else
     int padding;
 #endif
@@ -641,13 +660,35 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
             return -2;
     } while (nb_GetPacketType() != 0); // dropping NBSS Session Keep alive
 
+    // recvfrom() puts a segment shorter than a READ_ANDX response header (63 bytes with the session
+    // header) into SMB_buf whole and nothing into readbuf. So a reply whose first segment was that short
+    // may not have its whole header, or even its length, yet: collect the rest of the header in SMB_buf
+    // before reading its length, status or DataOffset. An error response is shorter than that header,
+    // so it is collected whole and nothing of it is left on the socket for the next request to read.
+    if (smb_RecvReplyRest(&rcv_size, 4) < 0)
+        return -2;
+    expected_size = nb_GetSessionMessageLength() + 4;
+    header_size = (int)sizeof(ReadAndXResponse_t) + 4;
+    if (smb_RecvReplyRest(&rcv_size, expected_size < header_size ? expected_size : header_size) < 0)
+        return -2;
+
     // check there's no error. An error response (an invalid handle, a failed read) is shorter than a
     // READ_ANDX response, so the DataLength read below would be left over from the request, and the
     // read would seem to succeed with whatever readbuf held.
-    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS)
+    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS) {
+        // An error response with more than its header: take the rest off the socket too.
+        if (expected_size <= (int)sizeof(SMB_buf) && smb_RecvReplyRest(&rcv_size, expected_size) < 0)
+            return -2;
         return -EIO;
+    }
+    // A success shorter than a READ_ANDX response, or whose data starts inside its header or past the
+    // end of the reply or of SMB_buf, is not a read reply: its fields would be the request's.
+    if (expected_size < header_size || RRsp->DataOffset < (int)sizeof(ReadAndXResponse_t) || RRsp->DataOffset + 4 > expected_size || RRsp->DataOffset + 4 > (int)sizeof(SMB_buf))
+        return -EIO;
+    // Padding between the header and the data, when the first segment ended before it.
+    if (smb_RecvReplyRest(&rcv_size, RRsp->DataOffset + 4) < 0)
+        return -2;
 
-    expected_size = nb_GetSessionMessageLength() + 4;
     DataLength = (int)(((u32)RRsp->DataLengthHigh << 16) | RRsp->DataLengthLow);
 
     // Handle fragmented packets
