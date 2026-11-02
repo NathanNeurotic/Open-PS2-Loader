@@ -12,6 +12,8 @@
 #ifndef __PADPROFILES_H
 #define __PADPROFILES_H
 
+#include "include/padfile.h" // pad_def_t
+
 // Read <settings home>/PADS/*.pad (up to PAD_DEFS_MAX profiles, decoder=generic only) and PADS/GAMES/<gameId>.pad
 // (gameId may be NULL: no game map), and pack them for this launch. 0 when a block is ready, -1 when there is none (no
 // PADS folder, no usable profile and no game map). On the launching thread, before the drives are let go.
@@ -41,5 +43,23 @@ void padProfilesMenuResend(void);
 // "<settings home>/PADS" into out. 0, or -1 when the home is empty, holds '?' (no memory card found), is raw APA
 // (hdd...: a partition namespace, not a file system) or does not fit.
 int padProfilesDir(char *out, int size);
+
+/* Controllers > My Pads lists each PADS/VVVV_PPPP.pad with what a game gets of it, so it asks what the launcher's packer
+   asks: the file read the same way, then the reader (padDefParse), then padProfilesLeftOut. */
+
+// The largest .pad the launcher reads, in bytes. A larger one is left out, never read cut short
+#define PAD_PROFILE_TEXT_MAX 4095
+
+// A profile's text, NUL ended, into buf (size bytes; PAD_PROFILE_TEXT_MAX + 1 for the launcher's limit). Its length, -1
+// when it cannot be opened or read, -2 when it is larger than size - 1 bytes
+int padProfilesRead(const char *path, char *buf, int size);
+
+// Why the launcher leaves out a profile the reader accepted, or PAD_PROFILE_USED
+enum {
+    PAD_PROFILE_USED = 0,
+    PAD_PROFILE_NOT_GENERIC, // decoder= is not generic: the Pad Emulator plays generic profiles only
+    PAD_PROFILE_BUILT_IN,    // a Sony ID (054C, 12BA) or the ShanWan PS3 pad 2563:0575: neither USB driver profiles it
+};
+int padProfilesLeftOut(const pad_def_t *def);
 
 #endif

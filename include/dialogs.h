@@ -385,6 +385,8 @@ enum UI_ITEMS {
     PADMACRO_INVERT_RX,
     PADMACRO_INVERT_RY,
     PADMACRO_TURBO_SPEED,
+    MY_PADS_BUTTON,   // Controllers > My Pads (from RIPPS2 build 126)
+    PAD_SETUP_BUTTON, // Controllers > Set Up A USB Pad (from RIPPS2 build 129)
 
     COMPAT_MODE_BASE = 250,
 #else
