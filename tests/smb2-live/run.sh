@@ -10,14 +10,17 @@
 #             directory listing, stat, read/write/seek, create/truncate/exclusive opens, mkdir,
 #             rename, remove, reconnect, and handles left open across LOGOFF.
 #   keepalive.c  includes smb2man.c and runs its keepalive passes by hand: a session lost (the
-#             socket cut) under an open file and directory, the reconnect on the next tick, the
-#             backoff after a refused reconnect, LOGOFF and CLOSESHARE while lost, and the leak check
-#             that a dropped session or a share change frees every handle and directory listing.
+#             socket cut) under open files and directories, by a failed ECHO, read or write, the
+#             reconnect on the next tick, the backoff after a refused reconnect, LOGOFF and
+#             CLOSESHARE while lost, and the leak check that a dropped session or a share change
+#             frees every handle and directory listing.
 #
-# All are built with AddressSanitizer and UBSan; a sanitizer report, a leak included, fails the case.
+# All are built with AddressSanitizer and UBSan; a sanitizer report, a leak included, fails the case
+# (it exits 86, so not even a case that expects a refusal takes one for it).
 # The server is started on a private port with NTLMv2 only, run once with signing mandatory and once
-# with signing off, and once capped at SMB 2.0.2. Guest logons (an unknown user, and a blank user name,
-# which logs on as "Guest" as the menu does) are checked against a guest-ok share.
+# with signing off, and once capped at SMB 2.0.2. Guest logons (an unknown user, and a blank user
+# name) are checked against a guest-ok share; a blank user name is also checked against a server where
+# only a real "Guest" account gets in, since it logs on as "Guest" as the menu does, not anonymously.
 #
 # Needs: a C compiler, Samba (smbd, smbpasswd, smbclient) and the PS2SDK's ps2smb.h (found through
 # PS2BUILD_HOME, default ~/.local/share/ps2build). Run as root (smbd wants to own its state) from
@@ -57,7 +60,7 @@ u8name=$(printf 'Caf\303\251 \303\274.iso')
 dd if="$work/share/DVD/TEST.iso" of="$work/share/DVD/$u8name" bs=4096 count=16 status=none
 
 conf="$work/smb.conf"
-write_conf() { # $1 signing, $2 extra global line
+write_conf() { # $1 signing, $2 extra global lines, $3 the share's guest ok (default yes)
     cat >"$conf" <<EOF
 [global]
    server role = standalone server
@@ -83,7 +86,7 @@ write_conf() { # $1 signing, $2 extra global line
    path = $work/share
    read only = no
    force user = root
-   guest ok = yes
+   guest ok = ${3:-yes}
 EOF
 }
 
@@ -110,6 +113,9 @@ start_smbd() {
 }
 
 # ---- build ----------------------------------------------------------------------------------------
+# A sanitizer report exits 86, distinct from the clients' own failure codes (1, 3).
+export ASAN_OPTIONS="${ASAN_OPTIONS:+$ASAN_OPTIONS:}exitcode=86"
+export UBSAN_OPTIONS="${UBSAN_OPTIONS:+$UBSAN_OPTIONS:}exitcode=86"
 cp "$ps2smb" "$work/inc/"
 san="-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1"
 cc $san -Wall -Wno-unused-parameter -I"$here/inc-ingame" -I"$root/modules/iopcore/cdvdman" -I"$root/modules/iopcore/common" \
@@ -146,6 +152,8 @@ run() { # $1 label, then the command
         echo "ok   $label"
     else
         echo "FAIL $label"
+        grep '^FAIL:' "$work/out.txt" || true # the failed checks, wherever they are in the output
+        echo "     last lines:"
         tail -15 "$work/out.txt"
         fails=$((fails + 1))
     fi
@@ -155,8 +163,11 @@ run() { # $1 label, then the command
 ingame() { # $1 user, $2 password
     timeout 120 ./ingame 127.0.0.1 "$port" "$1" "$2" PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' "\\DVD\\$u8name" "share/DVD/$u8name" && cmp readback.bin share/DVD/TEST.iso
 }
-denied() { # the logon must fail cleanly, not hang or crash
-    timeout 120 ./ingame 127.0.0.1 "$port" ps2 wrong PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' | grep -q 'session setup -1000'
+denied() { # the logon must be refused cleanly: exit 3 after the refusal, no hang, crash or sanitizer report
+    rc=0
+    timeout 120 ./ingame 127.0.0.1 "$port" ps2 wrong PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' >denied.txt 2>&1 || rc=$?
+    cat denied.txt
+    [ $rc -eq 3 ] && grep -q 'session setup -1000' denied.txt
 }
 browse() {
     timeout 120 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso "$u8name"
@@ -167,7 +178,7 @@ keepalive() {
 browse_refused() { # SMB 3-only: the menu must not list a server the in-game reader cannot reach
     rc=0
     timeout 60 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso || rc=$?
-    [ $rc -ne 0 ] && [ $rc -ne 124 ] # 0 = it listed the server; 124 = a hang, not a refusal
+    [ $rc -eq 1 ] # its checks failed; not 0 (it listed the server), 124 (a hang) or 86 (a sanitizer report)
 }
 
 run "in-game reader: UTF-8 names to UTF-16 (put_utf16)" ./utf16
@@ -177,11 +188,18 @@ for signing in mandatory disabled; do
     start_smbd
     run "in-game reader, signing $signing, NTLMv2 user" ingame ps2 secret
     run "in-game reader, signing $signing, guest" ingame nobody x
-    run "in-game reader, signing $signing, blank user (logs on as Guest)" ingame '' ''
+    run "in-game reader, signing $signing, blank user and password, guest-ok share" ingame '' ''
     run "in-game reader, signing $signing, wrong password refused" denied
     run "browse driver, signing $signing" browse
     run "browse driver keepalive: lost session, reconnect, backoff, no leaks, signing $signing" keepalive
 done
+# A blank user name logs on as "Guest" with the password, as the menu does, not anonymously: here
+# "Guest" is a real account (mapped to ps2) and there is no guest or anonymous access to the share.
+printf 'ps2 = Guest\n' >"$work/usermap"
+write_conf mandatory "map to guest = never
+   username map = $work/usermap" no
+start_smbd
+run "in-game reader, blank user logs on as Guest (no guest or anonymous access)" ingame '' secret
 write_conf mandatory "server max protocol = SMB2_02"
 start_smbd
 run "in-game reader, SMB 2.0.2 only, signing mandatory" ingame ps2 secret

@@ -1,15 +1,55 @@
-/* Host harness for smb2man.c's keepalive: a session lost under open handles, the reconnect and its
-   backoff, and LOGOFF / CLOSESHARE while the session is lost. It includes smb2man.c, so it can run
-   keepalive passes by hand (on the host no thread or alarm runs) and see the driver's state. The
-   connection is cut with shutdown() on the client's socket, so the next ECHO fails as it does when
-   a server goes away. Built with AddressSanitizer, whose leak check at exit fails the run if a
-   dropped session leaves a file handle or a directory listing allocated. Built and run by run.sh. */
+/* Host harness for smb2man.c's keepalive: a session lost under open handles (a keepalive ECHO, an
+   ECHO devctl, a read or a write that fails), the reconnect and its backoff, and LOGOFF /
+   CLOSESHARE while the session is lost. It includes smb2man.c, so it can run keepalive passes by
+   hand (on the host no thread or alarm runs) and see the driver's state. The connection is cut
+   with shutdown() on the client's socket: both ways, so the next request fails as it does when a
+   server goes away, or only the read side, so requests still go out and their replies never come.
+   Wrappers around smb2_echo() and smb2_connect_share() can let alarm ticks fire while those calls
+   wait, as they do when a request times out on the IOP.
+   Built with AddressSanitizer, whose leak check at exit fails the run if a dropped session leaves a
+   file handle or a directory listing allocated. Built and run by run.sh. */
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 
+#include <smb2/smb2.h>
+#include <smb2/libsmb2.h>
+#include <smb2/libsmb2-share-enum.h>
+#include <smb2/libsmb2-raw.h>
+
+/* Alarm ticks that fire while a request waits. On the IOP a failed echo or a refused reconnect can
+   wait out the 15 s timeout, 5 ticks; on the host the alarm never fires by itself, so these wrappers
+   run the alarm handler ticks_during_call times when the call returns. */
+static int ticks_during_call;
+static unsigned int smb2man_keepalive_alarm(void *arg);
+static void ticks_while_waiting(void)
+{
+    int i;
+
+    for (i = 0; i < ticks_during_call; i++)
+        smb2man_keepalive_alarm(NULL);
+}
+static int slow_echo(struct smb2_context *s)
+{
+    int rv = smb2_echo(s);
+
+    ticks_while_waiting();
+    return rv;
+}
+static int slow_connect_share(struct smb2_context *s, const char *server, const char *share, const char *user)
+{
+    int rv = smb2_connect_share(s, server, share, user);
+
+    ticks_while_waiting();
+    return rv;
+}
+#define smb2_echo          slow_echo
+#define smb2_connect_share slow_connect_share
 #include "smb2man.c"
+#undef smb2_echo
+#undef smb2_connect_share
 
 int AddDrv(iop_device_t *d)
 {
@@ -85,6 +125,12 @@ static void cut(void)
     shutdown(smb2_get_fd(smb2), SHUT_RDWR);
 }
 
+// Only the read side is cut: requests still go out, and their replies never come.
+static void cut_read(void)
+{
+    shutdown(smb2_get_fd(smb2), SHUT_RD);
+}
+
 static int lost(void)
 {
     return smb2 == NULL && !share_open && session_lost;
@@ -96,7 +142,7 @@ int main(int argc, char **argv)
     const char *ip, *user, *pw, *share;
     unsigned char buf[64];
     iox_dirent_t de;
-    iop_file_t f = {0}, d = {0}, d2 = {0};
+    iop_file_t f = {0}, f2 = {0}, d = {0}, d2 = {0};
     char server[sizeof(conn_server)];
     u32 retry;
     int port = 0, i, attempts;
@@ -200,6 +246,54 @@ int main(int argc, char **argv)
     smb2man_keepalive_pass();
     CHECK(lost(), "no reconnect in the pass right after the drop");
     CHECK(OPS->close(&f) == -EBADF, "the file handle is stale");
+    CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_LOGOFF, NULL, 0, NULL, 0) == 0, "logoff");
+
+    /* A read or a write that fails drops the session too. With only the read side cut, the request
+       and the closes queued for the open files are on the wire when the context goes, so destroying
+       it completes them from libsmb2's wait queue (the cases above complete them from its send
+       queue); the leak check sees whether every handle was freed. */
+    CHECK(logon(ip, port, user, pw) == 0 && openshare(share) == 0, "logon + openshare");
+    CHECK(OPS->open(&f, "\\DVD\\TEST.iso", FIO_O_RDONLY, 0) >= 0 && OPS->open(&f2, "\\VMC\\card.bin", FIO_O_RDONLY, 0) >= 0,
+          "two files open");
+    CHECK(OPS->dopen(&d, "\\DVD") == 0 && OPS->dread(&d, &de) == 1, "dopen + one dread");
+    cut_read();
+    CHECK(OPS->read(&f, buf, 16) == -EIO && lost(), "a failed read drops the session");
+    CHECK(OPS->read(&f2, buf, 16) == -EBADF && OPS->close(&f) == -EBADF && OPS->close(&f2) == -EBADF,
+          "both file handles are stale");
+    CHECK(OPS->dread(&d, &de) == -EBADF && OPS->dclose(&d) == 0, "the directory handle is stale");
+    smb2man_keepalive_pass();
+    CHECK(lost(), "no reconnect in the pass right after the drop");
+    tick();
+    CHECK(smb2 != NULL && share_open && !session_lost && echo() == 0, "reconnected on the next tick");
+    CHECK(OPS->open(&f, "\\VMC\\ka.bin", FIO_O_RDWR | FIO_O_CREAT | FIO_O_TRUNC, 0666) >= 0 && OPS->write(&f, buf, 16) == 16,
+          "a file open for writing");
+    cut_read();
+    CHECK(OPS->write(&f, buf, 16) == -EIO && lost(), "a failed write drops the session");
+    CHECK(OPS->close(&f) == -EBADF, "the file handle is stale");
+    tick();
+    CHECK(smb2 != NULL && share_open && !session_lost && echo() == 0, "reconnected on the next tick");
+    CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_LOGOFF, NULL, 0, NULL, 0) == 0, "logoff");
+
+    /* Ticks that fire while a request waits: the first reconnect still waits for the tick after the
+       drop, and the backoff runs from the end of the refused reconnect, not from its start. */
+    CHECK(logon(ip, port, user, pw) == 0 && openshare(share) == 0, "logon + openshare");
+    memcpy(server, conn_server, sizeof(server));
+    ticks_during_call = 5;
+    cut();
+    tick();
+    CHECK(lost() && keepalive_retry_at == keepalive_ticks + 1, "a drop after a slow echo waits for the next tick");
+    smb2man_keepalive_pass();
+    CHECK(lost(), "no reconnect in the pass right after a slow drop");
+    strcpy(conn_server, "127.0.0.1:9"); // refused
+    tick();
+    CHECK(lost() && keepalive_retry_at == keepalive_ticks + KEEPALIVE_RETRY_SECONDS / KEEPALIVE_SECONDS,
+          "the backoff runs from the end of a slow refused reconnect");
+    ticks_during_call = 0;
+    memcpy(conn_server, server, sizeof(server));
+    for (i = 0; i < KEEPALIVE_RETRY_SECONDS / KEEPALIVE_SECONDS && lost(); i++)
+        tick();
+    CHECK(smb2 != NULL && share_open && !session_lost && i == KEEPALIVE_RETRY_SECONDS / KEEPALIVE_SECONDS,
+          "reconnected when the backoff ran out (%d ticks)", i);
     CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_LOGOFF, NULL, 0, NULL, 0) == 0, "logoff");
 
     printf("%s (%d failures)\n", fails ? "FAILED" : "ALL PASSED", fails);

@@ -328,7 +328,7 @@ static void smb2man_close_dirs(void)
 */
 static void smb2man_drop_session(void)
 {
-    int i;
+    int i, rv;
 
     smb2man_close_dirs();
     for (i = 0; i < MAX_OPEN_FILES; i++) {
@@ -336,10 +336,14 @@ static void smb2man_drop_session(void)
           libsmb2 frees a handle when its close completes, and destroying the context does not free
           the handles opened on it. So queue a close for each: the destroy below completes it with
           SMB2_STATUS_SHUTDOWN, which frees the handle. Queueing waits for nothing; at most the
-          request is written to the socket, if nothing is queued ahead of it.
+          request is written to the socket, if nothing is queued ahead of it. It fails only when
+          libsmb2 cannot allocate the request, and that handle then stays allocated: say so.
         */
-        if (file_table[i].used && smb2 != NULL)
-            smb2_close_async(smb2, file_table[i].fh, smb2man_discard_cb, NULL);
+        if (file_table[i].used && smb2 != NULL) {
+            rv = smb2_close_async(smb2, file_table[i].fh, smb2man_discard_cb, NULL);
+            if (rv != 0)
+                printf("smb2man: could not close a file of the lost session (%d), its handle leaks\n", rv);
+        }
         file_table[i].fh = NULL;
         file_table[i].used = 0;
     }
