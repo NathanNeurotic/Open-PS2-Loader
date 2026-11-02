@@ -507,11 +507,12 @@ Handoff Path** chooses what an ordinary app receives as its own path (argv[0]):
 
 Only the string handed to the app changes. The ELF is still read through OPL's own `massN:` mount
 before any IOP reset, POPSTARTER keeps its bare `mass:` selector, HDD apps keep `hddN:...:pfs:/`, and a
-device with no typed name (UDPBD, PC CARD CF) falls back to the legacy spelling. Apps built on a ps2sdk
-older than February 2026 do not know the typed names and will ignore the argument, which is no worse than
-today. To override the setting for one app, add `HANDOFFPATH=TYPED` or `HANDOFFPATH=LEGACY` to its
-`title.cfg` (or `CFG/<ELF name>.cfg` for a `conf_apps.cfg` entry, like `REBOOTIOP`). The File Manager's
-Run follows the global setting.
+device with no typed name (UDPBD, PC CARD CF) falls back to the legacy spelling. Typed is only for apps
+built on a ps2sdk from February 2026 or later: an older app does not register `usb0:`/`ata0:` at all, so
+if it opens its own folder through argv[0] it finds nothing, and nothing detects that or falls back to
+`massN:` after the handoff. Leave such apps on Legacy. To override the setting for one app, add
+`HANDOFFPATH=TYPED` or `HANDOFFPATH=LEGACY` to its `title.cfg` (or `CFG/<ELF name>.cfg` for a
+`conf_apps.cfg` entry, like `REBOOTIOP`). The File Manager's Run follows the global setting.
 
 ## Cheats
 

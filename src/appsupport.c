@@ -1036,26 +1036,34 @@ void appLaunchElfPath(const char *path)
     char normFilename[256];
     char typedArgv0[256];
     char *target_argv[1];
+    size_t argBytes;
     int rebootIop;
 
     if (!strncasecmp(path, "pfs", 3) || !strncasecmp(path, "hdd", 3)) {
         guiMsgBox(_l(_STR_FM_RUN_HDD), 0, NULL);
         return;
     }
-    // the child loader's 256-byte argument pool holds the load path, argv[0] and the reset flag
-    if (appNormalizeLaunchPath(normFilename, sizeof(normFilename), path) == NULL ||
-        strlen(normFilename) * 2 + 2 + sizeof("-reset-iop") > 256) {
+    if (appNormalizeLaunchPath(normFilename, sizeof(normFilename), path) == NULL) {
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
         return;
     }
     rebootIop = guiPromptRebootIop();
     if (rebootIop < 0)
         return; // the user backed out
-    mmceReset();
-    // No per-app cfg here: the global App Handoff Path decides. A typed spelling is at most a few bytes
-    // longer than the mass<N>: one the pool check above assumed; the loader re-checks the exact budget and
-    // refuses rather than truncates.
+    // No per-app cfg here: the global App Handoff Path decides.
     target_argv[0] = (char *)appChooseHandoffArgv0(gAppHandoffPath, normFilename, typedArgv0, sizeof(typedArgv0));
+    // The child-loader ExecPS2 handoff has one 256-byte kernel argument pool: the load path, the argv[0]
+    // actually chosen (a typed spelling is a few bytes longer than mass<N>:) and the reset flag. Count them
+    // exactly here, before the GUI is torn down, so an over-long path is refused with a dialog instead of
+    // by the loader after deinit.
+    argBytes = strlen(normFilename) + 1 + strlen(target_argv[0]) + 1;
+    if (rebootIop)
+        argBytes += sizeof("-reset-iop");
+    if (argBytes > 256) {
+        guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+        return;
+    }
+    mmceReset();
     deinit(UNMOUNT_EXCEPTION | (rebootIop == 0 ? KEEPIOP_EXCEPTION : 0), IO_MODE_SELECTED_ALL_SPARE);
     sysLoadELFApp(normFilename, "", 1, target_argv, rebootIop, 0);
 }
