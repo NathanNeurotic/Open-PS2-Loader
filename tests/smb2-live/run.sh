@@ -47,6 +47,9 @@ root = sys.argv[1]
 open(root + '/DVD/TEST.iso', 'wb').write(bytes((i * 7 + 3) & 0xff for i in range(5 * 1024 * 1024 + 1234)))
 open(root + '/VMC/card.bin', 'wb').write(bytes(1024 * 1024 * 2))
 EOF
+# A name outside ASCII, as libsmb2 lists it (UTF-8): the in-game reader must request the same name.
+u8name=$(printf 'Caf\303\251 \303\274.iso')
+dd if="$work/share/DVD/TEST.iso" of="$work/share/DVD/$u8name" bs=4096 count=16 status=none
 
 conf="$work/smb.conf"
 write_conf() { # $1 signing, $2 extra global line
@@ -106,6 +109,8 @@ cp "$ps2smb" "$work/inc/"
 san="-fsanitize=address,undefined -fno-omit-frame-pointer -g -O1"
 cc $san -Wall -Wno-unused-parameter -I"$here/inc-ingame" -I"$root/modules/iopcore/cdvdman" -I"$root/modules/iopcore/common" \
     "$here/ingame.c" "$root/modules/iopcore/cdvdman/smb2.c" "$root/modules/iopcore/cdvdman/smb2auth.c" -o "$work/ingame"
+cc $san -Wall -Wno-unused-parameter -Wno-unused-function -I"$here/inc-ingame" -I"$root/modules/iopcore/cdvdman" \
+    -I"$root/modules/iopcore/common" "$here/utf16.c" "$root/modules/iopcore/cdvdman/smb2auth.c" -o "$work/utf16"
 
 lib="$root/modules/network/smb2man/libsmb2"
 # libsmb2 for the host, from the vendored sources, with the configuration its CMake build finds on Linux.
@@ -140,13 +145,13 @@ run() { # $1 label, then the command
 # Each client gets a time limit: the in-game negotiate retries forever by design (a game keeps
 # trying), so a stalled case must fail here instead of blocking the run.
 ingame() { # $1 user, $2 password
-    timeout 120 ./ingame 127.0.0.1 "$port" "$1" "$2" PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' && cmp readback.bin share/DVD/TEST.iso
+    timeout 120 ./ingame 127.0.0.1 "$port" "$1" "$2" PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' "\\DVD\\$u8name" "share/DVD/$u8name" && cmp readback.bin share/DVD/TEST.iso
 }
 denied() { # the logon must fail cleanly, not hang or crash
     timeout 120 ./ingame 127.0.0.1 "$port" ps2 wrong PS2SMB '\DVD\TEST.iso' '\VMC\card.bin' | grep -q 'session setup -1000'
 }
 browse() {
-    timeout 120 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso
+    timeout 120 ./browse 127.0.0.1 "$port" ps2 secret PS2SMB '\DVD\TEST.iso' share/DVD/TEST.iso "$u8name"
 }
 browse_refused() { # SMB 3-only: the menu must not list a server the in-game reader cannot reach
     rc=0
@@ -154,6 +159,7 @@ browse_refused() { # SMB 3-only: the menu must not list a server the in-game rea
     [ $rc -ne 0 ] && [ $rc -ne 124 ] # 0 = it listed the server; 124 = a hang, not a refusal
 }
 
+run "in-game reader: UTF-8 names to UTF-16 (put_utf16)" ./utf16
 for signing in mandatory disabled; do
     write_conf "$signing" ""
     printf 'secret\nsecret\n' | smbpasswd -c "$conf" -s -a ps2 >/dev/null

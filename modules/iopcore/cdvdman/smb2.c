@@ -167,17 +167,57 @@ static int bytes_equal(const u8 *a, const u8 *b, int n)
     return 1;
 }
 
-// ASCII to UTF-16LE, optionally upper-cased; returns the byte length written (no terminator).
+/*
+  UTF-8 to UTF-16LE, optionally upper-cased (ASCII only, as NTOWFv2 needs); returns the byte length
+  written (no terminator). The names come from the menu, which got them from smb2man's directory
+  listing, and libsmb2 returns those as UTF-8: a file called "Café.iso" must be requested as the
+  same UTF-16 the server listed it under. A byte that is not valid UTF-8 is passed through as
+  Latin-1, so an 8-bit name from an old config still makes a request of the same length.
+*/
 static int put_utf16(u8 *out, const char *in, int upper)
 {
     int len = 0;
 
-    for (; *in != '\0'; in++, len += 2) {
-        u8 c = (u8)*in;
+    while (*in != '\0') {
+        u32 c = (u8)*in++, min = 0; // min: the smallest code point a sequence of this length may hold
+        int more = 0;
+
+        if (c >= 0xC2 && c <= 0xDF)
+            more = 1, c &= 0x1F, min = 0x80;
+        else if (c >= 0xE0 && c <= 0xEF)
+            more = 2, c &= 0x0F, min = 0x800;
+        else if (c >= 0xF0 && c <= 0xF4)
+            more = 3, c &= 0x07, min = 0x10000;
+
+        if (more) {
+            const u8 *p = (const u8 *)in;
+            int i;
+
+            for (i = 0; i < more && (p[i] & 0xC0) == 0x80; i++)
+                c = (c << 6) | (p[i] & 0x3F);
+            // Well-formed (RFC 3629): complete, not overlong (E0 82 80 is not U+0080), not past
+            // U+10FFFF, not a lone surrogate.
+            if (i == more && c >= min && c <= 0x10FFFF && (c < 0xD800 || c > 0xDFFF))
+                in += more;
+            else
+                c = (u8)in[-1]; // not UTF-8: the lead byte alone, as Latin-1
+        }
+
         if (upper && c >= 'a' && c <= 'z')
             c -= 'a' - 'A';
-        out[len] = c;
-        out[len + 1] = 0;
+
+        if (c >= 0x10000) { // a surrogate pair
+            c -= 0x10000;
+            out[len] = (u8)(c >> 10);
+            out[len + 1] = (u8)(0xD8 | (c >> 18));
+            out[len + 2] = (u8)c;
+            out[len + 3] = (u8)(0xDC | ((c >> 8) & 0x03));
+            len += 4;
+        } else {
+            out[len] = (u8)c;
+            out[len + 1] = (u8)(c >> 8);
+            len += 2;
+        }
     }
 
     return len;
@@ -531,12 +571,16 @@ int smb_SessionSetupAndX(u32 capabilities)
         return -1000;
     memcpy(server_challenge, tok + 24, 8);
 
-    // TargetName (12): the domain this logon is computed for, sent back as-is (as usmb2 does).
-    domlen = rd16(tok + 12);
-    tioff = rd32(tok + 16); // the server's offset: check it alone first, so the sum cannot wrap
-    if (domlen > (int)sizeof(domain) || tioff > seclen || (u32)domlen > seclen - tioff)
-        domlen = 0, tioff = 0;
-    memcpy(domain, tok + tioff, domlen);
+    /*
+      DomainName: empty, as the menu's logon. The menu checked these credentials through smb2man,
+      and libsmb2 logs on with no domain (smb2->domain is unset): the server resolved the user in
+      its own account database. The server recomputes NTOWFv2 with the UserDom the client sent
+      (MS-NLMP 3.3.2), so hashing and sending the CHALLENGE's TargetName instead (the usmb2 way)
+      asks it to look the same user up under that name. On a domain-joined Windows machine that
+      name is the domain, and a local account is not found there: the browse logon succeeds and
+      the in-game logon fails with the same password. The two logons now ask the same question.
+    */
+    domlen = 0;
 
     // TargetInfo (40): copied into the NTLMv2 blob. Look for the server's timestamp in it.
     tilen = 0;

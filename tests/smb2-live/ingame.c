@@ -34,7 +34,7 @@ static void cb(server_specs_t *ss)
 
 int main(int argc, char **argv)
 {
-    /* argv: ip port user pass share iso_path vmc_path */
+    /* argv: ip port user pass share iso_path vmc_path [utf8_path local_copy] */
     if (argc < 8) {
         fprintf(stderr, "usage\n");
         return 2;
@@ -140,6 +140,24 @@ int main(int argc, char **argv)
     printf("vmc page mismatches %d\n", bad);
     fails += (bad != 0);
     smb_Close(vfid);
+
+    /* A name outside ASCII, as the menu stores it (UTF-8 from smb2man's listing). */
+    if (argc > 9) {
+        u16 uf = 0xFFFF;
+        static u8 want[2048];
+        FILE *ref = fopen(argv[9], "rb");
+        r = smb_OpenAndX(argv[8], (u8 *)&uf, 0);
+        printf("open utf-8 name %d\n", r);
+        fails += (r <= 0);
+        if (r > 0) {
+            r = smb_ReadFile(uf, 0, 0, buf, 2048);
+            printf("read utf-8 name %d\n", r);
+            fails += (r != 2048 || ref == NULL || fread(want, 1, 2048, ref) != 2048 || memcmp(buf, want, 2048) != 0);
+            smb_Close(uf);
+        }
+        if (ref)
+            fclose(ref);
+    }
 
     /* A file that does not exist must fail cleanly. */
     u16 nf;
