@@ -3,10 +3,12 @@
 
 cdvdfsv serves the EE's sceCdRead (cdvd_readee) and sceCdReadChain (cdvd_readchain) in chunks. A break that lands
 during a chunk leaves sectors in cdvdfsv's buffer that the read never produced, so none of that chunk may reach EE
-memory, and the EE must be told only the bytes it got. Both functions are compiled on the host from ncmd.c, with
-AddressSanitizer when it is available, and run against a simulated cdvdman and EE memory: including the case where
-something resets the shared error code before cdvdfsv looks (sceCdDiskReady on another cdvdfsv thread resets it to
-SCECdErNO in OPL, and so does a stream fill), which used to let a cut-short chunk through as data.
+memory, and the EE must be told only the bytes it got. sceCdReadIOPMem (cdvd_readiopm) reads into IOP memory in
+one go, so the EE has only the error code to tell a broken read from a whole one. The three functions are compiled
+on the host from ncmd.c, with AddressSanitizer when it is available, and run against a simulated cdvdman, EE and IOP
+memory: including the case where something resets the shared error code before cdvdfsv looks (sceCdDiskReady on
+another cdvdfsv thread resets it to SCECdErNO in OPL, and so does a stream fill), which used to let a cut-short
+chunk through as data and a cut-short IOP read pass for a whole one.
 """
 import re
 import shutil
@@ -125,6 +127,8 @@ int sceCdRead(u32 lsn, u32 sectors, void *buf, sceCdRMode *mode)
 int sceCdSync(int mode) { return 0; }
 int sceCdGetError(void) { return err; }
 int sceCdDiskReady(int mode) { err = SCECdErNO; return 2; } /* OPL's resets the error code; Sony's does not */
+u32 sceCdGetReadPos(void) { return 0; }
+int DelayThread(int usec) { return 0; }
 
 int sceCdSC(int code, int *param)
 {
@@ -202,6 +206,18 @@ int main(int argc, char **argv)
         printf("result=%%d progress=%%u err=%%d reads=%%d b1len=%%u b2len=%%u bad=%%ld\n", rpc.result, progress, err,
                reads, record.b1len, record.b2len,
                bad_byte(dst, sectors * 2048, lsn, rpc.result < 0 ? 0 : (u32)rpc.result, ee, EE_BASE));
+    } else if (strcmp(what, "readiopm") == 0) {
+        /* sceCdReadIOPMem: 20 sectors into IOP memory, of which the first valid bytes must match the disc. */
+        u32 dst = IOP_BASE + 0x100, pos = EE_BASE + 0x90000, valid = atoi(argv[6]) * 2048;
+        RpcCdvd_t r;
+
+        memset(&r, 0, sizeof(r));
+        r.lsn = 10;
+        r.sectors = 20;
+        r.buf = (void *)(uintptr_t)dst;
+        r.eeaddr2 = (void *)(uintptr_t)pos;
+        cdvd_readiopm(&r);
+        printf("err=%%d reads=%%d bad=%%ld\n", err, reads, bad_byte(dst, valid, 10, valid, iop, IOP_BASE));
     } else {
         /* Two entries of 20 sectors: to EE memory ("ee"), or the first to IOP memory ("iop"). */
         RpcCdvdchain_t chain[66];
@@ -236,7 +252,7 @@ def harness():
     text = NCMD.read_text()
     opl = OPL_H.read_text()
     types = '\n'.join(typedef(text, name) for name in ('RpcCdvd_t', 'RpcCdvdchain_t', 'cdvdfsv_readee_t'))
-    names = ['cdvd_readee', 'cdvd_readchain']
+    names = ['cdvd_readee', 'cdvd_readiopm', 'cdvd_readchain']
     if re.search(r'\bcdvdfsv_report_break\(void\)\n\{', text):  # the read functions' helper, where there is one
         names.insert(0, 'cdvdfsv_report_break')
     code = '\n'.join(function(text, name) for name in names)
@@ -273,6 +289,9 @@ class EeReadBreakTests(unittest.TestCase):
 
     def chain(self, kind, second_valid, break_read=0, break_sectors=0, break_after_send=0, reset_error=0):
         return self.run_case('chain-' + kind, break_read, break_sectors, break_after_send, reset_error, second_valid)
+
+    def readiopm(self, valid, break_read=0, break_sectors=0, reset_error=0):
+        return self.run_case('readiopm', break_read, break_sectors, 0, reset_error, valid)
 
     def test_whole_reads(self):
         for offset in (0, 16, 63):
@@ -349,6 +368,16 @@ class EeReadBreakTests(unittest.TestCase):
                 self.assertEqual(got['second'], -1)
                 self.assertEqual(got['err'], 1)
 
+    def test_read_to_iop_memory(self):
+        got = self.readiopm(20)
+        self.assertEqual((got['reads'], got['bad'], got['err']), (1, -1, 0))
+        # sceCdReadIOPMem reads in one go, into IOP memory: the break stops it after 5 of its 20 sectors.
+        for reset_error in (0, 1):
+            with self.subTest(reset_error=reset_error):
+                got = self.readiopm(5, break_read=1, break_sectors=5, reset_error=reset_error)
+                self.assertEqual((got['reads'], got['bad']), (1, -1))
+                self.assertEqual(got['err'], 1, 'the EE does not see SCECdErABRT for its broken read')
+
 
 class SourceTests(unittest.TestCase):
     def test_only_sce_cd_break_sets_the_flag(self):
@@ -368,7 +397,7 @@ class SourceTests(unittest.TestCase):
         text = NCMD.read_text()
         self.assertEqual(re.findall(r'sceCdGetError\(\)\s*==\s*SCECdErABRT', text), [],
                          'ncmd.c tests the shared error code for a break: another thread can reset it first')
-        for name in ('cdvd_readee', 'cdvd_readchain'):
+        for name in ('cdvd_readee', 'cdvd_readiopm', 'cdvd_readchain'):
             self.assertEqual(function(text, name).count('*cdvdfsv_break = 0;'), 1, name)
         init = function(FSV.read_text(), 'init_thread')
         self.assertRegex(init, r'sceCdSC\(CDSC_GET_BREAK_FLAG, &(\w+)\);')

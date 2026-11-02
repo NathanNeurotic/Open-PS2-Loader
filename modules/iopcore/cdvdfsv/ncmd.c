@@ -325,12 +325,20 @@ static inline void cdvd_readiopm(void *buf)
     int r, fsverror;
     u32 readpos;
 
+    // From here on, a sceCdBreak ends this read with SCECdErABRT (see cdvd_readee for the flag).
+    *cdvdfsv_break = 0;
+
     r = sceCdRead(((RpcCdvd_t *)buf)->lsn, ((RpcCdvd_t *)buf)->sectors, ((RpcCdvd_t *)buf)->buf, NULL);
     while (sceCdSync(1)) {
         readpos = sceCdGetReadPos();
         sysmemSendEE(&readpos, ((RpcCdvd_t *)buf)->eeaddr2, sizeof(readpos));
         DelayThread(8000);
     }
+
+    /* sceCdBreak stopped the read: the IOP buffer may hold sectors it never read, and the EE can tell only from
+       SCECdErABRT, which sceCdDiskReady on another cdvdfsv thread, or a stream fill, may have reset since. */
+    if (*cdvdfsv_break)
+        cdvdfsv_report_break();
 
     if (r == 0) {
         if (sceCdGetError() == SCECdErNO) {
