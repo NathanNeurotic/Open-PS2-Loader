@@ -387,7 +387,9 @@ def check_created_first(rel, init, sema, first_use):
     if body is None:
         failures.append(init + ' not found in ' + rel)
         return
-    made = body.find('%s = sbCreateSemaphore();' % sema)
+    # RiptOPL's themes and language code sit below the device layer, so they make the lock with the kernel call
+    # (semaCreateBinary in include/sema_lock.h); the C edition uses sbCreateSemaphore.
+    made = body.find('%s = %s();' % (sema, 'semaCreateBinary' if CPP else 'sbCreateSemaphore'))
     used = body.find(first_use)
     if made < 0 or used < 0 or made > used:
         failures.append('%s: %s...) must create %s before %s' % (rel, init, sema, first_use))
