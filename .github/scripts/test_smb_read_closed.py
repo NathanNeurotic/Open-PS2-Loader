@@ -9,8 +9,12 @@ priority while smb_ReadFile() held smb_io_sema: the game froze and IGR could not
 This compiles the real smb_ReadAndX() with the real SMB_buf layout and session-header helpers against a
 scripted transport and checks that a whole reply in one or several segments still returns its data
 length, and that a close (0) or an error (-1) after the first segment returns -2 promptly.
+It also checks that a reply with an error status returns -EIO. Such a reply is shorter than a READ_ANDX
+reply, so its DataLength field still holds the request's bytes, and the read used to return them as its
+length with nothing read: a game whose image could not be opened read whatever its buffer held.
 Adapted from belomaxorka/YAOPL e16e2d15. This is a host regression check, not a console test.
 """
+import errno
 from pathlib import Path
 import re
 import subprocess
@@ -68,7 +72,7 @@ struct sockaddr;
 typedef int socklen_t;
 #define USE_CUSTOM_RECV 1
 ''' + ''.join(define(smb_h, name, SMB_H) for name in ('SMB_MAGIC', 'SMB_FLAGS2_32BIT_STATUS', 'SMB_COM_READ_ANDX', 'SMB_COM_NONE', 'STATUS_SUCCESS')) \
-    + define(smb, 'ZERO_PKT_ALIGNED', SMB) \
+    + define(smb, 'ZERO_PKT_ALIGNED', SMB) + define(smb, 'SMB_STATUS', SMB) \
     + ''.join(packed_struct(smb_h, name) for name in ('SMBHeader_t', 'ReadAndXRequest_t', 'ReadAndXResponse_t')) + r'''
 static u16 UID, TID;
 static int main_socket = 3;
@@ -88,7 +92,9 @@ static int SendData(int sock, char *buf, int size) { (void)sock; (void)buf; retu
 
 #define DATA_LEN 3000
 #define HDR 49
+#define ERROR_REPLY 35 /* an error reply: the SMB header, WordCount 0 and ByteCount 0 */
 static int script[8], script_len, script_pos, calls;
+static u32 status; /* the reply's NT status */
 static int recv_stub(int s, void *mem, int hlen, void *payload, int plen, unsigned int flags, struct sockaddr *from, socklen_t *fromlen)
 {
     (void)s; (void)payload; (void)plen; (void)flags; (void)from; (void)fromlen;
@@ -97,8 +103,12 @@ static int recv_stub(int s, void *mem, int hlen, void *payload, int plen, unsign
         exit(3);
     }
     if (mem != NULL && hlen == HDR) { /* first segment: header plus the first part of the data */
-        u32 size = HDR - 4 + DATA_LEN;
+        u32 size = status != 0 ? ERROR_REPLY : HDR - 4 + DATA_LEN;
         SMB_buf.sessionHeader = ((size & 0xff0000) >> 8) | ((size & 0xff00) << 8) | ((size & 0xff) << 24);
+        SMB_buf.smb.readAndXResponse.smbH.Eclass = (s16)(status & 0xffff);
+        SMB_buf.smb.readAndXResponse.smbH.Ecode = (s16)(status >> 16);
+        if (status != 0) /* the rest of SMB_buf still holds the request, where DataLength would be */
+            return 4 + ERROR_REPLY;
         SMB_buf.smb.readAndXResponse.DataOffset = HDR - 4;
         SMB_buf.smb.readAndXResponse.DataLengthLow = DATA_LEN;
         SMB_buf.smb.readAndXResponse.DataLengthHigh = 0;
@@ -112,9 +122,10 @@ int main(int argc, char **argv)
 {
     static u8 readbuf[DATA_LEN + 64];
     int want = atoi(argv[1]), i;
-    script_len = argc - 2;
+    status = (u32)strtoul(argv[2], NULL, 0);
+    script_len = argc - 3;
     for (i = 0; i < script_len; i++)
-        script[i] = atoi(argv[i + 2]);
+        script[i] = atoi(argv[i + 3]);
     int r = smb_ReadAndX(1, 0, 0, readbuf, DATA_LEN);
     if (r != want) {
         printf("smb_ReadAndX = %d, expected %d\n", r, want);
@@ -124,12 +135,17 @@ int main(int argc, char **argv)
 }
 '''
 
+OK = 0
+INVALID_HANDLE = 0xC0000008  # STATUS_INVALID_HANDLE: a read from an image that could not be opened
+END_OF_FILE = 0xC0000011  # STATUS_END_OF_FILE: a read that starts past the end of the file
 cases = [
-    ('whole reply in one segment', 3000, [3000]),
-    ('reply in three segments', 3000, [1000, 1000, 1000]),
-    ('server closes after the first segment', -2, [1000, 0]),
-    ('receive error after the first segment', -2, [1000, -1]),
-    ('server closes after two segments', -2, [1000, 1500, 0]),
+    ('whole reply in one segment', 3000, OK, [3000]),
+    ('reply in three segments', 3000, OK, [1000, 1000, 1000]),
+    ('server closes after the first segment', -2, OK, [1000, 0]),
+    ('receive error after the first segment', -2, OK, [1000, -1]),
+    ('server closes after two segments', -2, OK, [1000, 1500, 0]),
+    ('server refuses the read: invalid handle', -errno.EIO, INVALID_HANDLE, []),
+    ('server refuses the read: end of file', -errno.EIO, END_OF_FILE, []),
 ]
 failures = []
 with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
@@ -139,8 +155,8 @@ with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
     subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wno-unused-function', '-Wno-unused-variable',
                     '-Wno-unused-but-set-variable', '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
                     str(src), '-o', str(binary)], check=True)
-    for name, want, script in cases:
-        result = subprocess.run([str(binary), str(want)] + [str(s) for s in script],
+    for name, want, status, script in cases:
+        result = subprocess.run([str(binary), str(want), str(status)] + [str(s) for s in script],
                                 capture_output=True, text=True, timeout=10)
         if result.returncode != 0:
             failures.append('%s: %s' % (name, (result.stdout + result.stderr).strip()))
@@ -148,4 +164,5 @@ with tempfile.TemporaryDirectory(prefix='smb-read-closed-') as folder:
 if failures:
     print('FAIL:\n  ' + '\n  '.join(failures))
     sys.exit(1)
-print('PASS: a cut-off SMB read reply fails with -2; whole and segmented replies still return their length')
+print('PASS: a cut-off SMB read reply fails with -2 and a refused one with -EIO; whole and segmented replies '
+      'still return their length')
