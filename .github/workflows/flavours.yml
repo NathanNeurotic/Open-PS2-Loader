@@ -235,6 +235,8 @@ jobs:
             -Wno-unused-function -I tests/smb2-live/inc-ingame -I modules/iopcore/cdvdman -I modules/iopcore/common \
             tests/smb2-live/utf16.c modules/iopcore/cdvdman/smb2auth.c -o "$RUNNER_TEMP/utf16"
           "$RUNNER_TEMP/utf16"
+      - name: Check an SMB game launch keeps the image's whole file name, from the EE's settings block to the path the game opens (tests/smb2-live/launchname.c)
+        run: python3 .github/scripts/test_smb_launch_name.py
       - name: Check PSX DVR Neutrino discovery and safety gates
         run: python3 .github/scripts/test_neutrino_dvr.py
       - name: Check DVR refresh and Neutrino mount handoff
