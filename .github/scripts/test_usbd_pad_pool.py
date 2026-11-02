@@ -119,10 +119,17 @@ USBD = 'modules/usb/usbd-ra/src/usbd.c'
 iopmgr = read(IOPMGR)
 usbd = read(USBD)
 
-lit = one(r'static const char usbd_pad_args\[\] = "((?:[^"\\]|\\.)*)";', iopmgr, 'usbd_pad_args literal')
+lit = one(r'static (?:const )?char usbd_pad_args\[\] = "((?:[^"\\]|\\.)*)";', iopmgr, 'usbd_pad_args literal')
 args = lit.encode('latin-1').decode('unicode_escape').encode('latin-1')
-if 'LoadOPLModule(OPL_MODULE_ID_USBD, 0, sizeof(usbd_pad_args), usbd_pad_args);' not in iopmgr:
-    fail('ee_core does not pass usbd_pad_args with its full length')
+# One call: the default arguments for a game on USB, usbd_pad_args (full length) only when USBD serves just the pads.
+block = one(r'(    if \(config->GameMode == BDM_USB_MODE PADEMU_ARG\) \{\n.*?\n    \}\n)', iopmgr, 'USBD load block', re.S)
+steps = ['const char *usbd_args = "thpri=2,3";', 'int usbd_args_len = 11;', '#ifdef PADEMU',
+         'if (config->GameMode != BDM_USB_MODE) {', 'usbd_args = usbd_pad_args;',
+         'usbd_args_len = sizeof(usbd_pad_args);', '#endif',
+         'LoadOPLModule(OPL_MODULE_ID_USBD, 0, usbd_args_len, usbd_args);']
+at = [block.find(s) for s in steps]
+if -1 in at or at != sorted(at) or block.count('LoadOPLModule(') != 1:
+    fail('ee_core does not load USBD once, with usbd_pad_args (full length) only for a game that is not on USB')
 if b'\0' in args[-1:]:
     fail('usbd_pad_args should not end in an explicit NUL: sizeof() already supplies the terminator')
 argv = (args + b'\0').split(b'\0')[:-1]  # IOP modload splits the argument block at NULs

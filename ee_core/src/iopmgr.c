@@ -200,6 +200,8 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
 #define PADEMU_ARG
 #endif
     if (config->GameMode == BDM_USB_MODE PADEMU_ARG) {
+        const char *usbd_args = "thpri=2,3";
+        int usbd_args_len = 11;
 #ifdef PADEMU
         if (config->GameMode != BDM_USB_MODE) {
             /* USBD serves only the pads here (the game is not on USB), so size its pools for
@@ -211,12 +213,16 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
                four pads behind a hub (three endpoints each) or one Bluetooth dongle (four),
                and pads make no isochronous transfers. The fork-built usbd_mini parses these
                (ps2sdk 314d87e7 usbd.c); .github/scripts/test_usbd_pad_pool.py feeds it this
-               exact string. */
-            static const char usbd_pad_args[] = "thpri=2,3\0dev=10\0ed=20\0gtd=16\0itd=2\0ioreq=24\0hub=2";
-            LoadOPLModule(OPL_MODULE_ID_USBD, 0, sizeof(usbd_pad_args), usbd_pad_args);
-        } else
+               exact string.
+               Not const, so it sits in .data: in the LLVM build ee_core's .rodata ended on a
+               128-byte boundary, so these 51 bytes there took 128 bytes from the stack above
+               .bss and went under the 3 KB guard in ee_core/linkfile. */
+            static char usbd_pad_args[] = "thpri=2,3\0dev=10\0ed=20\0gtd=16\0itd=2\0ioreq=24\0hub=2";
+            usbd_args = usbd_pad_args;
+            usbd_args_len = sizeof(usbd_pad_args);
+        }
 #endif
-            LoadOPLModule(OPL_MODULE_ID_USBD, 0, 11, "thpri=2,3");
+        LoadOPLModule(OPL_MODULE_ID_USBD, 0, usbd_args_len, usbd_args);
     }
 
 #if defined(RETROACHIEVEMENTS) && !defined(__LOAD_DEBUG_MODULES)
