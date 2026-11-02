@@ -236,6 +236,7 @@ int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived
 int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
 int gNetProtocolPick; // last protocol chosen, never OFF (see opl.h)
 int gUdpfsAccessMode; // UDPFS Files/IMG preference, independent of UDPBD
+int gSMBDialect;      // SMB_DIALECT_V1 / SMB_DIALECT_V2
 int gNetStartMode;    // START_MODE_* -- the Off/Manual/Auto network start row (see the 3-row Network setting)
 int gAutosort;
 int gAutoRefresh;
@@ -256,6 +257,8 @@ int gFontSize;
 int gGlyphSet;
 // Alternate Background: the theme's alt= pictures instead of its default= ones (themeviews.h).
 int gThemeAltBackground;
+// Boot Theme Wait: seconds the intro holds for a saved disk theme whose drive is not up yet (guiIntroLoop).
+int gBootThemeWait;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
 int gYOff;
@@ -1086,6 +1089,8 @@ static void initAllSupport(int force_reinit)
     if (gBootInProgress)
         guiRenderGreetingScreen();
     bdmEnumerateDevices();
+    if (gBootInProgress)
+        diagLog("boot: BDM start stage done (enabled drivers may still be loading in the background)");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_NET));
     if (gBootInProgress)
@@ -1097,6 +1102,8 @@ static void initAllSupport(int force_reinit)
     // HTTP shares that same NIC and the same one-tab-at-a-time rule: its start-mode gate is live
     // only when gNetworkProtocol == NET_PROTO_HTTP.
     initSupport(httpGetObject(0), HTTP_MODE, force_reinit);
+    if (gBootInProgress)
+        diagLog("boot: network start stage done (enabled drivers may still be loading in the background)");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
     if (gBootInProgress)
@@ -1104,6 +1111,8 @@ static void initAllSupport(int force_reinit)
     initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
+    if (gBootInProgress)
+        diagLog("boot: HDD, apps and favourites start stage done (enabled drivers may still be loading in the background)");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_MC));
     if (gBootInProgress)
@@ -1111,6 +1120,8 @@ static void initAllSupport(int force_reinit)
     LOG("BOOT scan: MMCE initSupport begin\n");
     initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
     LOG("BOOT scan: MMCE initSupport done\n");
+    if (gBootInProgress)
+        diagLog("boot: MMCE start stage done (enabled drivers may still be loading in the background)");
 
     // Arm the MMCE GameID transport at boot and on every settings apply -- instead
     // of deferring it to itemLaunchMMCE.
@@ -3394,6 +3405,7 @@ static void resolveBootDirToMass(void)
         // reads defaults for now and its first successful save lands on mmce once item 1 makes the
         // driver real. Cost is the ~10 x delay(1) poll on an MMCE boot only.
         mmceLoadModules();
+        diagLog("settings: MMCE driver load requested for %s", gBootDir);
         char devRoot[8];
         const char *colon = strchr(gBootDir, ':');
         size_t rootLen = colon ? (size_t)(colon - gBootDir) + 1 : 0;
@@ -3404,10 +3416,12 @@ static void resolveBootDirToMass(void)
                 DIR *dir = opendir(devRoot);
                 if (dir != NULL) {
                     closedir(dir);
+                    diagLog("settings: %s readable after %d retries", devRoot, tries);
                     return; // mounted -- the boot dir is readable as-is
                 }
                 delay(1);
             }
+            diagLog("settings: %s not readable after 10 tries, keeping it as the settings home", devRoot);
         }
         // Card still settling after the wait. It served this very ELF milliseconds ago, so it IS present
         // -- it just has not re-registered its mmceman filesystem yet. Do NOT blank gBootDir and re-home
@@ -3501,14 +3515,20 @@ static void _loadConfig()
     int value, themeID = -1, langID = -1;
     const char *temp;
     // Resolve boot aliases (usb0:/, ata0:/, mx4sio0:/) to massN: before reading settings.
+    // The diagLog lines through this function time each step of the settings load in DIAG.TXT
+    // (every line is timestamped), so a slow boot shows which step the seconds went to.
     resolveBootDirToMass();
+    diagLog("settings: boot dir %s", gBootDir);
     // Discover the resolved CWD before restoring the saved language.
     lngRefreshBootLanguages(-1);
+    diagLog("settings: languages scanned");
     int result = configReadMulti(lscstatus);
+    diagLog("settings: read 0x%x of 0x%x from %s", result, lscstatus, configGetLoadDir());
 
     if (lscstatus & CONFIG_OPL) {
         if (!(result & CONFIG_OPL)) {
             result = tryAlternateDevice(lscstatus);
+            diagLog("settings: other devices tried, now 0x%x from %s", result, configGetLoadDir());
         }
 
         if (result & CONFIG_OPL) {
@@ -3540,6 +3560,9 @@ static void _loadConfig()
             configReadFontSize(configOPL);
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
+            configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
 
             if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
@@ -3795,8 +3818,11 @@ static void _loadConfig()
             // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
             // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that
             // had eth_mode=0 gets Manual. Any non-SMB protocol forces SMB off (preserves UDPBD-wins).
-            // NOTE(rebuild): the fork also loads the SMB dialect (gSMBDialect, SMBv1/SMB2) here --
-            // that returns with checklist item 4; until then the rebuild speaks SMBv1 unconditionally.
+            // SMB dialect. A missing key is SMBv1 (every config written before the row existed), and
+            // anything that is not exactly SMB2 falls back to SMBv1 too: losing SMB2 is recoverable,
+            // selecting a driver this build does not have is not. (Autolaunch has no SMB path.)
+            if (!configGetInt(configOPL, CONFIG_OPL_SMB_DIALECT, &gSMBDialect) || gSMBDialect != SMB_DIALECT_V2)
+                gSMBDialect = SMB_DIALECT_V1;
             gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
             gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
             if (gNetworkProtocol == NET_PROTO_SMB) {
@@ -3960,7 +3986,9 @@ static void _loadConfig()
                         (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
                          gNetworkProtocol == NET_PROTO_UDPBD));
 
+    diagLog("settings: applying (theme, language, device start-up)");
     applyConfig(themeID, langID, 0);
+    diagLog("settings: applied");
     // applyConfig reloads only a CHANGED theme; the default <OPL> theme loaded at boot still shows its
     // default view. This reloads it once when the saved view differs.
     thmSetView(gThemeViewRequest);
@@ -4213,7 +4241,11 @@ static void _saveConfig()
     if (lscstatus & CONFIG_OPL) {
         config_set_t *configOPL = configGetByType(CONFIG_OPL);
         configSetInt(configOPL, CONFIG_OPL_SCROLLING, gScrollSpeed);
-        configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
+        // Keep the saved disk theme while its drive has not offered it yet. Boot Theme Wait is off by default, so the
+        // menu (and a settings save) can come before that, and writing the built-in fallback on screen would lose the
+        // user's theme for good. An explicit pick on the Interface page writes the key itself (guiShowInterfaceConfig).
+        if (!thmSavedThemePending())
+            configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
         if (gThemeViewRequest >= 0)
             configSetStr(configOPL, CONFIG_OPL_THEME_VIEW, thmViewName(gThemeViewRequest));
         else
@@ -4241,6 +4273,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_FONT_SIZE, gFontSize);
         configSetInt(configOPL, CONFIG_OPL_GLYPH_SET, gGlyphSet);
         configSetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, gThemeAltBackground);
+        configSetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, gBootThemeWait);
         configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
         configSetInt(configOPL, CONFIG_OPL_YOFF, gYOff);
@@ -4325,8 +4358,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, gNetBootProtocol);
         // Dual-write: the authoritative unified selector PLUS the three legacy keys (derived shadows),
         // so a config saved by this build still boots correctly on an older OPL that only reads the legacy keys.
-        // NOTE(rebuild): the fork also persists the SMB dialect here (item 4).
         configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
+        configSetInt(configOPL, CONFIG_OPL_SMB_DIALECT, gSMBDialect);
         configSetInt(configOPL, CONFIG_OPL_NET_START_MODE, gNetStartMode);
         configSetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, gNetProtocolPick);
         configSetInt(configOPL, CONFIG_OPL_UDPFS_ACCESS, gUdpfsAccessMode);
@@ -5260,6 +5293,7 @@ static void setDefaults(void)
     gFontSize = FONT_SIZE_DEFAULT;
     gGlyphSet = GLYPH_SET_THEME;
     gThemeAltBackground = 0; // the theme's default= pictures (KrahJohlito's alt= idea)
+    gBootThemeWait = 0;      // off: the menu opens without waiting, and the saved theme replaces the built-in one later
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;
@@ -5366,6 +5400,7 @@ static void setDefaults(void)
     gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
     gNetProtocolPick = NET_PROTO_SMB;
     gUdpfsAccessMode = 0; // UDPFS Files; never inherit UDPBD's forced IMG
+    gSMBDialect = SMB_DIALECT_V1;
 
     frameCounter = 0;
 
@@ -5684,6 +5719,9 @@ static void miniInit(int mode)
             configReadFontSize(configOPL);
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
+            configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);

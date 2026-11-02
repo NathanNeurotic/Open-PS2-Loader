@@ -50,7 +50,7 @@ class ReleaseNotesTests(unittest.TestCase):
         self.assets = [
             "RIPTOPL-v1.zip", "RIPTOPL.ELF", "RIPTOPL-RA.ELF",
             "RIPTOPL-RetroAchievements-v1.zip", "APP_RIPTOPL.psu",
-            "APP_RIPTOPL-RA.psu", "RIPTOPL-DEBUG-v1.zip",
+            "APP_RIPTOPL-RA.psu", "RIPTOPL-DEBUG-v1.zip", "RIPTOPL-BUGREPORT-v1.zip",
             "RIPTOPL-LANGS-v1.zip", "RIPTOPL-VARIANTS-v1.zip", "RIPTOPL-src-v1.zip",
         ]
 
@@ -98,6 +98,12 @@ class ReleaseNotesTests(unittest.TestCase):
         for name in ("RIPTOPL-Korium-v1.2.0-Beta-4420.zip", "RIPTOPL-v1.2.0-Beta-4420.zip"):
             self.assertTrue(notes.description(name).startswith("Full install:"), name)
         self.assertTrue(notes.description("RIPTOPL-DEBUG-Korium-v1.2.0-Beta-4420.zip").startswith("Debug loaders"))
+        self.assertTrue(notes.description("RIPTOPL-BUGREPORT-Korium-v1.2.0-Beta-4420.zip").startswith("Bug-report build"))
+
+    def test_bug_report_build_is_listed_right_under_the_kit(self):
+        downloads = self.render().split("<summary>Downloads</summary>\n", 1)[1].split("</details>", 1)[0]
+        names = [line.split("](", 1)[0][3:] for line in downloads.splitlines() if line.startswith("- [")]
+        self.assertEqual(names[:3], ["RIPTOPL-v1.zip", "RIPTOPL-BUGREPORT-v1.zip", "RIPTOPL.ELF"])
 
     def test_channels_and_tagged_releases(self):
         for tag in ("rolling", "rolling-korium", "v1.2.3"):

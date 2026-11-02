@@ -42,6 +42,7 @@
 #include "include/cheatman.h"
 #include "include/cheatconfig.h"
 #include "include/sound.h"
+#include "include/diaglog.h"
 #include "include/guigame.h"
 #include "include/texcache.h"
 #include "include/appsupport.h" // appGetObject() -- push a live Art Delay change onto the APPS list
@@ -640,6 +641,16 @@ int guiNetProtocolNeedsRestart(void)
     if (resident == NET_PROTO_OFF)
         return 0;
 
+    // smbman and smb2man both register the "smb" device and neither unloads, so a change of SMB
+    // dialect while one of them is resident is a restart too, exactly like a protocol change. The
+    // comparison is with the dialect the load ASKED for: after an SMB2 -> SMBv1 fallback the saved
+    // SMB2 choice is unchanged, and a restart would only fail the same way again.
+    if (resident == NET_PROTO_SMB && gNetworkProtocol == NET_PROTO_SMB) {
+        int requestedDialect = ethGetRequestedSmbDialect();
+        if (requestedDialect >= 0 && requestedDialect != gSMBDialect)
+            return 1;
+    }
+
     return gNetworkProtocol != resident;
 }
 
@@ -1187,9 +1198,8 @@ static int netConfigUpdater(int modified)
 
         // SMB/HTTP lock Access to Files; UDPBD locks it to IMG. Only UDPFS
         // exposes a mutable value, restored from its independent preference.
-        // NOTE(rebuild): the SMB Version row stays greyed at SMBv1 until item 4 lands (the fork
-        // enables it while SMB is the selected protocol).
-        diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0);
+        // The SMB Version row is live only while SMB is the picked protocol.
+        diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, isSMB);
         diaSetVisible(diaNetConfig, CFG_SMBDIALECT, isSMB);
         if (netProto == 0 || netProto == 3) { // SMB and HTTP -> Files, locked
             diaSetInt(diaNetConfig, CFG_UDPFSMODE, 0);
@@ -1211,7 +1221,7 @@ static int netConfigUpdater(int modified)
 // struct, so bytes past a terminator can never read as a change.
 typedef struct
 {
-    int dhcp, ps2Ip[4], netmask[4], gateway[4], dns[4], pcIp[4], pcPort, pcNetBIOS, opMode, protocol;
+    int dhcp, ps2Ip[4], netmask[4], gateway[4], dns[4], pcIp[4], pcPort, pcNetBIOS, opMode, protocol, smbDialect;
     char pcNBAddress[17], shareName[32], userName[32], password[32];
 } gui_smb_link_t;
 
@@ -1228,6 +1238,7 @@ static void guiSmbLinkCapture(gui_smb_link_t *link)
     link->pcNetBIOS = gPCShareAddressIsNetBIOS;
     link->opMode = gETHOpMode;
     link->protocol = gNetworkProtocol;
+    link->smbDialect = gSMBDialect;
     snprintf(link->pcNBAddress, sizeof(link->pcNBAddress), "%s", gPCShareNBAddress);
     snprintf(link->shareName, sizeof(link->shareName), "%s", gPCShareName);
     snprintf(link->userName, sizeof(link->userName), "%s", gPCUserName);
@@ -1258,9 +1269,8 @@ int guiShowNetConfig(void)
     const char *addrConfModes[] = {_l(_STR_ADDR_TYPE_IP), _l(_STR_ADDR_TYPE_NETBIOS), NULL};
     const char *ipAddrConfModes[] = {_l(_STR_IP_ADDRESS_TYPE_STATIC), _l(_STR_IP_ADDRESS_TYPE_DHCP), NULL};
     const char *udpfsModes[] = {"Files", "IMG", NULL}; // Access: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
-    // NOTE(rebuild): SMBv1 only until item 4 re-adds the SMB2 dialect; the row shows the active
-    // dialect and stays greyed (netConfigUpdater keeps it disabled).
-    const char *smbDialects[] = {"SMBv1", NULL};
+    // Index == enum SMB_DIALECT. Protocol names, not translated.
+    const char *smbDialects[] = {"SMBv1", "SMB2", NULL};
     diaSetEnum(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ipAddrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, addrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_ETHOPMODE, ethOpModes);
@@ -1334,11 +1344,11 @@ int guiShowNetConfig(void)
     diaSetString(diaNetConfig, NETCFG_HTTP_BASE, gHttpBasePath);
     diaSetInt(diaNetConfig, CFG_NETPROTOCOL, netProtoVal);
     diaSetInt(diaNetConfig, CFG_UDPFSMODE, netAccessVal);
-    diaSetInt(diaNetConfig, CFG_SMBDIALECT, 0); // SMBv1 -- the only dialect until item 4
+    diaSetInt(diaNetConfig, CFG_SMBDIALECT, gSMBDialect);
     // Seed the initial grey/lock: diaExecuteDialog renders the FIRST frame before it calls
     // netConfigUpdater, so without this the first frame flashes every row enabled.
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
-    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0); // NOTE(rebuild): greyed until item 4
+    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0);
     netConfigDhcpPreference = ps2_ip_use_dhcp;
     netConfigUdpfsAccess = gUdpfsAccessMode;
     netConfigLastProtocol = -1;
@@ -1432,7 +1442,10 @@ reshow_network:
         // mis-derive. The Game Sources "Network Start Mode" row decides whether the stack runs at
         // all: Start=Off -> OFF regardless of the protocol picked here. Then re-derive the legacy
         // shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
-        // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
+        int smbDialectWas = gSMBDialect;
+        diaGetInt(diaNetConfig, CFG_SMBDIALECT, &gSMBDialect);
+        if (gSMBDialect != SMB_DIALECT_V2)
+            gSMBDialect = SMB_DIALECT_V1;
         int netProtocolWas = gNetworkProtocol;
         guiNetProtocolStore(netProtoVal2, netAccessVal2);
         if (netProtoVal2 != 1)
@@ -1440,7 +1453,10 @@ reshow_network:
         guiNetProtocolApplied(netProtocolWas);
         // OK is this page's apply button. A protocol change made on Game Sources (or declined here
         // earlier) is still waiting on a restart, so OK offers it again rather than doing nothing.
-        if (gNetworkProtocol == netProtocolWas && (result == NETCFG_OK || result == NETCFG_RECONNECT) &&
+        // A changed SMB dialect is offered the same restart the moment it is applied, on any exit:
+        // the resident driver cannot be swapped live.
+        if (gNetworkProtocol == netProtocolWas &&
+            (result == NETCFG_OK || result == NETCFG_RECONNECT || gSMBDialect != smbDialectWas) &&
             guiNetProtocolNeedsRestart()) {
             guiNetProtocolOfferRestart();
         }
@@ -2936,6 +2952,7 @@ static int guiSettingsShowInterface(void)
     guiSetAppsViewPicker(ui);
     guiSetThemeViewPicker(ui);
     diaSetInt(ui, UICFG_THEME_ALT_BG, gThemeAltBackground);
+    diaSetInt(ui, UICFG_BOOT_THEME_WAIT, gBootThemeWait);
     guiSetLibraryPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
@@ -3013,6 +3030,7 @@ reshow_interface:
         appsViewChanged = guiReadAppsViewPicker(ui);
         themeViewRequest = guiReadThemeViewPicker(ui);
         diaGetInt(ui, UICFG_THEME_ALT_BG, &altBackgroundRequest);
+        diaGetInt(ui, UICFG_BOOT_THEME_WAIT, &gBootThemeWait);
         // With a view change pending, the alt change waits for that reload so the theme loads once.
         viewPending = themeViewRequest != gThemeViewRequest;
         if (!viewPending)
@@ -3037,6 +3055,10 @@ reshow_interface:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
+        // A theme picked here is the user's choice, even the built-in one, so the save writes it although a saved
+        // disk theme is still waiting for its drive (_saveConfig keeps the saved name only while nothing was picked).
+        if (previousTheme != themeID)
+            configSetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, thmGetValue());
         if (viewPending) {
             gThemeAltBackground = altBackgroundRequest;
             if (!thmSetView(themeViewRequest)) // reloads only when the theme now shows a different view
@@ -4479,8 +4501,19 @@ static void guiShow()
         screenHandler->renderScreen();
 }
 
-// The longest the greeting waits for the drive that holds the saved theme (RIPPS2 build 125 uses 6 s)
-#define THEME_HOLD_MS 6000
+// The longest the greeting waits for the drive that holds the saved theme: the Boot Theme Wait setting, in seconds
+// (Settings > Interface; RIPPS2 build 125 used 6 s). Off (0) by default: the menu opens straight away and the saved
+// theme replaces the built-in one as soon as its drive is up. Clamped so a hand-edited config cannot park the intro.
+#define THEME_HOLD_MAX_S 10
+static int themeHoldMs(void)
+{
+    int s = gBootThemeWait;
+    if (s <= 0)
+        return 0;
+    if (s > THEME_HOLD_MAX_S)
+        s = THEME_HOLD_MAX_S;
+    return s * 1000;
+}
 
 void guiIntroLoop(void)
 {
@@ -4495,9 +4528,14 @@ void guiIntroLoop(void)
     clock_t tFadeDelay = 0;
     int tFadeArmed = 0;
     // RIPPS2 build 125 (AK): a saved disk theme whose drive is not up yet keeps the greeting on screen, so the built-in
-    // theme does not show for a moment before the saved one replaces it. Bounded: at most THEME_HOLD_MS after init.
+    // theme does not show for a moment before the saved one replaces it. Bounded: at most Boot Theme Wait seconds after init, and off by default.
     clock_t tInitDone = 0;
     int tInitSeen = 0;
+    // For the DIAG.TXT line at the end: how long the greeting waited for the saved theme and the boot sound.
+    clock_t tHoldLast = 0;
+    clock_t tHoldStart = 0; // first frame the hold was active: the DIAG duration counts only the hold itself
+    int tHoldSeen = 0;      // a hold happened (clock() can in principle read 0, so the timestamps cannot say it)
+    int fadeDelayLogMs = 0;
 
     // oplIsBootInProgress() can become false while background startup work is still queued. That
     // is correct for runtime overlays, but the animated greeting owns the entire intro lifecycle.
@@ -4526,6 +4564,7 @@ void guiIntroLoop(void)
             int fadeDelayMs = sfxGetSoundDuration(SFX_BOOT) - fadeDuration;
             if (fadeDelayMs < 0)
                 fadeDelayMs = 0;
+            fadeDelayLogMs = fadeDelayMs;
             tFadeDelay = (clock_t)fadeDelayMs * (CLOCKS_PER_SEC / 1000);
             tFadeArmed = 1;
         }
@@ -4533,12 +4572,23 @@ void guiIntroLoop(void)
         if (gInitComplete && !tInitSeen) {
             tInitDone = clock();
             tInitSeen = 1;
+            diagLog("boot: devices started");
         }
-        int themeHold = greetingAlpha == 0x80 && tInitSeen && thmSavedThemePending() &&
-                        (clock() - tInitDone) < (clock_t)THEME_HOLD_MS * (CLOCKS_PER_SEC / 1000);
+        int themeHold = greetingAlpha == 0x80 && tInitSeen && themeHoldMs() > 0 && thmSavedThemePending() &&
+                        (clock() - tInitDone) < (clock_t)themeHoldMs() * (CLOCKS_PER_SEC / 1000);
+        if (themeHold) {
+            if (!tHoldSeen) {
+                tHoldStart = clock();
+                tHoldSeen = 1;
+            }
+            tHoldLast = clock();
+        }
 
-        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold)
+        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold) {
+            if (greetingAlpha == 0x80)
+                diagLog("boot: intro fading out");
             greetingAlpha -= 2;
+        }
 
         if (greetingAlpha <= 0)
             endIntro = 1;
@@ -4562,6 +4612,9 @@ void guiIntroLoop(void)
         }
     }
     gIntroSplashActive = 0;
+    diagLog("boot: intro done; held %d ms for the saved theme, boot sound %s, fade delay %d ms",
+            tHoldSeen ? (int)((tHoldLast - tHoldStart) / (CLOCKS_PER_SEC / 1000)) : 0, gEnableBootSND ? "on" : "off",
+            fadeDelayLogMs);
 }
 
 void guiMainLoop(void)
