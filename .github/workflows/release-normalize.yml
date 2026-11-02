@@ -76,7 +76,7 @@ jobs:
           set -euo pipefail
           # The unified package is the one RIPTOPL-*.zip that is not another archive. The RetroAchievements
           # package must be excluded too: `-print -quit` takes whichever match find lists first.
-          MAIN_ZIP="$(find release-work -maxdepth 1 -type f -name 'RIPTOPL-*.zip' ! -name 'RIPTOPL-VARIANTS-*' ! -name 'RIPTOPL-DEBUG-*' ! -name 'RIPTOPL-LANGS-*' ! -name 'RIPTOPL-RetroAchievements-*' ! -name 'RIPTOPL-RA-*' ! -name 'RIPTOPL-src-*' ! -name '*-src.zip' -print -quit)"
+          MAIN_ZIP="$(find release-work -maxdepth 1 -type f -name 'RIPTOPL-*.zip' ! -name 'RIPTOPL-VARIANTS-*' ! -name 'RIPTOPL-DEBUG-*' ! -name 'RIPTOPL-BUGREPORT-*' ! -name 'RIPTOPL-LANGS-*' ! -name 'RIPTOPL-RetroAchievements-*' ! -name 'RIPTOPL-RA-*' ! -name 'RIPTOPL-src-*' ! -name '*-src.zip' -print -quit)"
           if [[ -z "$MAIN_ZIP" ]]; then
             echo 'ERROR: unified RIPTOPL release package zip is missing.' >&2
             exit 1
@@ -85,6 +85,13 @@ jobs:
           rm -rf package-work
           mkdir -p package-work
           unzip -q "$MAIN_ZIP" -d package-work
+          # Every loader embeds libsmb2 (LGPL-2.1) and the verify below requires its licence in the kit. A kit
+          # built before the licence shipped (an older release, or rolling-korium until korium-sync brings the
+          # change over) gets it here instead of failing the whole normalization.
+          if [[ ! -f package-work/LICENSE-LIBSMB2.txt ]]; then
+            cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt package-work/LICENSE-LIBSMB2.txt
+            echo "Added LICENSE-LIBSMB2.txt to $(basename "$MAIN_ZIP"): the kit predates it."
+          fi
 
           printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/NathanNeurotic/PS2-Servers' > package-work/PS2-Servers.url
           rm -f package-work/udpfs-server.url
@@ -116,6 +123,11 @@ jobs:
           rm -rf variants-work
           mkdir -p variants-work
           unzip -q "$VARIANT_ZIP" -d variants-work
+          # The variant loaders embed libsmb2 too: an archive built before the licence shipped gets it here.
+          if [[ ! -f variants-work/LICENSE-LIBSMB2.txt ]]; then
+            cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt variants-work/LICENSE-LIBSMB2.txt
+            echo "Added LICENSE-LIBSMB2.txt to $(basename "$VARIANT_ZIP"): the archive predates it."
+          fi
 
           found=0
           while IFS= read -r -d '' ds5; do
@@ -142,10 +154,16 @@ jobs:
           # GitHub's release API returns the odd transient HTTP 500; one of those on 48537d39 killed this
           # job at the download and left rolling with its raw, un-normalized asset set. Retry instead.
           retry() { for n in 1 2 3 4; do "$@" && return 0; echo "Attempt $n failed: $*"; sleep $((n * 15)); done; return 1; }
+          # RIPTOPL.ELF and APP_RIPTOPL.psu are published loose, so the libsmb2 licence has to sit beside them.
+          # A release published before the licence shipped gets it now.
+          if [[ ! -f release-work/LICENSE-LIBSMB2.txt ]]; then
+            cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt release-work/LICENSE-LIBSMB2.txt
+            retry gh release upload "$TAG" release-work/LICENSE-LIBSMB2.txt --repo "$GITHUB_REPOSITORY" --clobber
+          fi
           for zip in release-work/RIPTOPL-*.zip; do
             [[ -f "$zip" ]] || continue
             case "$(basename "$zip")" in
-              *-src.zip|RIPTOPL-src-*.zip|RIPTOPL-*-src-*.zip|RIPTOPL-LANGS-*.zip|RIPTOPL-DEBUG-*.zip) continue ;;
+              *-src.zip|RIPTOPL-src-*.zip|RIPTOPL-*-src-*.zip|RIPTOPL-LANGS-*.zip|RIPTOPL-DEBUG-*.zip|RIPTOPL-BUGREPORT-*.zip) continue ;;
             esac
             retry gh release upload "$TAG" "$zip" --repo "$GITHUB_REPOSITORY" --clobber
           done
@@ -213,6 +231,11 @@ jobs:
             exit 1
           fi
           echo 'OK: standalone APP_RIPTOPL.psu is published.'
+          if ! printf '%s\n' "$ASSETS" | grep -qFx 'LICENSE-LIBSMB2.txt'; then
+            echo 'ERROR: LICENSE-LIBSMB2.txt (the libsmb2 LGPL-2.1 licence) is missing beside the standalone loaders.' >&2
+            exit 1
+          fi
+          echo 'OK: LICENSE-LIBSMB2.txt is published beside the standalone loaders.'
           if printf '%s\n' "$ASSETS" | grep -qE '^RIPTOPL-RetroAchievements-.*\.zip$'; then
             if ! printf '%s\n' "$ASSETS" | grep -qFx 'APP_RIPTOPL-RA.psu'; then
               echo 'ERROR: RA package exists but standalone APP_RIPTOPL-RA.psu is missing.' >&2
