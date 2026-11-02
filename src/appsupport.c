@@ -253,6 +253,44 @@ static int appGetRebootIopConfig(config_set_t *configSet)
     return -1;
 }
 
+// HANDOFFPATH=LEGACY|TYPED in the app's cfg (HANDOFF_PATH also accepted): the device spelling in the
+// argv[0] this app receives. APP_HANDOFF_* on a recognised value, -1 (follow the global setting) otherwise.
+static int appGetHandoffPathConfig(config_set_t *configSet)
+{
+    struct config_value_t *val;
+
+    if (configSet == NULL)
+        return -1;
+
+    for (val = configSet->head; val != NULL; val = val->next) {
+        if (strcasecmp(val->key, "HANDOFFPATH") == 0 || strcasecmp(val->key, "HANDOFF_PATH") == 0) {
+            if (strcasecmp(val->val, "LEGACY") == 0 || strcasecmp(val->val, "MASS") == 0 || strcasecmp(val->val, "0") == 0)
+                return APP_HANDOFF_LEGACY;
+            if (strcasecmp(val->val, "TYPED") == 0 || strcasecmp(val->val, "1") == 0)
+                return APP_HANDOFF_TYPED;
+            return -1;
+        }
+    }
+
+    return -1;
+}
+
+// The argv[0] an ELF app on a BDM device receives. Legacy: normFilename itself (mass<N>:/...). Typed: the
+// same path spelled with the device's typed root (usb0:, ata0:, ilink0:, mx4sio0:), so an app that reads
+// "mass" as "USB" and loads only a USB stack is told which device it is really on. The load path is always
+// normFilename: OPL mounts nothing under a typed name, and the child loader reads the ELF through the
+// live mass<N>: mount BEFORE any IOP reset. Falls back to the legacy spelling when the device has no typed
+// name (udp, cf) or the slot cannot be read, so a launch never fails for the sake of the spelling.
+static const char *appChooseHandoffArgv0(int handoff, const char *normFilename, char *typedBuf, size_t typedSize)
+{
+    if (handoff == APP_HANDOFF_TYPED && bdmBuildTypedHandoffPath(normFilename, typedBuf, (int)typedSize)) {
+        LOG("[APPS] handoff argv0=%s (typed) load=%s\n", typedBuf, normFilename);
+        return typedBuf;
+    }
+    LOG("[APPS] handoff argv0=%s (legacy) load=%s\n", normFilename, normFilename);
+    return normFilename;
+}
+
 #ifdef __OPLDIAG
 // Ember probe (docs/EMBER-INTEGRATION-PLAN.md Phase 0): does this APPS boot path name an ember.elf?
 // Basename match only, case-insensitively -- FAT is case-insensitive and Ember's install folder is
@@ -996,24 +1034,36 @@ static const char *appBuildHddHandoffPath(char *out, size_t outSize, const char 
 void appLaunchElfPath(const char *path)
 {
     char normFilename[256];
+    char typedArgv0[256];
     char *target_argv[1];
+    size_t argBytes;
     int rebootIop;
 
     if (!strncasecmp(path, "pfs", 3) || !strncasecmp(path, "hdd", 3)) {
         guiMsgBox(_l(_STR_FM_RUN_HDD), 0, NULL);
         return;
     }
-    // the child loader's 256-byte argument pool holds the load path, argv[0] and the reset flag
-    if (appNormalizeLaunchPath(normFilename, sizeof(normFilename), path) == NULL ||
-        strlen(normFilename) * 2 + 2 + sizeof("-reset-iop") > 256) {
+    if (appNormalizeLaunchPath(normFilename, sizeof(normFilename), path) == NULL) {
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
         return;
     }
     rebootIop = guiPromptRebootIop();
     if (rebootIop < 0)
         return; // the user backed out
+    // No per-app cfg here: the global App Handoff Path decides.
+    target_argv[0] = (char *)appChooseHandoffArgv0(gAppHandoffPath, normFilename, typedArgv0, sizeof(typedArgv0));
+    // The child-loader ExecPS2 handoff has one 256-byte kernel argument pool: the load path, the argv[0]
+    // actually chosen (a typed spelling is a few bytes longer than mass<N>:) and the reset flag. Count them
+    // exactly here, before the GUI is torn down, so an over-long path is refused with a dialog instead of
+    // by the loader after deinit.
+    argBytes = strlen(normFilename) + 1 + strlen(target_argv[0]) + 1;
+    if (rebootIop)
+        argBytes += sizeof("-reset-iop");
+    if (argBytes > 256) {
+        guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+        return;
+    }
     mmceReset();
-    target_argv[0] = normFilename;
     deinit(UNMOUNT_EXCEPTION | (rebootIop == 0 ? KEEPIOP_EXCEPTION : 0), IO_MODE_SELECTED_ALL_SPARE);
     sysLoadELFApp(normFilename, "", 1, target_argv, rebootIop, 0);
 }
@@ -1125,6 +1175,16 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
         }
         target_argv[0] = isPops ? filename : normFilename;
         target_argc = 1;
+
+        // Ordinary apps on a BDM device: the per-app HANDOFFPATH key, else the global App Handoff Path,
+        // decides whether argv[0] is spelled mass<N>: (legacy) or usb0:/ata0:/... (typed). POPSTARTER keeps
+        // its bare selector; HDD apps are re-spelled below; every other mode has no typed name.
+        if (!isPops && mode >= BDM_MODE && mode <= BDM_MODE_LAST) {
+            int handoff = appGetHandoffPathConfig(configSet);
+            if (handoff < 0)
+                handoff = gAppHandoffPath;
+            target_argv[0] = (char *)appChooseHandoffArgv0(handoff, normFilename, appArgv0, sizeof(appArgv0));
+        }
 
         // Folder Apps synthesize an empty AltStartup when argv1 is absent. Ordinary Apps
         // must receive no extra argument in that case; retain the POPSTARTER contract.
