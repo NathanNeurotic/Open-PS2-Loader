@@ -19,6 +19,7 @@
 #include "include/psbbnflow.h"
 #include "include/themeviews.h"
 #include "include/grid.h"
+#include "include/supportbase.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rabadge.h" // RA: mark over the cover
 #endif
@@ -88,6 +89,28 @@ static int loadedFontSize = FONT_SIZE_DEFAULT;
 static int nThemes = 0;
 static theme_file_t themes[THM_MAX_FILES];
 static const char **guiThemesNames = NULL;
+
+// One theme switch at a time. The IO thread loads themes (a device with the saved theme comes up or goes away, a
+// queued settings load) and so does the GUI thread (settings, the view switch, a language change). thmLoad reads the
+// current theme before it takes the GUI lock to swap, so two loads at once would both free that one theme. The theme
+// list and guiThemeID change with the loads, so this lock covers them too, from before that read until the id is
+// committed. Lock order: language switch, theme switch, GUI lock; a frame never takes it. thmInit creates it before
+// the IO thread exists. Not recursive: the *Locked functions are for callers that already hold it.
+static int thmSwitchSema = -1;
+
+static void thmSwitchLock(void)
+{
+    if (thmSwitchSema >= 0)
+        WaitSema(thmSwitchSema);
+}
+
+static void thmSwitchUnlock(void)
+{
+    if (thmSwitchSema >= 0)
+        SignalSema(thmSwitchSema);
+}
+
+static int thmSetGuiValueLocked(int themeID, int reload);
 
 // Coverflow render-mode state (externs in themes.h).
 #define COVERFLOW_PAD 1 // extra covers built off each edge, purely to fill the slide (see drawCoverFlow)
@@ -4885,6 +4908,7 @@ static void thmReadViewTemplate(config_set_t *cfg, int view)
         configReadBuffer(cfg, &conf_theme_OPL_cfg, size_conf_theme_OPL_cfg);
 }
 
+// The caller holds thmSwitchSema.
 static int thmLoad(const char *themePath)
 {
     LOG("THEMES Load theme path=%s\n", themePath);
@@ -5315,11 +5339,19 @@ static int thmLoad(const char *themePath)
     }
     if (curT == NULL)
         cacheCancelPendingImageLoads(); // first load: pre-cacheInit, nothing queued -- plain no-op drain
+    // The GUI thread draws the theme under the GUI lock (its frames and the dialog frames), and thmAddElements
+    // runs this on the IO thread when a device with the saved theme comes up: publish the new theme and free the
+    // old one under the same lock (YAOPL b45a592d, Roman Kelesidis). The lock is not recursive, so no caller may
+    // hold it: thmAddElements, thmReinit and lngSetGuiValue release theirs first, the settings pages and the view
+    // switch run between frames, and the first load comes before guiInit, when the lock is a no-op. Every caller
+    // holds thmSwitchSema, though, so curT is still the published theme here: no other load has freed it meanwhile.
+    guiLock();
     gTheme = newT;
     loadedFontSize = gFontSize;
     cfIsAnimating = 0;
     psbbnFlowStartOffset = 0;
     thmFree(curT);
+    guiUnlock();
     return 0;
 }
 
@@ -5352,6 +5384,8 @@ int thmAddElements(char *path, const char *separator, int forceRefresh)
 {
     int result, i;
 
+    // The scan appends at nThemes, which a device removal (thmReinit) on the other thread would move under it.
+    thmSwitchLock();
     result = listDir(path, separator, THM_MAX_FILES - nThemes, &thmReadEntry);
     nThemes += result;
     // Appends above only fill NEW themes[] slots (the published name list references old slots
@@ -5360,13 +5394,17 @@ int thmAddElements(char *path, const char *separator, int forceRefresh)
     thmRebuildGuiNames();
     guiUnlock();
 
+    int changed = 0;
     const char *temp;
     if (configGetStr(configGetByType(CONFIG_OPL), "theme", &temp)) {
         LOG("THEMES Trying to set again theme: %s\n", temp);
-        if (thmSetGuiValue(thmFindGuiID(temp), 0) && forceRefresh) {
-            for (i = 0; i < MODE_COUNT; i++)
-                moduleUpdateMenu(i, 1, 0);
-        }
+        changed = thmSetGuiValueLocked(thmFindGuiID(temp), 0);
+    }
+    thmSwitchUnlock(); // the menu refresh below does not touch the theme
+
+    if (changed && forceRefresh) {
+        for (i = 0; i < MODE_COUNT; i++)
+            moduleUpdateMenu(i, 1, 0);
     }
 
     return result;
@@ -5376,11 +5414,15 @@ void thmInit(void)
 {
     LOG("THEMES Init\n");
     gTheme = NULL;
+    if (thmSwitchSema < 0)
+        thmSwitchSema = sbCreateSemaphore();
 
     thmReloadScreenExtents();
 
     // initialize default internal
+    thmSwitchLock();
     thmLoad(NULL);
+    thmSwitchUnlock();
 
     thmAddElements(gBaseMCDir, "/", 0);
 }
@@ -5395,6 +5437,8 @@ void thmReinit(const char *path)
     // wrote the transient "<OPL>" over the user's saved theme name -- reverting it PERMANENTLY.
     // Only fall back to the default when the active theme actually lives on the removed device;
     // otherwise keep it and just re-index (the removal loop reshuffles ids, so re-find by name).
+    // The removal, the reload and the id fix-up are one theme switch.
+    thmSwitchLock();
     char activeName[64] = "";
     int activeOnDevice = 0;
     if (guiThemeID >= 1 && guiThemeID <= nThemes) {
@@ -5435,6 +5479,7 @@ void thmReinit(const char *path)
         // needs no reload -- its loaded resources are unaffected by the removed entries.
         guiThemeID = thmFindGuiID(activeName);
     }
+    thmSwitchUnlock();
 }
 
 void thmReloadScreenExtents(void)
@@ -5479,6 +5524,14 @@ void thmRefreshFontSize(void)
 
 int thmSetGuiValue(int themeID, int reload)
 {
+    thmSwitchLock();
+    int changed = thmSetGuiValueLocked(themeID, reload);
+    thmSwitchUnlock();
+    return changed;
+}
+
+static int thmSetGuiValueLocked(int themeID, int reload)
+{
     if (themeID >= 0 && themeID <= nThemes) {
         if (guiThemeID != themeID || reload) {
             int loadResult = thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
@@ -5509,7 +5562,9 @@ int thmSetGuiValue(int themeID, int reload)
     return 0;
 }
 
-int thmSetView(int view)
+// The view functions below read gTheme to decide on a reload. Only a theme switch replaces gTheme, so they hold
+// thmSwitchSema across the read and the reload, and reload the id selected at that moment.
+static int thmSetViewLocked(int view)
 {
     if (view < 0 || view >= THM_VIEW_COUNT)
         view = -1;
@@ -5522,25 +5577,54 @@ int thmSetView(int view)
     int target = (view >= 0 && (gTheme->viewMask & (1u << view))) ? view : gTheme->defaultView;
     if (target == gTheme->view)
         return 0;
-    if (!thmSetGuiValue(guiThemeID, 1)) {
+    if (!thmSetGuiValueLocked(guiThemeID, 1)) {
         gThemeViewRequest = previous; // abandoned load (#120): the old view is still on screen
         return 0;
     }
     return 1;
 }
 
-int thmRefreshDisplayLayout(void)
+int thmSetView(int view)
 {
-    if (gTheme == NULL)
-        return 0;
-    int wideChanged = gTheme->layoutDependsOnWide && gTheme->layoutWide != rmIsWideDisplay();
-    int altChanged = gTheme->altDeclared && gTheme->altBackground != (gThemeAltBackground != 0);
-    if (!wideChanged && !altChanged)
-        return 0;
-    return thmSetGuiValue(guiThemeID, 1);
+    thmSwitchLock();
+    int changed = thmSetViewLocked(view);
+    thmSwitchUnlock();
+    return changed;
 }
 
-int thmCycleView(void)
+int thmRefreshDisplayLayout(void)
+{
+    int changed = 0;
+    thmSwitchLock();
+    if (gTheme != NULL) {
+        int wideChanged = gTheme->layoutDependsOnWide && gTheme->layoutWide != rmIsWideDisplay();
+        int altChanged = gTheme->altDeclared && gTheme->altBackground != (gThemeAltBackground != 0);
+        if (wideChanged || altChanged)
+            changed = thmSetGuiValueLocked(guiThemeID, 1);
+    }
+    thmSwitchUnlock();
+    return changed;
+}
+
+int thmRefreshGridLayout(void)
+{
+    int loaded = 1; // no grid on screen: nothing to rebuild
+    thmSwitchLock();
+    if (gTheme != NULL && gTheme->grid != NULL)
+        loaded = thmSetGuiValueLocked(guiThemeID, 1);
+    thmSwitchUnlock();
+    return loaded;
+}
+
+int thmReload(void)
+{
+    thmSwitchLock();
+    int changed = thmSetGuiValueLocked(guiThemeID, 1);
+    thmSwitchUnlock();
+    return changed;
+}
+
+static int thmCycleViewLocked(void)
 {
     if (gTheme == NULL)
         return 0;
@@ -5556,11 +5640,19 @@ int thmCycleView(void)
     }
     int previousCovers = gCoverflowCount;
     gCoverflowCount = covers;
-    if (!thmSetView(v) && gTheme->view != v) {
+    if (!thmSetViewLocked(v) && gTheme->view != v) {
         gCoverflowCount = previousCovers; // abandoned load: the old view is still on screen
         return 0;
     }
     return 1;
+}
+
+int thmCycleView(void)
+{
+    thmSwitchLock();
+    int changed = thmCycleViewLocked();
+    thmSwitchUnlock();
+    return changed;
 }
 
 int thmGetGuiValue(void)
