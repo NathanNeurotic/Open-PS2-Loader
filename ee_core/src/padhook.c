@@ -94,7 +94,8 @@ static int RA_Intc_ID = -1;
 #endif
 #if defined(RETROACHIEVEMENTS) && defined(IGR_MENU)
 /* Set by IGR_RequestReset: the PC asked to leave the game (RAR1). That leaves at once, past In-Game Menu, and Debug
-   Colors does not take it for the combo. */
+   Colors does not take it for the combo. It lasts only as long as the request: the handler clears it once no request
+   is left, and a new IGR worker starts without it. */
 static volatile int IGR_PcReset = 0;
 #define IGR_FROM_PC IGR_PcReset
 #else
@@ -687,8 +688,13 @@ static int IGR_Intc_Handler(int cause)
             iChangeThreadPriority(IGR_Thread_ID, 0);
             iWakeupThread(IGR_Thread_ID);
         }
-    } else if (Pad_Data.combo_type == 0x00)
+    } else if (Pad_Data.combo_type == 0x00) {
         IGR_MenuRearm = 1;
+#ifdef RETROACHIEVEMENTS
+        // No request left, so no PC mark: in disc mode the pad's R3 + L3 can replace the PC's request and be dropped
+        IGR_PcReset = 0;
+#endif
+    }
 #endif
 
     // If power button or combo is press
@@ -794,6 +800,9 @@ void Install_IGR(void)
         Pad_Data.vb_count = 0;
         Pad_Data.combo_type = 0x00;
         Pad_Data.prev_frame = 0x00;
+#if defined(RETROACHIEVEMENTS) && defined(IGR_MENU)
+        IGR_PcReset = 0; // no request, so no PC mark
+#endif
 
         thread_param.gp_reg = &_gp;
         thread_param.func = IGR_Thread;

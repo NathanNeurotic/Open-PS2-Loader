@@ -14,10 +14,12 @@ reached the menu, although docs/IGR.md gave grey for "no overlay for this launch
    reset) in such a launch blinks three times in the grey the menu path uses for a menu that was not there, only
    with Debug Colors on.
 3. IgrMenuNoRoom is the last field of EECoreConfig_t, after the RA editions' other menu fields, so the overlay's
-   view of the fields before it does not move; the handler still opens the menu only with IgrMenu set.
+   view of the fields before it does not move.
 4. The PC's reset (RAR1, IGR_RequestReset) leaves the game at once, as the combo did before the menu: the VBLANK
-   handler's menu lines and IGR_RequestReset are compiled and run. With the menu on they open it for the combo but
-   not for the PC's request. Builds without the menu or without RetroAchievements keep no flag for it.
+   handler's menu lines, IGR_RequestReset and Install_IGR are compiled and run. The handler opens the menu only with
+   IgrMenu set, for the combo but not for the PC's request. The PC's mark lasts only as long as its request: one the
+   pad replaced and disc mode dropped leaves none behind, and a new IGR worker starts without it, while a pad reopen
+   keeps a pending one. Builds without the menu or without RetroAchievements keep no flag for it.
 5. The RA watch block (RiptOPL: the RA work area) is placed right after the modules, before the menu's cheats, so the
    cheats take only the room it leaves: a long cheat file cannot push it, and with it the menu, past IGROVL_BASE.
 """
@@ -85,19 +87,33 @@ if grey is None:
     failures.append('padhook.c: the menu path\'s grey for a menu that was not there was not found')
 grey = grey.group(1) if grey else '0'
 
-# --- 3. the field, appended; the handler opens the menu only with IgrMenu set ----------------------------------------
+# --- 3. the field, appended ----------------------------------------------------------------------------------------
 if not re.search(r'int IgrRaUnlocked;\s*(?:/\*(?:(?!\*/).)*\*/\s*)?int IgrMenuNoRoom;\s*#endif\s*\};', coreconfig,
                  re.S):
     failures.append('coreconfig.h: int IgrMenuNoRoom; must be the last field, after IgrRaUnlocked (RA editions)')
-if 'Pad_Data.combo_type == IGR_COMBO_START_SELECT && config->IgrMenu && !Power_Button.press && !IGR_FROM_PC' \
-        not in padhook:
-    failures.append('padhook.c: the handler must open the menu only with config->IgrMenu set, never for the PC\'s reset')
 if not re.search(r'\| \*\*Grey\*\* \|[^\n]*no room', docs):
     failures.append('docs/IGR.md: the grey row must name a launch with no room for the menu')
 if 'RAR1' not in docs:
     failures.append('docs/IGR.md: the menu section must say the PC\'s reset (RAR1) still leaves at once')
 
-# --- 4. the PC's reset: its flag, IGR_RequestReset, and the handler's menu lines -------------------------------------
+# --- 4. the PC's reset: its flag, IGR_RequestReset, the handler's menu lines and Install_IGR -------------------------
+def preprocessor_block(text, start):
+    """From the #if line at text[start] to its own #endif line, nested blocks included ('' when it never closes)."""
+    depth, pos = 0, start
+    while True:
+        end = text.find('\n', pos)
+        if end < 0:
+            return ''
+        line = text[pos:end].strip()
+        if line.startswith('#if'):
+            depth += 1
+        elif line.startswith('#endif'):
+            depth -= 1
+            if depth == 0:
+                return text[start:end + 1]
+        pos = end + 1
+
+
 flag = re.search(r'\n(#if defined\(RETROACHIEVEMENTS\) && defined\(IGR_MENU\)\n(?:(?!#endif).*\n)*?#endif\n)', padhook)
 if flag is None or 'static volatile int IGR_PcReset' not in flag.group(1) or '#define IGR_FROM_PC 0' not in flag.group(1):
     failures.append('padhook.c: IGR_PcReset (RA builds with the menu), and IGR_FROM_PC 0 elsewhere, were not found')
@@ -106,11 +122,16 @@ request = re.search(r'\nvoid IGR_RequestReset\(void\)\n\{\n(?:.*\n)*?\}\n', padh
 if request is None or 'IGR_PcReset = 1;' not in request.group(0):
     failures.append('padhook.c: IGR_RequestReset must mark the PC\'s reset (IGR_PcReset = 1)')
 request = request.group(0) if request else ''
-gate = re.search(r'\n(#ifdef IGR_MENU\n    // With In-Game Menu on, the reset combo pauses(?:(?!#endif).*\n)*?#endif\n)', padhook)
+gate_at = padhook.find('\n#ifdef IGR_MENU\n    // With In-Game Menu on, the reset combo pauses')
 handler = padhook.find('static int IGR_Intc_Handler(int cause)')
-if gate is None or handler < 0 or padhook.find(gate.group(1)) < handler:
+gate = preprocessor_block(padhook, gate_at + 1) if gate_at >= 0 else ''
+if not gate or handler < 0 or gate_at < handler:
     failures.append('padhook.c: the IGR_MENU lines of IGR_Intc_Handler were not found')
-gate = gate.group(1) if gate else ''
+    gate = ''
+install = re.search(r'\nvoid Install_IGR\(void\)\n\{\n(?:.*\n)*?\}\n', padhook)
+if install is None:
+    failures.append('padhook.c: Install_IGR was not found')
+install = install.group(0) if install else ''
 
 # --- 5. the RA watch block before the menu's cheats --------------------------------------------------------------
 if LAYOUT['host'] is not None:
@@ -243,11 +264,35 @@ GATE_HARNESS = r'''
 #define HAS_PC_FLAG
 #endif
 
-static struct { unsigned char combo_type; } Pad_Data;
-static __attribute__((unused)) struct { int press; } Power_Button;
-static int IGR_Thread_ID = 5;
+static struct { void *pad_buf; int vb_count; unsigned char combo_type, prev_frame; } Pad_Data;
+static struct { int press, vb_count, latched; } Power_Button;
+static int IGR_Thread_ID = 5, IGR_Intc_ID = -1;
 @FLAG@
 @REQUEST@
+
+// What Install_IGR calls: a worker that starts, and a VBLANK handler that registers
+#define DPRINTF(...) ((void)0)
+#define IGR_STACK_SIZE 0x400
+#define kINTC_VBLANK_END 3
+typedef struct {
+    int status;
+    void (*func)(void *);
+    void *stack;
+    int stack_size;
+    void *gp_reg;
+    int initial_priority, current_priority;
+    unsigned int attr, option;
+} ee_thread_t;
+static int _gp, threads;
+static unsigned char IGR_Stack[IGR_STACK_SIZE];
+static void IGR_Thread(void *arg) { (void)arg; }
+static int IGR_Intc_Handler(int cause) { (void)cause; return 0; }
+static int CreateThread(ee_thread_t *thread) { return thread->func == IGR_Thread ? 7 + threads++ : -1; }
+static int StartThread(int id, void *arg) { (void)id; (void)arg; return 0; }
+static int DeleteThread(int id) { (void)id; return 0; }
+static int AddIntcHandler(int cause, int (*func)(int), int next) { (void)cause; (void)func; (void)next; return 2; }
+static int EnableIntc(int cause) { (void)cause; return 0; }
+@INSTALL@
 #ifdef IGR_MENU
 static volatile int IGR_MenuOpen;
 static int IGR_MenuRearm = 1, held, wakes;
@@ -304,8 +349,35 @@ int main(void)
               "frame %u (menu %d, PC reset %d, power button %d, combo 0x%X): reset %d, menu %d, wakes %d, want %d %d",
               i, frames[i].menu, frames[i].pc, frames[i].power, frames[i].combo, reset, IGR_MenuOpen, wakes,
               frames[i].reset, frames[i].menuOpens);
+#ifdef HAS_PC_FLAG
+        CHECK(IGR_PcReset == frames[i].pc, "frame %u: the PC's mark must last while its request runs, IGR_Thread reads "
+              "it next (mark %d)", i, IGR_PcReset);
+#endif
     }
 #ifdef HAS_PC_FLAG
+    {
+        int reset;
+
+        // A PC request that the pad's R3 + L3 replaced, and disc mode then dropped (IGR_CheckInputs), leaves no mark:
+        // the next combo still opens the menu
+        g_config.IgrMenu = 1;
+        Power_Button.press = 0;
+        IGR_MenuOpen = 0;
+        IGR_MenuRearm = 1;
+        wakes = held = 0;
+        Pad_Data.combo_type = 0;
+        IGR_PcReset = 0;
+        IGR_RequestReset();
+        Pad_Data.combo_type = 0; // IGR_CheckInputs in disc mode
+        reset = handler();
+        CHECK(!reset && !IGR_MenuOpen && !IGR_PcReset, "a dropped PC request: nothing runs, and no mark is left "
+              "(reset %d, menu %d, mark %d)", reset, IGR_MenuOpen, IGR_PcReset);
+        Pad_Data.combo_type = IGR_COMBO_START_SELECT; // the pad's combo, a later frame
+        reset = handler();
+        CHECK(!reset && IGR_MenuOpen && wakes == 1, "after a dropped PC request the combo must still open the menu "
+              "(reset %d, menu %d)", reset, IGR_MenuOpen);
+    }
+
     // The PC's reset only fills an empty request, and only with an IGR thread (Mode 6 has none)
     Pad_Data.combo_type = IGR_COMBO_R3_L3;
     IGR_PcReset = 0;
@@ -320,6 +392,26 @@ int main(void)
     CHECK(IGR_FROM_PC == 0, "a build without the menu keeps no PC flag");
     IGR_RequestReset();
     CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT, "without the menu the PC's reset is the combo, as before");
+#endif
+
+    // Install_IGR: a new worker starts with no request and no PC mark; a pad reopen with the worker running keeps a
+    // pending request and its mark
+    IGR_Thread_ID = IGR_Intc_ID = -1;
+    Pad_Data.combo_type = IGR_COMBO_START_SELECT;
+#ifdef HAS_PC_FLAG
+    IGR_PcReset = 1;
+#endif
+    Install_IGR();
+    CHECK(IGR_Thread_ID >= 0 && IGR_Intc_ID >= 0 && Pad_Data.combo_type == 0x00,
+          "a first Install_IGR starts the worker and its handler with no request (thread %d, handler %d, combo 0x%X)",
+          IGR_Thread_ID, IGR_Intc_ID, Pad_Data.combo_type);
+#ifdef HAS_PC_FLAG
+    CHECK(!IGR_PcReset, "a first Install_IGR must start without a PC mark");
+    IGR_PcReset = 1;
+    Pad_Data.combo_type = IGR_COMBO_START_SELECT;
+    Install_IGR();
+    CHECK(IGR_PcReset && Pad_Data.combo_type == IGR_COMBO_START_SELECT && threads == 1,
+          "a pad reopen must keep the PC's pending request and its mark, without a second worker");
 #endif
     if (bad)
         return 1;
@@ -340,12 +432,20 @@ def build_and_run(name, code):
         source = path / ('harness' + LAYOUT['ext'])
         binary = path / ('harness.exe' if sys.platform == 'win32' else 'harness')
         source.write_text(code, encoding='utf-8')
-        build = subprocess.run([compiler, '-std=gnu99', '-Wall', '-Wextra', '-Werror', str(source), '-o',
-                                str(binary)], capture_output=True, text=True)
+        try:
+            build = subprocess.run([compiler, '-std=gnu99', '-Wall', '-Wextra', '-Werror', str(source), '-o',
+                                    str(binary)], capture_output=True, text=True, timeout=120, check=False)
+        except subprocess.TimeoutExpired:
+            failures.append('%s: the harness took over 120 s to compile' % name)
+            return
         if build.returncode != 0:
             failures.append('%s: harness did not compile:\n%s' % (name, build.stderr))
             return
-        run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
+        try:
+            run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10, check=False)
+        except subprocess.TimeoutExpired:
+            failures.append('%s: the harness ran over 10 s' % name)
+            return
         if run.returncode != 0:
             failures.append('%s: harness failed (%d):\n%s%s' % (name, run.returncode, run.stdout, run.stderr))
         else:
@@ -356,14 +456,15 @@ if launcher and thread and not failures:
     build_and_run('no room', HARNESS.replace('@GREY@', grey).replace('@PRE@', LAYOUT['pre'])
                   .replace('@LAUNCHER@', launcher).replace('@THREAD@', thread))
 
-if flag and request and gate and not failures:
+if flag and request and gate and install and not failures:
     for name, defines, req in (
             ('RA build with the menu: the combo opens it, the PC\'s reset leaves past it',
              '#define RETROACHIEVEMENTS\n#define IGR_MENU', request),
             ('RA build without the menu: the PC\'s reset is the combo, as before', '#define RETROACHIEVEMENTS', request),
             ('menu build without RA: no PC flag, the combo opens the menu', '#define IGR_MENU', '')):
         build_and_run(name, GATE_HARNESS.replace('@DEFINES@', defines).replace('@FLAG@', flag)
-                      .replace('@REQUEST@', req).replace('@GATE@', gate).replace('@NAME@', name))
+                      .replace('@REQUEST@', req).replace('@INSTALL@', install).replace('@GATE@', gate)
+                      .replace('@NAME@', name))
 
 if failures:
     print('In-Game Menu no-room checks FAILED:')
