@@ -202,7 +202,8 @@ static int read_missing(void)
 int main(int argc, char **argv)
 {
     static const char startup[] = "SLUS_209.46"; // the scan takes an old-format name's first 11 bytes
-    static const char ext[] = ".iso";
+    static const char extension[] = ".iso";
+    const unsigned int crc = 0x1234ABCDu; // USBA_crc32(game->name) on the EE
     char name[ISO_GAME_NAME_MAX + 1], prefix[sizeof(cdvdman_settings.smb_prefix)];
     char file[512], dir[1024], path[1600];
     int i, len, namelen, parts = 1, fails = 0;
@@ -248,15 +249,15 @@ int main(int argc, char **argv)
     cdvdman_settings.common.NumParts = usbld ? 2 : 1; // sbPrepare: game->parts
     cdvdman_settings.common.media = 0x14;             // a DVD: device-smb.c opens it in DVD
     if (!plain && !usbld) {
-        snprintf(file, sizeof(file), "%s.%s%s", startup, name, ext);
-        snprintf(cdvdman_settings.filename, sizeof(cdvdman_settings.filename), "%s.%s%s", startup, name, ext);
+        snprintf(file, sizeof(file), "%s.%s%s", startup, name, extension);
+        snprintf(cdvdman_settings.filename, sizeof(cdvdman_settings.filename), "%s.%s%s", startup, name, extension);
     } else if (plain) {
-        snprintf(file, sizeof(file), "%s%s", name, ext);
-        snprintf(cdvdman_settings.filename, sizeof(cdvdman_settings.filename), "%s%s", name, ext);
+        snprintf(file, sizeof(file), "%s%s", name, extension);
+        snprintf(cdvdman_settings.filename, sizeof(cdvdman_settings.filename), "%s%s", name, extension);
     } else {
         parts = 2;
-        snprintf(file, sizeof(file), "ul.%08X.%s", 0x1234ABCDu, startup); // USBA_crc32(name) on the EE
-        snprintf(cdvdman_settings.filename, sizeof(cdvdman_settings.filename), "ul.%08X.%s", 0x1234ABCDu, startup);
+        snprintf(file, sizeof(file), "ul.%08X.%s", crc, startup);
+        snprintf(cdvdman_settings.filename, sizeof(cdvdman_settings.filename), "ul.%08X.%s", crc, startup);
         cdvdman_settings.common.flags |= IOPCORE_SMB_FORMAT_USBLD;
     }
     snprintf(cdvdman_settings.smb_ip, sizeof(cdvdman_settings.smb_ip), "%s", argv[1]);

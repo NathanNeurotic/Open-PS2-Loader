@@ -7,8 +7,11 @@ field too short for a name the menu lists cuts it, and the game opens a file tha
 
 This checks, in the EE source:
 - every write to settings->filename is an snprintf bounded by sizeof(settings->filename), and they are
-  three, in this order: the old format's "%s.%s%s", the plain "%s%s" and USBExtreme's "ul.%08X.%s";
-- tests/smb2-live/launchname.c and longname.c fill the block with the same three calls.
+  three, in this order: the old format's "%s.%s%s" of game->startup, game->name and game->extension,
+  the plain "%s%s" of game->name and game->extension, and USBExtreme's "ul.%08X.%s" of
+  USBA_crc32(game->name) and game->startup;
+- tests/smb2-live/launchname.c and longname.c fill the block with the same three calls, with the
+  same arguments under the names startup, name, extension and crc.
 Then it builds launchname.c with device-smb.c and the real cdvd_config.h, under AddressSanitizer and
 UBSan, and runs it: each format, the name lengths either side of each one the old 160-byte field cut
 and the longest, with no prefix and the longest, on a DVD and a CD; the block must hold the whole name
@@ -56,25 +59,65 @@ def strip_comments(src):
     return ''.join(out)
 
 
+def call_args(src, i):
+    """The arguments of a call from src[i], just after its format string, to its closing parenthesis,
+    split at its own commas, without whitespace."""
+    args, cur, depth = [], '', 0
+    while i < len(src):
+        c = src[i]
+        if c in '"\'':
+            j = i + 1
+            while j < len(src) and src[j] != c:
+                j += 2 if src[j] == '\\' else 1
+            cur += src[i:j + 1]
+            i = j + 1
+            continue
+        if c == ')' and depth == 0:
+            break
+        if c == ',' and depth == 0:
+            args.append(cur)
+            cur = ''
+        else:
+            depth += (c == '(') - (c == ')')
+            cur += c
+        i += 1
+    args.append(cur)
+    return [re.sub(r'\s+', '', a) for a in args[1:]]  # args[0] is what lies between the format and its comma
+
+
 def fills(src, field):
-    """The (bound, format) of each snprintf into field, in order, and how many times field is named."""
+    """The (bound, format, arguments) of each snprintf into field, in order, and how many times field is
+    named."""
     f = r'\s*'.join(map(re.escape, re.findall(r'\w+|\S', field)))
-    calls = re.findall(r'\bsnprintf\s*\(\s*' + f + r'\s*,\s*([^,]+?)\s*,\s*"((?:[^"\\]|\\.)*)"', src)
-    return [(re.sub(r'\s+', '', b), fmt) for b, fmt in calls], len(re.findall(r'(?<![\w.>])' + f + r'(?!\w)', src))
+    calls = [(re.sub(r'\s+', '', m.group(1)), m.group(2), call_args(src, m.end()))
+             for m in re.finditer(r'\bsnprintf\s*\(\s*' + f + r'\s*,\s*([^,]+?)\s*,\s*"((?:[^"\\]|\\.)*)"', src)]
+    return calls, len(re.findall(r'(?<![\w.>])' + f + r'(?!\w)', src))
 
 
 FORMATS = ['%s.%s%s', '%s%s', 'ul.%08X.%s']
+# Each call's arguments as the tests name them: the EE's game->startup, game->name and game->extension
+# are startup, name and extension there, and USBA_crc32(game->name) is crc.
+ARGS = [['startup', 'name', 'extension'], ['name', 'extension'], ['crc', 'startup']]
+
+
+def as_test(arg):
+    return 'crc' if arg == 'USBA_crc32(game->name)' else re.sub(r'^game->(?=\w+$)', '', arg)
+
 
 ee = next((root / p for p in ('src/sources/ethsupport.cpp', 'src/ethsupport.c') if (root / p).is_file()), None)
 check(ee is not None, 'no src/sources/ethsupport.cpp or src/ethsupport.c: update this check')
 if ee is not None:
     calls, named = fills(strip_comments(ee.read_text(encoding='utf-8')), 'settings->filename')
-    check([fmt for _, fmt in calls] == FORMATS,
+    check([fmt for _, fmt, _ in calls] == FORMATS,
           '%s fills settings->filename with %s; this check expects %s, in that order: update it, launchname.c and '
-          'longname.c together' % (ee.relative_to(root), [fmt for _, fmt in calls], FORMATS))
-    check(all(b == 'sizeof(settings->filename)' for b, _ in calls),
+          'longname.c together' % (ee.relative_to(root), [fmt for _, fmt, _ in calls], FORMATS))
+    check(all(b == 'sizeof(settings->filename)' for b, _, _ in calls),
           '%s bounds an snprintf into settings->filename by %s, not by sizeof(settings->filename)' %
-          (ee.relative_to(root), ', '.join(b for b, _ in calls if b != 'sizeof(settings->filename)')))
+          (ee.relative_to(root), ', '.join(b for b, _, _ in calls if b != 'sizeof(settings->filename)')))
+    check([[as_test(a) for a in args] for _, _, args in calls] == ARGS,
+          '%s passes %s to those snprintf calls; launchname.c and longname.c pass %s in their place (startup, name, '
+          'extension and crc for game->startup, game->name, game->extension and USBA_crc32(game->name)): update them '
+          'and this check together' % (ee.relative_to(root), [args for _, _, args in calls], ARGS))
     # Every other mention is a sizeof (the static_asserts): nothing else writes the field.
     sizeofs = len(re.findall(r'\bsizeof\s*\(\s*settings\s*->\s*filename\s*\)', strip_comments(ee.read_text(encoding='utf-8'))))
     check(named == len(calls) + sizeofs,
@@ -82,9 +125,9 @@ if ee is not None:
           'writes or reads it, check it keeps the whole name' % (ee.relative_to(root), named, len(calls), sizeofs))
 for test in ('launchname.c', 'longname.c'):
     calls, _ = fills(strip_comments((live / test).read_text(encoding='utf-8')), 'cdvdman_settings.filename')
-    check(calls == [('sizeof(cdvdman_settings.filename)', fmt) for fmt in FORMATS],
-          'tests/smb2-live/%s fills the settings block with %s; it must make the EE\'s calls, %s, bounded by '
-          'sizeof(cdvdman_settings.filename)' % (test, calls, FORMATS))
+    check(calls == [('sizeof(cdvdman_settings.filename)', fmt, args) for fmt, args in zip(FORMATS, ARGS)],
+          'tests/smb2-live/%s fills the settings block with %s; it must make the EE\'s calls, %s with the arguments '
+          '%s, bounded by sizeof(cdvdman_settings.filename)' % (test, calls, FORMATS, ARGS))
 
 namemax = re.search(r'^#define\s+ISO_GAME_NAME_MAX\s+(\d+)', (root / 'include/supportbase.h').read_text(encoding='utf-8'), re.M)
 check(namemax is not None, 'ISO_GAME_NAME_MAX is not defined in include/supportbase.h: update this check')
@@ -112,5 +155,5 @@ if failures:
     for failure in failures:
         print('  ' + failure)
     sys.exit(1)
-print('smb launch name: the EE writes the whole file name into the settings block with the three formats launchname.c '
-      'and longname.c use, and device-smb.c opens it whole (%s)' % summary)
+print('smb launch name: the EE writes the whole file name into the settings block with the three calls launchname.c '
+      'and longname.c make, and device-smb.c opens it whole (%s)' % summary)
