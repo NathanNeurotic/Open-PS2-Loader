@@ -148,7 +148,7 @@ static int (*plwip_recvfrom)(int s, void *mem, int hlen, void *payload, int plen
 int main(int argc, char **argv)
 {
     /* argv: want status data_offset keepalive end_code segment sizes... (0 sizes: one segment) */
-    static unsigned char readbuf[DATA_LEN + 64];
+    static unsigned char readbuf[DATA_LEN]; /* exactly the read size, so ASan sees a 1-byte overrun */
     int want = atoi(argv[1]), offset = atoi(argv[3]), keepalive = atoi(argv[4]), i, pos = 0, size;
     u32 status = (u32)strtoul(argv[2], NULL, 0);
     /* SMB_EXTRA: data the server sends beyond the DATA_LEN bytes the read asked for */
@@ -241,6 +241,7 @@ cases = [
     ('server closes inside a refusal', -2, INVALID_HANDLE, 59, 0, CLOSE, [20]),
     # (..., data beyond what the read asked for): refused, not written past readbuf, taken off the socket
     ('more data than asked for', -errno.EIO, OK, 59, 0, CLOSE, [], 200),
+    ('one byte more than asked for', -errno.EIO, OK, 59, 0, CLOSE, [], 1),
     ('more data than asked for, header split', -errno.EIO, OK, 59, 0, CLOSE, [40, 1500, W + 200 - 1540], 200),
     ('server closes inside a reply with more data', -2, OK, 59, 0, CLOSE, [1063], 200),
     # (..., DataLength): one larger than the data sent would count bytes that never arrived
