@@ -13,6 +13,9 @@ PHDRS {
 }
 
 SECTIONS {
+	/* Linker-only stubs from loader.c (LINKER_ONLY). A live reference to one fails the link. */
+	/DISCARD/ : { *(.discard.linker_only) }
+
 	.text : {
 		*(.text)
 	} >MAIN_REGION :text

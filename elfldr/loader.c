@@ -61,43 +61,63 @@ void _libcglue_args_parse(int argc, char **argv) {}
 // descriptor layer. Two things used to drag it in anyway, and with it snprintf/printf, dtoa,
 // malloc, mktime and the fio/fileXio newlib glue -- roughly 110 KB, most of the ELF:
 //   * fileXioInit() calls _ps2sdk_fileXio_init(), whose SDK definition lives in the object that
-//     also holds the newlib fileXio glue and its constructors.
-//   * libkernel's iopcontrol.o and loadfile.o reference printf/snprintf (SifIopReboot) and
+//     also holds the newlib fileXio glue and its constructors. With the ps2dev SDK, which builds
+//     one archive member per function, this is the whole chain.
+//   * With ps2build's sdk-core, which builds one archive member per source file, libkernel's
+//     iopcontrol.o and loadfile.o also reference printf/snprintf (SifIopReboot) and
 //     open/lseek/close (SifExecModuleFile). Neither function is used here, but an undefined
 //     reference extracts the newlib objects before --gc-sections can see they are dead.
-// Defining the symbols here satisfies the references without extracting anything. The
-// _ps2sdk_fileXio_init/_deinit overrides are live: fileXioInit() really calls them, and the SDK
-// versions only swap the libcglue file-op table in and out, which this loader never uses (no
-// newlib descriptor layer is linked). The printf/snprintf/open/close/lseek stubs are linker-only:
-// nothing calls them, so --gc-sections drops them (verified with nm: none survives). The loader's
+// Defining the symbols here satisfies the references without extracting anything. The loader's
 // own code paths are unchanged.
+//
+// The fileXio hooks are live: fileXioInit() and fileXioExit() really call _ps2sdk_fileXio_init
+// and _deinit. The SDK versions swap the libcglue file-op table in and out and, in newer ps2sdk,
+// reset the block size that newlib's stat reports; this loader links neither. Newer upstream
+// ps2sdk (commit 8745ab1e) also makes fileXioSetRWBufferSize() call
+// _ps2sdk_fileXio_set_block_size(). Nothing here calls that function, but sdk-core keeps it in
+// the same object as fileXioInit(), so the reference alone would extract the SDK hook object and
+// fail the link (duplicate _ps2sdk_fileXio_init). It is defined here too.
 void _ps2sdk_fileXio_init(void) {}
 void _ps2sdk_fileXio_deinit(void) {}
-int printf(const char *format, ...)
+void _ps2sdk_fileXio_set_block_size(int size) {}
+
+// The five libc stubs below are linker-only: nothing calls them. They live in a section the
+// linker script discards (/DISCARD/ in elfldr/linkfile), so today the build is unchanged. If a
+// later change makes one live -- a printf here, or a call to SifIopReboot or SifExecModuleFile,
+// which use them -- the link fails ("defined in discarded section") instead of silently calling
+// a stub that does nothing. noinline and the empty volatile asm stop the compiler from inlining
+// or deleting such a call, which would hide it from the linker.
+#define LINKER_ONLY __attribute__((noinline, section(".discard.linker_only")))
+LINKER_ONLY int printf(const char *format, ...)
 {
+    __asm__ __volatile__("");
     (void)format;
     return 0;
 }
-int snprintf(char *str, size_t size, const char *format, ...)
+LINKER_ONLY int snprintf(char *str, size_t size, const char *format, ...)
 {
+    __asm__ __volatile__("");
     (void)str;
     (void)size;
     (void)format;
     return 0;
 }
-int open(const char *path, int flags, ...)
+LINKER_ONLY int open(const char *path, int flags, ...)
 {
+    __asm__ __volatile__("");
     (void)path;
     (void)flags;
     return -1;
 }
-int close(int fd)
+LINKER_ONLY int close(int fd)
 {
+    __asm__ __volatile__("");
     (void)fd;
     return -1;
 }
-off_t lseek(int fd, off_t offset, int whence)
+LINKER_ONLY off_t lseek(int fd, off_t offset, int whence)
 {
+    __asm__ __volatile__("");
     (void)fd;
     (void)offset;
     (void)whence;
