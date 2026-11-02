@@ -62,6 +62,7 @@ jobs:
         run: |
           python3 .github/scripts/test_game_size_fallback.py
           python3 .github/scripts/test_ps1_duplicates.py
+          python3 .github/scripts/test_list_cfg_text.py
           python3 .github/scripts/test_menu_crash_catcher.py
       - name: Check the About page (full version, NathanNeurotic credited, row count kept)
         run: python3 .github/scripts/test_about_credits_layout.py
