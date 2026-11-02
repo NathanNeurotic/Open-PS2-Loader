@@ -37,7 +37,7 @@ class ReleaseTests(unittest.TestCase):
                     (folder / "Korium.patch").write_bytes(b"same theme patch")
 
     def assets(self):
-        names = {"RIPTOPL-RetroAchievements-src-test.zip"}
+        names = {"RIPTOPL-RetroAchievements-src-test.zip", "LICENSE-LIBSMB2.txt"}
         for theme in publisher.THEMES:
             names.update((f"RIPTOPL-RA-{theme}.ELF", f"APP_RIPTOPL-RA-{theme}.psu",
                           f"RIPTOPL-RetroAchievements-{theme}-test.zip"))
@@ -286,6 +286,45 @@ class MbedtlsLicenceShippingTest(unittest.TestCase):
         self.assertIn('shutil.copyfile(ROOT / "third_party/mbedtls/LICENSE", kit / "LICENSE-MBEDTLS.txt")', ra)
         self.assertIn('required.add("LICENSE-MBEDTLS.txt")', app)
         self.assertIn('"LICENSE-MBEDTLS.txt" in names', app)
+
+
+class Libsmb2LicenceShippingTest(unittest.TestCase):
+    def test_every_kit_bundle_and_standalone_download_ships_the_lgpl_licence(self):
+        # Every RiptOPL ELF embeds smb2man over libsmb2 (LGPL-2.1), so the licence text must travel
+        # with the install kits (the RA kits copy the standard one), the VARIANTS/DEBUG zips and the
+        # standalone ELF download.
+        root = Path(__file__).resolve().parents[2]
+        licence = root / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"
+        self.assertIn("GNU LESSER GENERAL PUBLIC LICENSE", licence.read_text(encoding="utf-8"))
+        app = (root / ".github/scripts/package_release_app.py").read_text(encoding="utf-8")
+        self.assertIn('LIBSMB2_LICENCE = ROOT / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"', app)
+        self.assertIn('shutil.copyfile(LIBSMB2_LICENCE, package / "LICENSE-LIBSMB2.txt")', app)
+        self.assertIn('"LICENSE-LIBSMB2.txt",  # every loader embeds libsmb2 (LGPL-2.1)', app)
+        workflow = (root / ".github/workflows/rolling-release.yml").read_text(encoding="utf-8")
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt rolling/LICENSE-LIBSMB2.txt", workflow)
+        self.assertIn("PS2RD-CHT-Manager.url LICENSE-LIBSMB2.txt >/dev/null", workflow)
+        self.assertIn('cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "rolling/$kind/LICENSE-LIBSMB2.txt"', workflow)
+        # The MEGA mirror uploads the standalone flavour ELFs on their own, so the licence goes up beside them.
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt mega-out/LICENSE-LIBSMB2.txt", workflow)
+        self.assertIn('MEGA_UPLOAD_FILES="mega-out/${ARCHIVE} mega-out/LICENSE-LIBSMB2.txt"', workflow)
+        notes = (root / ".github/scripts/normalize_release_notes.py").read_text(encoding="utf-8")
+        self.assertIn('"LICENSE-LIBSMB2.txt": "LGPL-2.1 licence of libsmb2', notes)
+        # The RA channel publishes standalone RA ELFs too, so the licence is an RA asset as well, and a
+        # PR preview bootstrapped from an older standard kit still passes the verifier.
+        ra = (root / ".github/scripts/package_ra_release.py").read_text(encoding="utf-8")
+        self.assertIn('shutil.copyfile(app.LIBSMB2_LICENCE, destination / "LICENSE-LIBSMB2.txt")', ra)
+        self.assertIn('shutil.copyfile(app.LIBSMB2_LICENCE, args.output / "LICENSE-LIBSMB2.txt")', ra)
+        publish = (root / ".github/scripts/publish_ra_release.py").read_text(encoding="utf-8")
+        self.assertIn('"LICENSE-LIBSMB2.txt"}', publish)
+        # Normalize Release Assets verifies the kit with rebuild/main's packager, which requires the licence.
+        # A kit, VARIANTS zip or release built before the licence shipped gets it there instead of failing,
+        # and the final asset check insists on the loose copy beside the standalone loaders.
+        normalize = (root / ".github/workflows/release-normalize.yml").read_text(encoding="utf-8")
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt package-work/LICENSE-LIBSMB2.txt", normalize)
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt variants-work/LICENSE-LIBSMB2.txt", normalize)
+        self.assertIn('retry gh release upload "$TAG" release-work/LICENSE-LIBSMB2.txt', normalize)
+        self.assertIn("grep -qFx 'LICENSE-LIBSMB2.txt'", normalize)
+        self.assertLess(normalize.index("package-work/LICENSE-LIBSMB2.txt"), normalize.index("package_release_app.py verify"))
 
 
 if __name__ == "__main__":
