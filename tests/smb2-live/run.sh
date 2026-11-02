@@ -1,5 +1,6 @@
 #!/bin/sh
-# Live SMB2 check: runs the loader's two SMB2 clients on the host against a real Samba server.
+# Live SMB check: runs the loader's two SMB2 clients, and its SMB1 in-game reader, on the host
+# against a real Samba server.
 #
 #   ingame.c  drives modules/iopcore/cdvdman/smb2.c (smb2_cdvdman, the in-game reader) the way
 #             device-smb.c and smb_mcemu do: negotiate, NTLMv2 logon, tree connect, a whole 5 MB
@@ -26,9 +27,10 @@
 # (it exits 86, so not even a case that expects a refusal takes one for it).
 # The server is started on a private port with NTLMv2 only, run once with signing mandatory and once
 # with signing off, once capped at SMB 2.0.2, and once SMB 3-only, which the browse driver must
-# refuse. Guest logons (an unknown user, and a blank user name) are checked against a guest-ok
-# share; a blank user name is also checked against a server where only a real "Guest" account gets
-# in, since it logs on as "Guest" as the menu does, not anonymously.
+# refuse; longname.sh's SMB1 cases restart it with signing off and NT1 and NTLM allowed, as smb.c
+# needs. Guest logons (an unknown user, and a blank user name) are checked against a guest-ok share;
+# a blank user name is also checked against a server where only a real "Guest" account gets in,
+# since it logs on as "Guest" as the menu does, not anonymously.
 #
 # Needs: a C compiler, Samba (smbd, smbpasswd, smbclient) and the PS2SDK's ps2smb.h (found through
 # PS2BUILD_HOME, default ~/.local/share/ps2build). Run as root (smbd wants to own its state) from

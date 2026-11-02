@@ -264,6 +264,10 @@ static int smb2man_init(iop_device_t *dev)
     return 0;
 }
 
+// iomanX calls this only when the "smb" device is deleted, which never happens while smb2man is
+// resident: it is loaded once per IOP boot (smbman only if smb2man did not load), and the EE drops it
+// only with an IOP reset. So it stops the alarm and frees the semaphore, and leaves the keepalive
+// thread, keepalive_sema, the thread's stack and the libsmb2 context in place.
 static int smb2man_deinit(iop_device_t *dev)
 {
     int oldstate;
