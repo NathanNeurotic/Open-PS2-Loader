@@ -247,7 +247,11 @@ static int libViewPending(int mode) { (void)mode; return pendingView; }
 static int ioPutRequestUnlessWaiting(int type, void *data) { if (type == IO_MENU_UPDATE_DEFFERED && data == &list_support[APP_MODE].support->mode) appsQueued++; return 0; }
 #define ioPutRequest ioPutRequestUnlessWaiting /* either spelling counts as queuing (--baseline runs) */
 static void loadFavourites(void) { favLoads++; }
-static void guiExecDeferredOps(void) {}
+static int guiLocks, deferredCalls, deferredUnlocked;
+static void guiLock(void) { guiLocks++; }
+static void guiUnlock(void) { guiLocks--; }
+/* the queued row operations must drain under the GUI lock: the GUI thread draws those rows */
+static void guiExecDeferredOps(void) { deferredCalls++; deferredUnlocked += guiLocks <= 0; }
 static void clearMenuGameList(opl_io_module_t *m) { (void)m; }
 static void libViewCommitPending(int mode) { (void)mode; }
 static void libViewFinishPending(int mode) { (void)mode; pendingView = 0; }
@@ -258,7 +262,7 @@ static item_list_t bdm = {2, 1, needsUpdate}, apps = {APP_MODE, 1, needsUpdate},
 
 static int run(item_list_t *l, int need, int flip)
 {
-    needs = need; pendingView = flip; appsQueued = favLoads = rebuilds = 0; shouldAppsUpdate = 0;
+    needs = need; pendingView = flip; appsQueued = favLoads = rebuilds = deferredCalls = 0; shouldAppsUpdate = 0;
     menuDeferredUpdate(&l->mode);
     return 0;
 }
@@ -282,6 +286,12 @@ int main(void)
     if (appsQueued != 0) { printf("FAIL APPS rebuild queued another APPS rebuild\n"); failed = 1; }
     run(&fav, 1, 0);  /* FAV never re-syncs itself */
     if (appsQueued != 0 || favLoads != 0) { printf("FAIL FAV rebuild queued APPS or FAV\n"); failed = 1; }
+    run(&bdm, 0, 1); /* an L3 flip the device turns down without a rescan (MMCE with no card): only the queued rows drain */
+    if (deferredCalls != 1 || rebuilds != 0 || pendingView) {
+        printf("FAIL turned-down flip: drained %d time(s), rebuilds %d, view pending %d (want 1 0 0)\n", deferredCalls, rebuilds, pendingView);
+        failed = 1;
+    }
+    if (deferredUnlocked || guiLocks) { printf("FAIL deferred ops ran without the GUI lock (%d) or left it held (%d)\n", deferredUnlocked, guiLocks); failed = 1; }
     if (!failed)
         printf("io queue: an L3 flip skips the APPS rebuild, keeps the Favourites re-sync\n");
     return failed;

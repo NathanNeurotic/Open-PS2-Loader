@@ -277,6 +277,10 @@ typedef struct {char *name,*filePath;} theme_file_t;
 static theme_file_t themes[8];
 static int loads,loaded,colors,failLoad,locks;
 static theme_t theme, *gTheme=&theme;
+// The theme switch lock (thmSwitchSema): a scan, a removal and every theme load hold it. It is not recursive.
+static int thmSwitchSema=5,switchDepth;
+static void WaitSema(int id) {assert(id==thmSwitchSema && !switchDepth);switchDepth++;}
+static void SignalSema(int id) {assert(id==thmSwitchSema && switchDepth);switchDepth--;}
 #define THM_MAX_FILES 16
 #define CONFIG_OPL 0
 #define MODE_COUNT 0
@@ -292,6 +296,7 @@ static void guiLock(void) {assert(!locks);locks++;}
 static void guiUnlock(void) {assert(locks);locks--;}
 // <OPL> offers list/coverflow/psbbn and builds the requested one (else list), as thmLoad does.
 static int thmLoad(const char *path) {
+ assert(switchDepth==1 && !locks); // one theme switch at a time; thmLoad takes the GUI lock itself, for the swap
  loads++;loaded=path?3:0;
  if (failLoad) return -1;
  theme.viewMask=path?1u:7u;theme.defaultView=THM_VIEW_LIST;
@@ -301,6 +306,9 @@ static int thmLoad(const char *path) {
 static void thmSetColors(theme_t *t) {(void)t;colors++;}
 int thmFindGuiID(const char *theme);
 int thmSetGuiValue(int themeID, int reload);
+static int thmSetGuiValueLocked(int themeID, int reload);
+static int thmSetViewLocked(int view);
+static int thmCycleViewLocked(void);
 @FUNCTIONS@
 int main(void) {
  themes[0].name=strdup("A");themes[0].filePath=strdup("mass0:/THM/A/");
@@ -344,14 +352,17 @@ int main(void) {
  assert(thmSetView(THM_VIEW_GRID) && theme.view==THM_VIEW_LIST && gThemeViewRequest==THM_VIEW_GRID);
  assert(!thmSetView(-5) && gThemeViewRequest==-1 && theme.view==THM_VIEW_LIST);
  theme.viewMask=1u;assert(!thmCycleView()); // a single-view theme has nothing to cycle
+ assert(!switchDepth && !locks);
  free(guiThemesNames);
  puts("Theme catalog: <OPL> + disk themes, legacy names, palette, failed-load rollback, discovery/removal and view switching passed");
 }
 '''
 functions = '\n'.join(function(s) for s in (
+    'static void thmSwitchLock(void)\n{', 'static void thmSwitchUnlock(void)\n{',
     'static void thmRebuildGuiNames(', 'int thmFindGuiID(', 'int thmSetGuiValue(',
-    'int thmAddElements(',
-    'char *thmGetFilePath(', 'void thmReinit(', 'int thmSetView(', 'int thmCycleView(',
+    'static int thmSetGuiValueLocked(int themeID, int reload)\n{', 'int thmAddElements(',
+    'char *thmGetFilePath(', 'void thmReinit(', 'static int thmSetViewLocked(int view)\n{', 'int thmSetView(',
+    'static int thmCycleViewLocked(void)\n{', 'int thmCycleView(',
 ))
 # The real pick helpers from src/themeviews.c, with the pick enum from include/themeviews.h.
 VIEWS_H = (ROOT / 'include/themeviews.h').read_text(encoding='utf-8')
