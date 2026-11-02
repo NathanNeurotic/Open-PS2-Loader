@@ -98,6 +98,11 @@ static unsigned char cdread_for_stream;       // the read queued for cdvdman_cdr
 static unsigned char cdread_breakable;        // sceCdBreak may stop the read in flight: it came through the exported sceCdRead
 static volatile unsigned char read_abort;     // sceCdBreak hit the read in flight: cdvdman_read_sectors stops at its next chunk
 static volatile unsigned char read_in_flight; // cdvdman_read is still moving data (sync_flag also covers the pending callback)
+/* Set by every sceCdBreak that returns 1, and by nothing else. cdvdfsv clears it when it starts an EE read and ends
+   that read once it is set (CDSC_GET_BREAK_FLAG), as Sony's cdvdfsv does for chain reads with a flag of its own.
+   The error code cannot tell it: a stream fill, or sceCdDiskReady on another cdvdfsv thread, can reset SCECdErABRT
+   before cdvdfsv looks, and a chunk the break cut short would then reach the EE as data. */
+volatile unsigned char cdvdfsv_break;
 static int cdvdman_scmdsema;
 int cdvdman_searchfilesema;
 static int cdvdman_ReadingThreadID;
@@ -779,6 +784,7 @@ int cdvdman_BreakRead(void)
     if (cdread_breakable && read_in_flight) {
         read_abort = 1;
         cdvdman_stat.err = SCECdErABRT;
+        cdvdfsv_break = 1;
         result = 1;
     }
     CpuResumeIntr(OldState);
@@ -881,6 +887,10 @@ int sceCdSC(int code, int *param)
             break;
         case CDSC_OPL_SHUTDOWN:
             oplShutdown(*param);
+            result = 1;
+            break;
+        case CDSC_GET_BREAK_FLAG:
+            *param = (int)&cdvdfsv_break;
             result = 1;
             break;
 #ifdef INGAMEDIAG

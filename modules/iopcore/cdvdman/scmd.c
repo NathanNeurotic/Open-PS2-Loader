@@ -130,6 +130,7 @@ int sceCdBreak(void)
     cdvdman_stat.status = SCECdStatPause;
 
     cdvdman_stat.err = SCECdErABRT;
+    cdvdfsv_break = 1; // an EE read between two of its chunks stops too (cdvdfsv)
     cdvdman_cb_event(SCECdFuncBreak);
 
     return 1;

@@ -149,6 +149,7 @@ extern int cdvdman_searchfilesema;
 extern cdvdman_status_t cdvdman_stat;
 
 extern unsigned char sync_flag;
+extern volatile unsigned char cdvdfsv_break; // set by every sceCdBreak that returns 1: see cdvdman.c
 extern unsigned char cdvdman_cdinited;
 extern u32 mediaLsnCount;
 
