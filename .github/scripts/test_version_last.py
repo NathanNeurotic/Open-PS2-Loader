@@ -22,6 +22,7 @@ class VersionLastTests(unittest.TestCase):
             "RIPTOPL-v1.2.0-Beta-4420-Korium.zip": "RIPTOPL-Korium-v1.2.0-Beta-4420.zip",
             "RIPTOPL-VARIANTS-v1.2.0-Beta-4420-Korium.zip": "RIPTOPL-VARIANTS-Korium-v1.2.0-Beta-4420.zip",
             "RIPTOPL-DEBUG-v1.2.0-Beta-4420-Korium.zip": "RIPTOPL-DEBUG-Korium-v1.2.0-Beta-4420.zip",
+            "RIPTOPL-BUGREPORT-v1.2.0-Beta-4420-Korium.zip": "RIPTOPL-BUGREPORT-Korium-v1.2.0-Beta-4420.zip",
             "RIPTOPL-LANGS-v1.2.0-Beta-4420-Korium.zip": "RIPTOPL-LANGS-Korium-v1.2.0-Beta-4420.zip",
             "RIPTOPL-v1.2.0-Beta-4420-Korium-src.zip": "RIPTOPL-src-Korium-v1.2.0-Beta-4420.zip",
         }
