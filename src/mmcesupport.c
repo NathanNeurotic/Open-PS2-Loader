@@ -93,8 +93,8 @@ static unsigned char mmceEverResolved = 0;
 // otherwise the game boots while the card is still mounting and freezes at its MC check (issue #50,
 // cross-device path). A prior change had collapsed the per-poll gap to a sub-ms nopdelay(), which
 // gutted the wait so it returned in well under a second; a real sleep restores it.
-#define MMCE_GAMEID_WAIT_TICKS     15           // max polls of the card-switch busy bit
-#define MMCE_GAMEID_POLL_US        (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
+#define MMCE_GAMEID_WAIT_TICKS        15           // max polls of the card-switch busy bit
+#define MMCE_GAMEID_POLL_US           (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
 // sd2psXtd starts the switch on a LATER pass of its main loop, not while it answers the 0x8 send, so a
 // poll straight after the send reads "not busy" before the switch has begun and the game boots while
 // the card is still loading (or creating) its per-game card from the SD the game streams from -- the
@@ -102,16 +102,20 @@ static unsigned char mmceEverResolved = 0;
 // slot already holds this game's card, or Game ID is off on the device), and is then waited out on
 // screen: loading an 8 MB card takes ~9 s, creating a new one longer. START launches at once.
 // Ported from RIPPS2 build 115 (akilluminati47/RIPPS2, mmcesupport.c).
-#define MMCE_GAMEID_START_MS       2000 // how long a sent Game ID may take to start the switch
-#define MMCE_GAMEID_START_POLL_MS  50   // poll interval while waiting for the switch to start
-#define MMCE_GAMEID_QUERY_FAILURES 3    // failed busy queries in a row that end the wait (unconfirmed)
-#define MMCE_GAMEID_QUERY_SILENT   2    // after an answer: failed queries in a row that mean the switch began
-#define MMCE_CARD_READY_MAX_S      180  // the longest the launch waits for the game's card
-#define MMCE_CARD_READY_POLL_US    (250 * 1000)
-#define MMCE_CARD_READY_SILENT_MS  7500 // the longest the card may not answer at all (mmceigr's bound)
+#define MMCE_GAMEID_START_MS          2000 // how long a sent Game ID may take to start the switch
+#define MMCE_GAMEID_START_POLL_MS     50   // poll interval while waiting for the switch to start
+#define MMCE_GAMEID_QUERY_FAILURES    3    // failed busy queries in a row that end the wait (unconfirmed)
+#define MMCE_GAMEID_QUERY_SILENT      2    // after an answer: failed queries in a row that mean the switch began
+#define MMCE_CARD_READY_MAX_S         180  // the longest the launch waits for the game's card
+#define MMCE_CARD_READY_POLL_US       (250 * 1000)
+// The card's OWN switch after the OSD history write (sd2psXtd ps2_history_tracker: 2 s of quiet after the last
+// history page write, then the folder switch). The window is how long the launch watches for it to begin.
+#define MMCE_HISTORY_SWITCH_WINDOW_MS 3500
+#define MMCE_HISTORY_SWITCH_POLL_MS   250
+#define MMCE_CARD_READY_SILENT_MS     7500 // the longest the card may not answer at all (mmceigr's bound)
 /* The MMCE worker checks its abort flag between 32 KB staged reads. A
  * 500 ms wait gives a slow card time to reach the next safe checkpoint. */
-#define MMCE_ART_ABORT_WAIT_TICKS  500
+#define MMCE_ART_ABORT_WAIT_TICKS     500
 
 // forward declaration
 static item_list_t mmceGameList;
@@ -127,6 +131,7 @@ static void mmceGetDeviceRoot(char *root, size_t size);
 // and rename), and the device re-detect can blank mmcePrefix underneath any of them.
 static int mmceModLoaded = 0;          // latched by mmceLoadModules; read by mmceSendGameID's arm check
 static char mmceGameIdTarget[8] = {0}; // last device a GameID 0x8 switch was SENT to (mmceGameIdSettle polls it)
+static int mmceGameIdSwitchSeen = 0;   // mmceSendGameID saw the card switch for its send: the history write will not switch it again
 
 // Waits, on screen, while the card reports busy after a Game ID switch. Returns 1 when it is ready or the
 // user pressed START, 0 when it was still busy at MMCE_CARD_READY_MAX_S, -1 when the card stopped
@@ -175,6 +180,7 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
     char mmceDevice[sizeof(mmcePrefix)];
 
     mmceGameIdTarget[0] = '\0'; // no stale target: only a send made by THIS call may be settled against
+    mmceGameIdSwitchSeen = 0;
 
     if (!gMMCEEnableGameID || startup == NULL || startup[0] == '\0')
         return 0;
@@ -262,9 +268,32 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
             // 19578cc6 found the same silence).
             ++queryFailures;
             if (!answered && queryFailures >= MMCE_GAMEID_QUERY_FAILURES) {
-                LOG("MMCE GameID switch: busy query failed %d times; launching unconfirmed\n", queryFailures);
-                diagLog("gameid %s: busy query failed %d times; launching unconfirmed", startup, queryFailures);
-                return -1;
+                // The card answered the presence probe and the 0x8 itself a moment ago, so a run of failed
+                // busy queries straight after the send is one of two things, and only the presence devctl
+                // tells them apart. A card that still answers 0x1 has a firmware without the busy query:
+                // end the wait unconfirmed, as before. A card that answers NOTHING is already in its swap:
+                // sd2psXtd processes SET_GAMEID and starts the switch in the SAME main-loop pass that
+                // follows the 0x8, and from "card exit" until the new card is open nothing on it answers
+                // SIO2 -- for 500 ms of sleep plus the dirty-page flush of whatever was just written (the
+                // last-played save above). Reading that silence as "no busy query" launched the game while
+                // the card it streams from was still being swapped: an MMCE-hosted launch then never gets
+                // its ISO (black screen, or the PS2 logo and nothing after it), while the same game from
+                // MX4SIO survives because its disc is elsewhere and the MX4SIO leg waits (mmceGameIdSettle).
+                if (fileXioDevctl(mmceDevice, 0x1, NULL, 0, NULL, 0) != -1) {
+                    LOG("MMCE GameID switch: busy query failed %d times while the card answers; launching unconfirmed\n", queryFailures);
+                    diagLog("gameid %s: busy query failed %d times; launching unconfirmed", startup, queryFailures);
+                    return -1;
+                }
+                LOG("MMCE GameID %s: the card went silent after %d ms (swapping)\n", startup, waited);
+                diagLog("gameid %s: the card silent after %d ms; waiting for the swap", startup, waited);
+                mmceGameIdSwitchSeen = 1; // the card is switching for our send
+                int ready = mmceWaitCardReady(mmceDevice);
+                if (ready < 0)
+                    return -1; // never came back within the silent bound: unconfirmed
+                if (ready == 0)
+                    break; // still busy at the cap: launched anyway, not settled
+                LOG("Set MMCE GameID to: %s\n", startup);
+                return 1;
             }
             if (!answered || queryFailures < MMCE_GAMEID_QUERY_SILENT) {
                 DelayThread(MMCE_GAMEID_START_POLL_MS * 1000);
@@ -278,6 +307,7 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
             LOG("MMCE GameID %s: the card started switching after %d ms (%s)\n", startup, waited,
                 status < 0 ? "not answering" : "busy");
             diagLog("gameid %s: the card switching after %d ms", startup, waited);
+            mmceGameIdSwitchSeen = 1; // the card is switching for our send
             int ready = mmceWaitCardReady(mmceDevice);
             if (ready < 0)
                 return -1; // the query failed mid-wait: unconfirmed
@@ -325,6 +355,94 @@ int mmceGameIdSettle(int timeoutMs)
     }
     LOG("MMCE GameID settle NOT confirmed after %d ms\n", timeoutMs);
     return -1;
+}
+
+// For a launch whose GAME lives on the card that was just told to switch (the native MMCE path and the
+// Neutrino MMCE leg): never hand the IOP over while the swap is still in flight. mmceSendGameID returns -1
+// when it could not confirm the settle (the card fell silent past its bound, the firmware has no busy
+// query, or the budget expired), and the handoff itself can land on a switch the firmware deferred (its
+// own buttons held, a flush in progress). Both are bounded waits here, on the slot the send targeted:
+// presence first (silence is the swap's first phase), then the busy bit, waited out on screen as in the
+// send. A firmware without the busy query settles the moment presence answers, so it pays ~0 ms. The
+// MX4SIO leg has had this since batch S7 (mmceGameIdSettle); the MMCE-hosted legs did not, and they are
+// the ones that cannot survive the swap: the ISO the game streams is on the card being swapped.
+static void mmceWaitSwapDoneOn(const char *device, const char *why)
+{
+    int silent;
+    for (silent = 0; silent * 200 < MMCE_CARD_READY_SILENT_MS; silent++) {
+        if (fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
+            int busy = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
+            if (busy >= 0 && (busy & 1)) {
+                LOG("MMCE %s: the card is still swapping; waiting\n", why);
+                diagLog("mmce %s: card still busy; waiting", why);
+                mmceWaitCardReady(device);
+            } else if (silent)
+                LOG("MMCE %s: the card answers again after ~%d ms\n", why, silent * 200);
+            return;
+        }
+        DelayThread(200 * 1000);
+    }
+    LOG("MMCE %s: the card did not answer for %d ms; launching anyway\n", why, silent * 200);
+    diagLog("mmce %s: card silent for %d ms; launching anyway", why, silent * 200);
+}
+
+void mmceWaitSwapDone(const char *why)
+{
+    if (mmceGameIdTarget[0] == '\0')
+        return; // no send this launch: nothing to wait for
+    mmceWaitSwapDoneOn(mmceGameIdTarget, why);
+}
+
+// The last look before the IOP handoff. With a Game ID send this launch it is the slot that send targeted;
+// without one (Game ID off, the reported case) it is the game's own slot, so a history-triggered switch that
+// began after mmceWaitHistorySwitch's window is still caught. ~0 ms on an idle card.
+static void mmceWaitBeforeHandoff(void)
+{
+    char device[8];
+    mmceGetDeviceRoot(device, sizeof(device));
+    mmceWaitSwapDoneOn(mmceGameIdTarget[0] != '\0' ? mmceGameIdTarget : device, "before handoff");
+}
+
+// After the OSD history write on an MMCE-hosted launch: watch the game's slot for the card's own folder
+// switch (see the launch) and wait it out on screen. Nothing to watch when our Game ID send already
+// switched the card (it is on that folder), or when the firmware has no busy query (presence answers
+// while the busy query fails): then the window is not paid. Bounded: the window, then mmceWaitCardReady.
+int mmceWaitHistorySwitch(const char *device, const char *why)
+{
+    if (mmceGameIdSwitchSeen) {
+        LOG("MMCE %s: the card already switched for the Game ID send; not waiting again\n", why);
+        return 0;
+    }
+    char line[256];
+    int polls, silent = 0;
+    for (polls = 0; polls * MMCE_HISTORY_SWITCH_POLL_MS < MMCE_HISTORY_SWITCH_WINDOW_MS; polls++) {
+        int status = fileXioDevctl(device, 0x2, NULL, 0, NULL, 0);
+        if (status >= 0 && (status & 1) == 0) {
+            silent = 0; // answering and idle: the switch has not begun (or will not)
+        } else if (status < 0 && ++silent < MMCE_GAMEID_QUERY_FAILURES) {
+            // one failed query is retried, not trusted
+        } else if (status < 0 && fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
+            LOG("MMCE %s: the card has no busy query; cannot watch for its switch\n", why);
+            return 0;
+        } else {
+            LOG("MMCE %s: the card is switching on its own after %d ms (%s)\n", why, polls * MMCE_HISTORY_SWITCH_POLL_MS,
+                status < 0 ? "not answering" : "busy");
+            diagLog("mmce %s: the card switching on its own after %d ms", why, polls * MMCE_HISTORY_SWITCH_POLL_MS);
+            mmceWaitCardReady(device);
+            return 1;
+        }
+        // The whole window is visible (it looked like a freeze before the launch), and START skips it.
+        readPads();
+        if (getKeyOn(KEY_START)) {
+            LOG("MMCE %s: START pressed after %d ms; not watching for the card's switch\n", why, polls * MMCE_HISTORY_SWITCH_POLL_MS);
+            return 0;
+        }
+        snprintf(line, sizeof(line), _l(_STR_MMCE_GAMEID_CARD_WAIT), polls * MMCE_HISTORY_SWITCH_POLL_MS / 1000);
+        guiRenderTextScreen(line);
+        DelayThread(MMCE_HISTORY_SWITCH_POLL_MS * 1000);
+    }
+    LOG("MMCE %s: no card switch within %d ms\n", why, MMCE_HISTORY_SWITCH_WINDOW_MS);
+    return 0;
 }
 
 static void mmceGetDeviceRoot(char *root, size_t size)
@@ -1139,9 +1257,29 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             }
             // protectMcPath=NULL: the native path loads no ELF from mcN: mid-launch (ee_core is
             // embedded; sysLaunchLoaderElf reads rom0: only).
-            if (mmceSendGameID(game->startup, NULL, vmcMask))
+            int gameIdSwitched = mmceSendGameID(game->startup, NULL, vmcMask);
+            if (gameIdSwitched < 0)
+                mmceWaitSwapDone("unconfirmed switch"); // the game is ON this card: wait the swap out
+            if (gameIdSwitched)
                 mmceSettleAfterSwitch();
-            diagSaveBeforeLaunch(); // again, now with the Game ID switch and the card's wait in it
+            // The OSD history record. sysLaunchLoaderElf used to write it right before the IOP reset, for every
+            // device. An MMCE with its own Game ID detection on (the feature is meant to work this way) watches
+            // that write and switches to the game's folder about 2 s later: during ee_core's start, with the
+            // card answering nothing while it swaps and the ISO the game streams from ON that card. The OPL core
+            // then never got its disc: a black screen, or the PS2 logo and nothing after it. Keep the write and
+            // the switch, but make them happen HERE, before any card-side fd exists, and wait the switch out on
+            // screen exactly like a Game ID one (the card's busy query, or its silence). A card that already
+            // switched for our Game ID send is on that folder and will not switch again: no wait.
+            char historyName[32];
+            if (configGetStrCopy(configSet, CONFIG_ITEM_ALTSTARTUP, historyName, sizeof(historyName)) == 0)
+                strcpy(historyName, game->startup);
+            if (sysAddHistoryRecord(historyName)) { // no record (debug builds): nothing for the card to react to
+                char historyDevice[8];
+                mmceGetDeviceRoot(historyDevice, sizeof(historyDevice));
+                if (mmceWaitHistorySwitch(historyDevice, "history write"))
+                    mmceSettleAfterSwitch(); // the fs surface came back with the new card: let it answer first
+            }
+            diagSaveBeforeLaunch(); // again, now with the Game ID switch, the history write and the card's waits in it
         }
     }
 
@@ -1389,6 +1527,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // leg is ALWAYS mmce-hosted, so after any actual switch both our own reads below (neutrino.elf
         // load, ISO open for the keep-IOP handoff) AND Neutrino's own post-reset mmceman read hit the
         // just-switched card -- wait for the switched slot's fs to answer first (issue #56/#68).
+        if (gameIdSwitched < 0)
+            mmceWaitSwapDone("unconfirmed switch"); // the game is ON this card: wait the swap out
         if (gameIdSwitched)
             mmceSettleAfterSwitch();
         diagSaveBeforeLaunch(); // again, now with the Game ID switch and the card's wait in it
@@ -1396,6 +1536,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
+        // Last look before the handoff, as on the native leg: a switch the firmware deferred must not be in
+        // flight when Neutrino's mmceman takes the card over. ~0 ms on an idle card.
+        mmceWaitBeforeHandoff();
         deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);
         sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, -1, &neutrinoVmc);
         return;
@@ -1444,6 +1587,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // per-game VMC was configured (no VMC -> mcemu never loads and the game talks to the REAL card,
     // where the per-game folder genuinely matters: AndrewBento's logo-off report). The cross-device
     // paths (bdm/hdd/eth) send it too, with the same wait.
+
+    // Last look before the handoff: a switch the firmware deferred (its buttons held, a flush) or that a
+    // card-side history refresh queued must not be in flight when mmcedrv takes the ISO handle over. On
+    // the game's own slot when no Game ID was sent (see mmceWaitBeforeHandoff).
+    mmceWaitBeforeHandoff();
 
     if (gAutoLaunchBDMGame == NULL) {
         deinit(NO_EXCEPTION, MMCE_MODE); // CAREFUL: deinit will call mmceCleanUp, so mmceGames/game will be freed

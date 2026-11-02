@@ -33,6 +33,10 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
 // Bounded post-GameID settle for cross-device launches sharing SIO2 with the MMCE (MX4SIO, batch S7).
 // Polls the device the last send targeted; 0 = settled, -1 = expired. Caller warns + proceeds.
 int mmceGameIdSettle(int timeoutMs);
+// MMCE-hosted launches: wait out a card swap still in flight on the slot the last Game ID send targeted.
+void mmceWaitSwapDone(const char *why);
+// After the OSD history write: wait out the card's own folder switch on the game's slot (bounded).
+int mmceWaitHistorySwitch(const char *device, const char *why); // 1 when the card's own switch was waited out
 // Arm the GameID transport at menu/settings time (idempotent; no-op when the feature is off).
 void mmceArmGameIDTransport(void);
 // Reset present MMCE cards (SD2PSX/MemCard PRO2) to default channel (Card 1 / Channel 1) and clear GameID.
