@@ -170,11 +170,12 @@ memory card home with no card found, or a raw APA path (`hdd0:`) rather than a m
 
 **Which pads take a profile.** A pad with a Sony vendor ID (054C or 12BA) never takes one, in a game or in the menu,
 and neither does the ShanWan PS3 clone (2563:0575): the DualShock 3 and 4, the guitars, other Sony pads and the
-ShanWan keep their built-in decoders. A profile for one of them is read and packed but never used. `decoder=` is read,
-but nothing in PADEMU uses it, so the launcher leaves out a profile whose `decoder=` is not `generic` (its pad would do
-nothing), and My Pads says why. At most four profiles are used, as the block holds four: after the fourth good one,
-in the order the folder lists them, the rest are left out, and so is a file over 4095 bytes, rather than read in part.
-Each file left out is named, with the reason, in the debug log and in `DIAG.TXT`.
+ShanWan keep their built-in decoders. So the launcher leaves out a profile for one of them, which would only take a
+place in the block, and My Pads says why. `decoder=` is read, but nothing in PADEMU uses it, so the launcher also leaves
+out a profile whose `decoder=` is not `generic` (its pad would do nothing), and My Pads says why. At most four profiles
+are used, as the block holds four: after the fourth good one, in the order the folder lists them, the rest are left
+out, and so is a file over 4095 bytes, rather than read in part. Each file left out is named, with the reason, in the
+debug log and in `DIAG.TXT`.
 
 **Game maps** apply only to the pads PADEMU's USB driver reads: DualShock 3, DualShock 4, the ShanWan PS3 clone and
 profiled pads. Not the guitars, not pads on Bluetooth, not a real DualShock 2 in a controller port, and not the menu.
@@ -248,7 +249,8 @@ settle, in the text or in the reader: this build changes neither on its own.
    before a built-in decoder, does not hold for Sony pads. Nor does it for the ShanWan PS3 clone, whose built-in decoder
    comes first in RIPPS2 and here, although its ID is the example name in [Files](#files) (`2563_0575.pad`). The reader
    takes `decoder=ds3` with no buttons, a profile that decodes nothing. This build's launcher leaves out every profile
-   whose `decoder=` is not `generic` ([In this build](#in-this-build)).
+   whose `decoder=` is not `generic`, and every profile for a Sony vendor ID or the ShanWan PS3 clone
+   ([In this build](#in-this-build)).
 10. **F10, the report's length.** In RIPPS2, PADEMU decodes every report as 64 bytes long, so "a byte past the
     report's end reads as released / centred" never applies there. This build's PADEMU passes each report's real
     length, as the menu's driver does.

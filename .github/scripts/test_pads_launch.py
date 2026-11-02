@@ -20,6 +20,8 @@ ee_core gives it to PADEMU) and to the menu's driver (read at boot, sent from re
      block, not the old one;
    - a profile with decoder= other than generic, a file over 4095 bytes and a bad file are left out, each with its
      reason in DIAG.TXT; a fifth profile is left out unopened;
+   - a profile for a Sony ID (054C, 12BA) or the ShanWan PS3 pad (2563:0575), which neither USB driver ever profiles,
+     is left out too, with its reason, whatever its decoder=; another ShanWan pad's is packed;
    - a game map alone makes a block with no profile; no ID, another game, a map that changes nothing or a bad map
      makes none, and the menu never gets a game map;
    - a driver that does not take the block is tried again the next frame; Set Up A USB Pad open sends no profile
@@ -466,13 +468,13 @@ static void s_one(void)
     const unsigned char *b;
     char path[1024];
     int i;
-    CHECK(expect_block("2563_0575.pad", 0x2563, 0x0575, want) == 0, "the test profile reads");
+    CHECK(expect_block("0079_0006.pad", 0x0079, 0x0006, want) == 0, "the test profile reads");
     CHECK(padProfilesPrepare("SLUS_123.45") == 0, "one profile: a block");
     b = padProfilesBlock();
     CHECK(b != NULL && !memcmp(b, want, PAD_BLOCK_SIZE), "the block is the profile as padBlockPack packs it");
     if (b != NULL) {
         CHECK(b[0] == 'P' && b[1] == 'D' && b[2] == PAD_FORMAT && b[3] == 1, "PD, format 1, one profile");
-        CHECK(b[4] == 0x63 && b[5] == 0x25 && b[6] == 0x75 && b[7] == 0x05, "the VID and PID from its name, little endian");
+        CHECK(b[4] == 0x79 && b[5] == 0x00 && b[6] == 0x06 && b[7] == 0x00, "the VID and PID from its name, little endian");
         for (i = MAP_AT; i < PAD_BLOCK_SIZE; i++)
             CHECK(b[i] == PAD_REMAP_SAME, "no game map: byte %d", i);
     }
@@ -493,7 +495,7 @@ static void s_one(void)
     padProfilesMenuTick();
     padProfilesMenuTick();
     CHECK(!strcmp(t_seq, "S0P S0P "), "after the NBD server's IOP reset, once more (%s)", t_seq);
-    snprintf(path, sizeof(path), "%s/PADS/2563_0575.pad", t_home);
+    snprintf(path, sizeof(path), "%s/PADS/0079_0006.pad", t_home);
     CHECK(remove(path) == 0, "remove %s", path);
     CHECK(padProfilesPrepare("SLUS_123.45") == -1 && padProfilesBlock() == NULL, "the profile gone: a later launch gets no block, not the old one");
     padProfilesMenuLoad();
@@ -516,9 +518,33 @@ static void s_ds3(void)
     const unsigned char *b;
     CHECK(padProfilesPrepare("SLUS_123.45") == 0, "the generic profile makes a block");
     b = padProfilesBlock();
-    CHECK(b != NULL && b[3] == 1 && b[4] == 0x63 && b[5] == 0x25, "the generic profile alone (count %d)", b ? b[3] : -1);
-    CHECK(t_diags == 1 && strstr(t_diag, "054C_0268.pad left out: decoder= is not generic") != NULL,
+    CHECK(b != NULL && b[3] == 1 && b[4] == 0x79 && b[5] == 0x00, "the generic profile alone (count %d)", b ? b[3] : -1);
+    CHECK(t_diags == 1 && strstr(t_diag, "0001_0004.pad left out: decoder= is not generic") != NULL,
           "the decoder=ds3 profile is left out, and DIAG.TXT says why (%s)", t_diag);
+    balanced();
+}
+
+static void s_builtin(void)
+{
+    static const char *const dead[] = {"054C_0268.pad", "054C_05C4.pad", "12BA_0100.pad", "2563_0575.pad"};
+    const unsigned char *b;
+    char want[96], path[1024];
+    unsigned i;
+    CHECK(padProfilesPrepare("SLUS_123.45") == 0, "another ShanWan pad's profile makes a block");
+    b = padProfilesBlock();
+    CHECK(b != NULL && b[3] == 1 && b[4] == 0x63 && b[5] == 0x25 && b[6] == 0x76 && b[7] == 0x05,
+          "2563_0576.pad alone (count %d)", b ? b[3] : -1);
+    for (i = 0; i < sizeof(dead) / sizeof(dead[0]); i++) {
+        snprintf(want, sizeof(want), "%s left out: a Sony pad or the ShanWan PS3 pad takes no profile", dead[i]);
+        CHECK(strstr(t_diag, want) != NULL, "%s is left out, whatever its decoder=, and DIAG.TXT says why (%s)", dead[i], t_diag);
+    }
+    CHECK(t_diags == 4, "four files reported (%d)", t_diags);
+    snprintf(path, sizeof(path), "%s/PADS/2563_0576.pad", t_home);
+    CHECK(remove(path) == 0, "remove %s", path);
+    CHECK(padProfilesPrepare("SLUS_123.45") == -1 && padProfilesBlock() == NULL, "only those left: no block");
+    padProfilesMenuLoad();
+    padProfilesMenuTick();
+    CHECK(t_sets == 0, "and the menu's driver is not called (%s)", t_seq);
     balanced();
 }
 
@@ -585,7 +611,7 @@ static void s_retry(void)
 static void s_learn(void)
 {
     unsigned char want[PAD_BLOCK_SIZE];
-    CHECK(expect_block("2563_0575.pad", 0x2563, 0x0575, want) == 0, "the test profile reads");
+    CHECK(expect_block("0079_0006.pad", 0x0079, 0x0006, want) == 0, "the test profile reads");
     padProfilesMenuLoad();
     CHECK(padProfilesMenuLearn(1) == 0, "Set Up A USB Pad opens");
     CHECK(!strcmp(t_seq, "S1Z R3 "), "open: no profile, both ports (%s)", t_seq);
@@ -636,9 +662,9 @@ int main(int argc, char **argv)
     {
         const char *name;
         void (*run)(void);
-    } s[] = {{"dir", s_dir}, {"absent", s_absent}, {"empty", s_empty}, {"one", s_one}, {"ds3", s_ds3}, {"big", s_big},
-             {"maponly", s_maponly}, {"five", s_five}, {"retry", s_retry}, {"learn", s_learn}, {"learnfail", s_learnfail},
-             {"learnnone", s_learnnone}};
+    } s[] = {{"dir", s_dir}, {"absent", s_absent}, {"empty", s_empty}, {"one", s_one}, {"ds3", s_ds3}, {"builtin", s_builtin},
+             {"big", s_big}, {"maponly", s_maponly}, {"five", s_five}, {"retry", s_retry}, {"learn", s_learn},
+             {"learnfail", s_learnfail}, {"learnnone", s_learnnone}};
     unsigned i;
     if (argc != 3)
         return 2;
@@ -680,16 +706,18 @@ SCENARIOS = {
     'dir': None,
     'absent': {},
     'empty': {'PADS/readme.txt': 'not a profile\n', 'PADS/GAMES/': None},
-    'one': {'PADS/2563_0575.pad': GEN},
-    'ds3': {'PADS/054C_0268.pad': DS3, 'PADS/2563_0575.pad': GEN},
+    'one': {'PADS/0079_0006.pad': GEN},
+    'ds3': {'PADS/0001_0004.pad': DS3, 'PADS/0079_0006.pad': GEN},
+    'builtin': {'PADS/054C_0268.pad': GEN, 'PADS/054C_05C4.pad': DS3, 'PADS/12BA_0100.pad': GEN, 'PADS/2563_0575.pad': GEN,
+                'PADS/2563_0576.pad': GEN},
     'big': {'PADS/1111_2222.pad': padded(GEN, 4095), 'PADS/3333_4444.pad': padded(GEN, 4096),
             'PADS/5555_6666.pad': 'cross=b0.1\nnot a line\n'},
     'maponly': {'PADS/GAMES/SLUS_123.45.pad': 'format=1\ncross=circle\n', 'PADS/GAMES/SLES_000.00.pad': 'format=1\n',
                 'PADS/GAMES/SCUS_111.11.pad': 'format=1\ncross=banana\n'},
     'five': {'PADS/100%d_0001.pad' % i: GEN for i in range(1, 6)},
-    'retry': {'PADS/2563_0575.pad': GEN},
-    'learn': {'PADS/2563_0575.pad': GEN},
-    'learnfail': {'PADS/2563_0575.pad': GEN},
+    'retry': {'PADS/0079_0006.pad': GEN},
+    'learn': {'PADS/0079_0006.pad': GEN},
+    'learnfail': {'PADS/0079_0006.pad': GEN},
     'learnnone': {},
 }
 
@@ -855,6 +883,8 @@ with tempfile.TemporaryDirectory() as td:
                                'void padProfilesMenuLoad(void) {}\nvoid padProfilesMenuTick(void) {}\n'
                                'int padProfilesMenuLearn(int on) { return on; }\nvoid padProfilesMenuResend(void) {}\n'
                                'int padProfilesDir(char *out, int size) { return out != 0 && size > 0; }\n'
+                               'int padProfilesRead(const char *p, char *b, int s) { return p != 0 && b != 0 && s > 0; }\n'
+                               'int padProfilesLeftOut(const void *d) { return d != 0; }\n'
                                'int main(void) { return padProfilesBlock() != 0; }\n', encoding='utf-8')
     r = subprocess.run(flags + ['-I', str(stub), '-I', str(root), str(td / 'none.c'), str(root / 'src/padprofiles.c'),
                                 '-o', str(td / 'none.exe')], capture_output=True, text=True)

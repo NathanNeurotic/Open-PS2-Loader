@@ -14,9 +14,10 @@
 
 #include "include/padfile.h" // pad_def_t
 
-// Read <settings home>/PADS/*.pad (up to PAD_DEFS_MAX profiles, decoder=generic only) and PADS/GAMES/<gameId>.pad
-// (gameId may be NULL: no game map), and pack them for this launch. 0 when a block is ready, -1 when there is none (no
-// PADS folder, no usable profile and no game map). On the launching thread, before the drives are let go.
+// Read <settings home>/PADS/*.pad (up to PAD_DEFS_MAX profiles, each one padProfilesLeftOut keeps) and
+// PADS/GAMES/<gameId>.pad (gameId may be NULL: no game map), and pack them for this launch. 0 when a block is ready, -1
+// when there is none (no PADS folder, no usable profile and no game map). On the launching thread, before the drives are
+// let go.
 int padProfilesPrepare(const char *gameId);
 
 // This launch's PAD_BLOCK_SIZE block for PADEMU (after its 8 settings bytes), or NULL. The launching thread only.

@@ -8,7 +8,8 @@
   From RIPPS2 build 126-129 by akilluminati47 (https://github.com/akilluminati47/RIPPS2): its ripps2pads.c, with the
   PADS folder beside the settings rather than beside the ELF, every read on the caller's own stack (a launch and the
   menu's boot read may run at once, on two threads), the menu's copy handed between threads with interrupts off, and a
-  profile whose decoder= is not generic left out.
+  profile whose decoder= is not generic, or whose pad keeps a USB driver's own decoder, left out (padProfilesLeftOut,
+  which My Pads asks too).
 
   As a game starts (sbPrepare, before the drives are let go), the PADS folder beside the settings is read: up to
   PAD_DEFS_MAX VVVV_PPPP.pad profiles, checked by the reference reader (padfile.c), and PADS/GAMES/<the game's ID>.pad,
@@ -25,12 +26,14 @@
 #include "include/diaglog.h" // why a file was left out, in DIAG.TXT for a release build too
 #include "include/padfile.h"
 #include "include/padprofiles.h"
+#include "include/ds34common.h" // the Sony and ShanWan IDs both USB drivers decode themselves
 #include <libds34usb.h>
 
-// A .pad's text, NUL ended (RIPPS2's launcher size). A bigger file is left out rather than cut: a cut text can still
-// parse, with its last line cut short
-#define PADS_TEXT_SIZE 4096
+// A .pad's text, NUL ended (RIPPS2's launcher size; My Pads reads with the same limit). A bigger file is left out
+// rather than cut: a cut text can still parse, with its last line cut short
+#define PADS_TEXT_SIZE (PAD_PROFILE_TEXT_MAX + 1)
 #define PADS_TOO_BIG   "larger than 4095 bytes"
+_Static_assert(PAD_PROFILE_TEXT_MAX == 4095, "PADS_TOO_BIG names the limit");
 
 int padProfilesDir(char *out, int size)
 {
@@ -56,8 +59,9 @@ int padProfilesDir(char *out, int size)
     return 0;
 }
 
-// A file's text, NUL ended, and its length: -1 when it cannot be read, -2 when it is larger than size - 1 bytes
-static int padsRead(const char *path, char *buf, int size)
+// A file's text, NUL ended, and its length: -1 when it cannot be read, -2 when it is larger than size - 1 bytes. My Pads
+// reads each profile with it too, so it shows what a launch gets
+int padProfilesRead(const char *path, char *buf, int size)
 {
     int fd, n = 0, r = 0, big = 0;
     char more;
@@ -81,6 +85,16 @@ static void padsLeftOut(const char *name, const char *why)
 {
     LOG("PADS: %s left out: %s\n", name, why);
     diagLog("pads: %s left out: %s", name, why);
+}
+
+// Why the packer leaves out a profile the reader accepted (My Pads asks the same), or PAD_PROFILE_USED. Both USB drivers
+// keep their own decoders for every Sony ID and for the ShanWan PS3 pad and never look up a profile for them, and
+// PADEMU ignores decoder= (its DualShock and guitar decoders take no profile): either would only fill a slot of the block
+int padProfilesLeftOut(const pad_def_t *def)
+{
+    if (def->vid == DS34_VID || def->vid == SONY_VID || (def->vid == SHANWAN_VID && def->pid == SHANWAN_PS3_PID))
+        return PAD_PROFILE_BUILT_IN;
+    return def->decoder != PAD_DEC_GENERIC ? PAD_PROFILE_NOT_GENERIC : PAD_PROFILE_USED;
 }
 
 // PADS read and packed into out: the number of profiles (0 with only a game map), or -1 with nothing to pack (out is
@@ -108,7 +122,7 @@ static int padsCollect(const char *gameId, unsigned char out[PAD_BLOCK_SIZE])
             padsLeftOut(e->d_name, err);
             continue;
         }
-        n = snprintf(path, sizeof(path), "%s/%s", dir, e->d_name) < (int)sizeof(path) ? padsRead(path, text, sizeof(text)) : -1;
+        n = snprintf(path, sizeof(path), "%s/%s", dir, e->d_name) < (int)sizeof(path) ? padProfilesRead(path, text, sizeof(text)) : -1;
         if (n < 0) {
             padsLeftOut(e->d_name, n == -2 ? PADS_TOO_BIG : "could not be read");
             continue;
@@ -117,9 +131,10 @@ static int padsCollect(const char *gameId, unsigned char out[PAD_BLOCK_SIZE])
             padsLeftOut(e->d_name, err);
             continue;
         }
-        // PADEMU ignores decoder= (its DualShock and guitar decoders take no profile): such a profile would be a dead pad
-        if (defs[count].decoder != PAD_DEC_GENERIC) {
-            padsLeftOut(e->d_name, "decoder= is not generic, and the Pad Emulator plays generic profiles only");
+        // a profile no driver would use: a dead pad, or a slot taken for nothing
+        if ((n = padProfilesLeftOut(&defs[count])) != PAD_PROFILE_USED) {
+            padsLeftOut(e->d_name, n == PAD_PROFILE_BUILT_IN ? "a Sony pad or the ShanWan PS3 pad takes no profile" :
+                                                               "decoder= is not generic, and the Pad Emulator plays generic profiles only");
             continue;
         }
         count++;
@@ -127,7 +142,7 @@ static int padsCollect(const char *gameId, unsigned char out[PAD_BLOCK_SIZE])
     closedir(d);
     memset(map, PAD_REMAP_SAME, sizeof(map));
     if (gameId != NULL && gameId[0] != '\0' && snprintf(path, sizeof(path), "%s/GAMES/%s.pad", dir, gameId) < (int)sizeof(path)) {
-        n = padsRead(path, text, sizeof(text));
+        n = padProfilesRead(path, text, sizeof(text));
         if (n == -2)
             padsLeftOut(path, PADS_TOO_BIG);
         else if (n >= 0 && padMapParse(text, n, map, err, sizeof(err)) != 0)
