@@ -501,6 +501,7 @@ embedded font for a slot.
 | Key | Value | Meaning |
 |---|---|---|
 | `coverflow_cover_offset` | int (−1024…1024, default 0) | Horizontal nudge for the Coverflow carousel (see §8). |
+| `list_cfg_text` | 0/1 (default 1) | `0` leaves the game CFG's `Title` and `Description` off the list pages: an `AttributeText` with `attribute=Title` or `attribute=Description` in a `main` family (`main`, `appsMain`, `favsMain`, `vcdMain`, `favsVcdMain`, `favsAppsMain`, and their view blocks). The info page keeps them. **Settings → Interface → List Title and Description** follows this key on **Theme**, its default. **On** and **Off** override it. From [RIPPS2](https://github.com/akilluminati47/RIPPS2) ([akilluminati47](https://github.com/akilluminati47), build 126). |
 | `use_default` | 0/1 | Use OPL's embedded default assets for anything the theme omits. |
 | `use_real_height` | 0/1 | Lay out against the real screen height instead of 480. |
 | `use_settings_bg` | 0/1 | Load the theme's `settings_bg.png` behind the settings menus. |
