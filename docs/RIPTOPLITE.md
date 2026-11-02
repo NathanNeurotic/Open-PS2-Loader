@@ -61,7 +61,7 @@ time, and `src/riptlite.c` holds their settings off whatever the settings file s
 
 [`lite-release.yml`](../.github/workflows/lite-release.yml) runs after each published
 RetroAchievements release. It builds all sixteen loaders from that release's revision with the same
-frozen Korium theme delta, checks in each ELF that every left-out module is a stub and that the
+frozen Korium theme delta, checks in each ELF that no left-out module carries real data and that the
 device's own drivers are present, packages them with `.github/scripts/package_lite_release.py` and
 publishes `rolling-lite` with `.github/scripts/publish_lite_release.py`. It refuses a revision that
 `rolling` or `rolling-ra` has moved on from, and never marks the release GitHub's Latest.

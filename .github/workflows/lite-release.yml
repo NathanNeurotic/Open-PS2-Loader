@@ -146,9 +146,12 @@ jobs:
           NM=mips64r5900el-ps2-elf-nm
           command -v "$NM" >/dev/null 2>&1 || NM=ee-nm
           "$NM" -S opl.elf > lite-build/symbols.txt
-          # Every left-out module is a 16-byte stub; the device's own cdvdman is real.
+          # Every left-out module is a 16-byte stub, or gone when the linker dropped the code that named it;
+          # never real module data. The device's own cdvdman is real.
           for SYM in $(make -s RIPTOPLITE="$DEVICE" RETROACHIEVEMENTS="$RA" lite-dropped); do
-            grep -Eq "^[0-9a-f]+ 0+10 [bB] ${SYM}_irx$" lite-build/symbols.txt || { echo "::error::${SYM}_irx is not a stub"; exit 1; }
+            if grep -Eq " ${SYM}_irx$" lite-build/symbols.txt; then
+              grep -Eq "^[0-9a-f]+ 0+10 [bB] ${SYM}_irx$" lite-build/symbols.txt || { echo "::error::${SYM}_irx is not a stub"; exit 1; }
+            fi
           done
           case "$DEVICE" in
             hdd) KEEP=hdd_cdvdman ;; smb) KEEP=smb_cdvdman ;; udpfs) KEEP=udpfs_cdvdman ;;
