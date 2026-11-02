@@ -6,12 +6,32 @@
 #include "include/themes.h"
 #include "include/sound.h"
 #include "include/gui.h" // guiLock/guiUnlock -- serialize the language name-list rebuild
+#include "include/supportbase.h"
 #include <dirent.h>
 #include <limits.h>
 
 static int guiLangID = 0;
 static char **lang_strs = internalEnglish;
 static int nValidEntries = LANG_STR_COUNT;
+
+// One language switch at a time. The IO thread switches language when a device with the saved language comes up,
+// or for a queued settings load, and the GUI thread does for the settings. lngLoadFromFile reads the current strings
+// before it takes the GUI lock to swap, so two switches at once would both free that one table, and guiLangID and
+// nValidEntries must describe the table that is published. lngSetGuiValue holds this lock from before that read until
+// the id is committed. Lock order: language switch, theme switch, GUI lock. lngInit creates it before the IO thread.
+static int lngSwitchSema = -1;
+
+static void lngSwitchLock(void)
+{
+    if (lngSwitchSema >= 0)
+        WaitSema(lngSwitchSema);
+}
+
+static void lngSwitchUnlock(void)
+{
+    if (lngSwitchSema >= 0)
+        SignalSema(lngSwitchSema);
+}
 
 static int nLanguages = 0;
 static int languageCapacity = 0;
@@ -186,6 +206,7 @@ static int lngLoadFromFile(char *path, char *name)
         // The GUI thread draws these strings under the GUI lock, and lngAddLanguages runs this on the IO thread when
         // a device with the saved language comes up: publish the new strings and free the old ones under the same
         // lock (YAOPL b45a592d, Roman Kelesidis). lngFreeFromFile still sees the old guiLangID and nValidEntries.
+        // The caller (lngSetGuiValue) holds lngSwitchSema, so curL is still the published table here.
         guiLock();
         lang_strs = newL;
         lngFreeFromFile(curL);
@@ -430,6 +451,8 @@ void lngInitFallbackFont(void)
 
 void lngInit(void)
 {
+    if (lngSwitchSema < 0)
+        lngSwitchSema = sbCreateSemaphore();
     fntInit();
 
     lngAddLanguages(gBaseMCDir, "/", -1);
@@ -453,7 +476,8 @@ void lngEnd(void)
     fntEnd();
 }
 
-int lngSetGuiValue(int langID)
+// lngSetGuiValue for a caller that holds lngSwitchSema.
+static int lngSetGuiValueLocked(int langID)
 {
     if (langID >= 0 && langID <= nLanguages) {
         if (guiLangID != langID) {
@@ -470,7 +494,7 @@ int lngSetGuiValue(int langID)
                 free(path);
                 if (loaded) {
                     guiLangID = langID;
-                    thmSetGuiValue(thmGetGuiValue(), 1);
+                    thmReload();
                     bgmUnMute();
                     return 1;
                 }
@@ -489,12 +513,20 @@ int lngSetGuiValue(int langID)
             guiUnlock();
             // lang switched back to internalEnglish, reload default font
             fntLoadDefault(NULL);
-            thmSetGuiValue(thmGetGuiValue(), 1);
+            thmReload();
             bgmUnMute();
             return 1;
         }
     }
     return 0;
+}
+
+int lngSetGuiValue(int langID)
+{
+    lngSwitchLock();
+    int changed = lngSetGuiValueLocked(langID);
+    lngSwitchUnlock();
+    return changed;
 }
 
 int lngGetGuiValue(void)

@@ -25,6 +25,15 @@ Checks, on the source:
    holds it when it calls in.
 4. thmLoad publishes the new theme and frees the old one under the lock; lngLoadFromFile and the switch
    back to English do the same for the strings.
+5. One theme switch and one language switch at a time. thmLoad and lngLoadFromFile read the current theme or
+   strings before they take the GUI lock, so two loads at once (the IO thread bringing up a device with the
+   saved theme while the GUI thread changes the view, say) would both free the same one. Every thmLoad,
+   setGuiValueLocked and thmSetViewLocked call sits where the theme switch lock is held, and every
+   lngLoadFromFile call where the language switch lock is held; the functions that take a lock are never
+   called with it already held (it is not recursive), the C edition releases it on every way out, and both
+   locks exist before the IO thread starts. A reload of the current theme reads the id under the lock
+   (thmReload), never as thmSetGuiValue(thmGetGuiValue(), 1), which can reload a theme the IO thread has
+   just replaced. Theme code never switches language, so the lock order stays language, theme, GUI.
 """
 from pathlib import Path
 import re
@@ -241,15 +250,205 @@ def check_swap(rel, signature, publish, free):
         failures.append('%s: "%s" and "%s" in %s...) must sit in one locked section' % (rel, publish, free, signature))
 
 
+def blank_literals(text):
+    """text with the inside of every string and character literal blanked (quotes and newlines kept)."""
+    out = []
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        if c in '"\'':
+            j = i + 1
+            while j < n and text[j] != c:
+                j += 2 if text[j] == '\\' else 1
+            out.append(c + re.sub(r'[^\n]', ' ', text[i + 1:j]) + c)
+            i = j + 1
+        else:
+            out.append(c)
+            i += 1
+    return ''.join(out)
+
+
+DEFINITION = re.compile(r'^(?![\s#/])[^\n;{}=]*?([\w:~]+)\s*\([^;{}]*\)\s*(?:const\s*)?\n\{', re.M)
+
+
+def functions(code):
+    """(name, signature start, body start, body end) of every top-level function definition in code."""
+    found = []
+    for m in DEFINITION.finditer(code):
+        start = m.end() - 1
+        depth = 0
+        for i in range(start, len(code)):
+            if code[i] == '{':
+                depth += 1
+            elif code[i] == '}':
+                depth -= 1
+                if depth == 0:
+                    found.append((m.group(1).split('::')[-1], m.start(), start, i))
+                    break
+    return found
+
+
+def block_end(code, pos):
+    """Position of the '}' that closes the innermost block holding pos."""
+    depth = 0
+    for i in range(pos, len(code)):
+        if code[i] == '{':
+            depth += 1
+        elif code[i] == '}':
+            if depth == 0:
+                return i
+            depth -= 1
+    return len(code)
+
+
+class SwitchLock:
+    def __init__(self, rel, take, drop, raii):
+        self.rel = rel
+        self.code = blank_literals(strip_comments(read(rel)))
+        self.funcs = functions(self.code)
+        self.take = take
+        self.drop = drop
+        self.raii = raii
+
+    def where(self, pos):
+        return '%s:%d' % (self.rel, self.code.count('\n', 0, pos) + 1)
+
+    def enclosing(self, pos):
+        for f in self.funcs:
+            if f[2] < pos < f[3]:
+                return f
+        return None
+
+    def defined_at(self, pos):
+        return any(f[1] <= pos < f[2] for f in self.funcs)
+
+    def held(self, pos):
+        f = self.enclosing(pos)
+        if f is None:
+            return False
+        for t in re.finditer(re.escape(self.take), self.code[:pos]):
+            if t.start() < f[2]:
+                continue
+            # A C-style lock lasts to its unlock; a scoped one also ends with the block that holds it.
+            end = block_end(self.code, t.end()) if self.raii else f[3]
+            drop = self.code.find(self.drop, t.end(), end)
+            end = drop if drop >= 0 else end
+            if pos < end:
+                return True
+        return False
+
+    def calls(self, name):
+        for m in re.finditer(r'\b%s\s*\(' % re.escape(name), self.code):
+            if not self.defined_at(m.start()):
+                yield m.start()
+
+    def body(self, name):
+        for f in self.funcs:
+            if f[0] == name:
+                return f
+        failures.append('%s: %s() not found' % (self.rel, name))
+        return None
+
+
+def check_switch_lock(lock, takers, locked_only):
+    for name in takers:
+        f = lock.body(name)
+        if f is None:
+            continue
+        body = lock.code[f[2]:f[3]]
+        takes = body.count(lock.take)
+        if takes != 1:
+            failures.append('%s: %s() takes the switch lock %d times, not once' % (lock.rel, name, takes))
+            continue
+        if not lock.raii:
+            t = body.find(lock.take)
+            d = body.find(lock.drop, t)
+            if d < 0 or body.count(lock.drop) != 1:
+                failures.append('%s: %s() must release the switch lock exactly once, after taking it' % (lock.rel, name))
+            elif re.search(r'\breturn\b', body[t:d]):
+                failures.append('%s: %s() returns while it still holds the switch lock' % (lock.rel, name))
+    for name in locked_only:
+        for pos in lock.calls(name):
+            f = lock.enclosing(pos)
+            if f is None:
+                continue  # a prototype
+            if f[0] not in locked_only and not lock.held(pos):
+                failures.append('%s %s() called from %s() without the switch lock held' % (lock.where(pos), name, f[0]))
+    for name in takers:
+        for pos in lock.calls(name):
+            if lock.held(pos) or (lock.enclosing(pos) or ('',))[0] in locked_only:
+                failures.append('%s %s() takes the switch lock, but its caller already holds it (not recursive)'
+                                % (lock.where(pos), name))
+
+
+def check_created_first(rel, init, sema, first_use):
+    code = blank_literals(strip_comments(read(rel)))
+    body = function_body(code, init)
+    if body is None:
+        failures.append(init + ' not found in ' + rel)
+        return
+    made = body.find('%s = sbCreateSemaphore();' % sema)
+    used = body.find(first_use)
+    if made < 0 or used < 0 or made > used:
+        failures.append('%s: %s...) must create %s before %s' % (rel, init, sema, first_use))
+
+
+def check_switch_locks():
+    if CPP:
+        theme = SwitchLock(THEMES_FILE, 'raii::SemaLock lock(thmSwitchSema);', 'lock.unlock();', True)
+        lang = SwitchLock(LANG_FILE, 'raii::SemaLock lock(lngSwitchSema);', 'lock.unlock();', True)
+        theme_takers = ('addElements', 'reinit', 'setGuiValue', 'thmSetView', 'thmCycleView',
+                        'thmRefreshDisplayLayout', 'thmRefreshGridLayout', 'thmReload', 'thmInit')
+        lang_locked = ('lngLoadFromFile',)
+    else:
+        theme = SwitchLock(THEMES_FILE, 'thmSwitchLock();', 'thmSwitchUnlock();', False)
+        lang = SwitchLock(LANG_FILE, 'lngSwitchLock();', 'lngSwitchUnlock();', False)
+        theme_takers = ('thmAddElements', 'thmReinit', 'thmSetGuiValue', 'thmSetView', 'thmCycleView',
+                        'thmRefreshDisplayLayout', 'thmRefreshGridLayout', 'thmReload', 'thmInit')
+        lang_locked = ('lngLoadFromFile', 'lngSetGuiValueLocked')
+    check_switch_lock(theme, theme_takers, ('thmLoad', 'setGuiValueLocked', 'thmSetGuiValueLocked',
+                                            'thmSetViewLocked', 'thmCycleViewLocked'))
+    check_switch_lock(lang, ('lngSetGuiValue',), lang_locked)
+    for name in ('thmLoad', 'lngLoadFromFile'):
+        lock = theme if name == 'thmLoad' else lang
+        if not list(lock.calls(name)):
+            failures.append('%s: %s() is never called' % (lock.rel, name))
+
+    check_created_first(THEMES_FILE, 'void thmInit(', 'thmSwitchSema', 'thmLoad(NULL);')
+    check_created_first(LANG_FILE, 'void lngInit(', 'lngSwitchSema', 'lngAddLanguages(')
+    boot = blank_literals(strip_comments(read(OPL_FILE)))
+    first = {}
+    for name in ('ioInit', 'lngInit', 'thmInit'):
+        m = re.search(r'\b%s\(\);' % name, boot)  # \b: audioInit() is not ioInit()
+        first[name] = m.start() if m else -1
+    for name in ('lngInit', 'thmInit'):
+        if first[name] < 0 or first['ioInit'] < 0 or first[name] > first['ioInit']:
+            failures.append('%s: %s() must run before ioInit(), which starts the IO thread' % (OPL_FILE, name))
+
+    stale = re.compile(r'\b(?:thmSetGuiValue|setGuiValue)\s*\(\s*(?:thmGetGuiValue\(\)|(?:gCatalog\.)?guiValue\(\)|guiThemeID)(?!\w)')
+    for path in sorted((root / 'src').rglob('*')):
+        if path.suffix not in ('.c', '.cpp'):
+            continue
+        text = blank_literals(strip_comments(path.read_text(encoding='utf-8', errors='replace')))
+        for m in stale.finditer(text):
+            failures.append('%s:%d reloads the theme by an id read outside the theme switch lock: use thmReload()'
+                            % (path.relative_to(root), text.count('\n', 0, m.start()) + 1))
+    if re.search(r'\blngSetGuiValue\s*\(', theme.code):
+        failures.append('%s: theme code switches the language; the lock order is language, then theme' % THEMES_FILE)
+
+
 for rel in DIALOG_FILES:
     check_frames(rel)
 check_keyboard()
 check_deferred()
 check_swap(THEMES_FILE, 'static int thmLoad(', 'gTheme = newT;', 'thmFree(curT);')
 check_swap(LANG_FILE, 'static int lngLoadFromFile(', 'lang_strs = newL;', 'lngFreeFromFile(curL);')
-check_swap(LANG_FILE, 'int lngSetGuiValue(', 'lang_strs = internalEnglish;', 'lngFreeFromFile(oldL);')
+check_swap(LANG_FILE, 'int lngSetGuiValue(' if CPP else 'static int lngSetGuiValueLocked(', 'lang_strs = internalEnglish;',
+           'lngFreeFromFile(oldL);')
+check_switch_locks()
 
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('ok: dialogs draw under the GUI lock; the IO thread swaps the theme, the language and the menu rows under it')
+print('ok: dialogs draw under the GUI lock; the IO thread swaps the theme, the language and the menu rows under it; '
+      'one theme switch and one language switch at a time')
