@@ -176,6 +176,8 @@ Start + Select** no longer leaves the game at once: it **pauses** the game under
 
 Up and Down move; the confirm and back buttons are the ones OPL's own menus use.
 The console's power button still works while the menu is open: once powers off, twice exits.
+In RetroAchievements builds the PC's reset (**RAR1**) leaves the game at once, as before, and does not open
+the menu.
 
 **Cheats, live.** The game's `.cht` file is read when the game starts (*Cheats* on in the game's
 settings, as before); every cheat comes along, ticked or not, and the menu turns them on and off while
