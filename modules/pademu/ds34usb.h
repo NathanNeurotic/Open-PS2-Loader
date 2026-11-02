@@ -10,6 +10,7 @@
 #define GUITAR_GH 2
 #define GUITAR_RB 3
 #define SHANWAN   4 // ShanWan generic HID pad (SHANWAN_VID/SHANWAN_PS3_PID): input only
+#define GENERIC   5 // RIPPS2 build 129: a pad a .pad profile describes (padprofile.c), its index in profile
 
 #define MODEL_GUITAR 1
 #define MODEL_PS2    3
@@ -34,6 +35,7 @@ typedef struct _usb_ds34
     u8 rrum;
     u8 update_rum;
     u8 data_pending; // a report transfer is queued
+    s8 profile;      // RIPPS2 build 129: GENERIC's .pad profile
     union
     {
         struct ds2report ds2;

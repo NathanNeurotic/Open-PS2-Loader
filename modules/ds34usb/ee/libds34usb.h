@@ -17,3 +17,5 @@ int ds34usb_set_rumble(int port, u8 lrum, u8 rrum);
 int ds34usb_set_led(int port, u8 led);
 int ds34usb_get_data(int port, u8 *data);
 int ds34usb_reset();
+int ds34usb_set_profiles(const u8 *block, int size, int learn); // RIPPS2 build 129: .pad
+int ds34usb_get_raw(int port, u8 *out);                         // RIPPS2 build 129: 8 + 64 bytes
