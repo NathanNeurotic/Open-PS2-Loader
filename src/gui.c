@@ -400,18 +400,41 @@ static void guiResetNotifications(void)
     popupArmed = 0;
 }
 
-static void guiRenderNotifications(char *string, int y)
+// Draw one notice whose box starts at y; returns the y for the next one (yadd lower, plus any wrapped lines).
+static int guiRenderNotifications(const char *string, int y, int yadd)
 {
-    int x;
+    // Right-aligned with nothing to stop it, a notice wider than the screen started off its left edge: the UDPBD
+    // static-IP note is about 1020 wide on the 640 grid, the CF notice from the game menu about 890. Size the box to
+    // the text but never wider than the screen less its margins, and wrap a longer notice onto more lines. A notice
+    // that fits is drawn exactly as before.
+    int textW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], string));
+    int boxW = textW + 10;
+    if (boxW > screenWidth - 20)
+        boxW = screenWidth - 20;
+    int x = screenWidth - boxW - 10;
+    int innerW = boxW - 10;
 
-    x = screenWidth - rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], string)) - 10;
+    if (textW <= innerW) {
+        rmDrawRect(x, y, boxW, MENU_ITEM_HEIGHT + 10, gColDarker);
+        fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
+        return y + yadd;
+    }
 
-    rmDrawRect(x - 10, y, screenWidth - x, MENU_ITEM_HEIGHT + 10, gColDarker);
-    fntRenderString(gTheme->fonts[0], x - 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
+    // fntRenderString does not wrap; it breaks a line only at '\n', and only when given a width. The clip gets the
+    // box's 5 px right padding as slack, so a glyph drawn a little past its advance at a line's end is not dropped.
+    char wrapped[512];
+    int lines = fntWrapText(gTheme->fonts[0], string, innerW, wrapped, sizeof(wrapped));
+    if (lines < 1)
+        lines = 1;
+    int boxH = lines * MENU_ITEM_HEIGHT + 10;
+    rmDrawRect(x, y, boxW, boxH, gColDarker);
+    fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW + 5, boxH - 5, wrapped, gTheme->textColor);
+    return y + yadd + (lines - 1) * MENU_ITEM_HEIGHT;
 }
 
-// Feedback for a user action; independent of courtesy notification preferences.
-static char actionToast[128];
+// Feedback for a user action; independent of courtesy notification preferences. Room for the longest translated
+// message with a game name (a HIDDEN_NAME_MAX buffer) in it; test_menu_text_fit.py checks every language.
+static char actionToast[384];
 static clock_t actionToastStart;
 
 static void guiRenderToast(void)
@@ -422,7 +445,7 @@ static void guiRenderToast(void)
         actionToast[0] = '\0';
         return;
     }
-    guiRenderNotifications(actionToast, 10);
+    guiRenderNotifications(actionToast, 10, 0);
 }
 
 void guiShowToast(const char *text)
@@ -456,8 +479,7 @@ static void guiShowNotifications(void)
             col_pos++;
 
             snprintf(notification, sizeof(notification), _l(_STR_PARTITION_NOTIFICATION), col_pos);
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showCfgPopup) {
@@ -465,8 +487,7 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showThmPopup) {
@@ -474,8 +495,7 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showLngPopup) {
@@ -483,15 +503,13 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         // One-time network notice set at config load: UDP transports always use the saved static PS2
         // IP fields. If DHCP is the preserved SMB/HTTP preference, remind the user which address UDP uses.
         if (showNetDhcpPopup) {
-            guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
-            y += yadd;
+            y = guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y, yadd);
         }
 
         if ((clock() - popupStart) >= (clock_t)5000 * (CLOCKS_PER_SEC / 1000)) {
@@ -508,7 +526,8 @@ static void guiShowNotifications(void)
    I/O thread and so cannot open a dialog. They set the text; the render loop
    draws it. Deliberately NOT gated on gEnableNotifications -- they are the
    answer to an action the user just took, not a courtesy popup. */
-static char raNotice[2][96];
+// 96 bytes cut the English CF notice mid-sentence; room for the longest translation (test_menu_text_fit.py).
+static char raNotice[2][256];
 static int raNoticeLines = 0;
 static clock_t raNoticeTimer = 0;
 
@@ -534,8 +553,7 @@ static int guiRenderRANotices(int y, int yadd)
     }
 
     for (i = 0; i < raNoticeLines; i++) {
-        guiRenderNotifications(raNotice[i], y);
-        y += yadd;
+        y = guiRenderNotifications(raNotice[i], y, yadd);
     }
 
     if (clock() >= raNoticeTimer) {
@@ -5513,7 +5531,10 @@ void guiManageCheats(config_set_t *configSet)
                 rmDrawFramedRect(boxX, boxY + 3, boxWidth, boxHeight, 2, gTheme->textColor, gTheme->selTextColor);
 
             u32 textColour = (i == selectedCheat) ? gTheme->selTextColor : gTheme->textColor;
-            fntRenderString(gTheme->fonts[0], boxX + 35, boxY + 3, ALIGN_LEFT, 0, 0, gCheats[i].name, textColour);
+            // A cheat name runs to 128 characters and nothing stopped it at the right-hand rule. The selected one
+            // scrolls through the whole name; the others end in "...".
+            int textX = boxX + 35;
+            fntRenderStringFit(gTheme->fonts[0], textX, boxY + 3, ALIGN_LEFT, screenWidth - 50 - textX, gCheats[i].name, textColour, i == selectedCheat);
 
             renderedCheats++;
         }
