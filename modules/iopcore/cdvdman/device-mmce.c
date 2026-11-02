@@ -29,6 +29,10 @@ static int mmce_dev_ready;
 // Set when that recovery budget ran out without the card answering: until it answers a probe again,
 // reads fail fast (one probe each) instead of each paying the whole budget.
 static int mmce_dev_lost;
+// Set by DeviceLock, the shutdown barrier (oplShutdown: IGR, IGR power-off, the power button). A read that is
+// retrying or waiting for the card stops at its next attempt or probe and fails, so the shutdown is not held up
+// for the rest of the budget. The barrier still holds: the read gives the lock up only after its last card access.
+static volatile int mmce_stopping;
 
 void DeviceInit(void)
 {
@@ -112,6 +116,7 @@ void DeviceFSInit(void)
 void DeviceLock(void)
 {
     DPRINTF("%s\n", __func__);
+    mmce_stopping = 1; // a read waiting for the card in DeviceReadSectors lets go within one probe
     WaitSema(mmce_io_sema);
 }
 
@@ -164,22 +169,25 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     do {
         res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
         retries++;
-    } while (res != sectors && retries < 3);
+    } while (res != sectors && retries < 3 && !mmce_stopping);
 
     // Three fast retries cover a glitch, not a card that is swapping: an MMCE switching to the game's folder
     // (its own Game ID detection reacting to the OSD history write, or a switch deferred past the launch's
     // wait) answers nothing for about a second and then slowly while the new card loads. That used to
     // end here as SCECdErREAD for good, a black screen or a game frozen after the PS2 logo. Wait for the
     // card to answer for our handle again, bounded, then read once more. A genuinely failed read costs one
-    // extra probe (the card answers at once, the retry fails again).
+    // extra probe (the card answers at once, the retry fails again). A shutdown (DeviceLock) cuts the retries
+    // and this wait short: the game is about to be reset or powered off, and the read just fails.
     if (res != sectors && fp_mmcedrv_get_size != NULL) {
         int probes;
-        for (probes = 0; probes < MMCE_SWAP_RECOVERY_PROBES; probes++) {
+        for (probes = 0; probes < MMCE_SWAP_RECOVERY_PROBES && !mmce_stopping; probes++) {
             DelayThread(100 * 1000);
             if (fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0)
                 break;
         }
-        if (probes < MMCE_SWAP_RECOVERY_PROBES) {
+        if (mmce_stopping) {
+            DPRINTF("%s: shutting down; not waiting for the card\n", __func__);
+        } else if (probes < MMCE_SWAP_RECOVERY_PROBES) {
             DPRINTF("%s: the card answers again after %d ms; retrying\n", __func__, (probes + 1) * 100);
             res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
             retries++;

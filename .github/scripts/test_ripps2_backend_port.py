@@ -327,6 +327,11 @@ int main(void)
     memcpy(script, idleCard, sizeof(idleCard)); scriptLen = 1; calls = 0;
     mmceWaitHistorySwitch("mmce0:/", "test"); assert(calls == 0);           /* the Game ID send already switched the card: skipped */
     mmceGameIdSwitchSeen = 0;
+
+    /* No slot resolved (Auto mode after the card was taken out): neither wait asks anything or waits. */
+    memcpy(script, noQuery, sizeof(noQuery)); scriptLen = 1; calls = slept = 0;
+    mmceWaitSwapDoneOn("", "test"); assert(calls == 0 && slept == 0);
+    assert(mmceWaitHistorySwitch("", "test") == 0 && calls == 0 && slept == 0);
     return 0;
 }
 '''

@@ -368,6 +368,8 @@ int mmceGameIdSettle(int timeoutMs)
 // the ones that cannot survive the swap: the ISO the game streams is on the card being swapped.
 static void mmceWaitSwapDoneOn(const char *device, const char *why)
 {
+    if (device == NULL || device[0] == '\0')
+        return; // no slot resolved (Auto mode after the card was taken out): nothing to watch
     int silent;
     for (silent = 0; silent * 200 < MMCE_CARD_READY_SILENT_MS; silent++) {
         if (fileXioDevctl(device, 0x1, NULL, 0, NULL, 0) != -1) {
@@ -409,6 +411,8 @@ static void mmceWaitBeforeHandoff(void)
 // while the busy query fails): then the window is not paid. Bounded: the window, then mmceWaitCardReady.
 int mmceWaitHistorySwitch(const char *device, const char *why)
 {
+    if (device == NULL || device[0] == '\0')
+        return 0; // no slot resolved: nothing to watch
     if (mmceGameIdSwitchSeen) {
         LOG("MMCE %s: the card already switched for the Game ID send; not waiting again\n", why);
         return 0;
