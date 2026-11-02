@@ -19,6 +19,7 @@ def description(name):
         "RIPTOPL-RA.ELF": "RetroAchievements loader update (requires xeRAbora v1.0.1 or alpha.17+).",
         "APP_RIPTOPL.psu": "Standard app for memory-card import; app files only.",
         "APP_RIPTOPL-RA.psu": "RetroAchievements app for memory-card import; app files only.",
+        "LICENSE-LIBSMB2.txt": "LGPL-2.1 licence of libsmb2, the SMB2 library every loader embeds; shipped beside the standalone ELF.",
     }
     for theme in ("inceBtion", "Korium"):
         if name == f"RIPTOPL-RA-{theme}.ELF":
@@ -37,6 +38,7 @@ def description(name):
         ("RIPTOPL-RetroAchievements-", f"Full RetroAchievements kit: loader, artwork, PSU, POPStarter, Ember and the pinned {ORBIT_LINK} (RA-only, in place of upstream Neutrino); requires xeRAbora v1.0.1 or alpha.17+."),
         ("RIPTOPL-RA-", "RetroAchievements package."),
         ("RIPTOPL-VARIANTS-", "Alternative loaders with extra features, controller emulation and DualSense support."),
+        ("RIPTOPL-BUGREPORT-", "Bug-report build: RiptOPL will not start or freezes? This loader shows each start-up step on screen and writes a report; its README says what to send."),
         ("RIPTOPL-DEBUG-", "Debug loaders for troubleshooting."),
         ("RIPTOPL-LANGS-", "Extra interface languages and fonts."),
         ("RIPTOPL-", "Full install: loader, artwork, PSU, POPStarter, Ember, Neutrino and companion-tool links."),
@@ -106,6 +108,8 @@ def render(assets, tag, revision, repository, server, version, neutrino, readme)
     def order(name):
         if description(name).startswith("Full install:"):
             return (0, name)
+        if name.startswith("RIPTOPL-BUGREPORT-"):  # right under the kit, so a tester finds it
+            return (0, "~" + name)
         preferred = ("RIPTOPL.ELF", "RIPTOPL-RA.ELF", "APP_RIPTOPL.psu", "APP_RIPTOPL-RA.psu")
         return (1 + preferred.index(name), name) if name in preferred else (6, name)
 

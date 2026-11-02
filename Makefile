@@ -159,9 +159,9 @@ IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o usbhdfsd.o bdmevent.o dvrdrv.o dvrf
 
 EECORE_OBJS = ee_core.o ioprp.o util.o \
 		udnl.o imgdrv.o eesync.o \
-		bdm_cdvdman.o bdm_ata_cdvdman.o bdm_udp_cdvdman.o udpfs_cdvdman.o IOPRP_img.o smb_cdvdman.o http_cdvdman.o \
+		bdm_cdvdman.o bdm_ata_cdvdman.o bdm_udp_cdvdman.o udpfs_cdvdman.o IOPRP_img.o smb_cdvdman.o smb2_cdvdman.o http_cdvdman.o \
 		hdd_cdvdman.o mmce_cdvdman.o hdd_hdpro_cdvdman.o cdvdfsv.o \
-		ingame_smstcpip.o smap_ingame.o smbman.o smbinit.o
+		ingame_smstcpip.o smap_ingame.o smbman.o smb2man.o smbinit.o
 
 PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
 	m4s_bd hdd_bd mmce hdd eth udp_bd udp_fs app cross triangle circle square select start left right \
@@ -504,6 +504,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/iopcore/cdvdman USE_UDPFS=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_MMCE=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_SMB=1 clean
+	$(MAKE) -C modules/iopcore/cdvdman USE_SMB2=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_HTTP=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_HDD=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_HDPRO=1 clean
@@ -588,6 +589,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/rapull clean
 	echo " -smbman-ra"
 	$(MAKE) -C modules/network/smbman-ra clean
+	echo " -smb2man"
+	$(MAKE) -C modules/network/smb2man clean
 	echo " -usbd-ra"
 	$(MAKE) -C modules/usb/usbd-ra clean
 	echo "-pc tools"
@@ -735,6 +738,13 @@ modules/iopcore/cdvdman/smb_cdvdman.irx: modules/iopcore/cdvdman
 	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_SMB=1 -C $< all
 
 $(EE_ASM_DIR)smb_cdvdman.c: modules/iopcore/cdvdman/smb_cdvdman.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+# SMB2 build of smb_cdvdman (smb2.c in place of smb.c), launched when the menu browses with smb2man.
+modules/iopcore/cdvdman/smb2_cdvdman.irx: modules/iopcore/cdvdman
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_SMB2=1 -C $< all
+
+$(EE_ASM_DIR)smb2_cdvdman.c: modules/iopcore/cdvdman/smb2_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 # Always enter the nested builds so their own dependency checks run. Track shared includes
@@ -1175,6 +1185,14 @@ modules/network/smbman-ra/smbman.irx: $(wildcard modules/network/smbman-ra/*.c) 
 	$(MAKE) -C modules/network/smbman-ra rebuild
 
 $(EE_ASM_DIR)smbman.c: $(SMBMAN_IRX) | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+# smb2man: the SMB2 browse driver over vendored libsmb2 (modules/network/smb2man/libsmb2/VENDORED.txt),
+# loaded instead of smbman when Settings > Network > SMB Version is SMB2. LGPL-2.1, like libsmb2.
+modules/network/smb2man/smb2man.irx: $(wildcard modules/network/smb2man/*.c) $(wildcard modules/network/smb2man/libsmb2/lib/*.c) $(wildcard modules/network/smb2man/libsmb2/lib/*.h) modules/network/smb2man/imports.lst modules/network/smb2man/Makefile
+	$(MAKE) -C modules/network/smb2man all
+
+$(EE_ASM_DIR)smb2man.c: modules/network/smb2man/smb2man.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/network/smbinit/smbinit.irx: modules/network/smbinit

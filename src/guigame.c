@@ -905,10 +905,10 @@ static int guiGameGSMUpdater(int modified)
 // UI-only sentinel for "this row follows the global". Appended LAST to gsmvmodeNames below, so it
 // sits one past the final real mode. It is NEVER written to disk -- picking it REMOVES $GSMVMode --
 // so unlike the real modes its index does not have to stay stable across builds.
-// Index of the last REAL mode in gsmvmodeNames[] / predef_vmode[]: 28 for the 29 base modes, 29 when
-// the 1080p row is compiled in (which is every shipped build -- Makefile GSM1080P ?= 1).
+// Index of the last REAL mode in gsmvmodeNames[] / predef_vmode[]: 28 for the 29 base modes, 30 when
+// the 1080p and 1080p 4:3 rows are compiled in (which is every shipped build -- Makefile GSM1080P ?= 1).
 #ifdef GSM_1080P
-#define GSM_VMODE_LAST_REAL_IDX 29
+#define GSM_VMODE_LAST_REAL_IDX 30
 #else
 #define GSM_VMODE_LAST_REAL_IDX 28
 #endif
@@ -960,6 +960,9 @@ int guiGameShowGSConfig(int forceGlobal)
         // gate in the save path below.
 #ifdef GSM_1080P
         "HDTV 1080p @60Hz (EXPERIMENTAL)",
+        // Index 30: the same 1080p raster with a 4:3 window centred in it, so 4:3 games are
+        // pillarboxed instead of stretched to 16:9 (issue #433). Same triple-confirm as 1080p.
+        "HDTV 1080p @60Hz 4:3 (EXPERIMENTAL)",
 #endif
         // "Default" = follow the global $GSMVMode. LAST, after every real mode, and never stored
         // (the save leg removes the key instead), so it cannot disturb the raw indices above.
@@ -1568,12 +1571,13 @@ static int compatShownNeutrino = 0;
 #define NEUTRINO_VIDEO_DEFAULT_IDX   6
 #define NEUTRINO_GSMCOMP_DEFAULT_IDX 4
 
-// Index of the appended "HDTV 1080p @60Hz (EXPERIMENTAL)" entry in gsmvmodeNames[] / predef_vmode[]
-// (both 30 long, last index 29). GSM1080P now defaults to 1, so every SHIPPED build has this entry
-// and the list length no longer varies between published flavours. Selecting it must clear
-// a triple-confirm before it is saved.
+// Indices of the appended "HDTV 1080p @60Hz (EXPERIMENTAL)" and "HDTV 1080p @60Hz 4:3 (EXPERIMENTAL)"
+// entries in gsmvmodeNames[] / predef_vmode[] (both 31 long, last index 30). GSM1080P now defaults
+// to 1, so every SHIPPED build has these entries and the list length no longer varies between
+// published flavours. Selecting either must clear a triple-confirm before it is saved.
 #ifdef GSM_1080P
-#define GSM_VMODE_1080P_IDX 29
+#define GSM_VMODE_1080P_IDX    29
+#define GSM_VMODE_1080P_43_IDX 30
 
 // 1080p is GSM-synthetic and hardware-confirmed, but it remains a non-standard raster that not every
 // display accepts. Force a THREE-STEP confirmation before it can reach disk, because a display that
@@ -1581,13 +1585,28 @@ static int compatShownNeutrino = 0;
 // when the user actually chose 1080p AND left GSM enabled.
 // Shared by the per-game and the global save legs -- the global one is the wider blast radius of
 // the two, since it is what every game with no GSM keys of its own inherits.
+//
+// Only asks when the (GSM on, 1080p mode) pair is NEW compared with what the page loaded. A game that
+// follows a global already set to 1080p shows that mode in its picker, and saving any unrelated
+// setting of that game must not re-ask -- and declining must not write mode 0 into the global, which
+// every other game inherits. Declining restores what the page loaded instead.
+static int sLoadedEnableGSM;
+static int sLoadedGSMVMode;
+
 static void guiGameConfirmGSM1080p(void)
 {
-    if (EnableGSM != 0 && GSMVMode == GSM_VMODE_1080P_IDX) {
+    if (EnableGSM != 0 && (GSMVMode == GSM_VMODE_1080P_IDX || GSMVMode == GSM_VMODE_1080P_43_IDX)) {
+        if (sLoadedEnableGSM != 0 && sLoadedGSMVMode == GSMVMode)
+            return; // unchanged since the page was loaded: already confirmed when it was chosen
         if (!guiMsgBox(_l(_STR_GSM_1080P_WARNING), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_PROCEED), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_SURE), 1, NULL)) {
-            GSMVMode = 0; // cancelled at some step -> do not apply 1080p
+            // cancelled at some step -> put back the pair the page loaded. A loaded 1080p mode was
+            // already confirmed when it was chosen, so it is safe to return to; and restoring the
+            // enable flag too means a decline cannot switch GSM on for a mode that was off.
+            EnableGSM = sLoadedEnableGSM;
+            GSMVMode = sLoadedGSMVMode;
+            diaSetInt(diaGSConfig, GSMCFG_ENABLEGSM, EnableGSM);
             diaSetInt(diaGSConfig, GSMCFG_GSMVMODE, GSMVMode);
         }
     }
@@ -2180,6 +2199,12 @@ static void guiGameLoadGSMConfig(config_set_t *configSet, config_set_t *configGa
         if (!configGetInt(configSet, CONFIG_ITEM_GSMFIELDFIX, &GSMFIELDFix))
             GSMFIELDFix = 0;
     }
+
+#ifdef GSM_1080P
+    // What the 1080p confirmation compares against at save time.
+    sLoadedEnableGSM = EnableGSM;
+    sLoadedGSMVMode = GSMVMode;
+#endif
 
     // set gui settings.
     diaSetInt(diaGSConfig, GSMCFG_GSMSOURCE, gGSMSource);
