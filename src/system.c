@@ -2950,6 +2950,27 @@ static int sysPlaceIgrOverlay(void)
 }
 #endif
 
+// The OSD history record a launch path wrote EARLY, before sysLaunchLoaderElf (the MMCE path: the card may
+// switch folders on that write, and the switch has to be over before the IOP reset). Keyed by name, so a
+// launch that bails after the early write only skips the record of a retry of the same game, once.
+static char sysHistoryRecorded[32];
+
+int sysAddHistoryRecord(const char *filename)
+{
+#if (!defined(__DEBUG) && !defined(_DTL_T10000))
+    // Kept, and reported as written, even when the write fails. A second try in sysLaunchLoaderElf would be the
+    // late write right before the IOP reset that made the card switch folders during the game's start, and a
+    // failed write can still have written to the card (the folder, or a truncated file), so the caller still
+    // watches for the card's switch. A failed write costs this launch its history record, not the game.
+    AddHistoryRecordUsingFullPath(filename);
+    snprintf(sysHistoryRecorded, sizeof(sysHistoryRecorded), "%s", filename);
+    return 1;
+#else
+    (void)filename;
+    return 0; // these builds write no history: the caller has no card switch to wait for
+#endif
+}
+
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags)
 {
     unsigned int modules, ModuleStorageSize;
@@ -2969,7 +2990,9 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 
     ethGetNetConfig(local_ip_address, local_netmask, local_gateway);
 #if (!defined(__DEBUG) && !defined(_DTL_T10000))
-    AddHistoryRecordUsingFullPath(filename);
+    if (strcmp(sysHistoryRecorded, filename) != 0) // not already written early by the launch path
+        AddHistoryRecordUsingFullPath(filename);
+    sysHistoryRecorded[0] = '\0';
 #endif
 
     if (gExitPath[0] == '\0')
