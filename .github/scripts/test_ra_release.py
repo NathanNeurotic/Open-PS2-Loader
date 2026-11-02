@@ -316,6 +316,15 @@ class Libsmb2LicenceShippingTest(unittest.TestCase):
         self.assertIn('shutil.copyfile(app.LIBSMB2_LICENCE, args.output / "LICENSE-LIBSMB2.txt")', ra)
         publish = (root / ".github/scripts/publish_ra_release.py").read_text(encoding="utf-8")
         self.assertIn('"LICENSE-LIBSMB2.txt"}', publish)
+        # Normalize Release Assets verifies the kit with rebuild/main's packager, which requires the licence.
+        # A kit, VARIANTS zip or release built before the licence shipped gets it there instead of failing,
+        # and the final asset check insists on the loose copy beside the standalone loaders.
+        normalize = (root / ".github/workflows/release-normalize.yml").read_text(encoding="utf-8")
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt package-work/LICENSE-LIBSMB2.txt", normalize)
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt variants-work/LICENSE-LIBSMB2.txt", normalize)
+        self.assertIn('retry gh release upload "$TAG" release-work/LICENSE-LIBSMB2.txt', normalize)
+        self.assertIn("grep -qFx 'LICENSE-LIBSMB2.txt'", normalize)
+        self.assertLess(normalize.index("package-work/LICENSE-LIBSMB2.txt"), normalize.index("package_release_app.py verify"))
 
 
 if __name__ == "__main__":
