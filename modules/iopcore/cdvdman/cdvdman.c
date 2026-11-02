@@ -94,8 +94,9 @@ static struct cdvdman_cb_data cb_data;
 
 int cdrom_io_sema;
 static int cdrom_rthread_sema;
-static unsigned char cdread_for_stream;   // the read queued for cdvdman_cdread_Thread is a stream fill (cdvdman_StreamRead)
-static volatile unsigned char read_abort; // sceCdBreak hit the read in flight: cdvdman_read_sectors stops at its next chunk
+static unsigned char cdread_for_stream;       // the read queued for cdvdman_cdread_Thread is a stream fill (cdvdman_StreamRead)
+static volatile unsigned char read_abort;     // sceCdBreak hit the read in flight: cdvdman_read_sectors stops at its next chunk
+static volatile unsigned char read_in_flight; // cdvdman_read is still moving data (sync_flag also covers the pending callback)
 static int cdvdman_scmdsema;
 int cdvdman_searchfilesema;
 static int cdvdman_ReadingThreadID;
@@ -607,6 +608,9 @@ static int cdvdman_read(u32 lsn, u32 sectors, u16 sector_size, void *buf)
 
             cdvdman_read_sectors(rpos, nsectors, cdvdman_buf);
 
+            if (read_abort) // cut short: cdvdman_buf holds sectors this read never produced, so copy none of them
+                break;
+
             rpos += nsectors;
             sectors -= nsectors;
             nbytes = nsectors * sector_size;
@@ -693,6 +697,7 @@ static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, i
 
     cdread_for_stream = for_stream ? 1 : 0;
     read_abort = 0;
+    read_in_flight = 1;
     cdvdman_stat.cdread_lba = lsn;
     cdvdman_stat.cdread_sectors = sectors;
     cdvdman_stat.sector_size = sector_size;
@@ -736,10 +741,12 @@ int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
 
     cdread_for_stream = 0;
     read_abort = 0;
+    read_in_flight = 1;
 
     CpuResumeIntr(OldState);
 
     cdvdman_read(lsn, sectors, sector_size, buf);
+    read_in_flight = 0;
 
     cdvdman_cb_event(read_abort ? SCECdFuncBreak : SCECdFuncRead);
     sync_flag = 0;
@@ -756,7 +763,9 @@ int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
    fill cut short would put garbage in the stream buffer. */
 int cdvdman_BreakRead(void)
 {
-    if (cdread_for_stream)
+    /* Once the data is in, only the completion callback is left (sync_flag stays set until it runs). There is
+       nothing left to stop then, and accepting the break would leave SCECdErABRT beside a SCECdFuncRead callback. */
+    if (cdread_for_stream || !read_in_flight)
         return 0;
 
     read_abort = 1;
@@ -1015,6 +1024,7 @@ static void cdvdman_cdread_Thread(void *args)
         for_stream = cdread_for_stream;
 
         cdvdman_read(cdvdman_stat.cdread_lba, cdvdman_stat.cdread_sectors, cdvdman_stat.sector_size, cdvdman_stat.cdread_buf);
+        read_in_flight = 0;
 
         /* This streaming callback is not compatible with the original SONY stream channel 0 (IOP) callback's design.
        The original is run from the interrupt handler, but we want it to run
