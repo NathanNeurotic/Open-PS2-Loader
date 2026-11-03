@@ -20,7 +20,7 @@ assert save.index('guiGameReadILinkID') < save.index('guiGamePrepareParentalLock
 reset = function(gui, 'void guiGameRemoveSettings(')
 assert 'configRemoveKey(configSet, CONFIG_ITEM_ILINK_ID)' in reset
 assert 'COMPAT_ILINK_ID, !neutrino && ilinkIdNativeCapable' in gui
-assert 'ilinkIdNativeCapable = support == NULL || libViewActive(support->mode) != LIB_VIEW_PS1' in gui
+assert 'ilinkIdNativeCapable = support == NULL || (support->mode != APP_MODE && libListRowView(support, id) == LIB_VIEW_ISO)' in gui
 assert 'oplParseILinkID(consoleID, settings->ilink_id)' in function(support, 'int sbPrepare(')
 assert 'sizeof(struct cdvdman_settings_common)' in function(support, 'void sbUnprepare(')
 
@@ -42,6 +42,17 @@ static void cdvdman_sendSCmd(int cmd,void *in,int n,void *out,int length){
  unsigned char *p=out;p[0]=0x25;for(int i=0;i<8;i++)p[i+1]=0x10+i;
 }
 '''
+assignment = re.search(r'^    ilinkIdNativeCapable = .*;', gui, re.M).group(0)
+code += """
+#define LIB_VIEW_ISO 0
+#define LIB_VIEW_PS1 1
+#define LIB_VIEW_ELF 2
+#define APP_MODE 9
+typedef struct { int mode; } item_list_t;
+static int selected_view, row_queries;
+static int libListRowView(item_list_t *list,int id){assert(list&&id==7);row_queries++;return selected_view;}
+static int native_capability(item_list_t *support,int id){int ilinkIdNativeCapable;
+""" + assignment + "return ilinkIdNativeCapable;}\n"
 code += function(gui, 'static int guiGameReadILinkID(')
 code += function(scmd, 'int sceCdRI(')
 # readID uses sceCdRI; compile after its declaration as in the production header.
@@ -50,6 +61,12 @@ code += function(scmd, 'int sceCdReadGUID(')
 code += function(scmd, 'int sceCdReadModelID(')
 code += r'''
 int main(void){
+ item_list_t mixed={3},favorites={4};
+ assert(native_capability(NULL,7)&&row_queries==0);
+ for(int page=0;page<2;page++)for(int view=0;view<3;view++){
+  selected_view=view;assert(native_capability(page?&favorites:&mixed,7)==(view==LIB_VIEW_ISO));
+ }
+ item_list_t app={APP_MODE};selected_view=LIB_VIEW_ISO;assert(!native_capability(&app,7));
  const u8 wanted[8]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF};u8 id[8],out[8];u32 status;
  const char *invalid[]={"0","0123456789ABCDE","0123456789ABCDEF0","0123456789ABCDEG"," 123456789ABCDEF","01-23456789ABCDEF","0123456789ABCDEF\n"};
  memset(id,0xFF,8);assert(oplParseILinkID(NULL,id)==0&&!memcmp(id,(u8[8]){0},8));

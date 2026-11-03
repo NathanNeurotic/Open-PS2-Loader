@@ -1769,7 +1769,7 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // Neutrino-only row greyed even under a Neutrino global default (guiGameSetCoreAwareState reads
     // this). HTTP likewise has no Neutrino launch leg. CF is also native-core only: external Neutrino
     // cannot restore the CF bus. SMB follows the global core with per-game overrides (ethTryNeutrino).
-    ilinkIdNativeCapable = support == NULL || libViewActive(support->mode) != LIB_VIEW_PS1;
+    ilinkIdNativeCapable = support == NULL || (support->mode != APP_MODE && libListRowView(support, id) == LIB_VIEW_ISO);
     coreNeverNeutrino = (support != NULL && ((libViewActive(support->mode) == LIB_VIEW_PS1) || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode)));
 
     // UDPFS (Files: UDPFS_MODE, also for a Favourite that points back to it) and the UDP block device
