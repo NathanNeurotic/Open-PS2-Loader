@@ -550,7 +550,8 @@ int bdmGetDeviceSlotsByType(int bdmType, int *slots, int maxSlots)
 // bdmfs numbers typed roots in mount order (fs_driver_resolve_volume), and mass slot order IS mount
 // order, so this is the index bdmfs itself gives the device -- the same answer launcHER computes.
 // Returns 1 with out filled; 0 when massPath is not a numbered mass path, the slot is not mounted, its
-// type has no SDK typed name (udp, cf, unknown) or out is too small. Only ever used for the string
+// type has no SDK typed name (udp, cf, unknown), a lower slot cannot be identified (its typed index would be
+// a guess) or out is too small. Only ever used for the string
 // handed to the app: the load path and every OPL mount stay mass<N>:.
 int bdmBuildTypedHandoffPath(const char *massPath, char *out, int outLen)
 {
@@ -572,7 +573,11 @@ int bdmBuildTypedHandoffPath(const char *massPath, char *out, int outLen)
     for (int i = 0; i < slot; i++) {
         snprintf(path, sizeof(path), "mass%d:/", i);
         bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex);
-        if (driver[0] != '\0' && bdmDetermineDeviceType(driver) == type)
+        // A lower slot we cannot identify is still counted by bdmfs, so k could be off by one. Do not guess:
+        // fall back to the legacy spelling, which is always valid.
+        if (driver[0] == '\0')
+            return 0;
+        if (bdmDetermineDeviceType(driver) == type)
             k++;
     }
 
