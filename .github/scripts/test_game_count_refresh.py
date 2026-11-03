@@ -58,7 +58,8 @@ static const char *_l(int) { return "Files found: %i"; }
 static char drawn[64];
 static void endMutableText(struct theme_element *e) { (void)e; }
 static int alloc_call, fail_alloc, live_allocs;
-static void *test_malloc(size_t n) { if (++alloc_call == fail_alloc) return NULL; void *p=malloc(n); if(p)live_allocs++; return p; }
+static size_t value_alloc_size;
+static void *test_malloc(size_t n) { value_alloc_size=n; if (++alloc_call == fail_alloc) return NULL; void *p=malloc(n); if(p)live_allocs++; return p; }
 static void *test_calloc(size_t n,size_t size) { if (++alloc_call == fail_alloc) return NULL; void *p=calloc(n,size); if(p)live_allocs++; return p; }
 static void test_free(void *p) { if(p){live_allocs--;free(p);} }
 #define malloc test_malloc
@@ -100,7 +101,7 @@ int main(void)
     list.n = 40;
     drawGameCountText(&menu, NULL, NULL, &elem);
     assert(!strcmp(drawn, "Files found: 40") && mt.currentConfigId == 2);
-    /* No games after a rescan; return from a game with the same CFG uid. */
+    /* Simulate a rescan/return count change; this does not execute the game-return lifecycle. */
     list.n = 0;
     drawGameCountText(&menu, NULL, &cfgB, &elem);
     assert(!strcmp(drawn, "Files found: 0"));
@@ -119,7 +120,7 @@ int main(void)
             assert(!strcmp(drawn,"unchanged"));
         } else {
             mutable_text_t *m=(mutable_text_t *)fresh.extended;
-            assert(m && m->currentCount==-1 && !m->value[0] && live_allocs==2);
+            assert(m && m->currentCount==-1 && !m->value[0] && live_allocs==2 && value_alloc_size>=60);
             list.n=123456;
             drawGameCountText(&menu,NULL,NULL,&fresh);
             assert(!strcmp(drawn,"Files found: 123456"));

@@ -20,7 +20,7 @@ allocations at theme load and none during rendering.
 
 The host test executes both allocations failing, successful initialization,
 zero and delayed counts, unchanged selection, Mixed-view population, rescans,
-and a rebuilt count after returning from a game. This is host evidence only.
+and simulated count changes using the same CFG uid. It does not execute\nthe game-return lifecycle or a physical USB scan. This is host evidence only.
 
 For reporter acceptance, identify the exact ELF/hash and theme, capture the
 initial display and a later scan without moving selection, and compare the
