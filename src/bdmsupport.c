@@ -2748,7 +2748,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         irx_size = size_bdm_cdvdman_irx;
     }
 
-    compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
+    compatmask = sbPrepare(game, configSet, irx_size, irx, &index, 1);
     if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
         return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
     sbEnsureIgrUsbDrivers(compatmask);

@@ -69,10 +69,10 @@ HARNESS = r'''
 #define _STR_ERR_CHEATS_LOAD_FAILED 1
 typedef struct config_set config_set_t;
 #define CONFIG_ITEM_ILINK_ID "$ILinkID"
-static int id_diagnostics;
+static int id_diagnostics, id_reads;
 static void diagLog(const char *fmt,...){assert(strstr(fmt,"$ILinkID"));id_diagnostics++;}
 static const char *ilink_text;
-static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;assert(!strcmp(k, CONFIG_ITEM_ILINK_ID));*out=ilink_text;return ilink_text!=NULL;}
+static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;assert(!strcmp(k, CONFIG_ITEM_ILINK_ID));id_reads++;*out=ilink_text;return ilink_text!=NULL;}
 typedef struct { u8 parts, media; } base_game_info_t;
 struct UIItem;
 static int gOSDLanguageSource, gOSDLanguageEnable, gOSDLanguageValue, gOSDTVAspectRatio, gOSDVideOutput;
@@ -106,18 +106,18 @@ int main(void)
     memcpy(pristine, image, sizeof(image));
 
     index = -7;
-    r = sbPrepare(&game, NULL, size, (void **)image, &index);
+    r = sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     printf("prepare: %d at %d\n", r, index);
     /* The leg then fills in the rest of the block (layer1_start, zso_cache, its own fields), so the
        restore has to cover every byte of it, not just the ones sbPrepare wrote. */
     memset(image + index, 0x5A, sizeof(sample));
     index = -7;
-    r = sbPrepare(&game, NULL, size, (void **)image, &index);
+    r = sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     printf("prepare again, zone still filled in: %d at %d\n", r, index);
     sbUnprepare(image + 64);
     printf("unprepare: %s\n", memcmp(image, pristine, sizeof(image)) ? "changed" : "pristine");
 
-    sbPrepare(&game, NULL, size, (void **)image, &index);
+    sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     memset(image + index, 0x5A, sizeof(sample));
     answer = 1;
     r = sbCheatsMissingContinue(image + index, -ENOENT);
@@ -126,7 +126,7 @@ int main(void)
     r = sbCheatsMissingContinue(image + index, -ENOENT);
     printf("cheats prompt, back: %d, %s\n", r, memcmp(image, pristine, sizeof(image)) ? "filled in" : "pristine");
     index = -7;
-    r = sbPrepare(&game, NULL, size, (void **)image, &index);
+    r = sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     printf("prepare after back: %d at %d\n", r, index);
     /* The real launch parser patches the ID, and the next game never inherits it. */
     const char *ids[] = {"0123456789abcdef", NULL, "0000000000000000", "", "0123456789ABCDEG"};
@@ -137,13 +137,24 @@ int main(void)
         assert(!memcmp(image, pristine, sizeof(image)));
         ilink_text = ids[game_no];
         index = -7;
-        assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index) == 1 && index == 64);
+        assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index, 1) == 1 && index == 64);
         const struct cdvdman_settings_common *patched = (const struct cdvdman_settings_common *)(image + index);
         assert(!memcmp(patched->ilink_id, game_no == 0 ? enabled : disabled, 8));
         assert(id_diagnostics == (game_no == 4 ? 1 : 0));
     }
     sbUnprepare(image + 64);
     assert(!memcmp(image, pristine, sizeof(image)));
+    const char *external_ids[] = {"0123456789ABCDEF", "bad"};
+    for (unsigned i = 0; i < 2; i++) {
+        ilink_text = external_ids[i];
+        int reads = id_reads, diagnostics = id_diagnostics;
+        assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index, 0) == 1);
+        const struct cdvdman_settings_common *scratch = (const struct cdvdman_settings_common *)(image + index);
+        assert(!memcmp(scratch->ilink_id, disabled, 8));
+        assert(id_reads == reads && id_diagnostics == diagnostics);
+        sbUnprepare(image + index);
+        assert(!memcmp(image, pristine, sizeof(image)));
+    }
     return 0;
 }
 '''
@@ -262,6 +273,9 @@ for path, signature in LEGS:
     opening = prep + len('sbPrepare')
     args = [' '.join(a.split()) for a in code[opening + 1:close_paren(code, opening)].split(',')]
     irx, index = args[3].lstrip('&'), args[4].lstrip('&')
+    external = 'ethTryNeutrino' in signature or signature in ('void UdpfsSource::launch(', 'static void udpfsLaunchGame(')
+    if len(args) != 6 or args[5] != ('0' if external else '1'):
+        failures.append('%s: native console-ID preparation flag does not match the launch engine' % line(prep))
     after = close_paren(code, opening) + 1
 
     # sbPrepare sets the index only when it finds the zone, so its result is checked before anything uses

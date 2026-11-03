@@ -70,7 +70,8 @@ int sbTitleCompatDefault(config_set_t *configSet, int neutrino);
 int sbGetCompatModes(config_set_t *configSet, int neutrino);
 
 void sbEnsureIgrUsbDrivers(int compatmask);
-int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex);
+// nativeLaunch is 0 only for external-Neutrino scratch preparation; no console-ID config is consumed there.
+int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex, int nativeLaunch);
 void sbUnprepare(void *pCommon);
 // Where VMC slot `slot` (0/1) lives in an embedded mcemu image, as a u32 word index; -1 when the image has
 // no such slot. A launch writes the slot's VMC settings over its marker (0xC0DEFAC0 + slot) and nothing

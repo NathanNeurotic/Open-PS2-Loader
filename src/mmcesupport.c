@@ -1325,7 +1325,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // single guard before any card IO.)
     void *irx = &mmce_cdvdman_irx;
     int irx_size = size_mmce_cdvdman_irx;
-    compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
+    compatmask = sbPrepare(game, configSet, irx_size, irx, &index, 1);
     if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
         return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
     settings = (struct cdvdman_settings_mmce *)((u8 *)irx + index);
