@@ -74,6 +74,7 @@ int main(int argc, char **argv)
         return 2;
     }
     const char *ip = argv[1], *user = argv[3], *pw = argv[4], *share = argv[5], *iso = argv[6], *local = argv[7];
+    const char *u8name = argc > 8 ? argv[8] : NULL; // a UTF-8 file name under \DVD, listed as the server spells it
     int port = atoi(argv[2]);
     CHECK(smb2man_start(0, NULL) == 0, "module start");
     CHECK(logon(ip, port, user, "wrongpw") == 0, "logon records credentials");
@@ -89,6 +90,7 @@ int main(int argc, char **argv)
         printf("   share %s (%s)\n", shares[i].ShareName, shares[i].ShareComment);
 
     CHECK(openshare(share) == 0, "openshare %s", share);
+    CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_ECHO, NULL, 0, NULL, 0) == 0, "echo with the share open is a real round trip");
 
     iop_file_t f = {0}, d = {0};
     iox_dirent_t de;
@@ -103,14 +105,23 @@ int main(int argc, char **argv)
     OPS->dclose(&d);
     CHECK(sawdvd, "root lists DVD as a directory (%d entries)", n);
     CHECK(OPS->dopen(&d, "\\DVD") == 0, "dopen \\DVD");
-    int sawiso = 0;
-    while (OPS->dread(&d, &de) > 0)
+    int sawiso = 0, sawu8 = 0;
+    while (OPS->dread(&d, &de) > 0) {
         if (!strcmp(de.name, "TEST.iso")) {
             sawiso = 1;
             printf("   TEST.iso size %u mtime %u-%02u-%02u %02u:%02u\n", de.stat.size, de.stat.mtime[6] | (de.stat.mtime[7] << 8), de.stat.mtime[5], de.stat.mtime[4], de.stat.mtime[3], de.stat.mtime[2]);
         }
+        if (u8name && !strcmp(de.name, u8name))
+            sawu8 = (de.stat.size == 65536);
+    }
     OPS->dclose(&d);
     CHECK(sawiso, "\\DVD lists TEST.iso");
+    if (u8name) {
+        char u8path[300];
+        snprintf(u8path, sizeof(u8path), "\\DVD\\%s", u8name);
+        CHECK(sawu8, "\\DVD lists %s in UTF-8 with its size", u8name);
+        CHECK(OPS->getstat(&f, u8path, &st) == 0 && st.size == 65536, "getstat %s", u8path);
+    }
 
     CHECK(OPS->getstat(&f, "\\DVD\\TEST.iso", &st) == 0 && st.size == 5244114, "getstat size %u", st.size);
     CHECK(OPS->getstat(&f, "\\DVD\\NOPE.iso", &st) < 0, "getstat missing file fails");
@@ -138,6 +149,21 @@ int main(int argc, char **argv)
     CHECK(OPS->lseek(&f, 4096, 0) == 4096 && OPS->read(&f, a, 16) == 16 && a[0] == (unsigned char)((4096 * 7 + 3) & 0xff), "lseek SEEK_SET + read");
     CHECK(OPS->lseek64(&f, 0, 2) == 5244114, "lseek64 SEEK_END");
     CHECK(OPS->write(&f, a, 16) < 0, "write to a read-only handle fails");
+    CHECK(OPS->close(&f) == 0, "close");
+
+    /* Positions past 2 GiB, as a dual-layer image in one file needs: its size, and its second layer,
+       which the menu finds by seeking there (sbProbeISO9660). The image is sparse, 7 GiB long, with a
+       marker at 0xFE830000, where a layer 0 of 2,084,960 sectors ends. */
+    CHECK(OPS->open(&f, "\\DVD\\DVD9.iso", FIO_O_RDONLY, 0) >= 0, "open a 7 GiB image");
+    s64 pos = OPS->lseek64(&f, 0, 2);
+    CHECK(pos == 0x1C0001234LL, "lseek64 SEEK_END of the 7 GiB image (%lld)", (long long)pos);
+    pos = OPS->lseek64(&f, 0xFE830000LL, 0);
+    CHECK(pos == 0xFE830000LL && OPS->read(&f, a, 6) == 6 && !memcmp(a, "LAYER1", 6),
+          "lseek64 to 0xFE830000 and read the marker there (%lld)", (long long)pos);
+    pos = OPS->lseek64(&f, 0x123456000LL, 0);
+    CHECK(pos == 0x123456000LL, "lseek64 past 4 GiB (%lld)", (long long)pos);
+    CHECK(OPS->lseek64(&f, 0x7FFFFFF0LL, 0) == 0x7FFFFFF0LL && OPS->lseek(&f, 0x20, 1) == -EOVERFLOW,
+          "a 32-bit lseek past 2 GiB reports -EOVERFLOW");
     CHECK(OPS->close(&f) == 0, "close");
 
     /* create + write + reopen read-write, as VMC creation and config saves do */
@@ -172,6 +198,7 @@ int main(int argc, char **argv)
 
     /* close share and reopen (the menu's reconnect) */
     CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_CLOSESHARE, NULL, 0, NULL, 0) == 0, "closeshare");
+    CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_ECHO, NULL, 0, NULL, 0) == 0, "echo after closeshare: logged on, nothing lost");
     CHECK(OPS->open(&f, iso, FIO_O_RDONLY, 0) < 0, "open after closeshare fails");
     CHECK(openshare(share) == 0, "reopen share");
     fd = OPS->open(&f, iso, FIO_O_RDONLY, 0);
@@ -180,6 +207,7 @@ int main(int argc, char **argv)
     /* a handle left open across LOGOFF is closed by the driver */
     fd = OPS->open(&f, iso, FIO_O_RDONLY, 0);
     CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_LOGOFF, NULL, 0, NULL, 0) == 0, "logoff with a handle open");
+    CHECK(OPS->devctl(NULL, "", SMB_DEVCTL_ECHO, NULL, 0, NULL, 0) == -ENODEV, "echo after logoff reports no session");
     CHECK(OPS->read(&f, a, 16) < 0, "stale handle after logoff is refused");
     /* ...and stays refused once a new session reuses its slot for another open */
     CHECK(logon(ip, port, user, pw) == 0 && openshare(share) == 0, "logon + openshare after logoff");

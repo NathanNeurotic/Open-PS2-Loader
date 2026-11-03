@@ -76,6 +76,7 @@ write_file = function(smb, 'int smb_WriteFile(', SMB)
 wire = (''.join(define(smb_h, name, SMB_H) for name in
                 ('SMB_MAGIC', 'SMB_FLAGS2_32BIT_STATUS', 'SMB_COM_WRITE_ANDX', 'SMB_COM_NONE', 'STATUS_SUCCESS'))
         + define(smb, 'ZERO_PKT_ALIGNED', SMB)
+        + define(smb, 'SMB_STATUS', SMB)
         + ''.join(packed_struct(smb_h, name, SMB_H) for name in
                   ('SMBHeader_t', 'WriteAndXRequest_t', 'WriteAndXResponse_t')))
 device_lock = function(cdvd_device, 'void DeviceLock(', CDVD_DEVICE)

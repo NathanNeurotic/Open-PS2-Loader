@@ -230,6 +230,18 @@ jobs:
         run: python3 .github/scripts/test_neutrino_bsdfs.py
       - name: Check Neutrino SMB writes bsd-smb.toml safely and falls back to the OPL core
         run: python3 .github/scripts/test_neutrino_smb.py
+      - name: Check the in-game SMB2 reader's hashes and NTLMv2 logon
+        run: python3 .github/scripts/test_smb2_auth.py
+      - name: Check the in-game SMB2 logon sends the menu's user, domain and NTLMv2 AV pairs, the server's target name included, and computes its proof from the same credentials (fake server)
+        run: python3 .github/scripts/test_smb2_logon_parity.py
+      - name: Check the in-game SMB2 reader's UTF-8 to UTF-16 conversion (tests/smb2-live/utf16.c)
+        run: |
+          cc -fsanitize=address,undefined -fno-sanitize-recover=undefined -g -O1 -Wall -Wno-unused-parameter \
+            -Wno-unused-function -I tests/smb2-live/inc-ingame -I modules/iopcore/cdvdman -I modules/iopcore/common \
+            tests/smb2-live/utf16.c modules/iopcore/cdvdman/smb2auth.c -o "$RUNNER_TEMP/utf16"
+          "$RUNNER_TEMP/utf16"
+      - name: Check an SMB game launch keeps the image's whole file name, from the EE's settings block to the path the game opens (tests/smb2-live/launchname.c)
+        run: python3 .github/scripts/test_smb_launch_name.py
       - name: Check PSX DVR Neutrino discovery and safety gates
         run: python3 .github/scripts/test_neutrino_dvr.py
       - name: Check DVR refresh and Neutrino mount handoff

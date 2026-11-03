@@ -16,6 +16,9 @@ It also pins the structure smb2.c relies on: smb2.c provides every function smb.
 the oplutils exports and smb_mcemu bind to those names), smb_Close() never waits on smb_io_sema
 (oplShutdown() calls it with the semaphore held), every function that waits on it signals it before
 each return, and smbinit's SMB1 hash callback is never called.
+That the in-game logon sends and hashes the same user name and NTLM domain as the menu's, and sends
+the same NTLMv2 AV pairs, is checked by test_smb2_logon_parity.py, which runs both against one fake
+server.
 This is a host regression check, not a console test. The end-to-end check against a real server is
 tests/smb2-live/run.sh (needs Samba).
 """
@@ -165,7 +168,7 @@ check('blob[0] = 1;' in smb2 and 'blob[1] = 1;' in smb2 and 'memcpy(blob + 8, ti
       'smb2.c: the NTLMv2 blob layout (MS-NLMP 2.2.2.7) changed')
 check(re.search(r'smb2auth_hmac_update\(&mac, pw16, ulen\);\s*smb2auth_hmac_update\(&mac, domain, domlen\);', smb2) is not None,
       'smb2.c: NTOWFv2 must hash UPPER(user) then the domain')
-check('put_utf16(pw16, user_name, 1)' in smb2, 'smb2.c: NTOWFv2 must upper-case the user name')
+check('put_utf16(pw16, user, 1)' in smb2, 'smb2.c: NTOWFv2 must upper-case the user name')
 
 # The same entry points as smb.c, which device-smb.c, exports.tab and smb_mcemu bind to by name.
 smb1 = text(cdvdman / 'smb.c')

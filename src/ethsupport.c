@@ -1078,6 +1078,16 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
 
     settings = (struct cdvdman_settings_smb *)((u8 *)cdvdmanIrx + i);
 
+    // The file name below must reach the game whole: snprintf would cut it short, and the game would
+    // open a file that does not exist. The longest the menu lists is the old format's, a startup of up
+    // to GAME_STARTUP_MAX characters, a dot, a name of up to ISO_GAME_NAME_MAX (the scan skips longer
+    // ones) and an extension of up to ISO_GAME_EXTENSION_MAX. device-smb.c then opens it as
+    // "\<prefix>\DVD\<file name>", built in a CDVDMAN_SMB_PATH_MAX-byte buffer.
+    _Static_assert(sizeof(settings->filename) >= GAME_STARTUP_MAX + 1 + ISO_GAME_NAME_MAX + ISO_GAME_EXTENSION_MAX + 1,
+                   "cdvdman_settings_smb.filename (cdvd_config.h) must hold the longest file name the menu lists");
+    _Static_assert(1 + (sizeof(settings->smb_prefix) - 1) + 5 + (sizeof(settings->filename) - 1) + 1 <= CDVDMAN_SMB_PATH_MAX,
+                   "device-smb.c's path buffer (CDVDMAN_SMB_PATH_MAX) must hold \\<prefix>\\DVD\\<file name>");
+
     switch (game->format) {
         case GAME_FORMAT_OLD_ISO:
             snprintf(settings->filename, sizeof(settings->filename), "%s.%s%s", game->startup, game->name, game->extension);
@@ -1090,8 +1100,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
             settings->common.flags |= IOPCORE_SMB_FORMAT_USBLD;
     }
 
-    // No dialect flag travels in the settings block: the dialect is the choice of module above, so
-    // cdvdman_settings_smb and common.flags stay byte-identical to every pre-dialect build.
+    // No dialect flag travels in the settings block: the dialect is the choice of module above, and
+    // both modules read the block as this file writes it, from the same cdvd_config.h.
 
     sprintf(settings->smb_ip, "%u.%u.%u.%u", pc_ip[0], pc_ip[1], pc_ip[2], pc_ip[3]);
     settings->smb_port = gPCPort;

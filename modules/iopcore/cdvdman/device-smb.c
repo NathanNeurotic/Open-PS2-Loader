@@ -70,7 +70,7 @@ int DeviceReady(void)
 void DeviceFSInit(void)
 {
     int i = 0;
-    char tmp_str[256];
+    char tmp_str[CDVDMAN_SMB_PATH_MAX];
 
     // open a session
     smb_SessionSetupAndX(ServerCapabilities);
