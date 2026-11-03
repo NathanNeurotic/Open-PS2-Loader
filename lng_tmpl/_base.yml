@@ -2543,3 +2543,5 @@ gui_strings:
   string: "Native OPL core only. Enter 16 hexadecimal digits in byte order. Empty or all zeros uses this console's ID. This does not change i.LINK storage hardware."
 - label: INVALID_CONSOLE_ILINK_ID
   string: "Console i.LINK ID must be empty or exactly 16 hexadecimal digits (0-9, A-F). Settings were not saved."
+- label: LAUNCH_CONSOLE_ILINK_ID_FALLBACK
+  string: "The stored Console i.LINK ID is invalid and was ignored. This game will use the real console ID."

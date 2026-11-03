@@ -69,7 +69,7 @@ HARNESS = r'''
 #define _STR_ERR_CHEATS_LOAD_FAILED 1
 typedef struct config_set config_set_t;
 #define CONFIG_ITEM_ILINK_ID "$ILinkID"
-#define _STR_INVALID_CONSOLE_ILINK_ID 2
+#define _STR_LAUNCH_CONSOLE_ILINK_ID_FALLBACK 2
 static int id_diagnostics, id_reads, id_warnings;
 static void diagLog(const char *fmt,...){assert(strstr(fmt,"$ILinkID"));id_diagnostics++;}
 static const char *ilink_text;
@@ -87,9 +87,9 @@ static void InitCheatsConfig(config_set_t *c) { (void)c; }
 static config_set_t *configGetByType(int type) { (void)type; return NULL; }
 static int configGetInt(config_set_t *c, const char *key, int *value) { (void)c; (void)key; (void)value; return 0; }
 static const char *sbCheatsNotFoundText(void) { return ""; }
-static const char *_l(int id) { (void)id; return ""; }
+static const char *_l(int id) { return id == _STR_LAUNCH_CONSOLE_ILINK_ID_FALLBACK ? "launch fallback" : ""; }
 static int GetCheatsFromGlobalDefault(void) { return 0; }
-static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)t; (void)ui; if (!accept) id_warnings++; return answer; }
+static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)t; (void)ui; if (!accept) { assert(!strcmp(t,"launch fallback")); id_warnings++; } return answer; }
 
 @FUNCTIONS@
 
