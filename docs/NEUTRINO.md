@@ -1,6 +1,6 @@
 # Neutrino Core (External Loader)
 
-This fork can hand a game off to an **external [Neutrino](https://github.com/rickgaiser/neutrino) ELF**
+This fork can hand a game off to an **external [Neutrino](https://github.com/ps2max32/neutrino) ELF**
 instead of OPL's built-in EE core, on a **per-game** basis. This is useful for titles that
 boot better under Neutrino, or for users who prefer Neutrino's loader and its launch flags.
 
@@ -8,11 +8,11 @@ boot better under Neutrino, or for users who prefer Neutrino's loader and its la
 
 ## Credit and licence
 
-**[Neutrino](https://github.com/rickgaiser/neutrino) is created by [rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular
-PS2 Device Emulator"*. Home: <https://github.com/rickgaiser/neutrino>.
+**[Neutrino](https://github.com/ps2max32/neutrino) is created by [rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular
+PS2 Device Emulator"*. Home: <https://github.com/ps2max32/neutrino>.
 
 The [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) release package
-bundles the upstream development pre-release selected at publish time (falling back to the upstream latest release when no pre-release is listed); a failed download or incomplete extraction fails packaging, under [Neutrino](https://github.com/rickgaiser/neutrino)'s
+bundles the upstream development pre-release selected at publish time (falling back to the upstream latest release when no pre-release is listed); a failed download or incomplete extraction fails packaging, under [Neutrino](https://github.com/ps2max32/neutrino)'s
 **AFL-3.0** licence. We add one file to that folder — `config/bsd-udpfsbd.toml`, because
 Neutrino ships `udpfs_bd.irx` without a matching `-bsd` token and RiptOPL launches UDPFS as
 `-bsd=udpfsbd` — and replace the i.LINK pair: `modules/IEEE1394_bd_mini.irx` and its manager
@@ -22,13 +22,13 @@ drive before the drive lets go of the login held across an IOP reset, so i.LINK 
 (#1018); the manager carries the transmit-cancel, alarm and receive-FIFO fixes. The RetroAchievements
 kit's ORBIT runtime gets the same pair (#1065). Nothing else of [rickgaiser](https://github.com/rickgaiser)'s is altered or removed.
 
-[Neutrino](https://github.com/rickgaiser/neutrino) is deliberately **UI-agnostic**: it has no interface of its own, and that is exactly what
+[Neutrino](https://github.com/ps2max32/neutrino) is deliberately **UI-agnostic**: it has no interface of its own, and that is exactly what
 makes a front-end like this one possible. [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) is one of several — **[LUNA](https://github.com/dnunezx/LUNA)**
 by **[darkladark](https://github.com/dnunezx)** (our #1 recommended alternative, for lightweight,
 customized Neutrino gameplay), **[NHDDL](https://github.com/pcm720/nhddl)**, **XEB+ Plugin**, **RETROLauncher**, **OSD-XMB** and
 **PSBBN/BBNL** all drive the same core.
 
-Report *launching* problems here — building the arguments and handing off are ours. Genuine [Neutrino](https://github.com/rickgaiser/neutrino)
+Report *launching* problems here — building the arguments and handing off are ours. Genuine [Neutrino](https://github.com/ps2max32/neutrino)
 bugs belong on [rickgaiser](https://github.com/rickgaiser)'s tracker.
 
 ### PSX DESR DVR filesystem (experimental)
@@ -36,7 +36,7 @@ bugs belong on [rickgaiser](https://github.com/rickgaiser)'s tracker.
 [RiptOPL](https://github.com/NathanNeurotic/RiptOPL) can detect the DESR DVRP hardware capability and enumerate ISO files
 from the DVR-side `dvr_pfs0:` / `dvr_pfs1:` filesystems using read-only
 mounts. For launching, **[pcm720](https://github.com/pcm720)'s separate [bsd-dvr Neutrino branch](https://github.com/pcm720/neutrino/tree/bsd-dvr)**
-is required: normal bundled [Neutrino](https://github.com/rickgaiser/neutrino) does not contain its DVR modules. Select
+is required: normal bundled [Neutrino](https://github.com/ps2max32/neutrino) does not contain its DVR modules. Select
 the full DVR Neutrino installation under **Neutrino Path**. RiptOPL emits
 `-bsd=dvr` and `-dvd=dvr_pfsN:/path.iso`, without `-qb` (which would
 skip the required PSX-mode transition). This is unverified on DESR hardware
@@ -159,7 +159,7 @@ paths are no longer limited to 31 characters.
 | MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
 | UDPFS (network boot — Files or Image) | ✅ **default** for Files and Image — Neutrino unless the game's Loader Core is `<OPL>` (see §4). On `<OPL>`, Files reads the ISO through the in-game `udpfs_fhi` module and keeps VMCs on the server (`udpfs_mcemu`); **not tested on hardware** | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail. Same rule on `<OPL>`: a VMC the server will not open read-write offers the usual skip prompt |
 | UDPBD (network boot — served disk image) | ✅ **default** — Neutrino unless the game's Loader Core is `<OPL>` (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
-| SMB / ETH | ⚠️ **experimental, needs a Neutrino build with SMB support** — only a game whose own Loader Core is **Neutrino**; **Default** stays `<OPL>` on SMB whatever the global core is. See [SMB through Neutrino](#smb-through-neutrino-experimental). **Not tested on hardware** | ❌ the SMB driver is read-only: a game with a VMC launches with `<OPL>` and a warning |
+| SMB / ETH | ⚠️ **experimental, needs a Neutrino build with SMB support** — **Default** follows the global **Loader Core**, with per-game **Neutrino** / **<OPL>** overrides. See [SMB through Neutrino](#smb-through-neutrino-experimental). **Not tested on hardware** | ❌ the SMB driver is read-only: a game with a VMC launches with `<OPL>` and a warning |
 | USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) | n/a |
 | Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) | n/a |
 
@@ -186,19 +186,21 @@ Unsupported cases fall back to the `<OPL>` core automatically with an on-screen 
 
 ### SMB through Neutrino (experimental)
 
-Neutrino is gaining an SMB backend in
+Neutrino nightly includes the SMB backend merged on 2026-10-31 in
 [ps2max32/neutrino PR #236](https://github.com/ps2max32/neutrino/pull/236) by
 [Ronnie Sahlberg (sahlberg)](https://github.com/sahlberg). It uses his
 [usmb2](https://github.com/sahlberg/usmb2), a minimal SMB client (dialect 3.0 only) with its own small TCP/IP stack:
-`smb_ioman.irx` reads the game in Neutrino's loader and `smb_fhi.irx` reads it in the game. The PR is
-**not merged yet**, so this needs a Neutrino build that has it; a Neutrino without the SMB modules
-falls back to `<OPL>` with a warning. **Not tested on hardware.**
+`smb_ioman.irx` reads the game in Neutrino's loader and `smb_fhi.irx` reads it in the game. Install the
+**whole latest nightly folder**, including `config/bsd-smb.toml` and both SMB modules. Release kits
+fetch upstream's `latest` nightly at packaging time. An older installed folder without those files
+falls back to `<OPL>` with a warning. The RA kit uses the pinned ORBIT runtime; it needs its own SMB
+backend update before this path is available there. **Not tested on hardware.**
 
 How a game gets there:
 
-1. Set the game's **Loader Core** to **Neutrino** (Game Settings → Compatibility). **Default** keeps
-   SMB games on `<OPL>`, even when the global core is Neutrino, because `<OPL>` is the SMB path that
-   works today and Neutrino's has the limits below.
+1. Set the global **Loader Core** to **Neutrino** and leave the game on **Default**, or select
+   **Neutrino** for this game (Game Settings → Compatibility). An explicit **<OPL>** choice stays
+   on the native core. Favourites use the same rule as the original SMB row.
 2. At launch, the PS2's address, mask and gateway (the static ones, or the DHCP lease the menu got),
    the server's address (a NetBIOS name is looked up first), the user, the password and the share are
    written into every module argument in `<neutrino folder>/config/bsd-smb.toml`, because that file
@@ -210,14 +212,14 @@ Each of these keeps the game on `<OPL>`, with a warning saying why:
 
 | Limit | Why |
 |---|---|
-| SMB port is not **445** | usmb2 always dials 445. The bundled PS2-Servers defaults (SMBv1 on 1111, SMB2 on 1445) need to be moved to 445 for this |
+| SMB port is not **445** | usmb2 always dials 445. Use PS2-Servers' **SMBv3** card on 445 (its normal default is 1445); SMBv1 and the SMBv2 card cannot negotiate this backend |
 | A VMC is set for the game | the driver is read-only, so it cannot write the card |
 | `.zso` or USB Extreme (`ul.*`) images | Neutrino reads one plain ISO |
 | neutrino.elf only on the SMB share | Neutrino loads its modules after the share is closed; keep it on a memory card or USB |
 | User or password over 31 characters, share over 63, or path on the share over 127 | the driver's own limits |
 | `bsd-smb.toml` missing, read-only or not in the stock shape | the settings could not be handed over |
 
-The server must offer the **SMB 3.0** dialect (usmb2 asks for no other) with NTLM login, and no signing or encryption. OPL's **SMB Version** setting does not apply to this path. RetroAchievements are not
+The server must offer the **SMB 3.0** dialect (usmb2 asks for no other) with NTLM login, and no signing or encryption. Use ASCII usernames and passwords of at most 31 characters, because usmb2 hashes password bytes rather than decoding UTF-8. OPL's **SMB Version** setting does not apply to this path. RetroAchievements are not
 carried on this path yet. `bsd-smb.toml` holds the SMB password in plain text, like
 `conf_network.cfg` already does.
 
@@ -347,24 +349,27 @@ Connectivity** row (**Off** / Manual / Auto) plus the **Protocol** selector — 
 UDPBD / HTTP** — shown indented under it and on **Network** (one setting, both places). HTTP uses OPL’s core and has its own [guide](HTTP.md). **UDPFS** is the modern
 network-boot protocol ([Rick Gaiser](https://github.com/rickgaiser)'s **UDPRDMA** transport); **UDPBD** is the older SUDPBDv2 protocol,
 kept for users still running the `udpbd-server`. Both appear in OPL as their own games list — with
-covers and per-game settings — and boot via the external [Neutrino](https://github.com/rickgaiser/neutrino) core. **SMB** uses
+covers and per-game settings — and boot via the external [Neutrino](https://github.com/ps2max32/neutrino) core. **SMB** uses
 a mounted SMB file share served by OPL's **own** core (Neutrino only per game, experimental: see below), and it keeps its own address /
 port / share / credentials fields plus an **SMB Version** row (**SMBv1** default, or **SMB2**).
-Changing the version only takes effect on the next boot — OPL shows the usual restart notice when a
-network stack is already up — and it warns first that SMB2 changes **both** browsing and in-game
-reading, so an SMBv1-only server (including the bundled [PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers) tool) will list no games.
+SMB2 changes **both** browsing and in-game reading, so the server must speak SMB 2.0.2 or 2.1 for
+the whole session; PS2-Servers' SMBv1 card lists no games with it (use its SMBv2 card, Samba or
+Windows). Changing the version while an SMB driver is already loaded offers the usual restart. If
+the SMB2 driver cannot load, browsing falls back to SMBv1.
 
 | Choice | Wire protocol | On the PS2 | Core | PC server |
 |---|---|---|---|---|
 | **Network Connectivity: Off** | — | no network device (default) | — | — |
-| **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core; Neutrino per game (experimental, SMB 3.0 on port 445) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
+| **SMB** | SMBv1 (default) or SMB2 on OPL's core (**Network → SMB Version**); SMB 3.0 on port 445 (Neutrino core) | a mounted file share | OPL's *own* core; Neutrino per game (experimental) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended: SMBv1 or SMBv2 card for OPL, SMBv3 card for Neutrino) / Samba |
 | **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Files and Image: Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
 | **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino by default, `<OPL>` per game | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
 | **HTTP** | HTTP byte ranges | a `games.csv` catalog and ISO streams | OPL's own core | [Docmine17's server](https://github.com/Docmine17/Open-PS2-Loader-HTTP) or a server meeting the [HTTP profile](HTTP.md) |
 
-> **SMB3 is reserved, not offered.** The dialect enum has a slot for it, but packet signing isn't
-> implemented, so the picker deliberately stops at SMB2. The bundled PS2-Servers SMB server speaks
-> SMBv1 — leave the picker on **SMBv1** unless your server does SMB2.
+> **SMB2 means SMB 2.0.2 and 2.1.** OPL's own core logs on with NTLMv2 and signs its requests when
+> the server requires signing (Windows 11 24H2 does by default). It does not offer SMB 3.x, so a
+> server set to SMB 3 only is not reached (browsing it fails). Use PS2-Servers' **SMBv1**
+> card (or Samba with `min protocol = NT1`) with **SMBv1**, or its **SMBv2** card with **SMB2**;
+> Neutrino's experimental SMB path needs the **SMBv3** card on port 445 instead.
 
 Because the PS2 has a **single** network adapter, only ONE of these is active per session — the
 selector is exclusive *by construction* (the old separate ETH start-mode + "Network Boot" toggle +
@@ -415,7 +420,7 @@ effect** (OPL shows the usual restart-to-apply notice).
   images over UDPFS and is found by broadcast, so there is no address to type on the console; it is
   built on **[udpfsd](https://github.com/pcm720/udpfsd)** by **[pcm720](https://github.com/pcm720)**
   and is MIT licensed. On a PC, use **[NathanNeurotic/PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)**,
-  the maintained all-in-one launcher for UDPFS, SMBv1 and UDPBD; release packages include a
+  the maintained all-in-one launcher for UDPFS, SMB (v1, v2 and v3), UDPBD and HTTP; release packages include a
   `PS2-Servers.url` shortcut to it. Advanced users can instead run
   **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** directly. The old standalone `udpbd-server`
   (SUDPBDv2) does **not** work with UDPFS. Layout: **Image** mode's served FAT/exFAT image uses the
@@ -605,7 +610,7 @@ own mcemu ignores the toggle entirely. Dropping the argument also clears that sl
 slot mask, so the MMCE GameID card-switch re-arms for it, and on APA HDD it silences the
 "VMC unsupported under Neutrino" warning.
 
-Rules that follow from Neutrino's design (verified against `rickgaiser/neutrino` source):
+Rules that follow from Neutrino's design (verified against Neutrino's source, now `ps2max32/neutrino`):
 
 - **The `.bin` must already exist.** Neutrino opens it `O_RDWR` with no create, and **aborts the
   whole boot** (black screen) if it can't. OPL therefore creates/format cards at *config* time
@@ -627,6 +632,6 @@ Rules that follow from Neutrino's design (verified against `rickgaiser/neutrino`
 
 ## RetroAchievements edition runtime
 
-Both theme kits in the [dedicated RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) bundle the pinned ORBIT v1.0.2 [Neutrino](https://github.com/rickgaiser/neutrino) runtime by Daniel / [danielnuld](https://github.com/danielnuld) (AFL-3.0), based on Neutrino by [Maximus32](https://github.com/rickgaiser) and [xeRAbora](https://github.com/hacan359/xerabora) protocol work by [hacan359](https://github.com/hacan359). Standard kits keep ordinary upstream Neutrino. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
+Both theme kits in the [dedicated RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) bundle the pinned ORBIT v1.0.2 [Neutrino](https://github.com/ps2max32/neutrino) runtime by Daniel / [danielnuld](https://github.com/danielnuld) (AFL-3.0), based on Neutrino by [Maximus32](https://github.com/rickgaiser) and [xeRAbora](https://github.com/hacan359/xerabora) protocol work by [hacan359](https://github.com/hacan359). Standard kits keep ordinary upstream Neutrino. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
 
 The adapter supports both RA modes (Xerabora, and Caduceus through its engine), watch lists whose direct values fit 1,216 bytes (pointer-chain achievements excluded, as in ORBIT), and writable configuration storage. UDP storage reuses its existing network stack and currently needs static addressing, a saved watch list and a companion profile that already knows the image. Console unlock notices are not supplied by this runtime. See the [RA setup and validation limits](RETROACHIEVEMENTS.md#neutrino-in-the-ra-edition).

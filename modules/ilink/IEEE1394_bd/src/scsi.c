@@ -399,7 +399,8 @@ int scsi_connect(struct scsi_interface *scsi)
             // RiptOPL: publish the device only once it answered, is ready and has a geometry. The
             // SDK ignored scsi_warmup's result and connected a drive whose inquiry, readiness or
             // capacity had failed, so BDM and CDVDMAN read through a device with no sector size
-            // (#1018). A failed drive frees its slot; the next bus reset tries it again.
+            // (#1018). A failed drive frees its slot; the bus-reset thread tries it again shortly,
+            // bus reset or not (sbp2_driver.c, SBP2_RETRY_FIRST_US).
             warmup_interface = scsi;
             GetSystemTime(&warmup_start);
             int result = scsi_warmup(bd);

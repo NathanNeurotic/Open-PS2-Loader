@@ -292,6 +292,8 @@ static int hdpro_io_start(void)
 
 static int hdpro_io_finish(void)
 {
+    int ok;
+
     if (!hdpro_io_active)
         return 0;
 
@@ -305,10 +307,13 @@ static int hdpro_io_finish(void)
 
     DelayThread(200);
 
-    if (HDPROreg_IO32 == 0x401a7800) // check the 1st in ROM0 seg get
-        hdpro_io_active = 0;         // back to it's original state
+    ok = (HDPROreg_IO32 == 0x401a7800); // check the 1st in ROM0 seg get
 
-    return hdpro_io_active ^ 1;
+    // Clear the flag even when the check fails: left set, hdpro_io_start() would refuse every later
+    // transfer without trying, so one failed finish would end all disc access until reboot.
+    hdpro_io_active = 0;
+
+    return ok;
 }
 
 static void hdpro_io_write(u8 cmd, u16 val)
@@ -678,8 +683,11 @@ int sceAtaDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
 
     WAITIOSEMA(ata_io_sema);
 
-    if (!hdpro_io_start())
+    if (!hdpro_io_start()) {
+        // Give the lock back, or every later disc read of the game waits on it for good.
+        SIGNALIOSEMA(ata_io_sema);
         return -1;
+    }
 
     while (nsectors) {
         len = (nsectors > 256) ? 256 : nsectors;
@@ -717,7 +725,7 @@ int sceAtaDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
     }
 
     if (!hdpro_io_finish())
-        return -2;
+        res = -2; // still release the lock below
 
     SIGNALIOSEMA(ata_io_sema);
 

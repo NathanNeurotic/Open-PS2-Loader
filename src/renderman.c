@@ -27,7 +27,7 @@ static int vsync_id = -1;
 static int hiresThread = -1;
 static int hiresPriority = -1;
 
-#define NUM_RM_VMODES 17
+#define NUM_RM_VMODES 20
 #define RM_VMODE_AUTO 0
 
 // RM Vmode -> GS Vmode conversion table
@@ -49,6 +49,9 @@ struct rm_mode
     // these out get 0 from aggregate initialisation.
     short int safeW;
     short int safeH;
+    // 1 = flicker filter for an interlaced FIELD HIRES row: each displayed line is blended with the
+    // framebuffer line below it in the GS merge circuit (see rmApplyLineBlend). 0 elsewhere.
+    short int lineBlend;
 };
 
 // clang-format off
@@ -102,6 +105,16 @@ static struct rm_mode rm_mode_table[NUM_RM_VMODES] = {
     // trades the 1:1 vertical mapping for that fit (the 480-line grid is squeezed to 448 lines).
     // Appended at the tail for the same stored-index reason as the flicker-free rows.
     {GS_MODE_NTSC,       16,  704,  480,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3, 14, 15, 640, 448}, // NTSC@60Hz HIRES, 448-line area
+    // Flicker-filtered twins of the three 480i/576i HIRES rows (RiptOPL issue #132), appended for the
+    // same stored-index reason. Unlike the FLICKER-FREE rows above they keep FIELD mode and the full
+    // 576/480-line framebuffer, so vertical detail is not thrown away: instead the GS merge circuit
+    // shows every line half-and-half with the line below it (rmApplyLineBlend). A one-line detail
+    // then appears in both fields at half strength instead of strobing at 25/30Hz, which is the
+    // classic interlace flicker filter. Everything else (safe area, PAR, gsKit hires passes) is
+    // exactly the twin's.
+    {GS_MODE_PAL,        16,  704,  576,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3, 16, 15, 640, 512, 1}, // PAL@50Hz HIRES flicker-filtered
+    {GS_MODE_NTSC,       16,  704,  480,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3,  1,  1, 640, 480, 1}, // NTSC@60Hz HIRES flicker-filtered
+    {GS_MODE_NTSC,       16,  704,  480,  2, 4, GS_INTERLACED,    GS_FIELD, RM_ARATIO_4_3, 14, 15, 640, 448, 1}, // NTSC@60Hz HIRES, 448-line area, flicker-filtered
 };
 // clang-format on
 
@@ -724,9 +737,53 @@ void rmDrawBlendedTriangles(GSTEXTURE *txt, int count, const float *xy, const fl
     rmQueueTriangles(txt, count, xy, uv, colors, 1);
 }
 
+// Interlace flicker filter for the lineBlend HIRES rows (RiptOPL issue #132).
+//
+// gsKit only ever displays through read circuit 2 (gsKit_init_screen: PMODE EN1=0 EN2=1), and the
+// hires renderer keeps a single front buffer at ScreenBuffer[0] that DISPFB2 points at for the
+// whole life of the mode (no double buffering, nothing in gsHires.c touches PMODE or the DISPFB
+// registers). That leaves read circuit 1 free. Point it at the same buffer one line further down
+// (DISPFB1 DBY=1) with the same DISPLAY position, and let the merge circuit mix the two at a fixed
+// ~50% (PMODE MMOD=1, ALP=0x80, SLBG=0: out = RC1*ALP + RC2*(1-ALP)). In FIELD mode the CRTC reads
+// line 2k+field, so every scanline of either field shows lines n and n+1 averaged: a one-line
+// detail lands in both fields at half strength instead of alternating at 25/30Hz.
+//
+// DISPLAY1 is two raster lines (one line per field) shorter than DISPLAY2, so circuit 1 never reads
+// the line past the end of the framebuffer (that is texture VRAM). The last line of the picture is
+// then circuit 2 alone at the blend weight, at the very bottom of the raster, under the bezel.
+//
+// Leaving the mode needs no undo: every mode switch goes through gsKit_init_screen, which resets
+// the GS and writes PMODE, DISPFB1 and DISPLAY1 back to gsKit's single-circuit setup.
+static void rmApplyLineBlend(void)
+{
+    DIntr();
+    GS_SET_DISPFB1(gsGlobal->ScreenBuffer[0] / 8192, // same front buffer as DISPFB2
+                   gsGlobal->Width / 64,
+                   gsGlobal->PSM,
+                   0,
+                   1); // one framebuffer line down
+    GS_SET_DISPLAY1(gsGlobal->StartX + gsGlobal->StartXOffset,
+                    gsGlobal->StartY + gsGlobal->StartYOffset,
+                    gsGlobal->MagH,
+                    gsGlobal->MagV,
+                    gsGlobal->DW - 1,
+                    gsGlobal->DH - 1 - 2);
+    GS_SET_PMODE(1,     // read circuit 1 on (the line below)
+                 1,     // read circuit 2 on (gsKit's own output)
+                 1,     // blend with the fixed ALP value, not pixel alpha
+                 0,     // (alpha output select, unused for display)
+                 0,     // blend circuit 1 with circuit 2, not with the background colour
+                 0x80); // ~50%
+    EIntr();
+}
+
 void rmSetDisplayOffset(int x, int y)
 {
     gsKit_set_display_offset(gsGlobal, x * rm_mode_table[vmode].VCK, y);
+    // gsKit_set_display_offset rewrites DISPLAY1 at full height, so the flicker filter's read
+    // circuit 1 setup has to follow every position change (rmSetMode always ends up here too).
+    if (rm_mode_table[vmode].lineBlend)
+        rmApplyLineBlend();
 }
 
 void rmSetAspectRatio(enum rm_aratio dar)

@@ -35,9 +35,14 @@ STUBS = r'''
 #define __OPLDIAG
 #define O_RDONLY 0
 #define MAX_BDM_DEVICES 10
-#define HDD_MODE 1
-#define APP_MODE 2
-#define ETH_MODE 3
+#define HDD_MODE 9 // the real IO_MODES order: BDM_MODE..BDM_MODE7 = 0..7, then ETH, HDD, APP
+#define APP_MODE 10
+#define ETH_MODE 8
+#define BDM_MODE 0
+#define BDM_MODE_LAST 7
+#define APP_HANDOFF_LEGACY 0
+#define APP_HANDOFF_TYPED 1
+#define LOG(...)
 #define UNMOUNT_EXCEPTION 1
 #define KEEPIOP_EXCEPTION 2
 #define IO_MODE_SELECTED_ALL_SPARE 99
@@ -56,6 +61,7 @@ enum { VCD_POPSNET_SMB_MISSING, VCD_POPSNET_NEED_STATIC,
 static struct { const char *title; } appsList[] = {{"launcHER"}};
 static char gOPLPart[128];
 static int is_pops, reset_iop, errors, torn_down, launched, sdk_launch;
+static int per_app_handoff = -1, gAppHandoffPath, typed_root_known = 1, typed_calls;
 static int got_argc, got_reset, got_cleanup, mock_fd = 1, mock_errno;
 static char got_path[512], got_partition[256], got_argv[2][512], last_msg[1024];
 static int appVisibleToMaster(item_list_t *items, int id) { return id; }
@@ -75,12 +81,23 @@ static int mock_close(int fd) { return 0; }
 #define open mock_open
 #define close mock_close
 static int oplPath2Mode(const char *path)
-{ return !strncmp(path, "pfs", 3) ? HDD_MODE : APP_MODE; }
+{ return !strncmp(path, "pfs", 3) ? HDD_MODE : !strncmp(path, "mass", 4) ? BDM_MODE : APP_MODE; }
 static int appIsPopstarterSmb(const char *path) { return 0; }
 static const char *ethGetSMBPrefix(void) { return "smb0:"; }
 static int vcdPreparePopstarterSmbLaunch(const char *path) { return -1; }
 static int appIsPopstarterElf(const char *path, const char *title) { return is_pops; }
 static int appGetRebootIopConfig(config_set_t *c) { return reset_iop; }
+static int appGetHandoffPathConfig(config_set_t *c) { return per_app_handoff; }
+// The typed spelling bdmsupport would compute from the live slot table: here every mass slot is an exFAT HDD.
+static int bdmBuildTypedHandoffPath(const char *path, char *out, int outLen)
+{
+    const char *colon = strchr(path, ':');
+    typed_calls++;
+    if (!typed_root_known || strncmp(path, "mass", 4) || colon == NULL)
+        return 0;
+    snprintf(out, outLen, "ata0%s", colon);
+    return 1;
+}
 static int guiPromptRebootIop(void) { return 0; }
 static void mmceReset(void) {}
 static int appIsEmberElf(const char *path) { (void)path; return 0; }
@@ -130,7 +147,7 @@ static void run(const char *path, const char *arg, int reset, int pops)
     config_set_t config = {path, arg};
     reset_iop = reset;
     is_pops = pops;
-    errors = torn_down = launched = sdk_launch = got_argc = got_cleanup = 0;
+    errors = torn_down = launched = sdk_launch = got_argc = got_cleanup = typed_calls = 0;
     last_msg[0] = '\0';
     memset(got_argv, 0, sizeof(got_argv));
     appLaunchItem(NULL, 0, &config);
@@ -221,7 +238,38 @@ int main(void)
     }
     mock_fd = 1;
 
-    puts("PASS: APA pfs handoff, HDD cleanup, reset choices, optional argv[1], other devices, POPSTARTER, argument boundary, OPLDIAG open failure");
+    // App Handoff Path: only the argv[0] string changes, and only for a BDM app that is not POPSTARTER.
+    const char *massApp = "mass0:/APPS/launcHER.elf";
+    const char *typedApp = "ata0:/APPS/launcHER.elf";
+    gAppHandoffPath = APP_HANDOFF_TYPED;
+    run(massApp, NULL, 0, 0);
+    assert(launched == 1 && !errors && typed_calls == 1);
+    assert(!strcmp(got_path, massApp) && !strcmp(got_argv[0], typedApp)); // load path stays mass0:
+    run(massApp, "game", 1, 0);
+    assert(got_argc == 2 && !strcmp(got_argv[0], typedApp) && !strcmp(got_argv[1], "game") && got_reset == 1);
+    per_app_handoff = APP_HANDOFF_LEGACY; // the app's own HANDOFFPATH key wins over the global setting
+    run(massApp, NULL, 0, 0);
+    assert(!typed_calls && !strcmp(got_argv[0], massApp));
+    per_app_handoff = -1;
+    typed_root_known = 0; // no typed name (udp, cf, unidentified slot): legacy spelling, the launch goes on
+    run(massApp, NULL, 0, 0);
+    assert(launched == 1 && !errors && typed_calls == 1 && !strcmp(got_argv[0], massApp));
+    typed_root_known = 1;
+    run("mc0:/BOOT/launcHER.elf", NULL, 0, 0); // not a BDM device: never consulted
+    assert(!typed_calls && !strcmp(got_argv[0], "mc0:/BOOT/launcHER.elf"));
+    run(apa, NULL, 0, 0); // HDD apps keep the APA spelling
+    assert(!typed_calls && !strcmp(got_argv[0], "hdd0:CustomApps:pfs:/APPS/Ember/launcHER.elf"));
+    run(massApp, "game", 0, 1); // POPSTARTER keeps its selector argv
+    assert(sdk_launch == 1 && !typed_calls && !strcmp(got_argv[0], "game"));
+    gAppHandoffPath = APP_HANDOFF_LEGACY;
+    per_app_handoff = APP_HANDOFF_TYPED; // per-app Typed under a Legacy global
+    run(massApp, NULL, 0, 0);
+    assert(typed_calls == 1 && !strcmp(got_argv[0], typedApp));
+    per_app_handoff = -1;
+    run(massApp, NULL, 0, 0); // defaults: byte-for-byte the old handoff
+    assert(!typed_calls && !strcmp(got_argv[0], massApp));
+
+    puts("PASS: APA pfs handoff, HDD cleanup, reset choices, optional argv[1], other devices, POPSTARTER, argument boundary, OPLDIAG open failure, App Handoff Path");
     return 0;
 }
 '''
@@ -232,6 +280,8 @@ with tempfile.TemporaryDirectory(prefix="opl-app-args-") as temp:
     helpers = function("appNormalizeLaunchPath(") + "\n"
     if "appBuildHddHandoffPath(" in text:
         helpers += function("appBuildHddHandoffPath(") + "\n"
+    if "appChooseHandoffArgv0(" in text:
+        helpers += function("appChooseHandoffArgv0(") + "\n"
     harness.write_text(STUBS + helpers + function("appLaunchItem(") + TESTS)
     executable = path / ("launch.exe" if os.name == "nt" else "launch")
     flags = ["-std=c99", "-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter"]

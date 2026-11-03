@@ -159,9 +159,9 @@ IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o usbhdfsd.o bdmevent.o dvrdrv.o dvrf
 
 EECORE_OBJS = ee_core.o ioprp.o util.o \
 		udnl.o imgdrv.o eesync.o \
-		bdm_cdvdman.o bdm_ata_cdvdman.o bdm_udp_cdvdman.o udpfs_cdvdman.o IOPRP_img.o smb_cdvdman.o http_cdvdman.o \
+		bdm_cdvdman.o bdm_ata_cdvdman.o bdm_udp_cdvdman.o udpfs_cdvdman.o IOPRP_img.o smb_cdvdman.o smb2_cdvdman.o http_cdvdman.o \
 		hdd_cdvdman.o mmce_cdvdman.o hdd_hdpro_cdvdman.o cdvdfsv.o \
-		ingame_smstcpip.o smap_ingame.o smbman.o smbinit.o
+		ingame_smstcpip.o smap_ingame.o smbman.o smb2man.o smbinit.o
 
 PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
 	m4s_bd hdd_bd mmce hdd eth udp_bd udp_fs app cross triangle circle square select start left right \
@@ -324,7 +324,7 @@ endif
 
 ifeq ($(OPLDIAG),1)
   EE_CFLAGS += -D__OPLDIAG
-  EE_LIBS += -ldebug # boot trace text screen (menuwatch)
+  EE_LIBS += -ldebug -leedebug # boot trace text screen, crash catcher (menuwatch)
 endif
 
 ifeq ($(INGAMEDIAG),1)
@@ -422,6 +422,70 @@ EE_CFLAGS += -fsingle-precision-constant -DOPL_VERSION=\"$(OPL_VERSION)\"
 EE_CFLAGS += -Wno-format-truncation -Wno-stringop-truncation
 # Generate .d files to track header file dependencies of each object file
 EE_CFLAGS += -MMD -MP
+# RiptOPLite (docs/RIPTOPLITE.md): RIPTOPLITE=<device> builds a loader with ONE game device's drivers.
+# Each device keeps the objects below; every other object in LITE_DEVICE_SPECIFIC is left out of the
+# ELF, and its <name>_irx / size_<name>_irx symbols come from a generated stub file with size 0, which
+# sysLoadModuleBuffer refuses (src/system.c). include/riptlite.h gates the code paths of the absent
+# devices; src/riptlite.c holds their settings off. Everything else stays in every lite build: MMCE's
+# modules (Game ID, the IGR boot-card switch), the menu's network stack and NBD server (the network
+# modules are backbone for other things), and the BDM core with the USB block driver (a lite ELF
+# started from a USB stick reads its settings there). Mirrors NathanNeurotic/RiptOPL tools/lite_devices.py.
+# Build each flavour from a clean tree (make clean): objects carry the RIPTOPLITE defines.
+LITE_DEVICES = usb mx4sio ilink hdd smb udpbd udpfs mmce
+LITE_BDM_GAME = bdm_cdvdman bdm_mcemu
+LITE_KEEP_usb = $(LITE_BDM_GAME)
+LITE_KEEP_mx4sio = $(LITE_BDM_GAME) mx4sio_bd
+LITE_KEEP_ilink = $(LITE_BDM_GAME) iLinkman IEEE1394_bd
+# The internal drive in both formats (APA/PFS and exFAT) and DESR DVR ISOs.
+LITE_KEEP_hdd = $(LITE_BDM_GAME) bdm_ata_cdvdman xhdd hdpro_atad ps2hdd ps2fs hdd_cdvdman hdd_hdpro_cdvdman \
+		hdd_mcemu dvrdrv dvrfile
+LITE_KEEP_smb = nbns-iop smbman smb2man smb_cdvdman smb2_cdvdman smb_mcemu smbinit ingame_smstcpip smap_ingame
+LITE_KEEP_udpbd = $(LITE_BDM_GAME) smap_udpbd bdm_udp_cdvdman
+# Both UDPFS accesses, Files and IMG. The Files launch borrows smb_cdvdman to prepare the game
+# (ethsupport.c), so it stays too.
+LITE_KEEP_udpfs = $(LITE_BDM_GAME) udpfs_smap udpfs_ministack udpfs_bd udpfs_ioman udpfs_fhi udpfs_cdvdman \
+		udpfs_mcemu bdm_udp_cdvdman smb_cdvdman
+# MMCE's modules are in every build; this one adds the MMCE games page.
+LITE_KEEP_mmce =
+LITE_DEFINE_usb = USB
+LITE_DEFINE_mx4sio = MX4SIO
+LITE_DEFINE_ilink = ILINK
+LITE_DEFINE_hdd = HDD
+LITE_DEFINE_smb = SMB
+LITE_DEFINE_udpbd = UDPBD
+LITE_DEFINE_udpfs = UDPFS
+LITE_DEFINE_mmce = MMCE
+# HTTP and PC Card CF have no lite build: their modules go everywhere.
+LITE_DEVICE_SPECIFIC = $(sort $(foreach d,$(LITE_DEVICES),$(LITE_KEEP_$(d))) http_cdvdman pccf_cdvdman pccf_bd pccf_game)
+# What RetroAchievements uses whatever the game device: the in-game SMAP + SMSTCPIP pair (RA telemetry
+# travels in the module table of every RA launch, system.c) and the menu's SMB filesystem with NBNS
+# (the achievements page reads ART/CADUCEUS.KEY and badges from the SMB share, achievements.c).
+LITE_RA_ALWAYS = ingame_smstcpip smap_ingame smbman smb2man nbns-iop
+
+FRONTEND_OBJS += riptlite.o
+ifneq ($(RIPTOPLITE),)
+  ifeq ($(filter $(RIPTOPLITE),$(LITE_DEVICES)),)
+    $(error RIPTOPLITE=$(RIPTOPLITE) is not one of: $(LITE_DEVICES))
+  endif
+  ifneq ($(words $(RIPTOPLITE)),1)
+    $(error RIPTOPLITE takes one device)
+  endif
+  # A renamed or removed module must be classified again, not silently kept or dropped.
+  LITE_UNKNOWN = $(filter-out $(basename $(IOP_OBJS) $(EECORE_OBJS)),$(LITE_DEVICE_SPECIFIC) $(LITE_RA_ALWAYS))
+  ifneq ($(LITE_UNKNOWN),)
+    $(error The RiptOPLite lists name objects this build does not embed: $(LITE_UNKNOWN))
+  endif
+  LITE_KEEP = $(LITE_KEEP_$(RIPTOPLITE)) $(if $(filter 1,$(RETROACHIEVEMENTS)),$(LITE_RA_ALWAYS))
+  LITE_DROP = $(filter-out $(LITE_KEEP),$(LITE_DEVICE_SPECIFIC))
+  # The BIN2C symbol of each dropped object (nbns-iop.o is nbns_irx).
+  LITE_DROP_SYMS = $(subst nbns-iop,nbns,$(LITE_DROP))
+  LITE_RA_NOTE = $(if $(filter 1,$(RETROACHIEVEMENTS)), RetroAchievements)
+  IOP_OBJS := $(filter-out $(LITE_DROP:%=%.o),$(IOP_OBJS))
+  EECORE_OBJS := $(filter-out $(LITE_DROP:%=%.o),$(EECORE_OBJS))
+  FRONTEND_OBJS += lite_irx_stubs.o
+  EE_CFLAGS += -DRIPTOPLITE -DRIPTOPLITE_$(LITE_DEFINE_$(RIPTOPLITE))
+endif
+
 EE_OBJS += $(FRONTEND_OBJS) $(GFX_OBJS) $(AUDIO_OBJS) $(MISC_OBJS) $(EECORE_OBJS) $(IOP_OBJS)
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
@@ -504,6 +568,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/iopcore/cdvdman USE_UDPFS=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_MMCE=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_SMB=1 clean
+	$(MAKE) -C modules/iopcore/cdvdman USE_SMB2=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_HTTP=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_HDD=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_HDPRO=1 clean
@@ -549,6 +614,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/httpclient clean
 	echo " -bdm"
 	$(MAKE) -C modules/bdm clean
+	$(MAKE) -C modules/mx4sio_bd clean
 	echo " -IEEE1394_bd"
 	$(MAKE) -C modules/ilink/IEEE1394_bd clean
 	$(MAKE) -C modules/ilink/iLinkman clean
@@ -587,6 +653,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/rapull clean
 	echo " -smbman-ra"
 	$(MAKE) -C modules/network/smbman-ra clean
+	echo " -smb2man"
+	$(MAKE) -C modules/network/smb2man clean
 	echo " -usbd-ra"
 	$(MAKE) -C modules/usb/usbd-ra clean
 	echo "-pc tools"
@@ -642,7 +710,13 @@ $(EE_VPKD).ELF: $(EE_BIN_PACKED)
 	cp -f $< $@
 
 $(EE_VPKD).ZIP: $(EE_VPKD).ELF DETAILED_CHANGELOG CREDITS LICENSE README.md
-	zip -r $@ $^
+#The ELF embeds smb2man over libsmb2 (LGPL-2.1): its licence goes with it, as LICENSE-LIBSMB2.txt. The
+#licence is staged before the archive is touched, and a failed step removes the archive, so a failed run
+#leaves no zip without the licence for anyone to ship.
+	tmp=$$(mktemp -d) && cp modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "$$tmp/LICENSE-LIBSMB2.txt" && \
+	  zip -r $@ $^ && \
+	  zip -j $@ "$$tmp/LICENSE-LIBSMB2.txt"; status=$$?; rm -rf "$$tmp"; \
+	  if [ $$status -ne 0 ]; then rm -f "$@"; fi; exit $$status
 	echo "Package Complete: $@"
 
 ee_core/ee_core.elf: ee_core
@@ -734,6 +808,13 @@ modules/iopcore/cdvdman/smb_cdvdman.irx: modules/iopcore/cdvdman
 	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_SMB=1 -C $< all
 
 $(EE_ASM_DIR)smb_cdvdman.c: modules/iopcore/cdvdman/smb_cdvdman.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+# SMB2 build of smb_cdvdman (smb2.c in place of smb.c), launched when the menu browses with smb2man.
+modules/iopcore/cdvdman/smb2_cdvdman.irx: modules/iopcore/cdvdman
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_SMB2=1 -C $< all
+
+$(EE_ASM_DIR)smb2_cdvdman.c: modules/iopcore/cdvdman/smb2_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 # Always enter the nested builds so their own dependency checks run. Track shared includes
@@ -921,6 +1002,16 @@ modules/pademu/usb_pademu.irx: modules/pademu
 $(EE_ASM_DIR)usb_pademu.c: modules/pademu/usb_pademu.irx
 	$(BIN2C) $< $@ $(*F)_irx
 
+# Always enter the driver sub-make, including after a header or build-variant change.
+.PHONY: mx4sio-submake
+mx4sio-submake:
+
+modules/mx4sio_bd/mx4sio_bd.irx: mx4sio-submake
+	$(MAKE) -C modules/mx4sio_bd MINI=0
+
+modules/mx4sio_bd/mx4sio_bd_mini.irx: mx4sio-submake
+	$(MAKE) -C modules/mx4sio_bd MINI=1
+
 # FORK-VENDORED Block Device Manager (modules/bdm, see its ORIGIN.txt): ps2sdk's bdm + libbdm with the
 # block-cache refill fix. Always enter the sub-make so an edited source rebuilds the IRX.
 .PHONY: bdm-submake
@@ -965,7 +1056,7 @@ $(EE_ASM_DIR)usbmass_bd.c: $(PS2SDK)/iop/irx/usbmass_bd.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)IEEE1394_bd.c: modules/ilink/IEEE1394_bd/IEEE1394_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)mx4sio_bd.c: $(PS2SDK)/iop/irx/mx4sio_bd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)mx4sio_bd.c: modules/mx4sio_bd/mx4sio_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 else
 # block device drivers without printf's
@@ -975,7 +1066,7 @@ $(EE_ASM_DIR)usbmass_bd.c: $(PS2SDK)/iop/irx/usbmass_bd_mini.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)IEEE1394_bd.c: modules/ilink/IEEE1394_bd/IEEE1394_bd_mini.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)mx4sio_bd.c: $(PS2SDK)/iop/irx/mx4sio_bd_mini.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)mx4sio_bd.c: modules/mx4sio_bd/mx4sio_bd_mini.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 endif
 
@@ -1164,6 +1255,14 @@ modules/network/smbman-ra/smbman.irx: $(wildcard modules/network/smbman-ra/*.c) 
 	$(MAKE) -C modules/network/smbman-ra rebuild
 
 $(EE_ASM_DIR)smbman.c: $(SMBMAN_IRX) | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+# smb2man: the SMB2 browse driver over vendored libsmb2 (modules/network/smb2man/libsmb2/VENDORED.txt),
+# loaded instead of smbman when Settings > Network > SMB Version is SMB2. LGPL-2.1, like libsmb2.
+modules/network/smb2man/smb2man.irx: $(wildcard modules/network/smb2man/*.c) $(wildcard modules/network/smb2man/libsmb2/lib/*.c) $(wildcard modules/network/smb2man/libsmb2/lib/*.h) modules/network/smb2man/imports.lst modules/network/smb2man/Makefile
+	$(MAKE) -C modules/network/smb2man all
+
+$(EE_ASM_DIR)smb2man.c: modules/network/smb2man/smb2man.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/network/smbinit/smbinit.irx: modules/network/smbinit
@@ -1357,6 +1456,14 @@ $(EE_ASM_DIR)tifinet_irx.c: modules/debug/tifinet.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)deci2_img.c: modules/debug/deci2.img | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)
 
+# RiptOPLite: the dropped modules' symbols, size 0 (see LITE_DEVICE_SPECIFIC). Rewritten only when it changes.
+.PHONY: lite-stubs-check
+$(EE_ASM_DIR)lite_irx_stubs.c: lite-stubs-check | $(EE_ASM_DIR)
+	{ echo '/* Generated by the Makefile for RiptOPLite $(RIPTOPLITE)$(LITE_RA_NOTE): the IRX this build leaves out. */'; \
+	$(foreach s,$(LITE_DROP_SYMS),echo 'unsigned char $(s)_irx[16] __attribute__((aligned(16)));'; echo 'int size_$(s)_irx = 0;';) } > $@.tmp
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
+	rm -f $@.tmp
+
 $(EE_OBJS_DIR)%.o: $(EE_SRC_DIR)%.c | $(EE_OBJS_DIR)
 	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
 
@@ -1429,6 +1536,11 @@ endif
 
 oplversion:
 	@echo $(OPL_VERSION)
+
+# RiptOPLite: what this build leaves out, for the release workflow's symbol check (lite-release.yml).
+.PHONY: lite-dropped
+lite-dropped:
+	@echo $(LITE_DROP_SYMS)
 
 ifdef PS2SDK
 include $(PS2SDK)/samples/Makefile.pref

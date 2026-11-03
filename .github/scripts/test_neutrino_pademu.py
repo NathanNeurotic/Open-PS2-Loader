@@ -98,16 +98,14 @@ int main(void) {
             support.mode=favourite ? FAV_MODE : mode; favMode=mode;
             for (int defaultCore=0; defaultCore<2; defaultCore++) {
                 gDefaultCoreLoader=defaultCore;
-                for (int choice=-1; choice<2; choice++) {
+                for (int choice=-1; choice<3; choice++) {
                     game.core_present=choice>=0; game.core=choice;
                     for (udpbd=0; udpbd<2; udpbd++) {
                         for (pccf=0; pccf<2; pccf++) {
                             if (udpbd && pccf) continue;
                             view=0;
-                            int expected=choice<0 ? defaultCore : choice;
+                            int expected=(choice<0 || choice==2) ? defaultCore : choice;
                             if (mode==HTTP_MODE || (mode==BDM_MODE && pccf)) expected=0;
-                            /* SMB is Neutrino only from its own key; Default stays on the OPL core */
-                            if (mode==ETH_MODE) expected=choice==1;
                             /* UDPFS and UDPBD default to Neutrino; only their own <OPL> key picks the OPL core */
                             if (mode==UDPFS_MODE || (mode==BDM_MODE && udpbd)) expected=choice!=0;
                             assert(gameMenuCoreIsNeutrino()==expected);

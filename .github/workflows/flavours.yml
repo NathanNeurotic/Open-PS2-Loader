@@ -58,6 +58,12 @@ jobs:
         run: python3 .github/scripts/test_ripps2_all_games.py
       - name: Check the RIPPS2 Hide Game and Delete everything (hidden.txt, rows, files that go)
         run: python3 .github/scripts/test_ripps2_game_manage.py
+      - name: Check the game size fallback, PS1 Duplicates and the diagnostic menu crash catcher
+        run: |
+          python3 .github/scripts/test_game_size_fallback.py
+          python3 .github/scripts/test_ps1_duplicates.py
+          python3 .github/scripts/test_list_cfg_text.py
+          python3 .github/scripts/test_menu_crash_catcher.py
       - name: Check the About page (full version, NathanNeurotic credited, row count kept)
         run: python3 .github/scripts/test_about_credits_layout.py
       - name: Check the YAOPL theme fixes, the Background art hold and the RIPPS2 boot theme hold
@@ -92,6 +98,8 @@ jobs:
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check that a missed pad read is not a release, and rumble alignment waits for a quiet pad
         run: python3 .github/scripts/test_pad_missed_read.py
+      - name: Check that the DualShock stays locked in analog mode, so its ANALOG button cannot stall the menu
+        run: python3 .github/scripts/test_pad_mode_lock.py
       - name: Check masked pattern scan bounds and rejection of short ranges
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6
@@ -106,8 +114,12 @@ jobs:
         run: python3 .github/scripts/test_smbman_ra_write_count.py
       - name: Check BDM and MMCE VMC writes, reads and erases report device failures
         run: python3 .github/scripts/test_vmc_write_result.py
+      - name: Check MX4SIO partial-transfer retries
+        run: python3 .github/scripts/test_mx4sio_retry.py
       - name: Check IGR and power-off let an in-flight VMC save finish, bounded
         run: python3 .github/scripts/test_igr_vmc_drain.py
+      - name: Check MMCE in-game reads wait out a card swap, and IGR and power-off cut that wait short
+        run: python3 .github/scripts/test_mmce_read_recovery.py
       - name: Check a failed ZSO device read is a read error, through the sector cache too, and an SMB image's last sector reads
         run: python3 .github/scripts/test_zso_read_errors.py
       - name: Check docs/VCD.md documents the shipped i.LINK usbhdfsd.irx size and hash
@@ -144,6 +156,12 @@ jobs:
         run: python3 .github/scripts/test_hires_thread_priority.py
       - name: Check that the 480i/576i HIRES modes draw inside a 4:3 safe area
         run: python3 .github/scripts/test_vmode_safe_area.py
+      - name: Check that the flicker-filtered HIRES modes blend each line with the next in the merge circuit
+        run: python3 .github/scripts/test_hires_line_blend.py
+      - name: Check the intro waits for the saved theme only as long as Boot Theme Wait says (off by default)
+        run: python3 .github/scripts/test_boot_theme_wait.py
+      - name: Check that a missing settings file is opened once, not twice
+        run: python3 .github/scripts/test_config_missing_open_once.py
       - name: Check 3D save icons parse real icons and card images, and refuse damaged ones
         run: python3 .github/scripts/test_save_icons.py
       - name: Check native PS2 logo validation including descriptor zero
@@ -188,6 +206,10 @@ jobs:
         run: python3 .github/scripts/test_settings_fit.py
       - name: Check settings text stays on screen (long notes wrap, labels leave room, values fit)
         run: python3 .github/scripts/test_dia_text_room.py
+      - name: Check dialogs draw under the GUI lock and IO-thread list operations run under it
+        run: python3 .github/scripts/test_dialog_gui_lock.py
+      - name: Check the in-game USBD pad pool and lwIP fragment settings fit the pads and the MTU
+        run: python3 .github/scripts/test_usbd_pad_pool.py
       - name: Check Settings and its prompts follow the user's confirm button
         run: python3 .github/scripts/test_confirm_button.py
       - name: Check language changes refresh menus when returning to English
@@ -208,6 +230,18 @@ jobs:
         run: python3 .github/scripts/test_neutrino_bsdfs.py
       - name: Check Neutrino SMB writes bsd-smb.toml safely and falls back to the OPL core
         run: python3 .github/scripts/test_neutrino_smb.py
+      - name: Check the in-game SMB2 reader's hashes and NTLMv2 logon
+        run: python3 .github/scripts/test_smb2_auth.py
+      - name: Check the in-game SMB2 logon sends the menu's user, domain and NTLMv2 AV pairs, the server's target name included, and computes its proof from the same credentials (fake server)
+        run: python3 .github/scripts/test_smb2_logon_parity.py
+      - name: Check the in-game SMB2 reader's UTF-8 to UTF-16 conversion (tests/smb2-live/utf16.c)
+        run: |
+          cc -fsanitize=address,undefined -fno-sanitize-recover=undefined -g -O1 -Wall -Wno-unused-parameter \
+            -Wno-unused-function -I tests/smb2-live/inc-ingame -I modules/iopcore/cdvdman -I modules/iopcore/common \
+            tests/smb2-live/utf16.c modules/iopcore/cdvdman/smb2auth.c -o "$RUNNER_TEMP/utf16"
+          "$RUNNER_TEMP/utf16"
+      - name: Check an SMB game launch keeps the image's whole file name, from the EE's settings block to the path the game opens (tests/smb2-live/launchname.c)
+        run: python3 .github/scripts/test_smb_launch_name.py
       - name: Check PSX DVR Neutrino discovery and safety gates
         run: python3 .github/scripts/test_neutrino_dvr.py
       - name: Check DVR refresh and Neutrino mount handoff
@@ -248,6 +282,12 @@ jobs:
         run: python3 .github/scripts/test_mx4sio_host_boot.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
+      - name: Check the GameCountText follows the list count, not only the selected game
+        run: python3 .github/scripts/test_game_count_refresh.py
+      - name: Check menu notices wrap on screen and long game titles and cheat names fit
+        run: python3 .github/scripts/test_menu_text_fit.py
+      - name: Check In-Game Menu room and resets (no-room grey, the PC's RA reset leaves, watch block before cheats)
+        run: python3 .github/scripts/test_igr_menu_no_room.py
       - name: Check optional game titles fall back without changing metadata
         run: python3 .github/scripts/test_theme_metadata.py
       - name: Check PSBBN Flow rendering, the theme catalog and view switching
@@ -313,6 +353,8 @@ jobs:
         run: python3 .github/scripts/test_orbit_neutrino_watch.py
       - name: Check both RA themes, provenance gates and upload rollback
         run: python3 .github/scripts/test_ra_release.py
+      - name: Check the RiptOPLite device lists, code gates and rolling-lite provenance
+        run: python3 .github/scripts/test_riptoplite.py
       - name: Check a rolling publish never leaves the release missing files when GitHub fails mid-way
         run: python3 .github/scripts/test_rolling_publish_order.py
       - name: Check the MEGA mirror upload is bounded and cannot fail a release
@@ -404,7 +446,7 @@ jobs:
         run: python3 .github/scripts/test_bdm_cache.py
       - name: Check the i.LINK driver logs back in after an IOP reset and only offers a ready drive (#1018)
         run: python3 .github/scripts/test_ilink_bd_reset.py
-      - name: Check both i.LINK drivers retain requests and release failed discovery contexts
+      - name: Check both i.LINK drivers retain requests, retry discovery without a bus reset and release failed contexts
         run: |
           python3 .github/scripts/test_ilink_sbp2_completion.py
           python3 .github/scripts/test_ilink_discovery.py
@@ -418,6 +460,8 @@ jobs:
         run: |
           python3 .github/scripts/test_ilink_command_orb.py
           python3 .github/scripts/test_ilink_scsi_geometry.py
+      - name: Check a failed iLinkman or IEEE1394_bd start on the OPL core stops on the red screen
+        run: python3 .github/scripts/test_ilink_game_transport.py
       - name: Check CF transfer safety, bus ownership and native handoff
         run: python3 .github/scripts/test_pccf.py
       - name: Check per-game parental lock and test/autolaunch paths
@@ -676,6 +720,14 @@ jobs:
             pinned: "no (tracks ps2homebrew:main)"
             opldiag: "0"
             ra: "1"
+          # RiptOPLite (lite-release.yml): the MMCE build leaves out the most device code, so it exercises
+          # the most LITE_HAS_* gates. lite-release.yml builds all sixteen when the lite machinery changes.
+          - flavour: OFFICIALROLLING-LITE-MMCE
+            image: ghcr.io/ps2homebrew/ps2homebrew:main
+            digest: ""
+            pinned: "no (tracks ps2homebrew:main)"
+            opldiag: "0"
+            lite: mmce
     runs-on: ubuntu-24.04
     container: ${{ matrix.image }}
     steps:
@@ -706,7 +758,7 @@ jobs:
         run: python3 .github/scripts/install_safe_bdmfs.py
 
       - name: Compile -> make clean release (${{ matrix.flavour }})
-        run: make --trace clean && make --trace LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.opldiag }} RETROACHIEVEMENTS=${{ matrix.ra || '0' }} INGAMEDIAG=${{ matrix.ingamediag || '0' }} release
+        run: make --trace clean && make --trace LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.opldiag }} RETROACHIEVEMENTS=${{ matrix.ra || '0' }} INGAMEDIAG=${{ matrix.ingamediag || '0' }} RIPTOPLITE=${{ matrix.lite || '' }} release
 
       - name: Verify the freeze report exists only in its flavour
         env:
@@ -792,6 +844,12 @@ jobs:
         if: ${{ success() && matrix.opldiag == '1' }}
         run: for f in RIPTOPL-*.ELF; do cp opl_stripped.elf "${f%.ELF}-UNPACKED.ELF"; done
 
+      # Every loader embeds smb2man over libsmb2 (LGPL-2.1), so its licence travels with the artifact, with
+      # CREDITS, which says the loader uses libsmb2 under that licence (LGPL-2.1 section 6).
+      - name: Put the libsmb2 licence beside the loaders (${{ matrix.flavour }})
+        if: ${{ success() }}
+        run: cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt LICENSE-LIBSMB2.txt
+
       - name: Upload ELF (${{ matrix.flavour }})
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
@@ -801,6 +859,8 @@ jobs:
             RIPTOPL-*.ELF
             OPNPS2LD-*.ELF
             BUILD-MANIFEST.txt
+            LICENSE-LIBSMB2.txt
+            CREDITS
             POPS/
             docs/VCD.md
           if-no-files-found: error

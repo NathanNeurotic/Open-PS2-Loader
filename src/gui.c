@@ -42,6 +42,7 @@
 #include "include/cheatman.h"
 #include "include/cheatconfig.h"
 #include "include/sound.h"
+#include "include/diaglog.h"
 #include "include/guigame.h"
 #include "include/texcache.h"
 #include "include/appsupport.h" // appGetObject() -- push a live Art Delay change onto the APPS list
@@ -51,6 +52,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <libvux.h>
+#include "include/riptlite.h" // LITE_HAS_NET_SOURCE / LITE_HAS_SMB_SHARE -- the Network page in a RiptOPLite build
 
 // Last Played Auto Start
 #include <time.h>
@@ -398,18 +400,41 @@ static void guiResetNotifications(void)
     popupArmed = 0;
 }
 
-static void guiRenderNotifications(char *string, int y)
+// Draw one notice whose box starts at y; returns the y for the next one (yadd lower, plus any wrapped lines).
+static int guiRenderNotifications(const char *string, int y, int yadd)
 {
-    int x;
+    // Right-aligned with nothing to stop it, a notice wider than the screen started off its left edge: the UDPBD
+    // static-IP note is about 1020 wide on the 640 grid, the CF notice from the game menu about 890. Size the box to
+    // the text but never wider than the screen less its margins, and wrap a longer notice onto more lines. A notice
+    // that fits is drawn exactly as before.
+    int textW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], string));
+    int boxW = textW + 10;
+    if (boxW > screenWidth - 20)
+        boxW = screenWidth - 20;
+    int x = screenWidth - boxW - 10;
+    int innerW = boxW - 10;
 
-    x = screenWidth - rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], string)) - 10;
+    if (textW <= innerW) {
+        rmDrawRect(x, y, boxW, MENU_ITEM_HEIGHT + 10, gColDarker);
+        fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
+        return y + yadd;
+    }
 
-    rmDrawRect(x - 10, y, screenWidth - x, MENU_ITEM_HEIGHT + 10, gColDarker);
-    fntRenderString(gTheme->fonts[0], x - 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
+    // fntRenderString does not wrap; it breaks a line only at '\n', and only when given a width. The clip gets the
+    // box's 5 px right padding as slack, so a glyph drawn a little past its advance at a line's end is not dropped.
+    char wrapped[512];
+    int lines = fntWrapText(gTheme->fonts[0], string, innerW, wrapped, sizeof(wrapped));
+    if (lines < 1)
+        lines = 1;
+    int boxH = lines * MENU_ITEM_HEIGHT + 10;
+    rmDrawRect(x, y, boxW, boxH, gColDarker);
+    fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW + 5, boxH - 5, wrapped, gTheme->textColor);
+    return y + yadd + (lines - 1) * MENU_ITEM_HEIGHT;
 }
 
-// Feedback for a user action; independent of courtesy notification preferences.
-static char actionToast[128];
+// Feedback for a user action; independent of courtesy notification preferences. Room for the longest translated
+// message with a game name (a HIDDEN_NAME_MAX buffer) in it; test_menu_text_fit.py checks every language.
+static char actionToast[384];
 static clock_t actionToastStart;
 
 static void guiRenderToast(void)
@@ -420,7 +445,7 @@ static void guiRenderToast(void)
         actionToast[0] = '\0';
         return;
     }
-    guiRenderNotifications(actionToast, 10);
+    guiRenderNotifications(actionToast, 10, 0);
 }
 
 void guiShowToast(const char *text)
@@ -454,8 +479,7 @@ static void guiShowNotifications(void)
             col_pos++;
 
             snprintf(notification, sizeof(notification), _l(_STR_PARTITION_NOTIFICATION), col_pos);
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showCfgPopup) {
@@ -463,8 +487,7 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showThmPopup) {
@@ -472,8 +495,7 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showLngPopup) {
@@ -481,15 +503,13 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         // One-time network notice set at config load: UDP transports always use the saved static PS2
         // IP fields. If DHCP is the preserved SMB/HTTP preference, remind the user which address UDP uses.
         if (showNetDhcpPopup) {
-            guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
-            y += yadd;
+            y = guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y, yadd);
         }
 
         if ((clock() - popupStart) >= (clock_t)5000 * (CLOCKS_PER_SEC / 1000)) {
@@ -506,7 +526,8 @@ static void guiShowNotifications(void)
    I/O thread and so cannot open a dialog. They set the text; the render loop
    draws it. Deliberately NOT gated on gEnableNotifications -- they are the
    answer to an action the user just took, not a courtesy popup. */
-static char raNotice[2][96];
+// 96 bytes cut the English CF notice mid-sentence; room for the longest translation (test_menu_text_fit.py).
+static char raNotice[2][256];
 static int raNoticeLines = 0;
 static clock_t raNoticeTimer = 0;
 
@@ -532,8 +553,7 @@ static int guiRenderRANotices(int y, int yadd)
     }
 
     for (i = 0; i < raNoticeLines; i++) {
-        guiRenderNotifications(raNotice[i], y);
-        y += yadd;
+        y = guiRenderNotifications(raNotice[i], y, yadd);
     }
 
     if (clock() >= raNoticeTimer) {
@@ -639,6 +659,16 @@ int guiNetProtocolNeedsRestart(void)
 
     if (resident == NET_PROTO_OFF)
         return 0;
+
+    // smbman and smb2man both register the "smb" device and neither unloads, so a change of SMB
+    // dialect while one of them is resident is a restart too, exactly like a protocol change. The
+    // comparison is with the dialect the load ASKED for: after an SMB2 -> SMBv1 fallback the saved
+    // SMB2 choice is unchanged, and a restart would only fail the same way again.
+    if (resident == NET_PROTO_SMB && gNetworkProtocol == NET_PROTO_SMB) {
+        int requestedDialect = ethGetRequestedSmbDialect();
+        if (requestedDialect >= 0 && requestedDialect != gSMBDialect)
+            return 1;
+    }
 
     return gNetworkProtocol != resident;
 }
@@ -1097,6 +1127,15 @@ static int netConfigUpdater(int modified)
 
         diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &isDHCPEnabled);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &isNetBIOS);
+        // RiptOPLite has no Protocol row (dialogs.c): its one protocol is the shown one, and a build
+        // without a network games source shows none of the protocol rows, only the PS2's own address.
+#if LITE_HAS_NET_SOURCE
+        netProto = guiNetProtocolToPicker(guiNetProtocolShown());
+#elif LITE_HAS_SMB_SHARE
+        netProto = 0;                       // RetroAchievements reads its key and badges from the SMB share: keep its rows
+#else
+        netProto = -1;
+#endif
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProto);
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
@@ -1187,9 +1226,8 @@ static int netConfigUpdater(int modified)
 
         // SMB/HTTP lock Access to Files; UDPBD locks it to IMG. Only UDPFS
         // exposes a mutable value, restored from its independent preference.
-        // NOTE(rebuild): the SMB Version row stays greyed at SMBv1 until item 4 lands (the fork
-        // enables it while SMB is the selected protocol).
-        diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0);
+        // The SMB Version row is live only while SMB is the picked protocol.
+        diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, isSMB);
         diaSetVisible(diaNetConfig, CFG_SMBDIALECT, isSMB);
         if (netProto == 0 || netProto == 3) { // SMB and HTTP -> Files, locked
             diaSetInt(diaNetConfig, CFG_UDPFSMODE, 0);
@@ -1211,7 +1249,7 @@ static int netConfigUpdater(int modified)
 // struct, so bytes past a terminator can never read as a change.
 typedef struct
 {
-    int dhcp, ps2Ip[4], netmask[4], gateway[4], dns[4], pcIp[4], pcPort, pcNetBIOS, opMode, protocol;
+    int dhcp, ps2Ip[4], netmask[4], gateway[4], dns[4], pcIp[4], pcPort, pcNetBIOS, opMode, protocol, smbDialect;
     char pcNBAddress[17], shareName[32], userName[32], password[32];
 } gui_smb_link_t;
 
@@ -1228,6 +1266,7 @@ static void guiSmbLinkCapture(gui_smb_link_t *link)
     link->pcNetBIOS = gPCShareAddressIsNetBIOS;
     link->opMode = gETHOpMode;
     link->protocol = gNetworkProtocol;
+    link->smbDialect = gSMBDialect;
     snprintf(link->pcNBAddress, sizeof(link->pcNBAddress), "%s", gPCShareNBAddress);
     snprintf(link->shareName, sizeof(link->shareName), "%s", gPCShareName);
     snprintf(link->userName, sizeof(link->userName), "%s", gPCUserName);
@@ -1258,9 +1297,8 @@ int guiShowNetConfig(void)
     const char *addrConfModes[] = {_l(_STR_ADDR_TYPE_IP), _l(_STR_ADDR_TYPE_NETBIOS), NULL};
     const char *ipAddrConfModes[] = {_l(_STR_IP_ADDRESS_TYPE_STATIC), _l(_STR_IP_ADDRESS_TYPE_DHCP), NULL};
     const char *udpfsModes[] = {"Files", "IMG", NULL}; // Access: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
-    // NOTE(rebuild): SMBv1 only until item 4 re-adds the SMB2 dialect; the row shows the active
-    // dialect and stays greyed (netConfigUpdater keeps it disabled).
-    const char *smbDialects[] = {"SMBv1", NULL};
+    // Index == enum SMB_DIALECT. Protocol names, not translated.
+    const char *smbDialects[] = {"SMBv1", "SMB2", NULL};
     diaSetEnum(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ipAddrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, addrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_ETHOPMODE, ethOpModes);
@@ -1326,6 +1364,9 @@ int guiShowNetConfig(void)
     // A NET_PROTO_OFF backend has no protocol memory, so seed the protocol row to SMB -- the common
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
     int netProtoVal = guiNetProtocolToPicker(guiNetProtocolShown()); // while Off: the remembered pick
+#if !LITE_HAS_NET_SOURCE
+    netProtoVal = -1; // RiptOPLite without a network games source: no protocol rows (netConfigUpdater)
+#endif
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
     int netAccessVal = (netProtoVal == 1) ? gUdpfsAccessMode : guiNetProtocolAccess(guiNetProtocolShown());
     for (i = 0; i < 4; ++i)
@@ -1334,11 +1375,11 @@ int guiShowNetConfig(void)
     diaSetString(diaNetConfig, NETCFG_HTTP_BASE, gHttpBasePath);
     diaSetInt(diaNetConfig, CFG_NETPROTOCOL, netProtoVal);
     diaSetInt(diaNetConfig, CFG_UDPFSMODE, netAccessVal);
-    diaSetInt(diaNetConfig, CFG_SMBDIALECT, 0); // SMBv1 -- the only dialect until item 4
+    diaSetInt(diaNetConfig, CFG_SMBDIALECT, gSMBDialect);
     // Seed the initial grey/lock: diaExecuteDialog renders the FIRST frame before it calls
     // netConfigUpdater, so without this the first frame flashes every row enabled.
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
-    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0); // NOTE(rebuild): greyed until item 4
+    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0 || (!LITE_HAS_NET_SOURCE && LITE_HAS_SMB_SHARE));
     netConfigDhcpPreference = ps2_ip_use_dhcp;
     netConfigUdpfsAccess = gUdpfsAccessMode;
     netConfigLastProtocol = -1;
@@ -1379,7 +1420,8 @@ reshow_network:
         goto reshow_network;
     }
     if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL)) {
-        int netProtoVal2, netAccessVal2;
+        // Seeded with what the page showed: a RiptOPLite page has no Protocol row, and only UDPFS has Access.
+        int netProtoVal2 = netProtoVal, netAccessVal2 = netAccessVal;
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
         diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
 
@@ -1432,7 +1474,10 @@ reshow_network:
         // mis-derive. The Game Sources "Network Start Mode" row decides whether the stack runs at
         // all: Start=Off -> OFF regardless of the protocol picked here. Then re-derive the legacy
         // shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
-        // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
+        int smbDialectWas = gSMBDialect;
+        diaGetInt(diaNetConfig, CFG_SMBDIALECT, &gSMBDialect);
+        if (gSMBDialect != SMB_DIALECT_V2)
+            gSMBDialect = SMB_DIALECT_V1;
         int netProtocolWas = gNetworkProtocol;
         guiNetProtocolStore(netProtoVal2, netAccessVal2);
         if (netProtoVal2 != 1)
@@ -1440,7 +1485,10 @@ reshow_network:
         guiNetProtocolApplied(netProtocolWas);
         // OK is this page's apply button. A protocol change made on Game Sources (or declined here
         // earlier) is still waiting on a restart, so OK offers it again rather than doing nothing.
-        if (gNetworkProtocol == netProtocolWas && (result == NETCFG_OK || result == NETCFG_RECONNECT) &&
+        // A changed SMB dialect is offered the same restart the moment it is applied, on any exit:
+        // the resident driver cannot be swapped live.
+        if (gNetworkProtocol == netProtocolWas &&
+            (result == NETCFG_OK || result == NETCFG_RECONNECT || gSMBDialect != smbDialectWas) &&
             guiNetProtocolNeedsRestart()) {
             guiNetProtocolOfferRestart();
         }
@@ -2364,7 +2412,7 @@ void guiShowCoverflowConfig(void)
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, &value))
             gGridLayout = (value >= 0 && value <= GRID_LAYOUTS) ? value : 0;
         // A new layout changes how many covers a page holds, and so the cover cache: the theme loads again.
-        if (gGridLayout != keepLayout && gTheme != NULL && gTheme->grid != NULL && !thmSetGuiValue(thmGetGuiValue(), 1))
+        if (gGridLayout != keepLayout && !thmRefreshGridLayout())
             gGridLayout = keepLayout; // abandoned load: the old grid is still on screen, keep the setting with it
     }
 }
@@ -2903,7 +2951,9 @@ static int guiSettingsShowInterface(void)
                                 "HDTV 1280x720p @60Hz 16bit (HIRES)", "HDTV 1920x1080i @60Hz 16bit (HIRES)",
                                 "PAL 640x256p @50Hz 24bit", "NTSC 640x224p @60Hz 24bit",
                                 "PAL 640x512i @50Hz 24bit (FLICKER-FREE)", "NTSC 640x448i @60Hz 24bit (FLICKER-FREE)",
-                                "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines)", NULL};
+                                "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines)",
+                                "PAL 704x576i @50Hz 24bit (HIRES, FLICKER FILTER)", "NTSC 704x480i @60Hz 24bit (HIRES, FLICKER FILTER)",
+                                "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines, FLICKER FILTER)", NULL};
     // Video Mode stays in diaDisplayConfig for the legacy standalone Display editor, but the
     // composed Interface page supplies its one copy at the top of diaUIConfig.
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, 1, 1);
@@ -2934,6 +2984,7 @@ static int guiSettingsShowInterface(void)
     guiSetAppsViewPicker(ui);
     guiSetThemeViewPicker(ui);
     diaSetInt(ui, UICFG_THEME_ALT_BG, gThemeAltBackground);
+    diaSetInt(ui, UICFG_BOOT_THEME_WAIT, gBootThemeWait);
     guiSetLibraryPicker(ui);
     diaSetEnum(ui, UICFG_VMODE, vmodeNames);
     diaSetInt(ui, UICFG_THEME, thmGetGuiValue());
@@ -2944,6 +2995,12 @@ static int guiSettingsShowInterface(void)
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(ui, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     diaSetInt(ui, UICFG_CFG_TITLES, gCfgTitlesInLists);
+    const char *ps1DupNames[] = {_l(_STR_PS1_DUPLICATES_BOTH), "Ember", "POPSTARTER", NULL};
+    diaSetEnum(ui, UICFG_PS1_DUPLICATES, ps1DupNames);
+    diaSetInt(ui, UICFG_PS1_DUPLICATES, gPs1Duplicates);
+    const char *listCfgNames[] = {_l(_STR_THEME), _l(_STR_ON), _l(_STR_OFF), NULL};
+    diaSetEnum(ui, UICFG_LIST_CFG_TEXT, listCfgNames);
+    diaSetInt(ui, UICFG_LIST_CFG_TEXT, gListCfgText);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -2995,16 +3052,21 @@ reshow_interface:
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
+        diaGetInt(ui, UICFG_LIST_CFG_TEXT, &gListCfgText); // read as each frame draws: nothing to rebuild
         {
-            int previousCfgTitles = gCfgTitlesInLists;
+            int previousCfgTitles = gCfgTitlesInLists, previousPs1Dup = gPs1Duplicates;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-            // A Sort Games change re-sorts every list; the CFG Title rebuild already does exactly that.
-            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort;
+            diaGetInt(ui, UICFG_PS1_DUPLICATES, &gPs1Duplicates);
+            // A Sort Games or PS1 Duplicates change rebuilds every list; the CFG Title rebuild already does exactly that.
+            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists || previousSort != gAutosort || previousPs1Dup != gPs1Duplicates;
+            if (previousPs1Dup != gPs1Duplicates)
+                hddVcdInvalidateCache(); // the HDD PS1 list applies the setting when it is built
         }
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         themeViewRequest = guiReadThemeViewPicker(ui);
         diaGetInt(ui, UICFG_THEME_ALT_BG, &altBackgroundRequest);
+        diaGetInt(ui, UICFG_BOOT_THEME_WAIT, &gBootThemeWait);
         // With a view change pending, the alt change waits for that reload so the theme loads once.
         viewPending = themeViewRequest != gThemeViewRequest;
         if (!viewPending)
@@ -3029,6 +3091,10 @@ reshow_interface:
         if (previousVMode != gVMode)
             guiFadeCurrentScreenToBlack();
         applyConfig(themeID, -1, 1);
+        // A theme picked here is the user's choice, even the built-in one, so the save writes it although a saved
+        // disk theme is still waiting for its drive (_saveConfig keeps the saved name only while nothing was picked).
+        if (previousTheme != themeID)
+            configSetStr(configGetByType(CONFIG_OPL), CONFIG_OPL_THEME, thmGetValue());
         if (viewPending) {
             gThemeAltBackground = altBackgroundRequest;
             if (!thmSetView(themeViewRequest)) // reloads only when the theme now shows a different view
@@ -3089,6 +3155,9 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_DEFAULT_CORE, defaultCoreStrs);
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
+    const char *appHandoffStrs[] = {_l(_STR_APP_HANDOFF_LEGACY), _l(_STR_APP_HANDOFF_TYPED), NULL};
+    diaSetEnum(ui, CFG_APP_HANDOFF_PATH, appHandoffStrs);
+    diaSetInt(ui, CFG_APP_HANDOFF_PATH, gAppHandoffPath);
     diaSetInt(ui, CFG_AUTO_CREATE_VMC, gAutoCreateVmc);
 #ifdef IGR_MENU
     diaSetInt(ui, CFG_IGR_MENU, gIgrMenu);
@@ -3119,6 +3188,7 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
+        diaGetInt(ui, CFG_APP_HANDOFF_PATH, &gAppHandoffPath);
         diaGetInt(ui, CFG_AUTO_CREATE_VMC, &gAutoCreateVmc);
 #ifdef IGR_MENU
         diaGetInt(ui, CFG_IGR_MENU, &gIgrMenu);
@@ -3581,7 +3651,7 @@ int guiShowKeyboard(char *value, int maxLength)
     char tmp[maxLength];
     strncpy(tmp, value, maxLength);
 
-    int result = diaShowKeyb(tmp, maxLength, 0, NULL);
+    int result = diaShowKeyb(tmp, maxLength, 0, -1);
     if (result) {
         strncpy(value, tmp, maxLength);
         value[maxLength - 1] = '\0';
@@ -4471,8 +4541,19 @@ static void guiShow()
         screenHandler->renderScreen();
 }
 
-// The longest the greeting waits for the drive that holds the saved theme (RIPPS2 build 125 uses 6 s)
-#define THEME_HOLD_MS 6000
+// The longest the greeting waits for the drive that holds the saved theme: the Boot Theme Wait setting, in seconds
+// (Settings > Interface; RIPPS2 build 125 used 6 s). Off (0) by default: the menu opens straight away and the saved
+// theme replaces the built-in one as soon as its drive is up. Clamped so a hand-edited config cannot park the intro.
+#define THEME_HOLD_MAX_S 10
+static int themeHoldMs(void)
+{
+    int s = gBootThemeWait;
+    if (s <= 0)
+        return 0;
+    if (s > THEME_HOLD_MAX_S)
+        s = THEME_HOLD_MAX_S;
+    return s * 1000;
+}
 
 void guiIntroLoop(void)
 {
@@ -4487,9 +4568,14 @@ void guiIntroLoop(void)
     clock_t tFadeDelay = 0;
     int tFadeArmed = 0;
     // RIPPS2 build 125 (AK): a saved disk theme whose drive is not up yet keeps the greeting on screen, so the built-in
-    // theme does not show for a moment before the saved one replaces it. Bounded: at most THEME_HOLD_MS after init.
+    // theme does not show for a moment before the saved one replaces it. Bounded: at most Boot Theme Wait seconds after init, and off by default.
     clock_t tInitDone = 0;
     int tInitSeen = 0;
+    // For the DIAG.TXT line at the end: how long the greeting waited for the saved theme and the boot sound.
+    clock_t tHoldLast = 0;
+    clock_t tHoldStart = 0; // first frame the hold was active: the DIAG duration counts only the hold itself
+    int tHoldSeen = 0;      // a hold happened (clock() can in principle read 0, so the timestamps cannot say it)
+    int fadeDelayLogMs = 0;
 
     // oplIsBootInProgress() can become false while background startup work is still queued. That
     // is correct for runtime overlays, but the animated greeting owns the entire intro lifecycle.
@@ -4518,6 +4604,7 @@ void guiIntroLoop(void)
             int fadeDelayMs = sfxGetSoundDuration(SFX_BOOT) - fadeDuration;
             if (fadeDelayMs < 0)
                 fadeDelayMs = 0;
+            fadeDelayLogMs = fadeDelayMs;
             tFadeDelay = (clock_t)fadeDelayMs * (CLOCKS_PER_SEC / 1000);
             tFadeArmed = 1;
         }
@@ -4525,12 +4612,23 @@ void guiIntroLoop(void)
         if (gInitComplete && !tInitSeen) {
             tInitDone = clock();
             tInitSeen = 1;
+            diagLog("boot: devices started");
         }
-        int themeHold = greetingAlpha == 0x80 && tInitSeen && thmSavedThemePending() &&
-                        (clock() - tInitDone) < (clock_t)THEME_HOLD_MS * (CLOCKS_PER_SEC / 1000);
+        int themeHold = greetingAlpha == 0x80 && tInitSeen && themeHoldMs() > 0 && thmSavedThemePending() &&
+                        (clock() - tInitDone) < (clock_t)themeHoldMs() * (CLOCKS_PER_SEC / 1000);
+        if (themeHold) {
+            if (!tHoldSeen) {
+                tHoldStart = clock();
+                tHoldSeen = 1;
+            }
+            tHoldLast = clock();
+        }
 
-        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold)
+        if (gInitComplete && (clock() - tFadeStart) >= tFadeDelay && !themeHold) {
+            if (greetingAlpha == 0x80)
+                diagLog("boot: intro fading out");
             greetingAlpha -= 2;
+        }
 
         if (greetingAlpha <= 0)
             endIntro = 1;
@@ -4554,6 +4652,9 @@ void guiIntroLoop(void)
         }
     }
     gIntroSplashActive = 0;
+    diagLog("boot: intro done; held %d ms for the saved theme, boot sound %s, fade delay %d ms",
+            tHoldSeen ? (int)((tHoldLast - tHoldStart) / (CLOCKS_PER_SEC / 1000)) : 0, gEnableBootSND ? "on" : "off",
+            fadeDelayLogMs);
 }
 
 void guiMainLoop(void)
@@ -5430,7 +5531,10 @@ void guiManageCheats(config_set_t *configSet)
                 rmDrawFramedRect(boxX, boxY + 3, boxWidth, boxHeight, 2, gTheme->textColor, gTheme->selTextColor);
 
             u32 textColour = (i == selectedCheat) ? gTheme->selTextColor : gTheme->textColor;
-            fntRenderString(gTheme->fonts[0], boxX + 35, boxY + 3, ALIGN_LEFT, 0, 0, gCheats[i].name, textColour);
+            // A cheat name runs to 128 characters and nothing stopped it at the right-hand rule. The selected one
+            // scrolls through the whole name; the others end in "...".
+            int textX = boxX + 35;
+            fntRenderStringFit(gTheme->fonts[0], textX, boxY + 3, ALIGN_LEFT, screenWidth - 50 - textX, gCheats[i].name, textColour, i == selectedCheat);
 
             renderedCheats++;
         }

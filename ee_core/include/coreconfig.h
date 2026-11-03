@@ -104,6 +104,10 @@ struct EECoreConfig_t
     int IgrRaHuntCount;
     int IgrRaTotal;
     int IgrRaUnlocked;
+    /* IgrMenuNoRoom: In-Game Menu on (and not Mode 6), but this launch had no room for igrovl.elf (the modules ran
+       past IGROVL_BASE or were moved elsewhere), so IgrMenu is 0 and the combo leaves the game. With Debug Colors on
+       it blinks grey first, as for a menu that was not there to run (padhook.c IGR_Thread, docs/IGR.md). */
+    int IgrMenuNoRoom;
 #endif
 };
 

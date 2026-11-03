@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/riptlite.h" // LITE_HAS_*: a RiptOPLite build without this device
 #include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
@@ -84,6 +85,11 @@ static void udpfsLoadModules(void)
 
     LOG("UDPFSSUPPORT LoadModules\n");
 
+#if defined(RIPTOPLITE) && !LITE_HAS_UDPFS
+    // A RiptOPLite build for another device carries no UDPFS drivers (include/riptlite.h).
+    (void)ipArg;
+    return;
+#endif
     if (udpfsIomanModLoaded)
         return;
     if (udpfsNicClaimed) {

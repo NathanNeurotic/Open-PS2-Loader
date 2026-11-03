@@ -209,6 +209,9 @@ int cueFillGameList(const char *devPrefix, base_game_info_t **outGames);
 // device class. See the note at the top of this header for why the root, and not a configurable
 // games prefix, is the right home for them.
 int ps1FillGameList(const char *devPrefix, base_game_info_t **outGames);
+/* Interface > PS1 Duplicates over rows = vcdCount VCD rows then cueCount Ember rows (PS1_DUP_*).
+   Returns the rows kept, packed in order; `parallel` (stride bytes per row, or NULL) follows them. */
+int ps1DropTwins(base_game_info_t *rows, void *parallel, size_t stride, int vcdCount, int cueCount, int prefer);
 /* Serialized I/O worker: query immediately after ps1FillGameList. */
 int ps1GameListNeedsRetry(void);
 

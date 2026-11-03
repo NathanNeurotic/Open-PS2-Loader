@@ -102,7 +102,7 @@ void PrepareGSM(char *cmdline, struct GsmConfig_t *config)
     //
     // clang-format off
     // Initializer-sized ([] not a fixed count): the 1080p row below is #ifdef-gated, and
-    // the clamp at the end reads sizeof(predef_vmode) so it tracks 29 or 30 automatically.
+    // the clamp at the end reads sizeof(predef_vmode) so it tracks 29 or 31 automatically.
     static const predef_vmode_struct predef_vmode[] = {
         //                                                            DH    DW   MAGV MAGH  DY   DX              VS  VDP  VBPE  VBP VFPE  VFP
         {GS_INTERLACED,    GS_MODE_NTSC,        GS_FIELD, makeDISPLAY(447,  2559, 0,   3,   46,  700), makeSYNCV(6,  480,  6,    26,  6,   1)},
@@ -141,6 +141,12 @@ void PrepareGSM(char *cmdline, struct GsmConfig_t *config)
         // behind a triple-confirm in the GUI. EXPERIMENTAL / not HW-validated.
 #ifdef GSM_1080P
         {GS_NONINTERLACED, GS_MODE_DTV_1080P,   GS_FRAME, makeDISPLAY(1079, 1919, 1,   2,   48,  238), makeSYNCV(10, 1080, 2,    28,  0,   5)},
+        // 1080p 4:3 (issue #433, RiptOPL #80). Same raster as the row above; only the DISPLAY window
+        // shrinks from 1920 to 1536 VCK, centred (DX 238 + (1920 - 1536) / 2 = 430). The engine's
+        // DISPLAY adaptation picks the largest whole MAGH whose width fits the window and centres
+        // it, so a 640-wide game gets 2x (1280 wide) instead of 3x (1920, stretched), and a
+        // 512-wide game keeps 3x (1536). Appended after 1080p so no saved index moves.
+        {GS_NONINTERLACED, GS_MODE_DTV_1080P,   GS_FRAME, makeDISPLAY(1079, 1535, 1,   2,   48,  430), makeSYNCV(10, 1080, 2,    28,  0,   5)},
 #endif
     }; //ends predef_vmode definition
     // clang-format on

@@ -12,6 +12,7 @@ another device.
 | Theme | Built-in `<OPL>` | Settings → Interface → Theme |
 | Theme View | Default (List for `<OPL>`); Coverflow (3), Coverflow (5), PSBBN Flow and Grid are optional views | Settings → Interface → Theme View, or hold L3 |
 | Alternate Background | Off (the theme's `default=` background) | Settings → Interface → Alternate Background |
+| Boot Theme Wait | Off (0 s: the menu opens without waiting for the saved theme) | Settings → Interface → Boot Theme Wait |
 | Cover and disc artwork | On | Settings → Interface → Artwork Settings |
 | Notifications | On | Settings → Interface |
 | PS2 logo | On | Settings → Game Launching |
@@ -26,6 +27,7 @@ another device.
 | Show Hidden Games | Off | Settings → Game Sources |
 | Sort Games | A to Z (an out-of-range saved value also reads as A to Z) | Settings → Interface |
 | Button Glyphs | Theme (the theme's own glyphs, or its `glyph_set` key) | Settings → Interface |
+| List Title and Description | Theme (as the theme shows them, or its `list_cfg_text` key) | Settings → Interface |
 | GameID barcode | PS1 half On, PS2 half Off (shown as *On (PS1 only)*) | Settings → Interface |
 
 The boot device can be enabled during discovery so that a loader started from

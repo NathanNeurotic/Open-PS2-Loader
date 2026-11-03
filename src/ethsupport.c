@@ -191,6 +191,20 @@ int ethGetModulesLoaded(void)
     return netGetModulesLoaded();
 }
 
+// Which browse driver smbLoadModules() actually put on the IOP; -1 while none is resident.
+static int ethLoadedSmbDialect = -1;
+static int ethRequestedSmbDialect = -1;
+
+int ethGetRequestedSmbDialect(void)
+{
+    return ethRequestedSmbDialect;
+}
+
+int ethGetLoadedSmbDialect(void)
+{
+    return ethLoadedSmbDialect;
+}
+
 int ethIsSMBShareConnected(void)
 {
     return netGetModulesLoaded() && gNetworkStartup == 0 && ethPrefix[0] != '\0';
@@ -228,6 +242,8 @@ static void ethProtocolTeardown(void)
 {
     nbnsDeinit();
     ethSmbModuleLoaded = 0;
+    ethLoadedSmbDialect = -1;
+    ethRequestedSmbDialect = -1;
     gNetworkStartup = ERROR_ETH_NOT_STARTED;
 }
 
@@ -293,16 +309,30 @@ static void smbLoadModules(void)
           resident -- and every path in OPL stays identical whichever one it is.
 
             smbman  -- PS2SDK's SMB1 driver, consumed prebuilt. Unchanged, still the default.
-            smb2man -- our SMB2/SMB3 driver over vendored libsmb2 (modules/network/smb2man).
+            smb2man -- our SMB2 (2.0.2/2.1) driver over vendored libsmb2 (modules/network/smb2man).
 
           Anything other than an explicit SMB2 selection falls back to smbman: losing SMB2 is
           recoverable, booting with no filesystem driver at all is not.
         */
-        // NOTE(rebuild): SMB2 (smb2man + gSMBDialect) returns with checklist item 4 -- until then
-        // this build speaks SMBv1 unconditionally, exactly like every pre-dialect build.
-        LOG("[SMBMAN]:\n");
-        if (sysLoadModuleBuffer((void *)&smbman_irx, size_smbman_irx, 0, NULL) >= 0) {
+        int dialect = (gSMBDialect == SMB_DIALECT_V2) ? SMB_DIALECT_V2 : SMB_DIALECT_V1;
+        int requested = dialect;
+        int loaded = -1;
+        if (dialect == SMB_DIALECT_V2) {
+            LOG("[SMB2MAN]:\n");
+            loaded = sysLoadModuleBuffer((void *)&smb2man_irx, size_smb2man_irx, 0, NULL);
+            if (loaded < 0) { // e.g. not enough IOP RAM for libsmb2: keep the menu usable on SMBv1
+                LOG("[SMB2MAN]: load failed (%d), falling back to smbman\n", loaded);
+                dialect = SMB_DIALECT_V1;
+            }
+        }
+        if (dialect == SMB_DIALECT_V1) {
+            LOG("[SMBMAN]:\n");
+            loaded = sysLoadModuleBuffer((void *)&smbman_irx, size_smbman_irx, 0, NULL);
+        }
+        if (loaded >= 0) {
             ethSmbModuleLoaded = 1;
+            ethLoadedSmbDialect = dialect;
+            ethRequestedSmbDialect = requested;
             LOG("[NBNS]:\n");
             sysLoadModuleBuffer(&nbns_irx, size_nbns_irx, 0, NULL);
             nbnsInit();
@@ -772,15 +802,18 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
 static int ethMcemuSlots[2] = {-2, -2};
 
 // SMB through Neutrino (-bsd=smb -dvd=smb:<path>, ps2max32/neutrino PR #236 by Ronnie Sahlberg).
-// Only a game whose own Loader Core is Neutrino takes this leg: "Default" stays on the OPL core for SMB
-// whatever the global core is, because the OPL core is the SMB path everyone has today and Neutrino's
-// has limits the OPL core does not (port 445, SMB 3.0 dialect only, read-only, no VMC on the share). Each limit
+// SMB follows the global core unless the game overrides it. Neutrino has limits the OPL core
+// does not (port 445, SMB 3.0 dialect only, read-only, no VMC on the share). Each limit
 // is checked here, before anything is prepared, and a miss says why and returns 0: the caller goes on
 // with the OPL core. 1 = handled (handed off to Neutrino, or the user backed out of a dialog).
 static int ethSmbNeutrinoRequested(config_set_t *configSet)
 {
-    int coreLoader = 0;
-    return configSet != NULL && configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader) && coreLoader == 1;
+    int coreLoader = gDefaultCoreLoader;
+    if (configSet != NULL)
+        configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    if (coreLoader == 2)
+        coreLoader = gDefaultCoreLoader;
+    return coreLoader == 1;
 }
 
 static int ethTryNeutrino(item_list_t *itemList, base_game_info_t *game, config_set_t *configSet)
@@ -1010,7 +1043,20 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
         saveConfig(CONFIG_LAST, 0);
     }
 
-    compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &i);
+    /*
+      The in-game reader follows the browse driver that is actually resident, not the saved row:
+      a dialect changed without the restart is still browsing on the old driver, and that is the
+      one known to reach this server. smb2_cdvdman is smb_cdvdman with smb.c swapped for smb2.c
+      (same settings block, same exports for smb_mcemu), so everything below is unchanged.
+    */
+    int launchDialect = ethGetLoadedSmbDialect();
+    if (launchDialect < 0)
+        launchDialect = gSMBDialect;
+    void **cdvdmanIrx = (launchDialect == SMB_DIALECT_V2) ? smb2_cdvdman_irx : smb_cdvdman_irx;
+    int cdvdmanSize = (launchDialect == SMB_DIALECT_V2) ? size_smb2_cdvdman_irx : size_smb_cdvdman_irx;
+    LOG("ETH launch: in-game reader %s\n", (launchDialect == SMB_DIALECT_V2) ? "smb2_cdvdman" : "smb_cdvdman");
+
+    compatmask = sbPrepare(game, configSet, cdvdmanSize, cdvdmanIrx, &i);
     if (compatmask < 0) // sbPrepare failed (patch zone not found) and never set `i`: it still holds the
         return;         // VMC loop's counter, so every settings write below would land at a wrong offset.
     sbEnsureIgrUsbDrivers(compatmask);
@@ -1025,12 +1071,22 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
         // #265: let the user back out instead of sitting through the whole load. The helper does
         // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
         // `settings` is not assigned until below, so derive the common block from the IRX base.
-        if (!sbCheatsMissingContinue((u8 *)(&smb_cdvdman_irx) + i, result))
+        if (!sbCheatsMissingContinue((u8 *)cdvdmanIrx + i, result))
             return;
     }
     sbLoadImage(ethPrefix, game->startup);
 
-    settings = (struct cdvdman_settings_smb *)((u8 *)(&smb_cdvdman_irx) + i);
+    settings = (struct cdvdman_settings_smb *)((u8 *)cdvdmanIrx + i);
+
+    // The file name below must reach the game whole: snprintf would cut it short, and the game would
+    // open a file that does not exist. The longest the menu lists is the old format's, a startup of up
+    // to GAME_STARTUP_MAX characters, a dot, a name of up to ISO_GAME_NAME_MAX (the scan skips longer
+    // ones) and an extension of up to ISO_GAME_EXTENSION_MAX. device-smb.c then opens it as
+    // "\<prefix>\DVD\<file name>", built in a CDVDMAN_SMB_PATH_MAX-byte buffer.
+    _Static_assert(sizeof(settings->filename) >= GAME_STARTUP_MAX + 1 + ISO_GAME_NAME_MAX + ISO_GAME_EXTENSION_MAX + 1,
+                   "cdvdman_settings_smb.filename (cdvd_config.h) must hold the longest file name the menu lists");
+    _Static_assert(1 + (sizeof(settings->smb_prefix) - 1) + 5 + (sizeof(settings->filename) - 1) + 1 <= CDVDMAN_SMB_PATH_MAX,
+                   "device-smb.c's path buffer (CDVDMAN_SMB_PATH_MAX) must hold \\<prefix>\\DVD\\<file name>");
 
     switch (game->format) {
         case GAME_FORMAT_OLD_ISO:
@@ -1044,20 +1100,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
             settings->common.flags |= IOPCORE_SMB_FORMAT_USBLD;
     }
 
-    /*
-      Hand the chosen dialect to the in-game reader. smbdisp.c reads these bits once, at negotiate
-      time, to pick between smb.c (SMB1) and smb2.c (SMB2).
-
-      They live in common.flags because cdvdman_settings_smb's SMB fields share a union with FIDs[]
-      and cannot grow; common.flags already carries IOPCORE_SMB_FORMAT_USBLD for the same reason.
-      Note this must come AFTER the format switch above, which also ORs into common.flags.
-
-      Only SMB1/SMB2 are emitted -- gSMBDialect is clamped to those on load, and the picker offers
-      no third value. Leaving the bits clear for SMB1 keeps the wire format identical to every
-      build that predates the dialect field.
-    */
-    // NOTE(rebuild): the in-game SMB2 dialect flag (IOPCORE_SMB_DIALECT_V2) returns with item 4;
-    // leaving the bits clear keeps the wire format identical to every pre-dialect build.
+    // No dialect flag travels in the settings block: the dialect is the choice of module above, and
+    // both modules read the block as this file writes it, from the same cdvd_config.h.
 
     sprintf(settings->smb_ip, "%u.%u.%u.%u", pc_ip[0], pc_ip[1], pc_ip[2], pc_ip[3]);
     settings->smb_port = gPCPort;
@@ -1137,7 +1181,7 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     // adjust ZSO cache
     settings->common.zso_cache = smbCacheSize;
 
-    sysLaunchLoaderElf(filename, "ETH_MODE", size_smb_cdvdman_irx, smb_cdvdman_irx, size_mcemu_irx, smb_mcemu_irx, EnablePS2Logo, compatmask);
+    sysLaunchLoaderElf(filename, "ETH_MODE", cdvdmanSize, cdvdmanIrx, size_mcemu_irx, smb_mcemu_irx, EnablePS2Logo, compatmask);
 }
 
 static config_set_t *ethGetConfig(item_list_t *itemList, int id)

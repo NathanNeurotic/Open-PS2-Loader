@@ -1,6 +1,7 @@
 #include "sys/fcntl.h"
 #include <sys/stat.h> // stat -- PP. partition IMAGE0.VCD #Size
 #include "include/opl.h"
+#include "include/riptlite.h" // LITE_HAS_*: a RiptOPLite build without this device
 #ifdef RETROACHIEVEMENTS
 #include "include/achievements.h"
 #endif
@@ -677,6 +678,11 @@ int hddLoadModules(void)
 
     LOG("[HDD STARTUP DIAG] hddLoadModules entry count=%u loaded=%u\n", hddModulesLoadCount, hddModulesLoaded);
 
+#if defined(RIPTOPLITE) && !(LITE_HAS_APA || LITE_HAS_BDMHDD)
+    // A RiptOPLite build for another device carries no HDD drivers (include/riptlite.h).
+    return HDD_LOADMODULES_STATUS_ERROR;
+#endif
+
     // The ATA modules are resident for the lifetime of this IOP generation. A readiness
     // probe is NOT a new DEV9 owner: all HDD entry points share the one sysInitDev9()
     // reference acquired by the first successful load. A prior non-terminal HDD-page
@@ -982,6 +988,13 @@ static int hddLoadCoreSupportModules(void)
     int nonSony;
 
     LOG("HDDSUPPORT LoadSupportModules\n");
+
+#if defined(RIPTOPLITE) && !(LITE_HAS_APA || LITE_HAS_BDMHDD)
+    // A RiptOPLite build for another device carries no HDD drivers (include/riptlite.h). Without this,
+    // a settings or boot-home path reaching the APA support stack probes a drive it cannot read and
+    // shows "HDD not detected".
+    return 0;
+#endif
 
     // ALREADY PROVEN -- do not re-litigate it. The non-Sony probe below exists to avoid loading APA
     // modules onto a non-APA drive, which is a one-time question: if hddSupportModulesLoaded is set
@@ -1401,6 +1414,8 @@ static int hddBuildVcdGameList(void)
 
     hddFreePopsPartitionList(&parts);
 
+    int vcdRows = total; // rows before here are VCD (and PP one-game) rows; Ember rows follow
+
     // ---- second phase: EMBER --------------------------------------------------------------------
     // ONE list, BOTH cores -- the APA restatement of what ps1FillGameList does for every other
     // device. The rows land in the SAME arrays, so the PS1 view, Favourites resolution, art lookup
@@ -1518,6 +1533,9 @@ static int hddBuildVcdGameList(void)
 
     // A first-ever incomplete scan may still expose the entries it proved readable, but it is never
     // latched as complete. A fully successful zero/nonzero scan is latched unless invalidated mid-run.
+    // Interface > PS1 Duplicates, as on every other device. The partition array moves with its rows.
+    // (An Ember folder named exactly like a VCD is already skipped above: launches resolve by name.)
+    total = ps1DropTwins(newGames, newParts, sizeof(*newParts), vcdRows, total - vcdRows, gPs1Duplicates);
     hddPublishVcdGameList(newGames, newParts, total, !scanIncomplete && (genAtEntry == hddVcdCacheGen));
     return total;
 }

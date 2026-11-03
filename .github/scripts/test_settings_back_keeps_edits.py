@@ -330,7 +330,7 @@ LINK_HARNESS = r'''
 #include <string.h>
 
 int ps2_ip_use_dhcp, ps2_ip[4], ps2_netmask[4], ps2_gateway[4], ps2_dns[4], pc_ip[4];
-int gPCPort, gPCShareAddressIsNetBIOS, gETHOpMode, gNetworkProtocol;
+int gPCPort, gPCShareAddressIsNetBIOS, gETHOpMode, gNetworkProtocol, gSMBDialect;
 char gPCShareNBAddress[17], gPCShareName[32], gPCUserName[32], gPCPassword[32];
 
 @TYPES@
@@ -352,6 +352,7 @@ static void seed(void)
     gPCShareAddressIsNetBIOS = 0;
     gETHOpMode = 0;
     gNetworkProtocol = 0;
+    gSMBDialect = 0;
     strcpy(gPCShareNBAddress, "PC");
     strcpy(gPCShareName, "PS2SMB");
     strcpy(gPCUserName, "GUEST");
@@ -375,6 +376,7 @@ static void share(void) { strcpy(gPCShareName, "GAMES"); }
 static void password(void) { strcpy(gPCPassword, "x"); }
 static void dhcp(void) { ps2_ip_use_dhcp = 1; }
 static void protocol(void) { gNetworkProtocol = 1; }
+static void dialect(void) { gSMBDialect = 1; }
 static void sameString(void) { strcpy(gPCUserName, "GUEST"); }
 
 int main(void)
@@ -387,6 +389,7 @@ int main(void)
     expect("password", password, 1);
     expect("DHCP", dhcp, 1);
     expect("protocol", protocol, 1);
+    expect("SMB dialect", dialect, 1);
     if (!fails)
         printf("settings back: the Network page reconnects only when the SMB link changed\n");
     return fails ? 1 : 0;

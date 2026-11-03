@@ -298,19 +298,9 @@ int bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *b
 #ifdef INGAMEDIAG
     freeze_diag_vmc_begin(FREEZE_DIAG_VMC_WRITE, (unsigned int)lba);
 #endif
-    // MX4SIO ("sdc"): when a multi-sector write stops part way, its driver retries the rest from the
-    // first sector again instead of the next one (ps2dev/ps2sdk#936, not merged), so the last sectors can
-    // be left unwritten while the call reports success. Give it one sector per call; every other BDM
-    // driver takes the whole run. Only mcemu's block erase writes more than one sector here.
-    unsigned short int step = (nsectors > 1 && g_bd->name != NULL && g_bd->name[0] == 's' && g_bd->name[1] == 'd' && g_bd->name[2] == 'c' && g_bd->name[3] == '\0') ? 1 : nsectors;
-    unsigned short int done = 0;
-    while (done < nsectors) {
-        unsigned short int n = (nsectors - done < step) ? nsectors - done : step;
-        if (g_bd->write(g_bd, lba + done, buffer + (u32)done * g_bd->sectorSize, n) != n)
-            break;
-        done += n;
-    }
-    rv = done;
+    // The embedded MX4SIO driver advances both sector and buffer after a partial transfer
+    // (ps2sdk#936). All BDM devices can take a full VMC erase batch; a short count still fails.
+    rv = g_bd->write(g_bd, lba, buffer, nsectors);
 #ifdef INGAMEDIAG
     freeze_diag_vmc_end();
 #endif

@@ -161,6 +161,12 @@ struct SBP2Device
     /* Resident memory: never reuse a slot while a management ORB is pending. */
     int generation;
     unsigned char configuring, managementPending, fetchAgentNeedsReset;
+    /* RiptOPL: the drive accepted this generation's LOGIN. A retry without a bus reset must not log
+     * in again: the drive keeps that login until a bus reset, so a second LOGIN is always refused. */
+    unsigned char loggedIn;
+    /* RiptOPL: the node's EUI-64 (bus info block quadlets 3 and 4). Node IDs change across bus
+     * resets; this names the same drive in every generation. */
+    unsigned int eui64[2];
     volatile struct sbp2_status statusFIFO __attribute__((aligned(4)));
     struct management_ORB managementORB __attribute__((aligned(4)));
     struct sbp2_login_response loginResponse __attribute__((aligned(4)));

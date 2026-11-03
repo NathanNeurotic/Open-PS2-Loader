@@ -1,7 +1,7 @@
 # Interface behaviours
 
 Menu behaviours that are configured from *Settings* but need more than a one-line description:
-language and theme selection, folder browsing, the parental lock, and the audio system.
+language and theme selection, menu video modes, folder browsing, the parental lock, and the audio system.
 
 For the button map, see [CONTROLS.md](CONTROLS.md). For UTF-8 Japanese and other Unicode game names with English menus, see [Unicode Game Titles](UNICODE-GAME-TITLES.md): place an optional `font_CJK.ttf` alongside `settings_riptopl.cfg` and restart; there is no UI toggle.
 
@@ -48,6 +48,11 @@ a theme with `alt=` is reloaded when the setting changes. Per-game background ar
 theme's picture while a game is selected. See
 [THEME_ENGINE.md, Alternate background](THEME_ENGINE.md#alternate-background-alt--this-fork).
 
+**Boot Theme Wait**, under Alternate Background, is how many seconds (0 to 10) the start-up screen waits
+for your saved theme while the drive that holds it is still starting up, so the built-in theme does not show
+for a moment first. It is Off (0) on fresh configurations: the menu opens right away and the saved theme
+replaces the built-in one as soon as its drive is up. Saved as `boot_theme_wait`; 6 is the old fixed wait.
+
 Both flow views rotate navigation on the main game list: Left/Right browse covers and Up/Down
 change sources. R3 remains Favorite, and info/settings screens keep their normal controls.
 **Coverflow Settings** tunes the `Coverflow` renderer; PSBBN Flow uses its fixed layout and
@@ -81,6 +86,54 @@ themes. The change shows on the next frame and is saved with your settings. Them
 `glyph_set` key and the hint bar keys in the [Theme Engine reference](THEME_ENGINE.md#button-hints-and-glyphs).
 
 *Not yet tested on hardware.*
+
+---
+
+## List Title and Description
+
+**Settings → Interface → List Title and Description.** Choose **Theme**, **On** or **Off**.
+
+Some themes show the `Title` and `Description` from each game's CFG beside the game list. **Theme**, the
+default, shows them the way the theme sets them, and a theme can leave them off its list pages with
+`list_cfg_text=0`. **On** shows them even then. **Off** hides them on every theme. The game info page shows
+them either way. The names in the list itself follow
+[Show CFG Titles in Game Lists](UNICODE-GAME-TITLES.md#show-cfg-titles-in-game-lists-optional) instead. The
+change shows on the next frame and is saved with your settings (`list_cfg_text` in `settings_riptopl.cfg`).
+The built-in themes show these two on the info page only, so on them the setting changes nothing.
+
+This comes from [RIPPS2](https://github.com/akilluminati47/RIPPS2) build 126, by
+[akilluminati47](https://github.com/akilluminati47). Theme authors can find the `list_cfg_text` key in the
+[Theme Engine reference](THEME_ENGINE.md#other-global-keys).
+
+*Not yet tested on hardware.*
+
+---
+
+## Menu video modes
+
+**Settings → Interface → Video Mode** sets the signal the **menu** uses. Games are not affected; they
+use their own mode, or GSM, described in [GSM.md](GSM.md). After a change, **hold** Accept to keep the new
+mode; a tap does nothing, and Back or 10 seconds goes back to the old one (see
+[Keeping a new video mode](CONTROLS.md#keeping-a-new-video-mode)). Holding **Triangle + Cross** at
+boot forces 480p and **Triangle + Circle** forces Auto, for a screen that shows nothing.
+
+| Entries | What they are |
+| --- | --- |
+| **Auto** | The console's own region mode (NTSC 640x448i or PAL 640x512i). The default. |
+| PAL 640x512i, NTSC 640x448i | The standard interlaced modes. |
+| EDTV 640x448p, EDTV 640x512p, VGA 640x480p | Progressive modes; they need component or VGA (composite shows no picture). |
+| PAL 704x576i, NTSC 704x480i, EDTV 704x480p, EDTV 704x576p (HIRES) | Sharper 704-wide modes. The interlaced ones draw the menu inside a 4:3 safe area with the same margins as the 640-wide modes, so a 4:3 CRT does not cut it off. |
+| HDTV 1280x720p, HDTV 1920x1080i (HIRES) | HD modes for component or HDMI; always drawn as 16:9, whatever the Widescreen setting. |
+| PAL 640x256p, NTSC 640x224p | Low-resolution progressive (240p-style) modes, for CRTs and scalers that prefer them. |
+| PAL 640x512i, NTSC 640x448i (FLICKER-FREE) | The same interlaced signal, but both fields show the same lines, so thin lines and font edges stop flickering on a CRT, at the cost of half the vertical detail. |
+| NTSC 704x480i (HIRES, 448 lines) | NTSC 704x480i with the menu kept in the 640x448 area, for a CRT that still hides the top or bottom of the 480-line mode. |
+| PAL 704x576i, NTSC 704x480i, NTSC 704x480i 448 lines (HIRES, FLICKER FILTER) | The three interlaced HIRES modes with each line shown half-and-half with the line below it, which calms interlace flicker while keeping the full vertical resolution. |
+
+The list keeps its order across versions (new modes are added at the end), so a saved mode stays
+the same mode after an update. **H-POS**, **V-POS** and **Overscan** are remembered for each video
+mode separately. When the settings are on a memory card, the menu starts directly in the saved mode
+instead of starting in Auto and switching. The FLICKER FILTER and 448-line modes are new and
+**NOT TESTED on hardware**.
 
 ---
 

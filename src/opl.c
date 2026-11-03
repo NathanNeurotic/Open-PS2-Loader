@@ -33,6 +33,7 @@
 #endif
 #include "include/config.h"
 #include "include/util.h"
+#include "include/riptlite.h"
 #include "include/extern_irx.h"
 
 #include "include/supportbase.h"
@@ -199,6 +200,8 @@ int gDefaultGameView;
 int gAppsDisplay;
 int gGameTypeLabels;
 int gCfgTitlesInLists;
+int gPs1Duplicates; // PS1_DUP_*: a game both as a POPSTARTER VCD and an Ember image shows once or twice
+int gListCfgText;   // LIST_CFG_TEXT_*: the CFG Title and Description on list pages, the theme's way by default
 int gEmberDisplay;
 int gEmberTiming;
 int gEmberDither;
@@ -235,6 +238,7 @@ int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived
 int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
 int gNetProtocolPick; // last protocol chosen, never OFF (see opl.h)
 int gUdpfsAccessMode; // UDPFS Files/IMG preference, independent of UDPBD
+int gSMBDialect;      // SMB_DIALECT_V1 / SMB_DIALECT_V2
 int gNetStartMode;    // START_MODE_* -- the Off/Manual/Auto network start row (see the 3-row Network setting)
 int gAutosort;
 int gAutoRefresh;
@@ -255,6 +259,8 @@ int gFontSize;
 int gGlyphSet;
 // Alternate Background: the theme's alt= pictures instead of its default= ones (themeviews.h).
 int gThemeAltBackground;
+// Boot Theme Wait: seconds the intro holds for a saved disk theme whose drive is not up yet (guiIntroLoop).
+int gBootThemeWait;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
 int gYOff;
@@ -263,7 +269,7 @@ int gOverscan;
 // The screen position for each video mode, so 1080i and 480i each keep their own centring (RIPPS2 build 124,
 // akilluminati47). A mode never set takes the shared xoff/yoff/overscan, which are still written as the mode in
 // use's, so an older build reads what it always did.
-#define SCREEN_POS_MODES 17
+#define SCREEN_POS_MODES 20
 static int gPosX[SCREEN_POS_MODES], gPosY[SCREEN_POS_MODES], gPosOver[SCREEN_POS_MODES];
 static unsigned char gPosSet[SCREEN_POS_MODES];
 
@@ -365,8 +371,9 @@ char gExitPath[256];
 char gCustomSettingsPath[64];
 int gEnableDebug;
 int gPS2Logo;
-int gAutoCreateVmc; // default-off: create + assign a per-game VMC on a PS2 game's first launch
-int gIgrMenu;       // default-off: the IGR combo pauses the game under the in-game menu (beta)
+int gAppHandoffPath; // the device spelling ELF apps are handed; the mounts themselves never change
+int gAutoCreateVmc;  // default-off: create + assign a per-game VMC on a PS2 game's first launch
+int gIgrMenu;        // default-off: the IGR combo pauses the game under the in-game menu (beta)
 int gDefaultDevice;
 int gEnableWrite;
 char gBDMPrefix[32];
@@ -1085,6 +1092,8 @@ static void initAllSupport(int force_reinit)
     if (gBootInProgress)
         guiRenderGreetingScreen();
     bdmEnumerateDevices();
+    if (gBootInProgress)
+        diagLog("boot: BDM start stage done (enabled drivers may still be loading in the background)");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_NET));
     if (gBootInProgress)
@@ -1096,6 +1105,8 @@ static void initAllSupport(int force_reinit)
     // HTTP shares that same NIC and the same one-tab-at-a-time rule: its start-mode gate is live
     // only when gNetworkProtocol == NET_PROTO_HTTP.
     initSupport(httpGetObject(0), HTTP_MODE, force_reinit);
+    if (gBootInProgress)
+        diagLog("boot: network start stage done (enabled drivers may still be loading in the background)");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
     if (gBootInProgress)
@@ -1103,6 +1114,8 @@ static void initAllSupport(int force_reinit)
     initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
+    if (gBootInProgress)
+        diagLog("boot: HDD, apps and favourites start stage done (enabled drivers may still be loading in the background)");
 
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_MC));
     if (gBootInProgress)
@@ -1110,6 +1123,8 @@ static void initAllSupport(int force_reinit)
     LOG("BOOT scan: MMCE initSupport begin\n");
     initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
     LOG("BOOT scan: MMCE initSupport done\n");
+    if (gBootInProgress)
+        diagLog("boot: MMCE start stage done (enabled drivers may still be loading in the background)");
 
     // Arm the MMCE GameID transport at boot and on every settings apply -- instead
     // of deferring it to itemLaunchMMCE.
@@ -1423,7 +1438,12 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
 {
     int viewTransition;
 
+    // This runs on the IO thread while the GUI thread draws the menu through the same rows under
+    // guiLock (guiStartFrame..guiEndFrame). The queued list operations change those rows, so they run
+    // under the lock here too; menuRowBeginEdit already does the same (YAOPL 4c713a3).
+    guiLock();
     guiExecDeferredOps();
+    guiUnlock();
 
     // Remember where the cursor was, so a rebuild does not dump the user back at the top of
     // the list (#589). Keyed on the game's startup id, not its row index: a rescan is exactly
@@ -1649,7 +1669,9 @@ void menuDeferredUpdate(void *data)
         // A device can reject a scan before it consumes the view-dirty flag (for example, MMCE with
         // no card inserted). Still retire the old rows and commit the retained destination so input
         // does not remain locked and the next successful device scan uses the user's chosen view.
+        guiLock(); // IO thread: see updateMenuFromGameList
         guiExecDeferredOps();
+        guiUnlock();
         clearMenuGameList(mod);
         libViewCommitPending(mod->support->mode);
         libViewFinishPending(mod->support->mode);
@@ -3393,6 +3415,7 @@ static void resolveBootDirToMass(void)
         // reads defaults for now and its first successful save lands on mmce once item 1 makes the
         // driver real. Cost is the ~10 x delay(1) poll on an MMCE boot only.
         mmceLoadModules();
+        diagLog("settings: MMCE driver load requested for %s", gBootDir);
         char devRoot[8];
         const char *colon = strchr(gBootDir, ':');
         size_t rootLen = colon ? (size_t)(colon - gBootDir) + 1 : 0;
@@ -3403,10 +3426,12 @@ static void resolveBootDirToMass(void)
                 DIR *dir = opendir(devRoot);
                 if (dir != NULL) {
                     closedir(dir);
+                    diagLog("settings: %s readable after %d retries", devRoot, tries);
                     return; // mounted -- the boot dir is readable as-is
                 }
                 delay(1);
             }
+            diagLog("settings: %s not readable after 10 tries, keeping it as the settings home", devRoot);
         }
         // Card still settling after the wait. It served this very ELF milliseconds ago, so it IS present
         // -- it just has not re-registered its mmceman filesystem yet. Do NOT blank gBootDir and re-home
@@ -3500,15 +3525,23 @@ static void _loadConfig()
     int value, themeID = -1, langID = -1;
     const char *temp;
     // Resolve boot aliases (usb0:/, ata0:/, mx4sio0:/) to massN: before reading settings.
+    // The diagLog lines through this function time each step of the settings load in DIAG.TXT
+    // (every line is timestamped), so a slow boot shows which step the seconds went to.
     resolveBootDirToMass();
+    diagLog("settings: boot dir %s", gBootDir);
     // Discover the resolved CWD before restoring the saved language.
     lngRefreshBootLanguages(-1);
+    diagLog("settings: languages scanned");
     int result = configReadMulti(lscstatus);
+    diagLog("settings: read 0x%x of 0x%x from %s", result, lscstatus, configGetLoadDir());
 
     if (lscstatus & CONFIG_OPL) {
         if (!(result & CONFIG_OPL)) {
             result = tryAlternateDevice(lscstatus);
+            diagLog("settings: other devices tried, now 0x%x from %s", result, configGetLoadDir());
         }
+        // RiptOPLite: the file's source settings are the full build's; keep them to write back (riptlite.c).
+        liteRememberDeviceKeys((result & CONFIG_OPL) ? configGetByType(CONFIG_OPL) : NULL);
 
         if (result & CONFIG_OPL) {
             config_set_t *configOPL = configGetByType(CONFIG_OPL);
@@ -3539,6 +3572,9 @@ static void _loadConfig()
             configReadFontSize(configOPL);
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
+            configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
 
             if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
@@ -3590,6 +3626,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_YSENSITIVITY, &gYSensitivity);
             configGetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, &gEnableDebug);
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
+            configGetInt(configOPL, CONFIG_OPL_APP_HANDOFF_PATH, &gAppHandoffPath);
             configGetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, &gAutoCreateVmc);
             configGetInt(configOPL, CONFIG_OPL_IGR_MENU, &gIgrMenu);
             configGetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, &gHDDGameListCache);
@@ -3654,6 +3691,12 @@ static void _loadConfig()
             gGameTypeLabels = gGameTypeLabels ? 1 : 0;
             configGetInt(configOPL, CONFIG_OPL_CFG_TITLES, &gCfgTitlesInLists);
             gCfgTitlesInLists = gCfgTitlesInLists ? 1 : 0;
+            configGetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, &gPs1Duplicates);
+            if (gPs1Duplicates < PS1_DUP_BOTH || gPs1Duplicates > PS1_DUP_POPSTARTER)
+                gPs1Duplicates = PS1_DUP_BOTH;
+            configGetInt(configOPL, CONFIG_OPL_LIST_CFG_TEXT, &gListCfgText);
+            if (gListCfgText < LIST_CFG_TEXT_THEME || gListCfgText > LIST_CFG_TEXT_OFF)
+                gListCfgText = LIST_CFG_TEXT_THEME;
             // Where the user left each L3 page last session. Read from the LAST set (the same
             // configReadMulti above filled it), but sequenced HERE, after the two display settings
             // above: the restore validates every remembered position against what its mode can
@@ -3791,8 +3834,11 @@ static void _loadConfig()
             // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
             // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that
             // had eth_mode=0 gets Manual. Any non-SMB protocol forces SMB off (preserves UDPBD-wins).
-            // NOTE(rebuild): the fork also loads the SMB dialect (gSMBDialect, SMBv1/SMB2) here --
-            // that returns with checklist item 4; until then the rebuild speaks SMBv1 unconditionally.
+            // SMB dialect. A missing key is SMBv1 (every config written before the row existed), and
+            // anything that is not exactly SMB2 falls back to SMBv1 too: losing SMB2 is recoverable,
+            // selecting a driver this build does not have is not. (Autolaunch has no SMB path.)
+            if (!configGetInt(configOPL, CONFIG_OPL_SMB_DIALECT, &gSMBDialect) || gSMBDialect != SMB_DIALECT_V2)
+                gSMBDialect = SMB_DIALECT_V1;
             gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
             gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
             if (gNetworkProtocol == NET_PROTO_SMB) {
@@ -3930,6 +3976,9 @@ static void _loadConfig()
             gBDMStartMode = START_MODE_AUTO;
             configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_BDM_MODE, gBDMStartMode);
         }
+
+        // RiptOPLite holds the sources it does not carry off and starts the one it does, whatever the file said.
+        liteApplyDeviceMask();
     }
 
     if (lscstatus & CONFIG_NETWORK) {
@@ -3956,7 +4005,9 @@ static void _loadConfig()
                         (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
                          gNetworkProtocol == NET_PROTO_UDPBD));
 
+    diagLog("settings: applying (theme, language, device start-up)");
     applyConfig(themeID, langID, 0);
+    diagLog("settings: applied");
     // applyConfig reloads only a CHANGED theme; the default <OPL> theme loaded at boot still shows its
     // default view. This reloads it once when the saved view differs.
     thmSetView(gThemeViewRequest);
@@ -4209,7 +4260,11 @@ static void _saveConfig()
     if (lscstatus & CONFIG_OPL) {
         config_set_t *configOPL = configGetByType(CONFIG_OPL);
         configSetInt(configOPL, CONFIG_OPL_SCROLLING, gScrollSpeed);
-        configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
+        // Keep the saved disk theme while its drive has not offered it yet. Boot Theme Wait is off by default, so the
+        // menu (and a settings save) can come before that, and writing the built-in fallback on screen would lose the
+        // user's theme for good. An explicit pick on the Interface page writes the key itself (guiShowInterfaceConfig).
+        if (!thmSavedThemePending())
+            configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
         if (gThemeViewRequest >= 0)
             configSetStr(configOPL, CONFIG_OPL_THEME_VIEW, thmViewName(gThemeViewRequest));
         else
@@ -4237,6 +4292,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_FONT_SIZE, gFontSize);
         configSetInt(configOPL, CONFIG_OPL_GLYPH_SET, gGlyphSet);
         configSetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, gThemeAltBackground);
+        configSetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, gBootThemeWait);
         configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
         configSetInt(configOPL, CONFIG_OPL_YOFF, gYOff);
@@ -4244,6 +4300,7 @@ static void _saveConfig()
         screenPosSave(configOPL); // each video mode's position (RIPPS2 build 124)
         configSetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, gEnableDebug);
         configSetInt(configOPL, CONFIG_OPL_PS2LOGO, gPS2Logo);
+        configSetInt(configOPL, CONFIG_OPL_APP_HANDOFF_PATH, gAppHandoffPath);
         configSetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, gAutoCreateVmc);
         configSetInt(configOPL, CONFIG_OPL_IGR_MENU, gIgrMenu);
         configSetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, gHDDGameListCache);
@@ -4282,6 +4339,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
         configSetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels);
         configSetInt(configOPL, CONFIG_OPL_CFG_TITLES, gCfgTitlesInLists);
+        configSetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, gPs1Duplicates);
+        configSetInt(configOPL, CONFIG_OPL_LIST_CFG_TEXT, gListCfgText);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
@@ -4320,8 +4379,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, gNetBootProtocol);
         // Dual-write: the authoritative unified selector PLUS the three legacy keys (derived shadows),
         // so a config saved by this build still boots correctly on an older OPL that only reads the legacy keys.
-        // NOTE(rebuild): the fork also persists the SMB dialect here (item 4).
         configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
+        configSetInt(configOPL, CONFIG_OPL_SMB_DIALECT, gSMBDialect);
         configSetInt(configOPL, CONFIG_OPL_NET_START_MODE, gNetStartMode);
         configSetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, gNetProtocolPick);
         configSetInt(configOPL, CONFIG_OPL_UDPFS_ACCESS, gUdpfsAccessMode);
@@ -4337,6 +4396,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_YSENSITIVITY, gYSensitivity);
 
         configSetInt(configOPL, CONFIG_OPL_SWAP_SEL_BUTTON, gSelectButton == KEY_CIRCLE ? 0 : 1);
+        // RiptOPLite forced its source settings: write the full build's back over them.
+        liteRestoreDeviceKeys(configOPL);
     }
 
     // Fold in each page's current L3 position. Doing it at WRITE time is what keeps L3 itself free:
@@ -4564,6 +4625,8 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
     // the row back to Apps before the value was ever written to the config: the whole feature was
     // dead with its picker entry, its enum value and its config key all present. Data half without
     // the code half, again.
+    // RiptOPLite: a settings page cannot turn on a source this build does not carry (riptlite.c).
+    liteApplyDeviceMask();
     if (gDefaultDevice < 0 || gDefaultDevice > FAV_MODE)
         gDefaultDevice = MMCE_MODE;
     // Favourites is a valid startup page only while the FAV tab is enabled; otherwise a stale
@@ -5047,6 +5110,7 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     lngEnd();
     thmEnd();
     rmEnd();
+    menuWatchStop(); // diagnostic builds: no VBlank handler or exception hooks survive the handoff
     configEnd();
     if (gLaunchDiag)
         launchDiagMark(8); // deinitEx finished -- sysLaunchNeutrino runs next
@@ -5124,6 +5188,7 @@ void deinit(int exception, int modeSelected)
     lngEnd();
     thmEnd();
     rmEnd();
+    menuWatchStop(); // diagnostic builds: no VBlank handler or exception hooks survive the handoff
     configEnd();
 }
 
@@ -5253,6 +5318,7 @@ static void setDefaults(void)
     gFontSize = FONT_SIZE_DEFAULT;
     gGlyphSet = GLYPH_SET_THEME;
     gThemeAltBackground = 0; // the theme's default= pictures (KrahJohlito's alt= idea)
+    gBootThemeWait = 0;      // off: the menu opens without waiting, and the saved theme replaces the built-in one later
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;
@@ -5296,8 +5362,11 @@ static void setDefaults(void)
     gNeutrinoShowArgs = 0;
     gDefaultGameView = GAME_VIEW_BOTH;
     gAppsDisplay = APPS_DISPLAY_MIXED;
-    gGameTypeLabels = 0;   // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
-    gCfgTitlesInLists = 0; // #918: reading every CFG per list rebuild slows SMB/MMCE/MX4SIO; opt-in only
+    gGameTypeLabels = 0;           // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
+    gCfgTitlesInLists = 0;         // #918: reading every CFG per list rebuild slows SMB/MMCE/MX4SIO; opt-in only
+    gPs1Duplicates = PS1_DUP_BOTH; // both rows, as before the setting existed
+    // List Title and Description: the theme's way, as before the setting existed
+    gListCfgText = LIST_CFG_TEXT_THEME;
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;
@@ -5358,6 +5427,7 @@ static void setDefaults(void)
     gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
     gNetProtocolPick = NET_PROTO_SMB;
     gUdpfsAccessMode = 0; // UDPFS Files; never inherit UDPBD's forced IMG
+    gSMBDialect = SMB_DIALECT_V1;
 
     frameCounter = 0;
 
@@ -5637,10 +5707,11 @@ static void miniInit(int mode)
         // normally overrides from the saved config) had nothing to override it here: configReadMulti
         // runs AFTER bdmLoadModules(). bdmLoadBlockDeviceModules gates the USB load on the flag, so
         // an argv autolaunch from a USB stick loaded no USB block driver at all.
-        gEnableUSB = 1;
-        gEnableILK = 1; // iLink will break pcsx2 however.
-        gEnableMX4SIO = 1;
-        gEnableBdmHDD = 1;
+        // A RiptOPLite build loads only the transport it carries (include/riptlite.h).
+        gEnableUSB = LITE_HAS_USB;
+        gEnableILK = LITE_HAS_ILINK; // iLink will break pcsx2 however.
+        gEnableMX4SIO = LITE_HAS_MX4SIO;
+        gEnableBdmHDD = LITE_HAS_BDMHDD;
         bdmLoadModules();
     } else if (mode == HDD_MODE) {
         hddLoadModules();
@@ -5676,6 +5747,9 @@ static void miniInit(int mode)
             configReadFontSize(configOPL);
             configReadGlyphSet(configOPL);
             configGetInt(configOPL, CONFIG_OPL_THEME_ALT_BG, &gThemeAltBackground);
+            configGetInt(configOPL, CONFIG_OPL_BOOT_THEME_WAIT, &gBootThemeWait);
+            if (gBootThemeWait < 0 || gBootThemeWait > 10)
+                gBootThemeWait = gBootThemeWait < 0 ? 0 : 10; // a hand-edited value: show and save what the intro uses
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);

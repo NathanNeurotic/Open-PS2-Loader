@@ -183,4 +183,20 @@ assert everything.count('guiMsgBox(msg, 1, NULL) != 1') == 2, 'the delete asks t
 assert everything.index('_STR_DELETE_GAME_LAST_CHECK') < everything.index('support->itemDelete(support, id);') < everything.index('gmDeleteExtras(plan)')
 assert 'for (part = 0; part < game.parts && !partLeft; part++)' in everything and everything.index('if (partLeft) {') < everything.index('gmDeleteExtras(plan)'), 'every part is gone before the extras go'
 assert 'gEnableWrite' in menu[menu.index('static int menuHiddenState('):menu.index('static void menuHideGame(')]
+def last_gate(body, call):
+    # the last `if (...)` whose condition makes the call: the write must stay behind it
+    gates = [m.start() for m in re.finditer(r'\bif\s*\([^\n]*' + re.escape(call), body)]
+    assert gates, call + ' must gate the write, not just run before it'
+    return gates[-1]
+
+# The list can be rebuilt while a dialog is up: each write checks the row is still the same game first.
+assert everything.index('_STR_DELETE_GAME_LAST_CHECK') < last_gate(everything, 'menuRowBeginEdit(row)') < everything.index('support->itemDelete(support, id);')
+deleteGame = menu[menu.index('static void menuDeleteGame('):]
+deleteGame = deleteGame[:deleteGame.index('\n}\n')]
+assert deleteGame.index('menuDeleteEverything(submenu, &row)') < deleteGame.index('_STR_DELETE_WARNING') < last_gate(deleteGame, 'menuRowBeginEdit(&row)') < deleteGame.index('itemDelete(support, row.id)')
+rename = menu[menu.index('static void menuRenameGame('):]
+rename = rename[:rename.index('\n}\n')]
+assert rename.index('guiShowKeyboard(') < last_gate(rename, 'menuRowBeginEdit(&row)') < rename.index('itemRename(support, row.id, newName)')
+hide = menu[menu.index('static void menuHideGame('):menu.index('static int menuDeleteEverything(')]
+assert 'selected_item' not in rename + deleteGame + everything + hide, 'the actions work from their copy of the row'
 print('ok   wiring: hidden rows leave the page and the All Games gather; delete asks twice, parts first')

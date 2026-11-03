@@ -1230,19 +1230,45 @@ static int configPathIsRawApa(const char *path)
     return path != NULL && !strncmp(path, "hdd", 3) && path[3] >= '0' && path[3] <= '9' && path[4] == ':';
 }
 
+// Did a failed read-only openFile() establish that the file is not there? Only then may the caller
+// skip its second (buffered) open of the same path.
+// - "mc?:" still unresolved: checkFile() found no card and never reached open(); errno is whatever
+//   checkMC()'s card probes left (often ENOENT), so it says nothing about the file. A card that comes
+//   up before the retry must still be read.
+// - mass: bdmfs_fatfs reports the negated FatFs FRESULT, not an errno. FR_NO_FILE (4) / FR_NO_PATH (5)
+//   mean absent; FR_INT_ERR (2) is numerically ENOENT but is an internal error, so it is retried.
+// - every other device (mmce, mc, pfs, ...): ENOENT. Where a driver reports no ENOENT at all (the
+//   SDK's mmceman may return a bare -1), the file is simply opened twice, as before.
+static int configOpenFailureIsAbsent(const char *path, int err)
+{
+    if (path == NULL)
+        return 0;
+    if (!strncmp(path, "mc", 2) && path[2] == '?')
+        return 0;
+    if (!strncmp(path, "mass", 4))
+        return err == 4 || err == 5;
+    return err == ENOENT;
+}
+
 // Single-shot fast path for small configs (issue #500). Small CFG files (few KB)
 // are common for per-game configs. Reading the whole file in one IOP transaction
 // avoids the 4KB buffered refill loop and the extra BOM probe in openFileBuffer.
 // Falls back to the established 4KB buffered path on any error/OOM/oversize.
 // Keeps the 4096 buffer size; no gratuitous 8KB expansion without measurement.
-static file_buffer_t *configOpenSingleShot(const char *path)
+static file_buffer_t *configOpenSingleShot(const char *path, int *missing)
 {
+    *missing = 0;
     if (path == NULL)
         return NULL;
 
+    errno = 0;
     int fd = openFile((char *)path, O_RDONLY);
-    if (fd < 0)
+    if (fd < 0) {
+        // Only a file the device reports as absent skips the buffered retry. A timeout, a busy bus or
+        // any other failure leaves a different code, so the caller still opens it again.
+        *missing = configOpenFailureIsAbsent(path, errno);
         return NULL;
+    }
 
     int sz = getFileSize(fd);
     // Only single-shot when size is known, positive and fits in one 4KB buffer.
@@ -1285,6 +1311,20 @@ static int configGlobalIndex(const config_set_t *configSet)
     return -1;
 }
 
+// Read-only open of one settings file: single-shot when it fits in 4 KB, else the buffered reader.
+// A file the device reports as absent is opened ONCE. The buffered reader's own open is the identical
+// openFile(path, O_RDONLY), so retrying it after an ENOENT only fails again, and every settings
+// name has several fallback names (wOPL, legacy, carry-over) that are tried in turn. On an MMCE each
+// of those failed opens is a full round trip over SIO2, which made a settings load from mmce0 slow.
+static file_buffer_t *configOpenForRead(const char *path)
+{
+    int missing;
+    file_buffer_t *fileBuffer = configOpenSingleShot(path, &missing);
+    if (fileBuffer == NULL && !missing)
+        fileBuffer = openFileBuffer((char *)path, O_RDONLY, 0, 4096);
+    return fileBuffer;
+}
+
 // "<dir><name>" for the carry-over directory, which always ends in '/' or ':' ("pfs0:OPL/", "pfs0:").
 static file_buffer_t *configOpenCarryOver(const char *name)
 {
@@ -1292,9 +1332,7 @@ static file_buffer_t *configOpenCarryOver(const char *name)
     file_buffer_t *fileBuffer;
 
     snprintf(path, sizeof(path), "%s%s", configCarryOverDir, name);
-    fileBuffer = configOpenSingleShot(path);
-    if (fileBuffer == NULL)
-        fileBuffer = openFileBuffer(path, O_RDONLY, 0, 4096);
+    fileBuffer = configOpenForRead(path);
     if (fileBuffer != NULL)
         LOG("CONFIG no RiptOPL settings in this home; carrying over %s read-only\n", path);
     return fileBuffer;
@@ -1315,17 +1353,13 @@ int configRead(config_set_t *configSet)
         return 0;
     }
     int ret;
-    file_buffer_t *fileBuffer = configOpenSingleShot(configSet->filename);
-    if (fileBuffer == NULL)
-        fileBuffer = openFileBuffer(configSet->filename, O_RDONLY, 0, 4096);
+    file_buffer_t *fileBuffer = configOpenForRead(configSet->filename);
 
     if (fileBuffer == NULL && configSet->filename != NULL) {
         // Our name is absent -- wOPL may have moved this file's data to its own name (see above).
         char woplPath[256];
         if (configBuildWoplPath(configSet->filename, woplPath, sizeof(woplPath))) {
-            fileBuffer = configOpenSingleShot(woplPath);
-            if (fileBuffer == NULL)
-                fileBuffer = openFileBuffer(woplPath, O_RDONLY, 0, 4096);
+            fileBuffer = configOpenForRead(woplPath);
             if (fileBuffer != NULL) {
                 LOG("CONFIG %s absent; reading wOPL's %s instead\n", configSet->filename, woplPath);
                 // Point the set at the file we actually read, so a later save updates THAT file rather
@@ -1350,9 +1384,7 @@ int configRead(config_set_t *configSet)
         // new name. configSet->filename stays the new name, so configWrite migrates transparently.
         char legacyPath[256];
         configBuildLegacyOplPath(configSet->filename, legacyPath, sizeof(legacyPath));
-        fileBuffer = configOpenSingleShot(legacyPath);
-        if (fileBuffer == NULL)
-            fileBuffer = openFileBuffer(legacyPath, O_RDONLY, 0, 4096);
+        fileBuffer = configOpenForRead(legacyPath);
         if (fileBuffer != NULL)
             LOG("CONFIG migrating settings from legacy %s\n", legacyPath);
     }

@@ -69,6 +69,7 @@ Modes 0–5 are the standard console rasters; the rest are forced progressive, H
 | 12 | HDTV 1080i @60Hz Non Interlaced | | 27 | VGA 1280x1024p @60Hz |
 | 13 | VGA 640x480p @60Hz | | 28 | VGA 1280x1024p @75Hz |
 | 14 | VGA 640x480p @72Hz | | 29 | HDTV 1080p @60Hz (EXPERIMENTAL) |
+| | | | 30 | HDTV 1080p @60Hz 4:3 (EXPERIMENTAL) |
 
 **HDTV 480p @60Hz** (8) is the safe starting point on almost any modern display. **720p** (10) and
 **1080i** (11) are the next most widely accepted. The VGA modes need a display fed over VGA or a
@@ -84,12 +85,23 @@ passed real-hardware testing, it is non-standard enough that some displays will 
 
 Because a display that cannot sync leaves you with a black screen and no way to undo the choice from
 the console, selecting 1080p **with GSM enabled** triggers a three-step confirmation before it is
-written to disk. Decline at any of the three steps and the mode falls back to **NTSC (mode 0)**, not
-to your previous selection — so if you cancel, set the mode you actually wanted before leaving the
-page.
+written to disk. Decline at any of the three steps and the GSM switch and mode picker go back to what
+the page opened with. The question is only asked when you pick a 1080p mode: a game that follows a
+global already set to 1080p is not asked again when you save its other settings.
 
 The same gate applies on the global page, which carries the wider blast radius of the two: it is what
 every game without its own GSM settings inherits.
+
+### 1080p 4:3
+
+Mode 30, **HDTV 1080p @60Hz 4:3 (EXPERIMENTAL)**, is the same 1080p signal with the picture held to
+a 1536-wide window in the middle of the 1920-wide frame, so 4:3 games get black bars at the sides
+instead of being stretched to 16:9. It asks for the same three confirmations as mode 29.
+
+The GS can only scale a game's picture by whole numbers, so the result depends on how wide the game
+draws. A 640-wide game (most of them) is doubled to 1280 pixels, which is slightly narrower than true
+4:3 (1440). A 512-wide game is tripled to 1536, which is slightly wider. Mode 29 triples a 640-wide
+game to the full 1920, which is the stretch this mode avoids. Widescreen games should stay on mode 29.
 
 ---
 
@@ -161,8 +173,8 @@ Two names are involved, and they are not the same thing. **`GSM1080P` is the Mak
 defaults to `1`, and when set the `Makefile` adds **`-DGSM_1080P`** — the preprocessor macro the code
 actually tests — to the EE build, and forwards `GSM1080P=1` on to `ee_core/Makefile`.
 
-So every shipped build has mode 29 and the list is a consistent 30 entries across published flavours.
-Building with `GSM1080P=0` drops it and shortens the list.
+So every shipped build has modes 29 and 30, and the list is a consistent 31 entries across published flavours.
+Building with `GSM1080P=0` drops both 1080p rows and shortens the list to 29 entries.
 
 `In-game screenshots (IGS) require GSM to be enabled` — see [IGR.md](IGR.md#in-game-screenshots-igs).
 

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Exercise two-theme provenance gates and release rollback without GitHub writes."""
+import argparse
+import contextlib
 import hashlib
+import io
 import json
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -37,7 +41,7 @@ class ReleaseTests(unittest.TestCase):
                     (folder / "Korium.patch").write_bytes(b"same theme patch")
 
     def assets(self):
-        names = {"RIPTOPL-RetroAchievements-src-test.zip"}
+        names = {"RIPTOPL-RetroAchievements-src-test.zip", "LICENSE-LIBSMB2.txt"}
         for theme in publisher.THEMES:
             names.update((f"RIPTOPL-RA-{theme}.ELF", f"APP_RIPTOPL-RA-{theme}.psu",
                           f"RIPTOPL-RetroAchievements-{theme}-test.zip"))
@@ -286,6 +290,149 @@ class MbedtlsLicenceShippingTest(unittest.TestCase):
         self.assertIn('shutil.copyfile(ROOT / "third_party/mbedtls/LICENSE", kit / "LICENSE-MBEDTLS.txt")', ra)
         self.assertIn('required.add("LICENSE-MBEDTLS.txt")', app)
         self.assertIn('"LICENSE-MBEDTLS.txt" in names', app)
+
+
+class Libsmb2LicenceShippingTest(unittest.TestCase):
+    def test_every_kit_bundle_and_standalone_download_ships_the_lgpl_licence(self):
+        # Every RiptOPL ELF embeds smb2man over libsmb2 (LGPL-2.1), so the licence text must travel
+        # with the install kits (the RA kits copy the standard one), the VARIANTS/DEBUG zips and the
+        # standalone ELF download.
+        root = Path(__file__).resolve().parents[2]
+        licence = root / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"
+        self.assertIn("GNU LESSER GENERAL PUBLIC LICENSE", licence.read_text(encoding="utf-8"))
+        app = (root / ".github/scripts/package_release_app.py").read_text(encoding="utf-8")
+        self.assertIn('LIBSMB2_LICENCE = ROOT / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"', app)
+        self.assertIn('shutil.copyfile(LIBSMB2_LICENCE, package / "LICENSE-LIBSMB2.txt")', app)
+        self.assertIn('"LICENSE-LIBSMB2.txt",  # every loader embeds libsmb2 (LGPL-2.1)', app)
+        # CREDITS, the notice that the loaders use libsmb2 under that licence, goes everywhere the licence goes.
+        self.assertIn('CREDITS = ROOT / "CREDITS"', app)
+        self.assertIn('shutil.copyfile(CREDITS, package / "CREDITS")', app)
+        self.assertIn('"CREDITS",  # the notice that names libsmb2 and its licence', app)
+        workflow = (root / ".github/workflows/rolling-release.yml").read_text(encoding="utf-8")
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt rolling/LICENSE-LIBSMB2.txt", workflow)
+        self.assertIn("PS2RD-CHT-Manager.url LICENSE-LIBSMB2.txt CREDITS >/dev/null", workflow)
+        self.assertIn('cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt "rolling/$kind/LICENSE-LIBSMB2.txt"', workflow)
+        self.assertIn('cp -f CREDITS "rolling/$kind/CREDITS"', workflow)
+        # The MEGA mirror uploads the standalone flavour ELFs on their own, so the licence goes up beside them.
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt mega-out/LICENSE-LIBSMB2.txt", workflow)
+        self.assertIn("cp -f CREDITS mega-out/CREDITS", workflow)
+        self.assertIn('MEGA_UPLOAD_FILES="mega-out/${ARCHIVE} mega-out/LICENSE-LIBSMB2.txt mega-out/CREDITS"', workflow)
+        notes = (root / ".github/scripts/normalize_release_notes.py").read_text(encoding="utf-8")
+        self.assertIn('"LICENSE-LIBSMB2.txt": "LGPL-2.1 licence of libsmb2', notes)
+        # The RA channel publishes standalone RA ELFs too, so the licence is an RA asset as well, and a
+        # PR preview bootstrapped from an older standard kit still passes the verifier.
+        ra = (root / ".github/scripts/package_ra_release.py").read_text(encoding="utf-8")
+        self.assertIn('shutil.copyfile(app.LIBSMB2_LICENCE, destination / "LICENSE-LIBSMB2.txt")', ra)
+        self.assertIn('shutil.copyfile(app.CREDITS, destination / "CREDITS")', ra)
+        self.assertIn('shutil.copyfile(app.LIBSMB2_LICENCE, args.output / "LICENSE-LIBSMB2.txt")', ra)
+        publish = (root / ".github/scripts/publish_ra_release.py").read_text(encoding="utf-8")
+        self.assertIn('"LICENSE-LIBSMB2.txt"}', publish)
+        # Normalize Release Assets verifies the kit with rebuild/main's packager, which requires the licence
+        # and CREDITS. A kit, VARIANTS zip or release built before they shipped (rolling-korium until
+        # korium-sync brings the change over) gets them there instead of failing, and the final asset check
+        # insists on the loose licence beside the standalone loaders.
+        normalize = (root / ".github/workflows/release-normalize.yml").read_text(encoding="utf-8")
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt package-work/LICENSE-LIBSMB2.txt", normalize)
+        self.assertIn("cp -f CREDITS package-work/CREDITS", normalize)
+        self.assertIn("cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt variants-work/LICENSE-LIBSMB2.txt", normalize)
+        self.assertIn("cp -f CREDITS variants-work/CREDITS", normalize)
+        self.assertIn('retry gh release upload "$TAG" release-work/LICENSE-LIBSMB2.txt', normalize)
+        self.assertIn("grep -qFx 'LICENSE-LIBSMB2.txt'", normalize)
+        verify = normalize.index("package_release_app.py verify")
+        self.assertLess(normalize.index("package-work/LICENSE-LIBSMB2.txt"), verify)
+        self.assertLess(normalize.index("package-work/CREDITS"), verify)
+
+    def test_credits_say_every_loader_uses_libsmb2_under_the_lgpl(self):
+        # CREDITS is the LGPL-2.1 section 6 notice that travels with the licence: it names libsmb2, says every
+        # loader embeds it, that it is used under the LGPL-2.1 and where that licence text is.
+        credits = (pack.ROOT / "CREDITS").read_text(encoding="utf-8")
+        entry = credits[credits.index("  - libsmb2, by Ronnie Sahlberg"):]
+        entry = " ".join(entry[:entry.index("\n\n")].split())
+        for phrase in ("https://github.com/sahlberg/libsmb2", "every loader embeds", "used under the LGPL-2.1 licence",
+                       "LICENSE-LIBSMB2.txt"):
+            self.assertIn(phrase, entry)
+
+    def test_a_staged_kit_carries_the_licence_and_the_credits_at_its_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            elf = folder / "built.ELF"
+            elf.write_bytes(b"\x7fELFstaged-loader")
+            package = folder / "package"
+            with contextlib.redirect_stdout(io.StringIO()):
+                pack.app.stage(argparse.Namespace(package=str(package), source_elf=str(elf), app_name="APP_RIPTOPL",
+                    elf_name="RIPTOPL.ELF", title="[APP] Open PS2 Loader: RiptOPL", pbt_title="[APP] RiptOPL",
+                    version="test", flavour="OFFICIALROLLING", channel="Rolling",
+                    description="Open PS2 Loader for PS2 and PS3"))
+            self.assertEqual((package / "LICENSE-LIBSMB2.txt").read_bytes(), pack.app.LIBSMB2_LICENCE.read_bytes())
+            self.assertEqual((package / "CREDITS").read_bytes(), (pack.ROOT / "CREDITS").read_bytes())
+            # Both sit beside the app, never inside it, so the PSU is the app folder alone.
+            self.assertFalse(any(p.name in ("CREDITS", "LICENSE-LIBSMB2.txt") for p in (package / "APPS").rglob("*")))
+
+    def assert_copied_before_upload(self, workflow, artifact, copies, listed):
+        # The copies run in the job that uploads the artifact, before the upload and whenever it runs: no
+        # condition but success() and no continue-on-error, so a later edit cannot quietly drop the licence.
+        import yaml  # the host-test runners carry PyYAML; imported here so the other tests do not need it
+
+        allowed = ("${{ success() }}", "success()")
+        jobs = yaml.safe_load((pack.ROOT / ".github/workflows" / workflow).read_text(encoding="utf-8"))["jobs"]
+        uploads = [(job["steps"], index) for job in jobs.values() for index, step in enumerate(job.get("steps", []))
+                   if "actions/upload-artifact@" in step.get("uses", "") and step.get("with", {}).get("name") == artifact]
+        self.assertEqual(len(uploads), 1, artifact)
+        steps, upload = uploads[0]
+        self.assertEqual(steps[upload]["with"]["path"].split(), listed, artifact)
+        self.assertIn(steps[upload].get("if", allowed[0]), allowed, artifact)
+        for copy in copies:
+            found = [step for step in steps[:upload]
+                     if copy in [line.strip() for line in str(step.get("run", "")).splitlines()]]
+            self.assertEqual(len(found), 1, (artifact, copy))
+            self.assertIn(found[0].get("if", allowed[0]), allowed, (artifact, copy))
+            self.assertNotIn("continue-on-error", found[0], (artifact, copy))
+
+    def test_every_actions_build_of_a_loader_carries_the_licence_and_the_credits(self):
+        # Testers download loaders straight from Actions runs: the build-flavours artifacts, and the RA
+        # builds the RetroAchievements release is packed from. CREDITS is a tracked file at the root.
+        self.assertTrue((pack.ROOT / "CREDITS").is_file())
+        self.assert_copied_before_upload(
+            "flavours.yml", "OPL-${{ matrix.flavour }}",
+            ["cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt LICENSE-LIBSMB2.txt"],
+            ["RIPTOPL-*.ELF", "OPNPS2LD-*.ELF", "BUILD-MANIFEST.txt", "LICENSE-LIBSMB2.txt", "CREDITS", "POPS/",
+             "docs/VCD.md"])
+        self.assert_copied_before_upload(
+            "ra-release.yml", "ra-${{ matrix.theme }}-${{ matrix.sdk.name }}",
+            ["cp -f modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt ra-build/LICENSE-LIBSMB2.txt",
+             "cp -f CREDITS ra-build/CREDITS"],
+            ["ra-build/"])
+
+    def test_make_release_zip_carries_the_licence_and_never_leaves_a_partial_one(self):
+        # Run the real $(EE_VPKD).ZIP rule, cut out of the Makefile, in a scratch tree.
+        if not (shutil.which("make") and shutil.which("zip")):
+            self.skipTest("needs make and zip, which the ubuntu-24.04 runners have")
+        makefile = (pack.ROOT / "Makefile").read_text(encoding="utf-8")
+        rule = makefile[makefile.index("$(EE_VPKD).ZIP:"):]
+        rule = rule[:rule.index("\n\n") + 1]
+        with tempfile.TemporaryDirectory() as directory:
+            tree = Path(directory)
+            licence = tree / "modules/network/smb2man/libsmb2/LICENCE-LGPL-2.1.txt"
+            licence.parent.mkdir(parents=True)
+            licence.write_bytes(b"LGPL-2.1 text")
+            inputs = ("RIPTOPL-test.ELF", "DETAILED_CHANGELOG", "CREDITS", "LICENSE", "README.md")
+            for name in inputs:
+                (tree / name).write_bytes(name.encode())
+            (tree / "Makefile").write_text("EE_VPKD = RIPTOPL-test\n" + rule, encoding="utf-8")
+            archive = tree / "RIPTOPL-test.ZIP"
+
+            def make():
+                return subprocess.run(["make", "-B", "-s", archive.name], cwd=tree, capture_output=True, text=True)
+
+            for run in ("first", "second"):  # a second run replaces the entries instead of adding duplicates
+                result = make()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                with zipfile.ZipFile(archive) as zipped:
+                    self.assertEqual(sorted(zipped.namelist()), sorted(inputs + ("LICENSE-LIBSMB2.txt",)), run)
+                    self.assertEqual(zipped.read("LICENSE-LIBSMB2.txt"), b"LGPL-2.1 text", run)
+            licence.unlink()
+            self.assertNotEqual(make().returncode, 0)
+            self.assertFalse(archive.exists(), "a failed rule must not leave the archive behind")
 
 
 if __name__ == "__main__":

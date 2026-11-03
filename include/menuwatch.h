@@ -21,6 +21,12 @@
   the IOP reset, every module load and the boot stages up to the video setup, each step is printed
   on screen as it starts, so a boot that stops there leaves its last step on screen. From the video
   setup on, the stage colours take over.
+
+  The same builds catch EE exceptions in the menu (a bad pointer, an unaligned access ...), which
+  otherwise freeze the screen without a word: the screen turns dark red, RIPTOPL-CRASH.TXT is written
+  to mc0: (mc1: if that fails) with the exception, the registers, the code addresses on the stack and
+  the last PCs a VBlank found the EE at, then the screen turns green (written) or orange (not). Look
+  the addresses up in the build's map file (opl.map).
 */
 
 enum MenuWatchStep {
@@ -48,8 +54,12 @@ enum MenuWatchStep {
 #ifdef __OPLDIAG
 void menuWatchStart(void);
 void menuWatchStep(int step);
+void menuWatchStop(void);
 #else
 static inline void menuWatchStart(void)
+{
+}
+static inline void menuWatchStop(void)
 {
 }
 static inline void menuWatchStep(int step)

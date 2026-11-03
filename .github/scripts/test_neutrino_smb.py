@@ -223,8 +223,30 @@ if "if (ethTryNeutrino(itemList, game, configSet))\n        return;" not in laun
     failures.append("ethLaunchGame must try the Neutrino leg before the OPL core")
 if launch.index("ethTryNeutrino(") > launch.index("sbPrepare("):
     failures.append("the Neutrino leg must run before the OPL core prepares smb_cdvdman")
-if "coreLoader == 1" not in function("static int ethSmbNeutrinoRequested(", eth):
-    failures.append("only the game's own Neutrino key takes SMB to Neutrino; Default stays on the OPL core")
+# Execute the launch policy with missing, explicit and legacy Default keys.
+policy = function("static int ethSmbNeutrinoRequested(", eth)
+policy_program = r'''#include <cassert>
+#define CONFIG_ITEM_CORE_LOADER 1
+struct config_set_t { int present, core; };
+static int gDefaultCoreLoader;
+static int configGetInt(config_set_t *c, int, int *v) { if (!c->present) return 0; *v=c->core; return 1; }
+@POLICY@
+int main() {
+    for (int global=0; global<2; global++) {
+        gDefaultCoreLoader=global;
+        assert(ethSmbNeutrinoRequested(NULL)==global);
+        for (int key=-1; key<=2; key++) {
+            config_set_t cfg={key>=0,key};
+            assert(ethSmbNeutrinoRequested(&cfg)==((key<0 || key==2) ? global : key));
+        }
+    }
+}
+'''.replace("@POLICY@", policy)
+with tempfile.TemporaryDirectory() as tmp:
+    src, exe = Path(tmp)/"policy.cpp", Path(tmp)/"policy.exe"
+    src.write_text(policy_program.replace("#include <cassert>", "#include <cassert>\n#include <cstddef>"), encoding="utf-8")
+    subprocess.run(["g++", "-std=c++17", "-Wall", "-Werror", str(src), "-o", str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)
 order = ["sbResolveNeutrinoPath(NULL)", "NEUTRINO_SMB_PORT", "sbBuildVmcNeutrinoArgs(", "sysNeutrinoSmbPreflight(",
          'sysNeutrinoPreflight("smb"', "sbPrepare(", "sbUnprepare(", "deinitEx(", 'sysLaunchNeutrino("smb"']
 positions = [leg.find(m) for m in order]
@@ -240,15 +262,13 @@ if not re.search(r'snprintf\(partname, sizeof\(partname\), "smb:%s", sharePath\)
 gui = (ROOT / "src/guigame.c").read_text(encoding="utf-8")
 if re.search(r"coreNeverNeutrino = [^;]*ETH_MODE", gui):
     failures.append("guigame: the SMB Loader Core row must not be locked to the OPL core any more")
-if "coreDefaultOpl = support != NULL && sourceMode == ETH_MODE;" not in gui:
-    failures.append("guigame: SMB's Default row means the OPL core, for a Favourite of an SMB game too")
-if not re.search(r"static int guiGameDialogCoreIsNeutrino\(int sourceMode,", gui) or "if (sourceMode == ETH_MODE)\n        return coreChoice == 1;" not in gui:
-    failures.append("guigame: the title defaults follow the owning source's core (a Favourite of an SMB game)")
+if "coreDefaultOpl" in gui or "if (sourceMode == ETH_MODE)\n        return coreChoice == 1;" in gui:
+    failures.append("guigame: SMB Default must follow the global core in dialogs and title defaults")
 
 menu = (ROOT / "src/menusys.c").read_text(encoding="utf-8")
 core = function("static int gameMenuCoreIsNeutrino(", menu)
-if "if (sourceMode == ETH_MODE) {" not in core or "return key == 1;" not in core:
-    failures.append("menusys: the game menu treats an SMB game as Neutrino only from its own key (Cheats/GSM/PADEMU/OSD)")
+if "return key == 1;" in core:
+    failures.append("menusys: SMB must follow the global core; covered by test_neutrino_pademu")
 
 if failures:
     print("Neutrino SMB checks FAILED:")

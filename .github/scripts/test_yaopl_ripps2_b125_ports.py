@@ -54,7 +54,8 @@ assert "gameImage->lastCacheId = -1;" in hb, "a game with nothing coming drops t
 assert "keepLastBackground(gameImage);" in elems, "the background on screen is touched before the next request"
 assert elems.index("keepLastBackground(gameImage);") < elems.index("texture = holdLastBackground(gameImage, menu, &item->item, texture, !coverflowCoverSettled);")
 splash = read("src/gui.c")
-assert "#define THEME_HOLD_MS 6000" in splash
+assert "#define THEME_HOLD_MAX_S 10" in splash and "themeHoldMs() > 0" in splash, \
+    "the hold is the Boot Theme Wait setting (off by default), clamped to 10 s"
 assert "if (themeHold && gFrameHook) {\n            guiInactiveFrames++;\n            gFrameHook();" in splash, \
     "the hold runs the menu update hook, idle, so a late drive is seen"
 assert "thmSavedThemePending()" in splash and "(clock() - tInitDone) <" in splash, "the hold must be bounded"

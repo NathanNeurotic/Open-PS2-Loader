@@ -6,4 +6,4 @@ Includes small network stack and UDPTTY.
 Requires `ip=<IPv4 address>` argument.
 
 Original source:  
-https://github.com/rickgaiser/neutrino
+https://github.com/ps2max32/neutrino
