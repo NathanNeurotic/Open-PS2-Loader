@@ -214,6 +214,21 @@ latency remain console checks.
   `e7829b6aa81586fe53b10b200f256f7177069aab287d3d028c20b7e043313917`, built in the
   pinned image that CI rebuilds it in; not tested on a console. See
   [Notes for ps2sdk](PS2SDK-NOTES.md#our-defect-fixed-the-status-decode-read-the-wrong-bytes).
+- Follow-up, 2026-11-02: "a permanently missing completion requires a fresh
+  driver start" was one of five ways a drive stayed detached until a bus reset
+  that never comes. Both driver copies now ask an unanswered LOGIN again with the
+  same request, retry a drive that did not attach on a 1, 2, 4, then 5 s back-off
+  without a bus reset, keep a granted login for a retry in the same generation,
+  stop a LOGIN loop at a bus reset, and release a drive's stale reserved LOGIN and
+  command once it logs in again. The menu and in-game driver also numbers a lone
+  drive 0 whichever slot it lands in, as CDVDMAN and Neutrino expect. With two
+  drives, a slot holding one drive's login of this generation stays that drive's,
+  and that drive keeps its device number while its warm-up is retried. While
+  another drive is attached, a drive that never attaches gets at most 8 more tries
+  (32 s of waiting) and then waits for a bus reset, so its tries cannot keep
+  stalling the attached drive's I/O. The rebuilt POPStarter driver is 27,769 bytes,
+  SHA-256 `9cd849ea7f06d72f3ee6015032dfd91d6fcb1332e87d5acde306cb42b5d4313d`; item 7 of
+  `modules/ilink/IEEE1394_bd/ORIGIN.txt` has the details. Not tested on a console.
 
 The old local C++ RiptOPL tree has the same reversed POPStarter direction and
 the manager defects above. A report of an older C++ build working therefore

@@ -1984,7 +1984,7 @@ static int menuPromptParentalLockPassword(const char *parentalLockPassword)
     int result;
 
     password[0] = '\0';
-    if (diaShowKeyb(password, CONFIG_KEY_VALUE_LEN, 1, _l(_STR_PARENLOCK_ENTER_PASSWORD_TITLE))) {
+    if (diaShowKeyb(password, CONFIG_KEY_VALUE_LEN, 1, _STR_PARENLOCK_ENTER_PASSWORD_TITLE)) {
         if (strncmp(parentalLockPassword, password, CONFIG_KEY_VALUE_LEN) == 0) {
             result = 0;
         } else if (strncmp(OPL_PARENTAL_LOCK_MASTER_PASS, password, CONFIG_KEY_VALUE_LEN) == 0) {
@@ -2699,11 +2699,12 @@ void menuRenderGameMenu()
     int y = (gTheme->usedHeight >> 1) - (spacing * (count >> 1));
     int cp = 0; // current position
 
-    // game title
-    fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0,
-                    cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
-                                        submenuItemGetText(&selected_item->item->current->item)),
-                    gTheme->selTextColor);
+    // game title: a name can run to 160 characters, about twice the screen, and nothing stopped it at either edge.
+    // Scroll a long one through the same 600 the PS1 note below the app menu's title gets.
+    fntRenderStringFit(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 600,
+                       cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
+                                           submenuItemGetText(&selected_item->item->current->item)),
+                       gTheme->selTextColor, 1);
 
     // config source
     char *cfgSource = gameConfigSource();
@@ -3025,11 +3026,11 @@ void menuRenderAppMenu()
     int y = (gTheme->usedHeight >> 1) - (spacing * (count >> 1));
     int cp = 0; // current position
 
-    // app title
-    fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0,
-                    cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
-                                        submenuItemGetText(&selected_item->item->current->item)),
-                    gTheme->selTextColor);
+    // app title, scrolled when it is wider than the screen, like the game menu's
+    fntRenderStringFit(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 600,
+                       cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
+                                           submenuItemGetText(&selected_item->item->current->item)),
+                       gTheme->selTextColor, 1);
 
     // A PS1 row opens this smaller menu, not the PS2 VMC editor. Say why the missing PS2 control
     // is intentional without claiming that Ember and POPSTARTER store their cards identically.

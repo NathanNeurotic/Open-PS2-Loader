@@ -164,10 +164,11 @@ required = function(modmgr, 'static int IsRequiredTransport(int id)', 'ee_core/s
 check(all(m in required for m in ('OPL_MODULE_ID_PCCF', 'OPL_MODULE_ID_SMAP_UDPBD', 'OPL_MODULE_ID_UDPFS_SMAP',
                                   'OPL_MODULE_ID_UDPFS_MINISTACK', 'OPL_MODULE_ID_UDPFS_BD')),
       'modmgr.c: every network block module is a required transport')
-check('if (IsRequiredTransport(id) && (result < 1 || moduleStartResult != 0))\n                RequiredTransportFailed();' in modmgr,
+check('\n    if (IsRequiredTransport(id) && (result < 1 || moduleStartResult != 0))\n        RequiredTransportFailed();' in modmgr,
       'modmgr.c: a required transport that loads but does not stay resident halts visibly')
-check(modmgr.count('RequiredTransportFailed();') == 3,
-      'modmgr.c: failed, empty and unpacked required transports all halt visibly')
+check(modmgr.count('RequiredTransportFailed();') == 1,
+      'modmgr.c: one check halts failed, empty, unpacked and non-resident required transports '
+      '(test_ilink_game_transport.py plays each one through the real LoadOPLModule)')
 
 # 6. The menu packs the right modules and nothing else that would take the adapter.
 check('static int sysModeIsNetBlock(const char *mode_str)' in system and

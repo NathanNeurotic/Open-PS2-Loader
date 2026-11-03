@@ -52,6 +52,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <libvux.h>
+#include "include/riptlite.h" // LITE_HAS_NET_SOURCE / LITE_HAS_SMB_SHARE -- the Network page in a RiptOPLite build
 
 // Last Played Auto Start
 #include <time.h>
@@ -399,18 +400,41 @@ static void guiResetNotifications(void)
     popupArmed = 0;
 }
 
-static void guiRenderNotifications(char *string, int y)
+// Draw one notice whose box starts at y; returns the y for the next one (yadd lower, plus any wrapped lines).
+static int guiRenderNotifications(const char *string, int y, int yadd)
 {
-    int x;
+    // Right-aligned with nothing to stop it, a notice wider than the screen started off its left edge: the UDPBD
+    // static-IP note is about 1020 wide on the 640 grid, the CF notice from the game menu about 890. Size the box to
+    // the text but never wider than the screen less its margins, and wrap a longer notice onto more lines. A notice
+    // that fits is drawn exactly as before.
+    int textW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], string));
+    int boxW = textW + 10;
+    if (boxW > screenWidth - 20)
+        boxW = screenWidth - 20;
+    int x = screenWidth - boxW - 10;
+    int innerW = boxW - 10;
 
-    x = screenWidth - rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], string)) - 10;
+    if (textW <= innerW) {
+        rmDrawRect(x, y, boxW, MENU_ITEM_HEIGHT + 10, gColDarker);
+        fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
+        return y + yadd;
+    }
 
-    rmDrawRect(x - 10, y, screenWidth - x, MENU_ITEM_HEIGHT + 10, gColDarker);
-    fntRenderString(gTheme->fonts[0], x - 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
+    // fntRenderString does not wrap; it breaks a line only at '\n', and only when given a width. The clip gets the
+    // box's 5 px right padding as slack, so a glyph drawn a little past its advance at a line's end is not dropped.
+    char wrapped[512];
+    int lines = fntWrapText(gTheme->fonts[0], string, innerW, wrapped, sizeof(wrapped));
+    if (lines < 1)
+        lines = 1;
+    int boxH = lines * MENU_ITEM_HEIGHT + 10;
+    rmDrawRect(x, y, boxW, boxH, gColDarker);
+    fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW + 5, boxH - 5, wrapped, gTheme->textColor);
+    return y + yadd + (lines - 1) * MENU_ITEM_HEIGHT;
 }
 
-// Feedback for a user action; independent of courtesy notification preferences.
-static char actionToast[128];
+// Feedback for a user action; independent of courtesy notification preferences. Room for the longest translated
+// message with a game name (a HIDDEN_NAME_MAX buffer) in it; test_menu_text_fit.py checks every language.
+static char actionToast[384];
 static clock_t actionToastStart;
 
 static void guiRenderToast(void)
@@ -421,7 +445,7 @@ static void guiRenderToast(void)
         actionToast[0] = '\0';
         return;
     }
-    guiRenderNotifications(actionToast, 10);
+    guiRenderNotifications(actionToast, 10, 0);
 }
 
 void guiShowToast(const char *text)
@@ -455,8 +479,7 @@ static void guiShowNotifications(void)
             col_pos++;
 
             snprintf(notification, sizeof(notification), _l(_STR_PARTITION_NOTIFICATION), col_pos);
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showCfgPopup) {
@@ -464,8 +487,7 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showThmPopup) {
@@ -473,8 +495,7 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         if (showLngPopup) {
@@ -482,15 +503,13 @@ static void guiShowNotifications(void)
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
-            guiRenderNotifications(notification, y);
-            y += yadd;
+            y = guiRenderNotifications(notification, y, yadd);
         }
 
         // One-time network notice set at config load: UDP transports always use the saved static PS2
         // IP fields. If DHCP is the preserved SMB/HTTP preference, remind the user which address UDP uses.
         if (showNetDhcpPopup) {
-            guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
-            y += yadd;
+            y = guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y, yadd);
         }
 
         if ((clock() - popupStart) >= (clock_t)5000 * (CLOCKS_PER_SEC / 1000)) {
@@ -507,7 +526,8 @@ static void guiShowNotifications(void)
    I/O thread and so cannot open a dialog. They set the text; the render loop
    draws it. Deliberately NOT gated on gEnableNotifications -- they are the
    answer to an action the user just took, not a courtesy popup. */
-static char raNotice[2][96];
+// 96 bytes cut the English CF notice mid-sentence; room for the longest translation (test_menu_text_fit.py).
+static char raNotice[2][256];
 static int raNoticeLines = 0;
 static clock_t raNoticeTimer = 0;
 
@@ -533,8 +553,7 @@ static int guiRenderRANotices(int y, int yadd)
     }
 
     for (i = 0; i < raNoticeLines; i++) {
-        guiRenderNotifications(raNotice[i], y);
-        y += yadd;
+        y = guiRenderNotifications(raNotice[i], y, yadd);
     }
 
     if (clock() >= raNoticeTimer) {
@@ -1108,6 +1127,15 @@ static int netConfigUpdater(int modified)
 
         diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &isDHCPEnabled);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &isNetBIOS);
+        // RiptOPLite has no Protocol row (dialogs.c): its one protocol is the shown one, and a build
+        // without a network games source shows none of the protocol rows, only the PS2's own address.
+#if LITE_HAS_NET_SOURCE
+        netProto = guiNetProtocolToPicker(guiNetProtocolShown());
+#elif LITE_HAS_SMB_SHARE
+        netProto = 0;                       // RetroAchievements reads its key and badges from the SMB share: keep its rows
+#else
+        netProto = -1;
+#endif
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProto);
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
@@ -1336,6 +1364,9 @@ int guiShowNetConfig(void)
     // A NET_PROTO_OFF backend has no protocol memory, so seed the protocol row to SMB -- the common
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
     int netProtoVal = guiNetProtocolToPicker(guiNetProtocolShown()); // while Off: the remembered pick
+#if !LITE_HAS_NET_SOURCE
+    netProtoVal = -1; // RiptOPLite without a network games source: no protocol rows (netConfigUpdater)
+#endif
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
     int netAccessVal = (netProtoVal == 1) ? gUdpfsAccessMode : guiNetProtocolAccess(guiNetProtocolShown());
     for (i = 0; i < 4; ++i)
@@ -1348,7 +1379,7 @@ int guiShowNetConfig(void)
     // Seed the initial grey/lock: diaExecuteDialog renders the FIRST frame before it calls
     // netConfigUpdater, so without this the first frame flashes every row enabled.
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
-    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0);
+    diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, netProtoVal == 0 || (!LITE_HAS_NET_SOURCE && LITE_HAS_SMB_SHARE));
     netConfigDhcpPreference = ps2_ip_use_dhcp;
     netConfigUdpfsAccess = gUdpfsAccessMode;
     netConfigLastProtocol = -1;
@@ -1389,7 +1420,8 @@ reshow_network:
         goto reshow_network;
     }
     if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL)) {
-        int netProtoVal2, netAccessVal2;
+        // Seeded with what the page showed: a RiptOPLite page has no Protocol row, and only UDPFS has Access.
+        int netProtoVal2 = netProtoVal, netAccessVal2 = netAccessVal;
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
         diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
 
@@ -2380,7 +2412,7 @@ void guiShowCoverflowConfig(void)
         if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_GRID_LAYOUT, &value))
             gGridLayout = (value >= 0 && value <= GRID_LAYOUTS) ? value : 0;
         // A new layout changes how many covers a page holds, and so the cover cache: the theme loads again.
-        if (gGridLayout != keepLayout && gTheme != NULL && gTheme->grid != NULL && !thmSetGuiValue(thmGetGuiValue(), 1))
+        if (gGridLayout != keepLayout && !thmRefreshGridLayout())
             gGridLayout = keepLayout; // abandoned load: the old grid is still on screen, keep the setting with it
     }
 }
@@ -2966,6 +2998,9 @@ static int guiSettingsShowInterface(void)
     const char *ps1DupNames[] = {_l(_STR_PS1_DUPLICATES_BOTH), "Ember", "POPSTARTER", NULL};
     diaSetEnum(ui, UICFG_PS1_DUPLICATES, ps1DupNames);
     diaSetInt(ui, UICFG_PS1_DUPLICATES, gPs1Duplicates);
+    const char *listCfgNames[] = {_l(_STR_THEME), _l(_STR_ON), _l(_STR_OFF), NULL};
+    diaSetEnum(ui, UICFG_LIST_CFG_TEXT, listCfgNames);
+    diaSetInt(ui, UICFG_LIST_CFG_TEXT, gListCfgText);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -3017,6 +3052,7 @@ reshow_interface:
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
+        diaGetInt(ui, UICFG_LIST_CFG_TEXT, &gListCfgText); // read as each frame draws: nothing to rebuild
         {
             int previousCfgTitles = gCfgTitlesInLists, previousPs1Dup = gPs1Duplicates;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
@@ -3119,6 +3155,9 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_DEFAULT_CORE, defaultCoreStrs);
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
+    const char *appHandoffStrs[] = {_l(_STR_APP_HANDOFF_LEGACY), _l(_STR_APP_HANDOFF_TYPED), NULL};
+    diaSetEnum(ui, CFG_APP_HANDOFF_PATH, appHandoffStrs);
+    diaSetInt(ui, CFG_APP_HANDOFF_PATH, gAppHandoffPath);
     diaSetInt(ui, CFG_AUTO_CREATE_VMC, gAutoCreateVmc);
 #ifdef IGR_MENU
     diaSetInt(ui, CFG_IGR_MENU, gIgrMenu);
@@ -3149,6 +3188,7 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
+        diaGetInt(ui, CFG_APP_HANDOFF_PATH, &gAppHandoffPath);
         diaGetInt(ui, CFG_AUTO_CREATE_VMC, &gAutoCreateVmc);
 #ifdef IGR_MENU
         diaGetInt(ui, CFG_IGR_MENU, &gIgrMenu);
@@ -3611,7 +3651,7 @@ int guiShowKeyboard(char *value, int maxLength)
     char tmp[maxLength];
     strncpy(tmp, value, maxLength);
 
-    int result = diaShowKeyb(tmp, maxLength, 0, NULL);
+    int result = diaShowKeyb(tmp, maxLength, 0, -1);
     if (result) {
         strncpy(value, tmp, maxLength);
         value[maxLength - 1] = '\0';
@@ -5491,7 +5531,10 @@ void guiManageCheats(config_set_t *configSet)
                 rmDrawFramedRect(boxX, boxY + 3, boxWidth, boxHeight, 2, gTheme->textColor, gTheme->selTextColor);
 
             u32 textColour = (i == selectedCheat) ? gTheme->selTextColor : gTheme->textColor;
-            fntRenderString(gTheme->fonts[0], boxX + 35, boxY + 3, ALIGN_LEFT, 0, 0, gCheats[i].name, textColour);
+            // A cheat name runs to 128 characters and nothing stopped it at the right-hand rule. The selected one
+            // scrolls through the whole name; the others end in "...".
+            int textX = boxX + 35;
+            fntRenderStringFit(gTheme->fonts[0], textX, boxY + 3, ALIGN_LEFT, screenWidth - 50 - textX, gCheats[i].name, textColour, i == selectedCheat);
 
             renderedCheats++;
         }

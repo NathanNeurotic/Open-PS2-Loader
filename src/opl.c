@@ -33,6 +33,7 @@
 #endif
 #include "include/config.h"
 #include "include/util.h"
+#include "include/riptlite.h"
 #include "include/extern_irx.h"
 
 #include "include/supportbase.h"
@@ -200,6 +201,7 @@ int gAppsDisplay;
 int gGameTypeLabels;
 int gCfgTitlesInLists;
 int gPs1Duplicates; // PS1_DUP_*: a game both as a POPSTARTER VCD and an Ember image shows once or twice
+int gListCfgText;   // LIST_CFG_TEXT_*: the CFG Title and Description on list pages, the theme's way by default
 int gEmberDisplay;
 int gEmberTiming;
 int gEmberDither;
@@ -369,8 +371,9 @@ char gExitPath[256];
 char gCustomSettingsPath[64];
 int gEnableDebug;
 int gPS2Logo;
-int gAutoCreateVmc; // default-off: create + assign a per-game VMC on a PS2 game's first launch
-int gIgrMenu;       // default-off: the IGR combo pauses the game under the in-game menu (beta)
+int gAppHandoffPath; // the device spelling ELF apps are handed; the mounts themselves never change
+int gAutoCreateVmc;  // default-off: create + assign a per-game VMC on a PS2 game's first launch
+int gIgrMenu;        // default-off: the IGR combo pauses the game under the in-game menu (beta)
 int gDefaultDevice;
 int gEnableWrite;
 char gBDMPrefix[32];
@@ -1435,7 +1438,12 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
 {
     int viewTransition;
 
+    // This runs on the IO thread while the GUI thread draws the menu through the same rows under
+    // guiLock (guiStartFrame..guiEndFrame). The queued list operations change those rows, so they run
+    // under the lock here too; menuRowBeginEdit already does the same (YAOPL 4c713a3).
+    guiLock();
     guiExecDeferredOps();
+    guiUnlock();
 
     // Remember where the cursor was, so a rebuild does not dump the user back at the top of
     // the list (#589). Keyed on the game's startup id, not its row index: a rescan is exactly
@@ -1661,7 +1669,9 @@ void menuDeferredUpdate(void *data)
         // A device can reject a scan before it consumes the view-dirty flag (for example, MMCE with
         // no card inserted). Still retire the old rows and commit the retained destination so input
         // does not remain locked and the next successful device scan uses the user's chosen view.
+        guiLock(); // IO thread: see updateMenuFromGameList
         guiExecDeferredOps();
+        guiUnlock();
         clearMenuGameList(mod);
         libViewCommitPending(mod->support->mode);
         libViewFinishPending(mod->support->mode);
@@ -3530,6 +3540,8 @@ static void _loadConfig()
             result = tryAlternateDevice(lscstatus);
             diagLog("settings: other devices tried, now 0x%x from %s", result, configGetLoadDir());
         }
+        // RiptOPLite: the file's source settings are the full build's; keep them to write back (riptlite.c).
+        liteRememberDeviceKeys((result & CONFIG_OPL) ? configGetByType(CONFIG_OPL) : NULL);
 
         if (result & CONFIG_OPL) {
             config_set_t *configOPL = configGetByType(CONFIG_OPL);
@@ -3614,6 +3626,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_YSENSITIVITY, &gYSensitivity);
             configGetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, &gEnableDebug);
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
+            configGetInt(configOPL, CONFIG_OPL_APP_HANDOFF_PATH, &gAppHandoffPath);
             configGetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, &gAutoCreateVmc);
             configGetInt(configOPL, CONFIG_OPL_IGR_MENU, &gIgrMenu);
             configGetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, &gHDDGameListCache);
@@ -3681,6 +3694,9 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, &gPs1Duplicates);
             if (gPs1Duplicates < PS1_DUP_BOTH || gPs1Duplicates > PS1_DUP_POPSTARTER)
                 gPs1Duplicates = PS1_DUP_BOTH;
+            configGetInt(configOPL, CONFIG_OPL_LIST_CFG_TEXT, &gListCfgText);
+            if (gListCfgText < LIST_CFG_TEXT_THEME || gListCfgText > LIST_CFG_TEXT_OFF)
+                gListCfgText = LIST_CFG_TEXT_THEME;
             // Where the user left each L3 page last session. Read from the LAST set (the same
             // configReadMulti above filled it), but sequenced HERE, after the two display settings
             // above: the restore validates every remembered position against what its mode can
@@ -3960,6 +3976,9 @@ static void _loadConfig()
             gBDMStartMode = START_MODE_AUTO;
             configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_BDM_MODE, gBDMStartMode);
         }
+
+        // RiptOPLite holds the sources it does not carry off and starts the one it does, whatever the file said.
+        liteApplyDeviceMask();
     }
 
     if (lscstatus & CONFIG_NETWORK) {
@@ -4281,6 +4300,7 @@ static void _saveConfig()
         screenPosSave(configOPL); // each video mode's position (RIPPS2 build 124)
         configSetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, gEnableDebug);
         configSetInt(configOPL, CONFIG_OPL_PS2LOGO, gPS2Logo);
+        configSetInt(configOPL, CONFIG_OPL_APP_HANDOFF_PATH, gAppHandoffPath);
         configSetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, gAutoCreateVmc);
         configSetInt(configOPL, CONFIG_OPL_IGR_MENU, gIgrMenu);
         configSetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, gHDDGameListCache);
@@ -4320,6 +4340,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels);
         configSetInt(configOPL, CONFIG_OPL_CFG_TITLES, gCfgTitlesInLists);
         configSetInt(configOPL, CONFIG_OPL_PS1_DUPLICATES, gPs1Duplicates);
+        configSetInt(configOPL, CONFIG_OPL_LIST_CFG_TEXT, gListCfgText);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
@@ -4375,6 +4396,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_YSENSITIVITY, gYSensitivity);
 
         configSetInt(configOPL, CONFIG_OPL_SWAP_SEL_BUTTON, gSelectButton == KEY_CIRCLE ? 0 : 1);
+        // RiptOPLite forced its source settings: write the full build's back over them.
+        liteRestoreDeviceKeys(configOPL);
     }
 
     // Fold in each page's current L3 position. Doing it at WRITE time is what keeps L3 itself free:
@@ -4602,6 +4625,8 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
     // the row back to Apps before the value was ever written to the config: the whole feature was
     // dead with its picker entry, its enum value and its config key all present. Data half without
     // the code half, again.
+    // RiptOPLite: a settings page cannot turn on a source this build does not carry (riptlite.c).
+    liteApplyDeviceMask();
     if (gDefaultDevice < 0 || gDefaultDevice > FAV_MODE)
         gDefaultDevice = MMCE_MODE;
     // Favourites is a valid startup page only while the FAV tab is enabled; otherwise a stale
@@ -5340,6 +5365,8 @@ static void setDefaults(void)
     gGameTypeLabels = 0;           // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
     gCfgTitlesInLists = 0;         // #918: reading every CFG per list rebuild slows SMB/MMCE/MX4SIO; opt-in only
     gPs1Duplicates = PS1_DUP_BOTH; // both rows, as before the setting existed
+    // List Title and Description: the theme's way, as before the setting existed
+    gListCfgText = LIST_CFG_TEXT_THEME;
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;
@@ -5680,10 +5707,11 @@ static void miniInit(int mode)
         // normally overrides from the saved config) had nothing to override it here: configReadMulti
         // runs AFTER bdmLoadModules(). bdmLoadBlockDeviceModules gates the USB load on the flag, so
         // an argv autolaunch from a USB stick loaded no USB block driver at all.
-        gEnableUSB = 1;
-        gEnableILK = 1; // iLink will break pcsx2 however.
-        gEnableMX4SIO = 1;
-        gEnableBdmHDD = 1;
+        // A RiptOPLite build loads only the transport it carries (include/riptlite.h).
+        gEnableUSB = LITE_HAS_USB;
+        gEnableILK = LITE_HAS_ILINK; // iLink will break pcsx2 however.
+        gEnableMX4SIO = LITE_HAS_MX4SIO;
+        gEnableBdmHDD = LITE_HAS_BDMHDD;
         bdmLoadModules();
     } else if (mode == HDD_MODE) {
         hddLoadModules();

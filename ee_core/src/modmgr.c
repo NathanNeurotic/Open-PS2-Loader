@@ -153,11 +153,14 @@ int GetOPLModInfo(int id, void **pointer, unsigned int *size)
 // The transports a game cannot run without. If one does not start after the reset, cdvdman waits
 // forever for a block device that never arrives: a black screen with nothing to explain it. Stop on
 // a blinking red screen instead, as an out-of-IOP-memory failure does. A module that loads but
-// declines to stay resident (bad ip=, no adapter) counts as not started.
+// declines to stay resident (bad ip=, no adapter) counts as not started. iLinkman and IEEE1394_bd
+// are the i.LINK pair: iopmgr.c already skips IEEE1394_bd when iLinkman fails, but nothing said why,
+// and the game then sat on a black screen waiting for a drive that could never attach.
 static int IsRequiredTransport(int id)
 {
     return id == OPL_MODULE_ID_PCCF || id == OPL_MODULE_ID_SMAP_UDPBD || id == OPL_MODULE_ID_UDPFS_SMAP ||
-           id == OPL_MODULE_ID_UDPFS_MINISTACK || id == OPL_MODULE_ID_UDPFS_BD || id == OPL_MODULE_ID_UDPFS_FHI;
+           id == OPL_MODULE_ID_UDPFS_MINISTACK || id == OPL_MODULE_ID_UDPFS_BD || id == OPL_MODULE_ID_UDPFS_FHI ||
+           id == OPL_MODULE_ID_ILINK || id == OPL_MODULE_ID_ILINKBD;
 }
 
 static void RequiredTransportFailed(void)
@@ -177,8 +180,6 @@ int LoadOPLModule(int id, int mode, int arg_len, const char *args)
         if (size > 0) {
             moduleStartResult = -1;
             result = LoadMemModule(mode, pointer, size, arg_len, args);
-            if (IsRequiredTransport(id) && (result < 1 || moduleStartResult != 0))
-                RequiredTransportFailed();
             if (result < 1) { // El_isra: only check for MODLOAD errors for simplicity
                 if (EnableDebug) {
                     DBGCOL(0x00FFDC, MODMGR, "IRX loading error (from MODLOAD)");
@@ -207,11 +208,14 @@ int LoadOPLModule(int id, int mode, int arg_len, const char *args)
                 DBGCOL(0xDCFF00, MODMGR, "IRX size is 0 or less");
                 delay(3);
             }
-            if (IsRequiredTransport(id))
-                RequiredTransportFailed();
         }
-    } else if (IsRequiredTransport(id))
-        RequiredTransportFailed(); // the menu did not pack it
+    }
+
+    // One check covers every way a required transport fails: the menu did not pack it (-1), it is empty (0),
+    // MODLOAD refused it (< 0), or it loaded and declined to stay resident. One check, not one per path: the
+    // stack is what ee_core leaves above .bss, and the LLVM build has almost none of it to spare.
+    if (IsRequiredTransport(id) && (result < 1 || moduleStartResult != 0))
+        RequiredTransportFailed();
 
     BGCOLND(0x000000);
     return result;

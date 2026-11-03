@@ -8,6 +8,7 @@
 #include "include/gui.h"
 #include "include/supportbase.h"
 #include "include/bdmsupport.h"
+#include "include/bdmtyped.h"
 #include "include/vcdsupport.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rapopslaunch.h"
@@ -542,6 +543,45 @@ int bdmGetDeviceSlotsByType(int bdmType, int *slots, int maxSlots)
     }
 
     return n;
+}
+
+// Spell a mass<N>:/... path the typed way (usb0:, ata0:, ilink0:, mx4sio0:) for an ELF app handoff.
+// Reads slot N's driver name to get its type, then counts the LOWER mounted slots of the same type:
+// bdmfs numbers typed roots in mount order (fs_driver_resolve_volume), and mass slot order IS mount
+// order, so this is the index bdmfs itself gives the device -- the same answer launcHER computes.
+// Returns 1 with out filled; 0 when massPath is not a numbered mass path, the slot is not mounted, its
+// type has no SDK typed name (udp, cf, unknown), a lower slot cannot be identified (its typed index would be
+// a guess) or out is too small. Only ever used for the string
+// handed to the app: the load path and every OPL mount stay mass<N>:.
+int bdmBuildTypedHandoffPath(const char *massPath, char *out, int outLen)
+{
+    char path[16], driver[32];
+    int slot, type, devIndex = -1, k = 0;
+
+    slot = bdmParseMassSlot(massPath, NULL);
+    if (slot < 0 || slot >= MAX_BDM_DEVICES)
+        return 0;
+
+    snprintf(path, sizeof(path), "mass%d:/", slot);
+    bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex);
+    if (driver[0] == '\0')
+        return 0;
+    type = bdmDetermineDeviceType(driver);
+    if (bdmTypedPathToken(type) == NULL)
+        return 0;
+
+    for (int i = 0; i < slot; i++) {
+        snprintf(path, sizeof(path), "mass%d:/", i);
+        bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex);
+        // A lower slot we cannot identify is still counted by bdmfs, so k could be off by one. Do not guess:
+        // fall back to the legacy spelling, which is always valid.
+        if (driver[0] == '\0')
+            return 0;
+        if (bdmDetermineDeviceType(driver) == type)
+            k++;
+    }
+
+    return bdmFormatTypedPath(type, k, massPath, out, outLen);
 }
 
 static int bdmLoadOptionalModule(const char *name, void *module, int moduleSize)

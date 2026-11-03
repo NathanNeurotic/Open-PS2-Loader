@@ -201,6 +201,12 @@ enum { PS1_DUP_BOTH = 0,
        PS1_DUP_EMBER,
        PS1_DUP_POPSTARTER };
 extern int gPs1Duplicates;
+// Interface > List Title and Description (RIPPS2 build 126): the Title and Description from a game's CFG that a
+// theme shows on its list pages. Theme: as its list_cfg_text key says. The info page always shows them.
+enum { LIST_CFG_TEXT_THEME = 0,
+       LIST_CFG_TEXT_ON,
+       LIST_CFG_TEXT_OFF };
+extern int gListCfgText;
 
 enum {
     APPS_DISPLAY_MIXED = 0, // all ELFs together; L3 disabled (back-compatible default)
@@ -447,6 +453,9 @@ extern char gCustomSettingsPath[64];
 extern int gEnableDebug;
 
 extern int gPS2Logo;
+#define APP_HANDOFF_LEGACY 0 // argv[0] = mass<N>:/..., every device, as always
+#define APP_HANDOFF_TYPED  1 // argv[0] = usb0:/ ata0:/ ilink0:/ mx4sio0:/...; the load path stays mass<N>:
+extern int gAppHandoffPath;  // APP_HANDOFF_LEGACY (mass<N>:, default) or APP_HANDOFF_TYPED (usb0:/ata0:/...) in an app's argv[0]
 extern int gAutoCreateVmc;
 extern int gIgrMenu; // the in-game menu (ee_core igrmenu.c), off by default; not in RetroAchievements builds
 

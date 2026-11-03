@@ -520,7 +520,7 @@ static void fmRenameEntry(int e)
     if (!fmCanWrite())
         return;
     snprintf(name, sizeof(name), "%s", fmList_[e].name);
-    if (!diaShowKeyb(name, FM_NAME - 1, 0, _l(_STR_RENAME)) || !strcmp(name, fmList_[e].name))
+    if (!diaShowKeyb(name, FM_NAME - 1, 0, _STR_RENAME) || !strcmp(name, fmList_[e].name))
         return;
     fmPath(path, sizeof(path), e);
     if (!fmRename(path, name)) {
@@ -536,7 +536,7 @@ static void fmNewFolder(void)
 
     if (!fmCanWrite())
         return;
-    if (!diaShowKeyb(name, FM_NAME - 1, 0, _l(_STR_FM_NEW_FOLDER)) || name[0] == '\0')
+    if (!diaShowKeyb(name, FM_NAME - 1, 0, _STR_FM_NEW_FOLDER) || name[0] == '\0')
         return;
     if (!fmMakeDir(fmDir, name)) {
         fmShowFailure(name, fmErrText(fmError()));

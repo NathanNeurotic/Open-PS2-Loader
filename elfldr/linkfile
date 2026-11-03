@@ -13,7 +13,10 @@ PHDRS {
 }
 
 SECTIONS {
-	/* Linker-only stubs from loader.c (LINKER_ONLY). A live reference to one fails the link. */
+	/* Linker-only stubs from loader.c (LINKER_ONLY). A live reference to one fails the link.
+	 * This relies on --gc-sections (this target's link flags pass it): libkernel's dead
+	 * SifIopReboot and SifExecModuleFile reference these names, and gc must drop them before
+	 * the discard check. Without the flag the link fails loudly, naming the symbol. */
 	/DISCARD/ : { *(.discard.linker_only) }
 
 	.text : {

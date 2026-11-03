@@ -23,6 +23,19 @@ static int mmce_io_sema;
 // 0 until DeviceFSInit confirmed the device answers for our iso_fd. A failed/timed-out init leaves it
 // 0 so reads fail fast with SCECdErREAD instead of silently wedging the IOP right after the PS2 logo.
 static int mmce_dev_ready;
+// How long a failed read waits for the card to answer again before it is an error: a card swap (card exit,
+// flush, close, 500 ms, open) plus most of an 8 MB card load, probed every 100 ms. Timed on the IOP clock,
+// so a probe that itself takes long (mmcedrv's size query allows its reply up to 1 s) cannot stretch it.
+#define MMCE_SWAP_RECOVERY_MS 15000
+#define MMCE_SWAP_PROBE_US    (100 * 1000)
+#define MMCE_TICKS_PER_MS     36864u // GetSystemTime counts the 36.864 MHz IOP clock
+// Set when that recovery budget ran out without the card answering: until it answers a probe again,
+// reads fail fast (one probe each) instead of each paying the whole budget.
+static int mmce_dev_lost;
+// Set by DeviceLock, the shutdown barrier (oplShutdown: IGR, IGR power-off, the power button). A read that is
+// retrying or waiting for the card stops at its next attempt or probe and fails, so the shutdown is not held up
+// for the rest of the budget. The barrier still holds: the read gives the lock up only after its last card access.
+static volatile int mmce_stopping;
 
 void DeviceInit(void)
 {
@@ -106,6 +119,7 @@ void DeviceFSInit(void)
 void DeviceLock(void)
 {
     DPRINTF("%s\n", __func__);
+    mmce_stopping = 1; // a read waiting for the card in DeviceReadSectors lets go within one probe
     WaitSema(mmce_io_sema);
 }
 
@@ -136,21 +150,65 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     WaitSema(mmce_io_sema);
 
     if (!mmce_dev_ready) {
-        // Init never saw the device. One cheap re-probe per read: a card that came back late (slow SD
-        // re-enumeration across the IOP reboot) recovers here; otherwise fail fast instead of driving
-        // a dead transport. Guard the pointer: DeviceFSInit leaves it NULL when mmcedrv wasn't resident
-        // (it bails before resolving the exports), and these are zero-init statics on first boot.
-        if (fp_mmcedrv_get_size == NULL || fp_mmcedrv_get_size(cdvdman_settings.iso_fd) <= 0) {
+        // Init never saw the device (or a read below lost it). Guard the pointer: DeviceFSInit leaves it
+        // NULL when mmcedrv wasn't resident (it bails before resolving the exports), and these are
+        // zero-init statics on first boot; nothing can be read then. One cheap re-probe per read: a card
+        // that came back late (slow SD re-enumeration across the IOP reboot) recovers here. A card that
+        // does not answer still gets the read and the bounded recovery wait below ONCE (it may be mid-swap,
+        // see there); after that budget ran out, reads fail fast until a probe answers again.
+        if (fp_mmcedrv_get_size == NULL) {
             SignalSema(mmce_io_sema);
             return SCECdErREAD;
         }
-        mmce_dev_ready = 1;
+        if (fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0) {
+            mmce_dev_ready = 1;
+            mmce_dev_lost = 0;
+        } else if (mmce_dev_lost) {
+            SignalSema(mmce_io_sema);
+            return SCECdErREAD;
+        }
     }
 
     do {
         res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
         retries++;
-    } while (res != sectors && retries < 3);
+    } while (res != sectors && retries < 3 && !mmce_stopping);
+
+    // Three fast retries cover a glitch, not a card that is swapping: an MMCE switching to the game's folder
+    // (its own Game ID detection reacting to the OSD history write, or a switch deferred past the launch's
+    // wait) answers nothing for about a second and then slowly while the new card loads. That used to
+    // end here as SCECdErREAD for good, a black screen or a game frozen after the PS2 logo. Wait for the
+    // card to answer for our handle again, bounded, then read once more. A genuinely failed read costs one
+    // extra probe (the card answers at once, the retry fails again). A shutdown (DeviceLock) cuts the retries
+    // and this wait short: the game is about to be reset or powered off, and the read just fails.
+    if (res != sectors && fp_mmcedrv_get_size != NULL) {
+        iop_sys_clock_t start, now;
+        u32 waited = 0; // IOP clock ticks. Checked every probe, far below the low word's 116 s wrap.
+        int answered = 0;
+
+        GetSystemTime(&start);
+        while (!mmce_stopping && waited < MMCE_SWAP_RECOVERY_MS * MMCE_TICKS_PER_MS) {
+            DelayThread(MMCE_SWAP_PROBE_US);
+            answered = fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0;
+            GetSystemTime(&now);
+            waited = now.lo - start.lo; // modulo 2^32: right across one wrap of the low word
+            if (answered)
+                break;
+        }
+        if (mmce_stopping) {
+            DPRINTF("%s: shutting down; not waiting for the card\n", __func__);
+        } else if (answered) {
+            DPRINTF("%s: the card answers again after %u ms; retrying\n", __func__, waited / MMCE_TICKS_PER_MS);
+            res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
+            retries++;
+        } else {
+            // The card never answered: do not pay this wait again on every read (cdvdman issues one per
+            // sector for the odd sizes), fail fast until a probe at the top answers again.
+            DPRINTF("%s: the card did not answer for %u ms; failing fast until it does\n", __func__, waited / MMCE_TICKS_PER_MS);
+            mmce_dev_ready = 0;
+            mmce_dev_lost = 1;
+        }
+    }
     SignalSema(mmce_io_sema);
 
     // Judge the LAST attempt, not the retry counter: a read that succeeds on the 3rd try also leaves

@@ -79,5 +79,40 @@ and the manager recovery corrections. No physical-console acceptance yet.
    STATUS_SAM, STATUS_SENSE_KEY); all ones marks a status not yet written.
    See docs/ILINK_CODE_AUDIT_2026-10-22.md for tests and hardware limits.
 
+7. November 2 bring-up follow-up (src/sbp2_driver.c): nothing waits for a bus reset any more. Five
+   traps each left a drive detached until a reset that a running game never causes:
+   a. An unanswered LOGIN was only polled again, never asked again, and the pointer write's result
+      was ignored. The pending branch of ieee1394_SendManagementORB now writes the pointer to the
+      very same request again (same ORB, same storage) and waits its full budget.
+   b. A drive that did not attach was tried again only at the next bus reset. The bus-reset thread
+      now tries it again after 1, 2 and 4 s, then every 5 s, while the unit is on the bus; a bus
+      reset ends that wait at once (sbp2RetryDelayUs, sbp2WaitBusReset, sbp2AttachUnits).
+   c. A retry in the same bus generation logged in again. The drive keeps a granted login until a
+      bus reset, so the second LOGIN was always refused. A retry now keeps its slot and its login
+      (SBP2Device.loggedIn) and goes straight to the warm-up.
+   d. The LOGIN loop kept asking for its whole 5 s after a bus reset, though every LOGIN of a dead
+      generation fails at once. It now stops at the reset.
+   e. The device number was the slot index. A slot whose LOGIN or command never got its status stays
+      reserved, so after a reset a lone drive came up as device 1, and CDVDMAN and Neutrino accept
+      the game's drive only under the menu's number (device 0). sbp2FreeDevNr now gives each drive
+      the lowest number no other attached or attaching drive uses.
+   f. (Found in review of c.) With two drives, a slot whose drive logged in but failed its warm-up
+      looked free, so the next drive in the same pass took it, kept its login flag, skipped its own
+      LOGIN and drove the first drive's command agent; the first drive then asked for a second login
+      it would be refused. A slot that holds a login of this generation is now kept for its drive, a
+      slot taken over from an ended generation starts without a login, and a logged-in drive keeps
+      its device number while its warm-up is retried.
+   g. (Found in review of b.) Every try holds the transport while it waits for the drive, so with
+      two drives, one that never attached stalled the attached drive's I/O at every try, every 5 s,
+      for as long as both were on the bus. While another drive is attached, the tries now stop after
+      SBP2_RETRY_LIMIT (8) retries, 32 s of waiting, until the next bus reset (sbp2AnyAttached); a
+      lone drive is still tried for as long as it is on the bus.
+   A drive that logs in again also releases what its own earlier login left reserved (an unanswered
+   LOGIN, the shared command): an exclusive login is granted only when the drive holds no other
+   login, so that storage can no longer be written (sbp2RetireOlderLogins, matched by the EUI-64
+   read from the bus info block). test_ilink_discovery.py, test_ilink_bd_reset.py and
+   test_ilink_sbp2_completion.py cover it; the POPSTARTER copy carries the same changes except the
+   device number, which its single-device BDM layer does not have. Not tested on a console.
+
 RE-VENDOR: fetch the files above from the new pin, clang-format 12, then re-apply LOCAL CHANGES and
 update the pin. Keep test_ilink_bd_reset.py passing.

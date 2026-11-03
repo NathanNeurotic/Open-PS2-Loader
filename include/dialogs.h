@@ -38,6 +38,7 @@ enum UI_ITEMS {
 
     CFG_DEBUG,
     CFG_PS2LOGO,
+    CFG_APP_HANDOFF_PATH,
     CFG_HDDGAMELISTCACHE,
     CFG_EXITTO,
     CFG_CUSTOMCFGPATH, // opt-in "Custom Settings Path" (typed)
@@ -329,6 +330,7 @@ enum UI_ITEMS {
     UICFG_GAME_TYPE_LABELS,
     UICFG_CFG_TITLES,     // #918: rows show and sort by the CFG Title; default off
     UICFG_PS1_DUPLICATES, // PS1 Duplicates: Both, Ember, POPSTARTER (RIPPS2 build 126)
+    UICFG_LIST_CFG_TEXT,  // List Title and Description: Theme, On, Off (RIPPS2 build 126)
     SECURITY_PARENTAL_BUTTON,
     ADV_PREFIX_BUTTON,
     ADV_STORAGE_BUTTON,
