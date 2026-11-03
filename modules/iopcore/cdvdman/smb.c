@@ -22,6 +22,11 @@
 
 #define USE_CUSTOM_RECV 1
 
+// The NT status of a response (SMB_FLAGS2_32BIT_STATUS): Eclass holds its low 16 bits and Ecode its
+// high 16 bits. Both are signed shorts, so each is taken unsigned first: shifting a negative Ecode
+// (every error status) is undefined in C, and a negative Eclass would set the high bits.
+#define SMB_STATUS(h) ((u32)(u16)(h).Eclass | ((u32)(u16)(h).Ecode << 16))
+
 //Round up the erasure amount, so that memset can erase memory word-by-word.
 #define ZERO_PKT_ALIGNED(hdr, hdrSize) memset((hdr), 0, ((hdrSize) + 3) & ~3)
 
@@ -413,7 +418,7 @@ lbl_session_setup:
         return -1;
 
     // check there's no auth failure
-    if ((server_specs.SecurityMode == SERVER_USER_SECURITY_LEVEL) && ((SSRsp->smbH.Eclass | (SSRsp->smbH.Ecode << 16)) == STATUS_LOGON_FAILURE) && (AuthType == NTLM_AUTH)) {
+    if ((server_specs.SecurityMode == SERVER_USER_SECURITY_LEVEL) && (SMB_STATUS(SSRsp->smbH) == STATUS_LOGON_FAILURE) && (AuthType == NTLM_AUTH)) {
         AuthType = LM_AUTH;
         goto lbl_session_setup;
     }
@@ -583,7 +588,7 @@ int smb_Close(int FID)
     }
 
     // check there's no error
-    if ((CRsp->smbH.Eclass | (CRsp->smbH.Ecode << 16)) != STATUS_SUCCESS) {
+    if (SMB_STATUS(CRsp->smbH) != STATUS_SUCCESS) {
         //      SIGNALIOSEMA(smb_io_sema);
         return -EIO;
     }
@@ -593,6 +598,45 @@ int smb_Close(int FID)
     return 0;
 }
 
+#ifdef USE_CUSTOM_RECV
+//-------------------------------------------------------------------------
+// Receive the reply in SMB_buf from byte *rcv_size up to byte size (session header included).
+// Returns 0, or -2 when the connection was closed (0) or failed (< 0) first.
+static int smb_RecvReplyRest(int *rcv_size, int size)
+{
+    int r;
+
+    while (*rcv_size < size) {
+        r = plwip_recvfrom(main_socket, NULL, 0, &((u8 *)&SMB_buf)[*rcv_size], size - *rcv_size, 0, NULL, NULL);
+        if (r <= 0)
+            return -2;
+        *rcv_size += r;
+    }
+
+    return 0;
+}
+
+//-------------------------------------------------------------------------
+// Take the rest of a refused reply (up to byte size) off the socket, so that the next request does
+// not read it as its reply. Returns -EIO, or -2 when the connection was closed or failed first.
+static int smb_DrainReply(int rcv_size, int size)
+{
+    int r, n;
+
+    while (rcv_size < size) {
+        n = size - rcv_size;
+        if (n > (int)sizeof(SMB_buf))
+            n = (int)sizeof(SMB_buf);
+        r = plwip_recvfrom(main_socket, NULL, 0, &SMB_buf, n, 0, NULL, NULL);
+        if (r <= 0)
+            return -2;
+        rcv_size += r;
+    }
+
+    return -EIO;
+}
+#endif
+
 //-------------------------------------------------------------------------
 static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, int nbytes)
 {
@@ -600,7 +644,7 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
     ReadAndXResponse_t *RRsp = &SMB_buf.smb.readAndXResponse;
     register int r, DataLength;
 #ifdef USE_CUSTOM_RECV
-    int rcv_size, expected_size;
+    int rcv_size, expected_size, header_size;
 #else
     int padding;
 #endif
@@ -636,8 +680,36 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
             return -2;
     } while (nb_GetPacketType() != 0); // dropping NBSS Session Keep alive
 
+    // recvfrom() puts a segment shorter than a READ_ANDX response header (63 bytes with the session
+    // header) into SMB_buf whole and nothing into readbuf. So a reply whose first segment was that short
+    // may not have its whole header, or even its length, yet: collect the rest of the header in SMB_buf
+    // before reading its length, status or DataOffset. An error response is shorter than that header,
+    // so it is collected whole and nothing of it is left on the socket for the next request to read.
+    if (smb_RecvReplyRest(&rcv_size, 4) < 0)
+        return -2;
     expected_size = nb_GetSessionMessageLength() + 4;
+    header_size = (int)sizeof(ReadAndXResponse_t) + 4;
+    if (smb_RecvReplyRest(&rcv_size, expected_size < header_size ? expected_size : header_size) < 0)
+        return -2;
+
+    // check there's no error. An error response (an invalid handle, a failed read) is shorter than a
+    // READ_ANDX response, so the DataLength read below would be left over from the request, and the
+    // read would seem to succeed with whatever readbuf held.
+    // An error response with more than its header: take the rest off the socket too.
+    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS)
+        return smb_DrainReply(rcv_size, expected_size);
+    // A success shorter than a READ_ANDX response, or whose data starts inside its header or past the
+    // end of the reply or of SMB_buf, is not a read reply: its fields would be the request's.
+    if (expected_size < header_size || RRsp->DataOffset < (int)sizeof(ReadAndXResponse_t) || RRsp->DataOffset + 4 > expected_size || RRsp->DataOffset + 4 > (int)sizeof(SMB_buf))
+        return smb_DrainReply(rcv_size, expected_size);
+    // More data than was asked for would be written past the end of readbuf, and a DataLength larger
+    // than the data the reply carries would count bytes that never arrived.
     DataLength = (int)(((u32)RRsp->DataLengthHigh << 16) | RRsp->DataLengthLow);
+    if (expected_size - RRsp->DataOffset - 4 > nbytes || (u32)DataLength > (u32)(expected_size - RRsp->DataOffset - 4))
+        return smb_DrainReply(rcv_size, expected_size);
+    // Padding between the header and the data, when the first segment ended before it.
+    if (smb_RecvReplyRest(&rcv_size, RRsp->DataOffset + 4) < 0)
+        return -2;
 
     // Handle fragmented packets
     while (rcv_size < expected_size) {
@@ -653,7 +725,7 @@ static int smb_ReadAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *readbuf, i
         return -EIO;
 
     // check there's no error
-    if ((RRsp->smbH.Eclass | (RRsp->smbH.Ecode << 16)) != STATUS_SUCCESS)
+    if (SMB_STATUS(RRsp->smbH) != STATUS_SUCCESS)
         return -EIO;
 
     //Skip any padding bytes.
@@ -742,7 +814,7 @@ static int smb_WriteAndX(u16 FID, u32 offsetlow, u32 offsethigh, void *writebuf,
         return -EIO;
 
     // check there's no error
-    if ((WRsp->smbH.Eclass | (WRsp->smbH.Ecode << 16)) != STATUS_SUCCESS)
+    if (SMB_STATUS(WRsp->smbH) != STATUS_SUCCESS)
         return -EIO;
 
     // A success status does not mean every byte was written: MS-CIFS 2.2.4.43.2 lets a server report
