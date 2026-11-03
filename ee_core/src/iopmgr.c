@@ -289,7 +289,9 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
             // Every other transport already checks this. The MX4SIO case below checks it, and the
             // menu-side loader in bdmsupport.c checks it FOR iLink (it gates IEEE1394_BD on
             // iLinkManModLoaded). This game-side path was the only one that did not, so a
-            // post-reset iLinkman failure was silent here and loud everywhere else.
+            // post-reset iLinkman failure was silent here and loud everywhere else. Both modules
+            // are required transports (modmgr.c, IsRequiredTransport): when either does not start,
+            // the boot stops on the blinking red screen.
             if (LoadOPLModule(OPL_MODULE_ID_ILINK, 0, 0, NULL) > 0)
                 LoadOPLModule(OPL_MODULE_ID_ILINKBD, 0, 0, NULL);
             break;
