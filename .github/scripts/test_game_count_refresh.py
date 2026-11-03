@@ -37,26 +37,42 @@ HARNESS = r"""
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 typedef unsigned int u32;
 @CONFIG@
 @LIST@
 struct menu_item { void *userdata; };
 struct menu_list { struct menu_item *item; };
 struct submenu_list { int id; };
-struct theme_element { void *extended; };
+struct theme_element {
+ void *extended;
+ void (*endElem)(struct theme_element *);
+ void (*drawElem)(struct menu_list *, struct submenu_list *, config_set_t *, struct theme_element *);
+};
+typedef struct theme_element theme_element_t;
+typedef struct {} theme_t;
 typedef struct { char *value; u32 currentConfigId; int currentCount; } mutable_text_t;
 #define SIZING_NONE 0
 #define _STR_FILE_COUNT 0
 static const char *_l(int) { return "Files found: %i"; }
 static char drawn[64];
+static void endMutableText(struct theme_element *e) { (void)e; }
+static int alloc_call, fail_alloc, live_allocs;
+static void *test_malloc(size_t n) { if (++alloc_call == fail_alloc) return NULL; void *p=malloc(n); if(p)live_allocs++; return p; }
+static void *test_calloc(size_t n,size_t size) { if (++alloc_call == fail_alloc) return NULL; void *p=calloc(n,size); if(p)live_allocs++; return p; }
+static void test_free(void *p) { if(p){live_allocs--;free(p);} }
+#define malloc test_malloc
+#define calloc test_calloc
+#define free test_free
 static void thmDrawElemText(struct theme_element *, int, const char *s, int) { snprintf(drawn, sizeof(drawn), "%s", s); }
 @GETCOUNT@
 @DRAW@
+@INITCOUNT@
 int main(void)
 {
     char value[60] = "";
     mutable_text_t mt = { value, 0, -1 };
-    struct theme_element elem = { &mt };
+    struct theme_element elem = { &mt, NULL, NULL };
     item_list_t list = @LISTINIT@;
     struct menu_item mi = { &list };
     struct menu_list menu = { &mi };
@@ -84,14 +100,42 @@ int main(void)
     list.n = 40;
     drawGameCountText(&menu, NULL, NULL, &elem);
     assert(!strcmp(drawn, "Files found: 40") && mt.currentConfigId == 2);
+    /* No games after a rescan; return from a game with the same CFG uid. */
+    list.n = 0;
+    drawGameCountText(&menu, NULL, &cfgB, &elem);
+    assert(!strcmp(drawn, "Files found: 0"));
+    list.n = 40;
+    drawGameCountText(&menu, NULL, &cfgB, &elem);
+    assert(!strcmp(drawn, "Files found: 40"));
+    /* Exercise the actual initializer, including BOTH allocation failures. */
+    for (int failure=1; failure<=3; failure++) {
+        struct theme_element fresh = { NULL, NULL, NULL };
+        alloc_call=0;fail_alloc=failure;
+        initGameCountText(NULL, NULL, NULL, &fresh, NULL);
+        if (failure<=2) {
+            assert(fresh.extended==NULL && live_allocs==0);
+            strcpy(drawn,"unchanged");
+            drawGameCountText(&menu,NULL,NULL,&fresh);
+            assert(!strcmp(drawn,"unchanged"));
+        } else {
+            mutable_text_t *m=(mutable_text_t *)fresh.extended;
+            assert(m && m->currentCount==-1 && !m->value[0] && live_allocs==2);
+            list.n=123456;
+            drawGameCountText(&menu,NULL,NULL,&fresh);
+            assert(!strcmp(drawn,"Files found: 123456"));
+            test_free(m->value);test_free(m);
+            assert(!live_allocs);
+        }
+    }
     puts("PASS: GameCountText follows the list's count, not only the selected game");
     return 0;
 }
 """
 
+initcount = re.search(r"^(?:static )?void initGameCountText\(.*?\n\}\n", text, re.S | re.M).group(0)
 getcount = re.search(r"^static int getGameCount\(.*?\n\}\n", text, re.S | re.M).group(0)
 harness = (HARNESS.replace("@CONFIG@", CONFIG).replace("@LIST@", LIST).replace("@GETCOUNT@", getcount)
-           .replace("@DRAW@", draw).replace("@LISTINIT@", "{ 0 }" if CPP else "{ 0, listCount }"))
+           .replace("@DRAW@", draw).replace("@INITCOUNT@", initcount).replace("@LISTINIT@", "{ 0 }" if CPP else "{ 0, listCount }"))
 if not CPP:
     harness = harness.replace("static const char *_l(int) {", "static const char *_l(int i) { (void)i;")
     harness = harness.replace("static void thmDrawElemText(struct theme_element *, int, const char *s, int) {",
