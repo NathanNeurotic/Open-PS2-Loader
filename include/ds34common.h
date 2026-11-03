@@ -15,7 +15,7 @@
 #define ROCK_BAND_PS3_PID   0x0200 // PS3 Rock Band Guitar
 // ShanWan 2563:0575 generic HID pad. The contributor describes a wireless PS2-style unit
 // with an ANALOG mode switch, not a PS/Home button. This input-only path skips DS3 enable
-// and LED/rumble reports. Source layout contributed by freergam3r: https://github.com/Fgr-35/Modified-drivers-for-usb-controller-in-opl
+// and LED/rumble reports. Source layout contributed by freergam3r: https://github.com/Fgr-35/Modified-drivers-for-usb-controller-in-opl/tree/a901ec6ac5b7a04bbb554698a48804854ec70f9a
 #define SHANWAN_VID         0x2563 // ShenZhen ShanWan Technology
 #define SHANWAN_PS3_PID     0x0575 // generic HID pad; legacy identifier retained for compatibility
 #ifdef DS5_ENABLE
