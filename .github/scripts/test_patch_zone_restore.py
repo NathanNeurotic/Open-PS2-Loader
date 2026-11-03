@@ -69,7 +69,8 @@ HARNESS = r'''
 #define _STR_ERR_CHEATS_LOAD_FAILED 1
 typedef struct config_set config_set_t;
 #define CONFIG_ITEM_ILINK_ID "$ILinkID"
-static int id_diagnostics, id_reads;
+#define _STR_INVALID_CONSOLE_ILINK_ID 2
+static int id_diagnostics, id_reads, id_warnings;
 static void diagLog(const char *fmt,...){assert(strstr(fmt,"$ILinkID"));id_diagnostics++;}
 static const char *ilink_text;
 static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;assert(!strcmp(k, CONFIG_ITEM_ILINK_ID));id_reads++;*out=ilink_text;return ilink_text!=NULL;}
@@ -88,7 +89,7 @@ static int configGetInt(config_set_t *c, const char *key, int *value) { (void)c;
 static const char *sbCheatsNotFoundText(void) { return ""; }
 static const char *_l(int id) { (void)id; return ""; }
 static int GetCheatsFromGlobalDefault(void) { return 0; }
-static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)t; (void)accept; (void)ui; return answer; }
+static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)t; (void)ui; if (!accept) id_warnings++; return answer; }
 
 @FUNCTIONS@
 
@@ -141,17 +142,18 @@ int main(void)
         const struct cdvdman_settings_common *patched = (const struct cdvdman_settings_common *)(image + index);
         assert(!memcmp(patched->ilink_id, game_no == 0 ? enabled : disabled, 8));
         assert(id_diagnostics == (game_no == 4 ? 1 : 0));
+        assert(id_warnings == id_diagnostics);
     }
     sbUnprepare(image + 64);
     assert(!memcmp(image, pristine, sizeof(image)));
     const char *external_ids[] = {"0123456789ABCDEF", "bad"};
     for (unsigned i = 0; i < 2; i++) {
         ilink_text = external_ids[i];
-        int reads = id_reads, diagnostics = id_diagnostics;
+        int reads = id_reads, diagnostics = id_diagnostics, warnings = id_warnings;
         assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index, 0) == 1);
         const struct cdvdman_settings_common *scratch = (const struct cdvdman_settings_common *)(image + index);
         assert(!memcmp(scratch->ilink_id, disabled, 8));
-        assert(id_reads == reads && id_diagnostics == diagnostics);
+        assert(id_reads == reads && id_diagnostics == diagnostics && id_warnings == warnings);
         sbUnprepare(image + index);
         assert(!memcmp(image, pristine, sizeof(image)));
     }
@@ -274,7 +276,14 @@ for path, signature in LEGS:
     args = [' '.join(a.split()) for a in code[opening + 1:close_paren(code, opening)].split(',')]
     irx, index = args[3].lstrip('&'), args[4].lstrip('&')
     external = 'ethTryNeutrino' in signature or signature in ('void UdpfsSource::launch(', 'static void udpfsLaunchGame(')
-    if len(args) != 6 or args[5] != ('0' if external else '1'):
+    mmce = 'MmceSource::launch' in signature or 'mmceLaunchGame' in signature
+    expected = '!coreLoader' if mmce else ('0' if external else '1')
+    if mmce:
+        gate = code.find('int coreLoader = gDefaultCoreLoader;', start, prep)
+        fallback = code.find('coreLoader = 0;', gate, prep) if gate >= 0 else -1
+        if gate < 0 or fallback < 0:
+            failures.append('%s: resolve the MMCE engine and fallback before native preparation' % line(prep))
+    if len(args) != 6 or args[5] != expected:
         failures.append('%s: native console-ID preparation flag does not match the launch engine' % line(prep))
     after = close_paren(code, opening) + 1
 

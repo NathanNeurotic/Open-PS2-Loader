@@ -2,7 +2,7 @@
 
 In a PS2 game's Compatibility settings, **Console i.LINK ID** optionally replaces the eight-byte console identifier returned by the native OPL engine's CDVDMAN. Enter exactly 16 hexadecimal digits, for example `0123456789ABCDEF`. Digits are in response-byte order, without reversal. Saving uses uppercase. Empty or `0000000000000000` uses the real console ID and removes the override.
 
-The per-game CFG key is `$ILinkID`. Existing CFG files need no migration. Invalid input is rejected before settings are applied. An invalid manually edited value is ignored at launch with a diagnostic. Each launch initializes all eight bytes, preventing inheritance from the previous game.
+The per-game CFG key is `$ILinkID`. Existing CFG files need no migration. Invalid input is rejected before settings are applied. An invalid manually edited value shows the existing localized invalid-ID message before launch, records a diagnostic, and uses the real console ID. Each launch initializes all eight bytes, preventing inheritance from the previous game.
 
 This setting is available only for native OPL PS2 launches. It is disabled for Neutrino and PS1/POPSTARTER launches. The separately pinned RA/ORBIT runtime is unchanged. It does not change the existing Disc ID/DNAS setting, a storage drive's identity, firmware, or IEEE-1394 bus configuration.
 

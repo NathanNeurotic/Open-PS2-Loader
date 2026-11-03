@@ -1097,8 +1097,10 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
     if (nativeLaunch) {
         const char *consoleID = NULL;
         configGetStr(configSet, CONFIG_ITEM_ILINK_ID, &consoleID);
-        if (oplParseILinkID(consoleID, settings->ilink_id) < 0)
+        if (oplParseILinkID(consoleID, settings->ilink_id) < 0) {
             diagLog("launch: invalid $ILinkID; using the real console ID");
+            guiMsgBox(_l(_STR_INVALID_CONSOLE_ILINK_ID), 0, NULL);
+        }
     }
 
     // game id
