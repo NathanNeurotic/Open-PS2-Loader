@@ -228,7 +228,8 @@ def statement_start(code, pos):
 LEGS = (('src/bdmsupport.c', 'void bdmLaunchGame('), ('src/ethsupport.c', 'static void ethLaunchGame('),
         ('src/ethsupport.c', 'static int ethTryNeutrino('),
         ('src/hddsupport.c', 'void hddLaunchGame('), ('src/httpsupport.c', 'static void httpLaunchGame('),
-        ('src/mmcesupport.c', 'void mmceLaunchGame('), ('src/udpfssupport.c', 'static void udpfsLaunchGame('))
+        ('src/mmcesupport.c', 'void mmceLaunchGame('), ('src/udpfssupport.c', 'static void udpfsLaunchOplCore('),
+        ('src/udpfssupport.c', 'static void udpfsLaunchGame('))
 
 for path, signature in LEGS:
     source = text(path)
