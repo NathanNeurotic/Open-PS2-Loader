@@ -141,20 +141,23 @@ static void endMutableText(struct theme_element *elem) { (void)elem; }
 @CODE@
 
 @READER@
-static int themeHides(const char *value)
+static int themeHides(const char *baseValue, const char *viewValue, int useViewPrefix)
 {
     theme_t t;
     theme_t *newT = &t;
     config_set_t themeKeys;
     config_set_t *themeConfig = &themeKeys;
-    const char *viewPrefix = "";
+    const char *viewPrefix = useViewPrefix ? "list" : "";
     int intValue = 0;
     memset(&t, 0, sizeof(t));
     memset(&themeKeys, 0, sizeof(themeKeys));
-    if (value != NULL) { /* the theme's list_cfg_text; NULL when it has none */
-        themeKeys.count = 1;
-        themeKeys.kv[0].key = "list_cfg_text";
-        themeKeys.kv[0].value = value;
+    if (baseValue != NULL) {
+        themeKeys.kv[themeKeys.count].key = "list_cfg_text";
+        themeKeys.kv[themeKeys.count++].value = baseValue;
+    }
+    if (viewValue != NULL) {
+        themeKeys.kv[themeKeys.count].key = "list.list_cfg_text";
+        themeKeys.kv[themeKeys.count++].value = viewValue;
     }
     @KEYLINE@
     return newT->hideListCfgText;
@@ -270,11 +273,16 @@ int main(void)
 
     /* The theme key, read by the production thmViewGetInt and configGetInt: list_cfg_text=0 hides them, and so does
        a word, which configGetInt's atoi reads as 0, as in RIPPS2. Absent or any other number shows them as before. */
-    assert(themeHides(NULL) == 0);
-    assert(themeHides("0") == 1);
-    assert(themeHides("on") == 1);
-    assert(themeHides("1") == 0);
-    assert(themeHides("2") == 0);
+    assert(themeHides(NULL, NULL, 0) == 0);
+    assert(themeHides("0", NULL, 0) == 1);
+    assert(themeHides("on", NULL, 0) == 1);
+    assert(themeHides("1", NULL, 0) == 0);
+    assert(themeHides("2", NULL, 0) == 0);
+    assert(themeHides("0", NULL, 1) == 1); /* unprefixed fallback */
+    assert(themeHides("0", "1", 1) == 0); /* prefixed override */
+    assert(themeHides("1", "0", 1) == 1);
+    assert(themeHides(NULL, "0", 1) == 1);
+    assert(themeHides("1", "0", 0) == 0); /* other view's key ignored */
 
     printf("PASS: List Title and Description: %d draws over every family, attribute, setting and theme key\n", checked);
     return 0;
