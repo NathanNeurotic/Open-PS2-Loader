@@ -61,8 +61,30 @@ static int smb2_sema = -1;
 static char conn_server[64];
 static char conn_user[256];
 static char conn_password[256];
+static char conn_share[256]; // the share OPENSHARE connected, for the keepalive's reconnect
 static int conn_valid = 0;
 static int share_open = 0;
+// Set when a share that was open is gone (a read or write whose reply never came, a failed
+// keepalive) and nothing has connected it again. ECHO reports it, so the menu's Refresh
+// reconnects at once, as it does with smbman; LOGON, OPENSHARE and LOGOFF clear it.
+static int session_lost = 0;
+
+/*
+  Keepalive, as smbman's: every KEEPALIVE_SECONDS an alarm wakes a thread that sends an SMB2 ECHO
+  on the open session. It keeps a Windows server's idle autodisconnect (15 minutes by default) from
+  dropping the session while the menu sits still, and when the server did drop it, the thread tears
+  the session down and connects the share again, on the next tick. A failed reconnect is retried
+  KEEPALIVE_RETRY_SECONDS after the attempt ends: each attempt can wait the full
+  SMB2MAN_TIMEOUT_SECONDS with the driver locked, and a server that is off should not keep the
+  menu's IO thread waiting on it.
+*/
+#define KEEPALIVE_SECONDS       3
+#define KEEPALIVE_RETRY_SECONDS 30
+static int keepalive_sema = -1;
+static int keepalive_tid = -1;
+static iop_sys_clock_t keepalive_clock;
+static u32 keepalive_ticks = 0;    // alarm ticks since start, for the retry backoff
+static u32 keepalive_retry_at = 0; // tick at which the next reconnect may be tried
 
 struct smb2man_file
 {
@@ -76,6 +98,21 @@ struct smb2man_file
 #define SMB2MAN_GEN_MASK  (0x7FFFFFFFu >> SMB2MAN_SLOT_BITS)
 
 static struct smb2man_file file_table[MAX_OPEN_FILES];
+
+/*
+  An open directory. libsmb2 reads the whole listing at opendir and keeps it in the smb2dir, which
+  no context owns: destroying the context leaves it allocated, and smb2_closedir() frees it only
+  when given a context. So the open ones are kept on a list, and whatever destroys the context (a
+  dropped session, teardown) frees their listings first. The node stays with the handle until
+  dclose, its dir NULL, so a handle whose listing went with its session gets -EBADF.
+*/
+struct smb2man_dir
+{
+    struct smb2dir *dir;      // NULL once the session it was read from is gone
+    struct smb2man_dir *next; // on open_dirs while dir is set
+};
+
+static struct smb2man_dir *open_dirs = NULL;
 
 #define LOCK()   WaitSema(smb2_sema)
 #define UNLOCK() SignalSema(smb2_sema)
@@ -181,9 +218,13 @@ static int smb2man_errno(int fallback)
 }
 
 //-------------------------------------------------------------------------
+static void smb2man_keepalive_thread(void *arg);
+static unsigned int smb2man_keepalive_alarm(void *arg);
+
 static int smb2man_init(iop_device_t *dev)
 {
     iop_sema_t smp;
+    iop_thread_t thread;
 
     (void)dev;
 
@@ -195,12 +236,47 @@ static int smb2man_init(iop_device_t *dev)
 
     memset(file_table, 0, sizeof(file_table));
 
-    return (smb2_sema < 0) ? -1 : 0;
+    if (smb2_sema < 0)
+        return -1;
+
+    // The keepalive: the alarm signals this semaphore, the thread does the network work.
+    smp.initial = 0;
+    smp.max = 1;
+    keepalive_sema = CreateSema(&smp);
+
+    thread.attr = TH_C;
+    thread.option = 0;
+    thread.thread = smb2man_keepalive_thread;
+    // libsmb2's sync calls run on this thread, as they run on fileXio's 32 KB RPC thread for the menu's
+    // requests. From the IOP compiler's stack-usage data, the deepest path (a reply read by
+    // smb2_read_data, whose 256 iovecs take 2 KB, completing into the session setup and its
+    // HMAC-SHA256 signature) needs about 4.3 KB, and about 6.5 KB if a server nests a transform header.
+    thread.stacksize = 0x4000;
+    thread.priority = 0x64;
+    keepalive_tid = CreateThread(&thread);
+    if (keepalive_sema >= 0 && keepalive_tid >= 0 && StartThread(keepalive_tid, NULL) == 0) {
+        USec2SysClock(KEEPALIVE_SECONDS * 1000 * 1000, &keepalive_clock);
+        SetAlarm(&keepalive_clock, smb2man_keepalive_alarm, NULL);
+    } else {
+        printf("smb2man: no keepalive (sema %d, thread %d)\n", keepalive_sema, keepalive_tid);
+    }
+
+    return 0;
 }
 
+// iomanX calls this only when the "smb" device is deleted, which never happens while smb2man is
+// resident: it is loaded once per IOP boot (smbman only if smb2man did not load), and the EE drops it
+// only with an IOP reset. So it stops the alarm and frees the semaphore, and leaves the keepalive
+// thread, keepalive_sema, the thread's stack and the libsmb2 context in place.
 static int smb2man_deinit(iop_device_t *dev)
 {
+    int oldstate;
+
     (void)dev;
+
+    CpuSuspendIntr(&oldstate);
+    CancelAlarm(smb2man_keepalive_alarm, NULL);
+    CpuResumeIntr(oldstate);
 
     if (smb2_sema >= 0) {
         DeleteSema(smb2_sema);
@@ -223,28 +299,78 @@ static int smb2man_alloc_fd(void)
     return -1;
 }
 
+static void smb2man_discard_cb(struct smb2_context *ctx, int status, void *command_data, void *cb_data)
+{
+    (void)ctx;
+    (void)status;
+    (void)command_data;
+    (void)cb_data;
+}
+
+// Free the listing of every open directory, before the context goes. Called with the lock held.
+static void smb2man_close_dirs(void)
+{
+    struct smb2man_dir *d;
+
+    while (open_dirs != NULL) {
+        d = open_dirs;
+        open_dirs = d->next;
+        smb2_closedir(smb2, d->dir);
+        d->dir = NULL;
+        d->next = NULL;
+    }
+}
+
 /*
   libsmb2's sync read/write return exactly -1 when waiting for the reply failed (poll or
   smb2_service error). The request is then still queued, and it still points at the caller's
   buffer, so a late reply could land in memory the caller has reused. Destroy the context (that
-  frees every queued request without more network I/O) and forget the open handles; the menu's
-  next OPENSHARE builds a fresh session. (A status-mapped -EPERM also ends here: those statuses
-  mean the handle is gone anyway.) Called with the lock held.
+  completes every queued request without waiting on the network) and forget the open handles and
+  directories; the menu's next OPENSHARE, or the keepalive, builds a fresh session. (A
+  status-mapped -EPERM also ends here: those statuses mean the handle is gone anyway.) Called with
+  the lock held.
 */
-static void smb2man_drop_broken_session(int rv)
+static void smb2man_drop_session(void)
 {
-    int i;
+    int i, rv;
 
-    if (rv != -1 || smb2 == NULL)
-        return;
-
+    smb2man_close_dirs();
     for (i = 0; i < MAX_OPEN_FILES; i++) {
+        /*
+          libsmb2 frees a handle when its close completes, and destroying the context does not free
+          the handles opened on it. So queue a close for each: the destroy below completes it with
+          SMB2_STATUS_SHUTDOWN, which frees the handle. Queueing waits for nothing; at most the
+          request is written to the socket, if nothing is queued ahead of it. It fails only when
+          libsmb2 cannot allocate the request, and that handle then stays allocated: say so.
+        */
+        if (file_table[i].used && smb2 != NULL) {
+            rv = smb2_close_async(smb2, file_table[i].fh, smb2man_discard_cb, NULL);
+            if (rv != 0)
+                printf("smb2man: could not close a file of the lost session (%d), its handle leaks\n", rv);
+        }
         file_table[i].fh = NULL;
         file_table[i].used = 0;
     }
-    smb2_destroy_context(smb2);
-    smb2 = NULL;
-    share_open = 0;
+    if (smb2 != NULL) {
+        smb2_destroy_context(smb2);
+        smb2 = NULL;
+    }
+    if (share_open) {
+        share_open = 0;
+        session_lost = 1;
+        // The first reconnect waits for the next tick. Ticks that came while a failed echo waited
+        // have already woken the keepalive thread again, and a reconnect the menu starts as soon
+        // as ECHO reports the loss (its Refresh) should go first.
+        keepalive_retry_at = keepalive_ticks + 1;
+    }
+}
+
+static void smb2man_drop_broken_session(int rv)
+{
+    if (rv != -1 || smb2 == NULL)
+        return;
+
+    smb2man_drop_session();
 }
 
 /*
@@ -429,7 +555,8 @@ static int smb2man_write(iop_file_t *f, void *buffer, int size)
 static int smb2man_lseek(iop_file_t *f, int offset, int whence)
 {
     uint64_t pos = 0;
-    int slot, rv;
+    int64_t rv; // smb2_lseek returns the new position: as an int, one past 2 GiB would read as an error
+    int slot;
 
     LOCK();
 
@@ -445,7 +572,7 @@ static int smb2man_lseek(iop_file_t *f, int offset, int whence)
 
     if (rv < 0)
         return -EIO;
-    // The 32-bit call cannot report a position past 2 GB; lseek64 serves those.
+    // The 32-bit call cannot report a position past 2 GiB; lseek64 serves those.
     if (pos > 0x7fffffffULL)
         return -EOVERFLOW;
 
@@ -455,7 +582,8 @@ static int smb2man_lseek(iop_file_t *f, int offset, int whence)
 static s64 smb2man_lseek64(iop_file_t *f, s64 offset, int whence)
 {
     uint64_t pos = 0;
-    int slot, rv;
+    int64_t rv; // the new position, as in smb2man_lseek: an int would cut it to 32 bits
+    int slot;
 
     LOCK();
 
@@ -533,7 +661,7 @@ static void smb2man_fill_stat(iox_stat_t *stat, const struct smb2_stat_64 *st)
 static int smb2man_dopen(iop_file_t *f, const char *dirname)
 {
     char path[MAX_PATH_LEN];
-    struct smb2dir *dir;
+    struct smb2man_dir *d;
     int rv;
 
     if (dirname == NULL)
@@ -552,14 +680,22 @@ static int smb2man_dopen(iop_file_t *f, const char *dirname)
         return rv;
     }
 
-    dir = smb2_opendir(smb2, path);
-    if (dir == NULL) {
+    d = malloc(sizeof(*d));
+    if (d == NULL) {
+        UNLOCK();
+        return -ENOMEM;
+    }
+    d->dir = smb2_opendir(smb2, path);
+    if (d->dir == NULL) {
         rv = smb2man_errno(-ENOENT);
+        free(d);
         UNLOCK();
         return rv;
     }
+    d->next = open_dirs;
+    open_dirs = d;
 
-    f->privdata = (void *)dir;
+    f->privdata = (void *)d;
 
     UNLOCK();
 
@@ -568,18 +704,27 @@ static int smb2man_dopen(iop_file_t *f, const char *dirname)
 
 static int smb2man_dclose(iop_file_t *f)
 {
-    struct smb2dir *dir;
+    struct smb2man_dir *d, **pp;
 
     LOCK();
 
-    dir = (struct smb2dir *)f->privdata;
-    if (dir == NULL) {
+    d = (struct smb2man_dir *)f->privdata;
+    if (d == NULL) {
         UNLOCK();
         return -EBADF;
     }
 
-    if (smb2 != NULL)
-        smb2_closedir(smb2, dir);
+    // With its listing still there, it is on open_dirs and its session is the current one.
+    if (d->dir != NULL) {
+        for (pp = &open_dirs; *pp != NULL; pp = &(*pp)->next) {
+            if (*pp == d) {
+                *pp = d->next;
+                break;
+            }
+        }
+        smb2_closedir(smb2, d->dir);
+    }
+    free(d);
     f->privdata = NULL;
 
     UNLOCK();
@@ -589,18 +734,18 @@ static int smb2man_dclose(iop_file_t *f)
 
 static int smb2man_dread(iop_file_t *f, iox_dirent_t *dirent)
 {
-    struct smb2dir *dir;
+    struct smb2man_dir *d;
     struct smb2dirent *ent;
 
     LOCK();
 
-    dir = (struct smb2dir *)f->privdata;
-    if (dir == NULL || smb2 == NULL) {
+    d = (struct smb2man_dir *)f->privdata;
+    if (d == NULL || d->dir == NULL) {
         UNLOCK();
         return -EBADF;
     }
 
-    ent = smb2_readdir(smb2, dir);
+    ent = smb2_readdir(smb2, d->dir);
     if (ent == NULL) {
         UNLOCK();
         return 0; // end of the directory
@@ -772,6 +917,7 @@ static void smb2man_teardown(void)
 {
     int i;
 
+    smb2man_close_dirs();
     for (i = 0; i < MAX_OPEN_FILES; i++) {
         if (file_table[i].used && smb2 != NULL && share_open)
             smb2_close(smb2, file_table[i].fh);
@@ -805,6 +951,67 @@ static struct smb2_context *smb2man_new_context(void)
     smb2_set_password(ctx, conn_password);
 
     return ctx;
+}
+
+// Connect conn_share again after the session was lost. Called with the lock held.
+static void smb2man_reconnect(void)
+{
+    struct smb2_context *ctx = smb2man_new_context();
+
+    if (ctx != NULL && smb2_connect_share(ctx, conn_server, conn_share, conn_user[0] ? conn_user : NULL) == 0) {
+        if (smb2 != NULL)
+            smb2_destroy_context(smb2);
+        smb2 = ctx;
+        share_open = 1;
+        session_lost = 0;
+        printf("smb2man: reconnected %s\n", conn_share);
+        return;
+    }
+
+    if (ctx != NULL)
+        smb2_destroy_context(ctx);
+    // Counted from now, the end of the attempt, which may have waited out the whole timeout.
+    keepalive_retry_at = keepalive_ticks + KEEPALIVE_RETRY_SECONDS / KEEPALIVE_SECONDS;
+}
+
+static unsigned int smb2man_keepalive_alarm(void *arg)
+{
+    (void)arg;
+
+    keepalive_ticks++;
+    iSignalSema(keepalive_sema);
+    iSetAlarm(&keepalive_clock, smb2man_keepalive_alarm, NULL);
+
+    return 0;
+}
+
+/*
+  One keepalive pass, run on each alarm tick: with a share open, an ECHO, and a failed one drops the
+  session; with the session lost, a reconnect once the backoff allows it. (tests/smb2-live runs
+  passes by hand: on the host no thread or alarm runs.)
+*/
+static void smb2man_keepalive_pass(void)
+{
+    LOCK();
+    if (smb2 != NULL && share_open) {
+        if (smb2_echo(smb2) < 0) {
+            printf("smb2man: keepalive echo failed, session dropped\n");
+            smb2man_drop_session();
+        }
+    } else if (session_lost && conn_valid && (int)(keepalive_ticks - keepalive_retry_at) >= 0) {
+        smb2man_reconnect();
+    }
+    UNLOCK();
+}
+
+static void smb2man_keepalive_thread(void *arg)
+{
+    (void)arg;
+
+    for (;;) {
+        WaitSema(keepalive_sema);
+        smb2man_keepalive_pass();
+    }
 }
 
 // Copy to EE memory, as smbman does for GETSHARELIST.
@@ -916,6 +1123,7 @@ static int smb2man_devctl(iop_file_t *f, const char *name, int cmd, void *arg, u
             LOCK();
             smb2man_teardown();
             conn_valid = 0;
+            session_lost = 0;
 
             // libsmb2 takes the port as "<host>:<port>" (a bare host means 445).
             if (logon->serverPort > 0 && logon->serverPort != 445)
@@ -949,6 +1157,7 @@ static int smb2man_devctl(iop_file_t *f, const char *name, int cmd, void *arg, u
             LOCK();
             smb2man_teardown();
             conn_valid = 0;
+            session_lost = 0;
             UNLOCK();
             return 0;
 
@@ -967,6 +1176,7 @@ static int smb2man_devctl(iop_file_t *f, const char *name, int cmd, void *arg, u
 
             // A fresh context per share: libsmb2 cannot reconnect a context it disconnected.
             smb2man_teardown();
+            session_lost = 0;
             smb2 = smb2man_new_context();
             if (smb2 == NULL) {
                 UNLOCK();
@@ -974,7 +1184,9 @@ static int smb2man_devctl(iop_file_t *f, const char *name, int cmd, void *arg, u
             }
 
             openshare->ShareName[sizeof(openshare->ShareName) - 1] = '\0';
-            rv = smb2_connect_share(smb2, conn_server, openshare->ShareName, conn_user[0] ? conn_user : NULL);
+            strncpy(conn_share, openshare->ShareName, sizeof(conn_share) - 1);
+            conn_share[sizeof(conn_share) - 1] = '\0';
+            rv = smb2_connect_share(smb2, conn_server, conn_share, conn_user[0] ? conn_user : NULL);
             if (rv < 0) {
                 UNLOCK();
                 return -SMB_DEVCTL_LOGON_ERR_LOGON;
@@ -992,13 +1204,33 @@ static int smb2man_devctl(iop_file_t *f, const char *name, int cmd, void *arg, u
                 // Keep the logon: a later OPENSHARE builds a new context from it.
                 smb2 = smb2man_new_context();
             }
+            session_lost = 0;
             UNLOCK();
             return 0;
 
         case SMB_DEVCTL_ECHO:
-            // There is no session until OPENSHARE (libsmb2 logs on when it connects a share), so
-            // there is nothing to probe yet. OPENSHARE is the call whose failure the menu reports.
-            return conn_valid ? 0 : -ENODEV;
+            /*
+              The menu's Refresh probes the session with this before deciding between "keep the
+              open handles" and "log on again" (ethsupport's refresh path), so it has to tell the
+              truth. With a share open it is a real SMB2 ECHO round trip; a share that was open and
+              is gone reports -EIO until something connects it again. Between LOGON and OPENSHARE
+              there is no session yet (libsmb2 logs on when it connects a share): 0, as before, and
+              OPENSHARE is the call whose failure the menu reports.
+            */
+            if (!conn_valid)
+                return -ENODEV;
+            LOCK();
+            if (smb2 != NULL && share_open) {
+                rv = 0;
+                if (smb2_echo(smb2) < 0) {
+                    smb2man_drop_session();
+                    rv = -EIO;
+                }
+            } else {
+                rv = session_lost ? -EIO : 0;
+            }
+            UNLOCK();
+            return rv;
 
         case SMB_DEVCTL_GETSHARELIST:
             if (arg == NULL || arglen < sizeof(smbGetShareList_in_t))

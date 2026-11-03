@@ -392,12 +392,17 @@ int lwip_recvfrom(int s, void *header, int index, void *payload, int plen, unsig
         if (avail_len >= 63) { // header of (SMB command) READ ANDX RESPONSE is 63 + padding bytes, which are "0x00" thus useless
             netbuf_copy_partial(buf, header, 63, sock->lastoffset);
             index = ((u8_t *)header)[index] + 4; // The word at offset 0 is sessionHeader, which Microsoft doesn't consider as being part of the SMB header.
-            copylen = index;
-            avail_len -= index;
-        } else {
+        }
+        // A segment that ends before the data (inside the header, or inside the padding after it) goes
+        // into the header whole, and the caller receives the rest. Taking index bytes from a shorter
+        // segment would wrap avail_len and count payload that never arrived.
+        if (avail_len < 63 || index > avail_len) {
             netbuf_copy_partial(buf, header, avail_len, sock->lastoffset);
             copylen = avail_len;
             avail_len = 0;
+        } else {
+            copylen = index;
+            avail_len -= index;
         }
     }
 
