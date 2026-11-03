@@ -61,7 +61,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Console file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Console file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED."
   },
   {
    "id": "B2",
@@ -71,7 +73,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "B3",
@@ -81,7 +85,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "B4",
@@ -91,7 +97,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "B5",
@@ -101,7 +109,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "B6",
@@ -111,7 +121,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "B7",
@@ -121,7 +133,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "BL1",
@@ -131,7 +145,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "BL2",
@@ -141,7 +157,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "CA1",
@@ -151,7 +169,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CA2",
@@ -161,7 +181,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "CA3",
@@ -171,7 +193,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "CA4",
@@ -181,7 +205,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "CA5",
@@ -191,7 +217,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "CA6",
@@ -201,7 +229,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CA7",
@@ -211,7 +241,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CF1",
@@ -221,7 +253,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CF2",
@@ -231,7 +265,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CF3",
@@ -241,7 +277,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CF4",
@@ -251,7 +289,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "CO1",
@@ -261,7 +301,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "CO2",
@@ -271,7 +313,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "CO3",
@@ -281,7 +325,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CO4",
@@ -291,7 +337,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CO5",
@@ -301,7 +349,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CO6",
@@ -311,7 +361,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "CO7",
@@ -321,7 +373,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DB1",
@@ -331,7 +385,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DB2",
@@ -341,7 +397,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DK1",
@@ -351,7 +409,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "DL1",
@@ -361,7 +421,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DL2",
@@ -371,7 +433,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DN1",
@@ -381,7 +445,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DN2",
@@ -391,7 +457,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DT1",
@@ -401,7 +469,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DT2",
@@ -411,7 +481,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DT3",
@@ -421,7 +493,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DT4",
@@ -431,7 +505,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DT5",
@@ -441,7 +517,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DT6",
@@ -451,7 +529,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "The same change landed upstream in OPL-DualSense-BT 8bb581a (rodrigoGalvanDev, Miguel Queiroz): lwIP IP_REASSEMBLY/IP_FRAG off, USBD pool trim for PADEMU-only. Turning IP fragmentation off changes behaviour for large-MTU SMB paths; needs a decision before any port. (November 1 listed this record twice; corrected November 2.)",
    "nov2_status": "PARTIAL",
-   "nov2_note": "Draft RiptOPL #270 / legacy #1231: IP_FRAG off, reassembly kept with a 1536-byte buffer (was 5760), USBD pools sized for PADEMU when the game is not on USB, transfer descriptors left at the default; about 26 KB back; two old ip_frag.c reassembly bugs fixed. NOT TESTED."
+   "nov2_note": "Draft RiptOPL #270 / legacy #1231: IP_FRAG off, reassembly kept with a 1536-byte buffer (was 5760), USBD pools sized for PADEMU when the game is not on USB, transfer descriptors left at the default; about 26 KB back; two old ip_frag.c reassembly bugs fixed. NOT TESTED.",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged in both maintained source editions; see the implementation checkpoint. Console acceptance is separate."
   },
   {
    "id": "DT7",
@@ -461,7 +541,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "DT8",
@@ -471,7 +553,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "E1",
@@ -481,7 +565,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "H4",
@@ -491,7 +577,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H5",
@@ -501,7 +589,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H6",
@@ -511,7 +601,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H7",
@@ -521,7 +613,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H8",
@@ -531,7 +625,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H9",
@@ -541,7 +637,9 @@
    "nov1_status": "BLOCKED",
    "nov1_note": "",
    "nov2_status": "BLOCKED",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "BLOCKED",
+   "checkpoint_note": ""
   },
   {
    "id": "H10",
@@ -551,7 +649,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H11",
@@ -561,7 +661,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H12",
@@ -571,7 +673,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "H13",
@@ -581,7 +685,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "H14",
@@ -591,7 +697,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "H15",
@@ -601,7 +709,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "JUMP1",
@@ -611,7 +721,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "Apps/PS1 shortcut categorisation exists; OPL-JUMP filename filter not ported. Product call.",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": "Apps/PS1 shortcut categorisation exists; OPL-JUMP filename filter not ported. Product call."
   },
   {
    "id": "JUMP2",
@@ -621,7 +733,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "K1",
@@ -631,7 +745,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "L1",
@@ -641,7 +757,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LC1",
@@ -651,7 +769,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "LS1",
@@ -661,7 +781,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "LS2",
@@ -671,7 +793,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "LU2",
@@ -681,7 +805,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU4",
@@ -691,7 +817,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU5",
@@ -701,7 +829,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU6",
@@ -711,7 +841,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU7",
@@ -721,7 +853,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU8",
@@ -731,7 +865,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU9",
@@ -741,7 +877,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU10",
@@ -751,7 +889,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "LU11",
@@ -761,7 +901,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU12",
@@ -771,7 +913,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU13",
@@ -781,7 +925,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU14",
@@ -791,7 +937,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Console file manager with copy tray merged: RiptOPL #219 / legacy #1180. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Console file manager with copy tray merged: RiptOPL #219 / legacy #1180. NOT TESTED."
   },
   {
    "id": "LU15",
@@ -801,7 +949,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU16",
@@ -811,7 +961,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU17",
@@ -821,7 +973,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU18",
@@ -831,7 +985,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU19",
@@ -841,7 +997,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU20",
@@ -851,7 +1009,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "File manager present (#219 / #1180); conflict-choice and verified-move specifics not re-verified on 2026-11-01.",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": "File manager present (#219 / #1180); conflict-choice and verified-move specifics not re-verified on 2026-11-01."
   },
   {
    "id": "LU21",
@@ -861,7 +1021,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "File manager present (#219 / #1180); preview/filter/sort specifics not re-verified on 2026-11-01.",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": "File manager present (#219 / #1180); preview/filter/sort specifics not re-verified on 2026-11-01."
   },
   {
    "id": "LU22",
@@ -871,7 +1033,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU23",
@@ -881,7 +1045,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU24",
@@ -891,7 +1057,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU25",
@@ -901,7 +1069,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU26",
@@ -911,7 +1081,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU27",
@@ -921,7 +1093,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "LU28",
@@ -931,7 +1105,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU29",
@@ -941,7 +1117,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "LU30",
@@ -951,7 +1129,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU31",
@@ -961,7 +1141,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU32",
@@ -971,7 +1153,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU33",
@@ -981,7 +1165,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU34",
@@ -991,7 +1177,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU35",
@@ -1001,7 +1189,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU36",
@@ -1011,7 +1201,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU37",
@@ -1021,7 +1213,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU38",
@@ -1031,7 +1225,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "LU39",
@@ -1041,7 +1237,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "LU40",
@@ -1051,7 +1249,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU41",
@@ -1061,7 +1261,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU42",
@@ -1071,7 +1273,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "LU43",
@@ -1081,7 +1285,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "LU44",
@@ -1091,7 +1297,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "M1",
@@ -1101,7 +1309,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "MA1",
@@ -1111,7 +1321,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "MA2",
@@ -1121,7 +1333,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "MP1",
@@ -1131,7 +1345,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "MP2",
@@ -1141,7 +1357,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "N1",
@@ -1151,7 +1369,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "N2",
@@ -1161,7 +1381,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "NV1",
@@ -1171,7 +1393,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O1",
@@ -1181,7 +1405,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Grid view merged: RiptOPL #196 / legacy #1164. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Grid view merged: RiptOPL #196 / legacy #1164. NOT TESTED."
   },
   {
    "id": "O2",
@@ -1191,7 +1417,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O3",
@@ -1201,7 +1429,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "Recent list merged (#195 / #1163 family) but holds 10 entries, not RIPPS2 99 (see RI38).",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": "Recent list merged (#195 / #1163 family) but holds 10 entries, not RIPPS2 99 (see RI38)."
   },
   {
    "id": "O4",
@@ -1211,7 +1441,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "O5",
@@ -1221,7 +1453,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O6",
@@ -1231,7 +1465,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O7",
@@ -1241,7 +1477,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O8",
@@ -1251,7 +1489,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O9",
@@ -1261,7 +1501,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "O10",
@@ -1271,7 +1513,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O11",
@@ -1281,7 +1525,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O12",
@@ -1291,7 +1537,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "O13",
@@ -1301,7 +1549,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "O14",
@@ -1311,7 +1561,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "O15",
@@ -1321,7 +1573,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OF1",
@@ -1331,7 +1585,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "OH1",
@@ -1341,7 +1597,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OH2",
@@ -1351,7 +1609,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OH3",
@@ -1361,7 +1621,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OH4",
@@ -1371,7 +1633,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OH5",
@@ -1381,7 +1645,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OH6",
@@ -1391,7 +1657,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OH7",
@@ -1401,7 +1669,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OH8",
@@ -1411,7 +1681,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OH9",
@@ -1421,7 +1693,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OH10",
@@ -1431,7 +1705,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OH11",
@@ -1441,7 +1717,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OH12",
@@ -1451,7 +1729,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "OM1",
@@ -1461,17 +1741,21 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OM2",
-   "feature": "Local bulk ISO ↔ ZSO compression/decompression and conversion jobs",
+   "feature": "Local bulk ISO \u00e2\u2020\u201d ZSO compression/decompression and conversion jobs",
    "project": "OrbitPS2 Manager",
    "oct29_status": "Companion / separate scope",
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OM3",
@@ -1481,7 +1765,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "OR3",
@@ -1491,7 +1777,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "OR4",
@@ -1501,7 +1789,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "OR5",
@@ -1511,7 +1801,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "P1",
@@ -1521,7 +1813,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "P2",
@@ -1531,7 +1825,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "P3",
@@ -1541,7 +1837,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "P4",
@@ -1551,7 +1849,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "P5",
@@ -1561,7 +1861,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "P6",
@@ -1571,7 +1873,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "P7",
@@ -1581,7 +1885,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "PB1",
@@ -1591,7 +1897,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "PX1",
@@ -1601,7 +1909,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX2",
@@ -1611,7 +1921,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX3",
@@ -1621,7 +1933,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX4",
@@ -1631,7 +1945,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX5",
@@ -1641,7 +1957,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX6",
@@ -1651,7 +1969,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX7",
@@ -1661,7 +1981,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX8",
@@ -1671,7 +1993,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX9",
@@ -1681,7 +2005,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX10",
@@ -1691,7 +2017,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX11",
@@ -1701,7 +2029,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX12",
@@ -1711,7 +2041,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "PX13",
@@ -1721,7 +2053,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "PX14",
@@ -1731,7 +2065,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX15",
@@ -1741,7 +2077,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "PX16",
@@ -1751,7 +2089,9 @@
    "nov1_status": "BLOCKED",
    "nov1_note": "",
    "nov2_status": "BLOCKED",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "BLOCKED",
+   "checkpoint_note": ""
   },
   {
    "id": "PX17",
@@ -1761,7 +2101,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "PX18",
@@ -1771,7 +2113,9 @@
    "nov1_status": "BLOCKED",
    "nov1_note": "",
    "nov2_status": "BLOCKED",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "BLOCKED",
+   "checkpoint_note": ""
   },
   {
    "id": "PX19",
@@ -1781,7 +2125,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "PX20",
@@ -1791,7 +2137,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "PX21",
@@ -1801,7 +2149,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "PX22",
@@ -1811,7 +2161,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "PX23",
@@ -1821,7 +2173,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX24",
@@ -1831,7 +2185,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX25",
@@ -1841,7 +2197,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX26",
@@ -1851,7 +2209,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX27",
@@ -1861,7 +2221,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "PX28",
@@ -1871,7 +2233,9 @@
    "nov1_status": "BLOCKED",
    "nov1_note": "",
    "nov2_status": "BLOCKED",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "BLOCKED",
+   "checkpoint_note": ""
   },
   {
    "id": "PX29",
@@ -1881,7 +2245,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX30",
@@ -1891,7 +2257,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX31",
@@ -1901,7 +2269,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX32",
@@ -1911,7 +2281,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX33",
@@ -1921,7 +2293,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX34",
@@ -1931,7 +2305,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX35",
@@ -1941,7 +2317,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX36",
@@ -1951,7 +2329,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "PX37",
@@ -1961,7 +2341,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "R1",
@@ -1971,7 +2353,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI1",
@@ -1981,7 +2365,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "VMC browsing with PSU export/import and the file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "VMC browsing with PSU export/import and the file manager merged: RiptOPL #219 / legacy #1180. NOT TESTED."
   },
   {
    "id": "RI2",
@@ -1991,7 +2377,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI3",
@@ -2001,7 +2389,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "OPL-core in-game pause/resume/cheats/exit (#184 / #1155) plus the RA pages and silent pause (#200 / #1168) merged. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "OPL-core in-game pause/resume/cheats/exit (#184 / #1155) plus the RA pages and silent pause (#200 / #1168) merged. NOT TESTED."
   },
   {
    "id": "RI4",
@@ -2011,7 +2401,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "RI5",
@@ -2021,7 +2413,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI6",
@@ -2031,7 +2425,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "RI7",
@@ -2041,7 +2437,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI8",
@@ -2051,7 +2449,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI9",
@@ -2061,7 +2461,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "RI10",
@@ -2071,7 +2473,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI11",
@@ -2081,7 +2485,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI12",
@@ -2091,7 +2497,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Power off from the in-game actions panel merged with #184 / #1155. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Power off from the in-game actions panel merged with #184 / #1155. NOT TESTED."
   },
   {
    "id": "RI13",
@@ -2101,7 +2509,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI14",
@@ -2111,7 +2521,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI15",
@@ -2121,7 +2533,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI16",
@@ -2131,7 +2545,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI17",
@@ -2141,7 +2557,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "RI18",
@@ -2151,7 +2569,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "RI19",
@@ -2161,7 +2581,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI20",
@@ -2171,7 +2593,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "RI21",
@@ -2181,7 +2605,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI22",
@@ -2191,7 +2617,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Hidden Games manager merged. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Hidden Games manager merged. NOT TESTED."
   },
   {
    "id": "RI23",
@@ -2201,7 +2629,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI24",
@@ -2211,7 +2641,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI25",
@@ -2221,7 +2653,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI26",
@@ -2231,7 +2665,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI27",
@@ -2241,7 +2677,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI28",
@@ -2251,7 +2689,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI29",
@@ -2261,7 +2701,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI30",
@@ -2271,7 +2713,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI31",
@@ -2281,7 +2725,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "RI32",
@@ -2291,7 +2737,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "RI33",
@@ -2301,7 +2749,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "RI34",
@@ -2311,7 +2761,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI35",
@@ -2321,7 +2773,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI36",
@@ -2331,7 +2785,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "RI37",
@@ -2341,7 +2797,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI38",
@@ -2351,7 +2809,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "Recent Games still capped at 10 entries in both editions; RIPPS2 keeps 99.",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": "Recent Games still capped at 10 entries in both editions; RIPPS2 keeps 99."
   },
   {
    "id": "RI39",
@@ -2361,7 +2821,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI40",
@@ -2371,7 +2833,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI41",
@@ -2381,7 +2845,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI42",
@@ -2391,7 +2857,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI43",
@@ -2401,7 +2869,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI44",
@@ -2411,7 +2881,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Per-video-mode menu positions merged (October 29 batch). NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Per-video-mode menu positions merged (October 29 batch). NOT TESTED."
   },
   {
    "id": "RI45",
@@ -2421,7 +2893,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI46",
@@ -2431,7 +2905,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "RI47",
@@ -2441,7 +2917,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "RI48",
@@ -2451,7 +2929,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "RI49",
@@ -2461,7 +2941,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "RI50",
@@ -2471,7 +2953,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "RI51",
@@ -2481,7 +2965,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "RR1",
@@ -2491,7 +2977,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "S1",
@@ -2501,7 +2989,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "Ours waits a bounded 30 s BSY plus 5 s DRDY; Stable OPL waits unbounded. Kept bounded on purpose.",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": "Ours waits a bounded 30 s BSY plus 5 s DRDY; Stable OPL waits unbounded. Kept bounded on purpose."
   },
   {
    "id": "SM1",
@@ -2511,7 +3001,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "T1",
@@ -2521,7 +3013,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "T2",
@@ -2531,7 +3025,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "T3",
@@ -2541,7 +3037,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "T4",
@@ -2551,7 +3049,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "T5",
@@ -2561,7 +3061,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "T6",
@@ -2571,7 +3073,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "T7",
@@ -2581,7 +3085,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "T8",
@@ -2591,7 +3097,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "T9",
@@ -2601,7 +3109,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "T10",
@@ -2611,7 +3121,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "T11",
@@ -2621,7 +3133,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "T12",
@@ -2631,7 +3145,9 @@
    "nov1_status": "UNKNOWN",
    "nov1_note": "",
    "nov2_status": "UNKNOWN",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "UNKNOWN",
+   "checkpoint_note": ""
   },
   {
    "id": "TV1",
@@ -2641,7 +3157,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "TV2",
@@ -2651,7 +3169,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "TV3",
@@ -2661,7 +3181,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "TV4",
@@ -2671,7 +3193,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "TV5",
@@ -2681,7 +3205,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "TV6",
@@ -2691,7 +3217,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "TV7",
@@ -2701,7 +3229,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "TV8",
@@ -2711,7 +3241,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "TV9",
@@ -2721,7 +3253,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "TV10",
@@ -2731,7 +3265,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "TV11",
@@ -2741,7 +3277,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "U1",
@@ -2751,7 +3289,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "U6",
@@ -2761,7 +3301,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "U9",
@@ -2771,7 +3313,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "UF1",
@@ -2781,7 +3325,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "W1",
@@ -2791,7 +3337,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "W2",
@@ -2801,7 +3349,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "W3",
@@ -2811,7 +3361,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "W6",
@@ -2821,7 +3373,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": ""
   },
   {
    "id": "WC1",
@@ -2831,7 +3385,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "X1",
@@ -2841,7 +3397,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-01",
@@ -2851,7 +3409,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA1",
@@ -2861,7 +3421,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-02",
@@ -2871,7 +3433,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA2",
@@ -2881,7 +3445,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-03",
@@ -2891,7 +3457,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-04",
@@ -2901,7 +3469,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-05",
@@ -2911,7 +3481,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-06",
@@ -2921,7 +3493,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "Bounded digital/unlocked handoff kept; analog-lock follow-up RiptOPL #246 / legacy #1208 merged. NOT TESTED.",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": "Bounded digital/unlocked handoff kept; analog-lock follow-up RiptOPL #246 / legacy #1208 merged. NOT TESTED."
   },
   {
    "id": "YA-07",
@@ -2931,7 +3505,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-08",
@@ -2941,7 +3517,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "",
    "nov2_status": "PARTIAL",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-09",
@@ -2951,7 +3529,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-10",
@@ -2961,7 +3541,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-11",
@@ -2971,7 +3553,9 @@
    "nov1_status": "INTENTIONAL DIFFERENCE",
    "nov1_note": "",
    "nov2_status": "INTENTIONAL DIFFERENCE",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "INTENTIONAL DIFFERENCE",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-12",
@@ -2981,7 +3565,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-13",
@@ -2991,7 +3577,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "No MMCE bar/controller coverage test in either CI.",
    "nov2_status": "MISSING",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "MISSING",
+   "checkpoint_note": "No MMCE bar/controller coverage test in either CI."
   },
   {
    "id": "YA-14",
@@ -3001,7 +3589,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-15",
@@ -3011,7 +3601,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-16",
@@ -3021,7 +3613,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-17",
@@ -3031,7 +3625,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-18",
@@ -3041,7 +3637,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": ""
   },
   {
    "id": "YA-19",
@@ -3051,7 +3649,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Local padhook already preserves the hook flag and flushes through kernel-context cache publication.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Local padhook already preserves the hook flag and flushes through kernel-context cache publication."
   },
   {
    "id": "YA-20",
@@ -3061,7 +3661,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Shared message/warning/confirmation wrapping merged: RiptOPL #215 / legacy #1177. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Shared message/warning/confirmation wrapping merged: RiptOPL #215 / legacy #1177. NOT TESTED."
   },
   {
    "id": "YA-21",
@@ -3071,7 +3673,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "Ported from yaopl/yaopl ce6323f (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED.",
    "nov2_status": "PARTIAL",
-   "nov2_note": "Draft RiptOPL #264 / legacy #1225, with YA-22 and YA-25. NOT TESTED."
+   "nov2_note": "Draft RiptOPL #264 / legacy #1225, with YA-22 and YA-25. NOT TESTED.",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged in both maintained source editions; see the implementation checkpoint. Console acceptance is separate."
   },
   {
    "id": "YA-22",
@@ -3081,7 +3685,9 @@
    "nov1_status": "PARTIAL",
    "nov1_note": "Ported from yaopl/yaopl 4c713a3 (Roman Kelesidis). Draft RiptOPL #264 / legacy #1225. NOT TESTED.",
    "nov2_status": "PARTIAL",
-   "nov2_note": "Draft RiptOPL #264 / legacy #1225, with YA-21 and YA-25. NOT TESTED."
+   "nov2_note": "Draft RiptOPL #264 / legacy #1225, with YA-21 and YA-25. NOT TESTED.",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged in both maintained source editions; see the implementation checkpoint. Console acceptance is separate."
   },
   {
    "id": "YA-23",
@@ -3091,7 +3697,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Row-race fix merged: RiptOPL #251 / legacy #1213 (YAOPL 5211110). NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Row-race fix merged: RiptOPL #251 / legacy #1213 (YAOPL 5211110). NOT TESTED."
   },
   {
    "id": "YA-24",
@@ -3101,7 +3709,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Merged: RiptOPL #245 / legacy #1207. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged: RiptOPL #245 / legacy #1207. NOT TESTED."
   },
   {
    "id": "YA-25",
@@ -3111,7 +3721,9 @@
    "nov1_status": null,
    "nov1_note": "Not recorded on November 1: YAOPL b45a592d was missed. Added November 2.",
    "nov2_status": "PARTIAL",
-   "nov2_note": "Ported from yaopl/yaopl b45a592d (Roman Kelesidis), with one theme switch and one language switch at a time. Draft RiptOPL #264 / legacy #1225. NOT TESTED."
+   "nov2_note": "Ported from yaopl/yaopl b45a592d (Roman Kelesidis), with one theme switch and one language switch at a time. Draft RiptOPL #264 / legacy #1225. NOT TESTED.",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged in both maintained source editions; see the implementation checkpoint. Console acceptance is separate."
   },
   {
    "id": "RI52",
@@ -3121,7 +3733,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 bd7615f). NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 bd7615f). NOT TESTED."
   },
   {
    "id": "RI53",
@@ -3131,7 +3745,9 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 a53f936). NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged: RiptOPL #255 / legacy #1217 (RIPPS2 a53f936). NOT TESTED."
   },
   {
    "id": "RI54",
@@ -3141,7 +3757,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "Released in RIPPS2 v1.2.8-beta. Product call; not ported.",
    "nov2_status": "PARTIAL",
-   "nov2_note": "Draft RiptOPL #276 / legacy #1235: Settings > Interface > List Title and Description (Theme, On, Off), default Theme keeps today's look. NOT TESTED."
+   "nov2_note": "Draft RiptOPL #276 / legacy #1235: Settings > Interface > List Title and Description (Theme, On, Off), default Theme keeps today's look. NOT TESTED.",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged in both maintained source editions; see the implementation checkpoint. Console acceptance is separate."
   },
   {
    "id": "RI55",
@@ -3151,7 +3769,9 @@
    "nov1_status": "MISSING",
    "nov1_note": "Unreleased branch work. Product call; not ported.",
    "nov2_status": "MISSING",
-   "nov2_note": "Released in RIPPS2 v1.2.9-beta (November 1). Port started: legacy first, then RiptOPL."
+   "nov2_note": "Released in RIPPS2 v1.2.9-beta (November 1). Port started: legacy first, then RiptOPL.",
+   "checkpoint_status": "PARTIAL",
+   "checkpoint_note": "Legacy #1243 implemented draft; RiptOPL WIP preserved. RIPPS2 build 129 released. Shared-layout/conflict validation and console acceptance remain open."
   },
   {
    "id": "NV2",
@@ -3161,7 +3781,36 @@
    "nov1_status": "PRESENT",
    "nov1_note": "Merged: RiptOPL #234 / legacy #1196 and #243 / #1205. NOT TESTED.",
    "nov2_status": "PRESENT",
-   "nov2_note": ""
+   "nov2_note": "",
+   "checkpoint_status": "PRESENT",
+   "checkpoint_note": "Merged: RiptOPL #234 / legacy #1196 and #243 / #1205. NOT TESTED."
   }
- ]
+ ],
+ "implementation_checkpoint_2026_11_03": {
+  "scope": "Focused source/PR refresh; previous full-register counts remain dated",
+  "source_heads": {
+   "RiptOPL": "22c319f72c046a583917fb73852f7de1d359bd8d",
+   "Open-PS2-Loader": "dfa28822d324ae23b653a2a7585815eaac0cb671"
+  },
+  "source_present": [
+   "YA-21",
+   "YA-22",
+   "YA-25",
+   "DT6",
+   "RI54"
+  ],
+  "draft_only": [
+   "RI55"
+  ],
+  "console_acceptance": "unestablished by this checkpoint",
+  "published": "not claimed for pending drafts"
+ },
+ "counts_checkpoint": {
+  "PRESENT": 77,
+  "MISSING": 110,
+  "UNKNOWN": 40,
+  "INTENTIONAL DIFFERENCE": 44,
+  "PARTIAL": 36,
+  "BLOCKED": 4
+ }
 }
