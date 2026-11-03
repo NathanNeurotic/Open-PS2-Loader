@@ -114,7 +114,7 @@ All **141 tracked identities** were rechecked with `git ls-remote` on November 1
 | [OPL-DualSense-BT](https://github.com/rodrigoGalvanDev/OPL-DualSense-BT) ([rodrigoGalvanDev](https://github.com/rodrigoGalvanDev)) | 7188a53, tag 1.2 | 8bb581a adds DS4 clones, RTL8761B, multi-pad, a Controller Setup page and multitap. **DT6** (an October 29 record; this is its code, counted again as new until the November 2 correction): in-game IOP memory relief for KH2 over SMB (lwIP IP_REASSEMBLY/IP_FRAG off, about 7.3 KB; USBD pool trim when only PADEMU loads, about 28 KB). MISSING; turning IP fragmentation off changes behaviour on large-MTU SMB paths, so it needs a decision before any port. |
 | [DKWDRV](https://github.com/DKWDRV/DKWDRV) | 1.7.6v | Documentation and release only. |
 | [OPL-JUMP](https://github.com/juankyt505/OPL-JUMP) | 5e103b9 | Content unchanged; JUMP1 filename filter stays PARTIAL (product call). |
-| [OrbitPS2-Manager](https://github.com/Luden02/OrbitPS2-Manager) | moved | Desktop companion; moved-head assessment UNKNOWN because this checkpoint does not document inspection. Prior OM1?OM2 desktop migration/batch-ZSO gaps are not reclassified here. |
+| [OrbitPS2-Manager](https://github.com/Luden02/OrbitPS2-Manager) | moved | Desktop companion; moved-head assessment UNKNOWN because this checkpoint does not document inspection. Prior OM1 / OM2 desktop migration/batch-ZSO gaps are not reclassified here. |
 | [neutrino](https://github.com/rickgaiser/neutrino) | 1bff25b | The SMB work is already taken (NV2). |
 | ps2homebrew/Open-PS2-Loader | unchanged | No new upstream master commits to compare. |
 
