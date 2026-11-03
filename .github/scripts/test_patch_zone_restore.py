@@ -46,6 +46,7 @@ STUB_TAMTYPES = 'typedef unsigned char u8;\ntypedef unsigned short u16;\ntypedef
 STUB_USBHDFSD = 'typedef struct { u64 sector; u32 count; } __attribute__((packed)) bd_fragment_t;\n'
 
 HARNESS = r'''
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -68,7 +69,8 @@ HARNESS = r'''
 #define _STR_ERR_CHEATS_LOAD_FAILED 1
 typedef struct config_set config_set_t;
 #define CONFIG_ITEM_ILINK_ID "$ILinkID"
-static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;(void)k;*out=NULL;return 0;}
+static const char *ilink_text;
+static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;assert(!strcmp(k, CONFIG_ITEM_ILINK_ID));*out=ilink_text;return ilink_text!=NULL;}
 typedef struct { u8 parts, media; } base_game_info_t;
 struct UIItem;
 static int gOSDLanguageSource, gOSDLanguageEnable, gOSDLanguageValue, gOSDTVAspectRatio, gOSDVideOutput;
@@ -124,6 +126,21 @@ int main(void)
     index = -7;
     r = sbPrepare(&game, NULL, size, (void **)image, &index);
     printf("prepare after back: %d at %d\n", r, index);
+    /* The real launch parser patches the ID, and the next game never inherits it. */
+    const char *ids[] = {"0123456789abcdef", NULL, "0000000000000000", "", "0123456789ABCDEG"};
+    const u8 enabled[8] = {1, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
+    const u8 disabled[8] = {0};
+    for (unsigned game_no = 0; game_no < sizeof(ids)/sizeof(ids[0]); game_no++) {
+        sbUnprepare(image + 64);
+        assert(!memcmp(image, pristine, sizeof(image)));
+        ilink_text = ids[game_no];
+        index = -7;
+        assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index) == 1 && index == 64);
+        const struct cdvdman_settings_common *patched = (const struct cdvdman_settings_common *)(image + index);
+        assert(!memcmp(patched->ilink_id, game_no == 0 ? enabled : disabled, 8));
+    }
+    sbUnprepare(image + 64);
+    assert(!memcmp(image, pristine, sizeof(image)));
     return 0;
 }
 '''
