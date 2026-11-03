@@ -34,7 +34,10 @@ typedef struct { u32 lo, hi; } iop_sys_clock_t;
 static unsigned char storage[XFER_BLOCK_SIZE+8], caller[XFER_BLOCK_SIZE+8];
 static unsigned char *writeBuffer=storage;
 @STATE@
-static struct SBP2Device device, other;
+#define MAX_DEVICES 2
+static struct SBP2Device SBP2Devices[MAX_DEVICES];
+#define device SBP2Devices[0]
+#define other SBP2Devices[1]
 static struct SBP2Device *target;
 static const void *target_orb;
 static unsigned long long now_us, due_us, delay_us;
@@ -237,15 +240,48 @@ int main(void) {
     CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && notified && submitted==1,
           "LOGIN survives a lost pointer ACK and uses its actual reply");
     CHECK(device.CommandBlockAgent_low==0xf0010000 && !device.managementPending,"successful matching LOGIN installs agent");
+    CHECK(device.loggedIn,"a granted LOGIN marks this generation's login, so a retry does not ask again");
     reset_case();suppress_reply=1;
     CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)<0 && device.managementPending,
           "timed-out LOGIN retains all remotely visible request storage");
     struct management_ORB saved=device.managementORB;
-    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)<0 && submitted==1 &&
-          !memcmp(&saved,&device.managementORB,sizeof(saved)),"pending LOGIN cannot be overwritten by retry");
+    struct sbp2_pointer savedPointer=device.managementPointer;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)<0 && submitted==2 && device.managementPending &&
+          !memcmp(&saved,&device.managementORB,sizeof(saved)) &&
+          !memcmp(&savedPointer,&device.managementPointer,sizeof(savedPointer)),
+          "an unanswered LOGIN is asked again with the very same request, never a new or cleared one");
     deliver();
-    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && submitted==1,
-          "late matching LOGIN is collected without duplicate publication");
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && submitted==2,
+          "late matching LOGIN is collected without another publication");
+
+    /* An exclusive LOGIN is granted only when the drive holds no other login, so whatever an older
+       login of the same drive left reserved (an unanswered LOGIN, the shared command) is released. */
+    reset_case();other.IsConnected=0;other.managementPending=1;
+    device.eui64[0]=other.eui64[0]=0x00d04b12;device.eui64[1]=other.eui64[1]=0x34567890;
+    command.pending=1;command.owner=&other;command.orb=&command.cdb;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && device.loggedIn &&
+          !other.managementPending && !command.pending,
+          "a granted LOGIN releases the same drive's older reserved LOGIN and command");
+    reset_case();other.IsConnected=0;other.managementPending=1;
+    device.eui64[0]=other.eui64[0]=0x00d04b12;device.eui64[1]=0x34567890;other.eui64[1]=0x0badf00d;
+    command.pending=1;command.owner=&other;command.orb=&command.cdb;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && other.managementPending && command.pending,
+          "another drive's reserved LOGIN and command stay reserved");
+    reset_case();other.IsConnected=0;other.managementPending=1;
+    command.pending=1;command.owner=&other;command.orb=&command.cdb;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)==0 && other.managementPending && command.pending,
+          "a drive whose EUI-64 is unknown releases nothing");
+    reset_case();suppress_reply=1;
+    device.eui64[0]=other.eui64[0]=0x00d04b12;device.eui64[1]=other.eui64[1]=0x34567890;
+    other.IsConnected=0;other.managementPending=1;command.pending=1;command.owner=&other;command.orb=&command.cdb;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)<0 && other.managementPending && command.pending,
+          "an unanswered LOGIN releases nothing");
+    reset_case();result_status=(1u<<30)|(1u<<24)|(4u<<16); /* request complete, access denied */
+    device.eui64[0]=other.eui64[0]=0x00d04b12;device.eui64[1]=other.eui64[1]=0x34567890;
+    other.IsConnected=0;other.managementPending=1;command.pending=1;command.owner=&other;command.orb=&command.cdb;
+    CHECK(ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST,&device)<0 && !device.loggedIn &&
+          other.managementPending && command.pending,
+          "a refused LOGIN releases nothing");
     CHECK(!held,"every path releases the transport mutex");
     return failures ? 1 : 0;
 }
@@ -264,6 +300,7 @@ def run(driver):
         'static int sbp2PublishCommand(struct SBP2Device *dev, u32 budget_us)',
         'static int ieee1394_ResetFetchAgent(struct SBP2Device *dev)',
         'static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev)',
+        'static void sbp2RetireOlderLogins(struct SBP2Device *dev)',
         'static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)',
         'static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd, unsigned int cmd_len, unsigned char *data, unsigned int data_len, unsigned int data_wr)',
     )

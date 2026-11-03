@@ -6,6 +6,7 @@
 #include "include/guigame.h"
 #include "include/drivestatus.h"
 #include "include/guifilemgr.h"
+#include "include/riptlite.h"
 
 #include <stdio.h>
 
@@ -16,23 +17,30 @@ struct UIItem diaNetConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MENU_NETWORK}}},
     {UI_SPLITTER},
 
-    // Unified network rows (moved from diaDeviceConfig): Protocol (SMB/UDPFS/UDPBD) and Access
-    // (Files/IMG) qualify the Game Sources "Network Start Mode" row. netConfigUpdater greys Access
-    // for SMB and locks it to IMG for UDPBD (same rules guiDeviceUpdater used to apply).
+// Unified network rows (moved from diaDeviceConfig): Protocol (SMB/UDPFS/UDPBD) and Access
+// (Files/IMG) qualify the Game Sources "Network Start Mode" row. netConfigUpdater greys Access
+// for SMB and locks it to IMG for UDPBD (same rules guiDeviceUpdater used to apply).
+// RiptOPLite carries one protocol (include/riptlite.h): no picker, and Access only for UDPFS.
+#if !defined(RIPTOPLITE)
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Protocol", -1}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETPROTOCOL, 1, 1, _STR_HINT_NET_PROTOCOL, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#endif
 
+#if LITE_HAS_UDPFS
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Access", -1}}},
     {UI_SPACER},
     {UI_ENUM, CFG_UDPFSMODE, 1, 1, _STR_HINT_UDPFS_ACCESS, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#endif
 
+#if LITE_HAS_SMB_SHARE
     {UI_LABEL, NETCFG_LBL_SMBDIALECT, 1, 1, -1, -40, 0, {.label = {"SMB Version", -1}}},
     {UI_SPACER},
     {UI_ENUM, CFG_SMBDIALECT, 1, 1, _STR_HINT_SMB_VERSION, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#endif
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHOW_ADVANCED_OPTS}}},
     {UI_SPACER},
@@ -430,6 +438,9 @@ struct UIItem diaDeviceConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_GAME_SOURCES}}},
     {UI_SPLITTER},
 
+// RiptOPLite starts its one source itself (liteApplyDeviceMask): no default page or start-mode rows
+// for sources it does not carry, and none for the one it does. The MMCE Settings button stays (Game ID).
+#if !defined(RIPTOPLITE)
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEFDEVICE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_DEFDEVICE, 1, 1, _STR_HINT_DEFDEVICE, 0, 0, {.intvalue = {0, 0}}},
@@ -444,12 +455,14 @@ struct UIItem diaDeviceConfig[] = {
     {UI_SPACER},
     {UI_ENUM, CFG_MMCEMODE, 1, 1, _STR_HINT_MMCE_MODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#endif
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"MMCE Settings", -1}}},
     {UI_SPACER},
     {UI_BUTTON, MMCE_SETTINGS_BUTTON, 1, 1, _STR_HINT_MMCE_SETTINGS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
+#if !defined(RIPTOPLITE)
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"BDM Devices Start Mode", -1}}},
     {UI_SPACER},
     {UI_ENUM, CFG_BDMMODE, 1, 1, _STR_HINT_BDM_START, 0, 0, {.intvalue = {0, 0}}},
@@ -475,10 +488,14 @@ struct UIItem diaDeviceConfig[] = {
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEPCCF, 1, 1, _STR_HINT_ENABLE_PCCF, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#endif
+#if LITE_HAS_DVR
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      DESR DVR ISOs (experimental)", -1}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEDVR, 1, 1, _STR_HINT_ENABLE_DVR, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#endif
+#if !defined(RIPTOPLITE)
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      iLink", -1}}},
     {UI_SPACER},
@@ -497,6 +514,7 @@ struct UIItem diaDeviceConfig[] = {
     {UI_SPACER},
     {UI_ENUM, CFG_NETPROTOCOL, 1, 1, _STR_HINT_NET_PROTOCOL, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#endif
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Applications Page Start Mode", -1}}},
     {UI_SPACER},
@@ -1105,6 +1123,11 @@ struct UIItem diaLaunchConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PS2LOGO}}},
     {UI_SPACER},
     {UI_BOOL, CFG_PS2LOGO, 1, 1, _STR_HINT_PS2LOGO, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_APP_HANDOFF_PATH}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_APP_HANDOFF_PATH, 1, 1, _STR_HINT_APP_HANDOFF_PATH, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_AUTO_CREATE_VMC}}},

@@ -25,3 +25,11 @@ static inline int DeleteSema(int s)
     (void)s;
     return 0;
 }
+#ifndef HOST_ISIGNALSEMA
+#define HOST_ISIGNALSEMA
+static inline int iSignalSema(int s)
+{
+    (void)s;
+    return 0;
+}
+#endif

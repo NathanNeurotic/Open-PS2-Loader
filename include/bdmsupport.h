@@ -92,6 +92,11 @@ int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen);
 // "mass<i>:/"), up to maxSlots; returns the count. The BDMA equip searches all same-type slots so a
 // source family with two same-type devices is covered when the files sit on the second.
 int bdmGetDeviceSlotsByType(int bdmType, int *slots, int maxSlots);
+// Spell "mass<N>:/..." as the typed root bdmfs also registers for that device ("usb0:/...", "ata0:/...",
+// "ilink0:/...", "mx4sio0:/..."), numbered the way bdmfs numbers it. For the argv[0] handed to an ELF app
+// ONLY: OPL loads and mounts through mass<N>: in every case. Returns 1 with out filled, 0 when there is
+// no typed name for this path (not a numbered mass path, slot not mounted, udp/cf/unknown type, out too small).
+int bdmBuildTypedHandoffPath(const char *massPath, char *out, int outLen);
 // Force-load the BDM transport for bdmType (even if its games toggle is off) and wait up to timeoutMs
 // for a device of that type to mount, so the BDMA equip can read a source device that isn't enabled for
 // games. Returns 1 if a device is present afterwards, 0 otherwise. Idempotent + instant when already up.

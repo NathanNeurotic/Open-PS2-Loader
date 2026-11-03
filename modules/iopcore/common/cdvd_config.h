@@ -47,7 +47,13 @@ struct cdvdman_settings_hdd
 struct cdvdman_settings_smb
 {
     struct cdvdman_settings_common common;
-    char filename[160];
+    // The image's file name, which device-smb.c opens. It must hold the longest one the menu lists
+    // whole, the old format "<startup>.<name><extension>": GAME_STARTUP_MAX + 1 + ISO_GAME_NAME_MAX +
+    // ISO_GAME_EXTENSION_MAX + 1 for the NUL (include/supportbase.h). The scan keeps at most
+    // GAME_STARTUP_MAX - 1 characters of an old-format startup, so the longest name is 176 bytes and
+    // one byte is spare. A name cut short opens a file that does not exist.
+    // src/ethsupport.c checks this size when it is built.
+    char filename[12 + 1 + 160 + 4 + 1];
     union
     {
         struct
@@ -64,8 +70,14 @@ struct cdvdman_settings_smb
     };
 } __attribute__((packed));
 
+// device-smb.c builds the paths it opens from the block above in a buffer of this size. The longest,
+// "\<prefix>\DVD\<file name>", takes at most 1 + 31 + 5 + 177 + 1 = 215 bytes, the prefix and file
+// name fields full; src/ethsupport.c checks that it fits when it is built.
+#define CDVDMAN_SMB_PATH_MAX 256
+
 // HTTP stores the launch-owned request target and expected image size across every IOP reset.
-// No menu pointer or live socket crosses this boundary. Existing device layouts stay unchanged.
+// No menu pointer or live socket crosses this boundary. Adding HTTP left the other device layouts as
+// they were.
 #define CDVDMAN_HTTP_URI_MAX 768
 struct cdvdman_settings_http
 {

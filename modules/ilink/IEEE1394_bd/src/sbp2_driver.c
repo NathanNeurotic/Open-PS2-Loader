@@ -244,13 +244,19 @@ static int initConfigureSBP2Device(struct SBP2Device *dev)
 {
     iop_sys_clock_t start;
 
-    GetSystemTime(&start);
-    while (ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST, dev) < 0) {
-        if (sbp2ElapsedUs(&start) >= SBP2_LOGIN_BUDGET_US) {
-            M_DEBUG("Failed to log into the SBP-2 device.\n");
-            return -1;
+    /* RiptOPL: a retry after a failed warm-up keeps the login the drive already gave this
+     * generation. Asking again would be refused: the drive keeps that login until a bus reset. */
+    if (!dev->loggedIn) {
+        GetSystemTime(&start);
+        while (ieee1394_SendManagementORB(SBP2_LOGIN_REQUEST, dev) < 0) {
+            /* RiptOPL: after a bus reset every further LOGIN here fails at once, so stop rather than
+             * spin out the budget; the bus-reset thread starts the next attempt. */
+            if (dev->generation != iLinkGetGenerationNumber() || sbp2ElapsedUs(&start) >= SBP2_LOGIN_BUDGET_US) {
+                M_DEBUG("Failed to log into the SBP-2 device.\n");
+                return -1;
+            }
+            DelayThread(SBP2_LOGIN_RETRY_US);
         }
-        DelayThread(SBP2_LOGIN_RETRY_US);
     }
 
     if (ieee1394_InitializeFetchAgent(dev) < 0) {
@@ -276,6 +282,13 @@ static inline int initSBP2Disk(struct SBP2Device *dev)
 
     /* !! NOTE !! sce1394CrRead() reads data starting from the start of the target device's configuration ROM (0x400),
         and the offset and data to be read is specified in quadlets (Groups of 4 bytes)!!!!! */
+
+    /* RiptOPL: the EUI-64 (bus info block quadlets 3 and 4, at 0x40C) names this drive in every bus
+     * generation; node IDs can change at each reset. sbp2RetireOlderLogins matches drives by it. */
+    if ((result = iLinkReadCROM(dev->nodeID, 3, 2, dev->eui64)) < 0) {
+        M_DEBUG("Error reading the EUI-64. Error %d.\n", result);
+        return (result);
+    }
 
     M_DEBUG("Reading configuration ROM for the unit directory offset of node 0x%08x\n", dev->nodeID);
 
@@ -344,89 +357,230 @@ static inline int initSBP2Disk(struct SBP2Device *dev)
     return 1;
 }
 
+/* RiptOPL: how long to wait before trying a drive that did not attach again (#1018).
+ *
+ * The SDK tried a drive only at a bus reset. A drive that refused or ignored its LOGIN for longer than
+ * the login budget, or whose warm-up failed, then stayed detached until the next bus reset -- and
+ * nothing in a running game causes one, so CDVDMAN or Neutrino waited for it forever. Keep trying
+ * while the unit is on the bus: after 1 s, then 2 s and 4 s, then every 5 s. A bus reset ends the wait
+ * at once and starts over. The wait polls, so it cannot sleep through a reset.
+ *
+ * A try holds the transport while it waits for the drive's answer (up to the login budget), so a
+ * drive that never answers would stall the I/O of an attached drive at every try, for as long as both
+ * are on the bus. With another drive attached, the tries stop after SBP2_RETRY_LIMIT retries (32 s
+ * of waiting in all) until the next bus reset. With none attached, nothing waits on the transport,
+ * and the tries go on. */
+#define SBP2_RETRY_FIRST_US (1000 * 1000)
+#define SBP2_RETRY_MAX_US   (5 * 1000 * 1000)
+#define SBP2_RETRY_POLL_US  (100 * 1000)
+#define SBP2_RETRY_LIMIT    8 /* retries while another drive is attached; also caps the back-off */
+
+static u32 sbp2RetryDelayUs(unsigned int retries)
+{
+    u32 delay = SBP2_RETRY_FIRST_US;
+    unsigned int i;
+
+    for (i = 1; i < retries && delay < SBP2_RETRY_MAX_US; i++)
+        delay *= 2;
+    return delay < SBP2_RETRY_MAX_US ? delay : SBP2_RETRY_MAX_US;
+}
+
+/* Wait up to `us` for a bus reset. Returns 1 when one arrived (its event is consumed), 0 when not. */
+static int sbp2WaitBusReset(u32 us)
+{
+    u32 bits, step;
+
+    while (PollEventFlag(sbp2_event_flag, BUS_RESET_COMPLETE, WEF_AND | WEF_CLEAR, &bits) != 0) {
+        if (us == 0)
+            return 0;
+        step = us < SBP2_RETRY_POLL_US ? us : SBP2_RETRY_POLL_US;
+        DelayThread(step);
+        us -= step;
+    }
+    return 1;
+}
+
+/* Called with sbp2_io_sema held. The lowest device number that no other attached or attaching drive
+ * uses. CDVDMAN and Neutrino accept the game's drive only under the number the menu saw it under
+ * (bd->devNr == bdDeviceId, modules/iopcore/cdvdman/device-bdm.c), and the slot index is not stable:
+ * a slot whose LOGIN or command never got its status stays reserved, so after a bus reset the same
+ * drive comes up in the next slot. Numbering by slot made a lone drive device 1 there, and nothing
+ * attached it. A lone drive is now always device 0, as it was in the menu. A drive whose login this
+ * generation granted keeps its number while its warm-up is retried, so a second drive that attaches
+ * meanwhile does not take it. */
+static unsigned int sbp2FreeDevNr(const struct SBP2Device *dev)
+{
+    unsigned int nr;
+    int i;
+
+    for (nr = 0;; nr++) {
+        for (i = 0; i < MAX_DEVICES; i++) {
+            const struct SBP2Device *other = &SBP2Devices[i];
+            if (other != dev && other->scsi.devNr == nr &&
+                (other->IsConnected || other->configuring || (other->loggedIn && other->generation == dev->generation)))
+                break;
+        }
+        if (i == MAX_DEVICES)
+            return nr;
+    }
+}
+
+/* A bus reset ends every login: this driver never sends RECONNECT. Requests whose status has not
+ * arrived keep their slots reserved (sbp2RetireOlderLogins releases them). */
+static void sbp2BusReset(void)
+{
+    struct SBP2Device *dev;
+    int i;
+
+    WaitSema(sbp2_io_sema);
+    for (i = 0; i < MAX_DEVICES; i++) {
+        dev = &SBP2Devices[i];
+        dev->IsConnected = dev->configuring = dev->loggedIn = 0;
+        if (dev->trContext >= 0) {
+            iLinkTrFree(dev->trContext);
+            dev->trContext = -1;
+        }
+        if (dev->managementPending && sbp2StatusReady(dev, &dev->managementORB))
+            dev->managementPending = 0;
+    }
+    sbp2CommandAvailable();
+    SignalSema(sbp2_io_sema);
+    /* BDM/FS unmount can take filesystem locks. Never hold the transport
+     * mutex while calling it: an in-flight FS read may need that mutex. */
+    for (i = 0; i < MAX_DEVICES; i++)
+        scsi_disconnect(&SBP2Devices[i].scsi);
+}
+
+/* Bring up every SBP-2 unit on the bus that is not attached yet. Returns how many could not be
+ * attached and are worth trying again without a bus reset. */
+static int sbp2AttachUnits(void)
+{
+    int nNodes, i, j, nodeID, speed, generation, missing = 0;
+    struct SBP2Device *dev, *slot;
+    static const unsigned char PayloadSizeLookupTable[] = {7, 8, 9};
+
+    nNodes = iLinkGetNodeCount();
+    for (i = 0; i < nNodes; i++) {
+        if ((nodeID = iLinkFindUnit(i, 0x0609e, 0x010483)) < 0)
+            continue;
+        WaitSema(sbp2_io_sema);
+        sbp2CommandAvailable();
+        generation = iLinkGetGenerationNumber();
+        /* RiptOPL: a retry keeps the slot of its earlier attempt in this generation, so a late answer
+         * to that attempt's LOGIN is still collected and an accepted login is reused, not refused.
+         * Otherwise take the first slot whose remote storage nothing can still write and that holds no
+         * login of this generation: such a login is another drive's, kept for that drive's retry. */
+        dev = NULL;
+        for (j = 0; j < MAX_DEVICES; j++) {
+            slot = &SBP2Devices[j];
+            if (slot->generation == generation && slot->nodeID == nodeID) {
+                dev = slot;
+                break;
+            }
+            if (dev == NULL && !slot->IsConnected && !slot->managementPending &&
+                !(slot->loggedIn && slot->generation == generation) &&
+                !(command.pending && command.owner == slot))
+                dev = slot;
+        }
+        if (dev == NULL) {
+            SignalSema(sbp2_io_sema);
+            missing++;
+            break;
+        }
+        if (dev->IsConnected) { /* attached already */
+            SignalSema(sbp2_io_sema);
+            continue;
+        }
+        /* A login another slot still records belongs to an earlier generation (a bus reset this thread
+         * has not handled yet ended it): this drive asks for its own. */
+        if (dev->generation != generation || dev->nodeID != nodeID)
+            dev->loggedIn = 0;
+        dev->generation = generation;
+        dev->nodeID = nodeID;
+        dev->InitiatorNodeID = iLinkGetLocalNodeID();
+        dev->ManagementAgent_high = dev->ManagementAgent_low = 0;
+        dev->mgt_ORB_timeout = dev->ORB_size = dev->LUN = 0;
+        speed = iLinkGetNodeMaxSpeed(nodeID);
+        if (speed < 0 || speed > 2) { /* not a speed this driver can use */
+            SignalSema(sbp2_io_sema);
+            continue;
+        }
+        if (initSBP2Disk(dev) < 0) { /* a configuration ROM read failed: may pass next time */
+            SignalSema(sbp2_io_sema);
+            missing++;
+            continue;
+        }
+        if (dev->ManagementAgent_low == 0) { /* no management agent: not a disk this driver can use */
+            SignalSema(sbp2_io_sema);
+            continue;
+        }
+        dev->trContext = iLinkTrAlloc(nodeID, speed);
+        if (dev->trContext < 0) {
+            SignalSema(sbp2_io_sema);
+            missing++;
+            continue;
+        }
+        speed = iLinkGetNodeTrSpeed(dev->trContext);
+        if (speed < 0 || speed > 2) {
+            iLinkTrFree(dev->trContext);
+            dev->trContext = -1;
+            SignalSema(sbp2_io_sema);
+            continue;
+        }
+        dev->speed = speed;
+        dev->max_payload = PayloadSizeLookupTable[speed];
+        dev->scsi.devNr = sbp2FreeDevNr(dev);
+        dev->configuring = 1;
+        SignalSema(sbp2_io_sema);
+
+        /* Warm-up submits normal SCSI commands, which acquire the mutex. */
+        int result = initConfigureSBP2Device(dev);
+        WaitSema(sbp2_io_sema);
+        dev->configuring = 0;
+        dev->IsConnected = result >= 0 && dev->generation == iLinkGetGenerationNumber();
+        if (!dev->IsConnected) {
+            iLinkTrFree(dev->trContext);
+            dev->trContext = -1;
+        }
+        SignalSema(sbp2_io_sema);
+        if (!dev->IsConnected) {
+            scsi_disconnect(&dev->scsi);
+            missing++;
+        }
+    }
+    return missing;
+}
+
+/* Whether any drive is attached. Only the bus-reset thread changes IsConnected once it runs. */
+static int sbp2AnyAttached(void)
+{
+    int i;
+
+    for (i = 0; i < MAX_DEVICES; i++)
+        if (SBP2Devices[i].IsConnected)
+            return 1;
+    return 0;
+}
+
 /* Hardware event handling threads. */
 static void iLinkIntrCBHandlingThread(void *arg)
 {
-    int nNodes, i, j, nodeID, speed;
-    struct SBP2Device *dev;
-    static const unsigned char PayloadSizeLookupTable[] = {7, 8, 9};
+    unsigned int retries = 0;
     (void)arg;
     while (1) {
-        WaitEventFlag(sbp2_event_flag, BUS_RESET_COMPLETE, WEF_AND | WEF_CLEAR, NULL);
-        WaitSema(sbp2_io_sema);
-        for (i = 0; i < MAX_DEVICES; i++) {
-            dev = &SBP2Devices[i];
-            dev->IsConnected = dev->configuring = 0;
-            if (dev->trContext >= 0) {
-                iLinkTrFree(dev->trContext);
-                dev->trContext = -1;
-            }
-            if (dev->managementPending && sbp2StatusReady(dev, &dev->managementORB))
-                dev->managementPending = 0;
+        if (retries == 0) {
+            WaitEventFlag(sbp2_event_flag, BUS_RESET_COMPLETE, WEF_AND | WEF_CLEAR, NULL);
+            sbp2BusReset();
+        } else if (sbp2WaitBusReset(sbp2RetryDelayUs(retries))) {
+            retries = 0;
+            sbp2BusReset();
         }
-        sbp2CommandAvailable();
-        SignalSema(sbp2_io_sema);
-        /* BDM/FS unmount can take filesystem locks. Never hold the transport
-         * mutex while calling it: an in-flight FS read may need that mutex. */
-        for (i = 0; i < MAX_DEVICES; i++)
-            scsi_disconnect(&SBP2Devices[i].scsi);
-
-        nNodes = iLinkGetNodeCount();
-        for (i = 0; i < nNodes; i++) {
-            if ((nodeID = iLinkFindUnit(i, 0x0609e, 0x010483)) < 0)
-                continue;
-            WaitSema(sbp2_io_sema);
-            sbp2CommandAvailable();
-            for (j = 0; j < MAX_DEVICES; j++) {
-                dev = &SBP2Devices[j];
-                if (!dev->IsConnected && !dev->managementPending &&
-                    !(command.pending && command.owner == dev))
-                    break;
-            }
-            if (j == MAX_DEVICES) {
-                SignalSema(sbp2_io_sema);
-                break;
-            }
-            dev->generation = iLinkGetGenerationNumber();
-            dev->nodeID = nodeID;
-            dev->InitiatorNodeID = iLinkGetLocalNodeID();
-            dev->ManagementAgent_high = dev->ManagementAgent_low = 0;
-            dev->mgt_ORB_timeout = dev->ORB_size = dev->LUN = 0;
-            speed = iLinkGetNodeMaxSpeed(nodeID);
-            if (speed < 0 || speed > 2 || initSBP2Disk(dev) < 0 || dev->ManagementAgent_low == 0) {
-                SignalSema(sbp2_io_sema);
-                continue;
-            }
-            dev->trContext = iLinkTrAlloc(nodeID, speed);
-            if (dev->trContext < 0) {
-                SignalSema(sbp2_io_sema);
-                continue;
-            }
-            speed = iLinkGetNodeTrSpeed(dev->trContext);
-            if (speed < 0 || speed > 2) {
-                iLinkTrFree(dev->trContext);
-                dev->trContext = -1;
-                SignalSema(sbp2_io_sema);
-                continue;
-            }
-            dev->speed = speed;
-            dev->max_payload = PayloadSizeLookupTable[speed];
-            dev->configuring = 1;
-            SignalSema(sbp2_io_sema);
-
-            /* Warm-up submits normal SCSI commands, which acquire the mutex. */
-            int result = initConfigureSBP2Device(dev);
-            WaitSema(sbp2_io_sema);
-            dev->configuring = 0;
-            dev->IsConnected = result >= 0 && dev->generation == iLinkGetGenerationNumber();
-            if (!dev->IsConnected) {
-                iLinkTrFree(dev->trContext);
-                dev->trContext = -1;
-            }
-            SignalSema(sbp2_io_sema);
-            if (!dev->IsConnected)
-                scsi_disconnect(&dev->scsi);
-        }
+        if (sbp2AttachUnits() == 0)
+            retries = 0;
+        else if (retries < SBP2_RETRY_LIMIT)
+            retries++;
+        else if (sbp2AnyAttached())
+            retries = 0; /* no more tries until a bus reset: each one stalls the attached drive's I/O */
     }
 }
 
@@ -462,6 +616,33 @@ out:
     return result;
 }
 
+/* Called with sbp2_io_sema held, once dev's LOGIN succeeded. The drive granted an exclusive login,
+ * so it held no other login at that moment: whatever earlier login of this drive a reserved slot's
+ * unanswered LOGIN or command belonged to is gone, and SBP-2 aborts a released login's tasks, so the
+ * drive will never write that storage again. Release it. Without this, a slot reserved by one lost
+ * status stayed reserved for the whole session, and the shared command storage with it: every later
+ * command, and every later fetch-agent setup, was refused until that status arrived, which it never
+ * does once the drive has dropped the login. The EUI-64 tells this drive from other drives. */
+static void sbp2RetireOlderLogins(struct SBP2Device *dev)
+{
+    struct SBP2Device *old;
+    int i;
+
+    for (i = 0; i < MAX_DEVICES; i++) {
+        old = &SBP2Devices[i];
+        if (old != dev) {
+            if (old->IsConnected || old->configuring || (dev->eui64[0] == 0 && dev->eui64[1] == 0) ||
+                old->eui64[0] != dev->eui64[0] || old->eui64[1] != dev->eui64[1])
+                continue;
+            old->managementPending = 0;
+            old->loggedIn = 0;
+        }
+        /* The login granted just now has carried no command yet. */
+        if (command.pending && command.owner == old)
+            command.pending = 0;
+    }
+}
+
 static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
 {
     int result = -1;
@@ -473,8 +654,16 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
     if (mode != SBP2_LOGIN_REQUEST || dev->generation != iLinkGetGenerationNumber())
         goto out;
     if (dev->managementPending) {
+        /* RiptOPL: the drive did not answer this LOGIN within its own management timeout (the whole
+         * wait below). Write the pointer to the very same request again -- same ORB, same storage,
+         * nothing cleared -- so a late answer to the first write still lands where this driver looks.
+         * The SDK only polled, and ignored the write's result, so a pointer write the drive never took
+         * left the LOGIN pending until the next bus reset (#1018). A drive still busy with the request
+         * rejects the write (SBP-2: the management agent refuses a pointer while it is busy) and goes
+         * on with the request. */
         if (!sbp2StatusReady(dev, orb))
-            goto out;
+            iLinkTrWrite(dev->trContext, dev->ManagementAgent_high, dev->ManagementAgent_low,
+                         &dev->managementPointer, 8);
     } else {
         memset((void *)&dev->statusFIFO, 0, sizeof(dev->statusFIFO));
         memset(response, 0, sizeof(*response));
@@ -507,6 +696,10 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
         if (dev->CommandBlockAgent_low < 0xf0010000 ||
             (dev->CommandBlockAgent_high & 0xffff) != 0xffff)
             result = -1;
+        else {
+            dev->loggedIn = 1;
+            sbp2RetireOlderLogins(dev);
+        }
     }
 out:
     SignalSema(sbp2_io_sema);
