@@ -69,6 +69,8 @@ HARNESS = r'''
 #define _STR_ERR_CHEATS_LOAD_FAILED 1
 typedef struct config_set config_set_t;
 #define CONFIG_ITEM_ILINK_ID "$ILinkID"
+static int id_diagnostics;
+static void diagLog(const char *fmt,...){assert(strstr(fmt,"$ILinkID"));id_diagnostics++;}
 static const char *ilink_text;
 static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;assert(!strcmp(k, CONFIG_ITEM_ILINK_ID));*out=ilink_text;return ilink_text!=NULL;}
 typedef struct { u8 parts, media; } base_game_info_t;
@@ -138,6 +140,7 @@ int main(void)
         assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index) == 1 && index == 64);
         const struct cdvdman_settings_common *patched = (const struct cdvdman_settings_common *)(image + index);
         assert(!memcmp(patched->ilink_id, game_no == 0 ? enabled : disabled, 8));
+        assert(id_diagnostics == (game_no == 4 ? 1 : 0));
     }
     sbUnprepare(image + 64);
     assert(!memcmp(image, pristine, sizeof(image)));

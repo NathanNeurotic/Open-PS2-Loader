@@ -1,4 +1,5 @@
 #include "include/ilinkid.h"
+#include "include/diaglog.h"
 #include "include/opl.h"
 #include "include/lang.h"
 #include "include/util.h"
@@ -1096,7 +1097,7 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
     const char *consoleID = NULL;
     configGetStr(configSet, CONFIG_ITEM_ILINK_ID, &consoleID);
     if (oplParseILinkID(consoleID, settings->ilink_id) < 0)
-        LOG("Ignoring malformed per-game $ILinkID; using the real console ID.\n");
+        diagLog("launch: invalid $ILinkID; using the real console ID");
 
     // game id
     memcpy(settings->DiscID, gameid, sizeof(settings->DiscID));
