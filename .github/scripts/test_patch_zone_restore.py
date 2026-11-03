@@ -51,6 +51,7 @@ HARNESS = r'''
 #include <string.h>
 #include <tamtypes.h>
 #include <cdvd_config.h>
+#include <ilinkid.h>
 #define LOG(...) ((void)0)
 #define COMPAT_MODE_1 0x01
 #define COMPAT_MODE_2 0x02
@@ -66,6 +67,8 @@ HARNESS = r'''
 #define CONFIG_ITEM_OSD_SETTINGS_VMODE "vmode"
 #define _STR_ERR_CHEATS_LOAD_FAILED 1
 typedef struct config_set config_set_t;
+#define CONFIG_ITEM_ILINK_ID "$ILinkID"
+static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;(void)k;*out=NULL;return 0;}
 typedef struct { u8 parts, media; } base_game_info_t;
 struct UIItem;
 static int gOSDLanguageSource, gOSDLanguageEnable, gOSDLanguageValue, gOSDTVAspectRatio, gOSDVideOutput;
@@ -138,7 +141,7 @@ with tempfile.TemporaryDirectory() as tmp:
     src, exe = tmp / 'zone.c', tmp / 'zone'
     src.write_text(HARNESS.replace('@FUNCTIONS@', functions), encoding='utf-8')
     result = subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Werror', '-Wno-unused-function', '-I', str(tmp),
-                             '-I', str(root / 'modules/iopcore/common'), '-o', str(exe), str(src)],
+                             '-I', str(root / 'include'), '-I', str(root / 'modules/iopcore/common'), '-o', str(exe), str(src)],
                             capture_output=True, text=True, check=False)
     if result.returncode != 0:
         sys.exit('the sbPrepare harness did not compile:\n' + result.stderr)

@@ -1311,6 +1311,11 @@ struct UIItem diaCompatConfig[] = {
     {UI_BUTTON, COMPAT_LOADFROMDISC, 1, 1, _STR_HINT_LOAD_FROM_DISC, 0, 0, {.label = {NULL, _STR_LOAD_FROM_DISC}}},
     {UI_SPLITTER},
 
+    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_CONSOLE_ILINK_ID}}},
+    {UI_SPACER},
+    {UI_STRING, COMPAT_ILINK_ID, 1, 1, _STR_HINT_CONSOLE_ILINK_ID, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_SPLITTER},
+
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_ALTSTARTUP}}},
     {UI_SPACER},
     {UI_STRING, COMPAT_ALTSTARTUP, 1, 1, _STR_HINT_ALTSTARTUP, 0, 0, {.stringvalue = {"", "", &guiGameAltStartupNameHandler}}},

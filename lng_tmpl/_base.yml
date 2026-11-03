@@ -2536,3 +2536,10 @@ gui_strings:
 - comment: App Handoff Path choice, the typed spelling.
   label: APP_HANDOFF_TYPED
   string: "Typed (usb0:, ata0:)"
+- comment: Optional native OPL core console identity override, separate from Disc ID.
+  label: CONSOLE_ILINK_ID
+  string: Console i.LINK ID
+- label: HINT_CONSOLE_ILINK_ID
+  string: "Native OPL core only. Enter 16 hexadecimal digits in byte order. Empty or all zeros uses this console's ID. This does not change i.LINK storage hardware."
+- label: INVALID_CONSOLE_ILINK_ID
+  string: "Console i.LINK ID must be empty or exactly 16 hexadecimal digits (0-9, A-F). Settings were not saved."

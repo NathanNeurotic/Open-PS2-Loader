@@ -1,3 +1,4 @@
+#include "include/ilinkid.h"
 #include "include/opl.h"
 #include "include/lang.h"
 #include "include/util.h"
@@ -989,7 +990,7 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
     char gameid[5];
     configGetDiscIDBinary(configSet, gameid);
 
-    for (i = 0, settings = NULL; i < size_cdvdman; i += 4) {
+    for (i = 0, settings = NULL; i <= size_cdvdman - (int)sizeof(cdvdman_settings_common_sample); i += 4) {
         if (!memcmp((void *)((u8 *)cdvdman_irx + i), &cdvdman_settings_common_sample, sizeof(cdvdman_settings_common_sample))) {
             settings = (struct cdvdman_settings_common *)((u8 *)cdvdman_irx + i);
             break;
@@ -1091,6 +1092,11 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
     }
 
     *patchindex = i;
+
+    const char *consoleID = NULL;
+    configGetStr(configSet, CONFIG_ITEM_ILINK_ID, &consoleID);
+    if (oplParseILinkID(consoleID, settings->ilink_id) < 0)
+        LOG("Ignoring malformed per-game $ILinkID; using the real console ID.\n");
 
     // game id
     memcpy(settings->DiscID, gameid, sizeof(settings->DiscID));

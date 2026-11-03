@@ -197,7 +197,12 @@ int sceCdRI(u8 *buf, u32 *stat)
 {
     u8 rdbuf[16];
 
-    cdvdman_sendSCmd(0x12, NULL, 0, rdbuf, 9);
+    const u8 *id = cdvdman_settings.common.ilink_id;
+    if (id[0] | id[1] | id[2] | id[3] | id[4] | id[5] | id[6] | id[7]) {
+        rdbuf[0] = 0;
+        memcpy(&rdbuf[1], id, 8);
+    } else
+        cdvdman_sendSCmd(0x12, NULL, 0, rdbuf, 9);
 
     if (stat)
         *stat = (u32)rdbuf[0];
