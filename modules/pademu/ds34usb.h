@@ -9,7 +9,7 @@
 #define DS4       1
 #define GUITAR_GH 2
 #define GUITAR_RB 3
-#define SHANWAN   4 // ShanWan PS3 clone in generic HID mode (SHANWAN_VID/SHANWAN_PS3_PID): input only
+#define SHANWAN   4 // ShanWan generic HID pad (SHANWAN_VID/SHANWAN_PS3_PID): input only
 
 #define MODEL_GUITAR 1
 #define MODEL_PS2    3
