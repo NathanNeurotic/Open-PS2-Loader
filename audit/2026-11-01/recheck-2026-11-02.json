@@ -1,6 +1,6 @@
 {
  "checked_at": "2026-11-02T14:16:41Z",
- "method": "git ls-remote --heads --tags from the cloud container, for the 11 tracked repositories that carry open records plus 2 untracked ones; heads compared with audit/2026-11-01/repository-heads.json. Peeled tag lines (^{}) are not compared. An untracked repository lists every ref as new.",
+ "method": "git ls-remote --heads --tags from the cloud container, for the 11 selected tracked repositories that carry open records plus 2 untracked ones; heads compared with audit/2026-11-01/repository-heads.json. Peeled tag lines (^{}) are not compared. An untracked repository lists every ref as new.",
  "moved": [
   "akilluminati47/RIPPS2"
  ],
