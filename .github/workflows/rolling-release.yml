@@ -1149,7 +1149,17 @@ jobs:
                 retry gh release download "$TAG" --pattern "$asset" --dir replaced --clobber </dev/null
               fi
             done <<< "$OLD_ASSETS"
-            if ! retry gh release upload "$TAG" rolling/* --clobber; then
+            # Upload one file per call: a transient 500/502 mid-run replays only the file that
+            # failed, never re-clobbering assets an earlier attempt already replaced (RiptOPL #303).
+            UPLOAD_FAILED=0
+            for asset_path in rolling/*; do
+              [ -e "$asset_path" ] || continue
+              if ! retry gh release upload "$TAG" "$asset_path" --clobber; then
+                UPLOAD_FAILED=1
+                break
+              fi
+            done
+            if [ "$UPLOAD_FAILED" -ne 0 ]; then
               NOW=$(retry gh release view "$TAG" --json assets --jq '.assets[].name' || true)
               for f in replaced/*; do
                 [ -e "$f" ] || continue
