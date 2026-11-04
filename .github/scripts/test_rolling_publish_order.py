@@ -49,6 +49,11 @@ FAKE_GH = r'''
 set -u
 verb="$1 $2"
 key=$(echo "$verb" | tr ' -' '__')
+if [ "$verb" = "release upload" ]; then
+  # Count every attempted per-file upload, including attempts that fail below,
+  # so the test can pin "one file per call" and "bounded retries" numerically.
+  ( shift 3; for f in "$@"; do case "$f" in --*) continue ;; esac; basename "$f"; done ) >> "$STATE/upload_attempts"
+fi
 left=$(cat "$STATE/fail_$key" 2>/dev/null || echo 0)
 if [ "$left" -gt 0 ]; then
   echo $((left - 1)) > "$STATE/fail_$key"
@@ -127,7 +132,9 @@ def run_case(tmp, old, new, fail=None, badnew=None):
     result = subprocess.run(['bash', str(Path(tmp) / 'publish.sh')], cwd=tmp, env=env, capture_output=True, text=True,
                             check=False)
     after = {p.name: p.read_text() for p in release.iterdir()}
-    return result.returncode, after, result.stderr
+    attempts_file = state / 'upload_attempts'
+    attempts = attempts_file.read_text().split() if attempts_file.exists() else []
+    return result.returncode, after, result.stderr, attempts
 
 
 if not failures:
@@ -141,25 +148,35 @@ if not failures:
         gh.chmod(0o755)
         (Path(tmp) / 'publish.sh').write_text(HARNESS.replace('@HELPER@', helper).replace('@UPDATE@', update), newline='\n')
 
-        code, after, err = run_case(tmp, old, new)
+        code, after, err, uploads = run_case(tmp, old, new)
         if code != 0 or sorted(after) != sorted(new) or any(not v.startswith('new ') for v in after.values()):
             failures.append('a normal publish must leave exactly the new set, an old name with a space included '
                             '(got %s, exit %d)\n%s' % (sorted(after), code, err))
+        if sorted(uploads) != sorted(new):
+            failures.append('a normal publish must attempt exactly one upload per staged asset, no bulk replay '
+                            '(got %d attempts: %s)' % (len(uploads), uploads))
 
         for key in ('release_view', 'release_download', 'release_upload', 'release_edit', 'release_delete_asset'):
-            code, after, err = run_case(tmp, old, new, fail={key: 2})
+            code, after, err, uploads = run_case(tmp, old, new, fail={key: 2})
             if code != 0 or sorted(after) != sorted(new):
                 failures.append('two HTTP 500s on "%s" must be retried and the publish completed (got %s, exit %d)\n%s'
                                 % (key.replace('_', ' '), sorted(after), code, err))
+            if key == 'release_upload' and len(uploads) != len(new) + 2:
+                failures.append('two HTTP 500s on upload must retry only the file in flight: %d attempts for %d assets '
+                                'means %s (a bulk clobber replay would attempt %d)' %
+                                (len(uploads), len(new), uploads, 3 * len(new)))
 
-        code, after, err = run_case(tmp, old, new, badnew={'RIPTOPL.ELF': 2})
+        code, after, err, uploads = run_case(tmp, old, new, badnew={'RIPTOPL.ELF': 2})
         if code != 0 or sorted(after) != sorted(new) or after.get('RIPTOPL.ELF') != 'new RIPTOPL.ELF':
             failures.append('a new RIPTOPL.ELF rejected twice after --clobber removed the old one must be retried '
                             '(got %s, exit %d)\n%s' % (sorted(after), code, err))
+        if len(uploads) != len(new) + 2:
+            failures.append('a twice-rejected RIPTOPL.ELF must retry only that file: %d attempts for %d assets '
+                            '(%s)' % (len(uploads), len(new), uploads))
 
         # GitHub keeps failing: the step must fail, and the public release must still hold a full set.
         for key in ('release_upload', 'release_edit', 'release_delete_asset'):
-            code, after, err = run_case(tmp, old, new, fail={key: 99})
+            code, after, err, uploads = run_case(tmp, old, new, fail={key: 99})
             label = key.replace('_', ' ')
             if code == 0:
                 failures.append('a publish whose "%s" never succeeds must fail the step' % label)
@@ -167,8 +184,11 @@ if not failures:
                 failures.append('when "%s" keeps failing, the release lost files: left %s' % (label, sorted(after)))
             if 'RIPTOPL.ELF' not in after:
                 failures.append('when "%s" keeps failing, RIPTOPL.ELF must still be downloadable' % label)
+            if key == 'release_upload' and len(uploads) != 4:
+                failures.append('upload retries must be bounded at 4 per file: got %d attempts (%s)'
+                                % (len(uploads), uploads))
 
-        code, after, err = run_case(tmp, old, new, badnew={'RIPTOPL.ELF': 99})
+        code, after, err, uploads = run_case(tmp, old, new, badnew={'RIPTOPL.ELF': 99})
         if code == 0:
             failures.append('a new RIPTOPL.ELF that GitHub always rejects must fail the step')
         if after.get('RIPTOPL.ELF') != 'old RIPTOPL.ELF':
@@ -176,6 +196,10 @@ if not failures:
                             '(got %r)\n%s' % (after.get('RIPTOPL.ELF'), err))
         if not all(n in after for n in old):
             failures.append('a rejected upload must not have deleted any old download: left %s' % sorted(after))
+        if len(uploads) != len(new) + 4:
+            failures.append('an always-rejected RIPTOPL.ELF must stop at the retry bound and restore exactly once: '
+                            'the %d prior assets upload once each, then 4 bounded tries on RIPTOPL.ELF, then 1 '
+                            'restore upload; got %d attempts (%s)' % (len(new) - 1, len(uploads), uploads))
 
 if failures:
     print('\n'.join(failures))
