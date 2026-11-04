@@ -14,6 +14,7 @@ missing asset is an error, and any call can be made to fail. Checks:
 """
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,13 @@ try:
 except StopIteration:
     sys.exit('rolling-release.yml: the publish step no longer has the retry helper or the existing-release block')
 update = '\n'.join(lines[start:end])
+
+# One file per upload call: a transient failure retries only that file, never replaying the whole
+# batch clobber (RiptOPL #303 shipped the same correction on the C++ edition's publisher).
+if re.search(r'gh release upload "\$TAG" rolling/\* --clobber', update):
+    failures.append('the publish step bulk-uploads rolling/* again: one transient failure replays the entire clobber')
+if not re.search(r'for asset_path in rolling/\*; do\s*\n\s*\[ -e "\$asset_path" \] \|\| continue\s*\n\s*if ! retry gh release upload "\$TAG" "\$asset_path" --clobber; then', update):
+    failures.append('the publish step does not upload each staged asset with its own retry')
 
 FAKE_GH = r'''
 #!/usr/bin/env bash
