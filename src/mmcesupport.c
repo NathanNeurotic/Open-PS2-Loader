@@ -1321,23 +1321,6 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         return;
     }
 
-    // (The MMCE art quiesce runs ABOVE the VCD handoff now -- both launch paths are covered by the
-    // single guard before any card IO.)
-    void *irx = &mmce_cdvdman_irx;
-    int irx_size = size_mmce_cdvdman_irx;
-    compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
-    if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
-        return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
-    settings = (struct cdvdman_settings_mmce *)((u8 *)irx + index);
-
-    // Persist last-played BEFORE any card switch below: on an FMCB-on-MMCE setup this write goes to
-    // the card's mcN: surface, and after a GameID switch it would land inside the per-game virtual
-    // card instead of the boot card (adversarial review of the native-send re-land).
-    if (gRememberLastPlayed) {
-        configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
-        saveConfig(CONFIG_LAST, 0);
-    }
-
     // The core this launch runs. A Neutrino setting falls back to the OPL core when Neutrino cannot run the game
     // (USBLD parts, a ZSO image) or no complete neutrino.elf is found. That is decided HERE, before the OPL core's
     // preparation below, so a launch that falls back gets all of it, in the same order as one set to the OPL core:
@@ -1360,6 +1343,23 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
             coreLoader = 0;
         }
+    }
+
+    // (The MMCE art quiesce runs ABOVE the VCD handoff now -- both launch paths are covered by the
+    // single guard before any card IO.)
+    void *irx = &mmce_cdvdman_irx;
+    int irx_size = size_mmce_cdvdman_irx;
+    compatmask = sbPrepare(game, configSet, irx_size, irx, &index, !coreLoader);
+    if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
+        return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
+    settings = (struct cdvdman_settings_mmce *)((u8 *)irx + index);
+
+    // Persist last-played BEFORE any card switch below: on an FMCB-on-MMCE setup this write goes to
+    // the card's mcN: surface, and after a GameID switch it would land inside the per-game virtual
+    // card instead of the boot card (adversarial review of the native-send re-land).
+    if (gRememberLastPlayed) {
+        configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
+        saveConfig(CONFIG_LAST, 0);
     }
 
     // Native-core GameID (AndrewBento, Gen2: with PS2 Logo off nothing ever names the game to the
