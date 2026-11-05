@@ -57,6 +57,7 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_EMBER_DITHER     "$EmberDither"     // per-game Ember dithering override; 0 = inherit global
 #define CONFIG_ITEM_EMBER_SHADING    "$EmberShading"    // per-game Ember shading override; 0 = inherit global
 #define CONFIG_ITEM_EMBER_CONTROLLER "$EmberController" // per-game Ember controller override; 0 = inherit global
+#define CONFIG_ITEM_ILINK_ID         "$ILinkID"         // Optional native-core console identity, 16 hex digits
 #define CONFIG_ITEM_DNAS             "$DNAS"
 #define CONFIG_ITEM_CONFIGSOURCE     "$ConfigSource"
 

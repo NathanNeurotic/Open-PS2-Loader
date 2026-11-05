@@ -66,7 +66,7 @@ launch = function(udpfs, 'static void udpfsLaunchGame(item_list_t *itemList, int
 check('int coreLoader = bdmNetBlockCoreLoader(configSet);' in launch, 'launch: the core comes from bdmNetBlockCoreLoader')
 pick = launch.find('int coreLoader = bdmNetBlockCoreLoader(configSet);')
 native = launch.find('udpfsLaunchOplCore(itemList, game, configSet);')
-scratch = launch.find('sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index)')
+scratch = launch.find('sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index, 0)')
 check(0 <= pick < native < scratch, 'launch: the core is chosen, and the OPL core leg taken, before the Neutrino leg borrows the SMB IRX')
 zso = launch.find('!strcasecmp(game->extension, ".zso")')
 check(zso > pick and '_STR_NEUTRINO_BAD_FORMAT' in launch[zso:native] and '_STR_NEUTRINO_NOT_FOUND' in launch[zso:native],
@@ -75,7 +75,7 @@ check('_STR_NET_NEEDS_NEUTRINO' not in udpfs, 'udpfssupport.c: UDPFS Files is no
 check(0 <= launch.find('GAME_FORMAT_USBLD') < pick, 'launch: a split (UL) game is refused before either core')
 
 leg = function(udpfs, 'static void udpfsLaunchOplCore(', 'udpfssupport.c')
-order = ['compatmask = sbPrepare(game, configSet, irx_size, irx, &index);',
+order = ['compatmask = sbPrepare(game, configSet, irx_size, irx, &index, 1);',
          'settings = (struct cdvdman_settings_udpfs *)((u8 *)irx + index);',
          'sbEnsureIgrUsbDrivers(compatmask);',
          'settings->common.mediaLsnCount = sbGetMediaLsnCount(partname, isoBytes);',

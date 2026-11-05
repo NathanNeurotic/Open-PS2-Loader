@@ -872,7 +872,7 @@ static void udpfsLaunchOplCore(item_list_t *itemList, base_game_info_t *game, co
         }
     }
 
-    compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
+    compatmask = sbPrepare(game, configSet, irx_size, irx, &index, 1);
     if (compatmask < 0) // patch zone not found: `index` is unset
         return;
     settings = (struct cdvdman_settings_udpfs *)((u8 *)irx + index);
@@ -1044,7 +1044,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // patch an OPL cdvdman IRX, but sbPrepare still needs a valid buffer to locate the patch zone; reuse
     // the smb cdvdman image as a scratch target (its patched fields are never launched here -- only the
     // returned compatmask is used).
-    compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index);
+    compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index, 0);
     if (compatmask < 0)
         return;
     compatmask = sbGetCompatModes(configSet, 1); // this leg launches Neutrino, and a title default can differ per core

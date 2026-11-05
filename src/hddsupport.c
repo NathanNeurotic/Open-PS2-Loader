@@ -2866,7 +2866,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
     // sbPrepare sets `i` only when it finds the patch zone. Without one, `i` is uninitialised or left over
     // from the VMC loops above, and every settings write below would land at that offset.
-    if (sbPrepare(NULL, configSet, size_irx, irx, &i) < 0)
+    if (sbPrepare(NULL, configSet, size_irx, irx, &i, 1) < 0)
         return;
     sbEnsureIgrUsbDrivers(compatMode);
 

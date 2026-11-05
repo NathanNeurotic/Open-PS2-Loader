@@ -639,6 +639,8 @@ static int getGameCount(void *support)
 static void drawGameCountText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     mutable_text_t *mutableText = (mutable_text_t *)elem->extended;
+    if (mutableText == NULL)
+        return;
     // The number can change without the selected game changing: a device whose scan lands after the first
     // frame (a cold boot, before a USB drive has settled), the PS1 half of a Mixed view, a rescan that adds
     // or drops rows. Refreshing only on a new game config left the first boot's count on screen until the
@@ -657,22 +659,20 @@ static void drawGameCountText(struct menu_list *menu, struct submenu_list *item,
 
 static void initGameCountText(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
 {
-    /* drawGameCountText() snprintf()s up to 60 bytes into mutableText->value.
-     * initMutableText() sizes value from strlen(seed)+1, so seeding with an
-     * empty string previously produced a 1-byte buffer that the 60-byte
-     * snprintf overran (and the separate 60-byte countStr was leaked).  Seed
-     * with "" then replace value with a correctly sized 60-byte buffer. */
-    mutable_text_t *mutableText = initMutableText(themePath, themeConfig, theme, name, ELEM_TYPE_ATTRIBUTE_TEXT, elem, "", NULL, DISPLAY_ALWAYS, SIZING_NONE);
-    elem->extended = mutableText;
-
+    // The count needs no CFG alias or wrapping. Allocate its final buffer once;
+    // replacing initMutableText's one-byte seed could leave it undersized on OOM.
+    mutable_text_t *mutableText = (mutable_text_t *)calloc(1, sizeof(mutable_text_t));
     if (mutableText != NULL) {
-        char *countStr = (char *)malloc(60);
-        if (countStr != NULL) {
-            countStr[0] = '\0';
-            free(mutableText->value);
-            mutableText->value = countStr;
+        mutableText->currentCount = -1;
+        mutableText->value = (char *)malloc(60);
+        if (mutableText->value == NULL) {
+            free(mutableText);
+            mutableText = NULL;
+        } else {
+            mutableText->value[0] = '\0';
         }
     }
+    elem->extended = mutableText;
 
     elem->endElem = &endMutableText;
     elem->drawElem = &drawGameCountText;

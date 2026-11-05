@@ -285,7 +285,8 @@ typedef struct theme
     int hintsSpacing; // a column's line pitch
 
     // list_cfg_text=0 (RIPPS2 build 126): the list pages leave out the game CFG's Title and Description.
-    // 0 (the key absent, or any other value) shows them, as before the key existed.
+    // 0 (the key absent, or any other number) shows them, as before the key existed. A word such as "on"
+    // reads as 0 and hides them, as in RIPPS2.
     int hideListCfgText;
 } theme_t;
 
