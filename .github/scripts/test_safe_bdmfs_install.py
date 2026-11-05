@@ -29,12 +29,25 @@ with tempfile.TemporaryDirectory() as temp:
     installer.stage(sdk, replacement)
     assert (driver.read_text(), main.read_text()) == once
 
-    driver.write_text(stock.replace('int iFragCount = 0;', 'int iFragCount = 1;'))
+    # ps2sdk 12e45c43 only adds a NULL block-device guard the replacement already has.
+    audited = (root / '.github/scripts/fixtures/bdmfs-frag-12e45c43.txt').read_text()
+    assert 'if (bd == NULL)\n        return -ENXIO;' in audited and 'return -ENODEV;' in replacement
+    driver.write_text(audited + '\nret = get_frag_list(file, NULL, 0) == 1 ? 1 : 0;\n')
+    main.write_text('int _start(void) {\n    if (InitFS() != 0) return 1;\n}\n')
+    installer.stage(sdk, replacement)
+    assert 'return -ENXIO;' not in driver.read_text()
+    assert 'iClusterNext == 0xFFFFFFFF' in driver.read_text() and 'if (ret >= 0)' in driver.read_text()
+    assert installer.MARKER.decode() in main.read_text()
+
+    unknown = stock.replace('int iFragCount = 0;', 'int iFragCount = 1;')
+    driver.write_text(unknown)
     before = (driver.read_text(), main.read_text())
     try:
         installer.stage(sdk, replacement)
-    except RuntimeError:
-        pass
+    except RuntimeError as error:
+        start = unknown.index('static int get_frag_list(')
+        digest = hashlib.sha256(unknown[start:unknown.index('\n}\n', start) + 3].encode()).hexdigest()
+        assert digest in str(error), 'refusal must name the unknown revision'
     else:
         raise AssertionError('unknown source revision was accepted')
     assert (driver.read_text(), main.read_text()) == before
