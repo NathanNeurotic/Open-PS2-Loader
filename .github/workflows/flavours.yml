@@ -282,6 +282,10 @@ jobs:
         run: python3 .github/scripts/test_mx4sio_host_boot.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
+      - name: Check theme publish and font loads retire the in-flight frame before freeing GS textures
+        run: |
+          python3 .github/scripts/test_theme_render_queue.py
+          python3 .github/scripts/test_font_flush_frame_lock.py
       - name: Check the GameCountText follows the list count, not only the selected game
         run: python3 .github/scripts/test_game_count_refresh.py
       - name: Check native console i.LINK ID parsing and launch isolation
