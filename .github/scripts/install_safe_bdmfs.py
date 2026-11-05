@@ -27,6 +27,7 @@ MARKER = b'RiptOPL BDM VMC extent and allocation guard v2'
 
 
 def download(entry, destination):
+    """Fetch one pinned upstream file described by a lock entry into destination."""
     url = 'https://raw.githubusercontent.com/{repo}/{ref}/{path}'.format(**entry)
     with urllib.request.urlopen(url, timeout=60) as response:
         data = response.read()
@@ -37,6 +38,7 @@ def download(entry, destination):
 
 
 def stage(sdk_source, replacement):
+    """Swap the SDK's audited get_frag_list for the reviewed walker; refuse unknown revisions."""
     driver = sdk_source / 'iop/fs/bdmfs_fatfs/src/fs_driver.c'
     main = driver.with_name('main.c')
     source = driver.read_text(encoding='utf-8')
@@ -99,6 +101,7 @@ BDM_VOLINFO = '''        case BDM_DEVCTL_VOLINFO: {
 
 
 def stage_allocation(sdk_source, repo):
+    """Apply the reviewed allocation-path patches on top of the staged driver."""
     driver = sdk_source / 'iop/fs/bdmfs_fatfs/src/fs_driver.c'
     source = driver.read_text(encoding='utf-8')
     if '#include "vmc_alloc.h"' in source:
@@ -126,6 +129,7 @@ def stage_allocation(sdk_source, repo):
 
 
 def main():
+    """Command-line entry point."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk-source', type=Path)
     parser.add_argument('--sdk-install', type=Path)
