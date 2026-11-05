@@ -5380,6 +5380,10 @@ static int thmLoad(const char *themePath)
     // switch run between frames, and the first load comes before guiInit, when the lock is a no-op. Every caller
     // holds thmSwitchSema, though, so curT is still the published theme here: no other load has freed it meanwhile.
     guiLock();
+    // The GUI lock excludes CPU drawing, but HIRES still replays the previous frame's inline
+    // texture uploads. Retire that queue before freeing the theme whose buffers it references.
+    if (curT != NULL)
+        rmDiscardFrame();
     gTheme = newT;
     loadedFontSize = gFontSize;
     cfIsAnimating = 0;
