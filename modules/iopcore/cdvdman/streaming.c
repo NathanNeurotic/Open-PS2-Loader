@@ -199,14 +199,25 @@ static int ReadSectorsEE(int maxcount, void *buffer)
         }
     }
 
-    if (dmat_count > 0)
-        while ((dmat_id = sceSifSetDma(dmat, dmat_count)) == 0) {
-        };
-
     CpuResumeIntr(OldState);
 
     if (dmat_count > 0) // Only if there is data to copy
     {
+        /* sceSifSetDma returns 0 while SIFMAN's tag queue is full. The queue only drains from the SIF0 DMA
+           completion interrupt, so retrying with interrupts suspended never succeeds: the IOP hangs with
+           interrupts off and every other IOP module (pad, sound, the drive) stops. Retry with interrupts on
+           and yield in between, as SCE's CDVDSTM and CDVDFSV do (#185).
+           Leaving the critical section before the transfer is safe: only this reader moves StReadPtr, and a
+           stream fill cannot reuse these sectors until StStreamed is lowered below, after the DMA ends. */
+        while (1) {
+            CpuSuspendIntr(&OldState);
+            dmat_id = sceSifSetDma(dmat, dmat_count);
+            CpuResumeIntr(OldState);
+            if (dmat_id != 0)
+                break;
+            DelayThread(500);
+        }
+
         while (sceSifDmaStat(dmat_id) >= 0) {
         };
 
@@ -412,6 +423,13 @@ int sceCdStRead(u32 sectors, u32 *buffer, u32 mode, u32 *error)
             // if(mode == STMNBLK) break;
             if (mode == 0)
                 break;
+
+            /* Blocking read still short: make sure a fill is on its way before waiting for the next read end.
+               The fill chain stops when the buffer is full and only restarts from here or after StRead returns,
+               so a blocking read that drained a full buffer without getting enough waited forever (#185).
+               Does nothing while a fill is already in flight. */
+            if (result < sectors)
+                StStartFillStreamBuffer();
         }
         *error = sceCdGetError();
 
