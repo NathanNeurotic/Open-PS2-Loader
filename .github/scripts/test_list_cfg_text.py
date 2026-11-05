@@ -7,8 +7,8 @@ whatever the theme says. The info page always shows them, and every other attrib
 Compiles the production renderer (drawAttributeText with its List Title helpers, initAttributeText and
 thmElemIsInfo) against fake theme families and runs every setting x theme key x family x attribute. The
 element's family decides list page or info page, not its block name: a view's blocks are named like
-grid.main0. Then it runs the theme's list_cfg_text parse and checks the setting's wiring: config key,
-default, clamp, settings row and strings.
+grid.main0. Then it runs the theme's list_cfg_text parse through the production thmViewGetInt and
+configGetInt, and checks the setting's wiring: config key, default, clamp, settings row and strings.
 """
 from pathlib import Path
 import re
@@ -25,7 +25,7 @@ def read(c_path, cpp_path):
 
 def definition(source, name):
     """The body of function `name`, skipping any forward declaration."""
-    match = re.search(r"^(?:static )?[\w ]+\**\b" + name + r"\([^;{]*\)\s*\{", source, re.M)
+    match = re.search(r"^(?:static )?[\w ]+\**\b" + name + r"\([^;{]*\)\s*(?:const\s*)?\{", source, re.M)
     assert match, name
     depth = 0
     for index in range(source.index("{", match.start()), len(source)):
@@ -42,8 +42,25 @@ themes = read("src/themes.c", "src/gfx/themes.cpp")
 key_line = re.search(r"newT->hideListCfgText = [^;]+;", themes)
 assert key_line, "the theme's list_cfg_text key is read"
 
+# The key is read as every theme value is: thmViewGetInt, then configGetInt, which converts it with atoi. The test
+# compiles both from the source, so a change to either shows in what the key does.
+config_h = (root / "include/config.h").read_text(encoding="utf-8")
+key_len = re.search(r"#define CONFIG_KEY_NAME_LEN\s+\d+", config_h)
+assert key_len, "CONFIG_KEY_NAME_LEN"
+config_src = read("src/config.c", "src/core/config.cpp")
+if CPP:  # configGetInt is the inline wrapper over ConfigSet::getInt
+    reader = ("int config_set::getStr(const char *key, const char **value) const\n"
+              "{\n    return configGetStr(const_cast<config_set_t *>(this), key, value);\n}\n\n"
+              + definition(config_src, "ConfigSet::getInt").replace("ConfigSet::", "config_set::")
+              + "\n\n" + definition(config_h, "configGetInt"))
+else:
+    reader = definition(config_src, "configGetInt")
+reader = key_len.group(0) + "\n\n" + reader + "\n\n" + definition(read("src/themeviews.c", "src/gfx/themeviews.cpp"), "thmViewGetInt")
+
 if CPP:
-    config = "typedef struct config_set { int id, count; kv_t kv[4]; int uid() const { return id; } } config_set_t;"
+    config = ("typedef struct config_set {\n    int id, count;\n    kv_t kv[4];\n    int uid() const { return id; }\n"
+              "    int getStr(const char *key, const char **value) const;\n"
+              "    int getInt(const char *key, int *value) const;\n} config_set_t;")
     setuid = "c->id = uid;"
 else:
     config = "typedef struct config_set { int uid, count; kv_t kv[4]; } config_set_t;"
@@ -123,33 +140,45 @@ static void endMutableText(struct theme_element *elem) { (void)elem; }
 
 @CODE@
 
-static const char *keyValue; /* the theme's list_cfg_text, NULL when it has none */
-static int thmViewGetInt(config_set_t *themeConfig, const char *prefix, const char *key, int *value)
-{
-    (void)themeConfig; (void)prefix;
-    if (strcmp(key, "list_cfg_text") || keyValue == NULL)
-        return 0;
-    *value = atoi(keyValue);
-    return 1;
-}
-static int themeHides(const char *value)
+@READER@
+static int themeHides(const char *baseValue, const char *viewValue, int useViewPrefix)
 {
     theme_t t;
     theme_t *newT = &t;
-    config_set_t *themeConfig = NULL;
-    const char *viewPrefix = "";
+    config_set_t themeKeys;
+    config_set_t *themeConfig = &themeKeys;
+    const char *viewPrefix = useViewPrefix ? "list" : "";
     int intValue = 0;
     memset(&t, 0, sizeof(t));
-    keyValue = value;
+    memset(&themeKeys, 0, sizeof(themeKeys));
+    if (baseValue != NULL) {
+        themeKeys.kv[themeKeys.count].key = "list_cfg_text";
+        themeKeys.kv[themeKeys.count++].value = baseValue;
+    }
+    if (viewValue != NULL) {
+        themeKeys.kv[themeKeys.count].key = "list.list_cfg_text";
+        themeKeys.kv[themeKeys.count++].value = viewValue;
+    }
     @KEYLINE@
     return newT->hideListCfgText;
 }
 
 static void setGame(config_set_t *c, int uid, const char *tag)
 {
-    static char title[64], desc[64];
-    snprintf(title, sizeof(title), "%s Title", tag);
-    snprintf(desc, sizeof(desc), "%s Description", tag);
+    /* Each game gets its own text, which no later game reuses, and the last game's text is overwritten, as when
+       its CFG is freed. A renderer that kept an older game's pointer then draws "Freed", not this game's text. The
+       text is never freed, so a stale read draws "Freed" rather than reading freed memory. */
+    static char *lastTitle, *lastDesc;
+    char *title = (char *)malloc(64), *desc = (char *)malloc(64);
+    assert(title != NULL && desc != NULL);
+    if (lastTitle != NULL) {
+        snprintf(lastTitle, 64, "Freed");
+        snprintf(lastDesc, 64, "Freed");
+    }
+    snprintf(title, 64, "%s Title", tag);
+    snprintf(desc, 64, "%s Description", tag);
+    lastTitle = title;
+    lastDesc = desc;
     @SETUID@
     c->count = 4;
     c->kv[0].key = "Title"; c->kv[0].value = title;
@@ -226,17 +255,39 @@ int main(void)
     gListCfgText = LIST_CFG_TEXT_THEME;
     elem.drawElem(NULL, &item, &game, &elem);
     assert(!strcmp(drawn, "Second Title"));
+    /* Two games passed while hidden: the next one shown draws its own text, not text kept from two games back. */
+    gListCfgText = LIST_CFG_TEXT_ON;
+    setGame(&game, 902, "Third");
+    elem.drawElem(NULL, &item, &game, &elem);
+    assert(!strcmp(drawn, "Third Title"));
+    gListCfgText = LIST_CFG_TEXT_OFF;
+    setGame(&game, 903, "Fourth");
+    drawn[0] = 0;
+    elem.drawElem(NULL, &item, &game, &elem);
+    setGame(&game, 904, "Fifth");
+    elem.drawElem(NULL, &item, &game, &elem);
+    assert(!drawn[0]);
+    gListCfgText = LIST_CFG_TEXT_THEME;
+    elem.drawElem(NULL, &item, &game, &elem);
+    assert(!strcmp(drawn, "Fifth Title"));
 
-    /* The theme key: only list_cfg_text=0 hides them; absent or any other value shows them as before. */
-    assert(themeHides(NULL) == 0);
-    assert(themeHides("0") == 1);
-    assert(themeHides("1") == 0);
-    assert(themeHides("2") == 0);
+    /* The theme key, read by the production thmViewGetInt and configGetInt: list_cfg_text=0 hides them, and so does
+       a word, which configGetInt's atoi reads as 0, as in RIPPS2. Absent or any other number shows them as before. */
+    assert(themeHides(NULL, NULL, 0) == 0);
+    assert(themeHides("0", NULL, 0) == 1);
+    assert(themeHides("on", NULL, 0) == 1);
+    assert(themeHides("1", NULL, 0) == 0);
+    assert(themeHides("2", NULL, 0) == 0);
+    assert(themeHides("0", NULL, 1) == 1); /* unprefixed fallback */
+    assert(themeHides("0", "1", 1) == 0); /* prefixed override */
+    assert(themeHides("1", "0", 1) == 1);
+    assert(themeHides(NULL, "0", 1) == 1);
+    assert(themeHides("1", "0", 0) == 0); /* other view's key ignored */
 
     printf("PASS: List Title and Description: %d draws over every family, attribute, setting and theme key\n", checked);
     return 0;
 }
-'''.replace("@CONFIG@", config).replace("@SETUID@", setuid).replace("@CODE@", code).replace("@KEYLINE@", key_line.group(0))
+'''.replace("@CONFIG@", config).replace("@SETUID@", setuid).replace("@CODE@", code).replace("@KEYLINE@", key_line.group(0)).replace("@READER@", reader)
 
 # -Wno-unused-function: a helper the renderer stops calling must fail by what it draws, not by a warning.
 with tempfile.TemporaryDirectory(prefix="listcfg-") as tmp:
