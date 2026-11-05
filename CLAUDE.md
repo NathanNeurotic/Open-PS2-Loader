@@ -1,3 +1,8 @@
+# Agent instructions
+
+Read [AGENTS.md](AGENTS.md) for repository instructions.
+
+
 # GitHub Attribution Policy
 
 All GitHub contributions must remain free of AI-generated signatures and vendor branding.
