@@ -46,11 +46,13 @@ STUB_TAMTYPES = 'typedef unsigned char u8;\ntypedef unsigned short u16;\ntypedef
 STUB_USBHDFSD = 'typedef struct { u64 sector; u32 count; } __attribute__((packed)) bd_fragment_t;\n'
 
 HARNESS = r'''
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <tamtypes.h>
 #include <cdvd_config.h>
+#include <ilinkid.h>
 #define LOG(...) ((void)0)
 #define COMPAT_MODE_1 0x01
 #define COMPAT_MODE_2 0x02
@@ -66,6 +68,12 @@ HARNESS = r'''
 #define CONFIG_ITEM_OSD_SETTINGS_VMODE "vmode"
 #define _STR_ERR_CHEATS_LOAD_FAILED 1
 typedef struct config_set config_set_t;
+#define CONFIG_ITEM_ILINK_ID "$ILinkID"
+#define _STR_LAUNCH_CONSOLE_ILINK_ID_FALLBACK 2
+static int id_diagnostics, id_reads, id_warnings;
+static void diagLog(const char *fmt,...){assert(strstr(fmt,"$ILinkID"));id_diagnostics++;}
+static const char *ilink_text;
+static int configGetStr(config_set_t *c,const char *k,const char **out){(void)c;assert(!strcmp(k, CONFIG_ITEM_ILINK_ID));id_reads++;*out=ilink_text;return ilink_text!=NULL;}
 typedef struct { u8 parts, media; } base_game_info_t;
 struct UIItem;
 static int gOSDLanguageSource, gOSDLanguageEnable, gOSDLanguageValue, gOSDTVAspectRatio, gOSDVideOutput;
@@ -79,9 +87,9 @@ static void InitCheatsConfig(config_set_t *c) { (void)c; }
 static config_set_t *configGetByType(int type) { (void)type; return NULL; }
 static int configGetInt(config_set_t *c, const char *key, int *value) { (void)c; (void)key; (void)value; return 0; }
 static const char *sbCheatsNotFoundText(void) { return ""; }
-static const char *_l(int id) { (void)id; return ""; }
+static const char *_l(int id) { return id == _STR_LAUNCH_CONSOLE_ILINK_ID_FALLBACK ? "launch fallback" : ""; }
 static int GetCheatsFromGlobalDefault(void) { return 0; }
-static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)t; (void)accept; (void)ui; return answer; }
+static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)t; (void)ui; if (!accept) { assert(!strcmp(t,"launch fallback")); id_warnings++; } return answer; }
 
 @FUNCTIONS@
 
@@ -99,18 +107,18 @@ int main(void)
     memcpy(pristine, image, sizeof(image));
 
     index = -7;
-    r = sbPrepare(&game, NULL, size, (void **)image, &index);
+    r = sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     printf("prepare: %d at %d\n", r, index);
     /* The leg then fills in the rest of the block (layer1_start, zso_cache, its own fields), so the
        restore has to cover every byte of it, not just the ones sbPrepare wrote. */
     memset(image + index, 0x5A, sizeof(sample));
     index = -7;
-    r = sbPrepare(&game, NULL, size, (void **)image, &index);
+    r = sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     printf("prepare again, zone still filled in: %d at %d\n", r, index);
     sbUnprepare(image + 64);
     printf("unprepare: %s\n", memcmp(image, pristine, sizeof(image)) ? "changed" : "pristine");
 
-    sbPrepare(&game, NULL, size, (void **)image, &index);
+    sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     memset(image + index, 0x5A, sizeof(sample));
     answer = 1;
     r = sbCheatsMissingContinue(image + index, -ENOENT);
@@ -119,8 +127,36 @@ int main(void)
     r = sbCheatsMissingContinue(image + index, -ENOENT);
     printf("cheats prompt, back: %d, %s\n", r, memcmp(image, pristine, sizeof(image)) ? "filled in" : "pristine");
     index = -7;
-    r = sbPrepare(&game, NULL, size, (void **)image, &index);
+    r = sbPrepare(&game, NULL, size, (void **)image, &index, 1);
     printf("prepare after back: %d at %d\n", r, index);
+    /* The real launch parser patches the ID, and the next game never inherits it. */
+    const char *ids[] = {"0123456789abcdef", NULL, "0000000000000000", "", "0123456789ABCDEG"};
+    const u8 enabled[8] = {1, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF};
+    const u8 disabled[8] = {0};
+    for (unsigned game_no = 0; game_no < sizeof(ids)/sizeof(ids[0]); game_no++) {
+        sbUnprepare(image + 64);
+        assert(!memcmp(image, pristine, sizeof(image)));
+        ilink_text = ids[game_no];
+        index = -7;
+        assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index, 1) == 1 && index == 64);
+        const struct cdvdman_settings_common *patched = (const struct cdvdman_settings_common *)(image + index);
+        assert(!memcmp(patched->ilink_id, game_no == 0 ? enabled : disabled, 8));
+        assert(id_diagnostics == (game_no == 4 ? 1 : 0));
+        assert(id_warnings == id_diagnostics);
+    }
+    sbUnprepare(image + 64);
+    assert(!memcmp(image, pristine, sizeof(image)));
+    const char *external_ids[] = {"0123456789ABCDEF", "bad"};
+    for (unsigned i = 0; i < 2; i++) {
+        ilink_text = external_ids[i];
+        int reads = id_reads, diagnostics = id_diagnostics, warnings = id_warnings;
+        assert(sbPrepare(&game, NULL, sizeof(image), (void **)image, &index, 0) == 1);
+        const struct cdvdman_settings_common *scratch = (const struct cdvdman_settings_common *)(image + index);
+        assert(!memcmp(scratch->ilink_id, disabled, 8));
+        assert(id_reads == reads && id_diagnostics == diagnostics && id_warnings == warnings);
+        sbUnprepare(image + index);
+        assert(!memcmp(image, pristine, sizeof(image)));
+    }
     return 0;
 }
 '''
@@ -138,7 +174,7 @@ with tempfile.TemporaryDirectory() as tmp:
     src, exe = tmp / 'zone.c', tmp / 'zone'
     src.write_text(HARNESS.replace('@FUNCTIONS@', functions), encoding='utf-8')
     result = subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Werror', '-Wno-unused-function', '-I', str(tmp),
-                             '-I', str(root / 'modules/iopcore/common'), '-o', str(exe), str(src)],
+                             '-I', str(root / 'include'), '-I', str(root / 'modules/iopcore/common'), '-o', str(exe), str(src)],
                             capture_output=True, text=True, check=False)
     if result.returncode != 0:
         sys.exit('the sbPrepare harness did not compile:\n' + result.stderr)
@@ -208,7 +244,8 @@ def statement_start(code, pos):
 LEGS = (('src/bdmsupport.c', 'void bdmLaunchGame('), ('src/ethsupport.c', 'static void ethLaunchGame('),
         ('src/ethsupport.c', 'static int ethTryNeutrino('),
         ('src/hddsupport.c', 'void hddLaunchGame('), ('src/httpsupport.c', 'static void httpLaunchGame('),
-        ('src/mmcesupport.c', 'void mmceLaunchGame('), ('src/udpfssupport.c', 'static void udpfsLaunchGame('))
+        ('src/mmcesupport.c', 'void mmceLaunchGame('), ('src/udpfssupport.c', 'static void udpfsLaunchOplCore('),
+        ('src/udpfssupport.c', 'static void udpfsLaunchGame('))
 
 for path, signature in LEGS:
     source = text(path)
@@ -238,6 +275,16 @@ for path, signature in LEGS:
     opening = prep + len('sbPrepare')
     args = [' '.join(a.split()) for a in code[opening + 1:close_paren(code, opening)].split(',')]
     irx, index = args[3].lstrip('&'), args[4].lstrip('&')
+    external = 'ethTryNeutrino' in signature or signature in ('void UdpfsSource::launch(', 'static void udpfsLaunchGame(')
+    mmce = 'MmceSource::launch' in signature or 'mmceLaunchGame' in signature
+    expected = '!coreLoader' if mmce else ('0' if external else '1')
+    if mmce:
+        gate = code.find('int coreLoader = gDefaultCoreLoader;', start, prep)
+        fallback = code.find('coreLoader = 0;', gate, prep) if gate >= 0 else -1
+        if gate < 0 or fallback < 0:
+            failures.append('%s: resolve the MMCE engine and fallback before native preparation' % line(prep))
+    if len(args) != 6 or args[5] != expected:
+        failures.append('%s: native console-ID preparation flag does not match the launch engine' % line(prep))
     after = close_paren(code, opening) + 1
 
     # sbPrepare sets the index only when it finds the zone, so its result is checked before anything uses

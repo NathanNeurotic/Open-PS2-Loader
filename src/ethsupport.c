@@ -903,7 +903,7 @@ static int ethTryNeutrino(item_list_t *itemList, base_game_info_t *game, config_
 
     // The compat modes, as the udpfs leg resolves them: sbPrepare needs a patch zone, smb_cdvdman_irx is
     // the scratch target, and it is restored before anything below can return.
-    compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index);
+    compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &index, 0);
     if (compatmask < 0)
         return 1;
     compatmask = sbGetCompatModes(configSet, 1);
@@ -1056,7 +1056,7 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     int cdvdmanSize = (launchDialect == SMB_DIALECT_V2) ? size_smb2_cdvdman_irx : size_smb_cdvdman_irx;
     LOG("ETH launch: in-game reader %s\n", (launchDialect == SMB_DIALECT_V2) ? "smb2_cdvdman" : "smb_cdvdman");
 
-    compatmask = sbPrepare(game, configSet, cdvdmanSize, cdvdmanIrx, &i);
+    compatmask = sbPrepare(game, configSet, cdvdmanSize, cdvdmanIrx, &i, 1);
     if (compatmask < 0) // sbPrepare failed (patch zone not found) and never set `i`: it still holds the
         return;         // VMC loop's counter, so every settings write below would land at a wrong offset.
     sbEnsureIgrUsbDrivers(compatmask);

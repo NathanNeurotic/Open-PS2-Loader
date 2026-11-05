@@ -15,11 +15,19 @@ import subprocess
 import tempfile
 import urllib.request
 
-STOCK_SHA256 = 'aacd29d99b77e1c00c80f59dc970ca763d31ba4f00d85b98865b3776baa4269f'
+# Audited upstream get_frag_list revisions the replacement is a strict superset of.
+STOCK_SHA256 = {
+    # ps2dev/ps2sdk 329e2bb43287e16af16c4dde1c614e2662c24468 (the pinned source)
+    'aacd29d99b77e1c00c80f59dc970ca763d31ba4f00d85b98865b3776baa4269f',
+    # ps2dev/ps2sdk 12e45c4310d2: adds `if (bd == NULL) return -ENXIO;`, a case the
+    # replacement already fails closed on (-ENODEV); nothing else in the walker changed.
+    '93ae7fb910f925320de29639d8af5eaf594bfb72d6451edcf087b6087243ddbd',
+}
 MARKER = b'RiptOPL BDM VMC extent and allocation guard v2'
 
 
 def download(entry, destination):
+    """Fetch one pinned upstream file described by a lock entry into destination."""
     url = 'https://raw.githubusercontent.com/{repo}/{ref}/{path}'.format(**entry)
     with urllib.request.urlopen(url, timeout=60) as response:
         data = response.read()
@@ -30,6 +38,7 @@ def download(entry, destination):
 
 
 def stage(sdk_source, replacement):
+    """Swap the SDK's audited get_frag_list for the reviewed walker; refuse unknown revisions."""
     driver = sdk_source / 'iop/fs/bdmfs_fatfs/src/fs_driver.c'
     main = driver.with_name('main.c')
     source = driver.read_text(encoding='utf-8')
@@ -37,8 +46,9 @@ def stage(sdk_source, replacement):
     end = source.index('\n}\n', start) + 3
     old = source[start:end]
     replacement = replacement[replacement.index('static int get_frag_list('):]
-    if old != replacement and hashlib.sha256(old.encode()).hexdigest() != STOCK_SHA256:
-        raise RuntimeError('Unknown BDM fragment walker revision; audit it before changing the SDK pin')
+    digest = hashlib.sha256(old.encode()).hexdigest()
+    if old != replacement and digest not in STOCK_SHA256:
+        raise RuntimeError('Unknown BDM fragment walker revision ' + digest + '; audit it before changing the SDK pin')
     source = source[:start] + replacement + source[end:]
     pattern = r'ret\s*=\s*get_frag_list\(file,\s*NULL,\s*0\)\s*==\s*1\s*\?\s*1\s*:\s*0;'
     source, changed = re.subn(pattern, 'ret = get_frag_list(file, NULL, 0);\n            if (ret >= 0)\n                ret = ret == 1 ? 1 : 0;', source)
@@ -91,6 +101,7 @@ BDM_VOLINFO = '''        case BDM_DEVCTL_VOLINFO: {
 
 
 def stage_allocation(sdk_source, repo):
+    """Apply the reviewed allocation-path patches on top of the staged driver."""
     driver = sdk_source / 'iop/fs/bdmfs_fatfs/src/fs_driver.c'
     source = driver.read_text(encoding='utf-8')
     if '#include "vmc_alloc.h"' in source:
@@ -118,6 +129,7 @@ def stage_allocation(sdk_source, repo):
 
 
 def main():
+    """Command-line entry point."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--sdk-source', type=Path)
     parser.add_argument('--sdk-install', type=Path)

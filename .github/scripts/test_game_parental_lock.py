@@ -54,6 +54,9 @@ harness = r"""
 #define _STR_PARENLOCK_DISABLE_WARNING 4
 #define _STR_PARENLOCK_PASSWORD_INCORRECT 5
 #define _STR_PARENLOCK_GAME_NO_PASSWORD 6
+#define _STR_INVALID_CONSOLE_ILINK_ID 7
+static int id_invalid;
+static int guiGameReadILinkID(char out[17]) {out[0]=0;return id_invalid?-1:0;}
 #define _l(x) (x)
 typedef struct {int locked;char password[64];} config_set_t;
 static config_set_t global, cloned;
@@ -81,7 +84,7 @@ static void diaGetInt(int dialog,int key,int *out) {assert(dialog==1&&key==3);*o
 @TEST_LAUNCH@
 static void reset(void) {
     memset(&global,0,sizeof(global));strcpy(global.password,"secret");
-    answer="secret";accept=1;parentalLockCheckEnabled=1;
+    answer="secret";accept=1;parentalLockCheckEnabled=1;id_invalid=0;
     prompts=notices=saved=launches=edits=frees=failClone=editLock=failInsert=0;
 }
 int main(void) {
@@ -123,6 +126,8 @@ int main(void) {
     guiGameTestSettings(7,&support,&unlocked);assert(!edits && !launches);
     reset();global.password[0]=0;assert(!menuGameRequiresParentalLock(&locked));
     assert(!menuCheckGameParentalLock(&locked) && !prompts);
+    reset();id_invalid=1;editLock=0;locked.locked=1;
+    assert(guiGameSaveConfig(&locked,&support)<0&&locked.locked==1&&!edits&&notices==1);
     puts("PASS: repeated prompts, cancel/wrong/master passwords, test edits and autolaunch guards");
 }
 """.replace('@PREPARE@', function(game, 'static int guiGamePrepareParentalLock(')).replace('@HELPERS@', helpers).replace('@SAVE_CONFIG@', function(game, 'int guiGameSaveConfig(')).replace('@TEST_LAUNCH@', function(game, 'void guiGameTestSettings('))

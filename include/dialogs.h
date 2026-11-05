@@ -390,6 +390,7 @@ enum UI_ITEMS {
 #else
     COMPAT_MODE_BASE = 200,
 #endif
+    COMPAT_ILINK_ID = 280, // Reserved beyond the compatibility-mode rows; preserve existing IDs.
 };
 
 #define COMPAT_NOEXIT       0x70000000

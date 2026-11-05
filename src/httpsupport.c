@@ -736,7 +736,7 @@ static void httpLaunchGame(item_list_t *itemList, int id, config_set_t *configSe
         saveConfig(CONFIG_LAST, 0);
     }
 
-    compatmask = sbPrepare(game, configSet, size_http_cdvdman_irx, http_cdvdman_irx, &i);
+    compatmask = sbPrepare(game, configSet, size_http_cdvdman_irx, http_cdvdman_irx, &i, 1);
     if (compatmask < 0) // sbPrepare failed (patch zone not found): `i` is unset -- bail before using it.
         return;
     sbEnsureIgrUsbDrivers(compatmask);
