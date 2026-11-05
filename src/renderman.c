@@ -203,6 +203,16 @@ void rmEndFrame(void)
     rmFramesDrawn++;
 }
 
+void rmDiscardFrame(void)
+{
+    if (hires) {
+        // HIRES replays the last frame on its DMA thread. Between frames the current draw queue is
+        // empty: flip to it, waiting out the old DMA, before its referenced pixel buffers are freed.
+        gsKit_hires_sync(gsGlobal);
+        gsKit_hires_flip(gsGlobal);
+    }
+}
+
 static int rmOnVSync(int cause)
 {
     if (guiWakeupCount == 0) {

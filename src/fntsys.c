@@ -7,6 +7,7 @@
 #include "include/opl.h"
 #include "include/fntsys.h"
 #include "include/renderman.h"
+#include "include/gui.h"
 #include "include/ioman.h"
 #include "include/utf8.h"
 #include "include/util.h"
@@ -180,6 +181,32 @@ static void fntLock(void)
 static void fntUnlock(void)
 {
     SignalSema(gFontSemaId);
+}
+
+/* The font lock covers the CPU side only. The atlases a flush destroys are GS textures: gsKit's
+   texture manager keeps every texture in one unlocked global list that the GUI thread walks on each
+   draw (gsKit_TexManager_bind), and a frame's inline uploads reference the atlas pixels until that
+   frame -- under HIRES, its replay -- is retired. Dropping them from the IO worker under the font lock
+   alone (a saved disk theme found while the splash draws, the case the note above describes) races
+   the GUI thread inside gsKit and could leave it spinning in a corrupted block list with the GUI lock
+   held -- a plausible, not console-confirmed, way for the splash to freeze on its last status line.
+   Either way the race is real, so a flush is frame work, done the way thmLoad publishes a theme: GUI
+   lock, retire the in-flight frame, then the font lock -- the order fntRenderString establishes (frame
+   lock first, font lock inside). Entry points that may flush take this pair; their callers
+   (thmLoadFonts, lngSetGuiValue, guiUpdateScreenScale) hold no GUI lock. fntRelease does not: thmFree
+   calls it already under the lock, after its own rmDiscardFrame. Before guiInit the GUI lock is a
+   no-op and the renderer has nothing in flight. */
+static void fntFrameLock(void)
+{
+    guiLock();
+    rmDiscardFrame();
+    fntLock();
+}
+
+static void fntFrameUnlock(void)
+{
+    fntUnlock();
+    guiUnlock();
 }
 
 static void fntUpdateAspectRatioLocked(void);
@@ -473,7 +500,7 @@ int fntLoadFile(char *path, int fontSize)
     if (buffer == NULL)
         return FNT_ERROR;
 
-    fntLock();
+    fntFrameLock();
     for (i = 1; i < FNT_MAX_COUNT; i++) {
         if (!fonts[i].isValid) {
             if (fntLoadSlotLocked(&fonts[i], buffer, bufferSize, owned, fontSize) != FNT_ERROR)
@@ -482,7 +509,7 @@ int fntLoadFile(char *path, int fontSize)
             break;
         }
     }
-    fntUnlock();
+    fntFrameUnlock();
 
     if (owned) // no free slot
         free(buffer);
@@ -497,14 +524,14 @@ void fntSetWeight(int id, int weight)
 {
     if (id <= FNT_DEFAULT || id >= FNT_MAX_COUNT)
         return;
-    fntLock();
+    fntFrameLock();
     font_t *font = &fonts[id];
     if (font->isValid && font->face != NULL && font->weight != weight) {
         font->weight = weight;
         font->embolden = fntEmboldenFor(weight, fntFaceSetWeight(font_library, font->face, weight));
         fntCacheFlush(font);
     }
-    fntUnlock();
+    fntFrameUnlock();
 }
 
 int fntLoadFallback(char *path)
@@ -537,14 +564,14 @@ int fntLoadDefault(char *path)
 
     // The swap and the delete of the old font happen under the same lock the renderers hold, so no
     // draw can be using the old face, cache or atlases when they go.
-    fntLock();
+    fntFrameLock();
     if (fntLoadSlotLocked(&newFont, buffer, bufferSize, owned, FNTSYS_DEFAULT_SIZE) != FNT_ERROR) {
         memcpy(&oldFont, &fonts[FNT_DEFAULT], sizeof(font_t));
         memcpy(&fonts[FNT_DEFAULT], &newFont, sizeof(font_t));
         fntDeleteSlot(&oldFont);
         result = 0;
     }
-    fntUnlock();
+    fntFrameUnlock();
 
     return result;
 }
@@ -685,9 +712,9 @@ int fntScaleFontSize(int baseSize)
 
 void fntUpdateAspectRatio()
 {
-    fntLock();
+    fntFrameLock();
     fntUpdateAspectRatioLocked();
-    fntUnlock();
+    fntFrameUnlock();
 }
 
 static void fntUpdateAspectRatioLocked(void)
