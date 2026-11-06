@@ -2,7 +2,7 @@
 
 The files in `src/core/` are copied without modification from
 [PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager) by
-**techwritescode**, at upstream commit
+**[techwritescode](https://github.com/techwritescode)**, at upstream commit
 `6c4d371ebda0709814c87c4b01f9a1a5b817c71b`. They are dedicated to the
 flat PlayStation 2 `.psu` save format; the GUI, platform integration, and
 installer are outside the release packager's scope. The upstream project is

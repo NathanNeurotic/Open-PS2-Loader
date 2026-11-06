@@ -12,7 +12,7 @@
 
 > **[RiptOPL](https://github.com/NathanNeurotic/RiptOPL) is developed in partnership and collaboration with the [RIPPS2 Project](https://github.com/akilluminati47/RIPPS2) by [Akilluminati47](https://github.com/akilluminati47).**
 
-> **ps2build C++ Edition.** The [C++ Edition](https://github.com/NathanNeurotic/RiptOPL), built with ps2build in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**, is now the main line of RiptOPL.
+> **C++ Edition on [ps2build](https://ps2build.dev/).** The [C++ Edition](https://github.com/NathanNeurotic/RiptOPL), built with ps2build in collaboration with **[techwritescode](https://github.com/techwritescode)**, is now the main line of RiptOPL.
 
 ## Interface languages
 
@@ -30,7 +30,8 @@ installed package, actual game core, transport and failing stage before changing
 Our [fork collaboration review](docs/FORK-COLLABORATION.md) and
 [current comparison](https://nathanneurotic.github.io/Open-PS2-Loader/fork-gaps.html)
 track shared improvements and candidates from [RIPPS2](https://github.com/akilluminati47/RIPPS2) and other projects with their evidence limits.
-The [October 28 fork-gap status](docs/FORK-GAP-STATUS-2026-10-28.md) records parity with the C++
+The [November 1 fork-gap status](docs/FORK-GAP-STATUS-2026-11-01.md) re-reads every tracked fork record
+against current code; the [October 28 status](docs/FORK-GAP-STATUS-2026-10-28.md) records parity with the C++
 edition, the fixes that landed in both, [akilluminati47](https://github.com/akilluminati47)'s RIPPS2 findings and port plan, and what is
 still not tested on hardware.
 
@@ -770,7 +771,7 @@ With special and sincere thanks to:
   the base of the fork's SMB2 driver, and for **[usmb2](https://github.com/sahlberg/usmb2)** and the SMB backend he
   added to [Neutrino](https://github.com/ps2max32/neutrino) ([ps2max32/neutrino PR #236](https://github.com/ps2max32/neutrino/pull/236)),
   which lets this loader launch SMB games on the Neutrino core.
-- **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)** — for
+- **[techwritescode](https://github.com/techwritescode)** — for
   **PSUManager**, whose CC0 core documents the PS2 save container format and independently
   validates the `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu` release saves. Its unmodified
   core and license are preserved in [third_party/PSUManager](third_party/PSUManager/README.md).

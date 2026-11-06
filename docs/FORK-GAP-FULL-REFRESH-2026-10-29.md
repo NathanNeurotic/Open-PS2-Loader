@@ -1,5 +1,7 @@
 # Full ecosystem fork-gap refresh - October 29, 2026
 
+> Superseded - November 1, 2026: the [fork-gap status of November 1](FORK-GAP-STATUS-2026-11-01.md) re-reads every record below against current code and records what merged since. This document stays as dated evidence.
+
 This snapshot replaces the availability conclusions of the earlier October 29 reconciliation. It was collected late on October 29 in America/Los_Angeles; UTC evidence timestamps extend into October 30. Both sites retain the older reports and every stable anchor as dated history. Differences are opportunities for comparison, with shared work credited; they are not promised ports or a defect count.
 
 > Publication update - October 30, 2026: the All Games/Apps changes (#195 / #1163) have now merged in both editions. The CPP-only list-rebuild follow-up #201, Coverflow variants (#199 / #1167), Grid integration (#196 / #1164), silent in-game pause (#200 / #1168), config-import changes (#190 / #1159) and menu-freeze diagnostics (#191 / #1160) remain open at this publication check. The repository/ref/release inventory below remains the explicitly dated late-October-29 source snapshot.
