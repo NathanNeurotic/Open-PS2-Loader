@@ -32,9 +32,13 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -r .github/requirements-docs.txt
 python .github/scripts/site_sync.py --site ../site --ra-md docs/RETROACHIEVEMENTS.md \
-    --md-page docs/PS2SDK-NOTES.md=ps2sdk-notes.html --md-page docs/GAME-LIBRARY.md=library.html
+    --md-page docs/PS2SDK-NOTES.md=ps2sdk-notes.html \
+    --md-page docs/GAME-LIBRARY.md=library.html \
+    --md-page docs/FILE_MANAGER.md=file-manager.html
 python .github/scripts/site_sync.py --site ../site --ra-md docs/RETROACHIEVEMENTS.md \
-    --md-page docs/PS2SDK-NOTES.md=ps2sdk-notes.html --md-page docs/GAME-LIBRARY.md=library.html --check
+    --md-page docs/PS2SDK-NOTES.md=ps2sdk-notes.html \
+    --md-page docs/GAME-LIBRARY.md=library.html \
+    --md-page docs/FILE_MANAGER.md=file-manager.html --check
 python .github/scripts/check_docs.py --site ../site --report /tmp/docs-links.json
 python .github/scripts/test_site_sync.py
 python .github/scripts/test_wiki_sync.py

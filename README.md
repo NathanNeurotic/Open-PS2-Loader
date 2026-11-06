@@ -12,7 +12,7 @@
 
 > **[RiptOPL](https://github.com/NathanNeurotic/RiptOPL) is developed in partnership and collaboration with the [RIPPS2 Project](https://github.com/akilluminati47/RIPPS2) by [Akilluminati47](https://github.com/akilluminati47).**
 
-> **ps2build C++ Edition.** The [C++ Edition](https://github.com/NathanNeurotic/RiptOPL), built with ps2build in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**, is now the main line of RiptOPL.
+> **C++ Edition on [ps2build](https://ps2build.dev/).** The [C++ Edition](https://github.com/NathanNeurotic/RiptOPL), built with ps2build in collaboration with **[techwritescode](https://github.com/techwritescode)**, is now the main line of RiptOPL.
 
 ## Interface languages
 
@@ -771,7 +771,7 @@ With special and sincere thanks to:
   the base of the fork's SMB2 driver, and for **[usmb2](https://github.com/sahlberg/usmb2)** and the SMB backend he
   added to [Neutrino](https://github.com/ps2max32/neutrino) ([ps2max32/neutrino PR #236](https://github.com/ps2max32/neutrino/pull/236)),
   which lets this loader launch SMB games on the Neutrino core.
-- **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)** — for
+- **[techwritescode](https://github.com/techwritescode)** — for
   **PSUManager**, whose CC0 core documents the PS2 save container format and independently
   validates the `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu` release saves. Its unmodified
   core and license are preserved in [third_party/PSUManager](third_party/PSUManager/README.md).
