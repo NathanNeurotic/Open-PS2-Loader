@@ -124,12 +124,13 @@ int sceCdBreak(void)
 {
     DPRINTF("sceCdBreak\n");
 
-    if (sync_flag)
-        return 0;
+    if (sync_flag) // a read is in flight: stop it (Tales of the Abyss, #185) instead of refusing the break
+        return cdvdman_BreakRead();
 
     cdvdman_stat.status = SCECdStatPause;
 
     cdvdman_stat.err = SCECdErABRT;
+    cdvdfsv_break = 1; // an EE read between two of its chunks stops too (cdvdfsv)
     cdvdman_cb_event(SCECdFuncBreak);
 
     return 1;

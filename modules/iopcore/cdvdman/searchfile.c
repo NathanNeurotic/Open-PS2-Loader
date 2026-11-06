@@ -104,7 +104,7 @@ lbl_startlocate:
     }
 
     while (tocLength > 0) {
-        if (sceCdRead(tocLBA, 1, cdvdman_buf, NULL) == 0)
+        if (cdvdman_FsRead(tocLBA, 1, cdvdman_buf) == 0)
             return NULL;
         sceCdSync(0);
         DPRINTF("cdvdman_locatefile tocLBA read done\n");
@@ -255,7 +255,7 @@ int sceCdLayerSearchFile(sceCdlFILE *fp, const char *name, int layer)
 void cdvdman_searchfile_init(void)
 {
     // Read the volume descriptor
-    sceCdRead(16, 1, cdvdman_buf, NULL);
+    cdvdman_FsRead(16, 1, cdvdman_buf);
     sceCdSync(0);
 
     struct dirTocEntry *tocEntryPointer = (struct dirTocEntry *)&cdvdman_buf[0x9c];
@@ -275,7 +275,7 @@ void cdvdman_searchfile_init(void)
             u32 lsn0 = mediaLsnCount;
             // So that CdRead below can read more than first layer.
             mediaLsnCount = 0;
-            sceCdRead(layer1_start + 16, 1, cdvdman_buf, NULL);
+            cdvdman_FsRead(layer1_start + 16, 1, cdvdman_buf);
             sceCdSync(0);
             tocEntryPointer = (struct dirTocEntry *)&cdvdman_buf[0x9c];
             layer_info[1].rootDirtocLBA = layer1_start + tocEntryPointer->fileLBA;

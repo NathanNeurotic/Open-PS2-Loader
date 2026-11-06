@@ -99,6 +99,17 @@ enum CDVD_ST_CMDS {
 };
 
 //--------------------------------------------------------------
+/* An EE read that a sceCdBreak stopped ends with SCECdErABRT. The shared error code may have been reset meanwhile: by
+   sceCdDiskReady on another cdvdfsv thread, by a stream fill, or by the chunk this read started just after a break
+   that came between two chunks. The EE would then take the short read for a whole one. */
+static void cdvdfsv_report_break(void)
+{
+    int fsverror = SCECdErABRT;
+
+    sceCdSC(CDSC_SET_ERROR, &fsverror);
+}
+
+//--------------------------------------------------------------
 static inline void cdvd_readee(void *buf)
 { // Read Disc data to EE mem buffer
     u8 curlsn_buf[16];
@@ -128,6 +139,9 @@ static inline void cdvd_readee(void *buf)
     r->buf = (void *)((u32)r->buf & 0x1fffffff);
 
     sceCdDiskReady(0);
+
+    // From here on, a sceCdBreak ends this read: see the checks in the loop.
+    *cdvdfsv_break = 0;
 
     sectors_to_read = r->sectors;
     bytesent = 0;
@@ -162,7 +176,22 @@ static inline void cdvd_readee(void *buf)
 
     while (1) {
         do {
-            if ((sectors_to_read == 0) || (sceCdGetError() == SCECdErABRT)) {
+            /* A sceCdBreak stops the read here. cdvdman sets its break flag for every break it accepts, whether the
+               break cut the chunk in flight short or came between two chunks with no read in flight, and only this
+               read clears it: the break is seen even if something reset the error code since. */
+            if ((sectors_to_read == 0) || *cdvdfsv_break) {
+                if (sectors_to_read != 0) {
+                    /* A break stopped the read. Sony's cdvdfsv still sends the alignment record after an early break,
+                       and so does this: the EE's completion callback copies whatever record is in place, so a skipped
+                       send would replay the previous read's record into that read's buffer. The record keeps only
+                       the head bytes, and only if the first chunk finished; the tail was never read. The EE is told
+                       only the bytes it got: the head and the chunks sent after it. */
+                    if (sectors_to_read == r->sectors)
+                        readee.b1len = 0;
+                    readee.b2len = 0;
+                    nbytes = readee.b1len + bytesent;
+                    cdvdfsv_report_break();
+                }
                 sysmemSendEE((void *)&readee, (void *)r->eeaddr1, sizeof(cdvdfsv_readee_t));
 
                 *((u32 *)&curlsn_buf[0]) = nbytes;
@@ -197,6 +226,12 @@ static inline void cdvd_readee(void *buf)
                 return;
             }
             sceCdSync(0);
+
+            /* A sceCdBreak during this chunk: fsvRbuf may hold sectors it never read. Send none of them; the check at
+               the top of the loop ends the read. The flag, not sceCdGetError(): sceCdDiskReady on another cdvdfsv
+               thread, or a stream fill, can reset SCECdErABRT before this thread runs again. */
+            if (*cdvdfsv_break)
+                continue;
 
             size_64b = nsectors * sector_size;
             size_64bb = size_64b;
@@ -290,12 +325,20 @@ static inline void cdvd_readiopm(void *buf)
     int r, fsverror;
     u32 readpos;
 
+    // From here on, a sceCdBreak ends this read with SCECdErABRT (see cdvd_readee for the flag).
+    *cdvdfsv_break = 0;
+
     r = sceCdRead(((RpcCdvd_t *)buf)->lsn, ((RpcCdvd_t *)buf)->sectors, ((RpcCdvd_t *)buf)->buf, NULL);
     while (sceCdSync(1)) {
         readpos = sceCdGetReadPos();
         sysmemSendEE(&readpos, ((RpcCdvd_t *)buf)->eeaddr2, sizeof(readpos));
         DelayThread(8000);
     }
+
+    /* sceCdBreak stopped the read: the IOP buffer may hold sectors it never read, and the EE can tell only from
+       SCECdErABRT, which sceCdDiskReady on another cdvdfsv thread, or a stream fill, may have reset since. */
+    if (*cdvdfsv_break)
+        cdvdfsv_report_break();
 
     if (r == 0) {
         if (sceCdGetError() == SCECdErNO) {
@@ -313,7 +356,15 @@ static inline void cdvd_readchain(void *buf)
 
     RpcCdvdchain_t *ch = (RpcCdvdchain_t *)buf;
 
+    // From here on, a sceCdBreak ends the chain, as in Sony's cdvdfsv (see cdvd_readee for the flag).
+    *cdvdfsv_break = 0;
+
     for (i = 0, readpos = 0; i < 64; i++, ch++) {
+        // A sceCdBreak since the last entry: end the chain before this one, as Sony's cdvdfsv does.
+        if (*cdvdfsv_break) {
+            cdvdfsv_report_break();
+            return;
+        }
 
         if ((ch->lsn == -1) || (ch->sectors == -1) || ((u32)ch->buf == -1))
             break;
@@ -334,6 +385,12 @@ static inline void cdvd_readchain(void *buf)
             }
             sceCdSync(0);
 
+            // sceCdBreak stopped this entry: end the chain here, as Sony's cdvdfsv does.
+            if (*cdvdfsv_break) {
+                cdvdfsv_report_break();
+                return;
+            }
+
             readpos += tsectors * 2048;
         } else { // EE addr
             while (tsectors > 0) {
@@ -349,6 +406,14 @@ static inline void cdvd_readchain(void *buf)
                     return;
                 }
                 sceCdSync(0);
+
+                /* sceCdBreak cut this chunk short: cdvdfsv_buf holds sectors it never read. Send none of them and
+                   end the chain here, as Sony's cdvdfsv does. */
+                if (*cdvdfsv_break) {
+                    cdvdfsv_report_break();
+                    return;
+                }
+
                 sysmemSendEE(cdvdfsv_buf, (void *)addr, nsectors * 2048);
 
                 lsn += nsectors;

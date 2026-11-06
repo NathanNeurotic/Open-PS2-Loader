@@ -20,7 +20,8 @@ ISOFS = ROOT / 'modules/isofs/isofs.c'
 SEARCHFILE = ROOT / 'modules/iopcore/cdvdman/searchfile.c'
 INTERNAL = ROOT / 'modules/iopcore/cdvdman/internal.h'
 IOOPS = ROOT / 'modules/iopcore/cdvdman/ioops.c'
-CC = shutil.which('cc') or shutil.which('gcc')
+NCMD = ROOT / 'modules/iopcore/cdvdman/ncmd.c'
+CC =shutil.which('cc') or shutil.which('gcc')
 ROOT_LBA, SUB_LBA, FILE_LBA = 20, 30, 100
 
 
@@ -104,7 +105,7 @@ def ingame_source():
 #define IOPCORE_COMPAT_EMU_DVDDL 0x10
 static struct { struct { int flags; } common; } cdvdman_settings;
 static unsigned char cdvdman_buf[2048];
-static int sceCdRead(u32 lsn, u32 count, void *buffer, void *mode) { memcpy(buffer, disc[lsn], 2048); return 1; }
+static int cdvdman_FsRead(u32 lsn, u32 count, void *buffer) { memcpy(buffer, disc[lsn], 2048); return 1; }
 static int sceCdSync(int mode) { return 0; }
 ''' + function(text, 'cdvdman_locatefile') + MAIN % {'root': ROOT_LBA}
 
@@ -214,6 +215,17 @@ class SourceTests(unittest.TestCase):
         body = function(IOOPS.read_text(), 'cdrom_dread')
         self.assertLess(body.index('if (fh->position > 2048 - 34)'), body.index('&cdvdman_fs_buf[fh->position]'))
         self.assertIn('if (tocEntryPointer != NULL) {', body)
+
+    def test_own_reads_refuse_a_break(self):
+        # cdvdman's reads for cdrom0: files and sceCdSearchFile go through cdvdman_FsRead, which sceCdBreak leaves alone:
+        # their callers would take a read that a break cut short as file data or directory records.
+        for path in (SEARCHFILE, IOOPS):
+            text = path.read_text()
+            direct = [text.count('\n', 0, m.start()) + 1 for m in re.finditer(r'\bsceCdRead\(', text)]
+            self.assertEqual(direct, [], f'{path.name} calls sceCdRead directly (lines above): use cdvdman_FsRead')
+            self.assertTrue('cdvdman_FsRead(' in text, f'{path.name} no longer reads through cdvdman_FsRead')
+        body = function(NCMD.read_text(), 'cdvdman_FsRead')
+        self.assertTrue('cdvdman_IssueRead(lsn, sectors, 2048, buf, 0);' in body, 'cdvdman_FsRead must queue unbreakable reads')
 
 
 if __name__ == '__main__':

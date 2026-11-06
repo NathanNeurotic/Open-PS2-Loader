@@ -94,7 +94,15 @@ static struct cdvdman_cb_data cb_data;
 
 int cdrom_io_sema;
 static int cdrom_rthread_sema;
-static unsigned char cdread_for_stream; // the read queued for cdvdman_cdread_Thread is a stream fill (cdvdman_StreamRead)
+static unsigned char cdread_for_stream;       // the read queued for cdvdman_cdread_Thread is a stream fill (cdvdman_StreamRead)
+static unsigned char cdread_breakable;        // sceCdBreak may stop the read in flight: it came through the exported sceCdRead
+static volatile unsigned char read_abort;     // sceCdBreak hit the read in flight: cdvdman_read_sectors stops at its next chunk
+static volatile unsigned char read_in_flight; // cdvdman_read is still moving data (sync_flag also covers the pending callback)
+/* Set by every sceCdBreak that returns 1, and by nothing else. cdvdfsv clears it when it starts an EE read and ends
+   that read once it is set (CDSC_GET_BREAK_FLAG), as Sony's cdvdfsv does for chain reads with a flag of its own.
+   The error code cannot tell it: a stream fill, or sceCdDiskReady on another cdvdfsv thread, can reset SCECdErABRT
+   before cdvdfsv looks, and a chunk the break cut short would then reach the EE as data. */
+volatile unsigned char cdvdfsv_break;
 static int cdvdman_scmdsema;
 int cdvdman_searchfilesema;
 static int cdvdman_ReadingThreadID;
@@ -497,6 +505,13 @@ static int cdvdman_read_sectors(u32 lsn, unsigned int sectors, void *buf)
     for (ptr = buf, remaining = sectors; remaining > 0;) {
         unsigned int SectorsToRead = remaining;
 
+        /* sceCdBreak during this read (cdvdman_BreakRead): stop here, like the real drive stops at the sector it is on.
+           The read then ends with SCECdErABRT and an SCECdFuncBreak callback, and sceCdSync(0) returns. */
+        if (read_abort) {
+            cdvdman_stat.err = SCECdErABRT;
+            break;
+        }
+
         if (cdvdman_settings.common.flags & IOPCORE_COMPAT_ACCU_READS) {
             // Limit transfers to a maximum length of 8, with a restricted transfer rate.
             iop_sys_clock_t TargetTime;
@@ -558,6 +573,11 @@ static int cdvdman_read_sectors(u32 lsn, unsigned int sectors, void *buf)
         cdvdman_stat.err = SCECdErEOM;
     }
 
+    // A break that landed after the last chunk still ends this read as aborted, as on the real drive.
+    if (read_abort) {
+        cdvdman_stat.err = SCECdErABRT;
+    }
+
     return (cdvdman_stat.err == SCECdErNO ? 0 : 1);
 }
 
@@ -580,6 +600,9 @@ static int cdvdman_read(u32 lsn, u32 sectors, u16 sector_size, void *buf)
         u32 rpos = lsn;
 
         while (sectors > 0) {
+            if (read_abort) // sceCdBreak: cdvdman_read_sectors already ended with SCECdErABRT
+                break;
+
             nsectors = sectors;
             if (nsectors > CDVDMAN_BUF_SECTORS)
                 nsectors = CDVDMAN_BUF_SECTORS;
@@ -590,6 +613,9 @@ static int cdvdman_read(u32 lsn, u32 sectors, u16 sector_size, void *buf)
                 nsectors = 1;
 
             cdvdman_read_sectors(rpos, nsectors, cdvdman_buf);
+
+            if (read_abort) // cut short: cdvdman_buf holds sectors this read never produced, so copy none of them
+                break;
 
             rpos += nsectors;
             sectors -= nsectors;
@@ -661,7 +687,7 @@ static int cdvdman_common_lock(int IntrContext)
     return 1;
 }
 
-static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int for_stream)
+static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int for_stream, int breakable)
 {
     int IsIntrContext, OldState;
 
@@ -676,6 +702,9 @@ static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, i
     }
 
     cdread_for_stream = for_stream ? 1 : 0;
+    cdread_breakable = breakable ? 1 : 0;
+    read_abort = 0;
+    read_in_flight = 1;
     cdvdman_stat.cdread_lba = lsn;
     cdvdman_stat.cdread_sectors = sectors;
     cdvdman_stat.sector_size = sector_size;
@@ -691,19 +720,19 @@ static int cdvdman_QueueRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, i
     return 1;
 }
 
-// The game's sceCdRead: its completion goes to the game's sceCdCallback.
-int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
+// A read through sceCdRead (ncmd.c): its completion goes to the game's sceCdCallback. breakable: see cdvdman_BreakRead.
+int cdvdman_AsyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int breakable)
 {
-    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 0);
+    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 0, breakable);
 }
 
-// A stream fill (streaming.c): its completion goes to the stream channel's callback.
+// A stream fill (streaming.c): its completion goes to the stream channel's callback. sceCdBreak leaves it alone.
 int cdvdman_StreamRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
 {
-    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 1);
+    return cdvdman_QueueRead(lsn, sectors, sector_size, buf, 1, 0);
 }
 
-int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
+int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf, int breakable)
 {
     int IsIntrContext, OldState;
 
@@ -717,15 +746,50 @@ int cdvdman_SyncRead(u32 lsn, u32 sectors, u16 sector_size, void *buf)
         return 0;
     }
 
+    cdread_for_stream = 0;
+    cdread_breakable = breakable ? 1 : 0;
+    read_abort = 0;
+    read_in_flight = 1;
+
     CpuResumeIntr(OldState);
 
     cdvdman_read(lsn, sectors, sector_size, buf);
+    read_in_flight = 0;
 
-    cdvdman_cb_event(SCECdFuncRead);
+    cdvdman_cb_event(read_abort ? SCECdFuncBreak : SCECdFuncRead);
     sync_flag = 0;
     SetEventFlag(cdvdman_stat.intr_ef, 9);
 
     return 1;
+}
+
+/* sceCdBreak while a read is in flight. Sony's cdvdman stops the read at the sector the drive is on, ends it with
+   SCECdErABRT and an SCECdFuncBreak callback, and returns 1; every emulated cdvdman returned 0 and let the read run.
+   Tales of the Abyss (#185) breaks the read it has in flight whenever it switches ADX streams, treats the 0 as a
+   failure and then waits in sceCdSync(0) for a read it believes it cancelled.
+   Only a read that came through the exported sceCdRead (the game's, or cdvdfsv's for the EE) is stopped. The rest
+   still refuse the break, as every read did before: a stream fill, because StmCallback counts a finished fill as
+   data and a fill cut short would put garbage in the stream buffer; and cdvdman's own reads for cdrom0: files and
+   sceCdSearchFile (cdvdman_FsRead), because their callers do not check for an aborted read and would hand on a
+   cut-short buffer as file data or directory records. */
+int cdvdman_BreakRead(void)
+{
+    /* Once the data is in, only the completion callback is left (sync_flag stays set until it runs). There is
+       nothing left to stop then, and accepting the break would leave SCECdErABRT beside a SCECdFuncRead callback. */
+    int OldState, result = 0;
+
+    // Decide and mark under suspended interrupts: otherwise the read can end and another one (a stream fill, say) be
+    // queued in between, and the break would cut that one short.
+    CpuSuspendIntr(&OldState);
+    if (cdread_breakable && read_in_flight) {
+        read_abort = 1;
+        cdvdman_stat.err = SCECdErABRT;
+        cdvdfsv_break = 1;
+        result = 1;
+    }
+    CpuResumeIntr(OldState);
+
+    return result;
 }
 
 //-------------------------------------------------------------------------
@@ -823,6 +887,10 @@ int sceCdSC(int code, int *param)
             break;
         case CDSC_OPL_SHUTDOWN:
             oplShutdown(*param);
+            result = 1;
+            break;
+        case CDSC_GET_BREAK_FLAG:
+            *param = (int)&cdvdfsv_break;
             result = 1;
             break;
 #ifdef INGAMEDIAG
@@ -978,6 +1046,7 @@ static void cdvdman_cdread_Thread(void *args)
         for_stream = cdread_for_stream;
 
         cdvdman_read(cdvdman_stat.cdread_lba, cdvdman_stat.cdread_sectors, cdvdman_stat.sector_size, cdvdman_stat.cdread_buf);
+        read_in_flight = 0;
 
         /* This streaming callback is not compatible with the original SONY stream channel 0 (IOP) callback's design.
        The original is run from the interrupt handler, but we want it to run
@@ -991,15 +1060,16 @@ static void cdvdman_cdread_Thread(void *args)
                 Stm0Callback();
         } else {
             /* A game read gets the game's callback even while a stream is open. Before, the stream callback took it
-               instead (StmCallback's "BUG!" note), so a game waiting on sceCdCallback for that read never heard back. */
-            cdvdman_cb_event(SCECdFuncRead);
+               instead (StmCallback's "BUG!" note), so a game waiting on sceCdCallback for that read never heard back.
+               A read that sceCdBreak cut short reports SCECdFuncBreak, as the real drive does. */
+            cdvdman_cb_event(read_abort ? SCECdFuncBreak : SCECdFuncRead);
 
             /* A stream fill refused while the game held the drive restarts now rather than at its retry alarm.
                Not through Stm0Callback: once the drive is free, the retry alarm can queue a fill before this line,
                and StmCallback would count that fill as done before it is read. If the game's callback is still
                pending, the drive is not free yet: the fill is refused again and keeps its alarm. */
-            if (!for_stream && Stm0Callback != NULL)
-                cdvdman_StreamRefill();
+            if (!for_stream && Stm0Callback != NULL && !read_abort) // after a break, leave the fill to its alarm so the
+                cdvdman_StreamRefill();                             // game sees SCECdErABRT before a fill resets it
         }
     }
 }
