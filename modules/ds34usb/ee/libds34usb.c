@@ -2,21 +2,24 @@
 #include <sifrpc.h>
 #include <string.h>
 #include <time.h>
+#include "libds34usb.h"
 
-#define DS34USB_INIT       1
-#define DS34USB_GET_STATUS 2
-#define DS34USB_GET_BDADDR 3
-#define DS34USB_SET_BDADDR 4
-#define DS34USB_SET_RUMBLE 5
-#define DS34USB_SET_LED    6
-#define DS34USB_GET_DATA   7
-#define DS34USB_RESET      8
+#define DS34USB_INIT         1
+#define DS34USB_GET_STATUS   2
+#define DS34USB_GET_BDADDR   3
+#define DS34USB_SET_BDADDR   4
+#define DS34USB_SET_RUMBLE   5
+#define DS34USB_SET_LED      6
+#define DS34USB_GET_DATA     7
+#define DS34USB_RESET        8
+#define DS34USB_GET_RAW      9  // RIPPS2 build 129: Set Up A USB Pad
+#define DS34USB_SET_PROFILES 10 // RIPPS2 build 129: the .pad block
 
 #define DS34USB_BIND_RPC_ID 0x18E3878E
 
 static SifRpcClientData_t ds34usb;
 
-static u8 rpcbuf[64] __attribute__((aligned(64)));
+static u8 rpcbuf[256] __attribute__((aligned(64))); // build 129: 4 + the .pad block (180), or 8 + a report (64)
 
 static u8 ds34usb_inited = 0;
 
@@ -150,4 +153,34 @@ int ds34usb_reset()
         return 0;
 
     return (SifCallRpc(&ds34usb, DS34USB_RESET, 0, NULL, 0, NULL, 0, NULL, NULL) == 0);
+}
+
+// RIPPS2 build 129: the .pad block (PAD_BLOCK_SIZE bytes; NULL: none) for the menu, and Set Up A USB Pad's switch: while
+// learn is 1 a HID pad with no profile is taken too, so its reports can be read
+int ds34usb_set_profiles(const u8 *block, int size, int learn)
+{
+    if (!ds34usb_inited || size < 0 || size > (int)sizeof(rpcbuf) - 4)
+        return 0;
+
+    memset(rpcbuf, 0, 4 + size);
+    rpcbuf[0] = learn;
+    if (block != NULL)
+        memcpy(rpcbuf + 4, block, size);
+
+    return (SifCallRpc(&ds34usb, DS34USB_SET_PROFILES, 0, rpcbuf, 4 + size, NULL, 0, NULL, NULL) == 0);
+}
+
+// RIPPS2 build 129: a port's state and its last report as it came (out: DS34USB_RAW_SIZE bytes, see the IRX's ds34usb_get_raw)
+int ds34usb_get_raw(int port, u8 *out)
+{
+    int ret;
+
+    if (!ds34usb_inited)
+        return 0;
+
+    rpcbuf[0] = port;
+    ret = (SifCallRpc(&ds34usb, DS34USB_GET_RAW, 0, rpcbuf, 1, rpcbuf, DS34USB_RAW_SIZE, NULL, NULL) == 0);
+    memcpy(out, rpcbuf, DS34USB_RAW_SIZE);
+
+    return ret;
 }

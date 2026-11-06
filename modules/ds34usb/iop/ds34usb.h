@@ -9,6 +9,7 @@
 #define DS4     1
 #define DS5     2 // PS5 DualSense; only reachable when built with DUALSENSE=1 (-DDS5_ENABLE)
 #define SHANWAN 3 // ShanWan generic HID pad (SHANWAN_VID/SHANWAN_PS3_PID): input only
+#define GENERIC 4 // RIPPS2 build 129: a HID pad; its .pad profile (padprofile.c) reads it, or none yet (Set Up A USB Pad)
 
 #define MAX_BUFFER_SIZE 64 // Size of general purpose data buffer
 
@@ -32,6 +33,16 @@ typedef struct _usb_ds34
         u8 data[18];
     };
     u8 type;
+    // RIPPS2 build 129, GENERIC: its profile (-1: none), its ID, and its last report as it came (the setup screen reads it)
+    s8 profile;
+    u8 data_pending;
+    int data_result;
+    int data_bytes;
+    int data_sema;
+    u16 vid, pid;
+    u8 raw_len;
+    u8 raw_seq;
+    u8 raw[MAX_BUFFER_SIZE];
 } ds34usb_device;
 
 enum eDS34USBStatus {

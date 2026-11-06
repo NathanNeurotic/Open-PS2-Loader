@@ -143,7 +143,7 @@ ifneq ($(GIT_TAG),latest)
 endif
 endif
 
-FRONTEND_OBJS = pad.o xparam.o fntsys.o textshape.o diaglog.o drivestatus.o filemgr.o guifilemgr.o menuwatch.o renderman.o menusys.o OSDHistory.o system.o elfldr_noreset.o elfldr.o lang.o lang_internal.o config.o hdd.o dialogs.o favsupport.o gamemanage.o \
+FRONTEND_OBJS = padfile.o pad.o xparam.o fntsys.o textshape.o diaglog.o drivestatus.o filemgr.o guifilemgr.o menuwatch.o renderman.o menusys.o OSDHistory.o system.o elfldr_noreset.o elfldr.o lang.o lang_internal.o config.o hdd.o dialogs.o favsupport.o gamemanage.o \
 		dia.o ioman.o texcache.o themes.o themeviews.o supportbase.o bdmsupport.o netsupport.o ethsupport.o httpcatalog.o httpsupport.o udpfssupport.o hddsupport.o zso.o lz4.o launchdiag.o \
 		appsupport.o mmcesupport.o artindex.o vcdsupport.o cuesupport.o libview.o retrogem.o folderbrowse.o gui.o guigame.o vmcrebuild.o vmcsaves.o vmc_groups.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o cheatconfig.o sound.o ps2cnf.o tar.o saveicon.o cfgtitle.o
 
@@ -274,6 +274,8 @@ endif
 
 ifeq ($(PADEMU),1)
   IOP_OBJS += bt_pademu.o usb_pademu.o ds34usb.o ds34bt.o libds34usb.a libds34bt.a
+  # The user's .pad USB pad profiles (RIPPS2 build 126-129): read for a launch and for the menu's USB pad driver
+  FRONTEND_OBJS += padprofiles.o
   EE_CFLAGS += -DPADEMU
   EE_INCS += -Imodules/ds34bt/ee -Imodules/ds34usb/ee
   PADEMU_FLAGS = PADEMU=1
@@ -984,7 +986,13 @@ $(EE_OBJS_DIR)libds34usb.a: modules/ds34usb/ee/libds34usb.a
 modules/ds34usb/ee/libds34usb.a: modules/ds34usb/ee
 	$(MAKE) -C $<
 
-modules/ds34usb/iop/ds34usb.irx: modules/ds34usb/iop
+# Always enter the sub-makes of the two IRXs that read the .pad block. Both build the launcher's src/padfile.c, and
+# the menu's driver PADEMU's padprofile.c, from outside their own directory, whose timestamp cannot show an edit
+# there. Their Makefiles name those files as prerequisites, so an IRX is rebuilt only when one changed.
+.PHONY: pads-submake
+pads-submake:
+
+modules/ds34usb/iop/ds34usb.irx: modules/ds34usb/iop pads-submake
 	$(MAKE) -C $< DUALSENSE=$(DUALSENSE)
 
 $(EE_ASM_DIR)ds34usb.c: modules/ds34usb/iop/ds34usb.irx | $(EE_ASM_DIR)
@@ -996,7 +1004,7 @@ modules/pademu/bt_pademu.irx: modules/pademu
 $(EE_ASM_DIR)bt_pademu.c: modules/pademu/bt_pademu.irx
 	$(BIN2C) $< $@ $(*F)_irx
 
-modules/pademu/usb_pademu.irx: modules/pademu
+modules/pademu/usb_pademu.irx: modules/pademu pads-submake
 	$(MAKE) -C $< USE_USB=1
 
 $(EE_ASM_DIR)usb_pademu.c: modules/pademu/usb_pademu.irx

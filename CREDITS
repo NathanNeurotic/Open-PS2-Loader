@@ -208,6 +208,10 @@ Partnership and collaboration:
     Last played, Random Game, the All Games list, Hide Game, Delete everything, Arabic and Persian
     letter joining with right-to-left lines, CJK, Thai and Lao line breaks, and the Drive Status
     page with DIAG.TXT.
+    .pad USB pad profiles, from RIPPS2 builds 126-129 (Copyright 2026, RIPPS2 contributors,
+    AFL-3.0): the format 1 reader, packer and generic decoder (include/padfile.h, src/padfile.c),
+    the profiles in PADEMU and in the menu's USB pad driver, the launcher's hand-over, My Pads and
+    Set Up A USB Pad. The format and how this build uses it: docs/PAD-PROFILES.md.
 
 Planned collaboration:
 

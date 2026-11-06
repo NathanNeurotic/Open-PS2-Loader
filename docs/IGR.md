@@ -230,11 +230,14 @@ into the picture the game is showing, which it finds through the same GS write b
   (`mod_storage_location_list`), or run past 0xCC000, gets the plain combo in those builds, and with
   **Debug Colors** on the combo blinks grey first. The modules run past it when a launch carries many of them
   beside RetroAchievements telemetry (212 KB lie below the menu; the experimental achievement cards alone
-  take 30 KB of them).
+  take 30 KB of them). With the Pad Emulator in DualShock3/4 USB mode they end about 3 KB higher than before
+  [.pad profiles](PAD-PROFILES.md#in-this-build) came in, with a `PADS` folder or without; for one that runs
+  past it the debug log says `IGR menu off` with where the modules end.
 * Not in the IGS (`EXTRA_FEATURES=1`) and freeze-report (`INGAMEDIAG=1`) builds: `ee_core` has no room
   for both. Those keep the plain combo and have no *In-Game Menu* row. `make IGR_MENU=0` leaves it out of
   a standard build too.
-* The CHEATS page needs a game whose modules sit at the usual address; a few games moved elsewhere
+* The CHEATS page needs a game whose modules sit at the usual address, and room for its cheats after them,
+  below 0xD0000 (0xCC000 in the RetroAchievements builds); a few games moved elsewhere
   (`mod_storage_location_list`) get the menu without it, and their cheats run as ticked before launch.
 
 The menu is **[RIPPS2](https://github.com/akilluminati47/RIPPS2)'s** (by **[akilluminati47](https://github.com/akilluminati47)**), itself built on ORBIT's [Neutrino](https://github.com/ps2max32/neutrino) in-game menu

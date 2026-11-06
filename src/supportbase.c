@@ -31,6 +31,9 @@
 #include "include/udpfssupport.h"
 #include "include/hddsupport.h"
 #include "include/mmcesupport.h"
+#ifdef PADEMU
+#include "include/padprofiles.h" // the user's USB pad profiles, read for the launch in sbPrepare
+#endif
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioMount("iso:", ***), fileXioUmount("iso:")
@@ -1069,8 +1072,20 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
         configGetInt(configGame, CONFIG_ITEM_PADMACROSETTINGS, &gPadMacroSettings);
     }
 
+    padProfilesClear(); // no block left by an earlier launch that did not start: only this game's own read sets one
     if (gEnablePadEmu) {
         settings->fakemodule_flags |= FAKE_MODULE_FLAG_USBD;
+        /* The user's USB pad profiles and this game's button map (padprofiles.c, from RIPPS2 build 129 by
+           akilluminati47), read now while the settings device is still mounted: every OPL-core leg calls sbPrepare
+           before it lets the drives go, and sysLaunchLoaderElf then places the block for PADEMU. Only for the USB
+           PADEMU, the one that reads them (sendIrxKernelRAM packs bt_pademu when the low byte is set). With no PADS
+           folder the whole cost is one failed opendir. */
+        if (!(gPadEmuSettings & 0xFF)) {
+            const char *startup = NULL;
+            if (configSet == NULL || !configGetStr(configSet, CONFIG_ITEM_STARTUP, &startup))
+                startup = NULL;
+            padProfilesPrepare(startup);
+        }
     }
 #endif
     // sanitise the settings

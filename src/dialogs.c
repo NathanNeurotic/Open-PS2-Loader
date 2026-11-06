@@ -2190,6 +2190,12 @@ struct UIItem diaControllerConfig[] = {
     {UI_BOOL, CFG_RUMBLE, 1, 1, _STR_HINT_RUMBLE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #ifdef PADEMU
+    // From RIPPS2 builds 126 and 129: the .pad profiles in PADS beside the settings, each checked, and a USB pad set up
+    // by pressing each button it asks for. Pad Emulator builds only: without it nothing reads a profile
+    {UI_BUTTON, MY_PADS_BUTTON, 1, 1, _STR_HINT_MY_PADS, 0, 0, {.label = {NULL, _STR_MY_PADS}}},
+    {UI_BREAK},
+    {UI_BUTTON, PAD_SETUP_BUTTON, 1, 1, _STR_HINT_PAD_SETUP, 0, 0, {.label = {NULL, _STR_PAD_SETUP}}},
+    {UI_BREAK},
     {UI_BUTTON, PADEMU_GLOBAL_BUTTON, 1, 1, _STR_HINT_PADEMU_GLOBAL, 0, 0, {.label = {NULL, _STR_CONTROLLER_EMULATION}}},
     {UI_BREAK},
     {UI_BUTTON, PADMACRO_GLOBAL_BUTTON, 1, 1, _STR_HINT_PADMACRO_GLOBAL, 0, 0, {.label = {NULL, _STR_CONTROLLER_MACROS}}},

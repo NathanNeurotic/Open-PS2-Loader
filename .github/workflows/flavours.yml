@@ -100,6 +100,14 @@ jobs:
         run: python3 .github/scripts/test_pad_missed_read.py
       - name: Check that the DualShock stays locked in analog mode, so its ANALOG button cannot stall the menu
         run: python3 .github/scripts/test_pad_mode_lock.py
+      - name: Check Controllers > My Pads and Set Up A USB Pad (Pad Emulator builds), the frame's GUI lock, the finder, the file written and what My Pads lists
+        run: python3 .github/scripts/test_pad_setup_screen.py
+      - name: Check .pad USB pad profiles (RIPPS2 format 1) read, pack, decode and refuse bad files
+        run: python3 .github/scripts/test_ripps2_pad.py
+      - name: Check .pad profiles reach PADEMU and the menu's USB driver, and no PADS folder changes nothing
+        run: python3 .github/scripts/test_pads_launch.py
+      - name: Check .pad phase 2 (RIPPS2 build 129) is wired through PADEMU, ee_core, the launcher and the menu's USB driver, and this port's rules
+        run: python3 .github/scripts/test_ripps2_pad129.py
       - name: Check masked pattern scan bounds and rejection of short ranges
         run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR samples from the VBLANK_END handler in every build, and RA Mode 6

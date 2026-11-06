@@ -48,6 +48,13 @@
 #include "include/appsupport.h" // appGetObject() -- push a live Art Delay change onto the APPS list
 #include "include/tar.h"        // tarInvalidate -- re-arm the .tar probe when the toggle flips
 #include "include/grid.h"       // GRID_LAYOUTS -- Grid Layout's presets
+#ifdef PADEMU
+#include "include/padfile.h"     // My Pads and Set Up A USB Pad (RIPPS2 builds 126-129): the .pad reader
+#include "include/padprofiles.h" // the PADS folder, what a game gets of each profile, the menu driver's learn mode
+#include "include/filemgr.h"     // fmExists, fmRename: a profile already there is put aside, never removed
+#include <libds34usb.h>          // ds34usb_get_raw: a HID pad's reports while it is set up
+#include <sys/stat.h>            // mkdir
+#endif
 
 #include <limits.h>
 #include <stdlib.h>
@@ -2469,6 +2476,13 @@ int guiShowAudioConfig(void)
     return guiSettingsPageResult(result);
 }
 
+#ifdef PADEMU
+// Controllers > My Pads and Set Up A USB Pad (RIPPS2 builds 126 and 129): defined further down, after the message box
+// code they draw like
+static void guiShowMyPads(void);
+static void guiSetUpUsbPad(void);
+#endif
+
 int guiShowControllerConfig(void)
 {
     int value;
@@ -2506,7 +2520,13 @@ reshow_controller:
         else
             gSelectButton = KEY_CIRCLE;
 #ifdef PADEMU
-        if (result == PADEMU_GLOBAL_BUTTON) {
+        if (result == MY_PADS_BUTTON) {
+            guiShowMyPads();
+            goto reshow_controller;
+        } else if (result == PAD_SETUP_BUTTON) {
+            guiSetUpUsbPad();
+            goto reshow_controller;
+        } else if (result == PADEMU_GLOBAL_BUTTON) {
             guiGameShowPadEmuConfig(1);
             goto reshow_controller;
         } else if (result == PADMACRO_GLOBAL_BUTTON) {
@@ -4921,6 +4941,681 @@ int guiCancelIcon(void)
 {
     return gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON;
 }
+
+#ifdef PADEMU
+/* Controllers > My Pads, from RIPPS2 build 126 by akilluminati47 (https://github.com/akilluminati47/RIPPS2). Every
+   PADS/VVVV_PPPP.pad beside the settings, asked what the launcher's packer asks (src/padprofiles.c): read the same way,
+   checked by the reference reader (padfile.c), then padProfilesLeftOut, in the packer's order. Each shows its name and OK,
+   or why a game does not get it (for a file the reader refuses, the reader's own words), and the last line counts the
+   game maps in PADS/GAMES. It only reads: with no PADS folder it says "None yet" and makes nothing. */
+
+#define MY_PADS_MSG   480 // the most one message box is given here (guiMsgBox wraps into 512 bytes)
+#define MY_PADS_LINES 10  // and its lines, so it fits between the box's rules at the largest font
+#define MY_PADS_TAIL  128 // bytes kept for the last two lines: "and N more" and the game maps
+#define MY_PADS_NAME  40  // bytes of a profile's name shown
+
+// A profile's name=, found the way the reader finds a key (padfile.c padLines: '#' starts a comment, the key's case is
+// ignored, key and value are trimmed), cut to size - 1 bytes at the start of a UTF-8 character. "" when it has none
+static void guiMyPadsName(const char *text, char *out, int size)
+{
+    const char *line = text, *end, *stop, *key, *eq, *v;
+    int n;
+
+    out[0] = '\0';
+    while (*line != '\0') {
+        end = line + strcspn(line, "\n");
+        if ((stop = memchr(line, '#', end - line)) == NULL)
+            stop = end;
+        for (key = line; key < stop && (*key == ' ' || *key == '\t'); key++)
+            ;
+        if ((eq = memchr(key, '=', stop - key)) != NULL) {
+            for (v = eq; v > key && (v[-1] == ' ' || v[-1] == '\t'); v--)
+                ;
+            if (v - key == 4 && !strncasecmp(key, "name", 4)) {
+                for (v = eq + 1; v < stop && (*v == ' ' || *v == '\t'); v++)
+                    ;
+                while (stop > v && (stop[-1] == ' ' || stop[-1] == '\t' || stop[-1] == '\r'))
+                    stop--;
+                n = stop - v;
+                if (n > size - 1) {
+                    n = size - 1;
+                    while (n > 0 && ((unsigned char)v[n] & 0xC0) == 0x80) // not inside a character
+                        n--;
+                }
+                memcpy(out, v, n);
+                out[n] = '\0';
+                return;
+            }
+        }
+        line = *end != '\0' ? end + 1 : end;
+    }
+}
+
+// line on a line of its own after msg, when msg then stays under bytes and wraps to at most lines lines. 1 when it went in
+static int guiMyPadsAdd(char *msg, int *len, const char *line, int bytes, int lines)
+{
+    char wrapped[512];
+    int n = strlen(line);
+
+    if (*len + 1 + n >= bytes)
+        return 0;
+    msg[*len] = '\n';
+    memcpy(msg + *len + 1, line, n + 1);
+    if (guiWrapText(msg, screenWidth - 120, wrapped, sizeof(wrapped)) > lines) {
+        msg[*len] = '\0';
+        return 0;
+    }
+    *len += 1 + n;
+    return 1;
+}
+
+static void guiShowMyPads(void)
+{
+    char dir[256], path[320], msg[MY_PADS_MSG], row[256], reason[128], name[MY_PADS_NAME + 1], err[96], *text;
+    int len, rows = 0, shown = 0, used = 0, games = 0, n, parsed;
+    unsigned vid, pid;
+    pad_def_t def;
+    struct dirent *e;
+    DIR *d;
+
+    if (padProfilesDir(dir, sizeof(dir)) != 0) {
+        guiMsgBox(_l(_STR_MY_PADS_NO_HOME), 0, NULL);
+        return;
+    }
+    if ((text = malloc(PAD_PROFILE_TEXT_MAX + 1)) == NULL) { // the launcher's limit, kept off the stack
+        guiMsgBox(_l(_STR_FM_ERR_MEMORY), 0, NULL);
+        return;
+    }
+    len = snprintf(msg, sizeof(msg), _l(_STR_MY_PADS_IN), dir);
+    if (len < 0 || len >= (int)sizeof(msg))
+        len = strlen(msg);
+    if ((d = opendir(dir)) != NULL) {
+        while ((e = readdir(d)) != NULL) {
+            if (padFileId(e->d_name, &vid, &pid) != 0)
+                continue;
+            parsed = 0;
+            n = -1;
+            if (used < PAD_DEFS_MAX && snprintf(path, sizeof(path), "%s/%s", dir, e->d_name) < (int)sizeof(path))
+                n = padProfilesRead(path, text, PAD_PROFILE_TEXT_MAX + 1);
+            if (used == PAD_DEFS_MAX) // the packer reads no more once it has a block's worth
+                snprintf(reason, sizeof(reason), _l(_STR_MY_PADS_FULL), PAD_DEFS_MAX);
+            else if (n == -1)
+                snprintf(reason, sizeof(reason), "%s", _l(_STR_MY_PADS_UNREADABLE));
+            else if (n < 0)
+                snprintf(reason, sizeof(reason), _l(_STR_MY_PADS_TOO_BIG), PAD_PROFILE_TEXT_MAX);
+            else if (padDefParse(text, n, vid, pid, &def, err, sizeof(err)) != 0)
+                snprintf(reason, sizeof(reason), "%s", err); // the reader's own words: the line, and what is wrong there
+            else {
+                parsed = 1;
+                guiMyPadsName(text, name, sizeof(name));
+                switch (padProfilesLeftOut(&def)) {
+                    case PAD_PROFILE_USED:
+                        used++;
+                        snprintf(reason, sizeof(reason), "%s", _l(_STR_OK));
+                        break;
+                    case PAD_PROFILE_BUILT_IN:
+                        snprintf(reason, sizeof(reason), "%s", _l(_STR_MY_PADS_BUILT_IN));
+                        break;
+                    default:
+                        snprintf(reason, sizeof(reason), "%s", _l(_STR_MY_PADS_NOT_GENERIC));
+                        break;
+                }
+            }
+            if (parsed)
+                snprintf(row, sizeof(row), "%04X:%04X %s - %s", vid, pid, name[0] != '\0' ? name : _l(_STR_MY_PADS_NO_NAME), reason);
+            else
+                snprintf(row, sizeof(row), "%04X:%04X - %s", vid, pid, reason);
+            // in the order the packer meets them; once one does not fit, the rest are only counted
+            if (shown == rows && guiMyPadsAdd(msg, &len, row, MY_PADS_MSG - MY_PADS_TAIL, MY_PADS_LINES - 2))
+                shown++;
+            rows++;
+        }
+        closedir(d);
+        snprintf(path, sizeof(path), "%s/GAMES", dir);
+        if ((d = opendir(path)) != NULL) {
+            while ((e = readdir(d)) != NULL) {
+                size_t l = strlen(e->d_name);
+                games += l > 4 && !strcasecmp(e->d_name + l - 4, ".pad");
+            }
+            closedir(d);
+        }
+    }
+    free(text);
+    if (rows == 0)
+        guiMyPadsAdd(msg, &len, _l(_STR_MY_PADS_NONE), MY_PADS_MSG, MY_PADS_LINES);
+    else if (shown < rows) {
+        snprintf(row, sizeof(row), _l(_STR_MY_PADS_MORE), rows - shown);
+        guiMyPadsAdd(msg, &len, row, MY_PADS_MSG, MY_PADS_LINES);
+    }
+    if (games == 1)
+        snprintf(row, sizeof(row), "%s", _l(_STR_MY_PADS_GAME_MAP));
+    else
+        snprintf(row, sizeof(row), _l(_STR_MY_PADS_GAME_MAPS), games);
+    guiMyPadsAdd(msg, &len, row, MY_PADS_MSG, MY_PADS_LINES);
+    guiMsgBox(msg, 0, NULL);
+}
+
+/* Controllers > Set Up A USB Pad, from RIPPS2 build 129 by akilluminati47 (https://github.com/akilluminati47/RIPPS2). The
+   menu's USB pad driver takes any HID pad while this is open (padProfilesMenuLearn) and hands its reports over as they
+   come (ds34usb_get_raw). The pad is read at rest, then each button and stick is asked for in turn and what moved is
+   found: one bit (a button, b<byte>.<bit>, or !b when it drops), a hat's low nibble leaving its centre (the d-pad,
+   dpad=hat<byte>), or a byte that swings (an axis, a<byte>, a- when it runs the other way; a trigger that only has an
+   axis is a<byte>). Bytes that move at rest are left out. The result is tried live, then written as PADS/VVVV_PPPP.pad
+   beside the settings. The PS2 pad drives it: SELECT skips a button, the cancel button backs out.
+
+   Changed from RIPPS2: PADS is padProfilesDir's; a frame holds the GUI lock from just before rmStartFrame to just after
+   rmEndFrame, makes its text there from string IDs, and reads no input, calls no driver and opens no file inside it; the
+   driver is let go before any closing message; a profile already there is put aside with fmRename (.bak, then .b01 to
+   .b99), never removed; the new file is written with a mode, read back, and removed if any of that fails. It does not
+   open without a pad that works the menu with no profile (all are off while it is open), takes no pad that was in a
+   port as it opened until it has been out, reads only the port it found the pad in, and says when the new profile is
+   left out of the block. */
+
+#define PAD_SETUP_SWING 0x50 // an axis moved this far from rest
+#define PAD_SETUP_HOLD  4    // frames a find must hold before it counts
+
+typedef struct
+{
+    int port, len, seq;
+    unsigned vid, pid;
+    unsigned char r[64];
+} pad_setup_raw_t;
+
+// A button's name as the screen shows it: a string ID, or the PS2 pad's own marking, the same in every language
+typedef struct
+{
+    int label;        // when text is NULL
+    const char *text; // "L1", "START"
+} pad_setup_name_t;
+
+static const struct
+{
+    int axis, id;
+    pad_setup_name_t name; // a button's name, or a stick step's whole sentence
+} padSetupSteps[] = {
+    {0, PAD_B_CROSS, {_STR_CROSS, NULL}},
+    {0, PAD_B_CIRCLE, {_STR_CIRCLE, NULL}},
+    {0, PAD_B_SQUARE, {_STR_PAD_SETUP_SQUARE, NULL}},
+    {0, PAD_B_TRIANGLE, {_STR_PAD_SETUP_TRIANGLE, NULL}},
+    {0, PAD_B_L1, {0, "L1"}},
+    {0, PAD_B_R1, {0, "R1"}},
+    {0, PAD_B_L2, {0, "L2"}},
+    {0, PAD_B_R2, {0, "R2"}},
+    {0, PAD_B_SELECT, {0, "SELECT"}},
+    {0, PAD_B_START, {0, "START"}},
+    {0, PAD_B_L3, {_STR_PAD_SETUP_L3, NULL}},
+    {0, PAD_B_R3, {_STR_PAD_SETUP_R3, NULL}},
+    {0, PAD_B_UP, {_STR_PAD_SETUP_DPAD_UP, NULL}},
+    {0, PAD_B_DOWN, {_STR_PAD_SETUP_DPAD_DOWN, NULL}},
+    {0, PAD_B_LEFT, {_STR_PAD_SETUP_DPAD_LEFT, NULL}},
+    {0, PAD_B_RIGHT, {_STR_PAD_SETUP_DPAD_RIGHT, NULL}},
+    {1, PAD_AX_LX, {_STR_PAD_SETUP_LX, NULL}},
+    {1, PAD_AX_LY, {_STR_PAD_SETUP_LY, NULL}},
+    {1, PAD_AX_RX, {_STR_PAD_SETUP_RX, NULL}},
+    {1, PAD_AX_RY, {_STR_PAD_SETUP_RY, NULL}},
+};
+#define PAD_SETUP_STEPS ((int)(sizeof(padSetupSteps) / sizeof(padSetupSteps[0])))
+
+// What the screen shows. The text is made from it inside each frame: no translated string is kept from one frame to the next
+enum {
+    PAD_SETUP_VIEW_PLUG = 0, // plug the pad in
+    PAD_SETUP_VIEW_REST,     // found vid:pid, let go
+    PAD_SETUP_VIEW_STEP,     // press or push padSetupSteps[step]
+    PAD_SETUP_VIEW_GOT,      // got it, let go
+    PAD_SETUP_VIEW_TRY,      // what the new profile reads now: buttons, ax
+};
+
+typedef struct
+{
+    int view, step;
+    unsigned vid, pid;
+    unsigned short buttons; // active low, as padTranslate gives them
+    unsigned char ax[PAD_AX_COUNT];
+} pad_setup_view_t;
+
+static const char *padSetupName(const pad_setup_name_t *n)
+{
+    return n->text != NULL ? n->text : _l(n->label);
+}
+
+// The HID pad the driver holds in a port, and its last report: 1, 0 when the port holds none that runs, -1 when the
+// driver did not answer
+static int padSetupPoll(int port, pad_setup_raw_t *p)
+{
+    unsigned char b[DS34USB_RAW_SIZE];
+
+    if (!ds34usb_get_raw(port, b))
+        return -1;
+    if (b[1] != DS34USB_TYPE_GENERIC || !(b[0] & DS34USB_STATE_RUNNING))
+        return 0;
+    p->port = port;
+    p->vid = b[2] | b[3] << 8;
+    p->pid = b[4] | b[5] << 8;
+    p->len = b[6] < (int)sizeof(p->r) ? b[6] : (int)sizeof(p->r); // the driver caps it at 64; never past r all the same
+    p->seq = b[7];
+    memcpy(p->r, b + 8, sizeof(p->r));
+    return 1;
+}
+
+// One frame. Only drawing happens inside the lock: readPads and padSetupPoll run between frames, outside it
+static void padSetupDraw(const pad_setup_view_t *v)
+{
+    static const pad_setup_name_t shown[PAD_B_COUNT] = {
+        {0, "SELECT"},
+        {0, "L3"},
+        {0, "R3"},
+        {0, "START"},
+        {_STR_PAD_SETUP_UP, NULL},
+        {_STR_PAD_SETUP_RIGHT, NULL},
+        {_STR_PAD_SETUP_DOWN, NULL},
+        {_STR_PAD_SETUP_LEFT, NULL},
+        {0, "L2"},
+        {0, "R2"},
+        {0, "L1"},
+        {0, "R1"},
+        {_STR_PAD_SETUP_TRIANGLE, NULL},
+        {_STR_CIRCLE, NULL},
+        {_STR_CROSS, NULL},
+        {_STR_PAD_SETUP_SQUARE, NULL}};
+    char body[512], wrapped[512];
+    int lines, i, n;
+
+    guiLock();
+    rmStartFrame();
+
+    switch (v->view) {
+        case PAD_SETUP_VIEW_REST:
+            snprintf(body, sizeof(body), _l(_STR_PAD_SETUP_FOUND), v->vid, v->pid);
+            break;
+        case PAD_SETUP_VIEW_STEP:
+            if (padSetupSteps[v->step].axis)
+                snprintf(body, sizeof(body), "%s", padSetupName(&padSetupSteps[v->step].name));
+            else
+                snprintf(body, sizeof(body), _l(_STR_PAD_SETUP_PRESS), padSetupName(&padSetupSteps[v->step].name));
+            break;
+        case PAD_SETUP_VIEW_GOT:
+            snprintf(body, sizeof(body), "%s", _l(_STR_PAD_SETUP_GOT_IT));
+            break;
+        case PAD_SETUP_VIEW_TRY:
+            n = snprintf(body, sizeof(body), "%s\n", _l(_STR_PAD_SETUP_TRY));
+            for (i = 0; i < PAD_B_COUNT && n >= 0 && n < (int)sizeof(body) - 64; i++)
+                if (!(v->buttons & (1u << i)))
+                    n += snprintf(body + n, sizeof(body) - n, "%s ", padSetupName(&shown[i]));
+            if (n >= 0 && n < (int)sizeof(body))
+                snprintf(body + n, sizeof(body) - n, "\nL %3d %3d   R %3d %3d", v->ax[PAD_AX_LX], v->ax[PAD_AX_LY], v->ax[PAD_AX_RX], v->ax[PAD_AX_RY]);
+            break;
+        default:
+            snprintf(body, sizeof(body), "%s", _l(_STR_PAD_SETUP_PLUG));
+            break;
+    }
+    lines = guiWrapText(body, screenWidth - 120, wrapped, sizeof(wrapped));
+
+    if (guiDrawBGSettings() == 0)
+        guiDrawBGPlasma();
+    rmDrawRect(0, 0, screenWidth, screenHeight, gColDarker);
+    rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
+    rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
+    fntRenderString(gTheme->fonts[0], screenWidth >> 1, 100, ALIGN_CENTER, 0, 0, _l(_STR_PAD_SETUP), gTheme->selTextColor);
+    guiDrawWrappedLines(wrapped, lines);
+    // where guiMsgBox puts its two: what SELECT or the confirm button does here, then BACK
+    if (v->view == PAD_SETUP_VIEW_STEP)
+        guiDrawIconAndText(SELECT_ICON, _STR_PAD_SETUP_SKIP, gTheme->fonts[0], 70, 417, gTheme->textColor);
+    else if (v->view == PAD_SETUP_VIEW_TRY)
+        guiDrawIconAndText(guiConfirmIcon(), _STR_PAD_SETUP_SAVE, gTheme->fonts[0], 70, 417, gTheme->textColor);
+    guiDrawIconAndText(guiCancelIcon(), _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
+
+    rmEndFrame();
+    guiUnlock();
+}
+
+static int padSetupBits(unsigned v)
+{
+    int n = 0;
+    for (; v; v &= v - 1)
+        n++;
+    return n;
+}
+
+// What moved since rest, for the step: 1 a bit (*at, *bit, *low), 2 a hat (*at), 3 an axis (*at, *low = it fell)
+static int padSetupFind(const unsigned char *rest, const unsigned char *noise, const pad_setup_raw_t *p, int axis, int dpad,
+                        int trigger, const unsigned char *usedBits, const unsigned char *usedAxis, int *at, int *bit, int *low)
+{
+    int i, best = -1, bestSwing = 0;
+
+    for (i = 0; i < p->len; i++) { // the byte that swung furthest
+        int d = (int)p->r[i] - (int)rest[i];
+        if (d < 0)
+            d = -d;
+        if (noise[i] >= 0x20 || usedAxis[i] || usedBits[i] || d < PAD_SETUP_SWING || d <= bestSwing)
+            continue;
+        if (axis ? rest[i] < 0x40 || rest[i] > 0xC0 : rest[i] > 0x40) // a stick rests round its centre, a trigger low
+            continue;
+        best = i;
+        bestSwing = d;
+    }
+    if (best >= 0 && (axis || trigger)) { // L2/R2: an analog trigger's byte first, as its low bits flip on the way down
+        *at = best;
+        *low = p->r[best] < rest[best];
+        return 3;
+    }
+    if (!axis) {
+        if (dpad)                        // first: Up on a hat centred at 8 drops one bit (8 to 0), which would read as a button
+            for (i = 0; i < p->len; i++) // a hat: the low nibble leaves its centre (8-15), the high one stays
+                if (!noise[i] && !usedAxis[i] && (rest[i] & 0x0F) >= 8 && (p->r[i] & 0x0F) < 8 && (rest[i] & 0xF0) == (p->r[i] & 0xF0)) {
+                    *at = i;
+                    return 2;
+                }
+        for (i = 0; i < p->len; i++) { // one bit, in a byte that is still at rest
+            unsigned x = rest[i] ^ p->r[i];
+            if (noise[i] || usedAxis[i] || !x || padSetupBits(x) != 1 || (usedBits[i] & x))
+                continue;
+            *at = i;
+            for (*bit = 0; !(x & (1u << *bit)); (*bit)++)
+                ;
+            *low = (rest[i] >> *bit) & 1; // set at rest: pressed is 0
+            return 1;
+        }
+    }
+    if (best < 0)
+        return 0;
+    *at = best; // a button with only an axis (pressed past half)
+    *low = 0;
+    return 3;
+}
+
+static int padSetupAtRest(const unsigned char *rest, const unsigned char *noise, const unsigned char *usedAxis, const pad_setup_raw_t *p)
+{
+    int i;
+    for (i = 0; i < p->len; i++) {
+        int d = (int)p->r[i] - (int)rest[i];
+        if (d < 0)
+            d = -d;
+        if (noise[i] ? d > noise[i] + 0x30 : usedAxis[i] ? d > 0x30 :
+                                                           d != 0)
+            return 0;
+    }
+    return 1;
+}
+
+// The file read back: 1 when it holds exactly text, and no more
+static int padSetupWritten(const char *path, const char *text, int len)
+{
+    char buf[256];
+    int fd = open(path, O_RDONLY), done = 0, r = 0;
+
+    if (fd < 0)
+        return 0;
+    while ((r = read(fd, buf, sizeof(buf))) > 0) {
+        if (done + r > len || memcmp(buf, text + done, r) != 0)
+            break;
+        done += r;
+    }
+    close(fd);
+    return r == 0 && done == len;
+}
+
+static void guiSetUpUsbPad(void)
+{
+    char msg[480], dir[256], path[320], bak[32], bakPath[320], text[2048], err[96];
+    unsigned char rest[64], lo[64], hi[64], noise[64], usedBits[64], usedAxis[64];
+    // what was found per step: kind (0 none), byte, bit, low
+    unsigned char kind[PAD_SETUP_STEPS], at[PAD_SETUP_STEPS], bitOf[PAD_SETUP_STEPS], lowOf[PAD_SETUP_STEPS];
+    pad_setup_raw_t p;
+    pad_setup_view_t v;
+    pad_def_t def;
+    int step, frames, i, k, hat = -1, len = 0, fd, offset, maxButton = 0, ok, port, got, saved = 0;
+    int stale[2]; // per port: it held a HID pad as the screen opened, and has not been seen without one since
+    unsigned vid = 0, pid = 0;
+
+    msg[0] = '\0';
+    bak[0] = '\0';
+    memset(&v, 0, sizeof(v));
+    if (padProfilesDir(dir, sizeof(dir)) != 0) {
+        guiMsgBox(_l(_STR_MY_PADS_NO_HOME), 0, NULL);
+        return;
+    }
+    if (!padReadyWithoutProfile()) { // every profile is off while this is open: a pad that one drives could not work it
+        guiMsgBox(_l(_STR_PAD_SETUP_NO_PAD), 0, NULL);
+        return;
+    }
+    if (padProfilesMenuLearn(1) < 0) { // the driver did not take it, and an open that fails is undone: nothing to let go
+        guiMsgBox(_l(_STR_PAD_SETUP_NO_DRIVER), 0, NULL);
+        return;
+    }
+    sfxPlay(SFX_MESSAGE);
+
+    // 1: the pad, plugged in now (one the driver already let go of is not offered again until it is). A port that holds
+    // a HID pad as the screen opens, a profiled pad say, is taken only once it has been seen without one, as PLUG's
+    // replug asks; from then on only the port and the ID found here are read
+    for (port = 0; port < 2; port++)
+        stale[port] = padSetupPoll(port, &p) > 0;
+    v.view = PAD_SETUP_VIEW_PLUG;
+    for (;;) {
+        for (port = 0; port < 2; port++) {
+            got = padSetupPoll(port, &p);
+            if (got == 0)
+                stale[port] = 0;
+            else if (got > 0 && !stale[port] && p.len > 0)
+                break;
+        }
+        if (port < 2) {
+            vid = p.vid;
+            pid = p.pid;
+            break;
+        }
+        padSetupDraw(&v);
+        readPads();
+        if (getKeyOn(guiCancelKey()))
+            goto out;
+    }
+
+    // 2: at rest. What a byte does with nothing held (an axis drifts, a counter counts) is measured for a second and a
+    // half. rest, lo and hi start from the report step 1 saw, so they are never unset, even with no report from here on;
+    // only reports from this pad count
+    v.view = PAD_SETUP_VIEW_REST;
+    v.vid = vid;
+    v.pid = pid;
+    memcpy(rest, p.r, sizeof(rest));
+    memcpy(lo, p.r, sizeof(lo));
+    memcpy(hi, p.r, sizeof(hi));
+    for (frames = 0; frames < 90; frames++) {
+        padSetupDraw(&v);
+        readPads();
+        if (getKeyOn(guiCancelKey()))
+            goto out;
+        if (padSetupPoll(port, &p) <= 0 || p.vid != vid || p.pid != pid)
+            continue;
+        memcpy(rest, p.r, sizeof(rest));
+        if (frames < 30 || !len) { // the first half second: the hand lets go
+            memcpy(lo, p.r, sizeof(lo));
+            memcpy(hi, p.r, sizeof(hi));
+            len = p.len;
+        }
+        for (i = 0; i < 64; i++) {
+            if (p.r[i] < lo[i])
+                lo[i] = p.r[i];
+            if (p.r[i] > hi[i])
+                hi[i] = p.r[i];
+        }
+    }
+    for (i = 0; i < 64; i++)
+        noise[i] = hi[i] - lo[i];
+    memset(usedBits, 0, sizeof(usedBits));
+    memset(usedAxis, 0, sizeof(usedAxis));
+    memset(kind, 0, sizeof(kind));
+
+    // 3: each button and stick
+    for (step = 0; step < PAD_SETUP_STEPS; step++) {
+        int axis = padSetupSteps[step].axis, id = padSetupSteps[step].id, held = 0, last = -1, lastKind = 0, a = 0, b = 0, l = 0;
+        int lastBit = -1, lastLow = -1; // a hold counts one find: the same byte, the same bit, the same way
+        int dpad = !axis && id >= PAD_B_UP && id <= PAD_B_LEFT;
+
+        if (dpad && hat >= 0) { // the hat gave all four
+            kind[step] = 2;
+            at[step] = hat;
+            continue;
+        }
+        v.view = PAD_SETUP_VIEW_STEP;
+        v.step = step;
+        for (;;) {
+            int found = 0;
+            padSetupDraw(&v);
+            readPads();
+            if (getKeyOn(guiCancelKey()))
+                goto out;
+            if (getKeyOn(KEY_SELECT)) { // left as none
+                sfxPlay(SFX_CURSOR);
+                break;
+            }
+            if (padSetupPoll(port, &p) > 0 && p.vid == vid && p.pid == pid)
+                found = padSetupFind(rest, noise, &p, axis, dpad, !axis && (id == PAD_B_L2 || id == PAD_B_R2), usedBits, usedAxis, &a, &b, &l);
+            if (found && found == lastKind && a == last && b == lastBit && l == lastLow)
+                held++;
+            else
+                held = 0;
+            last = a;
+            lastBit = b;
+            lastLow = l;
+            lastKind = found;
+            if (found && held >= PAD_SETUP_HOLD) {
+                kind[step] = found;
+                at[step] = a;
+                bitOf[step] = b;
+                lowOf[step] = l;
+                if (found == 1)
+                    usedBits[a] |= 1u << b;
+                else {
+                    usedAxis[a] = 1;
+                    if (found == 2)
+                        hat = a;
+                }
+                sfxPlay(SFX_CONFIRM);
+                break;
+            }
+        }
+        // let go before the next (a second at most: a stick that rests a little off still moves on)
+        v.view = PAD_SETUP_VIEW_GOT;
+        for (frames = 0; frames < 60; frames++) {
+            padSetupDraw(&v);
+            readPads();
+            if (getKeyOn(guiCancelKey()))
+                goto out;
+            if (padSetupPoll(port, &p) > 0 && p.vid == vid && p.pid == pid && padSetupAtRest(rest, noise, usedAxis, &p))
+                break;
+        }
+    }
+
+    // 4: the text. Bytes count from the report's start; a report with its buttons past byte 31 is read from an offset
+    offset = 255;
+    for (step = 0; step < PAD_SETUP_STEPS; step++) {
+        if (kind[step] && at[step] < offset)
+            offset = at[step];
+        if (kind[step] == 1 && at[step] > maxButton)
+            maxButton = at[step];
+    }
+    if (offset == 255) {
+        snprintf(msg, sizeof(msg), "%s", _l(_STR_PAD_SETUP_NOTHING));
+        goto out;
+    }
+    if (maxButton <= PAD_BYTE_MAX)
+        offset = 0;
+    len = snprintf(text, sizeof(text), "# Set up on the PS2 by RiptOPL (Controllers > Set Up A USB Pad, from RIPPS2 build 129)\n[Device]\nformat=%d\nname=USB pad %04X:%04X\ndecoder=generic\n",
+                   PAD_FORMAT, vid, pid);
+    if (offset)
+        len += snprintf(text + len, sizeof(text) - len, "offset=%d\n", offset);
+    len += snprintf(text + len, sizeof(text) - len, "[Buttons]\n");
+    for (step = 0; step < PAD_SETUP_STEPS; step++) {
+        static const char *const names[PAD_B_COUNT] = {"select", "l3", "r3", "start", "up", "right", "down", "left",
+                                                       "l2", "r2", "l1", "r1", "triangle", "circle", "cross", "square"};
+        int id = padSetupSteps[step].id;
+        if (padSetupSteps[step].axis || kind[step] == 2)
+            continue;
+        if (kind[step] == 1)
+            len += snprintf(text + len, sizeof(text) - len, "%s=%sb%d.%d\n", names[id], lowOf[step] ? "!" : "", at[step] - offset, bitOf[step]);
+        else if (kind[step] == 3)
+            len += snprintf(text + len, sizeof(text) - len, "%s=a%d\n", names[id], at[step] - offset);
+        else
+            len += snprintf(text + len, sizeof(text) - len, "%s=none\n", names[id]);
+    }
+    len += snprintf(text + len, sizeof(text) - len, "[Axes]\n");
+    if (hat >= 0)
+        len += snprintf(text + len, sizeof(text) - len, "dpad=hat%d\n", hat - offset);
+    else
+        len += snprintf(text + len, sizeof(text) - len, "dpad=buttons\n");
+    for (step = 0; step < PAD_SETUP_STEPS; step++) {
+        static const char *const axes[PAD_AX_COUNT] = {"lx", "ly", "rx", "ry"};
+        if (!padSetupSteps[step].axis)
+            continue;
+        if (kind[step] == 3)
+            len += snprintf(text + len, sizeof(text) - len, "%s=a%d%s\n", axes[padSetupSteps[step].id], at[step] - offset, lowOf[step] ? "-" : "");
+        else
+            len += snprintf(text + len, sizeof(text) - len, "%s=none\n", axes[padSetupSteps[step].id]);
+    }
+    len += snprintf(text + len, sizeof(text) - len, "deadzone=12\n[Rumble]\nrumble=off\nled=off\ninit=off\n");
+    if (padDefParse(text, len, vid, pid, &def, err, sizeof(err)) != 0) { // never a file the reader would refuse
+        snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_CANNOT), err);
+        goto out;
+    }
+
+    // 5: tried live; the confirm button writes it
+    v.view = PAD_SETUP_VIEW_TRY;
+    for (ok = 0; !ok;) {
+        v.buttons = 0xFFFF;
+        memset(v.ax, 128, sizeof(v.ax));
+        if (padSetupPoll(port, &p) > 0 && p.vid == vid && p.pid == pid)
+            padTranslate(&def, p.r, p.len, &v.buttons, v.ax);
+        padSetupDraw(&v);
+        readPads();
+        if (getKeyOn(guiCancelKey()))
+            goto out;
+        if (getKeyOn(guiConfirmKey()))
+            ok = 1;
+    }
+
+    // 6: written. One already there is put aside first, as .bak, then .b01 to .b99: no file the user had is ever removed
+    mkdir(dir, 0777); // fails when it is there already: the open below is what says whether PADS can be written
+    snprintf(path, sizeof(path), "%s/%04X_%04X.pad", dir, vid, pid);
+    if (fmExists(path)) {
+        for (k = 0; k < 100; k++) {
+            if (k == 0)
+                snprintf(bak, sizeof(bak), "%04X_%04X.bak", vid, pid);
+            else
+                snprintf(bak, sizeof(bak), "%04X_%04X.b%02d", vid, pid, k);
+            snprintf(bakPath, sizeof(bakPath), "%s/%s", dir, bak);
+            if (!fmExists(bakPath))
+                break;
+        }
+        if (k == 100 || !fmRename(path, bak)) {
+            snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_KEPT), path);
+            goto out;
+        }
+    }
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    ok = fd >= 0 && write(fd, text, len) == len;
+    if (fd >= 0 && close(fd) < 0)
+        ok = 0;
+    if (!ok || !padSetupWritten(path, text, len)) {
+        unlink(path); // never a cut-short profile left looking whole; the one put aside stays where it is
+        if (bak[0] != '\0')
+            snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_WRITE_FAILED_BAK), path, bak);
+        else
+            snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_WRITE_FAILED), path);
+        goto out;
+    }
+    snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_SAVED), path);
+    saved = 1;
+
+out:
+    // Every way out lets the driver go first: the profiles read again, the new one too, and sent now, so the pad steers
+    // the menu as soon as the box below closes. A new profile the block has no room for is not used, and the box says so
+    padProfilesMenuLoad();
+    padProfilesMenuLearn(0);
+    if (saved && !padProfilesMenuHas(vid, pid))
+        snprintf(msg, sizeof(msg), _l(_STR_PAD_SETUP_SAVED_UNUSED), path, PAD_DEFS_MAX);
+    if (msg[0] != '\0')
+        guiMsgBox(msg, 0, NULL);
+}
+#endif
 
 int guiPromptRebootIop(void)
 {

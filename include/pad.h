@@ -70,4 +70,11 @@ void padGetRightStick(int *x, int *y); // -128..127 each way; 0, 0 in the dead z
 /** Debug HUD: reports detected actuators and alignment status for pad 0 and pad 1. */
 void padGetActuatorDiag(int *act0, int *aligned0, int *act1, int *aligned1);
 
+#ifdef PADEMU
+/** 1 when the menu reads a pad that needs no .pad profile: a DualShock 2 in a controller port, a pad on Bluetooth, or
+ * a USB pad the menu's driver has its own decoder for (DualShock 3 or 4, the ShanWan PS3 pad). Set Up A USB Pad turns
+ * every profile off while it is open, so it needs one. The GUI thread. */
+int padReadyWithoutProfile(void);
+#endif
+
 #endif

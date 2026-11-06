@@ -28,6 +28,10 @@
 #include "ra_overlay.h"
 #include "../../modules/network/common/ra_snap.h"
 #endif
+#ifdef PADEMU
+#include "../../include/padfile.h" // PAD_BLOCK_SIZE: the .pad block that may follow PADEMU's 8 bytes (New_Reset_Iop)
+_Static_assert(PAD_BLOCK_SIZE == 180, "New_Reset_Iop hands PADEMU 8 + 180 bytes");
+#endif
 
 extern int _iop_reboot_count;
 
@@ -447,10 +451,21 @@ int New_Reset_Iop(const char *arg, int arglen)
 
 #ifdef PADEMU
     if (iop_reboot_count >= 2 && config->EnablePadEmuOp) {
-        char args_for_pademu[8];
-        memcpy(args_for_pademu, &config->PadEmuSettings, 4);
-        memcpy(args_for_pademu + 4, &config->PadMacroSettings, 4);
-        LoadOPLModule(OPL_MODULE_ID_PADEMU, 0, sizeof(args_for_pademu), args_for_pademu);
+        // RIPPS2 build 129: the .pad block follows (in module storage: no stack for it)
+        if (config->PadEmuArgs != NULL) {
+            int settings = config->PadEmuSettings | (1 << 19); // PADEMU_PROFILES_FLAG
+            memcpy(config->PadEmuArgs, &settings, 4);
+            memcpy(config->PadEmuArgs + 4, &config->PadMacroSettings, 4);
+            LoadOPLModule(OPL_MODULE_ID_PADEMU, 0, 8 + 180, config->PadEmuArgs); // 180: PAD_BLOCK_SIZE
+        } else {
+            char args_for_pademu[8];
+            // No block: bit 19 clear, so PADEMU never reads past these 8 bytes. The menu never sets that bit (it is
+            // bit 27 of the saved PADEMU settings), so with no profiles these are the 8 bytes PADEMU always got.
+            int settings = config->PadEmuSettings & ~(1 << 19);
+            memcpy(args_for_pademu, &settings, 4);
+            memcpy(args_for_pademu + 4, &config->PadMacroSettings, 4);
+            LoadOPLModule(OPL_MODULE_ID_PADEMU, 0, sizeof(args_for_pademu), args_for_pademu);
+        }
     }
 #endif
 

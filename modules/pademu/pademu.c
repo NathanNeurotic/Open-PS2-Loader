@@ -8,6 +8,9 @@
 
 #include "pademu.h"
 #include "padmacro.h"
+#ifdef USB
+#include "padprofile.h" // RIPPS2 build 129: .pad (the USB build only)
+#endif
 
 #ifdef BT
 
@@ -124,6 +127,13 @@ int _start(int argc, char *argv[])
         u32 macro_settings = 0xAB;
         mips_memcpy(&macro_settings, argv[1] + 4, 4);
         padMacroInit(macro_settings);
+#ifdef USB
+        // RIPPS2 build 129: the user's .pad profiles and the game's button map, packed by the launcher after the settings
+        // (ee_core passes PAD_BLOCK_SIZE more bytes and sets the flag); nothing of it is read from a file in the game.
+        // The Bluetooth build has no profiled pads, so it leaves the block unread.
+        if (PadEmuSettings_local.raw & PADEMU_PROFILES_FLAG)
+            padProfilesLoad((const unsigned char *)argv[1] + 8);
+#endif
     }
 
     if (RegisterLibraryEntries(&_exp_pademu) != 0) {
