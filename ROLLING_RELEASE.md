@@ -47,7 +47,7 @@ memory card's file times; the release package cannot preserve them after a
 runtime write.
 
 The `.psu` format and independent package check use the CC0
-[PSUManager core by techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager),
+[PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager) core by [techwritescode](https://github.com/techwritescode),
 preserved with its license in [third_party/PSUManager](third_party/PSUManager/README.md).
 The core is release-host tooling and does not enter the installable packages.
 
