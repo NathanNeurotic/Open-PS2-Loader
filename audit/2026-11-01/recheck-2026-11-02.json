@@ -1,0 +1,156 @@
+{
+ "checked_at": "2026-11-02T14:16:41Z",
+ "method": "git ls-remote --heads --tags from the cloud container, for the 11 selected tracked repositories that carry open records plus 2 untracked ones; heads compared with audit/2026-11-01/repository-heads.json. Peeled tag lines (^{}) are not compared. An untracked repository lists every ref as new.",
+ "moved": [
+  "akilluminati47/RIPPS2"
+ ],
+ "repositories": {
+  "DKWDRV/DKWDRV": {
+   "tracked": true,
+   "branch": "main",
+   "november_1_head": "5c560c613727444f6e112f14f7cad5f8aaaffdf9",
+   "november_2_head": "5c560c613727444f6e112f14f7cad5f8aaaffdf9",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "MiguelQueiroz010/OPL-DS4RTBT": {
+   "tracked": true,
+   "branch": "mtap-menu-redesign",
+   "november_1_head": "9f250d4ca03c78adfd6b4db215c303d236a97cc4",
+   "november_2_head": "9f250d4ca03c78adfd6b4db215c303d236a97cc4",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "Okeanos86/BDMAssault": {
+   "tracked": true,
+   "branch": "main",
+   "november_1_head": "68731fca6fee75478a0939a64b79be8144b1ca96",
+   "november_2_head": "68731fca6fee75478a0939a64b79be8144b1ca96",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "Okeanos86/ELFWD": {
+   "tracked": false,
+   "branch": null,
+   "november_1_head": null,
+   "november_2_head": null,
+   "head_moved": null,
+   "new_refs": {
+    "refs/heads/main": "3d70c04612",
+    "refs/tags/v1.0.0": "122ef8fc92",
+    "refs/tags/v2.0.0": "ce55b65cce"
+   },
+   "removed_refs": []
+  },
+  "akilluminati47/RIPPS2": {
+   "tracked": true,
+   "branch": "main",
+   "november_1_head": "c0d308667e7771f5dc40a1e56974e74203969cdb",
+   "november_2_head": "f9d33c25b781f18f922248e60f3ef99600111969",
+   "head_moved": true,
+   "new_refs": {
+    "refs/tags/v1.2.9-beta": "0a697e3cce"
+   },
+   "removed_refs": []
+  },
+  "belomaxorka/yaopl": {
+   "tracked": true,
+   "branch": "master",
+   "november_1_head": "6955d0bef8651730199022e7634d1df389776bad",
+   "november_2_head": "6955d0bef8651730199022e7634d1df389776bad",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "dnunezx/LUNA": {
+   "tracked": true,
+   "branch": "main",
+   "november_1_head": "ab5211717479bc020ed9580b605c66cc4c800236",
+   "november_2_head": "ab5211717479bc020ed9580b605c66cc4c800236",
+   "head_moved": false,
+   "new_refs": {
+    "refs/heads/build-3.1.3-slovak": "21445a6a7c"
+   },
+   "removed_refs": []
+  },
+  "juankyt505/OPL-JUMP": {
+   "tracked": true,
+   "branch": "main",
+   "november_1_head": "5e103b9af33c2203425e0ab0be547692f31c81f0",
+   "november_2_head": "5e103b9af33c2203425e0ab0be547692f31c81f0",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "oMrRexD/sd2cloud": {
+   "tracked": false,
+   "branch": null,
+   "november_1_head": null,
+   "november_2_head": null,
+   "head_moved": null,
+   "new_refs": {
+    "refs/heads/main": "0216488938",
+    "refs/heads/refactor/modules": "d9396bdf99",
+    "refs/tags/beta": "0216488938",
+    "refs/tags/v1.0": "1d69d3f8e4",
+    "refs/tags/v1.0.1": "e2e48f04af",
+    "refs/tags/v1.1": "4e858d2ee7",
+    "refs/tags/v1.2": "faf7c3be10",
+    "refs/tags/v1.2.1": "18d878e4f5",
+    "refs/tags/v1.2.2": "1218b52e2a",
+    "refs/tags/v1.3": "77762d7c9f",
+    "refs/tags/v1.3.1": "75dc1139b2",
+    "refs/tags/v1.3.2": "5f2c1ec031",
+    "refs/tags/v1.4": "46cec6919e",
+    "refs/tags/v1.5": "1dbf40a1cb",
+    "refs/tags/v1.5.1": "2c37db7301",
+    "refs/tags/v1.6": "1aab7ccfcf",
+    "refs/tags/v1.6.1": "636e2e271c",
+    "refs/tags/v1.6.2": "1640151f21",
+    "refs/tags/v1.7": "8a2b9a48ad",
+    "refs/tags/v1.7.1": "4c27bbc420",
+    "refs/tags/v2.0": "c46f2bd037"
+   },
+   "removed_refs": []
+  },
+  "ps2homebrew/Open-PS2-Loader": {
+   "tracked": true,
+   "branch": "master",
+   "november_1_head": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+   "november_2_head": "b3a2199795fe89ba7e2dd7b843354472dff2c3eb",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "rickgaiser/neutrino": {
+   "tracked": true,
+   "branch": "master",
+   "november_1_head": "1bff25bcfa02e192f5b35cadbe53648786813974",
+   "november_2_head": "1bff25bcfa02e192f5b35cadbe53648786813974",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "rodrigoGalvanDev/OPL-DualSense-BT": {
+   "tracked": true,
+   "branch": "dualsense-bt",
+   "november_1_head": "7188a539813d8cacc4883610c21c299917619b3b",
+   "november_2_head": "7188a539813d8cacc4883610c21c299917619b3b",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  },
+  "yaopl/yaopl": {
+   "tracked": true,
+   "branch": "master",
+   "november_1_head": "6955d0bef8651730199022e7634d1df389776bad",
+   "november_2_head": "6955d0bef8651730199022e7634d1df389776bad",
+   "head_moved": false,
+   "new_refs": {},
+   "removed_refs": []
+  }
+ }
+}
