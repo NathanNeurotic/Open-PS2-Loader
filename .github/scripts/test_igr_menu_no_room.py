@@ -13,8 +13,8 @@ reached the menu, although docs/IGR.md gave grey for "no overlay for this launch
 2. ee_core's IGR_Thread lines are compiled and run: the combo (not the power button, not another combo, not the PC's
    reset) in such a launch blinks three times in the grey the menu path uses for a menu that was not there, only
    with Debug Colors on.
-3. IgrMenuNoRoom is the last field of EECoreConfig_t, after the RA editions' other menu fields, so the overlay's
-   view of the fields before it does not move.
+3. IgrMenuNoRoom follows IgrRaUnlocked and precedes PadEmuArgs. Every field through IgrMenuNoRoom keeps
+   its old offset, and PadEmuArgs is appended last, so the shared launcher/ee_core layout stays compatible.
 4. The PC's reset (RAR1, IGR_RequestReset) leaves the game at once, as the combo did before the menu: the VBLANK
    handler's menu lines, IGR_RequestReset and Install_IGR are compiled and run. The handler opens the menu only with
    IgrMenu set, for the combo but not for the PC's request. The PC's mark lasts only as long as its request: one the
@@ -88,9 +88,9 @@ if grey is None:
 grey = grey.group(1) if grey else '0'
 
 # --- 3. the field, appended ----------------------------------------------------------------------------------------
-if not re.search(r'int IgrRaUnlocked;\s*(?:/\*(?:(?!\*/).)*\*/\s*)?int IgrMenuNoRoom;\s*#endif\s*\};', coreconfig,
+if not re.search(r'int IgrRaUnlocked;\s*(?:/\*(?:(?!\*/).)*\*/\s*)?int IgrMenuNoRoom;\s*#endif\s*(?:/\*(?:(?!\*/).)*\*/\s*)?char \*PadEmuArgs;\s*\};', coreconfig,
                  re.S):
-    failures.append('coreconfig.h: int IgrMenuNoRoom; must be the last field, after IgrRaUnlocked (RA editions)')
+    failures.append('coreconfig.h: IgrMenuNoRoom must follow IgrRaUnlocked, with PadEmuArgs appended last')
 if not re.search(r'\| \*\*Grey\*\* \|[^\n]*no room', docs):
     failures.append('docs/IGR.md: the grey row must name a launch with no room for the menu')
 if 'RAR1' not in docs:
