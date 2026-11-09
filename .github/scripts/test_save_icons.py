@@ -378,8 +378,9 @@ with tempfile.TemporaryDirectory() as tmp:
 
     # 2. Corrupted headers are refused before anything is allocated from them.
     base = bytearray((root / 'misc/list.icn').read_bytes())
+    nv = struct.unpack_from('<I', base, 16)[0]    # the settings icon's vertex count (misc/list.icn)
     for label, offset, value in (('shapes 0', 4, 0), ('shapes 33', 4, 33), ('verts 0', 16, 0),
-                                 ('verts not a triangle list', 16, 301), ('verts huge', 16, 0x7FFFFFF0),
+                                 ('verts not a triangle list', 16, nv + 1), ('verts huge', 16, 0x7FFFFFF0),
                                  ('magic', 0, 0x00020000)):
         bad = bytearray(base)
         struct.pack_into('<I', bad, offset, value)
@@ -387,7 +388,7 @@ with tempfile.TemporaryDirectory() as tmp:
         if not run('model', tmp / 'bad.icn').startswith('ERR'):
             failures.append('a corrupted icon (%s) was accepted' % label)
     bad = bytearray(base)
-    off = 20 + 300 * 24
+    off = 20 + nv * 24
     struct.pack_into('<I', bad, off + 16, 1)        # one frame...
     bad[off + 20:off + 28] = struct.pack('<II', 0, 0x7FFFFFFF)  # ...claiming 2^31 keys
     (tmp / 'bad.icn').write_bytes(bad[:off + 28])
@@ -435,8 +436,11 @@ with tempfile.TemporaryDirectory() as tmp:
 
     # 6. Card images: the newer of two saves wins, through a fragmented chain, bare and with ECC.
     sys_bytes = (root / 'POPS/icon.sys').read_bytes()
-    new_icon = (root / 'misc/list.icn').read_bytes()    # 300 vertices
-    old_icon = (root / 'POPS/list.icn').read_bytes()    # 1044 vertices
+    # The newer save carries the bigger icon, so the contiguous-versus-fragmented read count below
+    # has enough clusters to tell the two apart (misc/list.icn is only 7 KB since #314).
+    new_icon = (root / 'POPS/list.icn').read_bytes()
+    old_icon = (root / 'misc/list.icn').read_bytes()
+    nv = struct.unpack_from('<I', new_icon, 16)[0]
     other = make_icon(1, 3, [])
 
     def standard_card(new_pattern='fragmented'):
@@ -452,11 +456,11 @@ with tempfile.TemporaryDirectory() as tmp:
     (tmp / 'card.bin').write_bytes(image)
     got = run('card', tmp / 'card.bin', 'SLUS-20062')
     ambient = '%.3f' % struct.unpack_from('<f', sys_bytes, 0xB0)[0]
-    if not got.startswith('FOUND verts=300 shapes=1 ambient=%s' % ambient):
-        failures.append('bare card image: %r (the newer save, 300 vertices and its lights, should win)' % got)
+    if not got.startswith('FOUND verts=%d shapes=1 ambient=%s' % (nv, ambient)):
+        failures.append('bare card image: %r (the newer save, %d vertices and its lights, should win)' % (got, nv))
     (tmp / 'ecc.bin').write_bytes(with_ecc(image))
     got = run('card', tmp / 'ecc.bin', 'SLUS-20062')
-    if not got.startswith('FOUND verts=300 shapes=1'):
+    if not got.startswith('FOUND verts=%d shapes=1' % nv):
         failures.append('card image with the ECC spare: %r' % got)
     got = run('card', tmp / 'card.bin', 'SLES-99999')
     if not got.startswith('FOUND verts=3'):
@@ -471,7 +475,7 @@ with tempfile.TemporaryDirectory() as tmp:
     got = run('card', tmp / 'contig.bin', 'SLUS-20062')
     contiguous = re.search(r'reads=(\d+)', got)
     fragmented = re.search(r'reads=(\d+)', run('card', tmp / 'card.bin', 'SLUS-20062'))
-    if (not got.startswith('FOUND verts=300') or contiguous is None or fragmented is None or
+    if (not got.startswith('FOUND verts=%d' % nv) or contiguous is None or fragmented is None or
             int(contiguous.group(1)) > 20 or int(contiguous.group(1)) + 4 > int(fragmented.group(1))):
         failures.append('contiguous icon on a bare image: %r (expected one run, fewer reads than the fragmented card)' % got)
 
@@ -496,8 +500,10 @@ with tempfile.TemporaryDirectory() as tmp:
         card.fat[card.fat[jump] & 0x7FFFFFFF] = 0x7FFFFFFF
     (tmp / 'bad.bin').write_bytes(damaged(free_mid_chain))
     got = run('card', tmp / 'bad.bin', 'SLUS-20062')
-    if not (got.startswith('NONE') or got.startswith('FOUND verts=1044')):
-        failures.append('a chain running into a free cluster: %r' % got)
+    old_nv = struct.unpack_from('<I', old_icon, 16)[0]
+    # The damaged chain is the newer save's icon: refuse it, or fall back to the older save, never read it.
+    if not (got.startswith('NONE') or got.startswith('FOUND verts=%d ' % old_nv)):
+        failures.append('a chain running into a free cluster: %r (want NONE or the older save, %d vertices)' % (got, old_nv))
 
     big = bytearray(image)
     struct.pack_into('<I', big, ALLOC * CS + 4, 0x7FFFFFFF)  # root "." claims 2^31 entries
