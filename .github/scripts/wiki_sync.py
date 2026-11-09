@@ -300,7 +300,7 @@ def convert_site(path, sha):
     return output
 
 
-LINK = re.compile(r"(!?\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\()([^\s<>()]+(?:\([^\n()]*\)[^\s<>()]*)?)(\s+\"[^\"\n]*\")?(\))")
+LINK = re.compile(r"(!?\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\()((?:[^\s<>()]|\([^\n()]*\))+)(\s+\"[^\"\n]*\")?(\))")
 
 
 def convert_doc(path, origin, sha):

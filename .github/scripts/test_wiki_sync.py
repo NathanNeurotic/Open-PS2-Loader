@@ -56,9 +56,9 @@ and restart Samba.</td></tr>
 
 
     def test_link_followed_by_closing_paren_keeps_the_paren_outside_the_url(self):
-        line = "See ([Guide](GUIDE.md)), then [Other](a_(b).md)."
+        line = "See ([Guide](GUIDE.md)), then [Other](a_(b).md), [Two](a_(b)_(c).md) and [Lead]((guide).md)."
         urls = [m[2] for m in wiki_sync.LINK.finditer(line)]
-        self.assertEqual(urls, ["GUIDE.md", "a_(b).md"])
+        self.assertEqual(urls, ["GUIDE.md", "a_(b).md", "a_(b)_(c).md", "(guide).md"])
 
     def test_every_published_doc_converts_without_changing_visible_text(self):
         root = Path(__file__).resolve().parents[2]
