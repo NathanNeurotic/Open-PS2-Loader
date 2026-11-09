@@ -163,7 +163,9 @@ jobs:
       - name: Check that a missing settings file is opened once, not twice
         run: python3 .github/scripts/test_config_missing_open_once.py
       - name: Check 3D save icons parse real icons and card images, and refuse damaged ones
-        run: python3 .github/scripts/test_save_icons.py
+        run: |
+          python3 .github/scripts/test_save_icons.py
+          python3 .github/scripts/test_save_icon_set.py
       - name: Check native PS2 logo validation including descriptor zero
         run: |
           python3 .github/scripts/test_ps2_logo_validation.py
