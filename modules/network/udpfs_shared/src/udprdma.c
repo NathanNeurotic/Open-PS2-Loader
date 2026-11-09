@@ -97,6 +97,25 @@ static unsigned int _timeout_cb(void *arg)
 }
 
 /*
+ * Arm the timeout for the wait that follows. Every wait below ends only on a packet flag or
+ * EF_TIMEOUT, so an alarm that was never set (SetAlarm failed: kernel heap exhausted, or a
+ * stale alarm still registered for this socket) would make it wait forever. Raise EF_TIMEOUT
+ * at once instead: the caller counts one timed-out attempt and its retry bound still holds.
+ */
+static void _arm_timeout(struct udprdma_socket *socket, uint32_t usec)
+{
+    iop_sys_clock_t clock;
+    int ret;
+
+    USec2SysClock(usec, &clock);
+    ret = SetAlarm(&clock, _timeout_cb, socket);
+    if (ret != 0) {
+        M_PRINTF("SetAlarm failed (%d), treating the wait as timed out\n", ret);
+        SetEventFlag(socket->event_flag, EF_TIMEOUT);
+    }
+}
+
+/*
  * Interrupt service thread callback
  *
  * Reads packet header from SMAP FIFO via smap_fifo_read and sets event flags.
@@ -450,7 +469,6 @@ void udprdma_destroy(udprdma_socket_t *socket)
 
 int udprdma_discover(udprdma_socket_t *socket, uint32_t timeout_ms)
 {
-    iop_sys_clock_t clock;
     uint32_t evf_bits;
     int retries;
 
@@ -467,8 +485,7 @@ int udprdma_discover(udprdma_socket_t *socket, uint32_t timeout_ms)
         _send_discovery(socket);
 
         /* Set timeout */
-        USec2SysClock(timeout_ms * 1000 / UDPRDMA_MAX_RETRIES, &clock);
-        SetAlarm(&clock, _timeout_cb, socket);
+        _arm_timeout(socket, timeout_ms * 1000 / UDPRDMA_MAX_RETRIES);
 
         /* Wait for response or timeout */
         WaitEventFlag(socket->event_flag, EF_RX_INFO | EF_TIMEOUT,
@@ -513,7 +530,6 @@ void udprdma_inform(udprdma_socket_t *socket)
 
 int udprdma_send(udprdma_socket_t *socket, const void *data, uint32_t size)
 {
-    iop_sys_clock_t clock;
     uint16_t sent_seq_nr;
     int retries, covered;
 
@@ -537,8 +553,7 @@ int udprdma_send(udprdma_socket_t *socket, const void *data, uint32_t size)
         _send_data(socket, data, size);
 
         /* Set timeout */
-        USec2SysClock(UDPRDMA_RETX_TIMEOUT_US, &clock);
-        SetAlarm(&clock, _timeout_cb, socket);
+        _arm_timeout(socket, UDPRDMA_RETX_TIMEOUT_US);
 
         covered = _wait_ack(socket, sent_seq_nr);
 
@@ -563,7 +578,6 @@ int udprdma_send_ll(udprdma_socket_t *socket,
                     const void *app_hdr, uint32_t app_hdr_size,
                     const void *data, uint32_t data_size)
 {
-    iop_sys_clock_t clock;
     uint16_t sent_seq_nr;
     int retries, covered;
 
@@ -585,8 +599,7 @@ int udprdma_send_ll(udprdma_socket_t *socket,
         sent_seq_nr = socket->tx_seq_nr;
         _send_data_ll(socket, app_hdr, app_hdr_size, data, data_size);
 
-        USec2SysClock(UDPRDMA_RETX_TIMEOUT_US, &clock);
-        SetAlarm(&clock, _timeout_cb, socket);
+        _arm_timeout(socket, UDPRDMA_RETX_TIMEOUT_US);
 
         covered = _wait_ack(socket, sent_seq_nr);
 
@@ -608,7 +621,6 @@ int udprdma_send_ll(udprdma_socket_t *socket,
 
 int udprdma_recv(udprdma_socket_t *socket, void *buffer, uint32_t size, uint32_t timeout_ms)
 {
-    iop_sys_clock_t clock;
     uint32_t evf_bits;
 
     if (socket == NULL || buffer == NULL)
@@ -632,8 +644,7 @@ int udprdma_recv(udprdma_socket_t *socket, void *buffer, uint32_t size, uint32_t
 
     /* Wait for FIN/buffer full, NACK (out-of-order), or timeout */
     while (1) {
-        USec2SysClock(timeout_ms * 1000, &clock);
-        SetAlarm(&clock, _timeout_cb, socket);
+        _arm_timeout(socket, timeout_ms * 1000);
 
         WaitEventFlag(socket->event_flag,
                       EF_RX_FIN | EF_RX_NACK | EF_RX_WINDOW | EF_TIMEOUT,
