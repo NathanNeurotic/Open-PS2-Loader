@@ -55,5 +55,18 @@ and restart Samba.</td></tr>
         self.assertTrue(any("/blob/abc123/README.md#setup-1" in link for link in links))
 
 
+    def test_link_followed_by_closing_paren_keeps_the_paren_outside_the_url(self):
+        line = "See ([Guide](GUIDE.md)), then [Other](a_(b).md)."
+        urls = [m[2] for m in wiki_sync.LINK.finditer(line)]
+        self.assertEqual(urls, ["GUIDE.md", "a_(b).md"])
+
+    def test_every_published_doc_converts_without_changing_visible_text(self):
+        root = Path(__file__).resolve().parents[2]
+        for origin, (page, _) in wiki_sync.DOCS.items():
+            if page in wiki_sync.REFERENCE_GUIDES:
+                continue  # published as an index of the source, not converted
+            with self.subTest(origin=origin):
+                wiki_sync.convert_doc(root / origin, origin, "abc123")
+
 if __name__ == "__main__":
     unittest.main()

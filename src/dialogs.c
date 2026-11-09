@@ -22,21 +22,21 @@ struct UIItem diaNetConfig[] = {
 // for SMB and locks it to IMG for UDPBD (same rules guiDeviceUpdater used to apply).
 // RiptOPLite carries one protocol (include/riptlite.h): no picker, and Access only for UDPFS.
 #if !defined(RIPTOPLITE)
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Protocol", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NETCFG_PROTOCOL}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETPROTOCOL, 1, 1, _STR_HINT_NET_PROTOCOL, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #endif
 
 #if LITE_HAS_UDPFS
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Access", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NETCFG_ACCESS}}},
     {UI_SPACER},
     {UI_ENUM, CFG_UDPFSMODE, 1, 1, _STR_HINT_UDPFS_ACCESS, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #endif
 
 #if LITE_HAS_SMB_SHARE
-    {UI_LABEL, NETCFG_LBL_SMBDIALECT, 1, 1, -1, -40, 0, {.label = {"SMB Version", -1}}},
+    {UI_LABEL, NETCFG_LBL_SMBDIALECT, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NETCFG_SMB_VERSION}}},
     {UI_SPACER},
     {UI_ENUM, CFG_SMBDIALECT, 1, 1, _STR_HINT_SMB_VERSION, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
@@ -221,12 +221,7 @@ struct UIItem diaNetConfig[] = {
     {UI_BREAK},
 #endif
 
-    // POPSTARTER owns its own IPCONFIG.DAT / SMBCONFIG.DAT editor. Keep its entry beside the
-    // SMB server data it relates to, without duplicating any of that state in this page.
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_NETWORK_SETTINGS}}},
-    {UI_SPACER},
-    {UI_BUTTON, NETCFG_POPSTARTER_BUTTON, 1, 1, _STR_HINT_POPS_NET_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
-    {UI_BREAK},
+    // POPSTARTER's own IPCONFIG.DAT / SMBCONFIG.DAT editor opens from PS Emulation Settings only.
 
     // buttons
     {UI_BUTTON, NETCFG_OK, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
@@ -419,11 +414,6 @@ struct UIItem diaConfig[] = {
     {UI_STRING, CFG_CUSTOMCFGPATH, 1, 1, _STR_HINT_CUSTOM_SETTINGS_PATH, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GSM_DEFAULTS}}},
-    {UI_SPACER},
-    {UI_BUTTON, GENERAL_GSM_DEFAULTS_BUTTON, 1, 1, _STR_HINT_GSM_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
-    {UI_BREAK},
-
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
     {UI_BREAK},
@@ -446,58 +436,58 @@ struct UIItem diaDeviceConfig[] = {
     {UI_ENUM, CFG_DEFDEVICE, 1, 1, _STR_HINT_DEFDEVICE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"HDD (APA) Start Mode", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_HDDMODE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_HDDMODE, 1, 1, _STR_HDD_HINT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"MMCE Start Mode", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCEMODE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_MMCEMODE, 1, 1, _STR_HINT_MMCE_MODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #endif
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"MMCE Settings", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCE_SETTINGS}}},
     {UI_SPACER},
     {UI_BUTTON, MMCE_SETTINGS_BUTTON, 1, 1, _STR_HINT_MMCE_SETTINGS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
 #if !defined(RIPTOPLITE)
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"BDM Devices Start Mode", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDM_DEVICES_START_MODE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_BDMMODE, 1, 1, _STR_HINT_BDM_START, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     // The four transports below are part of BDM, so they are indented under it the same way Protocol
     // sits under Network Connectivity.
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      Internal HDD (exFAT)", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SOURCE_BDM_HDD}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEBDMHDD, 1, 1, _STR_HDD_HINT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      USB", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SOURCE_USB}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEUSB, 1, 1, _STR_HINT_ENABLE_USB, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      MX4SIO", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SOURCE_MX4SIO}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEMX4SIO, 1, 1, _STR_HINT_ENABLE_MX4SIO, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      PC CARD CF (experimental)", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SOURCE_PCCF}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEPCCF, 1, 1, _STR_HINT_ENABLE_PCCF, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #endif
 #if LITE_HAS_DVR
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      DESR DVR ISOs (experimental)", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SOURCE_DVR}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEDVR, 1, 1, _STR_HINT_ENABLE_DVR, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #endif
 #if !defined(RIPTOPLITE)
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      iLink", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SOURCE_ILINK}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEILK, 1, 1, _STR_HINT_ENABLE_ILINK, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
@@ -506,22 +496,22 @@ struct UIItem diaDeviceConfig[] = {
     // row under it is the SAME setting as the Network page's Protocol row (both read and write
     // gNetworkProtocol), shown here so the two network choices sit together; it greys while
     // Connectivity is Off. Access and SMB Version stay on the Network page.
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Network Connectivity", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NET_CONNECTIVITY}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETSTART, 1, 1, _STR_HINT_NETSTART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      Protocol", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SOURCE_NET_PROTOCOL}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETPROTOCOL, 1, 1, _STR_HINT_NET_PROTOCOL, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #endif
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Applications Page Start Mode", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_APPS_START_MODE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_APPMODE, 1, 1, _STR_HINT_APPMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Favorites Page Start Mode", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_FAV_START_MODE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_FAVMODE, 1, 1, _STR_HINT_FAVMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
@@ -593,7 +583,7 @@ struct UIItem diaVcdConfig[] = {
     {UI_SPACER},
     {UI_BUTTON, VCD_BDMA_BUTTON, 1, 1, _STR_HINT_BDMA_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"VCD Games List Settings", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VCD_LIST_SETTINGS}}},
     {UI_SPACER},
     {UI_BUTTON, VCD_LIST_BUTTON, 1, 1, _STR_HINT_VCD_LIST_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
@@ -648,7 +638,7 @@ struct UIItem diaBdmaConfig[] = {
 
 // POPStarter -> Game List Settings (VCD list display options). Rows moved out of diaVcdConfig.
 struct UIItem diaVcdListConfig[] = {
-    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {"VCD Games List Settings", -1}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VCD_LIST_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VCD_HIDE_GAMEID}}},
@@ -763,7 +753,7 @@ struct UIItem diaMmceConfig[] = {
     {UI_ENUM, CFG_MMCEIGRSLOT, 1, 1, _STR_HINT_MMCEIGR_SLOT, 0, 0, {.intvalue = {0, 0, 0, 1}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Send GameID on Launch", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCE_SEND_GAMEID}}},
     {UI_SPACER},
     {UI_BOOL, CFG_MMCEGAMEID, 1, 1, _STR_HINT_MMCE_GAMEID, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
@@ -850,8 +840,8 @@ struct UIItem diaLanguageConfig[] = {
     {UI_TERMINATOR}};
 
 // Interface page (settings-layout restructure, was Display Settings): high-level view/video choice,
-// then theme/list behavior. Artwork, Coverflow and Colors are chained sub-dialogs; the
-// remaining geometry/GameID-barcode rows live in diaDisplayConfig. Ids unchanged.
+// then theme/list behavior, then screen geometry and the GameID barcode. Artwork, Coverflow and
+// Colors are chained sub-dialogs. Ids unchanged.
 struct UIItem diaUIConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_INTERFACE_SETTINGS}}},
     {UI_SPLITTER},
@@ -943,10 +933,6 @@ struct UIItem diaUIConfig[] = {
     {UI_SPACER},
     {UI_BUTTON, UICFG_COLORS_BUTTON, 1, 1, _STR_HINT_COLORS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"VCD Games List Settings", -1}}},
-    {UI_SPACER},
-    {UI_BUTTON, UICFG_GAME_LIST_BUTTON, 1, 1, _STR_HINT_VCD_LIST_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
-    {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_NOTIFICATIONS}}},
     {UI_SPACER},
@@ -961,6 +947,32 @@ struct UIItem diaUIConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_AUTOREFRESH}}},
     {UI_SPACER},
     {UI_BOOL, UICFG_AUTOREFRESH, 1, 1, _STR_HINT_AUTOREFRESH, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    // Screen geometry and the GameID barcode (formerly the separate diaDisplayConfig table).
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_WIDE_SCREEN}}},
+    {UI_SPACER},
+    {UI_BOOL, UICFG_WIDESCREEN, 1, 1, _STR_HINT_WIDESCREEN, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_XOFFSET}}},
+    {UI_SPACER},
+    {UI_INT, UICFG_XOFF, 1, 1, _STR_HINT_XOFF, 0, 0, {.intvalue = {0, 0, -300, 300}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_YOFFSET}}},
+    {UI_SPACER},
+    {UI_INT, UICFG_YOFF, 1, 1, _STR_HINT_YOFF, 0, 0, {.intvalue = {0, 0, -300, 300}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_OVERSCAN}}},
+    {UI_SPACER},
+    {UI_INT, UICFG_OVERSCAN, 1, 1, _STR_HINT_MENU_OVERSCAN, 0, 0, {.intvalue = {0, 0, 0, 100}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_APPLYGAMEID_BARCODE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_APPLYGAMEID, 1, 1, _STR_HINT_APPLYGAMEID, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // buttons
@@ -980,7 +992,7 @@ struct UIItem diaArtworkConfig[] = {
     {UI_BOOL, UICFG_COVERART, 1, 1, _STR_HINT_COVERART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Disc Artwork", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DISCART}}},
     {UI_SPACER},
     {UI_BOOL, UICFG_ENABLE_DISCART, 1, 1, _STR_HINT_DISCART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
@@ -990,7 +1002,7 @@ struct UIItem diaArtworkConfig[] = {
     {UI_BOOL, UICFG_ENABLE_LOGOART, 1, 1, _STR_HINT_LOGOART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Background Art", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BGART}}},
     {UI_SPACER},
     {UI_BOOL, UICFG_ENABLE_BGART, 1, 1, _STR_HINT_BGART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
@@ -1005,7 +1017,7 @@ struct UIItem diaArtworkConfig[] = {
     {UI_BOOL, UICFG_ENABLE_ART_TAR, 1, 1, _STR_HINT_ART_TAR, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Art Delay", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ART_DELAY}}},
     {UI_SPACER},
     {UI_ENUM, UICFG_ART_DELAY, 1, 1, _STR_HINT_ART_DELAY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
@@ -1053,58 +1065,6 @@ struct UIItem diaColorsConfig[] = {
     {UI_BREAK},
 
     {UI_BUTTON, UICFG_RESETCOL, 1, 1, _STR_HINT_RESETCOLOR, 0, 0, {.label = {NULL, _STR_RESETCOLOR}}},
-    {UI_BREAK},
-
-    // buttons
-    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
-    {UI_BREAK},
-
-    // end of dialog
-    {UI_TERMINATOR}};
-
-// Display section of the composed Interface page: video mode / geometry / GameID barcode. The
-// Settings-shell composition omits this Video Mode copy because it supplies the same control at
-// the top of diaUIConfig; the standalone Display editor retains its complete legacy dialog.
-struct UIItem diaDisplayConfig[] = {
-    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_DISPLAY_SETTINGS}}},
-    {UI_SPLITTER},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VMODE}}},
-    {UI_SPACER},
-    {UI_ENUM, UICFG_VMODE, 1, 1, _STR_HINT_MENU_VMODE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_WIDE_SCREEN}}},
-    {UI_SPACER},
-    {UI_BOOL, UICFG_WIDESCREEN, 1, 1, _STR_HINT_WIDESCREEN, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_XOFFSET}}},
-    {UI_SPACER},
-    {UI_INT, UICFG_XOFF, 1, 1, _STR_HINT_XOFF, 0, 0, {.intvalue = {0, 0, -300, 300}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_YOFFSET}}},
-    {UI_SPACER},
-    {UI_INT, UICFG_YOFF, 1, 1, _STR_HINT_YOFF, 0, 0, {.intvalue = {0, 0, -300, 300}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_OVERSCAN}}},
-    {UI_SPACER},
-    {UI_INT, UICFG_OVERSCAN, 1, 1, _STR_HINT_MENU_OVERSCAN, 0, 0, {.intvalue = {0, 0, 0, 100}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Show GameID Barcode (Pixel FX)", -1}}},
-    {UI_SPACER},
-    {UI_ENUM, CFG_APPLYGAMEID, 1, 1, _STR_HINT_APPLYGAMEID, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    // The GLOBAL half of GSM: the $EnableGSM/$GSMVMode/... block in the global config, which every
-    // game inherits unless it sets its own. Distinct from UICFG_VMODE above -- that is the video
-    // mode of the OPL MENU, this is the video mode games are launched in.
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GSM_DEFAULTS}}},
-    {UI_SPACER},
-    {UI_BUTTON, DISPLAY_GSM_DEFAULTS_BUTTON, 1, 1, _STR_HINT_GSM_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     // buttons
@@ -1194,7 +1154,7 @@ struct UIItem diaNeutrinoDefaults[] = {
     {UI_BOOL, CFG_NEUTRINO_SHOW_ARGS, 1, 1, _STR_HINT_NEUTRINO_SHOW_ARGS, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Neutrino Advanced Arguments", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_ADV_ARGS}}},
     {UI_SPACER},
     {UI_BUTTON, CFG_NEUTRINO_ARGS, 1, 1, _STR_HINT_NEUTRINO_ARGS, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
@@ -1245,16 +1205,16 @@ struct UIItem diaAdvancedConfig[] = {
 
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"BDM Prefix Path", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDM_PREFIX}}},
     {UI_SPACER},
     {UI_STRING, CFG_BDMPREFIX, 1, 1, _STR_HINT_BDMPREFIX, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"ETH Prefix Path", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ETH_PREFIX}}},
     {UI_SPACER},
     {UI_STRING, CFG_ETHPREFIX, 1, 1, _STR_HINT_ETHPREFIX, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"HDD Spindown", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADV_HDD_SPINDOWN}}},
     {UI_SPACER},
     {UI_INT, CFG_HDDSPINDOWN, 1, 1, _STR_HINT_SPINDOWN, 0, 0, {.intvalue = {20, 20, 0, 20}}},
     {UI_BREAK},
@@ -1266,17 +1226,17 @@ struct UIItem diaAdvancedConfig[] = {
     {UI_BOOL, CFG_HDDGAMELISTCACHE, 1, 1, _STR_HINT_HDDGAMELISTCACHE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"BDM Cache", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADV_BDM_CACHE}}},
     {UI_SPACER},
     {UI_INT, CFG_BDMCACHE, 1, 1, _STR_HINT_BDMCACHE, 0, 0, {.intvalue = {16, 8, 0, 32, NULL}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"HDD Cache", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADV_HDD_CACHE}}},
     {UI_SPACER},
     {UI_INT, CFG_HDDCACHE, 1, 1, _STR_HINT_HDDCACHE, 0, 0, {.intvalue = {8, 0, 0, 32, NULL}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"SMB Cache", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADV_SMB_CACHE}}},
     {UI_SPACER},
     {UI_INT, CFG_SMBCACHE, 1, 1, _STR_HINT_SMBCACHE, 0, 0, {.intvalue = {16, 4, 0, 32, NULL}}},
     {UI_BREAK},

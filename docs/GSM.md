@@ -16,9 +16,8 @@ extra detail.
 GSM lives in two places:
 
 * **Per game** — Triangle on a title → **Configure GSM**.
-* **Globally** — **GSM Defaults (All Games)** on *Settings → Game Launching* (also on Interface and
-  General & System). This is what every game with no GSM
-  settings of its own inherits.
+* **Globally** — **GSM Defaults (All Games)** on *Settings → Game Launching*. This is what every
+  game with no GSM settings of its own inherits.
 
 The per-game page's first row, **Settings Mode** (stored as `$GSMSource`), decides which of those wins:
 

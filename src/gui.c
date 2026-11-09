@@ -1413,12 +1413,6 @@ reshow_network:
         guiMsgBox(httpTestMessage, 0, NULL);
         goto reshow_network;
     }
-    if (result == NETCFG_POPSTARTER_BUTTON) {
-        // This is the shared POPSTARTER network editor. It owns IPCONFIG.DAT / SMBCONFIG.DAT;
-        // the Network page only provides a second entry point and never mirrors that state.
-        guiShowPopsNetConfig();
-        goto reshow_network;
-    }
     if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL)) {
         // Seeded with what the page showed: a RiptOPLite page has no Protocol row, and only UDPFS has Access.
         int netProtoVal2 = netProtoVal, netAccessVal2 = netAccessVal;
@@ -2729,13 +2723,7 @@ static int guiSettingsShowGeneral(void)
     guiSetAdvancedSettings(ui);
     guiSettingsBeginDialog(ui);
 
-reshow_general:
     result = diaExecuteDialog(ui, -1, 1, &guiSettingsGeneralUpdater);
-    if (result == GENERAL_GSM_DEFAULTS_BUTTON) {
-        if (guiGameShowGSConfig(1))
-            guiSettingsSavePending = 1;
-        goto reshow_general;
-    }
 
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, exitPathEdit, gExitPath)) {
         snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
@@ -2942,8 +2930,7 @@ static int guiSettingsDisplayUpdater(int modified)
 
 static int guiSettingsShowInterface(void)
 {
-    const struct UIItem *parts[] = {diaUIConfig, diaDisplayConfig};
-    const int skipIDs[] = {UICFG_VMODE};
+    const struct UIItem *parts[] = {diaUIConfig};
     const char *vmodeNames[] = {_l(_STR_AUTO), "PAL 640x512i @50Hz 24bit", "NTSC 640x448i @60Hz 24bit",
                                 "EDTV 640x448p @60Hz 24bit", "EDTV 640x512p @50Hz 24bit", "VGA 640x480p @60Hz 24bit",
                                 "PAL 704x576i @50Hz 24bit (HIRES)", "NTSC 704x480i @60Hz 24bit (HIRES)",
@@ -2954,9 +2941,7 @@ static int guiSettingsShowInterface(void)
                                 "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines)",
                                 "PAL 704x576i @50Hz 24bit (HIRES, FLICKER FILTER)", "NTSC 704x480i @60Hz 24bit (HIRES, FLICKER FILTER)",
                                 "NTSC 704x480i @60Hz 24bit (HIRES, 448 lines, FLICKER FILTER)", NULL};
-    // Video Mode stays in diaDisplayConfig for the legacy standalone Display editor, but the
-    // composed Interface page supplies its one copy at the top of diaUIConfig.
-    struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, 1, 1);
+    struct UIItem *ui = guiSettingsCompose(parts, 1, NULL, 0, 1, 1);
     const char **themeNamesSnap = NULL;
     int themeID, previousTheme, previousVMode, result;
     int gameViewChanged = 0;
@@ -3032,15 +3017,6 @@ reshow_interface:
     }
     if (result == UICFG_COLORS_BUTTON) {
         guiShowColorsConfig();
-        goto reshow_interface;
-    }
-    if (result == UICFG_GAME_LIST_BUTTON) {
-        guiShowVcdListConfig();
-        goto reshow_interface;
-    }
-    if (result == DISPLAY_GSM_DEFAULTS_BUTTON) {
-        if (guiGameShowGSConfig(1))
-            guiSettingsSavePending = 1;
         goto reshow_interface;
     }
 

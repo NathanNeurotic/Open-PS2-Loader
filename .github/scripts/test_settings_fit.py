@@ -164,9 +164,14 @@ if render:
 
 # --- BDM transports indented under BDM ----------------------------------------------------------------
 
-for label in ('Internal HDD (exFAT)', 'USB', 'MX4SIO', 'iLink'):
-    if '{.label = {"      %s", -1}}' % label not in dialogs_c:
-        failures.append('dialogs.c: "%s" must be indented under BDM Devices Start Mode' % label)
+# The rows' text lives in lng_tmpl/_base.yml (translatable); the six leading spaces are the indent.
+for sid, label in (('SOURCE_BDM_HDD', 'Internal HDD (exFAT)'), ('SOURCE_USB', 'USB'),
+                   ('SOURCE_MX4SIO', 'MX4SIO'), ('SOURCE_PCCF', 'PC CARD CF (experimental)'),
+                   ('SOURCE_DVR', 'DESR DVR ISOs (experimental)'), ('SOURCE_ILINK', 'iLink')):
+    if '{.label = {NULL, _STR_%s}}' % sid not in dialogs_c:
+        failures.append('dialogs.c: the "%s" row must use _STR_%s' % (label, sid))
+    if '  label: %s\n  string: "      %s"\n' % (sid, label) not in lang_base:
+        failures.append('_base.yml: %s must be "      %s", indented under BDM Devices Start Mode' % (sid, label))
 
 # --- per-game DNAS ID clarity --------------------------------------------------------------------
 
