@@ -59,7 +59,10 @@ def main():
     x0, y0 = int(m.group(1)), int(m.group(2))
     pitch, cap_w, cap_h = const(text, "KEYB_PITCH"), const(text, "KEYB_CAP_W"), const(text, "KEYB_CAP_H")
     width, height = const(text, "KEYB_WIDTH"), const(text, "KEYB_HEIGHT")
-    row_pitch = 3 * 10  # 3 * UI_SPACING_H (include/diaint.h)
+    # UI_SPACING_H lives in include/diaint.h (RiptOPL) or src/dia.c (OPL); read it from either.
+    header = ROOT / "include/diaint.h"
+    spacing_src = text + (header.read_text(encoding="utf-8") if header.exists() else "")
+    row_pitch = 3 * const(spacing_src, "UI_SPACING_H")
 
     if cap_w >= pitch:
         fail(f"caps overlap horizontally: width {cap_w} >= pitch {pitch}")
@@ -73,8 +76,8 @@ def main():
         fail(f"grid {top}..{bottom} crosses the text separator (138) or the footer (417)")
 
     cmd = re.search(r"// Commands\n(.*?)\n        \}\n", keyb, re.S)
-    if not cmd or "uiTextColor" in cmd.group(1):
-        fail("the command column still draws in uiTextColor")
+    if not cmd or "uiTextColor" in cmd.group(1) or "commands[i], gTheme->textColor)" not in cmd.group(1):
+        fail("the command column does not draw its labels in the theme text colour")
     pad = re.search(r"int diaShowNumPad\(.*?\n}\n", text, re.S).group(0)
     if "diaDrawKeyCap(" not in pad or "u64 col = gTheme->textColor;" not in pad:
         fail("the number pad does not draw keycaps in the text colour")
