@@ -78,7 +78,7 @@ static void diaDrawBoundingBox(int x, int y, int w, int h, int focus)
 #define KEYB_CAP_W 27
 #define KEYB_CAP_H 22
 
-static void diaDrawKeyCap(int x, int y, const char *label, int selected)
+static void diaDrawKeyCap(int x, int y, const char *label, int selected, u64 colour)
 {
     int cx = x + KEYB_CAP_W / 2;
 
@@ -92,8 +92,8 @@ static void diaDrawKeyCap(int x, int y, const char *label, int selected)
     } else
         rmDrawRect(x, y, KEYB_CAP_W, KEYB_CAP_H, GS_SETREG_RGBA(0xFF, 0xFF, 0xFF, 0x16));
 
-    fntRenderString(gTheme->fonts[0], cx, y + 1, ALIGN_HCENTER, 0, 0, label, gTheme->textColor);
-    fntRenderString(gTheme->fonts[0], cx + 1, y + 1, ALIGN_HCENTER, 0, 0, label, gTheme->textColor);
+    fntRenderString(gTheme->fonts[0], cx, y + 1, ALIGN_HCENTER, 0, 0, label, colour);
+    fntRenderString(gTheme->fonts[0], cx + 1, y + 1, ALIGN_HCENTER, 0, 0, label, colour);
 }
 
 // Rendered width of text[from..to), in the same 640-wide units the caret has always been placed in.
@@ -244,7 +244,7 @@ int diaShowKeyb(char *text, int maxLen, int hide_text, int titleId)
 
                 // The cap starts 4 left of where the glyph used to: the grid stays where it was and
                 // the last column's cap still ends well before the command icons at x=436.
-                diaDrawKeyCap(46 + i * KEYB_PITCH, 168 + 3 * UI_SPACING_H * j, c, (i + j * KEYB_WIDTH) == selchar);
+                diaDrawKeyCap(46 + i * KEYB_PITCH, 168 + 3 * UI_SPACING_H * j, c, (i + j * KEYB_WIDTH) == selchar, gTheme->textColor);
             }
         }
 
@@ -257,7 +257,7 @@ int diaShowKeyb(char *text, int maxLen, int hide_text, int titleId)
             }
 
             x = 477;
-            w = fntRenderString(gTheme->fonts[0], x, 170 + 3 * UI_SPACING_H * i, ALIGN_NONE, 0, 0, commands[i], gTheme->uiTextColor) - x;
+            w = fntRenderString(gTheme->fonts[0], x, 170 + 3 * UI_SPACING_H * i, ALIGN_NONE, 0, 0, commands[i], gTheme->textColor) - x;
             if (i == selcommand)
                 diaDrawBoundingBox(x, 170 + 3 * UI_SPACING_H * i, w, UI_SPACING_H, 0);
         }
@@ -460,7 +460,7 @@ static int diaShowNumPad(char *text, int maxLen, int minv, int maxv)
         '7', '8', '9',
         '-', '0', '<'};
     const int allowNegative = (minv < 0);
-    int len = strlen(text), sel = 0, i, j, x, w;
+    int len = strlen(text), sel = 0, i, j;
     char c[2] = "\0\0";
     char range[32];
 
@@ -485,16 +485,14 @@ static int diaShowNumPad(char *text, int maxLen, int minv, int maxv)
         for (j = 0; j < NUMPAD_HEIGHT; j++) {
             for (i = 0; i < NUMPAD_WIDTH; i++) {
                 int idx = i + j * NUMPAD_WIDTH;
-                u64 col = gTheme->uiTextColor;
+                u64 col = gTheme->textColor;
 
                 c[0] = numpad[idx];
                 if ((c[0] == '-') && !allowNegative)
-                    col = gTheme->textColor;
+                    col = gTheme->uiTextColor; // not allowed here: dimmed
 
-                x = 270 + i * 40;
-                w = fntRenderString(gTheme->fonts[0], x, 170 + 3 * UI_SPACING_H * j, ALIGN_NONE, 0, 0, c, col) - x;
-                if (idx == sel)
-                    diaDrawBoundingBox(x, 170 + 3 * UI_SPACING_H * j, w, UI_SPACING_H, 0);
+                // Keycaps as on the keyboard, 4 left of where the glyph used to start.
+                diaDrawKeyCap(266 + i * 40, 168 + 3 * UI_SPACING_H * j, c, idx == sel, col);
             }
         }
 

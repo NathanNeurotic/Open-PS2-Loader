@@ -38,8 +38,8 @@ def main():
     body = helper.group(0)
     if "uiTextColor" in body:
         fail("key glyphs must not use uiTextColor")
-    if body.count("gTheme->textColor") < 2:
-        fail("key glyph is not drawn (twice) in the theme text colour")
+    if body.count("label, colour)") < 2:
+        fail("key glyph is not drawn twice in the colour it is given")
     if "ALIGN_HCENTER" not in body:
         fail("key glyph is not centred in its cap")
 
@@ -48,8 +48,8 @@ def main():
     if not grid:
         fail("keyboard grid loop not found")
     g = grid.group(1)
-    if "diaDrawKeyCap(" not in g:
-        fail("keyboard grid does not draw keycaps")
+    if "diaDrawKeyCap(" not in g or "gTheme->textColor)" not in g:
+        fail("keyboard grid does not draw keycaps in the theme text colour")
     if "uiTextColor" in g or "diaDrawBoundingBox" in g:
         fail("keyboard grid still draws bare uiTextColor glyphs or the glyph-width box")
 
@@ -72,7 +72,14 @@ def main():
     if top <= 138 or bottom >= 417:
         fail(f"grid {top}..{bottom} crosses the text separator (138) or the footer (417)")
 
-    print(f"PASS: keyboard keys are keycaps in the text colour; grid x {x0}..{right}, y {top}..{bottom}")
+    cmd = re.search(r"// Commands\n(.*?)\n        \}\n", keyb, re.S)
+    if not cmd or "uiTextColor" in cmd.group(1):
+        fail("the command column still draws in uiTextColor")
+    pad = re.search(r"int diaShowNumPad\(.*?\n}\n", text, re.S).group(0)
+    if "diaDrawKeyCap(" not in pad or "u64 col = gTheme->textColor;" not in pad:
+        fail("the number pad does not draw keycaps in the text colour")
+
+    print(f"PASS: keyboard and number pad keys are keycaps in the text colour, commands too; grid x {x0}..{right}, y {top}..{bottom}")
 
 
 if __name__ == "__main__":
