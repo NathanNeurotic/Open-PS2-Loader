@@ -30,8 +30,8 @@ extern unsigned int size_save_icn;
 // icon.sys names THREE icon files -- the normal one, the one shown while the folder is being
 // copied, and the one shown while it is being deleted -- and the PS2/PS3 browser wants every name
 // it lists to actually be there. All three are the same artwork here, so ONE blob is embedded and
-// written out under each of these names; embedding three byte-identical ~11 KB copies would cost
-// ~22 KB of ELF for nothing. If they ever need to differ, split the blob, do not rename this list.
+// written out under each of these names; embedding three byte-identical ~7 KB copies would cost
+// ~14 KB of ELF for nothing. The art is rebuilt by tools/make_save_icon.py. If they ever need to differ, split the blob, do not rename this list.
 static const char *const saveIconName[3] = {"list.icn", "copy.icn", "del.icn"};
 
 static int mcID = -1;
@@ -116,15 +116,27 @@ static int buildIconPath(char *path, size_t size, const char *dir, const char *n
     return snprintf(path, size, "%s%s%s", dir, sep, name) < (int)size;
 }
 
+// The title field of the icon.sys builds before #314 stamped ("RiptOPL" / "OpenPS2Loader", Shift-JIS,
+// zero-padded to 68 bytes at offset 0xC0). Those builds paired it with a stock "APP" artwork instead
+// of a RiptOPL one, so a folder still carrying exactly that stamp is ours and is restamped once; the
+// current icon.sys has a different title, which is what stops the second boot from rewriting it.
+#define ICON_SYS_TITLE_OFFSET 0xC0
+#define ICON_SYS_TITLE_SIZE   68
+static const char oldStampTitle[ICON_SYS_TITLE_SIZE] =
+    "\x82\x71\x82\x89\x82\x90\x82\x94\x82\x6e\x82\x6f\x82\x6b\x82\x6e\x82\x90\x82\x85"
+    "\x82\x8e\x82\x6f\x82\x72\x82\x51\x82\x6b\x82\x8f\x82\x81\x82\x84\x82\x85\x82\x92";
+
 // Is this folder's save icon already done? icon.sys is the marker for the whole set, so the test
 // has to be stricter than "a file by that name exists": a SHORT one is the signature of a stamp
 // that ran out of card part-way, and treating that as done would leave the folder unreadable
-// forever. Anything at least as long as ours is somebody's icon -- an older opl.icn pairing from a
-// previous build, or a hand-made one -- and is left alone.
+// forever. Our own pre-#314 stamp (above) is not done either. Anything else at least as long as
+// ours is somebody's icon -- an older opl.icn pairing from a previous build, or a hand-made one --
+// and is left alone.
 static int saveIconSetDone(const char *dir)
 {
     char path[128];
-    int fd, size;
+    char title[ICON_SYS_TITLE_SIZE];
+    int fd, size, oldStamp;
 
     if (!buildIconPath(path, sizeof(path), dir, "icon.sys"))
         return 1; // cannot address it, so write nothing
@@ -133,9 +145,13 @@ static int saveIconSetDone(const char *dir)
     if (fd < 0)
         return 0;
     size = getFileSize(fd);
+    oldStamp = size == (int)size_icon_sys &&
+               lseek(fd, ICON_SYS_TITLE_OFFSET, SEEK_SET) == ICON_SYS_TITLE_OFFSET &&
+               read(fd, title, sizeof(title)) == (int)sizeof(title) &&
+               memcmp(title, oldStampTitle, sizeof(title)) == 0;
     close(fd);
 
-    return size >= (int)size_icon_sys;
+    return size >= (int)size_icon_sys && !oldStamp;
 }
 
 // Write one browser-save file, replacing whatever is there. Returns 1 only when the WHOLE blob
@@ -144,7 +160,8 @@ static int saveIconSetDone(const char *dir)
 //
 // This always truncates, which is safe only because the single caller has already established that
 // the folder has no finished icon.sys -- so anything here is a leftover from a stamp that did not
-// complete, and trusting its contents is exactly the mistake being avoided.
+// complete, or our own pre-#314 artwork, and trusting its contents is exactly the mistake being
+// avoided.
 static int writeIconFile(const char *dir, const char *name, const void *data, unsigned int len)
 {
     char path[128];
