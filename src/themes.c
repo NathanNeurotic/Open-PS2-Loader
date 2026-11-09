@@ -2222,13 +2222,15 @@ static void drawPsbbnFlow(struct menu_list *menu, struct submenu_list *item, con
         drawPsbbnCover(menu, previous, elem, -1000 + flow, 0);
 
     if (flow == 0) {
-        // The count sits under the focal cover's lower right corner, as in PSBBN.
+        // The count sits under the focal cover's lower right corner, as in PSBBN. Drawn unclipped (width 0):
+        // a clip box exactly as wide as the text drops the last glyph whenever the width loses a pixel through
+        // rmUnScaleX/rmScaleX (overscan) or a weighted glyph is wider than its advance: the "1/" of #287.
         int size = psbbnFlowFocalSize(elem), half = rmWideScale(size) / 2;
         char counter[32];
         snprintf(counter, sizeof(counter), "%d/%d", selectedRow, countRows);
         int counterWidth = rmUnScaleX(fntCalcDimensions(elem->font, counter));
         fntRenderString(elem->font, elem->posX + half - 4 - counterWidth, elem->posY + size / 2 + 6,
-                        ALIGN_LEFT, counterWidth, 0, counter, gTheme->textColor);
+                        ALIGN_LEFT, 0, 0, counter, gTheme->textColor);
     }
 }
 
@@ -2798,7 +2800,7 @@ static void drawGrid(struct menu_list *menu, struct submenu_list *item, config_s
         char counter[32];
         snprintf(counter, sizeof(counter), "%d/%d", index + 1, count);
         counterWidth = rmUnScaleX(fntCalcDimensions(elem->font, counter));
-        fntRenderString(elem->font, gridRight - counterWidth, below, ALIGN_LEFT, counterWidth, 0, counter, gTheme->textColor);
+        fntRenderString(elem->font, gridRight - counterWidth, below, ALIGN_LEFT, 0, 0, counter, gTheme->textColor);
     }
 
     // The selected title on a line of its own under the grid (<block>_title=1), as RIPPS2's RIPGRID shows it;
