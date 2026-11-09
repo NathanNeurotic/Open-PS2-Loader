@@ -17,10 +17,12 @@ Unless a row says otherwise, keys are in the master configuration `settings_ript
   device only by **Save Changes**. Leaving the hub with unsaved changes asks whether to save, exit
   without saving, or keep editing. Exiting without saving keeps the changes active until the
   console is switched off; only a picked HDD home folder is dropped.
-* Two exceptions write to the memory card at once on **OK**: POPSTARTER Network Settings
-  (POPSTARTER's own `IPCONFIG.DAT` and `SMBCONFIG.DAT`) and its POPS UDPFS Network Settings
-  sub-page (`SYS-CONF/IPCONFIG.DAT` and `UDPFSCONFIG.DAT`). Save Changes is not needed for them,
-  and leaving the hub without saving does not undo them.
+* Three things write to the memory card at once on **OK**, without Save Changes, and leaving the
+  hub without saving does not undo them:
+  * POPSTARTER Network Settings (POPSTARTER's own `IPCONFIG.DAT` and `SMBCONFIG.DAT`);
+  * its POPS UDPFS Network Settings sub-page (`SYS-CONF/IPCONFIG.DAT` and `UDPFSCONFIG.DAT`);
+  * on PS Emulation Settings, a changed BDMA Mode, or a changed BDMA Source while the mode is not
+    FAT32, equips or removes the BDMA driver files on the card.
 * Each setting has one row in one place. A button marked *Modify* opens a sub-page and returns to
   the page that opened it.
 * Some rows exist only in some builds: RiptOPLite ([RIPTOPLITE.md](RIPTOPLITE.md)) carries one
