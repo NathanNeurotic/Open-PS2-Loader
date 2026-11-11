@@ -186,7 +186,6 @@ enum UI_ITEMS {
     NETCFG_POPS_UDPFS,
     NETCFG_ETHOPMODE,
     NETCFG_RECONNECT,
-    NETCFG_POPSTARTER_BUTTON,
     NETCFG_OK,
     // Section labels for the SMB-only block, so it can be hidden whole when the selected network
     // protocol is not SMB. Appended here to keep the NETCFG_*_0..N consecutive runs above intact.
@@ -319,14 +318,12 @@ enum UI_ITEMS {
     UICFG_COLORS_BUTTON,
     LAUNCH_NEUTRINO_DEFAULTS_BUTTON,
     LAUNCH_OSD_DEFAULTS_BUTTON,
-    DISPLAY_GSM_DEFAULTS_BUTTON,
     VCD_BDMA_BUTTON,
     VCD_LIST_BUTTON,
     VCD_NET_BUTTON,
     MMCE_COMM_BUTTON,
     MMCE_PATH_BUTTON,
     MMCE_SETTINGS_BUTTON,
-    UICFG_GAME_LIST_BUTTON,
     UICFG_GAME_TYPE_LABELS,
     UICFG_CFG_TITLES,     // #918: rows show and sort by the CFG Title; default off
     UICFG_PS1_DUPLICATES, // PS1 Duplicates: Both, Ember, POPSTARTER (RIPPS2 build 126)
@@ -335,7 +332,6 @@ enum UI_ITEMS {
     ADV_PREFIX_BUTTON,
     ADV_STORAGE_BUTTON,
     CFG_HDDOPLPART,
-    GENERAL_GSM_DEFAULTS_BUTTON,
     LAUNCH_GSM_DEFAULTS_BUTTON,
     UICFG_THEME_VIEW,
     UICFG_LIBRARY,
@@ -434,7 +430,6 @@ extern struct UIItem diaMmceConfig[];
 extern struct UIItem diaVcdUsbMode[];
 extern struct UIItem diaArtworkConfig[];
 extern struct UIItem diaColorsConfig[];
-extern struct UIItem diaDisplayConfig[];
 extern struct UIItem diaLaunchConfig[];
 extern struct UIItem diaNeutrinoDefaults[];
 extern struct UIItem diaBdmaConfig[];

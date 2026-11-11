@@ -2545,3 +2545,72 @@ gui_strings:
   string: "Console i.LINK ID must be empty or exactly 16 hexadecimal digits (0-9, A-F). Settings were not saved."
 - label: LAUNCH_CONSOLE_ILINK_ID_FALLBACK
   string: "The stored Console i.LINK ID is invalid and was ignored. This game will use the real console ID."
+# Settings rows that showed hard-coded English. Appended to keep every positional language ID.
+- comment: Network page, the row that picks SMB, UDPFS, UDPBD or HTTP.
+  label: NETCFG_PROTOCOL
+  string: Protocol
+- comment: Network page, UDPFS read-only or read/write.
+  label: NETCFG_ACCESS
+  string: Access
+- comment: Network page, the SMB dialect asked for.
+  label: NETCFG_SMB_VERSION
+  string: SMB Version
+- label: BDM_DEVICES_START_MODE
+  string: BDM Devices Start Mode
+- comment: Game Sources row indented under BDM Devices Start Mode. Keep the six leading spaces; they are the indent.
+  label: SOURCE_BDM_HDD
+  string: "      Internal HDD (exFAT)"
+- comment: Game Sources row indented under BDM Devices Start Mode. Keep the six leading spaces.
+  label: SOURCE_USB
+  string: "      USB"
+- comment: Game Sources row indented under BDM Devices Start Mode. Keep the six leading spaces.
+  label: SOURCE_MX4SIO
+  string: "      MX4SIO"
+- comment: Game Sources row indented under BDM Devices Start Mode. Keep the six leading spaces.
+  label: SOURCE_PCCF
+  string: "      PC CARD CF (experimental)"
+- comment: Game Sources row indented under BDM Devices Start Mode. Keep the six leading spaces.
+  label: SOURCE_DVR
+  string: "      DESR DVR ISOs (experimental)"
+- comment: Game Sources row indented under BDM Devices Start Mode. Keep the six leading spaces.
+  label: SOURCE_ILINK
+  string: "      iLink"
+- label: NET_CONNECTIVITY
+  string: Network Connectivity
+- comment: Game Sources row indented under Network Connectivity. Keep the six leading spaces.
+  label: SOURCE_NET_PROTOCOL
+  string: "      Protocol"
+- label: APPS_START_MODE
+  string: Applications Page Start Mode
+- label: FAV_START_MODE
+  string: Favorites Page Start Mode
+- label: VCD_LIST_SETTINGS
+  string: VCD Games List Settings
+- comment: MMCE settings row.
+  label: MMCE_SEND_GAMEID
+  string: Send GameID on Launch
+- comment: Artwork Settings row.
+  label: DISCART
+  string: Disc Artwork
+- comment: Artwork Settings row.
+  label: BGART
+  string: Background Art
+- comment: Artwork Settings row.
+  label: ART_DELAY
+  string: Art Delay
+- label: APPLYGAMEID_BARCODE
+  string: Show GameID Barcode (Pixel FX)
+- label: NEUTRINO_ADV_ARGS
+  string: Neutrino Advanced Arguments
+- comment: General & System, Advanced section.
+  label: ADV_HDD_SPINDOWN
+  string: HDD Spindown
+- comment: General & System, Advanced section.
+  label: ADV_BDM_CACHE
+  string: BDM Cache
+- comment: General & System, Advanced section.
+  label: ADV_HDD_CACHE
+  string: HDD Cache
+- comment: General & System, Advanced section.
+  label: ADV_SMB_CACHE
+  string: SMB Cache

@@ -131,6 +131,7 @@ DOCS = {
     "docs/VCD.md": ("PS1-Reference", "PS1/VCD reference"),
     "pc/http/README.md": ("HTTP-Conformance", "HTTP server conformance tools"),
     "pc/apa-recovery/README.md": ("APA-Recovery-Tool", "APA recovery tool"),
+    "docs/SETTINGS.md": ("Settings-Map", "Where every setting lives"),
 }
 PAIRS = {
     "Game-Formats": "docs/GAME-FORMATS.md",
@@ -299,7 +300,7 @@ def convert_site(path, sha):
     return output
 
 
-LINK = re.compile(r"(!?\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\()([^\s<>]+(?:\([^\n()]*\)[^\s<>]*)?)(\s+\"[^\"\n]*\")?(\))")
+LINK = re.compile(r"(!?\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\]\()((?:[^\s<>()]|\([^\n()]*\))+)(\s+\"[^\"\n]*\")?(\))")
 
 
 def convert_doc(path, origin, sha):

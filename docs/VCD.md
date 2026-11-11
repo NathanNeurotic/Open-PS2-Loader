@@ -449,7 +449,7 @@ notices and verified hashes are in `POPS/UDPFS-NOTICES/`.
 
 PS1 games on an SMB share need POPSTARTER's own network config (`IPCONFIG.DAT` +
 `SMBCONFIG.DAT`) on the memory card, plus its SMB modules. Edit those files from
-**POPSTARTER Network Settings**, on **Settings → PS Emulation Settings** or **Settings → Network**.
+**POPSTARTER Network Settings**, on **Settings → PS Emulation Settings**.
 The screen shows what the card's files already contain, can import both from the connected share's
 `POPS` folder, and on OK writes back only the values you changed. The exception is a first setup:
 with neither file on the card, saving the SMB values writes `IPCONFIG.DAT` too, as DHCP unless a

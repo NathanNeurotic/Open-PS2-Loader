@@ -3,7 +3,8 @@
 These are the defaults for a fresh standard RiptOPL configuration. They apply
 when no saved master configuration is loaded. Updating the ELF does not reset
 saved settings, and a new installation folder can still discover settings on
-another device.
+another device. For every Settings row, the page it is on and the key it is
+saved under, see [Where every setting lives](SETTINGS.md).
 
 | Setting | Fresh default | Where to change it |
 | --- | --- | --- |
