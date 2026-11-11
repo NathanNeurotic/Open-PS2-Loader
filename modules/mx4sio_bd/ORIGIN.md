@@ -35,3 +35,9 @@ Additional local bounds/ownership fixes: read the 18-byte CSD+CRC response into
 a temporary buffer and copy only its 16 CSD bytes; restore the caller's bit
 order on every nonzero write return, using the original buffer/count. Tests use
 the real reversal routine and verify original caller bytes after all outcomes.
+
+Unaligned buffers: port of Rick Gaiser's ps2dev/ps2sdk#959 (commit
+`3e59cc2077236a196ee7716604a40a39bb537293`, merged as `87e6ae9b931dfcdbb2e383ad074487bf9d25d002`).
+Reads and writes with a buffer that is not word aligned go one sector at a
+time through an aligned bounce buffer; the alignment test casts through
+`uintptr_t` so the host harnesses build on 64-bit hosts.
