@@ -113,6 +113,7 @@ static int spisd_write_multi_begin(uint32_t sector, uint16_t count) {
     return 0;
 }
 static int spisd_write_multi_end(void) { assert(!pending); return 0; }
+static uint32_t bounce[SECTOR_SIZE / 4]; /* the driver's file-scope bounce buffer */
 @WRITE_DO@
 @WRITE@
 static void run(int failure_mode, int index) {
