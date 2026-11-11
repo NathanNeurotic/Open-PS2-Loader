@@ -103,3 +103,4 @@ Emulation itself is on.
 
 * [CONTROLS.md](CONTROLS.md) — the menu's own button map and the Rumble setting
 * [NEUTRINO.md](NEUTRINO.md) — the core PADEMU does not work under
+* [PAD-PROFILES.md](PAD-PROFILES.md) — `.pad` profiles for USB pads PADEMU does not know, and per-game button maps

@@ -125,6 +125,7 @@ DOCS = {
     "docs/MX4SIO.md": ("MX4SIO-Reference", "MX4SIO launch reference"),
     "docs/NEUTRINO.md": ("Neutrino-Reference", "Neutrino reference"),
     "docs/PADEMU.md": ("PADEMU-Reference", "PADEMU reference"),
+    "docs/PAD-PROFILES.md": ("Pad-Profiles", "USB pad profiles (.pad format 1)"),
     "docs/RETROACHIEVEMENTS.md": ("RetroAchievements-Reference", "RetroAchievements reference"),
     "docs/THEME_ENGINE.md": ("Theme-Engine-Reference", "Theme engine: full authoring reference"),
     "docs/UNICODE-GAME-TITLES.md": ("Unicode-Titles-Reference", "Unicode game titles reference"),

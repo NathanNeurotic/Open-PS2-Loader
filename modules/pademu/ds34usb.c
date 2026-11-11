@@ -8,6 +8,7 @@
 #include "thbase.h"
 #include "thsemap.h"
 #include "ds34usb.h"
+#include "padprofile.h" // RIPPS2 build 129: .pad
 #include "sys_utils.h"
 #include "padmacro.h"
 
@@ -56,6 +57,9 @@ static u8 rgbled_patterns[][2][3] =
 
 static u8 usb_buf[MAX_BUFFER_SIZE + 32] __attribute((aligned(4))) = {0};
 static u8 data_buf[MAX_PADS][MAX_BUFFER_SIZE + 32] __attribute((aligned(4)));
+// Each report's real length, for a profiled pad's decoder (RIPPS2 build 129). Not in ds34usb_device: one more byte there
+// makes it 68 bytes, and indexing ds34pad by 68 instead of 64 costs more code than this array.
+static u8 data_bytes[MAX_PADS];
 
 int usb_probe(int devId);
 int usb_connect(int devId);
@@ -94,6 +98,11 @@ int usb_probe(int devId)
     if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID)
         return 1;
 
+    // RIPPS2 build 129: a pad the user's .pad profiles describe. No Sony VID takes a profile, as in the menu's driver:
+    // the Sony pads above keep their own decoders, and usb_connect would read any other Sony pad as a DS4.
+    if (device->idVendor != DS34_VID && device->idVendor != SONY_VID && padProfileFind(device->idVendor, device->idProduct) >= 0)
+        return 1;
+
     return 0;
 }
 
@@ -129,8 +138,13 @@ int usb_connect(int devId)
     config = (UsbConfigDescriptor *)UsbGetDeviceStaticDescriptor(devId, device, USB_DT_CONFIG);
     interface = (UsbInterfaceDescriptor *)((char *)config + config->bLength);
 
+    ds34pad[pad].profile = -1;
     if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID) {
         ds34pad[pad].type = SHANWAN; // checked first: its PID would otherwise fall through to DS4
+        epCount = interface->bNumEndpoints - 1;
+    } else if ((device->idVendor != DS34_VID && device->idVendor != SONY_VID) &&
+               (ds34pad[pad].profile = padProfileFind(device->idVendor, device->idProduct)) >= 0) {
+        ds34pad[pad].type = GENERIC; // RIPPS2 build 129: a profiled pad, read as its .pad says
         epCount = interface->bNumEndpoints - 1;
     } else if (device->idProduct == DS3_PID) {
         ds34pad[pad].type = DS3;
@@ -172,7 +186,7 @@ int usb_connect(int devId)
     } while (epCount--);
 
     // The clone is never sent an output report, so it needs only its input endpoint.
-    if (ds34pad[pad].interruptEndp < 0 || (ds34pad[pad].outEndp < 0 && ds34pad[pad].type != SHANWAN)) {
+    if (ds34pad[pad].interruptEndp < 0 || (ds34pad[pad].outEndp < 0 && ds34pad[pad].type != SHANWAN && ds34pad[pad].type != GENERIC)) {
         usb_release(pad);
         return 1;
     }
@@ -230,6 +244,8 @@ static void usb_data_cb(int resultCode, int bytes, void *arg)
     // DPRINTF("DS34USB: usb_data_cb: res %d, bytes %d, arg %p \n", resultCode, bytes, arg);
 
     ds34pad[pad].data_result = resultCode;
+    // the report's real length, for a profiled pad's decoder (the transfer asks for MAX_BUFFER_SIZE at most)
+    data_bytes[pad] = bytes < 0 ? 0 : (bytes > MAX_BUFFER_SIZE ? MAX_BUFFER_SIZE : bytes);
     ds34pad[pad].data_pending = 0;
 
     SignalSema(ds34pad[pad].data_sema);
@@ -256,6 +272,26 @@ static void usb_config_set(int result, int count, void *arg)
     if (ds34pad[pad].type == SHANWAN) {
         // It answers neither the DS3 enable report nor the LED/rumble report, and sending them can
         // stall the bus for the USB storage that shares it (freergam3r). It reports without them.
+        ds34pad[pad].status |= DS34USB_STATE_RUNNING;
+        SignalSema(ds34pad[pad].sema);
+        return;
+    }
+    if (ds34pad[pad].type == GENERIC) {
+        // RIPPS2 build 129: only what its .pad asks for, as many copies hang on a packet they do not know. init=ds3: the
+        // F4 enable packet. led=ds3: the port's LED, sent once here with the motors off (the DualShock 3's report, which
+        // rumble=ds3 then sends again with the game's motors). Without led=ds3 that report carries the LEDs off.
+        // rumble=ds4 and led=ds4 send nothing in this build (docs/PAD-PROFILES.md, F13).
+        u8 flags = padProfiles[ds34pad[pad].profile].flags;
+
+        mips_memset(ds34pad[pad].oldled, 0, sizeof(ds34pad[pad].oldled)); // nothing from a pad this slot held before
+        if (flags & PAD_F_INIT_DS3)
+            DS3USB_init(pad);
+        if (flags & PAD_F_LED_DS3) {
+            if (flags & PAD_F_INIT_DS3)
+                DelayThread(10000); // as for a DualShock 3: the enable packet first
+            ds34pad[pad].oldled[0] = led_patterns[pad][1];
+            LEDRumble(ds34pad[pad].oldled, 0, 0, pad);
+        }
         ds34pad[pad].status |= DS34USB_STATE_RUNNING;
         SignalSema(ds34pad[pad].sema);
         return;
@@ -303,7 +339,19 @@ static void readReport(u8 *data, int pad_idx)
     }
     if (pad->type == SHANWAN) { // no report ID: data[0] is a button byte and can be 0
         translate_pad_shanwan(data, &pad->ds2);
+        padGameMapApply(&pad->ds2);    // RIPPS2 build 129: the game's button map
         padMacroPerform(&pad->ds2, 0); // ANALOG is a mode button; no PS/Home input is established for this unit
+        return;
+    }
+    if (pad->type == GENERIC) { // RIPPS2 build 129: its .pad profile reads the report (any byte can be 0)
+        // An empty report holds no input: keep the last state, which has its map and macros applied already.
+        if (data_bytes[pad_idx] == 0)
+            return;
+        // Decoded with its real length, as the menu's driver does: a byte past the report's end reads as released or
+        // centred, never as what a longer earlier report left in data_buf.
+        padProfileDecode(pad->profile, data, data_bytes[pad_idx], &pad->ds2);
+        padGameMapApply(&pad->ds2);
+        padMacroPerform(&pad->ds2, 0);
         return;
     }
     if (data[0]) {
@@ -320,6 +368,7 @@ static void readReport(u8 *data, int pad_idx)
             pad->data[1] = ~report->ButtonStateH;
 
             translate_pad_ds3(report, &pad->ds2, 0);
+            padGameMapApply(&pad->ds2); // RIPPS2 build 129
             padMacroPerform(&pad->ds2, report->PSButton);
             if (report->PSButton) {                                    // display battery level
                 if (report->Select && (pad->btn_delay == MAX_DELAY)) { // PS + SELECT
@@ -351,6 +400,7 @@ static void readReport(u8 *data, int pad_idx)
             struct ds4report *report;
             report = (struct ds4report *)data;
             translate_pad_ds4(report, &pad->ds2, 1);
+            padGameMapApply(&pad->ds2); // RIPPS2 build 129
             padMacroPerform(&pad->ds2, report->PSButton);
 
             if (report->PSButton) {                                   // display battery level
@@ -398,7 +448,7 @@ static int LEDRumble(u8 *led, u8 lrum, u8 rrum, int pad)
 
     mips_memset(usb_buf, 0, sizeof(usb_buf));
 
-    if (ds34pad[pad].type == DS3) {
+    if (ds34pad[pad].type == DS3 || ds34pad[pad].type == GENERIC) { // build 129: a profiled pad with led=ds3 or rumble=ds3
         mips_memcpy(usb_buf, output_01_report, sizeof(output_01_report));
 
         usb_buf[1] = 0xFE; // rt
@@ -508,7 +558,9 @@ int ds34usb_get_data(u8 *dst, int size, int port)
     mips_memcpy(dst, ds34pad[port].data, size);
     ret = ds34pad[port].analog_btn & 1;
 
-    if (ds34pad[port].type == SHANWAN) { // no LED, no motors: nothing to send
+    if (ds34pad[port].type == SHANWAN ||
+        (ds34pad[port].type == GENERIC && !(padProfiles[ds34pad[port].profile].flags & PAD_F_RUMBLE_DS3))) {
+        // No LED, no motors. A profiled pad: the game's motors only with rumble=ds3 (led=ds3 alone was sent at connect)
         ds34pad[port].update_rum = 0;
     } else if (ds34pad[port].update_rum) {
         ret = LEDRumble(ds34pad[port].oldled, ds34pad[port].lrum, ds34pad[port].rrum, port);

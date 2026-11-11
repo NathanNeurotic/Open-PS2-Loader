@@ -2545,3 +2545,147 @@ gui_strings:
   string: "Console i.LINK ID must be empty or exactly 16 hexadecimal digits (0-9, A-F). Settings were not saved."
 - label: LAUNCH_CONSOLE_ILINK_ID_FALLBACK
   string: "The stored Console i.LINK ID is invalid and was ignored. This game will use the real console ID."
+- comment: Settings > Controllers button (from RIPPS2 build 126, Pad Emulator builds only). Lists the user's .pad USB pad profiles.
+  label: MY_PADS
+  string: My Pads
+- comment: Hint for My Pads. PADS is a folder name; keep it as it is. Keep it short.
+  label: HINT_MY_PADS
+  string: "The .pad USB pad profiles in PADS, beside your settings: each one checked, and why any is left out."
+- comment: Settings > Controllers button (from RIPPS2 build 129, Pad Emulator builds only). Teaches RiptOPL an unknown USB pad, button by button.
+  label: PAD_SETUP
+  string: Set Up A USB Pad
+- comment: Hint for Set Up A USB Pad. SELECT is the button on the PS2's own pad. PADS is a folder name. Keep it short.
+  label: HINT_PAD_SETUP
+  string: "Press each button a USB pad has as RiptOPL asks, and it writes the pad's .pad profile in PADS. SELECT on the PS2 pad skips a button."
+- comment: My Pads and Set Up A USB Pad, when the folder beside the settings cannot be used. PADS is a folder name; keep it as it is.
+  label: MY_PADS_NO_HOME
+  string: "Pad profiles go in a PADS folder beside your settings, and the settings folder cannot be used now: no memory card was found, or the settings are on a raw HDD partition."
+- comment: My Pads, first line. %s is the PADS folder, such as mass0:/OPL/PADS.
+  label: MY_PADS_IN
+  string: "Pad profiles in %s:"
+- comment: My Pads, when PADS holds no profile. VVVV_PPPP stands for the USB vendor and product IDs in hex; keep it as it is.
+  label: MY_PADS_NONE
+  string: "None yet. A profile is a text file named after the pad's USB ID, VVVV_PPPP.pad. Set Up A USB Pad writes one for you."
+- comment: My Pads, after a pad's ID, for a file that could not be opened or read.
+  label: MY_PADS_UNREADABLE
+  string: could not be read
+- comment: My Pads, after a pad's ID, for a file the launcher does not read. %d is the largest size in bytes.
+  label: MY_PADS_TOO_BIG
+  string: "larger than %d bytes: left out"
+- comment: My Pads, after a pad's ID, for a profile without a name= line.
+  label: MY_PADS_NO_NAME
+  string: (no name)
+- comment: My Pads, after a pad's ID. decoder=generic is a line of the file; keep it as it is.
+  label: MY_PADS_NOT_GENERIC
+  string: "left out: the Pad Emulator plays decoder=generic profiles only"
+- comment: My Pads, after a pad's ID, for a profile of a Sony pad (USB vendor 054C or 12BA) or the ShanWan PS3 pad (2563:0575). The USB pad drivers never apply a profile to these, so it is never used.
+  label: MY_PADS_BUILT_IN
+  string: "not used: a Sony pad or the ShanWan PS3 pad takes no profile"
+- comment: My Pads, after a pad's ID, for a good profile past the ones a game gets. %d is how many a game gets (4).
+  label: MY_PADS_FULL
+  string: "left out: a game gets the first %d profiles only"
+- comment: My Pads, the last profile line when the list is too long to show. %d is how many are not shown.
+  label: MY_PADS_MORE
+  string: "and %d more"
+- comment: My Pads, last line. GAMES is a folder name; keep it as it is.
+  label: MY_PADS_GAME_MAP
+  string: 1 game button map in GAMES
+- comment: My Pads, last line. %d is a number other than 1. GAMES is a folder name; keep it as it is.
+  label: MY_PADS_GAME_MAPS
+  string: "%d game button maps in GAMES"
+- comment: Set Up A USB Pad, when the menu's USB pad driver did not answer.
+  label: PAD_SETUP_NO_DRIVER
+  string: The USB pad driver is not running, so a USB pad cannot be set up.
+- comment: Set Up A USB Pad, step 1.
+  label: PAD_SETUP_PLUG
+  string: Plug in the USB pad you want to set up. If it is in already, take it out and plug it in again. Then press any button on it once.
+- comment: Set Up A USB Pad, step 2. %04X:%04X is the pad's USB ID, such as 0E6F:0213.
+  label: PAD_SETUP_FOUND
+  string: "Found %04X:%04X. Let go of everything on it, sticks too, and wait."
+- comment: Set Up A USB Pad, one button at a time. %s is a button's name, such as Cross, L1 or Up on the d-pad.
+  label: PAD_SETUP_PRESS
+  string: "Press %s on the USB pad and hold it."
+- comment: Set Up A USB Pad, a stick step.
+  label: PAD_SETUP_LX
+  string: Push the left stick to the right and hold it.
+- comment: Set Up A USB Pad, a stick step.
+  label: PAD_SETUP_LY
+  string: Push the left stick down and hold it.
+- comment: Set Up A USB Pad, a stick step.
+  label: PAD_SETUP_RX
+  string: Push the right stick to the right and hold it.
+- comment: Set Up A USB Pad, a stick step.
+  label: PAD_SETUP_RY
+  string: Push the right stick down and hold it.
+- comment: A button's name (the PlayStation square button), used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_SQUARE
+  string: Square
+- comment: A button's name (the PlayStation triangle button), used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_TRIANGLE
+  string: Triangle
+- comment: A button's name, used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_L3
+  string: L3 (press the left stick in)
+- comment: A button's name, used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_R3
+  string: R3 (press the right stick in)
+- comment: A button's name, used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_DPAD_UP
+  string: Up on the d-pad
+- comment: A button's name, used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_DPAD_DOWN
+  string: Down on the d-pad
+- comment: A button's name, used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_DPAD_LEFT
+  string: Left on the d-pad
+- comment: A button's name, used in Press %s on the USB pad and hold it.
+  label: PAD_SETUP_DPAD_RIGHT
+  string: Right on the d-pad
+- comment: Set Up A USB Pad, after a button or stick was found.
+  label: PAD_SETUP_GOT_IT
+  string: Got it. Let go.
+- comment: Set Up A USB Pad, the last step, before the list of buttons held on the USB pad.
+  label: PAD_SETUP_TRY
+  string: "Try it. What you hold shows here:"
+- comment: The d-pad direction, in the list of buttons held (Set Up A USB Pad).
+  label: PAD_SETUP_UP
+  string: Up
+- comment: The d-pad direction, in the list of buttons held (Set Up A USB Pad).
+  label: PAD_SETUP_DOWN
+  string: Down
+- comment: The d-pad direction, in the list of buttons held (Set Up A USB Pad).
+  label: PAD_SETUP_LEFT
+  string: Left
+- comment: The d-pad direction, in the list of buttons held (Set Up A USB Pad).
+  label: PAD_SETUP_RIGHT
+  string: Right
+- comment: Set Up A USB Pad, the hint for SELECT, which leaves a button unset.
+  label: PAD_SETUP_SKIP
+  string: Skip
+- comment: Set Up A USB Pad, the hint for the button that writes the profile.
+  label: PAD_SETUP_SAVE
+  string: Save
+- comment: Set Up A USB Pad, when every button was skipped.
+  label: PAD_SETUP_NOTHING
+  string: Nothing was set up, so no file was written.
+- comment: Set Up A USB Pad. %s is the reason, in English, from the .pad reader.
+  label: PAD_SETUP_CANNOT
+  string: "This pad cannot be described in a .pad yet (%s), so no file was written."
+- comment: Set Up A USB Pad. %s is the file, such as mass0:/OPL/PADS/0E6F_0213.pad.
+  label: PAD_SETUP_KEPT
+  string: "%s is there already and could not be put aside, so it was left as it was and nothing was written."
+- comment: Set Up A USB Pad. %s is the file, such as mass0:/OPL/PADS/0E6F_0213.pad.
+  label: PAD_SETUP_WRITE_FAILED
+  string: "%s could not be written."
+- comment: Set Up A USB Pad. The first %s is the file; the second is the name the old file was given, such as 0E6F_0213.bak.
+  label: PAD_SETUP_WRITE_FAILED_BAK
+  string: "%s could not be written. The one that was there is kept as %s."
+- comment: Set Up A USB Pad. %s is the file, such as mass0:/OPL/PADS/0E6F_0213.pad.
+  label: PAD_SETUP_SAVED
+  string: "Saved as %s. The pad now steers the menu, and plays in games with the Pad Emulator on in DualShock3/4 USB mode."
+- comment: Set Up A USB Pad, when it does not open. Every .pad profile is off while it is open.
+  label: PAD_SETUP_NO_PAD
+  string: "This needs a pad that works the menu without a profile: a DualShock 2 in a controller port, or a DualShock 3 or 4. A USB pad that a .pad profile drives does nothing while a pad is set up."
+- comment: Set Up A USB Pad. %s is the file, such as mass0:/OPL/PADS/0E6F_0213.pad; %d is how many profiles are used (4).
+  label: PAD_SETUP_SAVED_UNUSED
+  string: "Saved as %s, but it is not used: the menu and games get the first %d profiles only. My Pads lists them."

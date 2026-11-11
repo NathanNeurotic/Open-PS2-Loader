@@ -30,4 +30,5 @@ I_sceUsbdOpenPipeAligned
 I_sceUsbdSetPrivateData
 I_sceUsbdTransferPipe
 I_sceUsbdRegisterLdd
+I_sceUsbdUnregisterLdd
 usbd_IMPORTS_end

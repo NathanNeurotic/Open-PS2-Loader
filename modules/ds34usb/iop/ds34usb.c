@@ -8,6 +8,7 @@
 #include "thbase.h"
 #include "thsemap.h"
 #include "ds34usb.h"
+#include "../../pademu/padprofile.h" // RIPPS2 build 129: .pad
 
 IRX_ID("ds34usb", 1, 1);
 
@@ -60,6 +61,9 @@ static u8 link_key[] = // for ds4 authorisation
         0xC0, 0x7F, 0x12, 0xAA, 0xD9, 0x66, 0x3C, 0xCE};
 
 static u8 usb_buf[MAX_BUFFER_SIZE + 32] __attribute((aligned(4))) = {0};
+static u8 gen_buf[MAX_PADS][MAX_BUFFER_SIZE] __attribute((aligned(4))); // build 129: GENERIC's own, never usb_buf's
+// build 129: Set Up A USB Pad is open, so a HID pad with no profile is taken too
+static int pads_learn = 0;
 
 int usb_probe(int devId);
 int usb_connect(int devId);
@@ -99,6 +103,26 @@ int usb_probe(int devId)
     if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID)
         return 1;
 
+    // RIPPS2 build 129: a pad the user's .pad profiles describe, or, while Set Up A USB Pad is open, any HID device that is
+    // not a boot keyboard or mouse (the Sony pads above keep their own decoders)
+    if (device->idVendor != DS34_VID && device->idVendor != SONY_VID) {
+        UsbConfigDescriptor *config;
+        UsbInterfaceDescriptor *intf;
+
+        if (padProfileFind(device->idVendor, device->idProduct) >= 0)
+            return 1;
+        if (!pads_learn)
+            return 0;
+        config = (UsbConfigDescriptor *)UsbGetDeviceStaticDescriptor(devId, device, USB_DT_CONFIG);
+        if (config == NULL)
+            return 0;
+        intf = (UsbInterfaceDescriptor *)((char *)config + config->bLength);
+        if (intf->bInterfaceClass == 0x03 && // HID
+            intf->bNumEndpoints > 0 &&
+            !(intf->bInterfaceSubClass == 1 && (intf->bInterfaceProtocol == 1 || intf->bInterfaceProtocol == 2)))
+            return 1;
+    }
+
     return 0;
 }
 
@@ -134,8 +158,16 @@ int usb_connect(int devId)
     config = (UsbConfigDescriptor *)UsbGetDeviceStaticDescriptor(devId, device, USB_DT_CONFIG);
     interface = (UsbInterfaceDescriptor *)((char *)config + config->bLength);
 
+    ds34pad[pad].profile = -1;
+    ds34pad[pad].vid = device->idVendor;
+    ds34pad[pad].pid = device->idProduct;
+    ds34pad[pad].raw_len = 0;
     if (device->idVendor == SHANWAN_VID && device->idProduct == SHANWAN_PS3_PID) {
         ds34pad[pad].type = SHANWAN;
+        epCount = interface->bNumEndpoints - 1;
+    } else if (device->idVendor != DS34_VID && device->idVendor != SONY_VID) {
+        ds34pad[pad].type = GENERIC; // build 129: probe took it, so it has a profile or the setup screen is open
+        ds34pad[pad].profile = padProfileFind(device->idVendor, device->idProduct);
         epCount = interface->bNumEndpoints - 1;
     } else if (device->idProduct == DS3_PID) {
         ds34pad[pad].type = DS3;
@@ -176,7 +208,7 @@ int usb_connect(int devId)
     } while (epCount--);
 
     // The clone is never sent an output report, so it needs only its input endpoint.
-    if (ds34pad[pad].interruptEndp < 0 || (ds34pad[pad].outEndp < 0 && ds34pad[pad].type != SHANWAN)) {
+    if (ds34pad[pad].interruptEndp < 0 || (ds34pad[pad].outEndp < 0 && ds34pad[pad].type != SHANWAN && ds34pad[pad].type != GENERIC)) {
         usb_release(pad);
         return 1;
     }
@@ -221,6 +253,8 @@ static void usb_release(int pad)
     ds34pad[pad].outEndp = -1;
     ds34pad[pad].devId = -1;
     ds34pad[pad].status = DS34USB_STATE_DISCONNECTED;
+    ds34pad[pad].data_pending = 0;
+    PollSema(ds34pad[pad].data_sema); // build 129: drop a completion left from this connection
 
     SignalSema(ds34pad[pad].sema);
 }
@@ -239,6 +273,17 @@ static void usb_data_cb(int resultCode, int bytes, void *arg)
     usb_resulCode = resultCode;
 
     SignalSema(ds34pad[pad].sema);
+}
+
+static void usb_gen_cb(int resultCode, int bytes, void *arg) // build 129: GENERIC's queued report
+{
+    int pad = (int)arg;
+
+    ds34pad[pad].data_result = resultCode;
+    ds34pad[pad].data_bytes = bytes;
+    ds34pad[pad].data_pending = 0;
+
+    SignalSema(ds34pad[pad].data_sema);
 }
 
 static void usb_cmd_cb(int resultCode, int bytes, void *arg)
@@ -262,6 +307,15 @@ static void usb_config_set(int result, int count, void *arg)
     if (ds34pad[pad].type == SHANWAN) {
         // It answers neither the DS3 enable report nor the LED/rumble report, and sending them can
         // stall the bus for the USB storage that shares it (freergam3r). It reports without them.
+        ds34pad[pad].status |= DS34USB_STATE_RUNNING;
+        SignalSema(ds34pad[pad].sema);
+        return;
+    }
+    if (ds34pad[pad].type == GENERIC) {
+        // build 129: only what its .pad asks for (init=ds3: the F4 enable packet); no LED and no motors in the menu, as
+        // many copies hang on a packet they do not know
+        if (ds34pad[pad].profile >= 0 && (padProfiles[ds34pad[pad].profile].flags & PAD_F_INIT_DS3))
+            DS3USB_init(pad);
         ds34pad[pad].status |= DS34USB_STATE_RUNNING;
         SignalSema(ds34pad[pad].sema);
         return;
@@ -295,6 +349,29 @@ static void DS3USB_init(int pad)
     usb_buf[3] = 0x00;
 
     UsbControlTransfer(ds34pad[pad].controlEndp, REQ_USB_OUT, USB_REQ_SET_REPORT, (HID_USB_GET_REPORT_FEATURE << 8) | 0xF4, 0, 4, usb_buf, NULL, NULL);
+}
+
+static void genericReport(int pad) // build 129
+{
+    int n = ds34pad[pad].data_bytes;
+
+    if (n <= 0) // an empty report holds no input: the last state stays, as in PADEMU's driver
+        return;
+    if (n > MAX_BUFFER_SIZE)
+        n = MAX_BUFFER_SIZE;
+    mips_memcpy(ds34pad[pad].raw, gen_buf[pad], n);
+    ds34pad[pad].raw_len = (u8)n;
+    ds34pad[pad].raw_seq++;
+    if (ds34pad[pad].profile >= 0)
+        padProfileDecode(ds34pad[pad].profile, gen_buf[pad], n, &ds34pad[pad].ds2);
+}
+
+static void genericIdle(int pad) // build 129: nothing held, sticks centred (no profile reads it)
+{
+    ds34pad[pad].data[0] = 0xFF;
+    ds34pad[pad].data[1] = 0xFF;
+    mips_memset(&ds34pad[pad].data[2], 0x7F, 4);
+    mips_memset(&ds34pad[pad].data[6], 0x00, 12);
 }
 
 static void readReport(u8 *data, int pad)
@@ -655,7 +732,7 @@ static int LEDRUM(u8 *led, u8 lrum, u8 rrum, int pad)
 
     WaitSema(ds34pad[pad].sema);
 
-    if (ds34pad[pad].type == SHANWAN) { // no LED, no motors: keep the request, send nothing
+    if (ds34pad[pad].type == SHANWAN || ds34pad[pad].type == GENERIC) { // no LED, no motors: keep the request, send nothing
         ds34pad[pad].lrum = lrum;
         ds34pad[pad].rrum = rrum;
     } else if (ds34pad[pad].update_rum) {
@@ -707,6 +784,32 @@ void ds34usb_get_data(char *dst, int size, int port)
 
     WaitSema(ds34pad[port].sema);
 
+    if (ds34pad[port].type == GENERIC) {
+        // build 129: its own buffer, one transfer queued at a time (a HID pad may report only when something changes, so
+        // a wait that ran out leaves it queued), as PADEMU's driver does
+        if (!ds34pad[port].data_pending) {
+            if (PollSema(ds34pad[port].data_sema) == 0 && !ds34pad[port].data_result) // it completed late
+                genericReport(port);
+            ds34pad[port].data_pending = 1;
+            if (UsbInterruptTransfer(ds34pad[port].interruptEndp, gen_buf[port], MAX_BUFFER_SIZE, usb_gen_cb, (void *)port) != USB_RC_OK)
+                ds34pad[port].data_pending = 0;
+        }
+        if (ds34pad[port].data_pending) {
+            TransferWait(ds34pad[port].data_sema);
+            if (!ds34pad[port].data_pending) {
+                // Completed just after the timeout woke the wait: drop its signal, or the next call reads this report
+                // again (PADEMU's driver does the same)
+                PollSema(ds34pad[port].data_sema);
+                if (!ds34pad[port].data_result)
+                    genericReport(port);
+            }
+        }
+        if (dst != NULL)
+            mips_memcpy(dst, ds34pad[port].data, size);
+        SignalSema(ds34pad[port].sema);
+        return;
+    }
+
     PollSema(ds34pad[port].sema);
 
     ret = UsbInterruptTransfer(ds34pad[port].interruptEndp, usb_buf, MAX_BUFFER_SIZE, usb_data_cb, (void *)port);
@@ -733,7 +836,7 @@ int ds34usb_get_bdaddr(u8 *data, int port)
     if (port >= MAX_PADS)
         return 0;
 
-    if (ds34pad[port].type == SHANWAN) // not a Bluetooth pad: no pairing address to read
+    if (ds34pad[port].type == SHANWAN || ds34pad[port].type == GENERIC) // not a Bluetooth pad: no pairing address to read
         return 0;
 
     if (ds34pad[port].update_rum) {
@@ -803,7 +906,7 @@ void ds34usb_set_bdaddr(u8 *data, int port)
 {
     int i, ret;
 
-    if (port >= MAX_PADS || ds34pad[port].type == SHANWAN) // not a Bluetooth pad: nothing to pair
+    if (port >= MAX_PADS || ds34pad[port].type == SHANWAN || ds34pad[port].type == GENERIC) // not a Bluetooth pad: nothing to pair
         return;
 
     WaitSema(ds34pad[port].sema);
@@ -860,6 +963,84 @@ int ds34usb_get_status(int port)
     return ret;
 }
 
+// The USBD asks a driver about a device only when the device arrives or the driver registers, so a profiled pad that
+// was plugged in before its profile came (the menu reads PADS after it loads this driver, and again after the NBD
+// server's IOP reset) was turned down and is never asked about again. When a profile's pad is held by no slot and an
+// enabled slot is free, the driver registers again, and the USBD asks it about every device no driver holds. Taking
+// this driver off its devices does not call usb_disconnect, so each pad it holds is let go first, and is taken again
+// with the rest (a DualShock 3 sees its LED set again). Not while the setup screen is open: it asks for a replug.
+static void usb_reprobe(void)
+{
+    int pad, i, room = 0, missing = 0;
+
+    for (pad = 0; pad < MAX_PADS; pad++)
+        if (ds34pad[pad].enabled && ds34pad[pad].devId == -1)
+            room = 1;
+    for (i = 0; i < padProfileCount && !missing; i++) {
+        missing = 1;
+        for (pad = 0; pad < MAX_PADS; pad++)
+            if (ds34pad[pad].devId != -1 && ds34pad[pad].vid == padProfiles[i].vid && ds34pad[pad].pid == padProfiles[i].pid)
+                missing = 0;
+    }
+    if (!room || !missing)
+        return;
+    for (pad = 0; pad < MAX_PADS; pad++)
+        if (ds34pad[pad].devId != -1)
+            usb_release(pad);
+    if (UsbUnregisterDriver(&usb_driver) != USB_RC_OK)
+        return;
+    usb_driver.next = NULL; // the USBD leaves both set, and refuses to register a driver that has either
+    usb_driver.prev = NULL;
+    if (UsbRegisterDriver(&usb_driver) != USB_RC_OK)
+        DPRINTF("DS34USB: Error registering USB devices again\n");
+}
+
+// RIPPS2 build 129: the .pad block (PAD_BLOCK_SIZE bytes, padfile.h) and the setup screen's learn switch (byte 0 of the
+// call: 1 open, 0 closed). Every connected HID pad is read again with the profile its ID now names; a pad that has none
+// reads as nothing held, and once the setup screen closes it is let go. A call too short for the whole block loads no
+// profiles: past what came, the buffer still holds the call before
+static void ds34usb_set_profiles(const u8 *data, int size)
+{
+    int pad;
+
+    pads_learn = size >= 4 ? data[0] : 0;
+    padProfilesLoad(size >= 4 + PAD_BLOCK_SIZE ? data + 4 : NULL);
+    for (pad = 0; pad < MAX_PADS; pad++) {
+        WaitSema(ds34pad[pad].sema);
+        if (ds34pad[pad].type == GENERIC && ds34pad[pad].devId != -1) {
+            ds34pad[pad].profile = padProfileFind(ds34pad[pad].vid, ds34pad[pad].pid);
+            if (ds34pad[pad].profile < 0)
+                genericIdle(pad);
+        }
+        SignalSema(ds34pad[pad].sema);
+        if (ds34pad[pad].type == GENERIC && ds34pad[pad].devId != -1 && ds34pad[pad].profile < 0 && !pads_learn)
+            usb_release(pad);
+    }
+    if (!pads_learn)
+        usb_reprobe();
+}
+
+// RIPPS2 build 129: Set Up A USB Pad's view of a port: its state, type, ID, and its last report as it came. 8 + 64 bytes:
+// status, type, vid (2), pid (2), the report's length, a count that moves with every new report, then the report
+static void ds34usb_get_raw(u8 *out, int port)
+{
+    if (port >= MAX_PADS)
+        return;
+    if (ds34pad[port].type == GENERIC && (ds34pad[port].status & DS34USB_STATE_RUNNING))
+        ds34usb_get_data(NULL, 0, port); // reads a new report if one has come
+    WaitSema(ds34pad[port].sema);
+    out[0] = ds34pad[port].status;
+    out[1] = ds34pad[port].type;
+    out[2] = ds34pad[port].vid & 0xFF;
+    out[3] = ds34pad[port].vid >> 8;
+    out[4] = ds34pad[port].pid & 0xFF;
+    out[5] = ds34pad[port].pid >> 8;
+    out[6] = ds34pad[port].raw_len;
+    out[7] = ds34pad[port].raw_seq;
+    mips_memcpy(out + 8, ds34pad[port].raw, MAX_BUFFER_SIZE);
+    SignalSema(ds34pad[port].sema);
+}
+
 void ds34usb_init(u8 pads)
 {
     u8 pad;
@@ -879,14 +1060,16 @@ static SifRpcServerData_t rpc_svr __attribute__((aligned(16)));
 
 static int rpc_buf[64] __attribute((aligned(16)));
 
-#define DS34USB_INIT       1
-#define DS34USB_GET_STATUS 2
-#define DS34USB_GET_BDADDR 3
-#define DS34USB_SET_BDADDR 4
-#define DS34USB_SET_RUMBLE 5
-#define DS34USB_SET_LED    6
-#define DS34USB_GET_DATA   7
-#define DS34USB_RESET      8
+#define DS34USB_INIT         1
+#define DS34USB_GET_STATUS   2
+#define DS34USB_GET_BDADDR   3
+#define DS34USB_SET_BDADDR   4
+#define DS34USB_SET_RUMBLE   5
+#define DS34USB_SET_LED      6
+#define DS34USB_GET_DATA     7
+#define DS34USB_RESET        8
+#define DS34USB_GET_RAW      9  // RIPPS2 build 129: Set Up A USB Pad
+#define DS34USB_SET_PROFILES 10 // RIPPS2 build 129: the .pad block
 
 #define DS34USB_BIND_RPC_ID 0x18E3878E
 
@@ -925,6 +1108,12 @@ void *rpc_sf(int cmd, void *data, int size)
         case DS34USB_RESET:
             ds34usb_reset();
             break;
+        case DS34USB_GET_RAW: // build 129
+            ds34usb_get_raw((u8 *)data, *(u8 *)data);
+            break;
+        case DS34USB_SET_PROFILES: // build 129
+            ds34usb_set_profiles((const u8 *)data, size);
+            break;
         default:
             break;
     }
@@ -958,6 +1147,10 @@ int _start(int argc, char *argv[])
         ds34pad[pad].outEndp = -1;
         ds34pad[pad].enabled = (enable >> pad) & 1;
         ds34pad[pad].type = 0;
+        ds34pad[pad].profile = -1; // build 129
+        ds34pad[pad].data_pending = 0;
+        ds34pad[pad].raw_len = 0;
+        ds34pad[pad].raw_seq = 0;
 
         ds34pad[pad].data[0] = 0xFF;
         ds34pad[pad].data[1] = 0xFF;
@@ -967,8 +1160,9 @@ int _start(int argc, char *argv[])
 
         ds34pad[pad].sema = CreateMutex(IOP_MUTEX_UNLOCKED);
         ds34pad[pad].cmd_sema = CreateMutex(IOP_MUTEX_UNLOCKED);
+        ds34pad[pad].data_sema = CreateMutex(IOP_MUTEX_LOCKED); // build 129: GENERIC's report completions
 
-        if (ds34pad[pad].sema < 0 || ds34pad[pad].cmd_sema < 0) {
+        if (ds34pad[pad].sema < 0 || ds34pad[pad].cmd_sema < 0 || ds34pad[pad].data_sema < 0) {
             DPRINTF("DS34USB: Failed to allocate I/O semaphore.\n");
             return MODULE_NO_RESIDENT_END;
         }

@@ -42,7 +42,7 @@ Use the references below for implementation details, exact limits and contributo
 
 ## Settings and customization
 
-- [Controls](CONTROLS.md), [in-game reset](IGR.md), [GSM video](GSM.md) and [PADEMU](PADEMU.md).
+- [Controls](CONTROLS.md), [in-game reset](IGR.md), [GSM video](GSM.md), [PADEMU](PADEMU.md) and [USB pad profiles (.pad)](PAD-PROFILES.md).
 - [Interface, folders and audio](INTERFACE.md), [theme authoring](THEME_ENGINE.md), [languages](LANGUAGES.md) and [Unicode game titles](UNICODE-GAME-TITLES.md).
 - [Game library](GAME-LIBRARY.md): All Games, Recent, Sort Games, Random Game, Hide Game, Delete and JPG art.
 - [Per-game parental locks](PARENTAL-LOCK.md) and [autolaunch/global settings](AUTOLAUNCH-GLOBAL-SETTINGS.md).

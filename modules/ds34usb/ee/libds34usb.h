@@ -17,3 +17,11 @@ int ds34usb_set_rumble(int port, u8 lrum, u8 rrum);
 int ds34usb_set_led(int port, u8 led);
 int ds34usb_get_data(int port, u8 *data);
 int ds34usb_reset();
+int ds34usb_set_profiles(const u8 *block, int size, int learn); // RIPPS2 build 129: .pad
+int ds34usb_get_raw(int port, u8 *out);                         // RIPPS2 build 129: DS34USB_RAW_SIZE bytes
+
+// RIPPS2 build 129: ds34usb_get_raw's reply is 8 bytes of a port's state, then its last report (the IRX's
+// MAX_BUFFER_SIZE, 64 bytes). Byte 1 is the port's type: DS34USB_TYPE_GENERIC (the IRX's GENERIC) for a HID pad that
+// a .pad profile drives, or none yet. The IRX's iop/ds34usb.h holds both values; test_ripps2_pad129.py checks they match
+#define DS34USB_RAW_SIZE     72
+#define DS34USB_TYPE_GENERIC 4
