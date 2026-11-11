@@ -1744,7 +1744,7 @@ static const bdma_pair_sig_t vcdBdmaPairSig[VCD_BDMA_MODE_COUNT] = {
     {11841, 19733}, // mmce
     {42749, 21837}, // ata
     {48500, 27769}, // iLink (27129 before the bring-up retry fix, 27145 before the SBP-2 status decode fix)
-    {51029, 34508}  // UDPFS Assault TEST 2026-10-28 (network read/write, BIN/CUE)
+    {61949, 34508}  // UDPFS Assault 1.0.1 2026-11-08 (network read/write, BIN/CUE, PATHMAP.INI)
 };
 
 // Returns file size in bytes, or -1 if absent / unreadable.
@@ -2382,6 +2382,141 @@ rollback:
 }
 
 
+
+// ---- UDPFS Assault PATHMAP.INI options ------------------------------------------------------
+// Parsed as the driver parses it (docs/README_CONFIG.txt in POPS/UDPFS-NOTICES): the first of
+// mc0:/POPSTARTER/ and mc1:/POPSTARTER/ that has the file, at most 512 bytes, KEY=VALUE lines,
+// keys without case, a repeated key's last line wins, a # or ; starts a comment, and only the
+// value 1 turns an option on. Bit i is vcdPathmapKeys[i], the order of the driver's option bits.
+static const char *const vcdPathmapKeys[VCD_PATHMAP_KEYS] = {"GAMEID_DIR", "DISCS_DIR", "CHEATS_WS"};
+
+// 1 = the file the driver reads, 0 = where a new one goes (an existing POPSTARTER folder), -3 error.
+static int vcdPathmapPath(char *path, int pathSize)
+{
+    static const char *files[2] = {"mc0:/POPSTARTER/PATHMAP.INI", "mc1:/POPSTARTER/PATHMAP.INI"};
+    for (int i = 0; i < 2; i++) {
+        snprintf(path, pathSize, "%s", files[i]);
+        int fd = open(path, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+        if (errno != ENOENT && errno != ENODEV)
+            return -3;
+    }
+    char dir[64];
+    if (!vcdFindPopstarterMc(dir, sizeof(dir)))
+        return -3; // no POPSTARTER folder: nothing would read the file
+    snprintf(path, pathSize, "%s/PATHMAP.INI", dir);
+    return 0;
+}
+
+// Which option a line sets (-1 none); *on = its value is 1.
+static int vcdPathmapLine(const char *line, const char *end, int *on)
+{
+    while (line < end && (*line == ' ' || *line == '\t'))
+        line++;
+    const char *eq = line;
+    while (eq < end && *eq != '=')
+        eq++;
+    if (eq == end || *line == '#' || *line == ';')
+        return -1;
+    const char *k = eq;
+    while (k > line && (k[-1] == ' ' || k[-1] == '\t'))
+        k--;
+    const char *v = eq + 1;
+    while (v < end && (*v == ' ' || *v == '\t'))
+        v++;
+    const char *ve = v;
+    while (ve < end && *ve != '#' && *ve != ';' && *ve != '\r')
+        ve++;
+    while (ve > v && (ve[-1] == ' ' || ve[-1] == '\t'))
+        ve--;
+    *on = (ve - v == 1 && *v == '1');
+    for (int i = 0; i < VCD_PATHMAP_KEYS; i++)
+        if ((int)strlen(vcdPathmapKeys[i]) == k - line && !strncasecmp(line, vcdPathmapKeys[i], k - line))
+            return i;
+    return -1;
+}
+
+static int vcdPathmapBits(const char *buf, int len)
+{
+    int bits = 0, on;
+    for (const char *p = buf, *end = buf + len; p < end;) {
+        const char *nl = (const char *)memchr(p, '\n', end - p);
+        const char *le = nl ? nl : end;
+        int key = vcdPathmapLine(p, le, &on);
+        if (key >= 0)
+            bits = on ? (bits | (1 << key)) : (bits & ~(1 << key));
+        p = nl ? nl + 1 : end;
+    }
+    return bits;
+}
+
+int vcdReadPopsPathmap(void)
+{
+    char path[64], buf[VCD_PATHMAP_MAX + 1];
+    int found = vcdPathmapPath(path, sizeof(path));
+    if (found <= 0)
+        return found < 0 ? -3 : 0;
+    int len = vcdReadNetFile(path, buf, sizeof(buf));
+    if (len == 0)
+        return 0;
+    return len < 0 ? -3 : vcdPathmapBits(buf, len); // a larger file is an error, not "all off"
+}
+
+// Rewrites only the three keys' lines and appends a missing key that is on; every other line is
+// kept byte for byte. A failed write puts the old file back.
+int vcdWritePopsPathmap(int bits)
+{
+    char path[64], old[VCD_PATHMAP_MAX + 1], out[VCD_PATHMAP_MAX + 64];
+    int found = vcdPathmapPath(path, sizeof(path));
+    if (found < 0)
+        return -3;
+    int oldLen = found ? vcdReadNetFile(path, old, sizeof(old)) : 0;
+    if (oldLen < 0)
+        return -3;
+    int len = 0, seen = 0, on;
+    for (const char *p = old, *end = old + oldLen; p < end;) {
+        const char *nl = (const char *)memchr(p, '\n', end - p);
+        const char *next = nl ? nl + 1 : end;
+        int key = vcdPathmapLine(p, nl ? nl : end, &on);
+        if (key >= 0) {
+            seen |= 1 << key;
+            const char *eol = (nl == NULL) ? "" : (nl > p && nl[-1] == '\r') ? "\r\n" :
+                                                                               "\n";
+            len += snprintf(out + len, sizeof(out) - len, "%s=%d%s", vcdPathmapKeys[key], (bits >> key) & 1, eol);
+        } else {
+            if (len + (next - p) > VCD_PATHMAP_MAX)
+                return -4;
+            memcpy(out + len, p, next - p);
+            len += next - p;
+        }
+        if (len > VCD_PATHMAP_MAX)
+            return -4;
+        p = next;
+    }
+    for (int i = 0; i < VCD_PATHMAP_KEYS; i++) {
+        if ((seen >> i & 1) || !(bits >> i & 1))
+            continue;
+        if (len > 0 && out[len - 1] != '\n')
+            len += snprintf(out + len, sizeof(out) - len, "\r\n");
+        len += snprintf(out + len, sizeof(out) - len, "%s=1\r\n", vcdPathmapKeys[i]);
+        if (len > VCD_PATHMAP_MAX)
+            return -4; // the driver ignores a larger file
+    }
+    if (len == oldLen && !memcmp(out, old, len)) // nothing changed, or all off and no file
+        return 0;
+    int result = vcdSafeWriteFile(path, out, len);
+    char check[VCD_PATHMAP_MAX + 1];
+    if (result == 0 && (vcdReadNetFile(path, check, sizeof(check)) != len || memcmp(check, out, len) != 0))
+        result = -3;
+    if (result != 0 && found)
+        vcdSafeWriteFile(path, old, oldLen);
+    else if (result != 0)
+        unlink(path);
+    return result;
+}
 
 // Parse "<IP> <NETMASK> <GATEWAY>". Returns 1 when a full valid triple was read. The caller
 // separately recognizes blank as DHCP; nonblank parse failure is invalid, never silently DHCP.

@@ -180,6 +180,8 @@ jobs:
         run: python3 .github/scripts/test_ilink_bd_assault_reset.py
       - name: Check POPS UDPFS game-device population and MC save rollback
         run: python3 .github/scripts/test_pops_udpfs.py
+      - name: Check the POPS UDPFS page's PATHMAP.INI reader and writer
+        run: python3 .github/scripts/test_pops_pathmap.py
       - name: Check unsupported MMCE ioctls cannot report VMC fragmentation
         run: python3 .github/scripts/test_vmc_contiguity.py
       - name: Check FAT fragment walker disk errors, corrupt chains and module installation

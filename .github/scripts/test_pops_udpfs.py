@@ -304,8 +304,8 @@ with tempfile.TemporaryDirectory() as temp:
     subprocess.run(['gcc', '-std=c99', '-Wall', '-Wextra', '-Werror', str(path/'scan.c'), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
 releases = json.loads((ROOT/'POPS/UDPFS-NOTICES/PROVENANCE.json').read_text())
-assert len(releases) == 1 and releases[0]['tag'] == 'UDPFS_TEST' and releases[0]['prerelease'] is True
-assert releases[0]['files']['POPS/usbd.irx.udpfs']['bytes'] == 51029
+assert len(releases) == 1 and releases[0]['tag'] == '1.0.1' and releases[0]['prerelease'] is False
+assert releases[0]['files']['POPS/usbd.irx.udpfs']['bytes'] == 61949
 for release in releases:
     for name, expected in release['files'].items():
         data = (ROOT/name).read_bytes()
