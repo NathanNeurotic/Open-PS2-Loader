@@ -42,6 +42,16 @@ assert off == end == len(icn) and pixels == 128 * 128, (off, end, len(icn), pixe
 for i in range(nv):
     u, v = struct.unpack_from('<2h', icn, 20 + i * (shapes * 8 + 16) + shapes * 8 + 8)
     assert 0 <= u <= 4096 and 0 <= v <= 4096, (i, u, v)
+# Winding: the browser culls by it, so each triangle must turn toward its own normal like the stock
+# icons do (cross(b - a, c - a) along n). Wound the other way the card showed its back face, mirrored.
+stride = shapes * 8 + 16
+for t in range(0, nv, 3):
+    pos = [struct.unpack_from('<3h', icn, 20 + (t + k) * stride) for k in range(3)]
+    nrm = [struct.unpack_from('<3h', icn, 20 + (t + k) * stride + shapes * 8) for k in range(3)]
+    e1 = [pos[1][i] - pos[0][i] for i in range(3)]
+    e2 = [pos[2][i] - pos[0][i] for i in range(3)]
+    cross = (e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0])
+    assert sum(cross[i] * sum(n[i] for n in nrm) for i in range(3)) > 0, ('triangle wound inside out', t // 3)
 
 # --- The stamping code, extracted verbatim and run against a real directory --------------------
 source = (root / 'src/util.c').read_text(encoding='utf-8')
