@@ -86,8 +86,11 @@ def card():
     v_top, v_bot, v_edge = 0.0, FACE_ROWS / TEX, (EDGE_ROW + 2) / TEX
 
     def quad(a, b, c, d, n, uvs):
+        # Wind each triangle so cross(v1 - v0, v2 - v0) points along the outward normal n, as the
+        # stock icons do: the browser culls by winding, and the opposite order (RiptOPL #314, Beta-4216
+        # to 4235) hid the face toward the camera and showed the far face through it, mirrored.
         p = [a, b, c, d]
-        return [(p[k], n, uvs[k]) for k in (0, 1, 2, 0, 2, 3)]
+        return [(p[k], n, uvs[k]) for k in (0, 2, 1, 0, 3, 2)]
 
     edge = [(0.5, v_edge)] * 4
     tris = []
