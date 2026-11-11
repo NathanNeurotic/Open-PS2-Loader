@@ -764,7 +764,7 @@ With special and sincere thanks to:
   RiptOPL directly: his [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) contributed
   LUNA's Collection display, adapted as the native **PSBBN Flow** theme in
   [#977](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/977) with the normal R3 favorite action. Thank you for sharing your work with us.
-- **[Okeanos](https://github.com/Okeanos86)** — for **[UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** (TEST 2026-10-28), giving [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) network read/write over UDPFS through BDMA, based on [israpps](https://github.com/israpps)’ BDM Assault.
+- **[Okeanos](https://github.com/Okeanos86)** — for **[UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** (1.0.1, 2026-11-08), giving [POPSTARTER](https://www.psx-place.com/resources/popstarter.683/) network read/write over UDPFS through BDMA and one save folder for the discs of a game (`PATHMAP.INI`), based on [israpps](https://github.com/israpps)’ BDM Assault.
 - **[saildot4k](https://github.com/saildot4k)** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
 - **[Ronnie Sahlberg](https://github.com/sahlberg)** — for **[libsmb2](https://github.com/sahlberg/libsmb2)**,

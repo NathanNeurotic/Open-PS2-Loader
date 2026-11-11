@@ -372,8 +372,8 @@ so POPSTARTER itself can read them off the exFAT volume.
 
 ### POPS UDPFS with BDM-UDPFS Assault
 
-RiptOPL uses [Okeanos's UDPFS Assault TEST](https://github.com/Okeanos86/BDMAssault/releases/tag/UDPFS_TEST) pre-release (2026-10-28; it
-replaces [1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0))
+RiptOPL uses [Okeanos's UDPFS Assault 1.0.1](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.1) (2026-11-08; it
+replaces the 2026-10-28 TEST pre-release and [1.0.0](https://github.com/Okeanos86/BDMAssault/releases/tag/1.0.0))
 as its sole POPSTARTER UDPFS BDMA driver. It serves every `mass:` request from the
 UDPFS server, including POPS dependencies and VMC writes. **USB is not required.**
 The older Alpha and USB-first fallback driver are no longer bundled or selected.
@@ -381,11 +381,11 @@ This runtime starts again after POPSTARTER resets the IOP, independently of
 RiptOPL's mounted UDPFS connection.
 
 The existing **BDMA Mode -> UDPFS** uses `POPS/usbd.irx.udpfs` (the unmodified
-51,029-byte `udp_fs_assault.irx`) and `POPS/usbhdfsd.irx.udpfs` (the 34,508-byte
+61,949-byte `udp_fs_assault.irx`) and `POPS/usbhdfsd.irx.udpfs` (the 34,508-byte
 `usbd_bd_assault.irx`). They install as `mc?:/POPSTARTER/usbd.irx` and
 `usbhdfsd.irx`. The mode ID and `udpfs` marker remain unchanged. With **VCD BDMA
 Apply on Launch** enabled, a UDPFS game equips this pair automatically; matching
-installed/manual pairs skip copying, while 1.0.0, Alpha and USB-first pairs are stale and
+installed/manual pairs skip copying, while TEST, 1.0.0, Alpha and USB-first pairs are stale and
 are replaced.
 With automatic equip disabled, equip **UDPFS** manually before launching.
 
@@ -403,7 +403,7 @@ wins, and the list shows that game once. One `.bin` per disc or one per track (R
 Upstream limits: track 1 must be MODE2/2352, no PREGAP/POSTGAP, every track needs INDEX 01,
 `.bin` sizes must be multiples of 2352, cue sheets up to 16 KiB and 99 tracks, images under
 4 GiB. The driver opens each `.bin` once at start (about 10 ms per file) and uses about 46 KB more
-IOP RAM than 1.0.0. A cue game's disc ID is not read from the image in the list or for the
+IOP RAM than 1.0.0; the 1.0.1 module file is also 10,920 bytes larger than the TEST one. A cue game's disc ID is not read from the image in the list or for the
 RetroGEM barcode; name the file `SLUS_123.45.Title.cue` if you want the ID shown.
 
 | Optional file in the game's POPS folder | MC destination | Contents |
@@ -422,6 +422,38 @@ The driver looks up each config at `mc0:/SYS-CONF/`, then `mc1:/SYS-CONF/`.
 Without configuration it uses PS2 `192.168.1.10/24` and server discovery. The
 server must be on the PS2's subnet: the driver does not route through the gateway.
 The old Alpha USB `mass:/POPS/` runtime configuration is no longer used.
+
+**One save folder for the discs of a game (optional).** POPSTARTER keeps a game's VMCs, cheats
+and patches in `POPS/<VCD name>/`, so each disc of a multi-disc game gets its own memory cards.
+The driver can send those paths to another folder on the server; POPSTARTER does not notice, and
+the VCDs themselves stay where they are, so RiptOPL's game list is unchanged. The options live in
+`mc0:/POPSTARTER/PATHMAP.INI`, at most 512 bytes, `KEY=1` lines. `mc1:/POPSTARTER/PATHMAP.INI` is
+read only when mc0 has no such file: an mc0 file with every option off still hides mc1's. Set them on the
+**POPS UDPFS Network Settings** page, under `mc?:/POPSTARTER/PATHMAP.INI`, or write the file yourself:
+
+| Key | Effect |
+| --- | --- |
+| `GAMEID_DIR=1` | the folder is the disc ID read from the image, e.g. `POPS/SLUS_123.45/` |
+| `DISCS_DIR=1` | the folder is the value of the ID's line in `POPS/DISCS_DIR.TXT` on the server (`ID=Folder` or `ID1,ID2=Folder`), so every disc of a game shares it; wins over `GAMEID_DIR` |
+| `CHEATS_WS=1` | `CHEATS_WS.TXT` in the game folder is read instead of `CHEATS.TXT` when it exists |
+
+All three are off without the file, which is POPSTARTER's own behaviour. The page edits the file the
+driver reads (mc0's, else mc1's, else a new one in the existing POPSTARTER folder) on **OK**, and
+only when a switch changed: it rewrites the three keys' lines and keeps every other line as it was.
+A file over 512 bytes, which the driver ignores, shows as all off and is never rewritten. Upstream's example is in `POPS/UDPFS-NOTICES/PATHMAP.INI` and its full rules are in
+`POPS/UDPFS-NOTICES/README_CONFIG.txt`. The folder is chosen once, by the first VCD opened: changing discs during a game keeps that
+folder, so with `GAMEID_DIR` alone each disc has its own folder only when the game is started from
+that disc. Turning an option on moves a game to a new folder: copy
+its old `SLOT0.VMC`/`SLOT1.VMC` across or it starts with empty cards. Ready-made `DISCS_DIR.TXT`
+lists are in [Okeanos's popstarter-dir-lists](https://github.com/Okeanos86/popstarter-dir-lists).
+These options work only with this UDPFS driver: the USB, MX4SIO, MMCE, iLink and HDD BDMA
+drivers do not read `PATHMAP.INI`.
+
+**CHD games.** The driver does not read `.chd`. A server that shows a CHD as a virtual `.cue` +
+`.bin` pair makes the game appear in the list and launch as a BIN/CUE game above, with the same
+track limits. [PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers) does this from v0.9.2
+(PS2-Servers #288) with CHD support (libchdr) available; v0.9.1 and older show a CHD only as `.iso`,
+which the POPS list does not show.
 
 **POPS UDPFS Network Settings** edits these effective MC files with explicit
 replacement confirmation. The screen shows their MC locations. Each MC0 file

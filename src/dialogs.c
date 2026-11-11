@@ -294,6 +294,23 @@ struct UIItem diaPopsUdpfsConfig[] = {
     {UI_INT, NETCFG_POPS_SMB_IP_3, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_BREAK},
 
+    // UDPFS Assault's own option file; the rows carry its key names, which are the same in every language.
+    {UI_SPLITTER},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {"mc?:/POPSTARTER/PATHMAP.INI", -1}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"GAMEID_DIR", -1}}},
+    {UI_SPACER},
+    {UI_BOOL, NETCFG_POPS_PATHMAP_0, 1, 1, _STR_HINT_POPS_GAMEID_DIR, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"DISCS_DIR", -1}}},
+    {UI_SPACER},
+    {UI_BOOL, NETCFG_POPS_PATHMAP_1, 1, 1, _STR_HINT_POPS_DISCS_DIR, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"CHEATS_WS", -1}}},
+    {UI_SPACER},
+    {UI_BOOL, NETCFG_POPS_PATHMAP_2, 1, 1, _STR_HINT_POPS_CHEATS_WS, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
     {UI_TERMINATOR}};
 

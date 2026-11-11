@@ -1,17 +1,23 @@
 [
   {
-    "tag": "UDPFS_TEST",
-    "prerelease": true,
-    "url": "https://github.com/Okeanos86/BDMAssault/releases/download/UDPFS_TEST/UDPFS_Assault_TEST.zip",
-    "archive_sha256": "225ea524f1eed59bffcc193e2fdf92868e6a2061a526a8c1d21675ac71c24d2f",
-    "supersedes": {
-      "tag": "1.0.0",
-      "archive_sha256": "a22311192bbf4d5252d62aec130e57a900505bc71f8603407fc45b7c453da27e"
-    },
+    "tag": "1.0.1",
+    "prerelease": false,
+    "url": "https://github.com/Okeanos86/BDMAssault/releases/download/1.0.1/UDPFS_Assault.zip",
+    "archive_sha256": "cd87f94b6981ff7435193ced699d30a0ba4345dfb9acfa25f996b95b93df52fd",
+    "supersedes": [
+      {
+        "tag": "UDPFS_TEST",
+        "archive_sha256": "225ea524f1eed59bffcc193e2fdf92868e6a2061a526a8c1d21675ac71c24d2f"
+      },
+      {
+        "tag": "1.0.0",
+        "archive_sha256": "a22311192bbf4d5252d62aec130e57a900505bc71f8603407fc45b7c453da27e"
+      }
+    ],
     "files": {
       "POPS/usbd.irx.udpfs": {
-        "bytes": 51029,
-        "sha256": "24e272996a6ea4af5ef20cb5d89a29aa615d8b828087032e75bc2b05aaac583e"
+        "bytes": 61949,
+        "sha256": "d1d5502454fbc9ca7c1fd039b65bbc143f8b87ffdfc0e275ce13dca4b191a738"
       },
       "POPS/usbhdfsd.irx.udpfs": {
         "bytes": 34508,

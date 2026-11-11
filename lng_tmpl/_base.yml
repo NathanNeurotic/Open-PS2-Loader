@@ -2545,3 +2545,12 @@ gui_strings:
   string: "Console i.LINK ID must be empty or exactly 16 hexadecimal digits (0-9, A-F). Settings were not saved."
 - label: LAUNCH_CONSOLE_ILINK_ID_FALLBACK
   string: "The stored Console i.LINK ID is invalid and was ignored. This game will use the real console ID."
+- comment: UDPFS Assault PATHMAP.INI option hints (POPS UDPFS page). Keep the file and key names.
+  label: HINT_POPS_GAMEID_DIR
+  string: "Name each game's save folder after its disc ID, e.g. POPS/SLUS_123.45/. Copy its SLOT0/SLOT1.VMC there first."
+- label: HINT_POPS_DISCS_DIR
+  string: "One save folder for all discs of a game, from POPS/DISCS_DIR.TXT on the server. Copy its SLOT0/SLOT1.VMC there first."
+- label: HINT_POPS_CHEATS_WS
+  string: "Read CHEATS_WS.TXT instead of CHEATS.TXT when the game folder has one."
+- label: POPS_PATHMAP_ERR
+  string: "Couldn't write mc?:/POPSTARTER/PATHMAP.INI (needs a POPSTARTER folder, at most 512 bytes)."

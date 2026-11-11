@@ -270,6 +270,14 @@ typedef struct
 int vcdReadPopsUdpfsNet(vcd_pops_udpfs_t *out);
 int vcdPopsUdpfsNetValid(const vcd_pops_udpfs_t *cfg);
 int vcdWritePopsUdpfsNet(const vcd_pops_udpfs_t *cfg);
+// UDPFS Assault's optional mc?:/POPSTARTER/PATHMAP.INI: bit 0 GAMEID_DIR, 1 DISCS_DIR, 2 CHEATS_WS.
+// Read returns the bits the driver would see (0 without the file) or -3; write changes only those
+// keys' lines, keeps the rest, writes nothing when the bits are already set, and returns 0, -2 card
+// full, -3 IO / unreadable file / no POPSTARTER folder, or -4 when the file would pass 512 bytes.
+#define VCD_PATHMAP_KEYS 3
+#define VCD_PATHMAP_MAX  512
+int vcdReadPopsPathmap(void);
+int vcdWritePopsPathmap(int bits);
 // Copy optional game-device POPS/*.DAT only when absent from both cards.
 int vcdInstallPopsUdpfsNet(const char *popsDir);
 
