@@ -15,6 +15,11 @@ EPERM, cueScanDir treated every completed MMCE listing as a read failure, and ps
 published the POPSTARTER half alone: no Ember titles on MMCE. The test builds that baseline too
 and requires it to fail, so it proves it can see the defect, then requires the patched driver to
 list the games while still reporting real SIO2 timeouts as failures.
+
+mmceman-fs-dread-entry.patch (the dread half of ps2-mmce/mmceman PR 11) makes an entry
+return 1 instead of the card's iterator descriptor: the iterator gets the card's lowest free
+descriptor, and 0 there read as end of directory, so the listing stopped before its first entry.
+A second baseline without it, on a card whose iterator descriptor is 0, must fail too.
 """
 from pathlib import Path
 import argparse
@@ -42,9 +47,10 @@ SOURCES = {
     'fileXio_ps2sdk.c': ('ps2dev/ps2sdk', SDK_PIN, 'ee/rpc/filexio/src/fileXio_ps2sdk.c',
                          'e780b3ea3c5886a18820facf4a25ea38d9a2a982306b2184349e1d5a5419a40a'),
 }
-# The installer's order; the last one is the fix under test.
+# The installer's order. Each baseline below drops one fix and must fail.
 PATCHES = ['mmceman-fs-close-fd-leak.patch', 'mmceman-fs-open-enoent.patch',
-           'mmceman-fs-dopen-enoent.patch', 'mmceman-fs-dread-eof.patch']
+           'mmceman-fs-dopen-enoent.patch', 'mmceman-fs-dread-eof.patch',
+           'mmceman-fs-dread-entry.patch']
 for name in PATCHES:
     assert name in installer, name + ' is no longer applied by install_coherent_mmce.sh'
 
@@ -143,10 +149,11 @@ static int cardOpen(const char *path) {
     return -1;
 }
 /* sd_iterate_dir: the next child, or -1 (end of listing, or the handle is a FILE). */
+static int zeroIterator; /* the child's card descriptor is 0: fd 0 was free when it was opened */
 static int cardIterate(int fd, int *child) {
     if (fd <= 0 || fd >= CARD_FILES || !card[fd].open || !tree[card[fd].node].dir) return -1;
     for (int i = card[fd].next; i < NODES; i++)
-        if (childOf(i, card[fd].node) && nodeFind(tree[i].path) >= 0) {card[fd].next = i + 1; *child = i; return fd + 1; /* nonzero iterator id */}
+        if (childOf(i, card[fd].node) && nodeFind(tree[i].path) >= 0) {card[fd].next = i + 1; *child = i; return zeroIterator ? 0 : fd + 1;}
     card[fd].next = NODES;
     return -1;
 }
@@ -299,7 +306,12 @@ int main(int argc, char **argv) {
     memset(mmce_fs_fds, -1, sizeof(mmce_fs_fds)); /* mmce_fs_init */
     if (argc > 1 && !strcmp(argv[1], "baseline"))
         return scan("unpatched dread: Spyro + Crash beside a loose file and an empty group", 2) ? 0 : 1;
-    int ok = scan("Spyro + Crash beside a loose file and an empty group", 2);
+    zeroIterator = 1;
+    if (argc > 1 && !strcmp(argv[1], "zero-iterator"))
+        return scan("dread returning the iterator fd: Spyro + Crash when that fd is 0", 2) ? 0 : 1;
+    int ok = scan("Spyro + Crash when the card's iterator fd is 0", 2);
+    zeroIterator = 0;
+    ok &= scan("Spyro + Crash beside a loose file and an empty group", 2);
     failDreadAt = 1; /* dread 0 lists Spyro, dread 1 is the image probe inside Spyro/ */
     ok &= scan("SIO2 timeout inside a game folder keeps the last-good list", -1);
     failDreadAt = 2; /* dread 2 is the games listing's next entry */
@@ -327,10 +339,14 @@ def build(work, patches, name):
 
 with tempfile.TemporaryDirectory(prefix='ember-mmce-') as temp:
     work = Path(temp)
-    baseline = build(work / 'baseline', PATCHES[:-1], 'scan')
+    baseline = build(work / 'baseline', [p for p in PATCHES if p != 'mmceman-fs-dread-eof.patch'], 'scan')
     result = subprocess.run([str(baseline), 'baseline'], timeout=30)
     assert result.returncode != 0, 'the unpatched driver lists Ember on MMCE: this test no longer sees the defect'
     print('baseline (without mmceman-fs-dread-eof.patch) fails as expected: every MMCE listing ends in EPERM')
+    baseline = build(work / 'baseline-iterator', PATCHES[:-1], 'scan')
+    result = subprocess.run([str(baseline), 'zero-iterator'], timeout=30)
+    assert result.returncode != 0, 'dread returning the iterator fd lists Ember: this test no longer sees the defect'
+    print('baseline (without mmceman-fs-dread-entry.patch) fails as expected: an iterator fd of 0 ends the listing')
     patched = build(work / 'patched', PATCHES, 'scan')
     subprocess.run([str(patched)], check=True, timeout=30)
 print('Ember on MMCE: games list through the real mmceman dread; SIO2 timeouts still preserve the list')

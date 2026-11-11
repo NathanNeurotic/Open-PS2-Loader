@@ -1,0 +1,14 @@
+diff --git a/mmceman/src/mmce_fs.c b/mmceman/src/mmce_fs.c
+--- a/mmceman/src/mmce_fs.c
++++ b/mmceman/src/mmce_fs.c
+@@ -834,7 +834,9 @@ int mmce_fs_dread(iomanX_iop_file_t *file, iox_dirent_t *dirent)
+ 
+     mmce_sio2_unlock();
+ 
+-    return rdbuf[0x1]; //itr fd from mmce
++    // 1, not the card's iterator fd: iomanX reads 0 as end of directory, and the card hands out its
++    // lowest free descriptor, which is 0 if the folder was opened while fd 0 was busy (upstream mmceman PR 11).
++    return 1;
+ }
+ 
+ int mmce_fs_getstat(iomanX_iop_file_t *file, const char *name, iox_stat_t *stat)

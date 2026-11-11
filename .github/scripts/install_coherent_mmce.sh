@@ -110,6 +110,20 @@ fi
 echo "== Applying mmceman dread end-of-directory fix (card status reply = 0, not -1) =="
 git -C "$WORK/mmceman" apply --verbose "$FS_DREAD_EOF_PATCH"
 
+# A listed entry is 1 (the dread half of ps2-mmce/mmceman PR 11, AKuHAK, 2b05e61, open upstream on
+# 2026-11-11). mmce_fs_dread returned the card's iterator descriptor for each entry; the iterator
+# gets the card's lowest free descriptor, so it is 0 when descriptor 0 was free, and iomanX reads 0
+# as end of directory: that listing stopped before its first entry. Its getstat -ENOENT half is not
+# taken: the card answers 1 for any failed open, a full file table included.
+# Applies on top of the four patches above (disjoint hunks); fail LOUD if it stops applying.
+FS_DREAD_ENTRY_PATCH="$SCRIPT_DIR/../patches/mmceman-fs-dread-entry.patch"
+if [ ! -f "$FS_DREAD_ENTRY_PATCH" ]; then
+    echo "ERROR: expected mmceman dread entry patch not found at $FS_DREAD_ENTRY_PATCH" >&2
+    exit 1
+fi
+echo "== Applying mmceman dread entry fix (an entry is 1, not the card's iterator fd) =="
+git -C "$WORK/mmceman" apply --verbose "$FS_DREAD_ENTRY_PATCH"
+
 # Older-SDK make quirk: the per-module obj dir isn't auto-created by every Makefile.iopglobal
 # vintage -- pre-create it so the first compile step doesn't fail on a missing directory.
 mkdir -p "$WORK/mmceman/mmceman/obj"
