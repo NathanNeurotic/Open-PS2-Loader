@@ -174,7 +174,7 @@ static void run(int write, unsigned offset, int fail, int expected) {
     transfers = multi = 0; fail_at = fail;
     for (unsigned i = 0; i < sizeof(disk); ++i) disk[i] = (unsigned char)(i / 512 * 7 + i);
     memcpy(before, disk, sizeof(disk));
-    for (unsigned i = 0; i < sizeof(caller); ++i) buf[i] = caller[i] = (unsigned char)(i * 13 + 5);
+    for (unsigned i = 0; i < sizeof(caller); ++i) buf[i] = caller[i] = (unsigned char)((i / SECTOR_SIZE) * 11 + i * 13 + 5);
     int result = write ? spisd_write(NULL, 5, buf, 3) : spisd_read(NULL, 5, buf, 3);
     assert(result == expected);
     /* An aligned buffer keeps the single multi-sector transfer. */
