@@ -1,4 +1,5 @@
 #include <bd_cache.h>
+#include <intrman.h>
 #include <string.h>
 #include <sysmem.h>
 
@@ -8,6 +9,38 @@
 #define SECTORS_PER_BLOCK   8   //  8 * 512b =   4KiB
 #define BLOCK_COUNT         32  // 32 * 4KiB = 128KiB
 #define BLOCK_WEIGHT_FACTOR 256 // Fixed point math (24.8)
+
+// RiptOPL: every physical BDM device gets its own 128 KiB cache, and they are all allocated before
+// the network drivers load. On a console with an HDD, an MX4SIO card and two USB sticks that is
+// 512 KiB of the 2 MiB IOP, and the largest free block left for the SMB2 driver (163 KB staged
+// plus 149 KB resident) was 274 KB: it failed with -400 and the menu fell back to SMBv1. Cap the
+// cached devices; later ones mount uncached, the same path as an allocation failure.
+#define CACHED_DEVICES_MAX 2
+
+// Devices connect from their own threads (USB, MX4SIO, iLink, ATA) and BDM has no lock around
+// bdm_connect_bd, so a slot is taken and given back with interrupts off.
+static int cached_devices;
+
+static int _reserve_slot(void)
+{
+    int state, ok;
+
+    CpuSuspendIntr(&state);
+    ok = cached_devices < CACHED_DEVICES_MAX;
+    if (ok)
+        cached_devices++;
+    CpuResumeIntr(state);
+    return ok;
+}
+
+static void _release_slot(void)
+{
+    int state;
+
+    CpuSuspendIntr(&state);
+    cached_devices--;
+    CpuResumeIntr(state);
+}
 
 struct bd_cache
 {
@@ -176,6 +209,8 @@ struct block_device *bd_cache_create(struct block_device *bd)
     // the NULL. In both cases return NULL: BDM then mounts the device uncached.
     if (bd->sectorSize != 512)
         return NULL;
+    if (!_reserve_slot())
+        return NULL;
 
     // Create new block device
     struct block_device *cbd = AllocSysMemory(ALLOC_FIRST, sizeof(struct block_device), NULL);
@@ -187,6 +222,7 @@ struct block_device *bd_cache_create(struct block_device *bd)
             FreeSysMemory(cbd);
         if (c != NULL)
             FreeSysMemory(c);
+        _release_slot();
         return NULL;
     }
 
@@ -229,4 +265,5 @@ void bd_cache_destroy(struct block_device *cbd)
 
     FreeSysMemory(cbd->priv);
     FreeSysMemory(cbd);
+    _release_slot(); // after the frees, so a device connecting meanwhile cannot hold a third cache alongside this one
 }

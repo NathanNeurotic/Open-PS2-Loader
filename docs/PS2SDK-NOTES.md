@@ -524,6 +524,12 @@ Neither `AllocSysMemory()` result in `bd_cache_create()` is checked, and the sec
 Our copy frees what it got and returns NULL; BDM then uses the device without a cache.
 (`test_bdm_partitions.py`.)
 
+Not an SDK bug, but related: our copy also caps the cached devices at two (`CACHED_DEVICES_MAX`). The
+caches are created before the network drivers load, and on a console with an HDD, an MX4SIO card and two
+USB sticks the four 128 KiB caches left a 274 KB largest free block, too small for the SMB2 browse driver
+(163 KB staged plus 149 KB resident), which failed with -400. Further devices mount uncached through the
+path above. (`test_bdm_cache.py`; measured on hardware in RiptOPL #305.)
+
 ### The connect log line divides by zero
 
 **Still in master.**

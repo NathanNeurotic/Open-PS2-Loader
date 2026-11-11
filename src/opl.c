@@ -143,6 +143,11 @@ static unsigned int lastSeenBdmGeneration;
 
 static char errorMessage[256];
 static int errorMessageStringId = -1;
+static volatile unsigned int errorMessageGeneration = 0;
+// A message appended below the pending one (appendErrorMessageWithCode), kept so that clearing
+// the pending one by id re-publishes this on its own instead of discarding it with the primary.
+static int appendedErrorStringId = -1;
+static int appendedErrorCode = 0;
 
 static opl_io_module_t list_support[MODE_COUNT];
 
@@ -1819,13 +1824,19 @@ static void clearErrorMessage(void)
     // reset the original frame hook
     frameCounter = 0;
     errorMessageStringId = -1;
+    appendedErrorStringId = -1;
     guiSetFrameHook(&menuUpdateHook);
 }
 
+// The message box copies its text when it opens, and the IO worker may set or append a message
+// while it is up. Each writer bumps the generation after the text is complete; a box that closed
+// on stale text leaves the hook installed, so the next frame shows what was written since.
 static void errorMessageHook()
 {
+    unsigned int shown = errorMessageGeneration;
     guiMsgBox(errorMessage, 0, NULL);
-    clearErrorMessage();
+    if (shown == errorMessageGeneration)
+        clearErrorMessage();
 }
 
 // Language strings can choose the order of the supported substitutions, but are never handed to
@@ -1836,6 +1847,7 @@ static void formatErrorMessage(const char *format, const char *path, int error, 
     char errorText[16];
     size_t used = 0;
 
+    appendedErrorStringId = -1; // a fresh text replaces whatever was appended before
     if (format == NULL) {
         errorMessage[0] = '\0';
         return;
@@ -1878,11 +1890,19 @@ static void formatErrorMessage(const char *format, const char *path, int error, 
     errorMessage[used] = '\0';
 }
 
+// Called once the text in errorMessage is complete. The generation bump is what tells an open
+// message box that it showed stale text (see errorMessageHook).
+static void publishErrorMessage(int strId)
+{
+    errorMessageStringId = strId;
+    errorMessageGeneration++;
+    guiSetFrameHook(&errorMessageHook);
+}
+
 void setErrorMessageWithCode(int strId, int error)
 {
     formatErrorMessage(_l(strId), NULL, error, 0, 1);
-    errorMessageStringId = strId;
-    guiSetFrameHook(&errorMessageHook);
+    publishErrorMessage(strId);
 }
 
 // The detail suffix is an internal enum name ("PS2FS_LOAD_FAILURE"), untranslated by construction,
@@ -1902,28 +1922,60 @@ void setErrorMessageWithCodeAndDetail(int strId, int error, const char *detail)
     if (detail != NULL && detail[0] != '\0' && used < sizeof(errorMessage) - 1)
         snprintf(&errorMessage[used], sizeof(errorMessage) - used, "\nDiagnostic reason: %s", detail);
 #endif
-    errorMessageStringId = strId;
-    guiSetFrameHook(&errorMessageHook);
+    publishErrorMessage(strId);
 }
 
 void setErrorMessage(int strId)
 {
     formatErrorMessage(_l(strId), NULL, 0, 0, 0);
-    errorMessageStringId = strId;
-    guiSetFrameHook(&errorMessageHook);
+    publishErrorMessage(strId);
 }
 
 void setErrorMessagePathCode(int strId, const char *path, int error)
 {
     formatErrorMessage(_l(strId), path, error, 1, 1);
-    errorMessageStringId = strId;
-    guiSetFrameHook(&errorMessageHook);
+    publishErrorMessage(strId);
+}
+
+// Adds a second message below one that is already pending instead of replacing it, so a secondary
+// cause (the SMB2 driver did not load) survives the primary failure (SMB1 connect) that follows it.
+// With nothing pending it behaves exactly like setErrorMessageWithCode. The pending message keeps
+// ownership of errorMessageStringId so clearErrorMessageIf still matches the primary caller; the
+// appended one is remembered so that clear does not take it down too.
+void appendErrorMessageWithCode(int strId, int error)
+{
+    char pending[sizeof(errorMessage)];
+    char added[sizeof(errorMessage)];
+
+    if (errorMessageStringId == -1) {
+        setErrorMessageWithCode(strId, error);
+        return;
+    }
+
+    strncpy(pending, errorMessage, sizeof(pending) - 1);
+    pending[sizeof(pending) - 1] = '\0';
+    formatErrorMessage(_l(strId), NULL, error, 0, 1);
+    strncpy(added, errorMessage, sizeof(added) - 1);
+    added[sizeof(added) - 1] = '\0';
+    snprintf(errorMessage, sizeof(errorMessage), "%s\n%s", pending, added);
+    appendedErrorStringId = strId;
+    appendedErrorCode = error;
+    publishErrorMessage(errorMessageStringId);
 }
 
 void clearErrorMessageIf(int strId)
 {
-    if (errorMessageStringId == strId)
+    if (errorMessageStringId != strId)
+        return;
+    if (appendedErrorStringId == -1) {
         clearErrorMessage();
+        return;
+    }
+    // The primary (say an HDD error) recovered, but the message appended under it (the SMB2
+    // fallback) still wants to be seen: re-publish that one alone.
+    int keepId = appendedErrorStringId, keepCode = appendedErrorCode;
+    appendedErrorStringId = -1;
+    setErrorMessageWithCode(keepId, keepCode);
 }
 
 // ----------------------------------------------------------

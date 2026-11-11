@@ -165,11 +165,13 @@ int sysLoadModuleBuffer(void *buffer, int size, int argc, char *argv)
         }
     }
 
-    // load the module
+    // load the module. A failed load returns the IOP's own error (KE_NO_MEMORY is -400) so the
+    // caller can show the cause; -2 is kept for a module that ran but declined to stay resident.
+    // Callers only test the sign.
     id = SifExecModuleBuffer(buffer, size, argc, argv, &ret);
     LOG("\t-- ID=%d, ret=%d\n", id, ret);
     if ((id < 0) || (ret)) {
-        ret = -2;
+        ret = id < 0 ? id : -2;
         goto exit;
     }
 

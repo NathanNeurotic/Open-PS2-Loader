@@ -46,11 +46,18 @@ struct block_device
 };
 '''
 
+STUB_INTRMAN = r'''
+#pragma once
+static inline int CpuSuspendIntr(int *state) { *state = 0; return 0; }
+static inline int CpuResumeIntr(int state) { (void)state; return 0; }
+'''
+
 STUB_SYSMEM = r'''
 #pragma once
 #include <stdlib.h>
 #define ALLOC_FIRST 0
-static inline void *AllocSysMemory(int mode, int size, void *ptr) { (void)mode; (void)ptr; return calloc(1, (size_t)size); }
+extern int alloc_fail; /* the harness sets it to make the next allocations fail */
+static inline void *AllocSysMemory(int mode, int size, void *ptr) { (void)mode; (void)ptr; return alloc_fail ? NULL : calloc(1, (size_t)size); }
 static inline int FreeSysMemory(void *ptr) { free(ptr); return 0; }
 '''
 
@@ -65,6 +72,7 @@ static unsigned char disk[DISK_SECTORS * 512];
 static int fail_from = -1, fail_to = -1; /* read of any sector in [from, to] fails */
 static int short_reads;                  /* reads return at most this many sectors (0 = off) */
 static int device_reads;
+int alloc_fail; /* read by the sysmem stub */
 
 static int dev_read(struct block_device *bd, u64 sector, void *buffer, u16 count)
 {
@@ -164,6 +172,25 @@ int main(void)
     memset(disk + 200 * 512, 200 * 7 + 1, 512); /* restore the pattern on disk ... */
     assert(bd->read(bd, 200, buf, 1) == 1 && is_sector(buf, 200)); /* ... and the cache must not mask it */
 
+    /* At most two devices are cached (IOP memory for the SMB2 driver); a third mounts uncached, and
+       disconnecting a cached device frees its slot. */
+    struct block_device *bd2 = bd_cache_create(&raw);
+    assert(bd2 != NULL);
+    assert(bd_cache_create(&raw) == NULL);
+    bd_cache_destroy(bd2);
+    bd2 = bd_cache_create(&raw);
+    assert(bd2 != NULL);
+    bd_cache_destroy(bd2);
+
+    /* A failed allocation gives its slot back. */
+    alloc_fail = 1;
+    assert(bd_cache_create(&raw) == NULL);
+    alloc_fail = 0;
+    bd2 = bd_cache_create(&raw);
+    assert(bd2 != NULL);
+    assert(bd_cache_create(&raw) == NULL);
+    bd_cache_destroy(bd2);
+
     bd_cache_destroy(bd);
     puts("bd_cache: all cases passed");
     return 0;
@@ -178,6 +205,7 @@ def main():
         (stubs / 'tamtypes.h').write_text(STUB_TAMTYPES)
         (stubs / 'bdm.h').write_text(STUB_BDM)
         (stubs / 'sysmem.h').write_text(STUB_SYSMEM)
+        (stubs / 'intrman.h').write_text(STUB_INTRMAN)
         harness = Path(tmp) / 'harness.c'
         harness.write_text(HARNESS)
         exe = Path(tmp) / 'bd_cache_test'
