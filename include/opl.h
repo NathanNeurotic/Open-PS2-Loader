@@ -72,6 +72,7 @@ void setErrorMessage(int strId);
 void setErrorMessageWithCode(int strId, int error);
 void setErrorMessageWithCodeAndDetail(int strId, int error, const char *detail);
 void setErrorMessagePathCode(int strId, const char *path, int error);
+void appendErrorMessageWithCode(int strId, int error);
 // Drop a queued error only when it is the exact condition that subsequently recovered. This avoids
 // hiding an unrelated notification merely because a later storage probe happened to succeed.
 void clearErrorMessageIf(int strId);

@@ -45,6 +45,14 @@ against a simulated device and fails on the SDK original):
    the conventional start of partition data), with the count clamped to that extent, so a corrupt
    header cannot read more than 2048 sectors at mount. Any other header keeps the SDK's
    stop-at-first-unused scan. Worth offering upstream to ps2sdk.
+5. libbdm/src/bd_cache.c: at most CACHED_DEVICES_MAX (2) physical devices get the 128 KiB block
+   cache; further devices mount uncached (the allocation-failure path of change 2) and a disconnect
+   frees the slot. The caches are created before the network drivers load, and on a console with an
+   HDD, an MX4SIO card and two USB sticks the four caches left a 274 KB largest free IOP block, too
+   small for the SMB2 driver (163 KB staged + 149 KB resident), which failed with -400 and left the
+   menu on SMBv1. The slot is taken and released with interrupts off (intrman, a new import of
+   bdm_drv) because the USB, MX4SIO, iLink and ATA drivers call bdm_connect_bd from their own
+   threads and bdm has no lock of its own. Pinned by .github/scripts/test_bdm_cache.py.
 Changes 2-4 are pinned by .github/scripts/test_bdm_partitions.py.
 
 DELIBERATELY UNCHANGED: the MBR/GPT parsers are otherwise the SDK's (change 4 aside). In particular, never require an

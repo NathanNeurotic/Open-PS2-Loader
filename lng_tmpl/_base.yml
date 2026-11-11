@@ -2545,3 +2545,5 @@ gui_strings:
   string: "Console i.LINK ID must be empty or exactly 16 hexadecimal digits (0-9, A-F). Settings were not saved."
 - label: LAUNCH_CONSOLE_ILINK_ID_FALLBACK
   string: "The stored Console i.LINK ID is invalid and was ignored. This game will use the real console ID."
+- label: NETWORK_SMB2_FALLBACK
+  string: '%d: The SMB2 driver did not load. Browsing with SMBv1 instead until the next start.'

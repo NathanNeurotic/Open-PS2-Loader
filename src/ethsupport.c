@@ -317,11 +317,13 @@ static void smbLoadModules(void)
         int dialect = (gSMBDialect == SMB_DIALECT_V2) ? SMB_DIALECT_V2 : SMB_DIALECT_V1;
         int requested = dialect;
         int loaded = -1;
+        int smb2LoadError = 0;
         if (dialect == SMB_DIALECT_V2) {
             LOG("[SMB2MAN]:\n");
             loaded = sysLoadModuleBuffer((void *)&smb2man_irx, size_smb2man_irx, 0, NULL);
-            if (loaded < 0) { // e.g. not enough IOP RAM for libsmb2: keep the menu usable on SMBv1
+            if (loaded < 0) { // e.g. not enough IOP RAM for libsmb2 (-400): keep the menu usable on SMBv1
                 LOG("[SMB2MAN]: load failed (%d), falling back to smbman\n", loaded);
+                smb2LoadError = loaded;
                 dialect = SMB_DIALECT_V1;
             }
         }
@@ -338,7 +340,13 @@ static void smbLoadModules(void)
             nbnsInit();
 
             LOG("SMBSUPPORT Modules loaded\n");
+            // The player picked SMB2 and is about to browse on SMBv1 without having changed
+            // anything. Say so: a server set up for SMB2 will just reject the SMB1 negotiate,
+            // and nothing else on screen explains why. Goes after ethInitSMB() and is appended
+            // to any SMB1 error that raised, so the cause is not lost under the symptom.
             ethInitSMB();
+            if (smb2LoadError < 0)
+                appendErrorMessageWithCode(_STR_NETWORK_SMB2_FALLBACK, smb2LoadError);
             return;
         }
     }

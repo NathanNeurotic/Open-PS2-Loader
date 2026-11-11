@@ -65,6 +65,12 @@ static inline void *AllocSysMemory(int mode, int size, void *ptr) { (void)mode; 
 static inline int FreeSysMemory(void *ptr) { if (ptr) frees++; free(ptr); return 0; }
 '''
 
+STUB_INTRMAN = r'''
+#pragma once
+static inline int CpuSuspendIntr(int *state) { *state = 0; return 0; }
+static inline int CpuResumeIntr(int state) { (void)state; return 0; }
+'''
+
 HARNESS = r'''
 #include <assert.h>
 #include <stdio.h>
@@ -302,6 +308,7 @@ def main():
         (stubs / 'tamtypes.h').write_text(STUB_TYPES)
         (stubs / 'bdm.h').write_text(STUB_BDM)
         (stubs / 'sysmem.h').write_text(STUB_SYSMEM)
+        (stubs / 'intrman.h').write_text(STUB_INTRMAN)
         harness = Path(tmp) / 'harness.c'
         harness.write_text(HARNESS)
         exe = Path(tmp) / 'partitions_test'

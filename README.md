@@ -363,7 +363,8 @@ are supported using the folder structure above.
 > switches *both* sides (browsing loads the SMB2 driver instead of the SMBv1 one, and the in-game
 > reader follows), so the server must speak SMB 2.0.2 or 2.1 for the whole session. SMB2 logs on with
 > NTLMv2 and signs requests when the server requires it; SMB 3.x is not offered, so a server set to
-> SMB 3 only is not reached. If the SMB2 driver cannot load, browsing falls back to SMBv1. Changing
+> SMB 3 only is not reached. If the SMB2 driver cannot load (it loads last, into the IOP memory the other
+> drivers leave), a message says so and browsing falls back to SMBv1 until the next start. Changing
 > the version while an SMB driver is loaded offers a restart. For SMBv1 use PS2-Servers' SMBv1 card,
 > or Samba with `min protocol = NT1`.
 >
