@@ -16,7 +16,7 @@ published the POPSTARTER half alone: no Ember titles on MMCE. The test builds th
 and requires it to fail, so it proves it can see the defect, then requires the patched driver to
 list the games while still reporting real SIO2 timeouts as failures.
 
-mmceman-fs-dread-getstat-returns.patch (same change as ps2-mmce/mmceman PR #11) makes an entry
+mmceman-fs-dread-entry.patch (the dread half of ps2-mmce/mmceman PR 11) makes an entry
 return 1 instead of the card's iterator descriptor: the iterator gets the card's lowest free
 descriptor, and 0 there read as end of directory, so the listing stopped before its first entry.
 A second baseline without it, on a card whose iterator descriptor is 0, must fail too.
@@ -50,7 +50,7 @@ SOURCES = {
 # The installer's order. Each baseline below drops one fix and must fail.
 PATCHES = ['mmceman-fs-close-fd-leak.patch', 'mmceman-fs-open-enoent.patch',
            'mmceman-fs-dopen-enoent.patch', 'mmceman-fs-dread-eof.patch',
-           'mmceman-fs-dread-getstat-returns.patch']
+           'mmceman-fs-dread-entry.patch']
 for name in PATCHES:
     assert name in installer, name + ' is no longer applied by install_coherent_mmce.sh'
 
@@ -346,7 +346,7 @@ with tempfile.TemporaryDirectory(prefix='ember-mmce-') as temp:
     baseline = build(work / 'baseline-iterator', PATCHES[:-1], 'scan')
     result = subprocess.run([str(baseline), 'zero-iterator'], timeout=30)
     assert result.returncode != 0, 'dread returning the iterator fd lists Ember: this test no longer sees the defect'
-    print('baseline (without mmceman-fs-dread-getstat-returns.patch) fails as expected: an iterator fd of 0 ends the listing')
+    print('baseline (without mmceman-fs-dread-entry.patch) fails as expected: an iterator fd of 0 ends the listing')
     patched = build(work / 'patched', PATCHES, 'scan')
     subprocess.run([str(patched)], check=True, timeout=30)
 print('Ember on MMCE: games list through the real mmceman dread; SIO2 timeouts still preserve the list')
