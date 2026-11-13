@@ -323,7 +323,7 @@ img { max-width: 100%; border: 1px solid var(--line2); }
   height: 15px;
 }
 .topbar-btn.primary {
-  background: linear-gradient(135deg, #3a5588, #5381b5);
+  background: linear-gradient(135deg, #2b4470, #3a5a85);
   color: #cadae8;
   border: 1px solid var(--ps-cyan);
   box-shadow: 0 0 14px rgba(83, 152, 181, 0.45), inset 0 1px 0 rgba(224, 224, 224, 0.3);
@@ -1084,7 +1084,7 @@ dl.credits { margin: 0 0 8px; }
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(135deg, #354d7b, #4774a5);
+  background: linear-gradient(135deg, #354d7b, #3a5a85);
   color: #c9d9e8;
   font-weight: 800;
   font-size: 14px;
