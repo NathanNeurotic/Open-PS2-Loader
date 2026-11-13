@@ -418,7 +418,7 @@ img { max-width: 100%; border: 1px solid var(--line2); }
 }
 .res .t { color: #e0e0e0; font-weight: 700; font-size: 14px; text-shadow: 0 0 8px rgba(83, 152, 181, 0.4); }
 .res .c {
-  color: var(--ps-cyan);
+  color: #96d7e6;
   font-size: 10px;
   margin-left: 8px;
   text-transform: uppercase;
