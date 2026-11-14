@@ -194,3 +194,18 @@
     else if (media.addListener) media.addListener(change);
   }
 })();
+
+// Color-scheme attribution in the shared documentation footer.
+(function () {
+  "use strict";
+  var footer = document.querySelector("footer");
+  if (!footer || footer.querySelector(".color-scheme-credit")) return;
+  var paragraph = document.createElement("p");
+  paragraph.className = "prov-inline color-scheme-credit";
+  paragraph.appendChild(document.createTextNode("Color scheme by "));
+  var link = document.createElement("a");
+  link.href = "https://www.psx-place.com/members/gamerman-5000.192149/";
+  link.textContent = "gamerman 5000";
+  paragraph.appendChild(link);
+  footer.appendChild(paragraph);
+})();

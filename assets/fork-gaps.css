@@ -1,14 +1,14 @@
 /* Page-scoped fork-gap audit and alphabetical source directory. */
 #fork-gap-audit .fork-gap-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:20px 0; }
-#fork-gap-audit .fork-gap-metric { padding:15px 18px; background:rgba(26, 41, 61,.7); border:1px solid var(--line2); border-radius:8px; }
+#fork-gap-audit .fork-gap-metric { padding:15px 18px; background:var(--panel); border:1px solid var(--line2); border-radius:8px; }
 #fork-gap-audit .fork-gap-metric strong { display:block; font-size:27px; color:var(--ink-bright); font-variant-numeric:tabular-nums; }
 #fork-gap-audit .fork-gap-metric span { display:block; color:var(--ink2); font-size:12px; line-height:1.5; margin-top:4px; }
 #fork-gap-audit .fork-gap-nav { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 22px; }
-#fork-gap-audit .fork-gap-nav a, #fork-gap-audit .directory-alpha a { display:inline-block; padding:7px 10px; border:1px solid var(--line2); background:rgba(28, 42, 65,.6); border-radius:5px; font-size:12px; font-weight:700; text-decoration:none; }
+#fork-gap-audit .fork-gap-nav a, #fork-gap-audit .directory-alpha a { display:inline-block; padding:7px 10px; border:1px solid var(--line2); background:var(--panel2); border-radius:5px; font-size:12px; font-weight:700; text-decoration:none; }
 #fork-gap-audit .fork-gap-nav a:hover, #fork-gap-audit .directory-alpha a:hover { background:var(--panel-hover); }
 #fork-gap-audit .fork-gap-controls { display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin:18px 0 9px; }
 #fork-gap-audit .fork-gap-controls label { display:flex; flex-direction:column; min-width:180px; flex:1 1 220px; font-size:12px; color:var(--ink2); gap:5px; }
-#fork-gap-audit .fork-gap-controls input, #fork-gap-audit .fork-gap-controls select { border:1px solid var(--line2); border-radius:5px; background:#202b3d; color:var(--ink-bright); font:inherit; font-size:14px; min-height:40px; padding:9px 11px; width:100%; }
+#fork-gap-audit .fork-gap-controls input, #fork-gap-audit .fork-gap-controls select { border:1px solid var(--line2); border-radius:5px; background:var(--bg-deep); color:var(--ink-bright); font:inherit; font-size:14px; min-height:40px; padding:9px 11px; width:100%; }
 #fork-gap-audit .fork-gap-controls :is(input,select):focus-visible { outline:2px solid var(--ps-cyan); outline-offset:2px; }
 #fork-gap-audit .fork-gap-count { font-size:12px; color:var(--ink2); margin:2px 0 9px; }
 #fork-gap-audit .directory-alpha { display:flex; gap:5px; flex-wrap:wrap; margin:10px 0 13px; }
