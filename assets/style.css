@@ -1,34 +1,33 @@
-/* RiptOPL Docs — Authentic PlayStation 2 OSDSYS Menu & Boot Screen Design System.
-   Theme: Pitch black void, drifting volumetric dark blue fog, luminous ice-blue typography, sharp silicon edges.
-   100% self-contained (zero external CDN or web font dependencies). */
+/* PS2 documentation theme — subdued charcoal surfaces and neutral typography.
+   Self-contained; keeps existing layouts, imagery, status indicators and PlayStation button symbols. */
 :root {
-  /* PS2 OSDSYS Pitch Black & Dark Blue Fog Void */
-  --bg: #1f1f1f;
-  --bg-deep: #131c2d;
-  --bg-fog: #172235;
-  --panel: rgba(23, 35, 55, 0.85);
-  --panel2: rgba(26, 39, 60, 0.90);
-  --panel-hover: rgba(31, 46, 71, 0.95);
+  /* Low-saturation charcoal surfaces */
+  --bg: #121212;
+  --bg-deep: #161616;
+  --bg-fog: #1c1c1c;
+  --panel: rgba(24, 24, 24, 0.92);
+  --panel2: rgba(28, 28, 28, 0.94);
+  --panel-hover: rgba(33, 33, 33, 0.96);
 
-  /* Authentic PS2 OSDSYS Phosphor / Crystal Blue Typography */
-  --ink: #b8cbe1;         /* Pale luminous ice-blue body text (sharp, readable, AAA contrast on black) */
-  --ink-bright: #cadae8;  /* Emphasized white-blue crystal highlight */
-  --ink2: #8697ab;        /* Medium atmospheric console blue for secondary text */
-  --ink3: #8a94a3;        /* Deep twilight navy for subtle details and borders */
+  /* Readable neutral typography */
+  --ink: #e0e0e0;         /* Pale luminous ice-blue body text (sharp, readable, AAA contrast on black) */
+  --ink-bright: #f0f0f0;  /* Emphasized white-blue crystal highlight */
+  --ink2: #b0b0b0;        /* Medium atmospheric console blue for secondary text */
+  --ink3: #888888;        /* Deep twilight navy for subtle details and borders */
 
-  /* PS2 Laser Lines & Silicon Traces */
-  --line: rgba(83, 137, 181, 0.22);
-  --line2: rgba(83, 152, 181, 0.42);
-  --line-glow: rgba(83, 164, 181, 0.75);
+  /* Neutral dividers and focus lines */
+  --line: #444444;
+  --line2: #666666;
+  --line-glow: rgba(136, 136, 136, 0.55);
 
-  /* PS2 Luminescence & System Accents */
-  --ps-blue: #42629a;
-  --ps-cyan: #53a4b5;
-  --ps-text-blue: #77a8c5;
-  --accent: #4b7aaf;
-  --accent2: #82a7c9;
-  --accent-ghost: rgba(83, 125, 181, 0.16);
-  --accent-glow: rgba(83, 160, 181, 0.45);
+  /* Subdued gray system accents */
+  --ps-blue: #888888;
+  --ps-cyan: #b0b0b0;
+  --ps-text-blue: #b0b0b0;
+  --accent: #888888;
+  --accent2: #b0b0b0;
+  --accent-ghost: rgba(136, 136, 136, 0.16);
+  --accent-glow: rgba(136, 136, 136, 0.35);
 
   /* Authentic PlayStation Controller Jewel Tones */
   --ps-tri: #4baf92;
@@ -49,7 +48,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; background-color: #1f1f1f; }
+html { scroll-behavior: smooth; background-color: var(--bg); }
 
 body {
   margin: 0;
@@ -59,7 +58,7 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #1f1f1f;
+  background-color: var(--bg);
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
@@ -75,16 +74,13 @@ body::before {
   height: 120%;
   z-index: -2;
   pointer-events: none;
-  background-color: #1f1f1f;
+  background-color: var(--bg);
   background-image:
-    /* Swirling clusters of deep royal / midnight blue fog banks */
-    radial-gradient(ellipse 950px 650px at 15% 15%, rgba(36, 53, 85, 0.50), transparent 72%),
-    radial-gradient(ellipse 1100px 750px at 85% 25%, rgba(47, 70, 110, 0.42), transparent 70%),
-    radial-gradient(ellipse 850px 700px at 50% 60%, rgba(31, 43, 71, 0.60), transparent 75%),
-    radial-gradient(ellipse 1200px 900px at 20% 85%, rgba(40, 58, 94, 0.46), transparent 72%),
-    radial-gradient(ellipse 950px 650px at 80% 90%, rgba(34, 50, 80, 0.52), transparent 70%),
-    /* Dense central atmospheric void */
-    radial-gradient(circle 800px at 50% 30%, rgba(30, 44, 70, 0.65), transparent 75%);
+    radial-gradient(ellipse 950px 650px at 15% 15%, rgba(78, 78, 78, 0.16), transparent 72%),
+    radial-gradient(ellipse 1100px 750px at 85% 25%, rgba(76, 76, 76, 0.12), transparent 70%),
+    radial-gradient(ellipse 850px 700px at 50% 60%, rgba(62, 62, 62, 0.15), transparent 75%),
+    radial-gradient(ellipse 1200px 900px at 20% 85%, rgba(69, 69, 69, 0.11), transparent 72%),
+    radial-gradient(ellipse 950px 650px at 80% 90%, rgba(65, 65, 65, 0.13), transparent 70%);
   background-size: 100% 100%;
   animation: osd-fog-drift 26s ease-in-out infinite alternate;
   will-change: transform;
@@ -117,7 +113,7 @@ body::after {
   pointer-events: none;
   background-image:
     /* Seven Towers architectural sound pillar light shafts in the background */
-    repeating-linear-gradient(90deg, transparent 0, transparent 116px, rgba(83, 122, 181, 0.015) 116px, rgba(83, 152, 181, 0.04) 118px, transparent 120px),
+    repeating-linear-gradient(90deg, transparent 0, transparent 116px, rgba(136, 136, 136, 0.015) 116px, rgba(136, 136, 136, 0.04) 118px, transparent 120px),
     /* Faint CRT OSD phosphor line texture */
     linear-gradient(rgba(31, 31, 31, 0) 50%, rgba(31, 31, 31, 0.22) 50%),
     /* Deep black edge vignette keeping the focus centered */
