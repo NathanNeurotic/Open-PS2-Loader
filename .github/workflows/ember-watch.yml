@@ -106,31 +106,29 @@ jobs:
           print('ember.elf: 32-bit little-endian MIPS ELF, %d bytes' % len(data))
           PY
 
-          # The licence must ship with the ELF, so settle it BEFORE touching either ELF copy. Keep ours only
-          # when upstream confirms it has no LICENSE-BETA.txt at this tag (HTTP 404); any other failure --
-          # timeout, rate limit, server error, bad Base64, empty content -- stops the update (CodeRabbit #820).
-          LIC="$RUNNER_TEMP/ember/LICENSE-BETA.txt"
-          if gh api "repos/$EMBER_REPO/contents/LICENSE-BETA.txt?ref=$TAG" --jq '.content' > "$RUNNER_TEMP/ember/lic.b64" 2> "$RUNNER_TEMP/ember/lic.err"; then
-            if ! base64 -d "$RUNNER_TEMP/ember/lic.b64" > "$LIC" || [ ! -s "$LIC" ]; then
-              echo "Upstream LICENSE-BETA.txt at $TAG did not decode to a non-empty file -- stopping." >&2
-              exit 1
-            fi
-          elif grep -q "HTTP 404" "$RUNNER_TEMP/ember/lic.err"; then
-            echo "No LICENSE-BETA.txt at $TAG upstream; keeping the bundled licence."
-            LIC=""
-          else
-            echo "Could not read upstream LICENSE-BETA.txt at $TAG -- stopping:" >&2
+          # The licence must ship with the ELF, so settle it BEFORE touching either ELF copy. Since 0.8 the
+          # licence is LICENSE.txt (the Beta builds' LICENSE-BETA.txt was retired upstream), and the packaging
+          # requires EMBER/LICENSE.txt. Any failure to read it -- missing (HTTP 404), timeout, rate limit, server
+          # error, bad Base64, empty content -- stops the update, so an ELF never ships with the wrong licence.
+          LIC="$RUNNER_TEMP/ember/LICENSE.txt"
+          if ! gh api "repos/$EMBER_REPO/contents/LICENSE.txt?ref=$TAG" --jq '.content' > "$RUNNER_TEMP/ember/lic.b64" 2> "$RUNNER_TEMP/ember/lic.err"; then
+            echo "Could not read upstream LICENSE.txt at $TAG -- stopping:" >&2
             cat "$RUNNER_TEMP/ember/lic.err" >&2
+            exit 1
+          fi
+          if ! base64 -d "$RUNNER_TEMP/ember/lic.b64" > "$LIC" || [ ! -s "$LIC" ]; then
+            echo "Upstream LICENSE.txt at $TAG did not decode to a non-empty file -- stopping." >&2
             exit 1
           fi
 
           KIT="Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/EMBER"
-          cp -f "$NEW" EMBER/ember.elf
-          if [ -d "$KIT" ]; then cp -f "$NEW" "$KIT/ember.elf"; fi
-          if [ -n "$LIC" ]; then
-            cp -f "$LIC" EMBER/LICENSE-BETA.txt
-            if [ -d "$KIT" ]; then cp -f "$LIC" "$KIT/LICENSE-BETA.txt"; fi
-          fi
+          for DIR in EMBER "$KIT"; do
+            [ -d "$DIR" ] || continue
+            cp -f "$NEW" "$DIR/ember.elf"
+            cp -f "$LIC" "$DIR/LICENSE.txt"
+            # The retired Beta licence must not sit beside a build it does not govern.
+            if [ -e "$DIR/LICENSE-BETA.txt" ]; then git rm -q -- "$DIR/LICENSE-BETA.txt"; fi
+          done
           git status --short
 
       - name: Commit to rebuild/main
@@ -142,13 +140,22 @@ jobs:
           UPDATED: ${{ steps.cmp.outputs.updated }}
         run: |
           set -eu
-          if git diff --quiet; then
+          if git diff --quiet && git diff --cached --quiet \
+            && [ -z "$(git ls-files --others --exclude-standard EMBER)" ]; then
             echo "Nothing changed on disk after bundling; nothing to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A EMBER "Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/EMBER"
+          # The example kit's folder name ends in .ZIP, which the *.ZIP ignore rule matches, so a plain
+          # "git add" of it is refused. Its files are tracked: stage their changes with -u, and force-add
+          # only the one file the update can create there.
+          KIT="Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/EMBER"
+          git add -A EMBER
+          if [ -d "$KIT" ]; then
+            git add -u -- "$KIT"
+            git add -f -- "$KIT/LICENSE.txt"
+          fi
           git commit -q -F - <<EOF
           bundle: update Ember to the official $TAG build ($UPDATED)
 

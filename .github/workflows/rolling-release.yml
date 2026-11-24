@@ -833,17 +833,17 @@ jobs:
           # the loader lists Ember titles whenever a device has an EMBER/ folder, so shipping that
           # folder WITHOUT its ember.elf would hand users a library whose rows cannot launch.
           test -f EMBER/ember.elf
-          # Ember's licence (LICENSE-BETA.txt, section 2) permits bundling ONLY IF the build ships
+          # Ember's licence (LICENSE.txt, section 2) permits bundling ONLY IF the build ships
           # unmodified, complete and WITH THE LICENCE FILE, credited to Gageformer by name with a
           # link to the official release page. Shipping the ELF without the licence is not a
           # missing nicety, it is a breach of the terms that let us ship it at all -- so this is a
           # hard failure, exactly like the bios.bin guard below.
-          test -f EMBER/LICENSE-BETA.txt
+          test -f EMBER/LICENSE.txt
           cp -rf EMBER/. "$PKG/EMBER/"
           mkdir -p "$PKG/EMBER/games/Per-Game-Folder"
           cp -f "$EXAMPLE/EMBER/games/Per-Game-Folder/GAME FILES" "$PKG/EMBER/games/Per-Game-Folder/GAME FILES"
-          if [ ! -s "$PKG/EMBER/LICENSE-BETA.txt" ]; then
-            echo "ERROR: EMBER/LICENSE-BETA.txt did not reach the package -- bundling Ember without" >&2
+          if [ ! -s "$PKG/EMBER/LICENSE.txt" ]; then
+            echo "ERROR: EMBER/LICENSE.txt did not reach the package -- bundling Ember without" >&2
             echo "       its licence breaches section 2(a) of that licence. Refusing to publish." >&2
             exit 1
           fi

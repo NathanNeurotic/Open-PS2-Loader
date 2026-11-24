@@ -53,6 +53,10 @@ def stage_shared_kit(archive, destination, preview):
         # POPS payload must match the PR's loader and validator, while extra
         # runtime files supplied only by the install kit remain available.
         shutil.copytree(ROOT / "POPS", destination / "POPS", dirs_exist_ok=True)
+        # The same holds for EMBER: an older kit can carry an earlier Ember and its retired
+        # LICENSE-BETA.txt (renamed LICENSE.txt in Ember 0.8).
+        shutil.copytree(ROOT / "EMBER", destination / "EMBER", dirs_exist_ok=True)
+        (destination / "EMBER" / "LICENSE-BETA.txt").unlink(missing_ok=True)
         # An older bootstrap kit predates the libsmb2 licence and the CREDITS the verifier now requires.
         shutil.copyfile(app.LIBSMB2_LICENCE, destination / "LICENSE-LIBSMB2.txt")
         shutil.copyfile(app.CREDITS, destination / "CREDITS")
