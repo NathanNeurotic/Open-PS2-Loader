@@ -330,7 +330,7 @@ def verify(args: argparse.Namespace) -> None:
             "POPS/POPSTARTER.KELF",
             "POPS/TROJAN_7.BIN",
             "EMBER/ember.elf",
-            "EMBER/LICENSE-BETA.txt",
+            "EMBER/LICENSE.txt",
             "EMBER/Ember Official Webpage.url",
             "EMBER/games/Per-Game-Folder/GAME FILES",
             "neutrino/neutrino.elf",
