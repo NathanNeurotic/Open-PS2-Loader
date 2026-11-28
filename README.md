@@ -53,7 +53,7 @@ A heartfelt thank you to developers who have contributed pull requests directly 
 - **[#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)** (`Cover art flow`): **PSBBN Flow** — Contributed LUNA's Collection display and its perspective cover animation. Adapted into a selectable native theme alongside Cover Flow, using RiptOPL's existing game lists, artwork cache, settings and launch callbacks. R3 retains its normal favorite shortcut.
 
 # RiptOPL
-**An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
+**An [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
 <br>
 Based on Open PS2 Loader · Copyright 2013, [Ifcaro](https://github.com/ifcaro) & [jimmikaelkael](https://github.com/jimmikaelkael)<br>
 Licensed under Academic Free License version 3.0<br>
